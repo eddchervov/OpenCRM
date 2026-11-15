@@ -6,7 +6,8 @@ The solution separates the web host, business modules, client applications, and 
 
 ## Main components
 
-- `src/OpenCRM.WebApp` — the ASP.NET Core host for the web interface, API, and background jobs.
+- `src/OpenCRM.WebApp` — the neutral executable, configuration, and resources.
+- `src/OpenCRM.Hosting` — shared web composition; compiles the common controllers and Razor views from the WebApp source tree for neutral and product hosts.
 - `src/OpenCRM.Modules.*` — business modules and their contracts.
 - `src/OpenCRM.Infrastructure.*` — access to the database, external services, and environment.
 - `src/OpenCRM.Frontend` — client applications, administration interface, and shared UI packages.

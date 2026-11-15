@@ -21,6 +21,7 @@ OpenCRM читает стандартную конфигурацию .NET: се�
 | `S3:*` | Параметры объектного хранилища. Учетные данные задаются отдельно; они не нужны для базового локального запуска. |
 | `IdentitySettings:*` | Политики паролей, входа и блокировки аккаунтов. Значения читаются из одноимённой секции appsettings. |
 | `Security:AllowedCorsOrigins` | Разрешённые источники браузерных запросов. Для собственного развертывания укажите адреса его клиентских приложений. |
+| `DataProtection:ApplicationName`, `DataProtection:KeysDirectory` | Постоянная идентичность изоляции и каталог ключей. ApplicationName по умолчанию `OpenCRM.WebApp`; сохраняйте оба значения при обновлении существующей установки. |
 | `ReverseProxy:KnownProxy` | В Production требуется IP доверенного обратного прокси; значение не нужно для локального профиля разработки. |
 
 Переменные окружения задаются процессу, который использует соответствующую настройку. Настройки WebApp не заменяют настройки отдельного Worker или платежного сервиса.
@@ -50,7 +51,7 @@ OpenCRM читает стандартную конфигурацию .NET: се�
 ## Где проверить состав настроек
 
 - Начальные значения WebApp и секции: `src/OpenCRM.WebApp/appsettings.json` и `src/OpenCRM.WebApp/appsettings.Development.json`.
-- Порядок источников конфигурации: `src/OpenCRM.WebApp/Program.cs`.
+- Порядок источников конфигурации: `src/OpenCRM.Hosting/OpenCRMApplication.cs`.
 - Подключение PostgreSQL, Identity и Hangfire: `src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs`.
 - Настройки помощника: `src/OpenCRM.WebApp/Infrastructure/Assistant/AssistantOptions.cs`.
 - Общие настройки бренда: `configuration/brand.json` и `configuration/README.md`.

@@ -21,6 +21,7 @@ The web application loads the standard `appsettings.json` and `appsettings.{Envi
 | `S3:*` | Object storage parameters. Credentials are configured separately and are unnecessary for basic local setup. |
 | `IdentitySettings:*` | Password, sign-in, and account lockout policies. Values come from the corresponding appsettings section. |
 | `Security:AllowedCorsOrigins` | Allowed browser request origins. For your deployment, specify the addresses of its client applications. |
+| `DataProtection:ApplicationName`, `DataProtection:KeysDirectory` | Stable isolation identity and keyring. ApplicationName defaults to `OpenCRM.WebApp`; preserve both when updating an existing installation. |
 | `ReverseProxy:KnownProxy` | The trusted reverse proxy IP is required in Production; this value is unnecessary for the local development profile. |
 
 Provide environment variables to the process that uses each setting. WebApp settings do not replace the separate Worker's or payment service's settings.
@@ -50,7 +51,7 @@ The `Assistant` section contains the `Enabled` switch, provider URL and allowed 
 ## Where to inspect available settings
 
 - WebApp defaults and sections: `src/OpenCRM.WebApp/appsettings.json` and `src/OpenCRM.WebApp/appsettings.Development.json`.
-- Configuration source order: `src/OpenCRM.WebApp/Program.cs`.
+- Configuration source order: `src/OpenCRM.Hosting/OpenCRMApplication.cs`.
 - PostgreSQL, Identity, and Hangfire registration: `src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs`.
 - Assistant settings: `src/OpenCRM.WebApp/Infrastructure/Assistant/AssistantOptions.cs`.
 - Shared brand settings: `configuration/brand.json` and `configuration/README.md`.

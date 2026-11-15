@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <RootNamespace>OpenCRM.WebApp</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Microsoft.AspNetCore.Builder" />
+    <Using Include="Microsoft.AspNetCore.Hosting" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.AspNetCore.Routing" />
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="QuestPDF" Version="2025.7.4" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Helpers\Helpers.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Auth\OpenCRM.Infrastructure.Auth.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Admin\OpenCRM.Infrastructure.Admin.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Documents\OpenCRM.Modules.Documents.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Common\OpenCRM.Infrastructure.Common.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Data\OpenCRM.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.FileStorage\OpenCRM.Infrastructure.FileStorage.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Migrations\OpenCRM.Infrastructure.Migrations.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Payments\OpenCRM.Infrastructure.Payments.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Vehicles\OpenCRM.Modules.Vehicles.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Inventory\OpenCRM.Modules.Inventory.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Maintenance\OpenCRM.Modules.Maintenance.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Maintenance.Contracts\OpenCRM.Modules.Maintenance.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Clients.Contracts\OpenCRM.Modules.Clients.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Clients\OpenCRM.Modules.Clients.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Communications.Contracts\OpenCRM.Modules.Communications.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Communications\OpenCRM.Modules.Communications.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Organizations.Contracts\OpenCRM.Modules.Organizations.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Organizations\OpenCRM.Modules.Organizations.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Catalog\OpenCRM.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Planning.Contracts\OpenCRM.Modules.Planning.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Planning\OpenCRM.Modules.Planning.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Billing\OpenCRM.Modules.Billing.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Billing.Contracts\OpenCRM.Modules.Billing.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Workspace\OpenCRM.Modules.Workspace.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Imports\OpenCRM.Modules.Imports.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Accounts\OpenCRM.Modules.Accounts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Notifications\OpenCRM.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Support\OpenCRM.Modules.Support.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Promotions\OpenCRM.Modules.Promotions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="OpenCRMApplication.cs" />
+    <Compile Include="../OpenCRM.WebApp/**/*.cs" Exclude="../OpenCRM.WebApp/wwwroot/img/cars/**;../OpenCRM.WebApp/Program.cs;../OpenCRM.WebApp/bin/**;../OpenCRM.WebApp/obj/**" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <RazorGenerate Include="../OpenCRM.WebApp/Views/**/*.cshtml" Link="Views/%(RecursiveDir)%(Filename)%(Extension)" TargetPath="Views/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

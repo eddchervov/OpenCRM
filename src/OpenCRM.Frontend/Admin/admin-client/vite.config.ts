@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { resolveFrontendOutputDir } from '../../build/frontendOutput'
 
 export default defineConfig({
   plugins: [vue()],
@@ -20,7 +21,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: '../../../OpenCRM.WebApp/wwwroot/admin-panel',
+    outDir: resolveFrontendOutputDir('../../../OpenCRM.WebApp/wwwroot/admin-panel', 'admin-panel'),
     emptyOutDir: true,
     manifest: 'manifest.json',
     sourcemap: false,

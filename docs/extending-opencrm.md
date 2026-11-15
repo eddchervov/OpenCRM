@@ -19,7 +19,21 @@ OpenCRM is a shared CRM foundation. Start with the available settings, then add 
 
 Installation settings are separate from application code. Business modules, contracts, infrastructure implementations, and shared UI components reside in separate projects and packages. Standard dependency injection lets you replace supported implementations when composing the host.
 
-The application is currently explicitly composed in [Program.cs](../src/OpenCRM.WebApp/Program.cs) and [service registrations](../src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs). Add a new extension to the source/projects, register it, and build it. Automatic plugin loading, a standalone extension SDK, and a ready-made separate product host have not yet been implemented.
+The reusable [OpenCRM.Hosting](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj) Razor library compiles the shared controllers, services, and views from the existing WebApp source tree. The neutral [Program.cs](../src/OpenCRM.WebApp/Program.cs) delegates to `OpenCRMApplication.ConfigureBuilder(builder, args)` and `ConfigureApplication(app)`. A product host can call the same composition and register its own services before `builder.Build()`. Automatic plugin discovery and a separately published NuGet extension SDK are not provided.
+
+## A product host and one source tree
+
+A product application references the [shared hosting library](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj), not the neutral executable. The [product-host MSBuild import](../build/OpenCRM.ProductHost.targets) accepts one `OpenCRMRoot`, adds the shared project and static resources, and builds all CRM clients from that source tree. The consumer supplies its own `brand.json`, `appsettings.json`, and entry point.
+
+The import copies core defaults as `opencrm.defaults.json`. Load that file before the product's settings, then reapply environment variables and command-line arguments. Register product services after the common builder configuration; apply the common pipeline to the built application. The neutral application remains independently runnable.
+
+For local development, `OpenCRMRoot` may select a neighboring checkout. For reproducible CI and releases, use a pinned source revision inside the product repository. Backend and frontend must use the same root; do not maintain a second editable copy of shared CRM code.
+
+`OPENCRM_FRONTEND_OUTPUT_ROOT` is an absolute path to the consumer's `wwwroot`. The import passes it to Vite, preserving the public `/clients/*`, `/admin-panel`, and `/app` URLs. Without it, `npm run build` retains the neutral application's existing output paths. Each host needs its own physical client files because Razor reads their manifests from `WebRootPath`.
+
+A product replacing the neutral home controller must explicitly exclude that controller from MVC discovery and add its own application part. A new controller with the same name alone can create ambiguous routes. Test compiled Razor views, CSS/JS, and both administration entry points from the published output.
+
+When running two hosts on localhost, use distinct cookie names and key directories; different ports alone do not isolate cookies. `DataProtection:ApplicationName` is configurable and defaults to `OpenCRM.WebApp`. Preserve an existing installation's discriminator and keyring when upgrading. Keep build outputs separate and avoid concurrent writes to shared intermediate files.
 
 ## 1. Start with configuration
 
@@ -60,9 +74,9 @@ Updating from upstream is the current practical mechanism for receiving shared l
 
 The [`IOrganizationWikiContentProvider`](../src/OpenCRM.WebApp/Models/Organizations/IOrganizationWikiContentProvider.cs) contract describes content availability, search, and article retrieval. The base distribution registers an empty provider; the help item is hidden when no content is available.
 
-The contract and article model currently reside in WebApp. A practical approach is to implement the provider in a product-specific folder/namespace within WebApp and replace its registration after the host's standard service configuration. Moving this class directly into a project that references WebApp and is simultaneously referenced by WebApp creates a circular dependency; first change the contract/composition boundaries separately if you need this arrangement.
+The contract and article models keep their `OpenCRM.WebApp.Models.Organizations` namespaces and are compiled into `OpenCRM.Hosting`. Implement the provider in the product host or a product library referencing Hosting. The shared library must not reference the product back; this keeps dependency direction one way.
 
-For a `ProductWikiContentProvider` already implemented within the host, replace the provider registration in `ConfigureBuilder` in `Program.cs`, after the standard presentation service registration:
+For an implemented `ProductWikiContentProvider`, replace the registration after `OpenCRMApplication.ConfigureBuilder(builder, args)` and before `builder.Build()` in the product entry point:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;

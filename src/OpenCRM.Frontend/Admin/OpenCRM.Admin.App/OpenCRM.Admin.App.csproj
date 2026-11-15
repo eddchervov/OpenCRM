@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ProjectBrandFile Condition="'$(ProjectBrandFile)' == ''">$(MSBuildProjectDirectory)/../../../../configuration/brand.json</ProjectBrandFile>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>..\OpenCRM.Admin.Launcher\Assets\OpenCRM.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -19,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../../../Helpers/ProjectBrand.cs" Link="Shared/ProjectBrand.cs" />
-    <None Include="../../../../configuration/brand.json" Link="brand.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="$(ProjectBrandFile)" Link="brand.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <AvaloniaResource Include="..\OpenCRM.Admin.Launcher\Assets\OpenCRM.ico" Link="Assets\OpenCRM.ico" />
   </ItemGroup>
 </Project>

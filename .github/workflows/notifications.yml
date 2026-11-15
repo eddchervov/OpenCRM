@@ -8,6 +8,7 @@ on:
       - "configuration/brand.json"
       - ".config/dotnet-tools.json"
       - "src/**"
+      - "build/**"
       - "integrations/**"
       - "tests/**"
       - "scripts/assert-*-coverage.ps1"
@@ -34,6 +35,7 @@ on:
       - "configuration/brand.json"
       - ".config/dotnet-tools.json"
       - "src/**"
+      - "build/**"
       - "integrations/**"
       - "tests/**"
       - "scripts/assert-*-coverage.ps1"
@@ -178,6 +180,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: Hosting
+            project: tests/OpenCRM.Hosting.Tests/OpenCRM.Hosting.Tests.csproj
           - name: Assistant
             project: tests/OpenCRM.Assistant.Tests/OpenCRM.Assistant.Tests.csproj
           - name: Communications

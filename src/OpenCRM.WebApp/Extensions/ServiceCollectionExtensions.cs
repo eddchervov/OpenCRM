@@ -244,7 +244,7 @@ public static class ServiceCollectionExtensions
         {
             options.Filters.Add<ApiAntiforgeryAuthorizationFilter>();
             options.Filters.Add<ApiErrorResultFilter>();
-        });
+        }).AddApplicationPart(typeof(OpenCRM.Hosting.OpenCRMApplication).Assembly);
         services.AddRazorPages().AddRazorRuntimeCompilation();
         services.AddMemoryCache();
         services.AddSingleton(TimeProvider.System);
@@ -308,7 +308,7 @@ public static class ServiceCollectionExtensions
 
         services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory))
-            .SetApplicationName("OpenCRM.WebApp")
+            .SetApplicationName(configuration["DataProtection:ApplicationName"] ?? "OpenCRM.WebApp")
             .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
         services.AddScoped<IEmailCampaignScheduler, EmailCampaignScheduler>();

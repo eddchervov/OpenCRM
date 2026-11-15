@@ -18,6 +18,7 @@ COPY services/payments/Directory.Build.props services/payments/Directory.Build.p
 COPY ["services/payments/src/Payments.Contracts/Payments.Contracts.csproj", "services/payments/src/Payments.Contracts/"]
 COPY services/notifications/src/Notifications.Contracts/ services/notifications/src/Notifications.Contracts/
 COPY ["src/OpenCRM.WebApp/OpenCRM.WebApp.csproj", "src/OpenCRM.WebApp/"]
+COPY ["src/OpenCRM.Hosting/OpenCRM.Hosting.csproj", "src/OpenCRM.Hosting/"]
 COPY ["src/OpenCRM.Infrastructure.Auth/OpenCRM.Infrastructure.Auth.csproj", "src/OpenCRM.Infrastructure.Auth/"]
 COPY ["src/OpenCRM.Infrastructure.Admin/OpenCRM.Infrastructure.Admin.csproj", "src/OpenCRM.Infrastructure.Admin/"]
 COPY ["src/OpenCRM.Infrastructure.FileStorage/OpenCRM.Infrastructure.FileStorage.csproj", "src/OpenCRM.Infrastructure.FileStorage/"]

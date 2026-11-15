@@ -114,3 +114,13 @@ dotnet publish src/OpenCRM.Frontend/Admin/OpenCRM.Admin.App -c Release -r osx-ar
 ```
 
 Use `osx-x64` for Intel Macs. Building for macOS does not replace testing on a MacBook. The commands publish self-contained binaries. Signing, installers, and automatic updates are not included.
+
+## Build for a product installation
+
+The same desktop sources can use a consumer's brand file without changing the core configuration. Pass an absolute `ProjectBrandFile` path to build/publish; it is copied to the output as `brand.json`. Without the property, the shared `configuration/brand.json` is used. The corresponding public base URL determines the API address; `OPENCRM_ADMIN_API_URL` can override the address at runtime.
+
+```powershell
+dotnet publish --configuration Release -p:ProjectBrandFile="C:/work/Product/brand.json"
+```
+
+Run from this project's directory and replace the example path. Keep the resulting configuration consistent with the consumer's web host. This changes configuration packaging; it does not duplicate the administrative UI or disable server-side access checks.

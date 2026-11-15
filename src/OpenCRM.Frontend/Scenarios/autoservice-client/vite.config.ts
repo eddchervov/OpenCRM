@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { resolveFrontendOutputDir } from '../../build/frontendOutput'
 
 function toSafeAssetName(name = 'asset') {
   return name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase()
@@ -36,7 +37,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: '../../../OpenCRM.WebApp/wwwroot/clients/autoservice',
+    outDir: resolveFrontendOutputDir('../../../OpenCRM.WebApp/wwwroot/clients/autoservice', 'clients/autoservice'),
     emptyOutDir: true,
     manifest: 'manifest.json',
     sourcemap: false,

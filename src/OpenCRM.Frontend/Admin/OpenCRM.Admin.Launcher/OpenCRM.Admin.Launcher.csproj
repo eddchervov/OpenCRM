@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ProjectBrandFile Condition="'$(ProjectBrandFile)' == ''">$(MSBuildProjectDirectory)/../../../../configuration/brand.json</ProjectBrandFile>
     <RootNamespace>OpenCRM.Admin.Launcher</RootNamespace>
     <AssemblyName>OpenCRM.Admin.Launcher</AssemblyName>
     <ApplicationIcon>Assets\OpenCRM.ico</ApplicationIcon>
@@ -13,9 +14,9 @@
 
   <ItemGroup>
     <Compile Include="../../../Helpers/ProjectBrand.cs" Link="Shared/ProjectBrand.cs" />
-    <None Include="../../../../configuration/brand.json" Link="brand.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    <None Include="$(ProjectBrandFile)" Link="brand.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </None>
   </ItemGroup>
 
