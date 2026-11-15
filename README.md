@@ -1,104 +1,108 @@
 # OpenCRM
 
-**Ядро CRM, на основе которого можно запустить и развивать свой продукт.**
+**English** | [Русский](README.ru.md)
 
-OpenCRM объединяет готовое веб-приложение, общие бизнес-модули, административные интерфейсы и отдельные микросервисы уведомлений и платежей. Начните с базовой CRM, настройте её под свою команду и добавляйте нужные возможности.
+**A CRM core you can use to launch and grow your own product.**
 
-## Почему OpenCRM
+OpenCRM combines a working web application, shared business modules, administration interfaces, and independent notification and payment microservices. Start with the core CRM, configure it for your team, and extend it with the features you need.
 
-- **Готовая основа.** Аккаунты, организации, участники, права, клиенты, автомобили, записи, заказы, склад, документы и рабочие финансы.
-- **Модульное ядро.** Предметные модули, контракты и инфраструктура разделены по проектам. Общие изменения можно развивать в ядре и переносить в свой продукт через обновления upstream.
-- **Отдельные микросервисы.** Уведомления и платежи имеют собственные приложения, настройки, базы данных и Docker-конфигурации. Их можно подключать и разворачивать независимо от основного веб-приложения.
-- **Своя настройка.** Название установки, адреса, подключения и провайдеры задаются конфигурацией. Общие компоненты интерфейса переиспользуются клиентскими приложениями.
-- **Самостоятельный запуск.** Базовой CRM достаточно PostgreSQL. SMTP, RabbitMQ, ИИ и платёжные провайдеры подключаются по необходимости.
-- **Опциональная коммерция.** Тарифы, подписки и промокоды сохранены отдельной возможностью. По умолчанию платные ограничения выключены; членство, роли и проверки прав продолжают действовать.
+## Why OpenCRM
 
-## Интерфейс CRM
+- **A working foundation.** Accounts, organizations, membership, permissions, customers, vehicles, appointments, work orders, inventory, documents, and operational finances.
+- **A modular core.** Business modules, contracts, and infrastructure are organized into separate projects. Improvements to shared functionality can be developed in the core and brought into your product through upstream updates.
+- **Independent microservices.** Notifications and payments have their own applications, configuration, databases, and Docker setup. You can connect and deploy them independently of the main web application.
+- **Your own configuration.** Set your installation name, URLs, connections, and providers through configuration. Shared UI components are reused across client applications.
+- **Self-hosted operation.** The basic CRM only needs PostgreSQL. SMTP, RabbitMQ, AI, and payment providers are optional integrations.
+- **Optional commercial features.** Plans, subscriptions, and promotional codes remain available as an optional capability. Paid restrictions are disabled by default; membership, roles, and permission checks remain enforced.
 
-Примеры экранов с демонстрационными данными. Скриншоты показывают настроенную организацию: набор пунктов меню и отметка PRO зависят от конфигурации. В базовой установке коммерческий режим выключен.
+## CRM interface
 
-### Приёмка и заказ
+Example screens with demonstration data. These screenshots show a configured organization: menu items and the PRO label depend on configuration. Commercial mode is disabled in a default installation. The screenshots show the Russian UI; this documentation language switch does not change the application language.
 
-Осмотр автомобиля, отметки повреждений на схеме, расчёты и документы заказа.
+### Vehicle intake and work orders
 
-![Приёмка автомобиля: схема повреждений, расчёты и документы](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/intake.png)
+Vehicle inspection, damage annotations, payment information, and work order documents.
+
+![Vehicle intake: damage diagram, payment information, and documents](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/intake.png)
 
 <details>
-<summary>Статистика работ и настройка прав</summary>
+<summary>Work statistics and role permissions</summary>
 
-### Статистика работ
+### Work statistics
 
-Сводные показатели организации, динамика работ и начислений. Это рабочая статистика CRM.
+Organization metrics, work trends, and accrued amounts. These are operational CRM statistics.
 
-![Статистика организации: показатели и графики работ](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/statistics.png)
+![Organization statistics: work metrics and charts](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/statistics.png)
 
-### Роли и права
+### Roles and permissions
 
-Настройка доступа участников к разделам и действиям внутри организации.
+Configure members' access to sections and actions within an organization.
 
-![Роли организации: настройка прав исполнителя](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/role-permissions.png)
+![Organization roles: configuring worker permissions](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/role-permissions.png)
 
 </details>
 
-## Быстрый старт
+## Quick start
 
 ```bash
 git clone https://github.com/eddchervov/OpenCRM.git
 cd OpenCRM
 ```
 
-Далее выполните [инструкцию локального запуска](docs/local-run.md): зависимости, собственная PostgreSQL, строка подключения, сборка, миграции и HTTPS. В ней есть команды для Bash и PowerShell.
+Follow the [local setup guide (Russian)](docs/local-run.md) for dependencies, your own PostgreSQL instance, connection configuration, build commands, migrations, and HTTPS. It includes commands for Bash and PowerShell.
 
-После запуска откройте **https://localhost:7142**, зарегистрируйте аккаунт и создайте организацию. Парольный вход по умолчанию работает без почтового сервиса и подтверждения email.
+Once the application is running, open **https://localhost:7142**, register an account, and create an organization. By default, password sign-in does not require an email service or email verification.
 
-## Документация
+## Documentation
 
-| Задача | Руководство |
+The project overview is available in English and Russian. The detailed guides linked below are currently in Russian; their English translations are not yet available.
+
+| Task | Guide |
 | --- | --- |
-| Запустить CRM с нуля | [Локальный запуск](docs/local-run.md) |
-| Настроить свою установку и интеграции | [Конфигурация](docs/configuration.md) |
-| Подключить уведомления и платежи | [Микросервисы](docs/microservices.md) |
-| Назначить первого администратора и открыть админки | [Администрирование](docs/administration.md) |
-| Создать свой продукт и получать обновления ядра | [Надстройки и расширение](docs/extending-opencrm.md) |
-| Дорабатывать общее ядро и проверять изменения | [Разработка и вклад в проект](CONTRIBUTING.md) |
-| Понять границы модулей | [Архитектура](docs/architecture-current.md) |
-| Изменить название и публичные адреса | [Настройки бренда](configuration/README.md) |
-| Найти описание конкретной функции | [Указатель документации](docs/README.md) |
+| Run the CRM from scratch | [Local setup (RU)](docs/local-run.md) |
+| Configure your installation and integrations | [Configuration (RU)](docs/configuration.md) |
+| Connect notifications and payments | [Microservices (RU)](docs/microservices.md) |
+| Assign the first administrator and access the admin interfaces | [Administration (RU)](docs/administration.md) |
+| Build your product and receive core updates | [Customization and extensions (RU)](docs/extending-opencrm.md) |
+| Develop the shared core and validate changes | [Contributing (RU)](CONTRIBUTING.md) |
+| Understand module boundaries | [Architecture (RU)](docs/architecture-current.md) |
+| Change the installation name and public URLs | [Brand configuration (RU)](configuration/README.md) |
+| Find documentation for a particular feature | [Documentation index (RU)](docs/README.md) |
 
-## Устройство
+## Architecture
 
 ```mermaid
 flowchart LR
-    UI["Клиенты CRM и админки"] --> Host["ASP.NET Core host"]
-    Config["Конфигурация своей установки"] --> Host
-    Host --> Core["Общие модули CRM"]
+    UI["CRM clients and admin interfaces"] --> Host["ASP.NET Core host"]
+    Config["Installation configuration"] --> Host
+    Host --> Core["Shared CRM modules"]
     Core --> DB[(PostgreSQL)]
-    Host -. "опционально" .-> Notify["Микросервис уведомлений"]
-    Host -. "опционально" .-> Pay["Микросервис платежей"]
-    Notify --> NotifyDB[(Своя БД)]
-    Pay --> PayDB[(Своя БД)]
+    Host -. "optional" .-> Notify["Notification microservice"]
+    Host -. "optional" .-> Pay["Payment microservice"]
+    Notify --> NotifyDB[(Separate database)]
+    Pay --> PayDB[(Separate database)]
 ```
 
-- [`src/OpenCRM.WebApp`](src/OpenCRM.WebApp) — HTTP-хост, API и серверные страницы.
-- `src/OpenCRM.Modules.*` и `*.Contracts` — предметная логика и контракты модулей.
-- `src/OpenCRM.Infrastructure.*` — база данных, хранение файлов и внешние подключения.
-- [`src/OpenCRM.Frontend`](src/OpenCRM.Frontend) — сценарные клиенты, веб-админка, настольные административные приложения и общие UI-пакеты.
-- [`services/notifications`](services/notifications) и [`services/payments`](services/payments) — самостоятельные микросервисы.
-- [`tests`](tests) и `services/*/tests` — модульные и интеграционные проверки.
-- [`OpenCRM.sln`](OpenCRM.sln) — основное решение, включая тестовые проекты.
+- [`src/OpenCRM.WebApp`](src/OpenCRM.WebApp) — HTTP host, API, and server-rendered pages.
+- `src/OpenCRM.Modules.*` and `*.Contracts` — business logic and module contracts.
+- `src/OpenCRM.Infrastructure.*` — database access, file storage, and external connections.
+- [`src/OpenCRM.Frontend`](src/OpenCRM.Frontend) — scenario clients, web administration, desktop administration applications, and shared UI packages.
+- [`services/notifications`](services/notifications) and [`services/payments`](services/payments) — independent microservices.
+- [`tests`](tests) and `services/*/tests` — unit and integration tests.
+- [`OpenCRM.sln`](OpenCRM.sln) — the main solution, including the test projects.
 
-## Свой продукт на основе ядра
+## Build your product on the core
 
-Начните с конфигурации: собственная БД, бренд и нужные интеграции. Продуктовые изменения интерфейса и поведения держите отдельно от общих исправлений. Изменения, полезные всем установкам, вносите в OpenCRM; свою версию обновляйте из `upstream/main` и проверяйте перед установкой.
+Start with configuration: your own database, branding, and integrations. Keep product-specific interface and behavior changes separate from shared fixes. Contribute improvements that benefit all installations to OpenCRM; update your product from `upstream/main` and validate it before deployment.
 
-В текущем устройстве новые реализации и модули явно подключаются в хосте и клиентской сборке. Пошаговый процесс, реальные точки расширения и ограничения описаны в [руководстве по надстройкам](docs/extending-opencrm.md).
+In the current architecture, new implementations and modules are explicitly registered in the host and client build. See the [customization guide (Russian)](docs/extending-opencrm.md) for the workflow, available extension points, and limitations.
 
-## Лицензия и авторство
+## License and attribution
 
-OpenCRM распространяется по [OpenCRM Attribution License 1.0](LICENSE). Разрешены использование, изменение, распространение и коммерческие продукты; собственные доработки можно оставлять закрытыми при соблюдении условий лицензии.
+OpenCRM is distributed under the [OpenCRM Attribution License 1.0](LICENSE). It permits use, modification, redistribution, and commercial products; your own modifications may remain private provided you comply with the license conditions.
 
-Сохраняйте уведомление об авторстве и видимую подпись на сайте или в веб-интерфейсе:
+Keep the copyright notice and the required visible attribution on your website or web interface:
 
 > На базе OpenCRM · автор [eddchervov](https://github.com/eddchervov)
 
-Условие действует и при изменении названия или оформления своего продукта. Полные условия находятся в `LICENSE`; сторонние компоненты сохраняют свои лицензии.
+The line means “Powered by OpenCRM · author eddchervov.” The attribution requirement also applies if you rename or redesign your product. See `LICENSE` for the full terms; third-party components retain their own licenses.
