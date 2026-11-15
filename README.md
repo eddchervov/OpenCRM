@@ -10,13 +10,103 @@ OpenCRM combines a working web application, shared business modules, administrat
 
 Real screenshots from a local OpenCRM installation with fictitious demonstration data and commercial mode disabled. The interface shown is Russian; both documentation languages share the same images.
 
-![OpenCRM workday in dark theme: appointments, work in progress, ready and handed-over vehicles](docs/images/screenshots/workday-dark.jpg)
+Expand a section below to explore that screen without leaving this README.
 
-| Customer records | Work statistics |
-| --- | --- |
-| [![Customer list in light theme](docs/images/screenshots/clients.jpg)](docs/screenshots.md#customers) | [![Operational statistics in dark theme](docs/images/screenshots/statistics.jpg)](docs/screenshots.md#statistics) |
+![OpenCRM workday in dark theme](docs/images/screenshots/workday-dark.jpg)
 
-[**Explore all 12 screenshots →**](docs/screenshots.md) — light and dark themes, appointments, work orders, intake, inquiries, permissions, and public pages.
+<details>
+<summary><strong>Workday — light theme</strong></summary>
+
+The same four-stage workday in light theme.
+
+![Workday — light theme](docs/images/screenshots/workday-light.jpg)
+
+</details>
+
+<details>
+<summary><strong>Customers — search, filters, and visit history</strong></summary>
+
+Customer records, vehicles, and service history in one list.
+
+![Customers — search, filters, and visit history](docs/images/screenshots/clients.jpg)
+
+</details>
+
+<details>
+<summary><strong>Appointments — work-bay schedule</strong></summary>
+
+Planned and active orders on the time grid for three work areas.
+
+![Appointments — work-bay schedule](docs/images/screenshots/schedule.jpg)
+
+</details>
+
+<details>
+<summary><strong>Work order — services and payment summary</strong></summary>
+
+Vehicle, workflow stage, service lines, customer, and payment summary.
+
+![Work order — services and payment summary](docs/images/screenshots/order.jpg)
+
+</details>
+
+<details>
+<summary><strong>Intake — condition, damage diagram, and documents</strong></summary>
+
+Four vehicle projections with a damage marker and document actions.
+
+![Intake — condition, damage diagram, and documents](docs/images/screenshots/intake.jpg)
+
+</details>
+
+<details>
+<summary><strong>Inquiries — four-stage board</strong></summary>
+
+Follow a request from first contact to readiness for an appointment.
+
+![Inquiries — four-stage board](docs/images/screenshots/inquiries-board.jpg)
+
+</details>
+
+<details>
+<summary><strong>Inquiry record — next action and history</strong></summary>
+
+Customer interest, the next action, notes, and event history.
+
+![Inquiry record — next action and history](docs/images/screenshots/inquiry-card.jpg)
+
+</details>
+
+<details>
+<summary><strong>Statistics — metrics and work charts</strong></summary>
+
+Operational organization metrics, completed work, and amounts.
+
+![Statistics — metrics and work charts](docs/images/screenshots/statistics.jpg)
+
+</details>
+
+<details>
+<summary><strong>Roles and permissions — access by role</strong></summary>
+
+Role selection and permission search; the example shows employee access to customers.
+
+![Roles and permissions — access by role](docs/images/screenshots/permissions.jpg)
+
+</details>
+
+<details>
+<summary><strong>Public pages — home and sign-in</strong></summary>
+
+A neutral home page and an empty password sign-in form for a self-hosted installation.
+
+![Neutral OpenCRM home page](docs/images/screenshots/home.jpg)
+
+![OpenCRM sign-in page](docs/images/screenshots/login.jpg)
+
+</details>
+
+[Open the full gallery with captions](docs/screenshots.md).
 
 ## Why OpenCRM
 

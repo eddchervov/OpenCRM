@@ -10,13 +10,103 @@ OpenCRM объединяет готовое веб-приложение, общ�
 
 Настоящие снимки локальной OpenCRM с вымышленными демонстрационными данными и выключенным коммерческим режимом. Обе языковые версии документации используют общие изображения.
 
-![Рабочий день OpenCRM в тёмной теме: записи, работа, готовность и выдача автомобилей](docs/images/screenshots/workday-dark.jpg)
+Раскрывайте нужные разделы ниже, чтобы посмотреть каждый экран прямо в README.
 
-| Клиентская база | Статистика работ |
-| --- | --- |
-| [![Список клиентов в светлой теме](docs/images/screenshots/clients.jpg)](docs/screenshots.ru.md#клиенты) | [![Рабочая статистика в тёмной теме](docs/images/screenshots/statistics.jpg)](docs/screenshots.ru.md#статистика) |
+![Рабочий день OpenCRM в тёмной теме](docs/images/screenshots/workday-dark.jpg)
 
-[**Все 12 скриншотов →**](docs/screenshots.ru.md) — светлая и тёмная темы, расписание, заказы, приёмка, обращения, права и публичные страницы.
+<details>
+<summary><strong>Рабочий день — светлая тема</strong></summary>
+
+Тот же рабочий день с четырьмя этапами в светлой теме.
+
+![Рабочий день — светлая тема](docs/images/screenshots/workday-light.jpg)
+
+</details>
+
+<details>
+<summary><strong>Клиенты — поиск, фильтры и история визитов</strong></summary>
+
+Клиентская база, автомобили и история услуг в одном списке.
+
+![Клиенты — поиск, фильтры и история визитов](docs/images/screenshots/clients.jpg)
+
+</details>
+
+<details>
+<summary><strong>Записи — расписание по постам</strong></summary>
+
+Плановые и текущие заказы на временной сетке трёх рабочих зон.
+
+![Записи — расписание по постам](docs/images/screenshots/schedule.jpg)
+
+</details>
+
+<details>
+<summary><strong>Заказ — услуги и расчёты</strong></summary>
+
+Автомобиль, этап работы, состав услуг, клиент и расчёты.
+
+![Заказ — услуги и расчёты](docs/images/screenshots/order.jpg)
+
+</details>
+
+<details>
+<summary><strong>Приёмка — состояние, схема повреждений и документы</strong></summary>
+
+Четыре проекции автомобиля с отметкой повреждения и документами.
+
+![Приёмка — состояние, схема повреждений и документы](docs/images/screenshots/intake.jpg)
+
+</details>
+
+<details>
+<summary><strong>Обращения — доска с четырьмя этапами</strong></summary>
+
+Путь обращения от первого контакта до готовности к записи.
+
+![Обращения — доска с четырьмя этапами](docs/images/screenshots/inquiries-board.jpg)
+
+</details>
+
+<details>
+<summary><strong>Карточка обращения — следующее действие и история</strong></summary>
+
+Запрос клиента, следующее действие, заметки и история событий.
+
+![Карточка обращения — следующее действие и история](docs/images/screenshots/inquiry-card.jpg)
+
+</details>
+
+<details>
+<summary><strong>Статистика — показатели и графики работ</strong></summary>
+
+Рабочие показатели организации, выполненные работы и суммы.
+
+![Статистика — показатели и графики работ](docs/images/screenshots/statistics.jpg)
+
+</details>
+
+<details>
+<summary><strong>Роли и права — доступ по ролям</strong></summary>
+
+Выбор роли и поиск разрешений; в примере показан доступ сотрудника к клиентам.
+
+![Роли и права — доступ по ролям](docs/images/screenshots/permissions.jpg)
+
+</details>
+
+<details>
+<summary><strong>Публичные страницы — главная и вход</strong></summary>
+
+Нейтральная главная и незаполненная форма парольного входа для собственной установки.
+
+![Нейтральная главная OpenCRM](docs/images/screenshots/home.jpg)
+
+![Страница входа OpenCRM](docs/images/screenshots/login.jpg)
+
+</details>
+
+[Открыть полную галерею с пояснениями](docs/screenshots.ru.md).
 
 ## Почему OpenCRM
 
