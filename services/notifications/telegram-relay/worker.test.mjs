@@ -4,7 +4,7 @@ import worker from "./worker.mjs";
 
 const env = {
   RELAY_KEY: "relay-secret",
-  TELEGRAM_BOT_TOKEN: "",
+  TELEGRAM_BOT_TOKEN: "bot-secret",
   TELEGRAM_OWNER_CHAT_ID: "123456",
   TELEGRAM_WEBHOOK_BASE_URL: "https://relay.example.com",
   OPENCRM_BASE_URL: "https://opencrm.example.invalid",
@@ -63,7 +63,7 @@ test("отправляет через бота организации тольк
       method: "POST",
       headers: { Authorization: "Bearer relay-secret" },
       body: JSON.stringify({
-        bot_token: "",
+        bot_token: "123456:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN",
         chat_id: "7654321",
         text: "Заказ готов",
       }),
@@ -132,7 +132,7 @@ test("получает файл только по Telegram file_id и фикси
       method: "POST",
       headers: { Authorization: "Bearer relay-secret" },
       body: JSON.stringify({
-        bot_token: "",
+        bot_token: "123456:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN",
         file_id: "Abcdefghijk-123",
       }),
     }), env);
@@ -161,7 +161,7 @@ test("отклоняет путь файла с обходом каталога 
       method: "POST",
       headers: { Authorization: "Bearer relay-secret" },
       body: JSON.stringify({
-        bot_token: "",
+        bot_token: "123456:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN",
         file_id: "Abcdefghijk-123",
       }),
     }), env);
@@ -182,7 +182,7 @@ test("bot organization management calls Telegram getMe and fixed setWebhook", as
   };
 
   try {
-    const botToken = "";
+    const botToken = "123456:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN";
     const getMeResponse = await worker.fetch(new Request("https://relay.example.com/getOrganizationBot", {
       method: "POST",
       headers: { Authorization: "Bearer relay-secret" },
@@ -194,7 +194,7 @@ test("bot organization management calls Telegram getMe and fixed setWebhook", as
       body: JSON.stringify({
         bot_token: botToken,
         organization_id: "7ac4ed0f-408f-4d05-86ce-e9e9f0867810",
-        secret: "",
+        secret: "webhook_secret-123",
       }),
     }), env);
 

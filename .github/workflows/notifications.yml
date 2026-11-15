@@ -76,6 +76,10 @@ jobs:
       - run: dotnet restore NotificationService.slnx
       - run: dotnet build NotificationService.slnx --configuration Release --no-restore
       - run: dotnet test NotificationService.slnx --configuration Release --no-build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test telegram-relay/worker.test.mjs
   frontend-build:
     name: Frontend (${{ matrix.client }})
     runs-on: ubuntu-latest
