@@ -1,41 +1,41 @@
 @startuml workspace_access_sequence
-title opencrm.example.invalid — проверка доступа к рабочему пространству
+title opencrm.example.invalid — workspace access check
 
 autonumber
-actor "Сотрудник" as Employee
+actor "Employee" as Employee
 boundary "Workspace API" as Api
 control "OrganizationPermissionService" as Permissions
 control "OrganizationSubscriptionService" as Subscription
 control "Business Service" as Service
 database "PostgreSQL" as Db
 
-Employee -> Api : выполнить операцию
+Employee -> Api : perform operation
 Api -> Permissions : HasPermission(userId, organizationId, permission)
-Permissions -> Db : организация и membership
+Permissions -> Db : organization and membership
 Db --> Permissions : roleCode
 Permissions -> Db : role permission overrides
 Db --> Permissions : overrides
-Permissions -> Permissions : defaults роли + overrides
+Permissions -> Permissions : role defaults + overrides
 
-alt Нет membership или permission
+alt No membership or permission
   Permissions --> Api : denied
   Api --> Employee : 403 Forbidden
-else Permission разрешен
+else Permission granted
   Permissions --> Api : allowed
   Api -> Subscription : CheckWorkspaceAccess
-  Subscription -> Db : активная подписка и plan features
+  Subscription -> Db : active subscription and plan features
   Db --> Subscription : access snapshot
 
-  alt Тариф разрешает изменение
+  alt Plan allows changes
     Subscription --> Api : write enabled
-    Api -> Service : выполнить use case
+    Api -> Service : execute use case
     Service -> Db : transaction
     Db --> Service : result
     Service --> Api : DTO
     Api --> Employee : 200 / 201
-  else Тариф истек или функция выключена
+  else Plan expired or feature disabled
     Subscription --> Api : read-only / feature denied
-    Api --> Employee : ограничение тарифа
+    Api --> Employee : plan restriction
   end
 end
 

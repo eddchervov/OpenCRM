@@ -1,98 +1,98 @@
-# Приёмка и фотографии до / после
+# Vehicle Intake and Before/After Photos
 
-Номера повреждений в PDF печатаются нативным текстом QuestPDF поверх схемы. SVG больше не зависит от наличия системного шрифта для цифр; на Linux подтверждён видимый № 1 для скола. Ранее скачанные PDF нужно сформировать заново. Типы повреждений и сохранённые координаты не меняются.
+**English** | [Русский](detailing-intake.ru.md)
 
-В общей карточке записи детейлинга, СТО и автопарка доступны приёмка и две группы фотографий. Состояние техники сохраняется отдельно от общего комментария к заказу. Можно указать повреждения, особенности покрытия и принятую комплектацию либо явно выбрать «Без замечаний».
+Damage numbers in PDFs are rendered as native QuestPDF text over the diagram. SVG no longer depends on a system font to render digits; Linux rendering has confirmed a visible “1” for a chip. Previously downloaded PDFs must be generated again. Damage types and stored coordinates are unchanged.
 
-- Первая фиксация приёмки сохраняет время в UTC. При уточнении это время не меняется; автор и изменения записываются в существующую историю обслуживания.
-- Приёмка не переводит запись в работу и не завершает её. Статус меняется существующими действиями карточки.
-- Фотографии загружаются в «До работы» или «После работы». Этап можно изменить без повторной загрузки и изменения идентификатора снимка.
-- Старые фотографии остаются «Без категории»; приложение не угадывает, когда они сделаны.
-- Изображение открывается в модальном просмотре. Выбор этапа и удаление находятся под фотографией, удаление требует подтверждения.
-- В редакторе записи также можно выбрать этап загрузки. В редакторе каждого из трёх сценариев доступен выбор этапа. Личная техника сохраняет прежнюю загрузку без указания этапа.
-- Изменения требуют права редактировать обслуживание и действующего доступа на запись в организацию. Сервер проверяет принадлежность обслуживания и фотографии организации.
-- «Отчёт с фото PDF» включает фотографии с подписями этапов и замечания приёмки. В обычный PDF без фото также включается текст приёмки.
+The shared detailing, auto service, and fleet work-order card provides intake and two photo groups. The vehicle condition is stored separately from the general work-order comment. Users can record damage, paint/coating details, and accepted equipment, or explicitly select “No remarks.”
 
-## Отметки повреждений на схеме — реализация
+- The first intake save records its time in UTC. Later updates do not change that time; the author and changes are recorded in the existing service history.
+- Intake does not start or complete the work order. Status is changed through the card’s existing actions.
+- Photos are uploaded to “Before work” or “After work.” Their stage can be changed without uploading again or changing the photo ID.
+- Older photos remain “Uncategorized”; the application does not guess when they were taken.
+- An image opens in a modal viewer. Stage selection and deletion are below the photo; deletion requires confirmation.
+- The work-order editor also lets the user select the upload stage. Each of the three scenario editors has stage selection. Personal vehicles retain the previous upload flow without a stage.
+- Changes require permission to edit maintenance and current access to write to the organization. The server checks organization ownership of the work order and photos.
+- “PDF report with photos” includes photos with stage captions and intake notes. The regular PDF without photos also includes intake text.
 
-В существующую вкладку «Приёмка и фото» добавлен общий осмотр кузова ([сохранённая концепция](mockups/intake-workflow-concept.png)):
+## Damage markers on the diagram — implementation
 
-- Четыре подробные проекции видны одновременно. Выбор ракурса открывает увеличенную схему в отдельном окне. Нажатие на точку открывает редактор повреждения и задаёт относительные координаты. На телефоне проекции располагаются друг под другом. «Изменить место» открывает увеличенный ракурс без потери описания и фото; стрелки и Enter позволяют выбрать точку без мыши.
-- У повреждения есть стабильный идентификатор, номер, тип («Царапина», «Скол», «Вмятина», «Другое»), описание до 1000 символов и фотографии. Одна запись имеет одну основную точку на выбранном ракурсе. Видимые номера активных повреждений идут подряд от 1 и пересчитываются после удаления — одинаково на схеме, в списке и в новом PDF. Неизменяемые UUID и внутренний порядок создания сохраняют связи с фотографиями; внутренняя последовательность не используется повторно. Старые события истории и ранее скачанные PDF не переписываются. Новые события связываются с повреждением по UUID в PayloadJson; их текст не зависит от изменяемого видимого номера.
-- Выбираются действующие фото «До работы» этого же заказа. Загрузка из редактора использует существующее хранилище; загруженный снимок выбирается явно. Фото, связанное с действующим повреждением, нельзя перевести в другой этап до снятия связи. Удалённые фотографии не показываются в осмотре.
-- Сервер проверяет чтение/редактирование, доступ организации, принадлежность заказа и фотографий. Изменения выполняются в транзакции с блокировкой заказа и проверкой xmin. Параллельное изменение возвращает 409; введённый текст сохраняется в редакторе. Перезапись новой серверной версии требует явного выбора пользователя.
-- Первая отметка фиксирует время приёмки; последующие правки его сохраняют. Статус, старые текстовые замечания, пробег и комплектация не подменяются. Добавление, уточнение и удаление записываются в существующую историю. Успешное сохранение закрывает редактор и увеличенный ракурс; если ответ потерян, окна закрываются после подтверждения записи с сервера. Ошибка сохранения оставляет черновик открытым. Успешное удаление закрывает подтверждение, редактор и увеличенный ракурс, очищая черновик; повторное сохранение удалённой метки невозможно. При ошибке удаления сообщение видно в подтверждении, а при конфликте версии старый черновик не получает новую версию автоматически.
-- Повреждения и связи с фото находятся в таблицах MaintenanceIntakeDamages и MaintenanceIntakeDamagePhotos. Составные внешние ключи гарантируют принадлежность связанных строк одному заказу; JSON не используется для этих связей.
-- В PDF-акте выводятся те же проекции и номерные отметки, список повреждений и подписи связанных фотографий. Схема общая, по визуальному направлению концепции; автоматического подбора кузова по модели автомобиля нет.
+A shared body inspection was added to the existing “Intake and photos” tab ([preserved concept](mockups/intake-workflow-concept.png)):
 
-API: GET /api/v1/maintenance/{id}/intake/damages возвращает версию заказа и список; PUT и DELETE /api/v1/maintenance/{id}/intake/damages/{damageId} проверяют эту версию. Все запросы передают organizationId; изменения используют существующую защиту от CSRF.
+- Four detailed views appear at once. Selecting a view opens a larger diagram in a separate dialog. Clicking a point opens the damage editor and sets relative coordinates. On phones the views stack vertically. “Change location” opens a larger view without losing the description or photos; arrow keys and Enter allow point selection without a mouse.
+- A damage record has a stable ID, number, type (“Scratch,” “Chip,” “Dent,” “Other”), description up to 1,000 characters, and photos. Each record has one primary point on the selected view. Visible numbers for active damage run from 1 and are recalculated after deletion—the same on the diagram, in the list, and in newly generated PDFs. Immutable UUIDs and internal creation order preserve photo relationships; internal sequence values are never reused. Existing history events and previously downloaded PDFs are not rewritten. New events link to damage by UUID in `PayloadJson`; their text does not depend on the mutable visible number.
+- The user selects active “Before work” photos from the same work order. Upload from the editor uses existing storage; the uploaded photo must be selected explicitly. A photo linked to active damage cannot be moved to another stage until unlinked. Deleted photos are not shown in inspection.
+- The server checks read/edit permission, organization access, and ownership of the work order and photos. Changes run in a transaction with a work-order lock and xmin check. A concurrent change returns 409; entered text remains in the editor. Replacing it with the newer server version requires an explicit user choice.
+- The first inspection marker records the intake time; later edits preserve it. Status, old text remarks, mileage, and equipment are not overwritten. Adds, edits, and deletions are recorded in existing history. A successful save closes the editor and enlarged view; if the response is lost, the dialogs close only after the server confirms the saved record. A failed save leaves the draft open. A successful delete closes the confirmation and editor, closes the enlarged view, and clears the draft; a deleted marker cannot be saved again. A delete error remains visible in the confirmation; on a version conflict the old draft is not automatically given a newer version.
+- Damage records and photo links use `MaintenanceIntakeDamages` and `MaintenanceIntakeDamagePhotos` tables. Composite foreign keys ensure linked rows belong to the same work order; these relationships are not stored in JSON.
+- The PDF work order shows the same views and numbered markers, damage list, and captions for linked photos. The diagram is shared and follows the concept’s visual direction; vehicle body shape is not selected automatically from the model.
 
-Применённая миграция EF Core 10.0.7 `20261024101148_AddMaintenanceIntakeDamages` идёт поверх последней миграции истории Communications. `Up` добавляет таблицы повреждений и связей с фото, версию схемы, проверки целостности, триггер и перенос совместимых исторических данных. Модель, Designer и snapshot сверены. `Down` удаляет созданные миграцией данные и объекты; автоматический откат БД не выполнялся. Для приложения подготовлен rollback image, совместимый с уже обновлённой схемой; откат приложения не требует понижения БД.
+API: `GET /api/v1/maintenance/{id}/intake/damages` returns the work-order version and list; `PUT` and `DELETE /api/v1/maintenance/{id}/intake/damages/{damageId}` check that version. Every request sends `organizationId`; changes use the existing CSRF protection.
 
-Предпросмотр схемы: `Scenarios/detailing-client/intake-damage-preview.html`; мобильный iframe 390 px — `intake-damage-mobile-preview.html`. Полная карточка: `node tests/serve-maintenance-card-preview.mjs` из `src/OpenCRM.Frontend`, затем `http://127.0.0.1:5179/tests/maintenance-card-preview.html#maintenance/1`. Браузерный стенд использует демонстрационные данные. [Тёмная тема](mockups/intake-damage-dark.png), [вкладка в полной карточке](mockups/intake-damage-card-dark.png). Проверка выполняется на локальном стенде с демонстрационными данными.
+EF Core 10.0.7 migration `20261024101148_AddMaintenanceIntakeDamages` follows the latest Communications history migration. `Up` adds damage and photo-link tables, a schema version, integrity checks, a trigger, and transfers compatible historical data. The model, Designer, and snapshot were compared. `Down` deletes data and objects created by the migration; no automatic database rollback was run. A rollback image was prepared for the already-updated schema, so rolling back the application does not require downgrading the database.
 
-Топливо, новые поля вещей в салоне/пожеланий, обязательные обзорные фото по ракурсам и отдельные шаги подтверждения из концепции требуют самостоятельного решения. В этом изменении они не добавлены.
+Diagram previews: `Scenarios/detailing-client/intake-damage-preview.html`; the 390 px mobile iframe is `intake-damage-mobile-preview.html`. Full card preview: run `node tests/serve-maintenance-card-preview.mjs` from `src/OpenCRM.Frontend`, then open `http://127.0.0.1:5179/tests/maintenance-card-preview.html#maintenance/1`. The browser harness uses demonstration data. [Dark theme](mockups/intake-damage-dark.png), [tab in the full card](mockups/intake-damage-card-dark.png). Checks use a local demo environment.
 
-Счётчики повреждений и фотографий размещены рядом с заголовками в оранжевых круглых бейджах.
+Fuel, new fields for cabin items/customer requests, mandatory overview photos for each view, and separate confirmation steps from the concept require their own decision. They were not added in this change.
 
-## Версия схемы осмотра
+Damage and photo counts appear beside headings in orange circular badges.
 
-Для осмотра закрепляется версия схемы; опубликованная версия — `sedan-v1`. Её составляют четыре файла `front.png`, `rear.png`, `left.png`, `right.png` и `diagram.json` в `packages/workspace/src/assets/intake/sedan-v1/`.
+## Inspection diagram version
 
-Одна версия рисунка и геометрии закрепляется за всем осмотром в `Maintenance.IntakeDiagramVersion`. До первого сохранения GET предлагает текущую версию без записи в БД. Сохранение метки обязательно передаёт версию показанной схемы: под блокировкой заказа сервер закрепляет поддерживаемую версию либо отклоняет несовпадение с уже закреплённой (409). Первое сохранение текстовой приёмки также закрепляет текущую версию. Последующие уточнения и удаление всех меток её не меняют; триггер БД запрещает менять или очищать закреплённое значение.
+An inspection uses a fixed diagram version; the published version is `sedan-v1`. It consists of `front.png`, `rear.png`, `left.png`, `right.png`, and `diagram.json` in `packages/workspace/src/assets/intake/sedan-v1/`.
 
-Поле версии, обратное заполнение совместимых существующих приёмок и trigger для защиты закреплённой версии включены в объединённую миграцию `20261024101148_AddMaintenanceIntakeDamages`.
+One drawing and geometry version is pinned to the entire inspection in `Maintenance.IntakeDiagramVersion`. Before the first save, GET suggests the current version without writing to the database. Saving a marker must include the version of the diagram shown to the user: while holding the work-order lock, the server pins a supported version or rejects a mismatch with the already pinned one (409). The first save of intake text also pins the current version. Later edits and deleting all markers do not change it; a database trigger prevents changing or clearing the pinned value.
 
-Версионирование оставлено для будущих изменений после запуска: если уже есть сохранённые осмотры, новый рисунок или геометрия получают новый идентификатор и отдельные ресурсы. Ресурсы использованных версий остаются доступными клиенту и PDF. Сейчас такой предыдущей версии нет. Неизвестная версия не подменяется текущей: клиент сохраняет доступ к текстовому списку и блокирует изменение координат, PDF возвращает ошибку. Конфликт с другой схемой требует перечитать осмотр и заново выбрать точку.
+The version field, backfill of compatible existing intake records, and trigger protecting the pinned version are included in migration `20261024101148_AddMaintenanceIntakeDamages`.
 
-При откате объединённая миграция удаляет добавленные таблицы, поле версии, триггеры и перенесённые ею данные. Откат БД не выполнялся; rollback image рассчитан на сохранение новой схемы. Перед отдельным решением о понижении схемы нужен резерв/экспорт осмотров.
+Versioning supports future changes after launch: if inspections are already saved, a new drawing or geometry receives a new identifier and separate assets. Assets for used versions remain available to the client and PDF renderer. There is no earlier version yet. An unknown version is never replaced with the current one: the client retains access to the text list and disables coordinate edits, while PDF generation returns an error. A conflict with a different diagram requires reloading the inspection and selecting a point again.
 
-## Ресурсы схемы и проверки
+Rolling back the combined migration removes its tables, version field, triggers, and data migrated by it. The database was not rolled back; the rollback image is designed to preserve the new schema. A backup/export of inspections is required before separately deciding to downgrade the schema.
 
-Каждый ракурс первой версии имеет прозрачный холст 1619 × 971. В браузере он занимает всю область координат без смещений фона и обрезания соседних проекций. Рамка рисуется внутренней тенью и не уменьшает область изображения. Светлая и тёмная темы используют те же пиксели; цвет контуров меняется фильтром, положение не меняется.
+## Diagram assets and checks
 
-`diagram.json` задаёт версию, размер, имена файлов и SHA-256. Клиент и PDF используют одни ресурсы и один манифест. PDF проверяет контрольные суммы и размеры при загрузке. Тесты закрепляют суммы всех четырёх изображений, геометрию и точные относительные координаты, включая края. Недоступный рисунок блокирует выбор точки и показывает повтор загрузки. Неизвестная версия не заменяется текущей.
+Each view in the first version has a transparent 1619 × 971 canvas. In the browser it occupies the full coordinate area without background shifts or cropping neighboring views. The frame is drawn as an inset shadow and does not reduce the image area. Light and dark themes use the same pixels; a filter changes outline color without moving it.
 
-Исходный общий лист сохранён под Git в `scripts/assets/intake-body-projections.png` только для воспроизводимой подготовки ресурсов. Команда `dotnet run --file scripts/build-intake-projections.cs -- <корень-репозитория>` проверяет SHA-256 исходника, удваивает его ближайшим соседом, извлекает четыре равных холста и очищает верхние 20 строк боковых проекций от края соседнего ракурса. Общий лист не импортируется клиентом и не встраивается в PDF. Повторная генерация даёт побайтно одинаковые PNG и манифест.
+`diagram.json` defines the version, dimensions, file names, and SHA-256. The client and PDF use the same assets and manifest. PDF generation verifies checksums and dimensions when loading. Tests pin checksums for all four images, geometry, and exact relative coordinates, including edge positions. If an image is unavailable, point selection is disabled and a retry is shown. An unknown version is not replaced with the current one.
 
-В браузере проверены Chrome и встроенный браузер: обе темы, ширина iframe 390 px, увеличение ракурса, добавление и повторное открытие, перенос стрелками с сохранением описания и фото, закрытие обоих окон после сохранения и удаления, режим чтения. На отдельном демонстрационном адресе `?imageError=rear` проверены реальная ошибка изображения и повтор: пустой ракурс остаётся заблокированным, остальные доступны. Проверка использует демонстрационный API в памяти страницы; настоящий API проверяется серверными интеграционными тестами. Firefox, Safari, физический телефон и сквозной браузерный проход с настоящим API/S3 не проверены.
+The original combined sheet is kept in Git at `scripts/assets/intake-body-projections.png` only to reproduce asset generation. `dotnet run --file scripts/build-intake-projections.cs -- <repository-root>` verifies the source SHA-256, doubles it using nearest-neighbor scaling, extracts four equal canvases, and clears the upper 20 rows of the side views where the neighboring view intrudes. The combined sheet is not imported by the client or embedded in the PDF. Re-running generation produces byte-identical PNGs and manifest.
 
-## Сравнение и скачивание
+Chrome and the embedded browser were checked: both themes, 390 px iframe width, zooming a view, adding and reopening damage, moving a marker with arrow keys while preserving description and photo, closing both dialogs after saving or deleting, and read-only mode. On a separate demo URL, `?imageError=rear` tested an actual image error and retry: the empty view remains disabled while others are available. The check uses the page’s in-memory demo API; the real API is covered by server integration tests. Firefox, Safari, a physical phone, and an end-to-end browser run with the real API/S3 were not checked.
 
-В общей карточке детейлинга, СТО и автопарка кнопка «Сравнить до / после» появляется, когда есть хотя бы одно фото каждой категории. В окне можно независимо выбрать снимки, посмотреть их рядом либо наложить с подвижной границей. Граница управляется мышью, касанием и отдельным ползунком с клавиатуры. Снимки вписываются целиком без обрезания; при разных ракурсах удобнее режим «Рядом». На телефоне этот режим располагает фотографии друг под другом. «Увеличить» открывает выбранный снимок отдельно.
+## Compare and download
 
-«Скачать PNG» сохраняет композицию шириной 2000 px с названием организации и подписями. Режим «Рядом» экспортирует две фотографии рядом независимо от ширины экрана; «Ползунок» сохраняет текущее положение границы. Кнопки и внутренние сведения записи в картинку не включаются. Экспорт не создаёт публичную ссылку и не публикует фотографии.
+In the shared detailing, auto service, and fleet card, “Compare before/after” appears when at least one photo exists in each category. The dialog lets users independently select photos, view them side by side, or overlay them with a movable divider. The divider works with a mouse, touch, and a separate keyboard-accessible slider. Images fit in full without cropping; “Side by side” is preferable for different views. On phones, the images stack vertically in this mode. “Enlarge” opens the selected photo separately.
 
-Сравнение доступно пользователю с правом просмотра записи, в том числе в режиме чтения. Для сборки изображения используется авторизованный GET `/api/v1/media/maintenance/{maintenanceId}/photos/{photoId}/content?organizationId=...`: сервер проверяет доступ к организации, записи и принадлежность фотографии. Поток читается через существующий сервис хранилища, ответ не кэшируется. Поэтому экспорт не зависит от CORS облачного хранилища. Временные адреса изображений освобождаются при смене пары и закрытии окна.
+“Download PNG” saves a 2,000 px wide composition with the organization name and captions. “Side by side” exports both photos next to each other regardless of screen width; “Slider” preserves the divider’s current position. Buttons and internal work-order details are not included in the image. Export does not create a public link or publish photos.
 
-Серверные тесты выдачи фотографии (разрешённый запрос, чужое фото, недоступная или отсутствующая запись, отсутствие пользователя) и браузерные сценарии выбора пары, обоих режимов, содержимого PNG, управления мышью/касанием/клавиатурой, ошибки и повтора загрузки, увеличения, закрытия и возврата фокуса покрыты. Проверки интерфейса используют тестовые ответы API. Новая миграция для сравнения не требуется.
+Comparison is available to users permitted to view the work order, including read-only users. Image composition uses the authorized GET `/api/v1/media/maintenance/{maintenanceId}/photos/{photoId}/content?organizationId=...`: the server checks organization and work-order access and photo ownership. The existing storage service streams the response without caching. Therefore export does not depend on cloud storage CORS. Temporary image URLs are released when the pair changes and when the dialog closes.
 
-## Хранение и миграция
+Server tests for photo delivery (allowed request, someone else’s photo, inaccessible or missing work order, and unauthenticated user) and browser scenarios for pair selection, both modes, PNG content, mouse/touch/keyboard operation, load error and retry, zoom, closing, and focus return are covered. UI checks use test API responses. No new migration is needed for comparison.
 
-Используются существующие `Maintenance`, `MaintenancePhotos`, сервисы обслуживания и медиа, история изменений. Новых таблиц и дополнительных сервисов нет.
+## Storage and migration
 
-Миграция `20260913140000_AddMaintenanceIntake` добавляет `IntakeNotes` (до 4000 символов), `IntakeRecordedAt` и `MaintenancePhotos.Stage`: 0 — без категории, 1 — до, 2 — после. Старые данные и файлы не изменяются.
+The feature uses existing `Maintenance`, `MaintenancePhotos`, maintenance and media services, and change history. No new tables or services are introduced.
 
-Миграцию необходимо применять до запуска новой версии. `Down` удаляет новые поля, поэтому теряет записанные замечания и категории; сами фотографии и обслуживания сохраняются. Для отката приложения предпочтительно оставить добавленные поля в базе.
+Migration `20260913140000_AddMaintenanceIntake` adds `IntakeNotes` (up to 4,000 characters), `IntakeRecordedAt`, and `MaintenancePhotos.Stage`: 0 — uncategorized, 1 — before, 2 — after. Existing data and files are unchanged.
 
-## Проверки
+Apply the migration before running the new version. `Down` removes the new fields and therefore loses saved notes and photo categories; the photos and maintenance records themselves remain. For an application rollback, it is preferable to leave the added database fields in place.
 
-Проверены сохранение и уточнение приёмки, неизменность статуса и первого времени, ограничения текста, права доступа, принадлежность организации, сохранение категории фотографий и соответствие модели миграции. В браузере проверены ошибки и повторное сохранение, загрузка, перенос между группами, просмотр, доступ только для чтения, обе темы и мобильная ширина 390 px.
+## Checks
 
-## Проверка в открытом аккаунте
+Saving and updating intake, unchanged status and first-recorded time, text limits, access rights, organization ownership, photo categories, and migration/model consistency were checked. In the browser, errors and retry, upload, moving between groups, viewing, read-only access, both themes, and 390 px mobile width were checked.
 
-Скрипт `scripts/maintenance/check-detailing-intake.js` запускается в авторизованной вкладке OpenCRM через инструменты разработчика: Sources → Snippets → New snippet. Откройте рабочее пространство детейлинга, вставьте содержимое файла в новый snippet и выполните Ctrl+Enter. Нужен аккаунт администратора, который владеет выбранной организацией; доступ организации должен разрешать изменения.
+## Check in an authenticated account
 
-Скрипт использует обычные API приложения и текущую сессию. Создаёт отдельные тестовые услугу и пост, три автомобиля и три записи с нулевой стоимостью: запланированную, в работе и завершённую многодневную. Данные помечены `ТЕСТ ПРИЁМКИ` и идентификатором запуска. Для каждой записи создаются замечания приёмки и два синтетических изображения. Реальные клиенты и контакты не используются.
+Run `scripts/maintenance/check-detailing-intake.js` in an authenticated OpenCRM tab using developer tools: Sources → Snippets → New snippet. Open the detailing workspace, paste the file content into a new snippet, and press Ctrl+Enter. Use an administrator account that owns the selected organization; the organization must permit changes.
 
-Проверяются отклонение пустой приёмки, уточнение без изменения первого времени, категории фотографий, история изменений, возвраты статусов, конфликт поста и получение PDF. Содержимое PDF и внешний вид карточек после запуска нужно проверить отдельно: наличие сигнатуры PDF не подтверждает правильность его оформления.
+The script uses the normal application API and current session. It creates a separate test service and bay, three vehicles, and three zero-cost work orders: planned, in progress, and completed across multiple days. Records are marked `ТЕСТ ПРИЁМКИ` (“INTAKE TEST”) and include a run identifier. For each record it creates intake notes and two synthetic images. No real customers or contacts are used.
 
-Результат и ссылки появляются в консоли. Состояние сохраняется в localStorage под ключом `opencrm:qa:intake:v1:<пользователь>:<организация>`. Повторный запуск для этого аккаунта и организации блокируется, включая повтор после ошибки. При остановке проверьте `error`, `pending` и `records` в сохранённом состоянии: запрос мог выполниться на сервере, даже если ответ не получен. Не удаляйте ключ ради повторного запуска без проверки уже созданных данных. Тестовые данные автоматически не удаляются.
+The script checks rejection of empty intake, updates without changing the first-recorded time, photo categories, change history, status restoration, bay conflict, and PDF retrieval. Afterward, inspect PDF contents and card appearance separately: a PDF signature alone does not prove correct layout.
 
-Подготовленный скрипт проверен в отдельном браузере с подставленными ответами API. Эта проверка не заменяет запуск в реальном аккаунте; его результат здесь пока не зафиксирован.
+Results and links appear in the console. State is stored in localStorage under `opencrm:qa:intake:v1:<user>:<organization>`. A second run for the same account and organization is blocked, including after an error. If execution stops, inspect `error`, `pending`, and `records` in the saved state: a request may have reached the server even if its response was lost. Do not delete the key to rerun until you check for records already created. Test data is not removed automatically.
 
-## Общая приёмка для СТО и автопарка
+The script was checked in a separate browser with stubbed API responses. This does not replace running it in a real account; no result from that run is recorded here.
 
-Приёмка, этапы фотографий, сравнение и скачивание включены в общей карточке всех трёх сценариев. Выбор этапа загрузки доступен и в редакторе обслуживания. Отдельных копий компонентов, новых таблиц или миграций для этого расширения нет. Сценарные различия заголовков, статусов и связанных неисправностей сохраняются.
+## Shared auto service and fleet intake
 
-В браузере для детейлинга, СТО и автопарка проверены сохранение и уточнение приёмки, категории и загрузка фото из карточки и редактора, сравнение, PNG, просмотр без права изменения, обе темы и мобильная ширина. Использованы тестовые ответы API. Собраны все три клиента.
+Intake, photo stages, comparison, and download are enabled in the shared card for all three scenarios. Upload-stage selection is also available in the maintenance editor. This extension adds no duplicated components, tables, or migrations. Scenario-specific headers, statuses, and linked defects remain distinct.

@@ -1,95 +1,53 @@
-# Подключение OpenCRM через RabbitMQ
+# Connect OpenCRM through RabbitMQ
 
-OpenCRM уже использует исходящую очередь EmailMessages и обработчики результатов.
-Рабочие приложения зависят только от Notifications.Contracts. В текущем решении это
-ProjectReference на services/notifications/src/Notifications.Contracts в общем репозитории.
-В CI приложения и Worker собираются из одного checkout; при выпуске сохраняется согласованность версий контрактов и потребителей.
+**English** | [Русский](opencrm-integration.ru.md)
 
-## Адреса
+OpenCRM already uses the EmailMessages outbox and result handlers. Running applications depend only on Notifications.Contracts. In this solution, that is a ProjectReference to services/notifications/src/Notifications.Contracts within the shared repository. CI builds applications and the Worker from one checkout; keep contract and consumer versions consistent when releasing.
 
-Production: notifications-opencrm-commands и notifications-opencrm-results.
-Development: notifications-opencrm-development-commands и notifications-opencrm-development-results.
-Брокер: адрес и сеть задаёт оператор развёртывания, порт по умолчанию 5672.
-Локальный OpenCRM подключается к 192.0.2.1:5672.
-RabbitMq:Applications в Worker содержит разрешённые идентификаторы приложений.
-Имя приложения у клиента задаётся конфигурацией RabbitMq:ApplicationId.
-Очереди клиентских переписок (`TelegramChat` и `ConversationDelivery`) Worker создаёт
-только для `Conversations:ApplicationId`; этот идентификатор должен входить в
-`RabbitMq:Applications` и совпадать с `RabbitMq:ApplicationId` приложения OpenCRM.
-Если разрешено несколько приложений, `Conversations:ApplicationId` обязателен.
-Автовыбор разрешён только при одном элементе в `RabbitMq:Applications`. Не подключайте
-production и development переписки к одному экземпляру Worker: у него общий адрес API
-и ключ service-to-service.
+## Addresses
 
-Очередь результатов относится к одной базе приложения. Не подключайте к production-очереди
-локальную базу. Команды передаются MassTransit Send со стандартным envelope, а не Publish.
-NotificationDispatchRequested — внутренний контракт Worker.
+Production: notifications-opencrm-commands and notifications-opencrm-results.
+Development: notifications-opencrm-development-commands and notifications-opencrm-development-results.
+The deployment operator supplies the broker address and network; the default port is 5672.
+Local OpenCRM is configured with 192.0.2.1:5672.
+RabbitMq:Applications in the Worker contains allowed application IDs.
+The client application's name is set through RabbitMq:ApplicationId.
+The Worker creates customer conversation queues (`TelegramChat` and `ConversationDelivery`) only for `Conversations:ApplicationId`; that ID must belong to `RabbitMq:Applications` and match the OpenCRM application's `RabbitMq:ApplicationId`.
+With multiple applications, `Conversations:ApplicationId` is mandatory. Automatic selection is allowed only when `RabbitMq:Applications` has one item. Do not connect production and development conversations to the same Worker instance: it shares one API URL and service-to-service key.
 
-## Команды и результаты
+A results queue belongs to one application database. Do not connect a local database to the production queue. Commands use MassTransit Send with the standard envelope, not Publish. NotificationDispatchRequested is the Worker's internal contract.
 
-SendNotification принимает CreateNotificationRequest: IdempotencyKey, Channel, Recipient,
-TemplateKey, Data и TemplateVersion. Для Razor-писем Subject/Body не задаются.
-Повтор задания использует прежний IdempotencyKey. GetNotificationStatus возвращает
-NotificationStatusChanged или not-found в постоянную очередь результатов.
+## Commands and results
 
-Состояния queued/processing/retrying/provider-accepted/simulated/failed описывают обработку.
-Provider-accepted ещё не означает доставки адресату; simulated исключает реальную отправку.
-Content содержит готовые Subject, Body, IsHtml и TextBody для журнала приложения.
+SendNotification accepts CreateNotificationRequest: IdempotencyKey, Channel, Recipient, TemplateKey, Data, and TemplateVersion. Do not supply Subject/Body for Razor emails. Retried jobs use the same IdempotencyKey. GetNotificationStatus returns NotificationStatusChanged or not-found to the permanent results queue.
 
-Админские сообщения используют канал `telegram` и получателя `owner`.
-Сообщения клиентов от имени организации используют отдельный канал `telegram-client`
-и получателя `<organizationGuidN>:<chatId>`. Worker получает токен через
-`GET https://<opencrm-host>/api/internal/notification-bots/telegram/{organizationId:N}`
-с заголовками `X-Notification-Service-Key`, `X-Notification-Key` и `X-Notification-Recipient` (ID чата из получателя); успешный ответ:
-`{"botToken":"..."}`. Токен сразу передаётся HTTPS-шлюзу и не сохраняется
-в очереди или базе уведомлений.
+queued/processing/retrying/provider-accepted/simulated/failed describe processing. Provider-accepted does not yet mean recipient delivery; simulated excludes a real send. Content contains final Subject, Body, IsHtml, and TextBody for the application log.
 
-Владелец организации проверяет токен через защищённый Worker-маршрут
-`POST /getOrganizationBot` с телом `{"bot_token":"..."}`. Установка webhook выполняется
-через `POST /setOrganizationWebhook` с телом `{"bot_token":"...","organization_id":"<uuid>","secret":"<telegram-secret>"}`.
-Telegram вызывает `POST https://<worker-host>/updates/{organizationId}`; Worker
-пересылает тело и `X-Telegram-Bot-Api-Secret-Token` на фиксированный адрес
-`https://<opencrm-host>/api/internal/notification-bots/telegram/{organizationId}/updates`.
-OpenCRM должен сверить переданный секрет с секретом этой организации.
+Administrative messages use channel `telegram` and recipient `owner`. Customer messages sent on an organization's behalf use the separate `telegram-client` channel and recipient `<organizationGuidN>:<chatId>`. The Worker retrieves the token through `GET https://<opencrm-host>/api/internal/notification-bots/telegram/{organizationId:N}` with `X-Notification-Service-Key`, `X-Notification-Key`, and `X-Notification-Recipient` headers (the chat ID from the recipient); a successful response is `{"botToken":"..."}`. The token is immediately forwarded to the HTTPS gateway and never stored in the notification queue or database.
 
-OpenCRM регистрирует NotificationResultConsumer для NotificationStatusChanged и
-NotificationCommandRejected, а NotificationDeliveryConsumer — для NotificationDeliveryReported.
-Endpoint использует ConfigureConsumeTopology=false. Состояния и счётчики обновляются
-в транзакции; повторные события доставки пропускаются по EventId.
+The organization owner verifies the token through the protected Worker endpoint `POST /getOrganizationBot` with `{"bot_token":"..."}`. Set the webhook through `POST /setOrganizationWebhook` with `{"bot_token":"...","organization_id":"<uuid>","secret":"<telegram-secret>"}`. Telegram calls `POST https://<worker-host>/updates/{organizationId}`; the Worker forwards the body and `X-Telegram-Bot-Api-Secret-Token` to the fixed `https://<opencrm-host>/api/internal/notification-bots/telegram/{organizationId}/updates` address. OpenCRM must verify the supplied secret against that organization's secret.
 
-Другие клиенты могут регистрировать неизменяемые версии шаблонов БД через
-UpsertNotificationTemplate. Тогда они также должны принимать NotificationTemplateUpdated.
-OpenCRM эту команду не использует: письма из редактора оформляет system/custom-email.
+OpenCRM registers NotificationResultConsumer for NotificationStatusChanged and NotificationCommandRejected, and NotificationDeliveryConsumer for NotificationDeliveryReported. The endpoint uses ConfigureConsumeTopology=false. State and counters update in a transaction; repeated delivery events are ignored by EventId.
 
-## Razor-шаблоны версии 1
+Other clients may register immutable database template versions through UpsertNotificationTemplate and must then also consume NotificationTemplateUpdated. OpenCRM does not use that command: editor emails use system/custom-email.
+
+## Version 1 Razor templates
 
 - system/email-confirmation: name, confirmationUrl.
 - system/password-reset: name, resetUrl.
-- system/login-code: code — восемь цифр.
+- system/login-code: code — eight digits.
 - system/password-reset-mobile: userId, code, resetUrl.
 - system/support-message: messageId, typeName, name, email, phone, topic, text.
-- system/subscription-notice: kind (upcoming, paid-expired, demo-expired, demo-available),
-  organizationName, planName, endDate, daysRemaining, durationDays, actionUrl.
-- system/custom-email: subject, htmlBody — доверенный HTML из редактора приложения.
+- system/subscription-notice: kind (upcoming, paid-expired, demo-expired, demo-available), organizationName, planName, endDate, daysRemaining, durationDays, actionUrl.
+- system/custom-email: subject, htmlBody — trusted HTML from the application editor.
 - system/subscription-expiring: name, subscriptionName, endDate, renewalUrl.
 
-Ключи разрешаются в SystemTemplates:Applications:<applicationId>:Templates.
-Профили opencrm и opencrm-development включены в базовый appsettings.
-Шаблоны и модели находятся в Templates/OpenCRM/V1. Данные не исполняются как Razor;
-в custom-email HTML вставляется без экранирования, поэтому его источник должен быть доверенным.
-[Правила и версии](templates.md).
+Keys are allowed in SystemTemplates:Applications:<applicationId>:Templates. Profiles opencrm and opencrm-development are included in the base appsettings. Templates and models reside in Templates/OpenCRM/V1. Data is not executed as Razor; custom-email inserts HTML without escaping, so its source must be trusted. See [rules and versions](templates.md).
 
-## События провайдера
+## Provider events
 
-При Email:Provider=unisender-go адаптер добавляет application_id и notification_key
-в global_metadata заголовка X-UNISENDER-GO. UnisenderGo:TrackLinks и TrackRead управляют
-отслеживанием. Worker проверяет подпись вебхука и передаёт NotificationDeliveryReported
-в адресную очередь приложения. OpenCRM не знает формат HTTP-запроса или ключ провайдера.
+With Email:Provider=unisender-go, the adapter adds application_id and notification_key to global_metadata in the X-UNISENDER-GO header. UnisenderGo:TrackLinks and TrackRead control tracking. The Worker verifies the webhook signature and sends NotificationDeliveryReported to the application's addressed queue. OpenCRM does not know the HTTP request format or provider key.
 
-События без application_id или notification_key игнорируются. Совместимости со старым протоколом нет.
-Обычный smtp не добавляет заголовки Unisender.
+Events without application_id or notification_key are ignored. There is no compatibility with the old protocol. Ordinary smtp does not add Unisender headers.
 
-О миграциях и настройках интеграций см. [../README.md](../README.md) — разделы
-«Настройки интеграций» и «Миграции»; конфигурации nginx находятся в этом же каталоге `docs`.
-При обновлении сначала требуется новая сборка Worker с шаблонами и миграциями,
-затем OpenCRM и маршрут HTTPS-вебхука. Запущенный старый Worker новых контрактов не поддерживает.
+For migrations and integration settings, see [../README.md](../README.md), the integration settings and migrations sections; nginx configurations are in the same `docs` directory. Upgrade the Worker build with templates and migrations first, then OpenCRM and the HTTPS webhook route. An old running Worker does not support the new contracts.

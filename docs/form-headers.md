@@ -1,7 +1,9 @@
-# Шапки форм и внутренних блоков
+# Form and Section Headers
 
-Общие компоненты `UiCard page` и `UiModal` оформляют основные заголовки форм классом `ui-form-header`. Обычный `UiCard` использует `ui-section-header` для внутренних групп. Переменные цвета тем находятся в общем пакете `packages/ui`.
+**English** | [Русский](form-headers.ru.md)
 
-Основная шапка имеет мягкую персиковую поверхность и тонкий акцент слева. Внутренняя группа использует нейтральную поверхность с границей. Для тёмной темы заданы отдельные оттенки. Не добавляй второй основной заголовок внутрь панели.
+The shared `UiCard page` and `UiModal` components style primary form headings with the `ui-form-header` class. A regular `UiCard` uses `ui-section-header` for inner groups. Theme color variables live in the shared `packages/ui` package.
 
-Этот стиль применяется в CRM, административном интерфейсе и пользовательском кабинете с использованием их существующих оболочек. Заголовки строк списка, колонки таблиц и пустые состояния не оформляются как шапки форм.
+The primary header has a soft peach background and a narrow accent on the left. Inner groups use a neutral background with a border. Dark mode has its own shades. Do not add a second primary heading inside a panel.
+
+This style is used in the CRM, administration interface, and user account area through their existing shells. List row headings, table column headings, and empty states are not form headers.

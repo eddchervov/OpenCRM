@@ -1,24 +1,23 @@
-# Модуль аккаунтов: технический дизайн
+# Accounts module: technical design
 
-> Исторический документ завершённого переноса. Старые этапы, команды и промежуточные статусы не являются действующими поручениями. Открытая работа перечислена в [указателе](../README.md); текущие границы — в актуальной архитектуре.
+**English** | [Русский](design.ru.md)
 
-Уточнение модели: у аккаунта нет режима; личная техника доступна всем, а тип и права относятся к выбранной организации. Проверки и автоматическая запись `AccountMode` удалены из пользовательских сценариев. Старые поля профиля и форма v1 API сохранены для совместимости и не определяют доступ; устаревшие PUT профиля и POST выбора режима больше не меняют состояние. Каталог типов организаций остаётся действующим. Нижеследующий дизайн фиксирует исходный перенос модуля, а не прежнее разделение пользователей на режимы.
+> Historical document for a completed extraction. Old stages, commands, and intermediate statuses are not current assignments. Open work is listed in the [index](../README.md); current boundaries are described in the current architecture.
 
-Решение по переносу `OpenCRM.Modules.Accounts`. Обосновано спецификацией (`spec.md`): модуль владеет своей реализацией, сам регистрирует сервисы, контракты
-остаются общими. Отдельный архитектурный выбор здесь ровно один — замена статической зависимости
-регистрации от уведомлений; он приведён в разделе 3.
+Model clarification: an account has no mode; personal vehicles are available to everyone, while type and permissions belong to the selected organization. Checks and automatic writes of `AccountMode` have been removed from user workflows. Legacy profile fields and the v1 API form remain for compatibility and do not determine access; obsolete profile PUT and mode-selection POST requests no longer change state. The organization type catalog remains active. The design below records the original module extraction, not the former separation of users into modes.
 
-## 1. Проекты
+Decision for extracting `OpenCRM.Modules.Accounts`. It follows the specification (`spec.md`): the module owns its implementation and registers its own services; contracts remain shared. There is exactly one separate architectural choice here: replacing the static registration dependency on notifications, described in section 3.
 
-| Проект | Путь | Папка решения | Назначение |
+## 1. Projects
+
+| Project | Path | Solution folder | Purpose |
 | --- | --- | --- | --- |
-| `OpenCRM.Modules.Accounts` | `src/OpenCRM.Modules.Accounts/OpenCRM.Modules.Accounts.csproj` | Backend → Application | Реализации профилей и сценариев аккаунта |
-| `OpenCRM.Modules.Accounts.Tests` | `tests/OpenCRM.Modules.Accounts.Tests/OpenCRM.Modules.Accounts.Tests.csproj` | Tests | Unit/Integration-проверки модуля |
+| `OpenCRM.Modules.Accounts` | `src/OpenCRM.Modules.Accounts/OpenCRM.Modules.Accounts.csproj` | Backend → Application | Account profile and scenario implementations |
+| `OpenCRM.Modules.Accounts.Tests` | `tests/OpenCRM.Modules.Accounts.Tests/OpenCRM.Modules.Accounts.Tests.csproj` | Tests | Unit/integration module checks |
 
-Новый `*.Contracts` не создаётся. Проект модуля: `net10.0`, `ImplicitUsings`, `Nullable`,
-как у `OpenCRM.Modules.Workspace`.
+No new `*.Contracts` project is created. The module project targets `net10.0`, with `ImplicitUsings` and `Nullable`, as in `OpenCRM.Modules.Workspace`.
 
-Структура реализации повторяет предметные папки исходного BL:
+The implementation structure follows the domain folders of the original BL:
 
 ```
 src/OpenCRM.Modules.Accounts/
@@ -31,21 +30,15 @@ src/OpenCRM.Modules.Accounts/
   AccountsServiceCollectionExtensions.cs
 ```
 
-Пространства имён: `OpenCRM.Modules.Accounts.AccountProfiles`, `OpenCRM.Modules.Accounts.Users`
-(соответствуют папкам, как в остальных модулях). Публичные типы реализации остаются публичными, как
-в `OpenCRM.Modules.Workspace`; закрытые вложенные типы (`EmailLoginCodeCacheEntry`) остаются
-приватными. Телам методов и текстам сообщений изменения не нужны.
+Namespaces are `OpenCRM.Modules.Accounts.AccountProfiles` and `OpenCRM.Modules.Accounts.Users`, matching their folders as in other modules. Public implementation types remain public, as in `OpenCRM.Modules.Workspace`; private nested types such as `EmailLoginCodeCacheEntry` remain private. Method bodies and message text do not need changes.
 
-## 2. Зависимости и регистрация
+## 2. Dependencies and registration
 
-Проектные ссылки модуля: `OpenCRM.Domain`, `OpenCRM.Infrastructure.Data`,
-`OpenCRM.Services.Interfaces` (+ `Helpers` только при подтверждённой необходимости).
-Пакеты объявляются явно по фактическому использованию перенесённых файлов, версиями семейства 10.0.x, совпадающими с уже разрешённым графом: `Microsoft.Extensions.Identity.Core` 10.0.7 (`UserManager<T>`, `IdentityResult`),
-`Microsoft.EntityFrameworkCore` (Include/AsNoTracking/ToListAsync), `Microsoft.Extensions.Caching.Memory` (`IMemoryCache`), `Microsoft.Extensions.Logging.Abstractions` (`ILogger<T>`). Транзитивная доступность пакета не заменяет явное объявление; неиспользуемые пакеты не добавляются.
-Запрещены ссылки на `OpenCRM.Infrastructure.BL`, на реализацию другого модуля и на `WebApp`.
+Project references for the module: `OpenCRM.Domain`, `OpenCRM.Infrastructure.Data`, and `OpenCRM.Services.Interfaces` (`Helpers` only if a confirmed need arises). Declare packages explicitly based on the files actually moved, using versions from the 10.0.x family compatible with the already resolved graph: `Microsoft.Extensions.Identity.Core` 10.0.7 (`UserManager<T>`, `IdentityResult`), `Microsoft.EntityFrameworkCore` (`Include`/`AsNoTracking`/`ToListAsync`), `Microsoft.Extensions.Caching.Memory` (`IMemoryCache`), and `Microsoft.Extensions.Logging.Abstractions` (`ILogger<T>`). A transitive package reference does not replace an explicit declaration; do not add unused packages.
 
-`AccountsServiceCollectionExtensions.AddOpenCRMAccounts` регистрирует ровно шесть сервисов с
-прежними временами жизни:
+References to `OpenCRM.Infrastructure.BL`, another module's implementation, and `WebApp` are prohibited.
+
+`AccountsServiceCollectionExtensions.AddOpenCRMAccounts` registers exactly six services with their previous lifetimes:
 
 ```
 AddTransient<IUsersService, UsersService>();
@@ -56,110 +49,58 @@ AddScoped<IAccountProfileService, AccountProfileService>();
 AddScoped<IAccountProfileAdminService, AccountProfileAdminService>();
 ```
 
-Эти шесть строк удаляются из `BusinessServiceCollectionExtensions.AddOpenCRMBusinessServices`
-(`Infrastructure.BL`); остальные регистрации BL не затрагиваются. `IApplicationUnitOfWork`,
-`IPromoCodeService`, `IEmailNotificationService`, `ISiteNotificationPublisher`,
-`IMemoryCache` и `ILogger<T>` приходят в модуль как внешние зависимости существующих владельцев.
+Remove these six registrations from `BusinessServiceCollectionExtensions.AddOpenCRMBusinessServices` (`Infrastructure.BL`); do not affect other BL registrations. `IApplicationUnitOfWork`, `IPromoCodeService`, `IEmailNotificationService`, `ISiteNotificationPublisher`, `IMemoryCache`, and `ILogger<T>` enter the module as external dependencies owned by existing components.
 
-WebApp вызывает `AddOpenCRMAccounts()` рядом с остальными регистраторами модулей в
-`Extensions/ServiceCollectionExtensions.AddOpenCRMInfrastructure`.
+WebApp calls `AddOpenCRMAccounts()` alongside the other module registrations in `Extensions/ServiceCollectionExtensions.AddOpenCRMInfrastructure`.
 
-## 3. Уведомления о регистрации: узкий контракт вместо статического вызова
+## 3. Registration notifications: narrow contract instead of static call
 
-Было: `AccountRegistrationService` вызывает
-`OpenCRM.Infrastructure.BL.Notifications.SiteNotificationPublisher.AddRegistrationNotificationsAsync(context, user)`
-внутри транзакции регистрации.
+Before: `AccountRegistrationService` calls `OpenCRM.Infrastructure.BL.Notifications.SiteNotificationPublisher.AddRegistrationNotificationsAsync(context, user)` inside the registration transaction.
 
-Становится:
+After:
 
-- `OpenCRM.Services.Interfaces.Notifications.ISiteNotificationPublisher` получает метод
-  `Task AddRegistrationNotificationsAsync(ApplicationUser user)`. `ApplicationUser` доступен: проект
-  контрактов уже ссылается на `OpenCRM.Domain`. Параметр-сущность выбран сознательно: он повторяет
-  текущий аргумент статического вызова, поэтому алгоритм владельца не переписывается и данные
-  (`Id`, `NormalizedEmail`) не извлекаются повторно.
-- Реализация остаётся у владельца уведомлений: `SiteNotificationPublisherAdapter` (BL) реализует
-  метод делегированием существующему `SiteNotificationPublisher.AddRegistrationNotificationsAsync(context, user)`.
-  Алгоритм приветственного уведомления и уведомлений по ожидающим приглашениям, ключи событий
-  `welcome:{userId}` и `invitation:{id}:{token}`, тексты, обрезка полей и внутренний
-  `SaveChangesAsync` остаются на месте.
-- Модуль внедряет `ISiteNotificationPublisher` через конструктор и вызывает метод на том же шаге
-  прежнего алгоритма: после `SaveAsync` профиля и до применения промокода.
+- `OpenCRM.Services.Interfaces.Notifications.ISiteNotificationPublisher` gains `Task AddRegistrationNotificationsAsync(ApplicationUser user)`. `ApplicationUser` is available because the contracts project already references `OpenCRM.Domain`. The entity parameter is deliberate: it matches the current static-call argument, so the owner's algorithm is not rewritten and values (`Id`, `NormalizedEmail`) are not fetched again.
+- The notification owner retains the implementation: `SiteNotificationPublisherAdapter` (BL) implements the method by delegating to the existing `SiteNotificationPublisher.AddRegistrationNotificationsAsync(context, user)`. The welcome and pending-invitation notification algorithm, event keys `welcome:{userId}` and `invitation:{id}:{token}`, text, field truncation, and internal `SaveChangesAsync` remain in place.
+- The module receives `ISiteNotificationPublisher` through its constructor and invokes it at the same step as the previous algorithm: after profile `SaveAsync` and before applying a promo code.
 
-Границы транзакции: адаптер получает тот же scoped `OpenCRMContext` (единый DI-контейнер на
-запрос), работает внутри уже открытой транзакции `IApplicationUnitOfWork` и не открывает
-собственную. Отправка сообщений и писем до commit не появляется; скрытых `SaveChanges` сверх
-существующего не добавляется. Прямая запись в `TelegramNotificationOutbox` через
-`OpenCRM.Infrastructure.Data.Notifications.TelegramAdminNotificationPublisher` сохраняется: это
-разрешённая зависимость от общей инфраструктуры, поведение не меняется. Добавление метода к интерфейсу требует одновременной правки существующей реализации-заглушки `DatabaseSiteNotificationPublisher` в `tests/OpenCRM.Modules.Organizations.Tests/Integration/OrganizationsDatabaseFixture.cs`: без этого набор проверок Organizations перестаёт собираться.
+Transaction boundaries: the adapter receives the same scoped `OpenCRMContext` (one DI container per request), works inside the already-open `IApplicationUnitOfWork` transaction, and does not open its own transaction. No messages or emails are sent before commit; no hidden `SaveChanges` calls are added beyond the existing one. Direct writes to `TelegramNotificationOutbox` through `OpenCRM.Infrastructure.Data.Notifications.TelegramAdminNotificationPublisher` remain; this is an allowed dependency on shared infrastructure and does not change behavior.
 
-## 4. Точки подключения
+Adding a method to the interface also requires updating the existing `DatabaseSiteNotificationPublisher` stub in `tests/OpenCRM.Modules.Organizations.Tests/Integration/OrganizationsDatabaseFixture.cs`; otherwise the Organizations test project will no longer compile.
 
-- `OpenCRM.sln`: новый модуль в Backend → Application, тестовый проект в Tests, все
-  12 конфигураций Debug/Release × Any CPU/x64/x86, как у `OpenCRM.Modules.Workspace`.
-- `src/Dockerfile`: `COPY` csproj нового модуля до restore; публикация получает сборку через
-  `ProjectReference` от WebApp.
-- `src/OpenCRM.WebApp/OpenCRM.WebApp.csproj`: проектная ссылка на `OpenCRM.Modules.Accounts`
-  (без неё вызов `AddOpenCRMAccounts` не компилируется) — как у остальных модулей.
+## 4. Integration points
 
-- `tests/Accounts.runsettings`: включаемый пакет `[OpenCRM.Modules.Accounts]*`, параллелизм как в
-  `Workspace.runsettings`.
-- `scripts/assert-backend-boundaries.ps1`: проверка границ уже покрывает новые проекты правилами
-  «нет циклов», «модуль не ссылается на BL/другую реализацию», «тесты в проекте Tests и в обеих
-  сборках»; запускается как есть и должна проходить на новом графе.
+- `OpenCRM.sln`: add the new module under Backend → Application and the test project under Tests, with all 12 Debug/Release × Any CPU/x64/x86 configurations as in `OpenCRM.Modules.Workspace`.
+- `src/Dockerfile`: add a `COPY` for the new module csproj before restore; publishing obtains its assembly through the WebApp `ProjectReference`.
+- `src/OpenCRM.WebApp/OpenCRM.WebApp.csproj`: add a project reference to `OpenCRM.Modules.Accounts` (without it, `AddOpenCRMAccounts` does not compile), as for other modules.
+- `tests/Accounts.runsettings`: include the `[OpenCRM.Modules.Accounts]*` package and parallelism as in `Workspace.runsettings`.
+- `scripts/assert-backend-boundaries.ps1`: existing checks already cover the new projects for “no cycles”, “module does not reference BL/another implementation”, and “tests reside in Tests and in both builds”; run it unchanged and require it to pass on the new graph.
 
-Промежуточная сборка: пока реализации модуля перенесены, а зависящие проверки
-`OpenCRM.Infrastructure.Tests` ещё ссылаются на прежние пространства имён BL, полная сборка
-решения красная — это ожидаемое состояние переноса, а не дефект. Сборка затронутых проектов
-проверяется по мере переноса; зелёная сборка `dotnet build OpenCRM.sln` требуется после переноса
-проверок.
+Intermediate build state: while module implementations are moved but dependent checks in `OpenCRM.Infrastructure.Tests` still reference old BL namespaces, the full solution build is red. This is expected during extraction, not a defect. Build affected projects as files move; `dotnet build OpenCRM.sln` must pass after the tests are migrated.
 
-## 5. Тесты модуля
+## 5. Module tests
 
-`OpenCRM.Modules.Accounts.Tests`: `net10.0`, `IsPackable=false`, пакеты как у
-`OpenCRM.Modules.Workspace.Tests` (Testcontainers.PostgreSql, Microsoft.AspNetCore.TestHost, Moq,
-Microsoft.NET.Test.Sdk, coverlet.collector, xunit, xunit.runner.visualstudio), ссылки на
-`OpenCRM.Modules.Accounts`, `OpenCRM.WebApp`, `OpenCRM.Testing`,
-`OpenCRM.Infrastructure.Migrations`, `tests/xunit.runner.json`. Ссылок на другие тестовые проекты
-нет. Физические папки `Unit` и `Integration` с соответствующими пространствами имён.
+`OpenCRM.Modules.Accounts.Tests`: target `net10.0`, `IsPackable=false`, packages matching `OpenCRM.Modules.Workspace.Tests` (Testcontainers.PostgreSql, Microsoft.AspNetCore.TestHost, Moq, Microsoft.NET.Test.Sdk, coverlet.collector, xunit, xunit.runner.visualstudio); references to `OpenCRM.Modules.Accounts`, `OpenCRM.WebApp`, `OpenCRM.Testing`, `OpenCRM.Infrastructure.Migrations`, and `tests/xunit.runner.json`. No references to other test projects. Physical `Unit` and `Integration` folders use matching namespaces.
 
-Перенесены проверки, относящиеся к реализации модуля:
+Move checks for the module implementation:
 
-- `tests/OpenCRM.Modules.Accounts.Tests/Integration/AccountProfileRemovalTests.cs` → `Integration`
-  (использует реальный `AccountProfileService`, TestServer и PostgreSQL);
-- `tests/OpenCRM.Modules.Accounts.Tests/Integration/RegistrationErrorTests.cs` → `Integration`
-  (использует реальный `AccountRegistrationService` и форму регистрации).
+- `tests/OpenCRM.Modules.Accounts.Tests/Integration/AccountProfileRemovalTests.cs` → `Integration` (uses real `AccountProfileService`, TestServer, and PostgreSQL);
+- `tests/OpenCRM.Modules.Accounts.Tests/Integration/RegistrationErrorTests.cs` → `Integration` (uses real `AccountRegistrationService` and the registration form).
 
-Остаются на месте проверки, не относящиеся к реализации модуля: `RegistrationTransactionTests`,
-`RegistrationAttributionTests` (WebApp/`RegistrationAttribution`), `AccountProfileModeTests`
-(Domain), `AuthMvcAcceptanceTests`, `AdminAuthenticationApiTests` и проверки других модулей,
-которые подставляют интерфейсы `Services.Interfaces` — контракты не переезжают, поэтому их
-регистрации-заглушки сохраняются.
+Keep checks unrelated to the module implementation in place: `RegistrationTransactionTests`, `RegistrationAttributionTests` (WebApp/`RegistrationAttribution`), `AccountProfileModeTests` (Domain), `AuthMvcAcceptanceTests`, `AdminAuthenticationApiTests`, and tests in other modules that substitute `Services.Interfaces` interfaces. Contracts do not move, so their stub registrations remain.
 
-Покрытие измеряется для поиска непроверенных участков; обязательного процента нет.
-Содержательные сценарии (обязательный минимум):
+Use coverage to find untested areas; no percentage is required. Meaningful scenarios (minimum):
 
-- регистрация: создание пользователя с паролем и без, согласия и их отметки времени, режим
-  профиля и организационный тип, промокод, атрибуция, приветственное уведомление и уведомления по
-  ожидающим приглашениям, строка Telegram-outbox; отказ Identity, откат транзакции и отсутствие
-  уведомлений после отката;
-- профиль: чтение и сохранение режима, fallback организационного типа, рекомендованные и
-  включённые возможности, сброс пустым режимом, кеш каталога и его сброс;
-- административные профили и возможности: создание/обновление/удаление, уникальность кодов,
-  ошибки с прежними текстами, порядок выдачи;
-- вход по email-коду: неверный, истёкший и повторный код, лимит попыток, анти-спам минута, отказ
-  отправки письма, согласие для регистрации, создание аккаунта, подтверждение email, удалённый
-  аккаунт (по email и по `OriginalEmail`);
-- удаление: маскирование email и UserName, `OriginalEmail`, `IsDeleted`/`DeletedAt`, удаление
-  внешних логинов, возвращаемое значение, строка Telegram-outbox;
-- пользовательские записи и статистика: вход/визит, счётчики, личная область, неудалённые записи,
-  поиск удалённого оригинального email, исключение для неизвестного пользователя;
-- HTTP/DI: маршруты профиля аккаунта через TestServer, регистрация `AddOpenCRMAccounts` (scoped и
-  transient, единственность), отсутствие зависимости от BL на уровне проекта.
+- registration: creating a user with and without a password, consents and their timestamps, profile mode and organization type, promo code, attribution, welcome and pending-invitation notifications, Telegram outbox row; Identity rejection, transaction rollback, and no notifications after rollback;
+- profile: reading and saving mode, organization-type fallback, recommended and enabled capabilities, reset with an empty mode, catalog cache and cache reset;
+- admin profiles and capabilities: create/update/delete, unique codes, errors with existing text, result ordering;
+- email-code sign-in: invalid, expired, and reused code, attempt limit, one-minute anti-spam delay, email-send failure, consent for registration, account creation, email confirmation, deleted account (by email and `OriginalEmail`);
+- deletion: masking email and UserName, `OriginalEmail`, `IsDeleted`/`DeletedAt`, removing external logins, return value, Telegram outbox row;
+- user records and statistics: sign-in/visit, counters, personal area, non-deleted records, finding deleted original email, exclusion for an unknown user;
+- HTTP/DI: account-profile routes through TestServer, `AddOpenCRMAccounts` registrations (scoped and transient, uniqueness), no project-level dependency on BL.
 
-Интеграционные проверки используют настоящие Identity, PostgreSQL (Testcontainers) и TestServer,
-подменяя только внешнюю отправку писем. Рабочая и боевая БД не подключаются.
+Integration checks use real Identity, PostgreSQL (Testcontainers), and TestServer, substituting only external email delivery. They do not connect to working or production databases.
 
-## 6. Проверки и воспроизведение
+## 6. Checks and reproduction
 
 ```powershell
 dotnet build OpenCRM.sln -m:1 -p:BuildScenarioClientsOnBuild=false
@@ -169,20 +110,12 @@ dotnet test tests/OpenCRM.Modules.Accounts.Tests/OpenCRM.Modules.Accounts.Tests.
 dotnet sln OpenCRM.sln list
 ```
 
-Целевые наборы запускаются во время работы, общая backend-регрессия — после последних изменений.
-Отчёты и TRX размещаются в изолированном каталоге (аргумент `--artifacts-path`), сборка клиентов
-отключена. Проверки контроллера выполняются argv-командами без shell, поэтому используются сборка
-решения и целевые наборы модуля в пределах лимита времени.
+Run targeted suites during implementation and the full backend regression after the final changes. Put reports and TRX files in an isolated directory (the `--artifacts-path` argument) and disable client builds. Controller checks use argv commands without a shell, so use the solution build and targeted module suites within the time limit.
 
-## 7. Риски и границы решения
+## 7. Risks and decision boundaries
 
-Перенос не меняет схему БД, миграции, HTTP-контракты, правила авторизации и границы транзакций.
-Единственная новая связь — вызов интерфейса `ISiteNotificationPublisher` вместо статического метода
-владельца; тот же scoped контекст и та же транзакция сохраняют атомарность регистрации. Если при
-реализации выяснится, что сохранение поведения требует изменения публичных контрактов, схемы БД,
-правил доступа или открытия отдельных транзакций, работа останавливается и выносится на отдельное
-решение: такой сценарий выходит за границы этого этапа.
+The extraction does not change the database schema, migrations, HTTP contracts, authorization rules, or transaction boundaries. The only new connection is calling `ISiteNotificationPublisher` instead of the owner's static method; the same scoped context and transaction preserve registration atomicity. If implementation shows that preserving behavior requires changing public contracts, the database schema, access rules, or opening separate transactions, stop and raise a separate decision: that scenario is outside this stage.
 
-## Уточнения окончательной реализации
+## Final implementation clarifications
 
-Неиспользуемый InternalsVisibleTo не добавляется: тесты используют публичные контракты, внутренних типов в модуле нет. Email-код получает необязательный TimeProvider с System по умолчанию для воспроизводимых проверок срока и повторной отправки. Integration использует локальную AccountsDatabaseFixture только с PostgreSQL и настоящими миграциями; RabbitMQ и EF InMemory для этих проверок не нужны. Подробные результаты приведены в [руководстве](../README.md).
+Do not add unused `InternalsVisibleTo`: tests use public contracts and the module has no internal types. Email-code login accepts an optional `TimeProvider` with `System` as the default so expiry and resend timing can be tested deterministically. Integration uses a local `AccountsDatabaseFixture` with PostgreSQL and real migrations only; RabbitMQ and EF InMemory are not needed for these checks. Detailed results are in the [guide](../README.md).

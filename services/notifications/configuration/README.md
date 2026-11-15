@@ -1,15 +1,17 @@
-# configuration сервиса уведомлений
+# Notification service configuration
 
-Настройки конкретных процессов сервиса уведомлений задаются переменными окружения и локальной конфигурацией, не хранящейся в репозитории.
+**English** | [Русский](README.ru.md)
 
-## Бренд
+Configure individual notification service processes through environment variables and local configuration excluded from the repository.
 
-Отображаемое имя для шаблонов, тем писем и `FromName` берётся из общего `Helpers.ProjectBrand`: он читает `configuration/brand.json`, подключённый в выходной каталог как `brand.json`. Переменные `Brand__DisplayName` и `Brand__PublicBaseUrl` переопределяют значения в этом процессе.
+## Branding
 
-После изменения общего `brand.json` пересоберите сервис либо установите согласованную версию файла в каталог запуска Worker.
+The display name used in templates, email subjects, and `FromName` comes from the shared `Helpers.ProjectBrand`: it reads `configuration/brand.json`, linked into the output directory as `brand.json`. The `Brand__DisplayName` and `Brand__PublicBaseUrl` environment variables override values in that process.
 
-## Провайдеры и отправитель
+After changing the shared `brand.json`, rebuild the service or install a consistent file version in the Worker's launch directory.
 
-Реальные провайдеры (SMTP и мессенджеры), ключи доступа и адрес отправителя писем настраиваются отдельно через переменные окружения. Email по умолчанию выключен и включается явной настройкой. Секреты не размещайте в `brand.json` и в репозитории; для локальной разработки используйте переменные окружения. Собственные `dotnet user-secrets` проекта уведомлений не связаны с общим идентификатором WebApp.
+## Providers and sender
 
-После изменения настроек перезапустите использующие их процессы.
+Configure real providers (SMTP and messengers), access keys, and the email sender address separately through environment variables. Email is disabled by default and requires explicit configuration to enable it. Do not put secrets in `brand.json` or the repository; use environment variables for local development. The notification project's own `dotnet user-secrets` is not linked to a shared WebApp identifier.
+
+Restart the affected processes after changing settings.

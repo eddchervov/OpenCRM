@@ -1,34 +1,21 @@
 # OpenCRM.Admin.Launcher
 
-Windows-приложение открывает существующую Vue-админку через Google Chrome в режиме
-приложения, без вкладок и адресной строки. Формы, API,
-авторизация и бизнес-логика остаются общими с веб-приложением.
+**English** | [Русский](README.ru.md)
 
-Адрес панели берётся из общего файла бренда `brand.json`, который копируется в каталог
-приложения; переменная окружения `OPENCRM_ADMIN_API_URL` переопределяет его. По умолчанию
-используется публичный адрес из `brand.json`. Для локальной разработки задайте базовый адрес:
+This Windows application opens the existing Vue admin interface through Google Chrome in application mode, without tabs or an address bar. Forms, APIs, authentication, and business logic remain shared with the web application.
+
+The panel URL comes from the shared `brand.json` copied to the application directory; the `OPENCRM_ADMIN_API_URL` environment variable overrides it. The default is the public URL from `brand.json`. For local development, set the base URL:
 
 ```powershell
 $env:OPENCRM_ADMIN_API_URL = 'https://localhost:44374/'
 ```
 
-Cookies хранятся в `%LOCALAPPDATA%\Администрирование\AdminDesktop\Chrome`, поэтому повторно
-входить при каждом запуске не требуется. Сервер продолжает проверять роли и разрешения
-для каждого запроса.
+Cookies are stored in `%LOCALAPPDATA%\Администрирование\AdminDesktop\Chrome`, so signing in again at every launch is unnecessary. The server continues to enforce roles and permissions on every request.
 
-## Работа через VPN
+## Using a VPN
 
-Для запуска Chrome обязательно используются параметры `--disable-http2` и
-`--disable-quic`. В текущем окружении AdGuard VPN может сбрасывать соединения Chromium
-по HTTP/2 или QUIC, хотя проверка того же адреса через `curl` проходит успешно.
+Chrome always starts with `--disable-http2` and `--disable-quic`. In the current environment, AdGuard VPN may reset Chromium connections over HTTP/2 or QUIC even when `curl` successfully checks the same URL.
 
-Chrome повторно использует уже запущенный процесс отдельного профиля. Поэтому после
-изменения параметров запуска необходимо закрыть только экземпляр Chrome с профилем
-`%LOCALAPPDATA%\Администрирование\AdminDesktop\Chrome` и запустить приложение заново. Обычный
-Chrome пользователя закрывать не нужно.
+Chrome reuses an existing process for its separate profile. After changing launch parameters, close only the Chrome instance using `%LOCALAPPDATA%\Администрирование\AdminDesktop\Chrome` and restart the application. Do not close the user's ordinary Chrome instance.
 
-Успешность запуска проверяется по фактической загрузке страницы и заголовку окна, который
-содержит отображаемое имя проекта или слово «Администрирование», а не только по наличию
-процесса или окна Chrome. Имя окна на панели задач формируется как
-`<отображаемое имя> — Администрирование`. Журнал приложения
-находится в `%LOCALAPPDATA%\OpenCRM\AdminDesktop\Logs\application.log`.
+Validate startup by the page actually loading and a window title containing the project display name or the word “Администрирование” (Administration), rather than the mere presence of a Chrome process or window. The taskbar window name is `<display name> — Администрирование`. The application log is `%LOCALAPPDATA%\OpenCRM\AdminDesktop\Logs\application.log`.

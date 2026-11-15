@@ -1,55 +1,57 @@
-# Услуги и оплаты записи
+# Services and payments on an appointment
 
-Общие компоненты используются в детейлинге, СТО и автопарке. Публичные страницы не меняются.
+**English** | [Русский](maintenance-services-payments.ru.md)
 
-## Работа в интерфейсе
+Shared components are used by Detailing, Service Station, and Fleet. Public pages are unchanged.
 
-- «Выбрать услуги» открывает поиск с вкладками услуг и наборов. Можно отметить несколько позиций и добавить их одновременно. Уже добавленные позиции отмечены и повторно не добавляются.
-- В строке услуги указаны количество, цена единицы и сумма. Количество — целое положительное число. Описание раскрывается при необходимости.
-- В справочнике у услуги можно задать цену. Набор содержит ссылки на обычные услуги этой организации; цены берутся из услуг при добавлении. Набор с архивными услугами нельзя добавить, пока состав не исправлен.
-- Редактирование состава в карточке сохраняет только услуги. Материалы, их зафиксированная себестоимость, состояние записи, даты и оплаты остаются прежними.
-- «Принять оплату» находится рядом с долгом. Предлагается весь остаток, можно принять часть. Сумма сверх текущего остатка отклоняется.
-- В истории видны сумма, время, сотрудник и комментарий. Ошибочный учёт можно отменить с обязательной причиной. Это не банковский возврат денег.
-- Оплаты доступны для изменения по разрешению `finance.manage`, услуги — `maintenance.edit`. Режим чтения блокирует изменения.
+## Working in the interface
 
-## Отмена записи и финансовые итоги
+- “Select services” opens a search with tabs for services and service sets. Multiple items can be selected and added together. Already-added items are marked and cannot be added twice.
+- A service row shows quantity, unit price, and total. Quantity is a positive integer. The description can be expanded as needed.
+- A service can have a price in the directory. A set references regular services belonging to the organization; prices are taken from those services when the set is added. A set containing archived services cannot be added until its composition is fixed.
+- Editing composition on the card saves services only. Materials and their recorded cost, appointment state, dates, and payments remain unchanged.
+- “Accept payment” appears next to the outstanding balance. The full balance is suggested, and a partial payment can be accepted. An amount above the current balance is rejected.
+- History shows the amount, time, employee, and comment. An accounting error can be reversed with a required reason. This is not a bank refund.
+- Payment changes require `finance.manage`; service changes require `maintenance.edit`. Read-only mode blocks changes.
 
-Отменённая запись не создаёт начисление и долг за невыполненные работы. Внесённые оплаты не исчезают автоматически. Ошибочно внесённый учёт оплаты пользователь отдельно отменяет через историю с обязательной причиной; это не банковский возврат. При повторном открытии записи начисление и долг рассчитываются снова по сохранённой смете и действующим оплатам.
+## Cancelled appointments and financial totals
 
-Локальное исправление отделяет видимость финансовой проекции (`IsVisible`) от участия в начислениях (`IsAccruable`). Для отменённого заказа `NetAmount` и `DebtAmount` равны нулю; исходные `GrossAmount`, скидка и строки заказа сохраняются. Фактически учтённые материалы и труд не стираются; прибыль отражает оставшиеся затраты со знаком минус. Действующие оплаты сохраняются в сводке. Отменённые работы исключаются из числа заказов, начислений и популярных услуг, а сама запись видна в финансовом списке с пометкой «Отменено». Отчёт сохраняет прежнюю группировку оплат по дате заказа; это не новый кассовый отчёт по дате поступления денег.
+A cancelled appointment does not create accruals or a debt for work not performed. Recorded payments are not removed automatically. The user can separately cancel an incorrectly recorded payment through history with a required reason; this is not a bank refund. When the appointment is reopened, accrual and debt are recalculated from the saved estimate and active payments.
 
-Миграция `20261030224000_AddMaintenanceAccrualFlag` пересчитывает старые финансовые строки и почасовую сводку в одной транзакции, обновляет покрывающие индексы. `Down` восстанавливает прежние производные расчёты из заказов и строк; исходные заказы, оплаты и их история не меняются. На время переключения записи старого приложения нужно остановить. При откате только приложения новый признак не будет поддерживаться старым writer: перед последующим возвратом к новой версии обязателен повторный согласованный пересчёт проекции и почасовой сводки из источников. Автоматический откат БД или автоматический пересчёт всей базы при запуске приложения не выполняется.
+The local fix separates financial projection visibility (`IsVisible`) from inclusion in accruals (`IsAccruable`). For a cancelled order, `NetAmount` and `DebtAmount` are zero; original `GrossAmount`, discount, and order lines are retained. Actual recorded materials and labor are not erased; profit reflects the remaining costs as a negative amount. Active payments remain in the summary. Cancelled work is excluded from order count, accruals, and popular services, while the record remains visible in the financial list with a “Cancelled” label. Reports retain the previous grouping of payments by order date; this is not a new cash report grouped by the date money was received.
 
-Проверка рабочей базы выполняется отдельно по инструкции развёртывания.
+Migration `20261030224000_AddMaintenanceAccrualFlag` recalculates old financial rows and the hourly summary in one transaction and updates covering indexes. `Down` restores the previous derived calculations from orders and lines; source orders, payments, and their history are unchanged. Stop writes by the old application during the switchover. If only the application is rolled back, the new flag is not supported by the old writer; before returning to the new version, a coordinated recalculation of the projection and hourly summary from source data is required. Neither automatic database rollback nor automatic full-database recalculation at application startup is performed.
 
-## Общий простой режим детейлинга и СТО
+Check the production database separately by following the deployment instructions.
 
-В настройках организации доступен общий выбор «Простой / По этапам». В простом режиме будущая запись сохраняется как `Planned` и резервирует время, а основная кнопка «Выдать» одним действием завершает работу и фиксирует фактическую выдачу. Промежуточные этапы в карточке скрыты. Назначение сотрудника без запуска операций не требует искусственных отметок выполнения; реально отслеживаемые незавершённые работы и нерассмотренные дополнительные работы защищены действующими проверками. Оплата остаётся отдельной операцией.
+## Shared simplified Detailing and Service Station mode
 
-Старые завершённые записи при выдаче сохраняют прежнюю дату выполнения и готовность. Поэтапный процесс и скрытый автопарк сохраняют свои правила. `IsPlannedBooking` в быстрой записи по умолчанию `true`, включая старые API-клиенты без поля; явное `false` позволяет оформить выполненную работу в простом режиме. Схема БД не менялась. [Реализация, автоматические и настоящие браузерные проверки](simple-maintenance-workflow.md).
+Organization settings provide a shared “Simple / By stages” selector. In simple mode, a future appointment is saved as `Planned` and reserves the time; the primary “Hand over” button completes the work and records actual handover in one action. Intermediate stages are hidden on the card. Assigning an employee without starting operations does not require fictitious completion marks; existing checks still protect real unfinished tracked work and unresolved additional work. Payment remains a separate operation.
 
-## Сохранность данных
+Previously completed appointments retain their original completion date and readiness when handed over. The staged workflow and hidden Fleet scenario keep their rules. `IsPlannedBooking` defaults to `true` for quick appointments, including old API clients that omit the field; explicit `false` allows completed work to be entered in simple mode. The database schema was not changed. See [implementation and automated and live browser checks](simple-maintenance-workflow.md).
 
-`MaintenanceDetail.Price` остаётся суммой строки, включая количество. Это сохраняет совместимость расчётов, отчётов и документов. `Quantity` по умолчанию равен 1; изменение каталога не пересчитывает ранее сохранённые строки и не переименовывает их. В документах количество больше единицы показано рядом с названием.
+## Data integrity
 
-`MaintenancePayments` хранит операции, включая отменённые. `Maintenance.PaidAmount` остаётся агрегатом для существующих отчётов; обычное редактирование организации его больше не перезаписывает. Новая организация принимает оплату после создания записи через её карточку.
+`MaintenanceDetail.Price` remains the line total, including quantity. This preserves compatibility with calculations, reports, and documents. `Quantity` defaults to 1; changing the catalog does not recalculate previously saved lines or rename them. Documents show quantities greater than one next to the service name.
 
-Операции оплаты выполняются в транзакции с блокировкой записи. Идентификатор запроса защищает повторную отправку, ожидаемая оплаченная сумма — устаревшую карточку. При повторе отмены сумма второй раз не уменьшается. Изменение услуг и обновлённый редактор передают версию PostgreSQL `xmin`, чтобы не перезаписать более свежие данные.
+`MaintenancePayments` stores operations, including cancelled ones. `Maintenance.PaidAmount` remains an aggregate for existing reports; normal organization editing no longer overwrites it. A new organization accepts payment for an appointment through its card after the appointment is created.
 
-## Миграция
+Payment operations run in a transaction with a record lock. The request ID protects against resubmission; the expected paid amount protects against a stale card. Repeating a cancellation does not reduce the amount twice. Service changes and the updated editor send the PostgreSQL `xmin` version so they cannot overwrite newer data.
 
-`20260913163729_AddMaintenancePaymentsAndServiceBundles` добавляет журнал оплат, цену услуги и состав набора. Положительные суммы, ранее записанные в `PaidAmount` организаций, переносятся как начальный остаток с отметкой «Ранее учтено». Исходная сумма не меняется; дата фактического получения неизвестна и не показывается как дата нового платежа. Личная техника в перенос не включается.
+## Migration
 
-`Down` удаляет журнал и новые поля каталога. После начала использования это приведёт к потере детализации оплат и составов наборов, хотя агрегат `PaidAmount` останется. Для полного отката данных нужна резервная копия до миграции.
+`20260913163729_AddMaintenancePaymentsAndServiceBundles` adds a payment log, service price, and service-set composition. Positive amounts previously stored in an organization's `PaidAmount` are migrated as an opening balance marked “Previously recorded”. The source amount is unchanged; the actual receipt date is unknown and is not shown as the date of a new payment. Personal vehicles are not included in the migration.
 
-## Проверки
+`Down` deletes the payment log and new catalog fields. Once they are in use, this loses payment detail and service-set composition, although the `PaidAmount` aggregate remains. A full data rollback requires a backup taken before migration.
 
-Интеграционные проверки: повтор оплаты, одновременные запросы, устаревшая карточка, отмена с причиной, запрет превышения долга, доступ к другой организации, финансовые права, сохранение старых цен и себестоимости, допустимый состав набора, защита от старого редактора. Интерфейс проверяется в трёх сценариях, двух темах и на ширинах 320–1500 пикселей.
+## Verification
 
-## Транзакции изменения заказа
+Integration checks cover repeated payment, concurrent requests, stale cards, cancellation with a reason, preventing payment above the debt, access to another organization, finance permissions, preservation of old prices and costs, valid service-set composition, and protection against the old editor. The interface is checked in three scenarios, two themes, and widths of 320–1500 px.
 
-Заказ, строки, история, склад, показания и синхронизация планировщика сохраняются в согласованной транзакции сценария. Команды находятся в OpenCRM.Modules.Maintenance/Commands; ApplicationUnitOfWork — в Infrastructure.Common. Переходы, версии и блокировки сохраняют свои проверки; это не общая гарантия однократного выполнения каждого запроса.
+## Order-change transactions
 
-Узкая команда переноса меняет даты и время, проверяет актуальный статус после блокировки и сохраняет остальные свежие поля. Конкурентные сценарии проверены на PostgreSQL.
+Orders, lines, history, inventory, readings, and scheduler synchronization are saved in a coordinated scenario transaction. Commands are in `OpenCRM.Modules.Maintenance/Commands`; `ApplicationUnitOfWork` is in Infrastructure.Common. Transitions, versions, and locks retain their checks; this is not a general guarantee that every request executes exactly once.
 
-[Исходная карта транзакций](README.md) сохраняет разбор прежних входов; [актуальная архитектура](architecture-current.md) описывает владельцев. Историческая карта не является инструкцией вызывать удалённые методы.
+The narrow rescheduling command changes dates and times, checks the current status after locking, and preserves other fresh fields. Concurrent scenarios are checked against PostgreSQL.
+
+The [original transaction map](README.md) preserves the analysis of previous entry points; [current architecture](architecture-current.md) describes ownership. The historical map is not an instruction to call removed methods.

@@ -1,42 +1,44 @@
-# Навигация CRM: первый этап,
+# CRM Navigation: Phase One
 
-Реализован переход от концепции к первому этапу. Приоритет — детейлинг и СТО.
+**English** | [Русский](navigation.ru.md)
 
-## Что изменено
+The transition from concept to phase one is complete. Detailing and auto service are the priorities.
 
-В серверном меню детейлинга и СТО существующие страницы распределены по группам: «Ежедневная работа», «Клиенты», «Ресурсы», «Отчёты», «Справка и доступ». В ежедневной работе сначала показаны рабочий день и записи, затем заказ-наряды СТО при наличии, журнал и визуализация. «Мои работы» остаются доступными по прежним правилам. Коды страниц, названия предметных разделов, адреса и проверки прав сохранены. Меню прежних организаций автопарка не перегруппировывалось.
+## Changes
 
-Используется прежний общий компонент навигации: на компьютере слева, на телефоне в модальной панели. Верхних глобальных вкладок и новых предметных разделов не добавлено.
+In the detailing and auto service server menus, existing pages are organized into groups: “Daily work,” “Customers,” “Resources,” “Reports,” and “Help and access.” Daily work starts with Workday and Appointments, followed by auto service work orders when applicable, then the service journal and visualization. “My work” remains available under its existing rules. Page codes, business section names, URLs, and permission checks are preserved. Menus for existing fleet organizations were not regrouped.
 
-При возвращении в записи детейлинга и СТО восстанавливаются дата, диапазон списка, представление, выбранный пост, длительность свободного слота и поиск по записям в режиме постов. При переходах внутри календаря сохраняется текущая дата его представления. Фильтр поста общий для режимов «Посты» и «Слоты»; длительность относится к слотам.
+The existing shared navigation component is used: on desktop it appears on the left, and on phones in a modal drawer. No global tabs or new business sections were added.
 
-Контекст сохраняется в `sessionStorage` для текущих пользователя и организации. Предпочтение вида в `localStorage` также отделено по пользователю; старый общий для организации ключ больше не подставляется новому пользователю. Если браузер запретил хранилище, экран работает без сохранения состояния после ухода. Повреждённые значения проверяются, слишком большой период не приводит к недопустимой конечной дате. Удалённый пост снимается с фильтра после загрузки каталога; при ошибке каталога фильтр сбрасывается, чтобы не скрыть расписание.
+When returning to detailing or auto service appointments, the selected date, list range, view, selected bay, available-slot duration, and appointment search in bay view are restored. Calendar navigation preserves the current date for its view. The bay filter is shared between “Bays” and “Slots”; duration applies to slots.
 
-Списки клиентов, автомобилей и журнал уже имели собственное сохранение фильтров; эти механизмы не переписывались. Общая история браузера и адреса хлебных крошек не менялись. Нового универсального действия «вернуться к исходной записи» из любой карточки нет: возвращение к карточкам использует существующие ссылки и историю, а переход в «Записи» восстанавливает просмотр расписания.
+Context is stored in `sessionStorage` for the current user and organization. The view preference in `localStorage` is also scoped to the user; a legacy key shared by an organization is no longer applied to a new user. If the browser blocks storage, the screen works but does not preserve state after navigation. Invalid values are validated, and an excessively long period cannot produce an invalid end date. A deleted bay is removed from the filter after the catalog loads; if the catalog request fails, the filter is cleared so it cannot hide the schedule.
 
-## Проверки
+Customer, vehicle, and service journal lists already had their own filter persistence; those mechanisms were not rewritten. Browser-wide history and breadcrumb URLs were not changed. There is no new universal “return to the original appointment” action from every profile: profile return links use the existing links and history, while opening “Appointments” restores the schedule view.
 
-- Frontend: полный прогон `node --test tests/*.test.mjs` покрывает восстановление контекста, изоляцию организаций/пользователей, недоступное и повреждённое хранилище, чрезмерный период и ошибку загрузки каталога.
-- Сервер: полный прогон `OpenCRM.Modules.Workspace.Tests` включает проверки оболочки и матрицу прав детейлинга, СТО и сохранённых сценариев.
-- Сборки CRM-клиентов детейлинга, СТО и автопарка проходят. Настройки аудита зависимостей и анализаторов не менялись; остаются предупреждения аудита, компиляции и размера клиентских модулей.
-- Браузерная проверка на демонстрационном API на широком диапазоне ширин для трёх CRM-клиентов: горизонтального выхода всей страницы не обнаружено. Светлая и тёмная темы просмотрены.
-- В детейлинге через интерфейс проверен выход в клиентов и возврат к сохранённой дате, режиму «Слоты», выбранному посту, длительности и восстановление поиска в режиме постов и в календаре.
-- В мобильном СТО с ограниченными правами проверены доступные группы и отсутствие финансовых пунктов; в режиме чтения создание записи недоступно. Escape закрывает меню и возвращает фокус кнопке открытия.
+## Verification
 
-Изменений БД и миграций нет.
+- Frontend: the full `node --test tests/*.test.mjs` run covers context restoration, organization/user isolation, unavailable and invalid storage, excessive date ranges, and catalog load failures.
+- Server: the full `OpenCRM.Modules.Workspace.Tests` run includes shell checks and a permission matrix for detailing, auto service, and preserved scenarios.
+- Detailing, auto service, and fleet CRM clients build successfully. Dependency audit and analyzer settings were not changed; dependency audit, compilation, and client bundle size warnings remain.
+- Browser checks against the demo API at a wide range of viewport widths found no page-wide horizontal overflow in the three CRM clients. Light and dark themes were reviewed.
+- In detailing, the interface was used to open customers and return to the saved date, “Slots” view, selected bay, duration, and restored search in both bay view and calendar.
+- In mobile auto service with restricted permissions, available groups and the absence of financial items were checked; creating an appointment is unavailable in read-only mode. Escape closes the menu and returns focus to its trigger.
 
-## Локальный просмотр
+There are no database changes or migrations.
 
-Запуск из `src/OpenCRM.Frontend`:
+## Local preview
+
+Run from `src/OpenCRM.Frontend`:
 
 ```powershell
 node tests/serve-visualization-preview.mjs
 ```
 
-Детейлинг: `http://127.0.0.1:5178/tests/scheduler-preview.html?navigation&empty&posts=3#scheduler`.
+Detailing: `http://127.0.0.1:5178/tests/scheduler-preview.html?navigation&empty&posts=3#scheduler`.
 
-СТО: добавить `scenario=autoservice`; режим чтения — `readonly`, ограниченное демонстрационное меню — `restricted`. Параметр `navigation` включает меню нового вида только в тестовом стенде; рабочий клиент получает группировку из серверного DTO без такого параметра.
+For auto service, add `scenario=autoservice`; use `readonly` for read-only mode and `restricted` for the limited demo menu. The `navigation` parameter enables the new menu only in the test harness; the production client receives grouped navigation from the server DTO without this parameter.
 
-Стенд использует настоящие Vue-компоненты и тестовые ответы API. Это проверка интерфейса, а не запуск полного приложения с рабочей БД. Некоторые соседние страницы в календарном стенде не имеют тестовых ответов API: переход в клиентов проверяет смену экрана и возврат, но не является полным бизнес-тестом карточек клиента и автомобиля. Производственные данные не использовались.
+The harness uses real Vue components and test API responses. It verifies the interface; it does not run the full application against a working database. Some neighboring pages in the calendar harness have no test API responses: opening customers verifies screen navigation and return, but is not a full business test of customer and vehicle profiles. No production data was used.
 
-Первый этап [концепции](README.md) закрыт локальной реализацией и проверками. Следующая продуктовая работа — отдельно детализировать ручные обращения до записи; её реализация не начиналась.
+Phase one of the [concept](README.md) is complete in the local implementation and checks. The next product task—specifying manual inquiries through appointment booking—has not started.

@@ -1,213 +1,215 @@
-# Рабочее место исполнителя
+# Employee Workspace
 
-План реализации и проверяемые сценарии: [Рабочее место исполнителя и контроль администратора](employee-workplace-implementation.md).
+**English** | [Русский](employee-workplace.ru.md)
 
-Проект графика смен, учёта времени и отчётов команды: [Смены и учёт сотрудников](employee-shifts-design.md).
+Implementation plan and verifiable scenarios: [Employee workspace and administrator oversight](employee-workplace-implementation.md).
 
-## Главный приоритет
+Shift scheduling, time tracking, and team reports design: [Employee shifts and time tracking](employee-shifts-design.md).
 
-Рабочее место исполнителя — главный продуктовый приоритет OpenCRM. Оно должно связать планирование администратора с фактическим выполнением работ в детейлинге, СТО и автопарке.
+## Primary priority
 
-Решение реализуется внутри существующего приложения и использует единые сервер, авторизацию и предметную модель. Для исполнителя создаётся отдельный компактный интерфейс, адаптированный для телефона и ограниченный выданными в выбранной организации правами. Отдельные клиенты для разных типов организаций не создаются.
+The employee workspace is OpenCRM’s primary product priority. It connects administrator planning with the actual execution of work in detailing, auto service, and fleet organizations.
 
-## Цели
+The solution is implemented in the existing application and uses the shared server, authentication, and business model. Employees get a separate compact interface optimized for phones and limited to the permissions granted in the selected organization. Separate clients for different organization types are not created.
 
-- Администратор видит начало, паузы и завершение работ без устных сообщений от исполнителя.
-- Исполнитель видит свою очередь, активную работу и только необходимые для неё данные и действия.
-- Фактическое выполнение учитывается по отдельным операциям обслуживания.
-- Использованные материалы списываются исполнителем в понятных единицах измерения.
-- Все значимые действия сохраняются в истории и не могут быть незаметно подменены.
-- Общий процесс одинаков для детейлинга, СТО и автопарка, а отраслевые возможности подключаются в составе конкретной работы.
+## Goals
 
-## Команда и доступ
+- Administrators can see when work starts, pauses, and finishes without relying on verbal updates from employees.
+- Employees can see their queue, active work, and only the data and actions needed for that work.
+- Actual execution is tracked per individual service operation.
+- Employees record consumed materials in units that make sense for the operation.
+- All significant actions are recorded in history and cannot be silently replaced.
+- The shared workflow is consistent across detailing, auto service, and fleet organizations; industry-specific capabilities belong to the specific work item.
 
-В интерфейсе используется один раздел настроек организации — **«Команда»**. Пользователю не требуется разбираться в различии между сотрудниками и участниками организации.
+## Team and access
 
-В предметной модели различие сохраняется:
+The organization settings interface has one section, **“Team.”** Users should not need to understand the distinction between employees and organization members.
 
-- сотрудник представляет исполнителя, назначения и историю выполненных работ;
-- участник организации представляет аккаунт и права доступа;
-- сотрудник может быть связан с участником организации;
-- отзыв доступа не удаляет сотрудника и связанную с ним историю.
+The business model preserves the distinction:
 
-Из раздела «Команда» администратор может:
+- an employee represents a worker, assignments, and completed-work history;
+- an organization member represents an account and its access permissions;
+- an employee may be linked to an organization member;
+- revoking access does not delete the employee or their associated history.
 
-- создать сотрудника без доступа в OpenCRM;
-- предоставить существующему сотруднику доступ;
-- пригласить нового человека и одновременно создать рабочую карточку;
-- назначить роль и разрешения;
-- отозвать доступ без удаления истории;
-- отключить сотрудника для новых назначений.
+From “Team,” an administrator can:
 
-Один аккаунт может иметь разные роли в разных организациях. После выбора организации открывается соответствующее рабочее пространство.
+- create an employee without OpenCRM access;
+- grant access to an existing employee;
+- invite a new person and create their work profile at the same time;
+- assign a role and permissions;
+- revoke access without deleting history;
+- deactivate an employee for new assignments.
 
-## Модель выполнения работ
+One account may have different roles in different organizations. Selecting an organization opens its corresponding workspace.
 
-Состояние отдельной операции не смешивается с состоянием всего обслуживания.
+## Work execution model
 
-Жизненный цикл операции:
+The state of an individual operation is separate from the state of the overall service visit.
 
-1. Назначена.
-2. В работе.
-3. Приостановлена.
-4. Выполнена.
+Operation lifecycle:
 
-Жизненный цикл обслуживания:
+1. Assigned.
+2. In progress.
+3. Paused.
+4. Completed.
 
-1. Запланировано.
-2. В работе.
-3. Ожидает проверки администратора.
-4. Готово к выдаче.
-5. Выдано.
+Service visit lifecycle:
 
-Начало первой обязательной операции переводит обслуживание в работу. Завершение одной операции не завершает всё обслуживание. После выполнения всех обязательных операций обслуживание ожидает проверки администратора. Исполнитель не подтверждает оплату и не выдаёт автомобиль.
+1. Scheduled.
+2. In progress.
+3. Awaiting administrator review.
+4. Ready for handover.
+5. Handed over.
 
-Каждое начало, приостановка, продолжение и завершение образует отдельное событие. По интервалам работы рассчитывается фактическое активное время. Исправление ошибочного действия оформляется отдельной корректировкой с причиной, автором и временем, а не скрытым изменением исходной записи.
+Starting the first required operation moves the service visit to in progress. Completing one operation does not complete the entire visit. Once all required operations are complete, the visit awaits administrator review. Employees do not confirm payment or hand over the vehicle.
 
-## Рабочее место исполнителя
+Each start, pause, resume, and completion creates a separate event. Actual active time is calculated from work intervals. A correction to a mistaken action is recorded as a separate adjustment with a reason, author, and timestamp, rather than by silently changing the original record.
 
-Основные представления:
+## Employee workspace
 
-- работы на сегодня;
-- активная работа;
-- назначенные работы;
-- доступные работы, если организация разрешает самостоятельное принятие;
-- завершённые за смену работы.
+Primary views:
 
-Карточка работы показывает:
+- today’s work;
+- active work;
+- assigned work;
+- available work, if the organization allows employees to claim it themselves;
+- work completed during the shift.
 
-- автомобиль или другую технику и государственный номер;
-- пост или место выполнения;
-- плановое время;
-- назначенные исполнителю операции;
-- данные приёмки, замечания и фотографии «до»;
-- согласованные дополнительные работы;
-- необходимые и уже использованные материалы.
+A work card shows:
 
-Доступные действия зависят от состояния и прав:
+- the vehicle or other equipment and its registration number;
+- the bay or work location;
+- planned time;
+- operations assigned to the employee;
+- intake details, notes, and “before” photos;
+- approved additional work;
+- required and already consumed materials.
 
-- начать работу;
-- приостановить с обязательной причиной;
-- продолжить;
-- добавить комментарий и фотографии;
-- сообщить о дефекте;
-- запросить дополнительную работу;
-- указать использованные материалы;
-- завершить свою операцию.
+Available actions depend on state and permissions:
 
-Запрошенная исполнителем дополнительная работа не увеличивает стоимость автоматически. Она поступает администратору на согласование и добавляется в обслуживание после подтверждения.
+- start work;
+- pause with a required reason;
+- resume;
+- add a comment and photos;
+- report a defect;
+- request additional work;
+- record consumed materials;
+- complete the employee’s operation.
 
-## Материалы и единицы измерения
+Additional work requested by an employee does not automatically increase the price. It goes to an administrator for approval and is added to the service visit only after approval.
 
-Исполнитель указывает фактический расход материала в единице, удобной для конкретной операции. Система автоматически приводит количество к базовой единице складского учёта.
+## Materials and units of measure
 
-Поддерживаемые группы:
+Employees record actual material consumption in a unit convenient for the particular operation. The system automatically converts the quantity to the inventory base unit.
 
-| Группа | Единицы | Ограничение |
+Supported groups:
+
+| Group | Units | Constraint |
 | --- | --- | --- |
-| Штучные товары | шт. | Только целое количество |
-| Масса | г, кг | Автоматический пересчёт |
-| Объём | мл, л | Автоматический пересчёт |
-| Упаковки | бутылка, канистра и другие | Для материала задаётся коэффициент пересчёта |
+| Counted items | pcs. | Whole quantities only |
+| Mass | g, kg | Automatic conversion |
+| Volume | ml, l | Automatic conversion |
+| Packages | bottle, canister, and others | A conversion factor is configured per material |
 
-Примеры:
+Examples:
 
-- поступление 3 кг моющего средства создаёт 3000 г базового остатка;
-- списание 300 г оставляет 2,7 кг;
-- поступление 200 л масла создаёт 200000 мл базового остатка;
-- списание 3 л 200 мл оставляет 196,8 л.
+- receiving 3 kg of detergent creates a base balance of 3,000 g;
+- consuming 300 g leaves 2.7 kg;
+- receiving 200 l of oil creates a base balance of 200,000 ml;
+- consuming 3 l and 200 ml leaves 196.8 l.
 
-Количество хранится как `decimal`. Для складского движения сохраняются введённое количество, введённая единица, пересчитанное базовое количество и применённый коэффициент. Это сохраняет понятную историю при последующем изменении настроек материала.
+Quantities are stored as `decimal`. Each inventory movement preserves the entered quantity, entered unit, converted base quantity, and applied factor. This keeps the history understandable if the material settings change later.
 
-Штучные товары принимают только целое количество. Значения в интерфейсе отображаются без незначащих нулей.
+Counted items accept only whole quantities. Values in the interface omit insignificant trailing zeroes.
 
-Исполнитель может списывать материалы только на доступную ему активную работу. Он не может проводить поступления, менять закупочную стоимость или удалять движения. Исправление расхода выполняется обратным или корректирующим движением с записью в истории.
+Employees may consume materials only for active work they can access. They cannot receive stock, change purchase costs, or delete movements. Consumption is corrected by a reversing or adjusting movement recorded in history.
 
-Для услуг можно задать нормативный состав материалов. При начале работы OpenCRM предлагает норматив, а исполнитель подтверждает или меняет фактический расход. Себестоимость операции рассчитывается по фактически списанному количеству и принятому складскому методу оценки.
+A standard material composition may be configured for a service. When work starts, OpenCRM suggests the standard amount, and the employee confirms or changes the actual consumption. Operation cost is calculated from the actual quantity consumed and the configured inventory valuation method.
 
-## Права и аудит
+## Permissions and audit
 
-Исполнитель по умолчанию не имеет доступа к финансам, оплатам, тарифам, настройкам организации, управлению участниками, закупочным ценам и чужим работам.
+By default, employees have no access to finances, payments, plans, organization settings, member management, purchase prices, or other employees’ work.
 
-Сервер проверяет права, принадлежность к организации, связь аккаунта с сотрудником, назначение на операцию и допустимость перехода состояния. Клиентские ограничения не считаются защитой.
+The server checks permissions, organization membership, the account-to-employee link, assignment to the operation, and whether the state transition is allowed. Client-side restrictions are not a security boundary.
 
-Для значимых действий сохраняются:
+Significant actions retain:
 
-- организация и обслуживание;
-- операция;
-- сотрудник;
-- авторизованный участник;
-- старое и новое состояние;
-- дата и время;
-- причина или комментарий;
-- версия изменяемой записи.
+- organization and service visit;
+- operation;
+- employee;
+- authenticated member;
+- old and new states;
+- date and time;
+- reason or comment;
+- version of the changed record.
 
-Команды должны быть идемпотентными и учитывать оптимистическую конкуренцию, чтобы повторное нажатие или два одновременных запроса не создавали двойных переходов и списаний.
+Commands must be idempotent and handle optimistic concurrency so a repeated click or two concurrent requests cannot create duplicate transitions or stock deductions.
 
-## Рабочий стол администратора
+## Administrator workspace
 
-Рабочий стол показывает фактическое состояние операций внутри карточки обслуживания:
+The service visit card shows the actual state of its operations:
 
-- кто назначен;
-- кто начал работу и когда;
-- длительность активной работы;
-- состояние паузы и её причину;
-- завершённые и оставшиеся операции;
-- запросы дополнительных работ;
-- нехватку материалов;
-- готовность к проверке и выдаче.
+- who is assigned;
+- who started work and when;
+- active work duration;
+- pause state and reason;
+- completed and remaining operations;
+- additional-work requests;
+- material shortages;
+- readiness for review and handover.
 
-Изменения доставляются на рабочий стол автоматически. Для первой версии допустим единый механизм периодического обновления с последующим переходом на SignalR. Kafka для этого процесса не требуется.
+Updates are delivered to the workspace automatically. The first version may use a shared polling mechanism, with a later move to SignalR. Kafka is not required for this workflow.
 
-## Этапы реализации
+## Implementation phases
 
-### 1. Основа предметной модели и доступа
+### 1. Business model and access foundation
 
-- объединить управление людьми в интерфейсе «Команда»;
-- добавить связь сотрудника с участником организации;
-- определить роль и разрешения исполнителя;
-- добавить состояния и события выполнения отдельных операций;
-- добавить интервалы фактической работы и корректировки;
-- обеспечить полную серверную проверку прав и переходов;
-- добавить миграцию и проверить её по правилам проекта.
+- unify people management in the “Team” interface;
+- link an employee to an organization member;
+- define employee roles and permissions;
+- add execution states and events for individual operations;
+- add actual work intervals and adjustments;
+- enforce permissions and state transitions on the server;
+- add a migration and validate it against project rules.
 
-### 2. Рабочее место и контроль администратора
+### 2. Employee workspace and administrator oversight
 
-- реализовать адаптивное рабочее место исполнителя;
-- реализовать начало, паузу, продолжение и завершение;
-- показать прогресс отдельных операций на рабочем столе администратора;
-- добавить проверку выполненной работы перед готовностью к выдаче;
-- добавить автоматическое обновление и понятные уведомления.
+- implement a responsive employee workspace;
+- implement start, pause, resume, and completion actions;
+- show operation progress in the administrator workspace;
+- add a review step before work can be marked ready for handover;
+- add automatic refresh and clear notifications.
 
-### 3. Материалы
+### 3. Materials
 
-- добавить группы единиц и преобразования;
-- перевести складские движения на нормализованное количество;
-- реализовать поступление и списание в разных совместимых единицах;
-- запретить дробные значения для штучных товаров;
-- добавить нормативные материалы услуг;
-- добавить фактическое списание из рабочего места;
-- сохранить стоимость, остатки и историю при преобразованиях.
+- add unit groups and conversions;
+- migrate inventory movements to normalized quantities;
+- support receiving and consuming stock in compatible units;
+- reject fractional quantities for counted items;
+- add standard materials for services;
+- support actual consumption from the employee workspace;
+- preserve costs, balances, and history during conversions.
 
-### 4. Производственный контур
+### 4. Production workflow
 
-- добавить дефекты и запросы дополнительных работ;
-- добавить фотографии и комментарии исполнителя;
-- добавить согласование администратором;
-- добавить отчёты по фактическому времени, материалам и себестоимости;
-- при необходимости добавить режим общего терминала как дополнительный способ доступа.
+- add defects and additional-work requests;
+- add employee photos and comments;
+- add administrator approval;
+- add reports for actual time, materials, and cost;
+- if needed, add a shared-terminal mode as an additional access method.
 
-## Критерии готовности первой рабочей версии
+## First working release acceptance criteria
 
-- сотрудник принимает приглашение и входит в нужную организацию;
-- ему доступно только рабочее место и разрешённые операции;
-- администратор назначает сотрудника на отдельную работу;
-- сотрудник начинает, приостанавливает, продолжает и завершает её;
-- рабочий стол администратора показывает изменения без ручного обновления страницы;
-- завершение одной работы не закрывает остальные работы и всё обслуживание;
-- фактическое время формируется из событий и интервалов;
-- материал можно принять в килограммах или литрах и списать в граммах или миллилитрах;
-- штучный товар нельзя списать дробным количеством;
-- остаток, себестоимость и журнал движений рассчитываются корректно;
-- повторный запрос не создаёт повторного перехода или двойного списания;
-- все изменения видны в истории с указанием сотрудника и аккаунта.
+- an employee accepts an invitation and signs in to the correct organization;
+- the employee can access only the workspace and permitted operations;
+- an administrator assigns the employee to an individual operation;
+- the employee starts, pauses, resumes, and completes it;
+- the administrator workspace shows updates without a manual page refresh;
+- completing one operation does not close other operations or the whole service visit;
+- actual time is derived from events and intervals;
+- material can be received in kilograms or liters and consumed in grams or milliliters;
+- a counted item cannot be consumed in a fractional quantity;
+- inventory balance, cost, and movement history are calculated correctly;
+- a repeated request does not create another transition or duplicate deduction;
+- all changes appear in history with the employee and account identified.

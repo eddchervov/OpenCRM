@@ -1,27 +1,29 @@
-# Карточка клиента
+# Customer Profile
 
-## Комментарий
+**English** | [Русский](client-card.ru.md)
 
-В карточке клиента и её форме используется одно поле «Комментарий» с ограничением 4000 символов. Сервер возвращает HTTP 400 с сообщением поля при превышении лимита; отклонённое изменение не сохраняется. Старый API-параметр `Notes` принимается для совместимости и объединяется с `Comment`. Поиск и экспорт используют единый комментарий.
+## Comment
 
-При переносе прежних полей `Comment` и `Notes` сохраняются оба текста с разделителем, если они различаются. Совпадающие значения не дублируются. Обратное разделение объединённого текста неоднозначно, поэтому откат схемы должен остановиться, если объединённые данные уже записаны.
+The customer profile and its form use one “Comment” field, limited to 4,000 characters. If the limit is exceeded, the server returns HTTP 400 with a field-level message; the rejected change is not saved. The legacy API parameter `Notes` is accepted for compatibility and merged into `Comment`. Search and export use the unified comment.
 
-Изменить комментарий можно отдельно через `PUT /api/v1/organizations/{organizationId}/clients/{clientId}/comment`. Операция проверяет право `ClientsEdit` и изменяет только комментарий и время обновления. Ошибка сохраняет введённый черновик; отмена не меняет данные.
+When the previous `Comment` and `Notes` fields are migrated, both texts are preserved with a separator if they differ. Identical values are not duplicated. Splitting a merged value back into the original fields is ambiguous, so a schema rollback must stop if merged data has already been written.
 
-## История обслуживаний
+The comment can be edited separately through `PUT /api/v1/organizations/{organizationId}/clients/{clientId}/comment`. The operation checks the `ClientsEdit` permission and changes only the comment and update timestamp. An error preserves the entered draft; canceling does not change the data.
 
-История загружается постранично через `GET /api/v1/organizations/{organizationId}/clients/{clientId}/maintenances`. Параметры: `page`, `pageSize`, `searchQuery` и `status` (`upcoming`, `completed` или без фильтра). Размер страницы ограничен значениями от 1 до 100. Поиск и фильтрация применяются до подсчёта и выборки; сортировка по дате, времени создания и идентификатору стабильна.
+## Service history
 
-История связывается с клиентом по `BuyerClientId`, в том числе при смене владельца автомобиля. Удалённые работы и техника исключаются; архивная техника остаётся видимой. Просмотр требует права чтения работ, а финансовые значения возвращаются только при наличии финансового права. Оплаты загружаются для текущей страницы; итог карточки рассчитывается агрегатом базы данных.
+History is loaded page by page through `GET /api/v1/organizations/{organizationId}/clients/{clientId}/maintenances`. Parameters are `page`, `pageSize`, `searchQuery`, and `status` (`upcoming`, `completed`, or no filter). Page size is limited to 1–100. Search and filtering are applied before counting and selecting records; ordering by date, creation time, and identifier is stable.
 
-## Идентификационные данные
+History is associated with the customer through `BuyerClientId`, including when a vehicle changes owner. Deleted work orders and vehicles are excluded; archived vehicles remain visible. Viewing requires permission to read work orders, and financial values are returned only when the user has financial access. Payments are loaded for the current page; the profile total is calculated by a database aggregate.
 
-Для физического лица хранятся фамилия, имя и отчество отдельно. Каждая часть ограничена 60 символами, полное имя — 160. Имя обязательно при создании или уточнении данных физического лица; фамилия и отчество необязательны. Для организации или индивидуального предпринимателя используется одно название до 160 символов.
+## Identity information
 
-Поля nullable, доступны в обеих выдачах клиентов и в экспорте организации. Старые значения `Name` автоматически не разбираются; старый API с одним `Name` поддерживается.
+For an individual, surname, given name, and patronymic are stored separately. Each part is limited to 60 characters and the full name to 160. A given name is required when creating or updating an individual's details; surname and patronymic are optional. An organization or sole proprietor has one name field of up to 160 characters.
 
-## Реквизиты
+The fields are nullable and available in both customer list responses and organization exports. Existing `Name` values are not parsed automatically; the legacy API with a single `Name` field remains supported.
 
-Вид организации определяет формат реквизитов. ИНН — 10 цифр для юридического лица или 12 для индивидуального предпринимателя. КПП доступен только юридическому лицу и содержит 9 знаков; в позициях 5–6 допускаются латинские буквы. Значения можно вставлять с пробелами; ведущие нули сохраняются. Форматная проверка не подтверждает регистрацию налогоплательщика.
+## Tax details
 
-Для старых API-запросов и записей без известного вида сохраняется прежнее поле реквизитов длиной до 20 символов. Строгая проверка включается после выбора вида организации.
+The organization type determines the tax detail format. A tax identification number (INN) contains 10 digits for a legal entity or 12 for a sole proprietor. A registration reason code (KPP) is available only for a legal entity and contains 9 characters; Latin letters are allowed in positions 5–6. Values may be pasted with spaces; leading zeroes are preserved. Format validation does not verify taxpayer registration.
+
+For legacy API requests and records without a known organization type, the previous tax details field remains supported with a 20-character limit. Strict validation applies after an organization type is selected.

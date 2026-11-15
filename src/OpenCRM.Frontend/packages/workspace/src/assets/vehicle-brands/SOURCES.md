@@ -1,8 +1,10 @@
-# Логотипы марок автомобилей
+# Vehicle brand logos
 
-SVG-файлы взяты из пакета [`simple-icons@16.35.0`](https://www.npmjs.com/package/simple-icons), папка `icons/`, кроме Mercedes: его значок взят из [`simple-icons@12.1.0`](https://www.npmjs.com/package/simple-icons), когда он ещё входил в набор. В metadata пакетов для этих значков не указана отдельная лицензия. Лицензия CC0 самого проекта Simple Icons не означает отказа от прав на товарные знаки; сведения об источнике и рекомендации по использованию доступны в [`DISCLAIMER.md`](https://github.com/simple-icons/simple-icons/blob/16.35.0/DISCLAIMER.md).
+**English** | [Русский](SOURCES.ru.md)
 
-Исходники значков ссылаются на страницы или материалы соответствующих марок:
+The SVG files come from the `icons/` directory of [`simple-icons@16.35.0`](https://www.npmjs.com/package/simple-icons), except Mercedes: its icon comes from [`simple-icons@12.1.0`](https://www.npmjs.com/package/simple-icons), when it was still part of the collection. The packages' metadata lists no separate license for these icons. The Simple Icons project's CC0 license does not waive trademark rights; source information and usage guidance are available in [`DISCLAIMER.md`](https://github.com/simple-icons/simple-icons/blob/16.35.0/DISCLAIMER.md).
+
+The icon sources reference the respective brands' pages or materials:
 
 - Audi — https://www.audi.com/ci/en/intro/basics/rings.html
 - BMW — https://bmw.com
@@ -25,4 +27,4 @@ SVG-файлы взяты из пакета [`simple-icons@16.35.0`](https://www
 - Volkswagen — https://www.vw.com
 - Volvo — https://www.media.volvocars.com/global/en-gb/logos
 
-Логотипы используются как локальные декоративные маркеры распознанной марки. Условия использования товарных знаков остаются за правообладателями.
+The logos serve as local decorative markers for a recognized vehicle brand. Trademark usage terms remain with the rights holders.

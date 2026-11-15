@@ -1,46 +1,48 @@
-# Общий простой режим детейлинга и СТО
+# Shared simplified Detailing and Service Station workflow
 
-Реализован и проверен локально. Разработка обращений второго этапа CRM не начиналась.
+**English** | [Русский](simple-maintenance-workflow.ru.md)
 
-## Поведение
+Implemented and checked locally. Development of the second-stage CRM inquiries feature has not started.
 
-В настройках «Работа и расписание» режим «Простой / По этапам» доступен детейлингу и СТО. Будущий визит в простом режиме сохраняется запланированным и занимает пост. Карточка показывает одну основную кнопку «Выдать»; цепочка промежуточных этапов, статусы строк услуг и общий индикатор выполнения скрыты. Перенос, отмена и восстановление записи доступны через действия.
+## Behavior
 
-«Выдать» открывает подтверждение, затем одним запросом завершает работу и фиксирует выдачу. Наличие долга отображается отдельно; выдача не создаёт оплату и не меняет сумму долга. Реально отслеживаемые незавершённые операции и нерассмотренные дополнительные работы продолжают блокировать выдачу. Само назначение сотрудника без операций не требует фиктивного прохождения этапов. Если существуют реальные операции или замечания, их блок остаётся доступен для разрешения ограничения.
+In “Work and schedule” settings, the “Simple / By stages” mode is available for Detailing and Service Station. A future visit in simple mode is saved as planned and occupies a bay. The card shows one primary “Hand over” button; intermediate stages, service-line statuses, and the overall completion indicator are hidden. Rescheduling, cancelling, and restoring an appointment remain available through actions.
 
-При выдаче прежней завершённой записи её фактическая дата выполнения и ранее зафиксированная готовность сохраняются. Наступление плановой даты само по себе не завершает работу. После выдачи остаётся существующая отмена выдачи с обязательной причиной.
+“Hand over” opens a confirmation and then completes the work and records the handover in one request. Any outstanding balance is displayed separately; handover does not create a payment or change the amount due. Real tracked unfinished operations and unresolved additional work continue to block handover. Assigning an employee without operations does not require fictitious stage completion. If actual operations or findings exist, their section remains available to resolve the restriction.
 
-Календарные формы обоих направлений отправляют явное намерение плановой записи. Для старых API-клиентов отсутствие нового поля `IsPlannedBooking` безопасно означает плановую запись. Явное `false` в простом режиме предназначено для внесения уже выполненной работы; в поэтапном режиме быстрая запись остаётся плановой. Форма также выбирает плановый сценарий при вводе будущей даты.
+When handing over a previously completed record again, its actual completion date and previously recorded readiness are preserved. Reaching the planned date does not itself complete the work. The existing undo-handover action remains available and requires a reason.
 
-Автопарк сохраняет прежний процесс. Существующее исключение детейлинга в проверке старых работ не ужесточалось; изменение режима организации не мигрирует статусы и историю прежних заказов.
+Calendar forms for both scenarios send an explicit intent to create a planned appointment. For legacy API clients, the absence of the new `IsPlannedBooking` field safely means a planned appointment. Explicit `false` in simple mode is intended for entering work that has already been completed; in staged mode, quick appointment creation remains planned. The form also selects the planned scenario when a future date is entered.
 
-## Архитектура
+Fleet retains its previous workflow. The existing Detailing exception in the old-work validation was not tightened; changing an organization's mode does not migrate statuses or history of previous orders.
 
-Новых таблиц и миграций нет. Используются существующие поля `MaintenanceStatus`, `CompletedDate`, `ReadyForHandoverAt`, `HandedOverAt`, история, услуги и журнал оплат.
+## Architecture
 
-Команда `simple_handover` выполняется через существующий транзакционный сервис Maintenance с проверкой организации, текущего режима и направления, `maintenance.edit`, блокировкой организации и записи, проверкой версии. Сохранены закрытие связанных дефектов, синхронизация счётчика при реальном завершении и синхронизация планировщика. Ложное сообщение «готов к выдаче» после атомарной выдачи не ставится в очередь.
+There are no new tables or migrations. The implementation uses the existing `MaintenanceStatus`, `CompletedDate`, `ReadyForHandoverAt`, `HandedOverAt`, history, services, and payment log fields.
 
-## Автоматические проверки
+The `simple_handover` command runs through the existing transactional Maintenance service with checks for organization, current mode and scenario, `maintenance.edit`, organization and record locks, and record version. Closing related defects, synchronizing the counter on actual completion, and scheduler synchronization are preserved. No false “ready for handover” message is queued after the atomic handover.
 
-- Целевые проверки Maintenance покрывают правила переходов, выдачу, сохранение исторических дат, доступ, версию, защитные проверки операций и побочные эффекты.
-- HTTP-проверки быстрой записи Organizations покрывают детейлинг и СТО, оба режима, явное намерение и отсутствие нового поля.
-- Полный набор frontend покрывает доступность общего режима, набор действий, один запрос выдачи с версией, ошибку и запрет записи.
-- Сборки клиентов детейлинга и СТО и сборка WebApp проходят без ошибок; остаются существующие предупреждения NuGet и компилятора.
+## Automated checks
 
-## Проверка в браузере и БД
+- Targeted Maintenance checks cover transitions, handover, historical date preservation, access, version, operation guards, and side effects.
+- Organizations quick-create HTTP checks cover Detailing and Service Station, both modes, explicit intent, and absence of the new field.
+- The full frontend suite covers shared-mode availability, actions, a single handover request with version, errors, and write restrictions.
+- Detailing and Service Station client builds and the WebApp build succeed; existing NuGet and compiler warnings remain.
 
-Проверка выполнялась на полном WebApp с настоящими API и PostgreSQL на отдельной тестовой базе с применёнными миграциями; рабочие базы не использовались. Параметры окружения (адрес запуска, контейнер и база) задаются собственной настройкой стенда. Доставка общих уведомлений использует in-memory transport, внешние клиентские боты и аналитика отключены; платёжные и S3-настройки стенда тестовые. Фото, внешние сообщения и эквайринг в этом проходе не проверялись.
+## Browser and database verification
 
-Синтетический владелец и тестовые тарифы подготовлены временным инструментом. Обе организации, посты, услуги, график и записи созданы через настоящий интерфейс. Это полный WebApp с настоящими API и PostgreSQL, а не демонстрационный API frontend-превью.
+Verification used the full WebApp with real APIs and PostgreSQL on a separate test database with migrations applied; production databases were not used. Environment parameters (run address, container, and database) came from the test setup's own configuration. Shared notifications used an in-memory transport; external client bots and analytics were disabled; payment and S3 settings were test values. Photos, external messages, and acquiring were not checked in this pass.
 
-| Сценарий в браузере | Результат |
+A synthetic owner and test plans were prepared with a temporary tool. Both organizations, bays, services, schedules, and appointments were created through the real interface. This was the full WebApp with real APIs and PostgreSQL, not a frontend preview with a demo API.
+
+| Browser scenario | Result |
 | --- | --- |
-| Детейлинг: включение простого режима | Настройка сохранена; после загрузки карточки доступны простые действия. |
-| Детейлинг: запись на будущую дату, интервал, пост, услуга с ценой | Запись «Запланировано», интервал занят и исключён из свободных начал. |
-| Детейлинг: перезагрузка и выдача | После перезагрузки показана одна кнопка; подтверждение сразу сохраняет выдачу, без запуска/завершения/готовности отдельными действиями. |
-| Детейлинг: повторная перезагрузка | Сохранились «Выдан», фактическое время, оплачено 0 ₽ и долг по услуге. |
-| СТО: простой режим, запись на будущую дату, услуга | Плановый статус и занятие времени подтверждены в расписании. |
-| СТО: выдача после перезагрузки | Одна операция; после повторной загрузки «Выдан», оплачено 0 ₽, долг равен стоимости услуги. |
-| СТО: переключение «По этапам», отдельная запись | Сохранились четыре этапа и кнопка «В работу». Запуск сохранён; после перезагрузки активен этап «В работе» и доступна готовность к выдаче. Полный повторный проход операций исполнителя не выполнялся. |
+| Detailing: enable simple mode | Setting saved; simple actions available after the card loads. |
+| Detailing: future appointment, interval, bay, priced service | Appointment is “Planned”; the interval is occupied and excluded from available starts. |
+| Detailing: reload and handover | One button is shown after reload; confirmation saves handover immediately without separate start/completion/readiness actions. |
+| Detailing: reload again | “Handed over”, actual time, 0 paid, and the service balance remain. |
+| Service Station: simple mode, future appointment, service | Planned status and occupied time confirmed in the schedule. |
+| Service Station: handover after reload | One operation; after reloading, “Handed over”, 0 paid, and balance equal to the service price remain. |
+| Service Station: switch to “By stages”, separate appointment | Four stages and the “Start work” button remain. Starting work is saved; after reload, “In progress” is active and readiness for handover is available. A full repeated run of performer operations was not performed. |
 
-Детейлинг просмотрен в светлой и тёмной темах, СТО также на узкой области браузера. Это не полная матрица всех размеров и ролей. Ролевые ограничения и ошибки дополнительно проверены автоматическими тестами.
+Detailing was viewed in light and dark themes, and Service Station was also viewed in a narrow browser area. This is not a complete matrix of every screen width and role. Role restrictions and error paths were additionally checked with automated tests.

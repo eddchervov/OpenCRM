@@ -1,0 +1,34 @@
+@startuml maintenance_sequence
+title opencrm.example.invalid — создание обслуживания
+
+autonumber
+actor "Сотрудник" as Employee
+boundary "Maintenance / Workspace API" as Api
+control "Permission Service" as Permission
+control "Subscription Service" as Subscription
+control "Maintenance Service" as Maintenance
+control "Audit Service" as Audit
+database "PostgreSQL" as Db
+
+Employee -> Api : данные обслуживания
+Api -> Permission : maintenance.edit
+Permission -> Db : membership, role, overrides
+Db --> Permission : access
+Permission --> Api : allowed
+
+Api -> Subscription : проверить write access и features
+Subscription -> Db : active organization subscription
+Db --> Subscription : plan snapshot
+Subscription --> Api : write enabled
+
+Api -> Maintenance : CreateAsync
+Maintenance -> Db : проверить vehicle и organization
+Maintenance -> Db : INSERT Maintenance
+Maintenance -> Db : история, дефекты,\nсчетчики и материалы
+Maintenance -> Audit : добавить событие
+Audit -> Db : INSERT OrganizationAuditEvent
+Db --> Maintenance : commit
+Maintenance --> Api : Maintenance DTO
+Api --> Employee : 201 Created
+
+@enduml

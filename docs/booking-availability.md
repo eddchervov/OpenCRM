@@ -1,54 +1,56 @@
-# Занятость поста при записи
+# Bay availability for appointments
 
-Общий компонент `BookingTimeFields` используется в быстром создании детейлинга и СТО, а также в общей форме создания и редактирования обслуживания.
+**English** | [Русский](booking-availability.ru.md)
 
-- После выбора даты и поста загружаются занятые интервалы. При изменении параметров прежний запрос отменяется.
-- Начало внутри занятого интервала недоступно. Час блокируется целиком, только если недоступны все его минуты с текущим шагом выбора.
-- Окончание проверяется по всему интервалу от выбранного начала. Запись, заканчивающаяся в 11:00, не мешает следующей начинаться в 11:00.
-- Подсказка содержит занятый интервал, госномер и услугу. На мобильном доступен раскрываемый список занятости.
-- Ручной ввод и уже выбранный интервал проверяются перед сохранением после повторной загрузки занятости. Ошибка загрузки не считается свободным постом.
-- При редактировании собственная запись исключается. Отменённые и удалённые записи не занимают пост.
-- Серверная проверка при сохранении остаётся обязательной. Интерфейс не заменяет её.
+The shared `BookingTimeFields` component is used for quick Detailing and Service Station appointments and in the shared maintenance create/edit form.
+
+- After a date and bay are selected, occupied intervals are loaded. A previous request is cancelled when parameters change.
+- A start time inside an occupied interval is unavailable. An hour is blocked in full only when every minute in it is unavailable at the current selection interval.
+- The end time is checked against the entire interval from the selected start. An appointment ending at 11:00 does not prevent the next one from starting at 11:00.
+- A hint shows the occupied interval, license plate, and service. On mobile, an expandable availability list is available.
+- Before saving, manually entered and already selected intervals are checked after availability is reloaded. A loading error is not treated as an available bay.
+- While editing, the current appointment is excluded. Cancelled and deleted appointments do not occupy a bay.
+- The server-side check on save remains mandatory. The interface does not replace it.
 
 ## API
 
 `GET /api/v1/maintenance/occupied-slots?organizationId=…&date=2026-09-11&location=Пост%201&excludeMaintenanceId=…`
 
-Требуется авторизация и право `MaintenanceView` в организации. Идентификатор исключаемой записи необязателен. Ответ не кешируется, не ограничивается лимитом календаря и содержит `id`, `startMinute`, `endMinute`, `vehicle`, `service`. Минуты отсчитываются от начала плановой даты.
+Authentication and the organization's `MaintenanceView` permission are required. The excluded appointment ID is optional. The response is not cached or limited by the calendar page size; it contains `id`, `startMinute`, `endMinute`, `vehicle`, and `service`. Minutes are counted from the start of the planned date.
 
-Загрузка занятости и проверка конфликта используют правила модуля `OpenCRM.Modules.Maintenance`. Расписание и занятость используют плановую дату независимо от статуса. Фактическая дата выполнения применяется в истории и отчётах и не переносит запись на другой день расписания. Для старых записей без плановой даты оба запроса используют основную дату записи. Имена постов сравниваются без регистра и пробелов по краям. При отсутствующем окончании применяется существующее правило: один час от начала.
+Availability loading and conflict validation use the `OpenCRM.Modules.Maintenance` module rules. Scheduling and availability use the planned date regardless of status. The actual completion date is used in history and reports and does not move the appointment to another schedule day. For legacy appointments without a planned date, both requests use the main appointment date. Bay names are compared case-insensitively after trimming surrounding whitespace. If the end is missing, the existing rule applies: one hour after the start.
 
-Многодневная занятость и полный диапазон API описаны в [правилах периодов](maintenance-periods.md).
+Multi-day availability and the full API date range are described in [the period rules](maintenance-periods.md).
 
-## Статусы и даты
+## Statuses and dates
 
-| Статус | Доступные переходы | Дата выполнения |
+| Status | Available transitions | Completion date |
 | --- | --- | --- |
-| Запланировано | В работу, Выполнено, Отменить | Скрыта и не сохраняется |
-| В работе | Выполнено, Отменить, Вернуть в запланированные | Скрыта и не сохраняется |
-| Выполнено | Вернуть в работу с подтверждением, корректировка данных | Показывается и допускает исправление |
-| Отменено | Возобновить запись с выбором даты | Скрыта и не сохраняется |
+| Planned | Start work, Complete, Cancel | Hidden and not saved |
+| In progress | Complete, Cancel, Return to planned | Hidden and not saved |
+| Completed | Return to work with confirmation, edit data | Shown and editable |
+| Cancelled | Resume appointment with date selection | Hidden and not saved |
 
-В обычном процессе новая запись создаётся запланированной. Завершение существующей записи выполняется действием «Выполнено» в карточке: фиксируется фактическая дата, плановая остаётся прежней. Редактор не предлагает неподдерживаемые переходы; сервер также запрещает завершение и обратные переходы через произвольную смену статуса в редакторе. Обратные переходы выполняются отдельными действиями карточки. Возобновление отменённой записи повторно проверяет занятость поста.
+In the normal workflow, a new appointment is created as planned. An existing appointment is completed using the “Complete” action on its card: the actual date is recorded and the planned date remains unchanged. The editor does not offer unsupported transitions; the server also prevents completion and reverse transitions through an arbitrary status change in the editor. Reverse transitions use separate card actions. Resuming a cancelled appointment checks bay availability again.
 
-Упрощённый режим СТО допускает создание сразу выполненной работы. При редактировании он сохраняет исходный статус и отдельную фактическую дату; не завершает отменённую или активную запись автоматически и не заменяет фактическую дату плановой.
+The simplified Service Station mode allows work to be created as completed. Editing preserves its original status and separate actual date; it does not automatically complete a cancelled or active appointment or replace the actual date with the planned date.
 
-Фото, услуги, материалы и расчёты остаются частью истории, включая отменённые записи. Документы актов доступны только для выполненной работы.
+Photos, services, materials, and calculations remain part of history, including for cancelled appointments. Work completion documents are available only for completed work.
 
-## Проверка
+## Verification
 
-`OccupiedMaintenanceSlotsTests` проверяет выборку на PostgreSQL: организацию, дату, пост, статусы, исключение редактируемой записи, отсутствие обрезания до 500 элементов и проверку доступа до чтения данных.
+`OccupiedMaintenanceSlotsTests` checks PostgreSQL queries for organization, date, bay, status, exclusion of the edited appointment, no truncation at 500 records, and authorization before reading data.
 
-Дополнительно проверены согласованность календаря и занятости при разных плановой и фактической датах, отказ при пересечении на создании и редактировании, допустимые переходы статусов и фиксация даты действием «Выполнено». Браузерные сценарии охватывают четыре статуса в трёх клиентах и в упрощённом режиме СТО.
+Additional checks cover calendar/availability consistency when planned and actual dates differ, rejection of overlaps during creation and editing, valid status transitions, and recording the date through the “Complete” action. Browser scenarios cover all four statuses in three clients and simplified Service Station mode.
 
-## Действия карточки и обратные переходы
+## Card actions and reverse transitions
 
-В шапке карточки выделен следующий шаг: «В работу» для запланированной записи, «Выполнено» для записи в работе, «Возобновить запись» для отменённой. Остальные операции доступны через кнопку «Действия». Изменение состояния выполняется после подтверждения; при ошибке окно остаётся открытым и показывает ответ сервера. Для отмены и возврата можно оставить комментарий в истории. Перенос и возобновление предлагают дату и время с проверкой занятости.
+The next step is highlighted in the card header: “Start work” for a planned appointment, “Complete” for one in progress, and “Resume appointment” for a cancelled one. Other operations are available through “Actions”. A state change requires confirmation; if it fails, the dialog stays open and shows the server response. A comment can be added to history when cancelling or returning. Rescheduling and resuming prompt for a date and time and check availability.
 
-- `return_to_planned`: только из состояния «В работе», сохраняет плановые дату и время, очищает фактическую дату.
-- `return_to_work`: только из состояния «Выполнено», возвращает в работу и очищает фактическую дату. Влияние записи на текущий пробег снимается с пересчётом по оставшимся показаниям.
-- Обе команды проверяют конфликт поста, сохраняют услуги, фото, оплаты и материалы и фиксируются в истории.
-- Связанные неисправности сохраняют самостоятельный статус: возврат работы не означает повторного появления уже устранённой неисправности. Это явно указано в окне подтверждения, если связи есть.
-- API использует существующий `IApplicationUnitOfWork`: состояние, история, пробег и синхронизация задач планировщика сохраняются одной транзакцией. Строка записи блокируется до завершения действия; после получения блокировки статус перечитывается. Повторная обратная команда не создаёт второе событие.
+- `return_to_planned`: only from “In progress”; keeps the planned date and time and clears the actual date.
+- `return_to_work`: only from “Completed”; returns the appointment to work and clears the actual date. Its effect on current mileage is removed and recalculated from the remaining readings.
+- Both commands check bay conflicts, preserve services, photos, payments, and materials, and are recorded in history.
+- Linked defects retain their independent status: returning work does not make an already resolved defect reappear. The confirmation dialog states this explicitly when links exist.
+- The API uses the existing `IApplicationUnitOfWork`: state, history, mileage, and scheduler-task synchronization are saved in one transaction. The appointment row is locked until the action completes; after acquiring the lock, its status is re-read. Repeating a reverse command does not create a second event.
 
-Отдельный класс `MaintenanceServiceCatalog` удалён. Проверка состава услуг находится в модуле `OpenCRM.Modules.Maintenance`; быстрая запись получает действующую услугу через `IOrganizationScenarioCatalogService.GetActiveServiceAsync`. Новый интерфейс карточки находится в общем компоненте `MaintenanceCardActions.vue`; существующий компонент компактных действий списка сохранён.
+The separate `MaintenanceServiceCatalog` class was removed. Service composition validation is in `OpenCRM.Modules.Maintenance`; quick appointment creation obtains an active service through `IOrganizationScenarioCatalogService.GetActiveServiceAsync`. The new card interface is in the shared `MaintenanceCardActions.vue` component; the existing compact list action component remains.

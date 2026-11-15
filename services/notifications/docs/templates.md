@@ -1,15 +1,12 @@
-# Системные письма на Razor
+# Razor system emails
 
-Системные письма NotificationService хранятся как .cshtml в репозитории.
-OpenCRM отправляет ключ шаблона, точную версию и Data через SendNotification.
-Сервис преобразует Data в типизированную модель, проверяет её и формирует письмо.
-До подтверждения queued готовые тема, тело и версия сохраняются вместе с уведомлением
-и outbox. Доставка, отложенная отправка и повторы используют этот снимок.
+**English** | [Русский](templates.ru.md)
 
-## Структура
+NotificationService system emails are stored as .cshtml files in the repository. OpenCRM sends the template key, exact version, and Data through SendNotification. The service converts Data into a typed model, validates it, and renders the email. Before acknowledging queued, the rendered subject, body, and version are persisted with the notification and outbox. Delivery, deferred sending, and retries use this snapshot.
 
-Системные шаблоны общие для приложений и предназначены для канала email.
-Доступ к ним и название в письмах определяются профилем приложения в конфигурации.
+## Structure
+
+System templates are shared between applications and intended for email. The application configuration profile determines access and the name displayed in emails.
 
 ~~~text
 src/Notifications.Infrastructure/
@@ -33,19 +30,13 @@ src/Notifications.Infrastructure/
       Body.cshtml
 ~~~
 
-Subject.cshtml формирует тему без макета. Body.cshtml подключает общий _Layout.cshtml.
-В моделях указаны обязательные поля и ограничения длины. Razor поддерживает обычные
-@model, @if, @foreach и частичные представления; текущие письма используют общий макет
-и типизированные данные без избыточных условий.
+Subject.cshtml renders the subject without a layout. Body.cshtml uses the shared _Layout.cshtml. Models declare required fields and length limits. Razor supports standard @model, @if, @foreach, and partial views; current emails use a shared layout and typed data without excessive conditions.
 
-Шаблоны компилируются Razor SDK при сборке и входят в сборку Infrastructure.
-Для формирования строк используется [Razor.Templating.Core](https://github.com/soundaranbu/Razor.Templating.Core).
-Компиляция из входных сообщений или БД во время работы не включена.
-Docker-образ Worker использует aspnet:10.0 для Razor и приёма обратных вебхуков провайдера. Отправка уведомлений из приложений идёт только через RabbitMQ.
+The Razor SDK compiles templates during the build into the Infrastructure assembly. [Razor.Templating.Core](https://github.com/soundaranbu/Razor.Templating.Core) renders strings. Runtime compilation from incoming messages or the database is not enabled. The Worker Docker image uses aspnet:10.0 for Razor and provider callback webhooks. Applications submit notifications only through RabbitMQ.
 
-## Профили приложений
+## Application profiles
 
-В appsettings.json задаются получатели команд RabbitMQ и профили системных писем:
+Configure RabbitMQ command recipients and system email profiles in appsettings.json:
 
 ~~~json
 {
@@ -71,45 +62,29 @@ Docker-образ Worker использует aspnet:10.0 для Razor и при
 }
 ~~~
 
-Идентификаторы приложений и названия здесь — настройки конкретного развёртывания.
-Движок и Razor-шаблоны не проверяют имя определённого клиента. Можно добавить другое
-приложение конфигурацией и перезапуском Worker, без изменения или пересборки кода.
+Application IDs and names here are deployment settings. The engine and Razor templates do not check for a particular client's name. Add another application through configuration and a Worker restart, without changing or rebuilding code.
 
-BrandName используется в теме и общем макете. Значение передаётся через ViewData из
-профиля, а не из команды пользователя, и экранируется Razor. Оно обязательно, ограничено
-200 символами и не допускает управляющих символов.
+BrandName is used in the subject and shared layout. It is supplied through ViewData from the profile, not from the user's command, and Razor escapes it. It is required, limited to 200 characters, and may not contain control characters.
 
-Templates — явный список разрешённых ключей. Неизвестные ключи, повторы, пустое название
-или пустой список отклоняются при запуске. Отсутствие профиля запрещает системные письма
-этому приложению; доступ к обычным сообщениям и шаблонам БД от этого не меняется.
+Templates is an explicit key allowlist. Unknown keys, duplicates, an empty name, or an empty list are rejected at startup. A missing profile disallows system emails for that application without changing access to ordinary messages or database templates.
 
-RabbitMq:Applications по-прежнему определяет входные очереди. Профиль оформления
-не создаёт очередь и не даёт приложению доступа к данным другого приложения.
+RabbitMq:Applications still defines the incoming queues. A presentation profile neither creates a queue nor grants access to another application's data.
 
-В Docker настройки можно переопределить стандартными переменными .NET, например
-SystemTemplates__Applications__catalog__BrandName и
-SystemTemplates__Applications__catalog__Templates__0. Добавьте также соответствующее
-значение RabbitMq__Applications__N. Для нового профиля нужны и название, и список шаблонов.
+In Docker, override settings using standard .NET environment variables, such as SystemTemplates__Applications__catalog__BrandName and SystemTemplates__Applications__catalog__Templates__0. Also add the corresponding RabbitMq__Applications__N entry. A new profile requires both a name and a template list.
 
-## Ключи и модели
+## Keys and models
 
-| TemplateKey | TemplateVersion | Поля Data |
-|---|---|---|
+| TemplateKey | TemplateVersion | Data fields |
+| --- | --- | --- |
 | system/email-confirmation | 1 | name, confirmationUrl |
 | system/password-reset | 1 | name, resetUrl |
 | system/subscription-expiring | 1 | name, subscriptionName, endDate, renewalUrl |
 
-Примеры Data находятся в [examples/system-emails](../examples/system-emails).
-Для endDate используется дата ISO 8601, например 2026-09-16. Это DateOnly в модели;
-формат для пользователя задаёт Razor-шаблон с явной культурой ru-RU.
+See [examples/system-emails](../examples/system-emails) for Data examples. endDate uses an ISO 8601 date, for example 2026-09-16. It is DateOnly in the model; the Razor template explicitly uses ru-RU for user-facing formatting.
 
-Системные письма доступны после запуска Worker приложениям с соответствующим профилем. Предварительно отправлять
-UpsertNotificationTemplate или ждать NotificationTemplateUpdated не требуется.
-Префикс system/ зарезервирован: зарегистрировать или перезаписать такой шаблон через
-RabbitMQ нельзя. Неизвестные ключ, версия, приложение или канал отклоняются;
-автоматической подстановки другой версии или шаблона из БД нет.
+System emails are available after Worker startup to applications with a corresponding profile. There is no need to send UpsertNotificationTemplate or wait for NotificationTemplateUpdated beforehand. The system/ prefix is reserved: templates under it cannot be registered or overwritten through RabbitMQ. Unknown keys, versions, applications, or channels are rejected; no fallback to another version or database template occurs.
 
-## Отправка из OpenCRM
+## Sending from OpenCRM
 
 ~~~csharp
 await endpoint.Send(
@@ -130,94 +105,57 @@ await endpoint.Send(
     cancellationToken);
 ~~~
 
-confirmationRequestId — сохранённый идентификатор конкретного задания OpenCRM.
-Повтор отправки этого задания использует тот же IdempotencyKey. Новый запрос пользователя
-на письмо получает новый ключ. OpenCRM формирует ссылку с токеном, а сервис только
-вставляет её в письмо.
+confirmationRequestId is the persisted identifier of a particular OpenCRM job. Retrying that job uses the same IdempotencyKey. A new user request for an email receives a new key. OpenCRM builds the tokenized URL; the service only inserts it into the email.
 
-Data преобразуется в модель с проверкой обязательных полей, типов и длины.
-Неизвестные поля также отклоняются, чтобы опечатка не оставалась незамеченной.
-Названия JSON-полей принимаются без учёта регистра; в примерах используется camelCase.
+Data is converted into a model with required-field, type, and length validation. Unknown fields are also rejected so typos do not go unnoticed. JSON field names are case-insensitive; examples use camelCase.
 
-Ссылки должны быть абсолютными HTTP(S), без данных авторизации и управляющих символов.
-Razor экранирует значения модели: строка с HTML или C# остаётся текстом и не исполняется.
-Html.Raw для пользовательских данных не применяется. Тема после формирования не должна
-превышать 1000 символов или содержать управляющие символы.
+URLs must be absolute HTTP(S), without credentials or control characters. Razor escapes model values: a string containing HTML or C# remains text and is not executed. Html.Raw is not used for user data. The rendered subject must not exceed 1000 characters or contain control characters.
 
-Ошибочные данные дают NotificationCommandRejected с MessageId исходной команды и
-ErrorCode=invalid-command до создания уведомления и вызова провайдера.
+Invalid data produces NotificationCommandRejected with the original MessageId and ErrorCode=invalid-command before notification creation or a provider call.
 
-## Версии и изменение писем
+## Versions and changing emails
 
-Путь представления выбирает каталог RazorSystemTemplateRenderer. Путь из входной команды
-не используется для поиска файлов. Профиль выбирается по ApplicationId, полученному из входной очереди, и проверяет разрешённые ключи.
+The RazorSystemTemplateRenderer catalog selects the view path. An incoming command path is not used to locate files. The profile is selected by ApplicationId derived from the incoming queue and validates allowed keys.
 
-V1 включает и тексты писем, и модели, и общий макет. При изменении содержимого или модели:
+V1 includes email text, models, and the shared layout. When changing content or a model:
 
-1. Добавьте новую версию вместе с её макетом и моделями, сохранив предыдущую.
-2. Добавьте точное соответствие приложения, ключа, канала и версии в каталог.
-3. Проверьте Razor-рендеринг и отправку через брокер.
-4. Разверните Worker с новой версией.
-5. Переключите OpenCRM на нужную TemplateVersion.
+1. Add a new version with its own layout and models, retaining the previous one.
+2. Add the exact application/key/channel/version mapping to the catalog.
+3. Validate Razor rendering and delivery through the broker.
+4. Deploy the Worker with the new version.
+5. Switch OpenCRM to the required TemplateVersion.
 
-Не правьте опубликованный макет V1 для выпуска V2: отложенные уже принятые письма
-защищены снимком, но новые команды, явно выбирающие V1, должны сохранять её поведение.
-Старые шаблоны нельзя удалять из образа, пока клиенты или старые задания могут их использовать.
-Новая версия требует сборки и развёртывания Worker.
+Do not edit the published V1 layout to release V2: accepted deferred emails are protected by snapshots, but new commands explicitly selecting V1 must preserve its behavior. Do not remove old templates from the image while clients or old jobs might use them. A new version requires a Worker build and deployment.
 
-## Редактируемые рассылки и SMS
+## Editable campaigns and SMS
 
-Для них сохранены шаблоны из БД с подстановками {{name}} и {{url:link}}.
-Их ключи не должны начинаться с system/. Это отдельный механизм без выполнения Razor-кода.
+These retain database templates with {{name}} and {{url:link}} substitutions. Their keys must not start with system/. This is a separate mechanism without Razor execution.
 
-UpsertNotificationTemplate регистрирует неизменяемую версию по
-(ApplicationId, Key, Channel, Version). Повтор с тем же содержимым подтверждается,
-изменение существующей версии отклоняется. Перед отправкой нужно получить
-NotificationTemplateUpdated с соответствующими Key, Channel и Version.
+UpsertNotificationTemplate registers an immutable version by (ApplicationId, Key, Channel, Version). Repeating the same content is acknowledged; changing an existing version is rejected. Before sending, receive NotificationTemplateUpdated with the corresponding Key, Channel, and Version.
 
-Для административной рассылки можно сохранить готовую разметку кампании как шаблон
-campaign-123 версии 1. Получателям отправляются ключ, версия и персональные параметры;
-отдельный шаблон на каждого получателя не нужен.
+An administrative campaign can store its final markup as template campaign-123 version 1. Recipients receive the key, version, and personal parameters; no separate template is needed for each recipient.
 
-В шаблонах БД разрешены только плоские строковые, числовые и логические значения Data.
-Объекты, массивы и null отклоняются. HTML-параметры экранируются; разметку письма храните
-в BodyTemplate. Циклы, выражения и raw HTML в параметрах этого механизма не поддерживаются.
-SMS-шаблоны используют обычный текст.
+Database templates allow only flat string, numeric, and boolean Data values. Objects, arrays, and null are rejected. HTML parameters are escaped; store email markup in BodyTemplate. Loops, expressions, and raw HTML parameters are unsupported in this mechanism. SMS templates use plain text.
 
-Старые команды без полей Version/TemplateVersion используют версию 1.
-Старые ключи email-confirmation и subscription-expiring без префикса system/ по-прежнему
-относятся к БД: они не переопределяются встроенным Razor-каталогом.
+Old commands without Version/TemplateVersion use version 1. Old email-confirmation and subscription-expiring keys without system/ still refer to the database; the built-in Razor catalog does not override them.
 
-## Снимок и обновление базы
+## Snapshot and database update
 
-Subject, Body, IsHtml, TemplateKey и TemplateVersion сохраняются при приёме команды.
-Повтор IdempotencyKey возвращает прежнее состояние; новые Data не заменяют первое письмо.
-Записи старого Worker с IsHtml=null получают снимок перед обращением к провайдеру.
+Subject, Body, IsHtml, TemplateKey, and TemplateVersion are stored at command acceptance. Repeating IdempotencyKey returns the previous state; new Data does not replace the first email. Old Worker records with IsHtml=null receive a snapshot before contacting the provider.
 
-Для снимков по-прежнему нужна ранее подготовленная миграция
-20260909054007_VersionedTemplateSnapshots. Дополнительной миграции для Razor нет.
-Существующие шаблоны БД сохраняются как версия 1, начальная миграция не меняется.
+Snapshots still require the previously prepared 20260909054007_VersionedTemplateSnapshots migration. Razor requires no additional migration. Existing database templates remain version 1; the initial migration is unchanged.
 
-1. Сделайте резервную копию базы notifications.
-2. Остановите старый Worker.
-3. Примените миграции через --migrate из нового образа.
-4. Запустите новый Worker, затем переключайте клиентов на системные ключи.
+1. Back up the notifications database.
+2. Stop the old Worker.
+3. Apply migrations through --migrate from the new image.
+4. Start the new Worker, then switch clients to system keys.
 
-Старый и новый Worker не должны одновременно обрабатывать задания при переходе.
-Down разрешён, пока все шаблоны БД имеют версию 1 и нет уведомлений с TemplateVersion > 1.
-В остальных случаях откат останавливается до удаления данных; требуется отдельный
-план сохранения данных или восстановление резервной копии.
+The old and new Worker must not process jobs concurrently during transition. Down is allowed while all database templates are version 1 and no notifications have TemplateVersion > 1. Otherwise, rollback stops before deleting data; a separate data preservation plan or backup restoration is required.
 
-provider-accepted означает принятие провайдером. Отчёты Unisender принимает Worker,
-а нормализованные события доставки передаются в OpenCRM через RabbitMQ.
+provider-accepted means provider acceptance. The Worker receives Unisender reports and forwards normalized delivery events to OpenCRM through RabbitMQ.
 
-## Письма из редактора
+## Emails from the editor
 
-system/custom-email принимает subject и htmlBody. Скомпилированный шаблон вставляет
-доверенный HTML редактора в общий макет; строка не компилируется и не исполняется как Razor.
-Обычные параметры других системных шаблонов продолжают экранироваться.
-OpenCRM не регистрирует отдельный шаблон БД для каждого такого письма.
+system/custom-email accepts subject and htmlBody. The compiled template inserts trusted editor HTML into the shared layout; that string is neither compiled nor executed as Razor. Ordinary parameters of other system templates remain escaped. OpenCRM does not register a separate database template for each such email.
 
-NotificationStatusChanged.Content возвращает снимок темы, HTML и текстовой версии
-в очередь приложения-владельца. Это позволяет показать готовое письмо в журнале OpenCRM.
-Отдельная миграция ProviderWebhookEvents относится к событиям провайдера, а не к Razor.
+NotificationStatusChanged.Content returns the subject, HTML, and plain-text snapshot to the owning application's queue so OpenCRM can show the rendered email in its log. The separate ProviderWebhookEvents migration concerns provider events, not Razor.

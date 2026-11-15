@@ -1,56 +1,58 @@
-# Конфигурация
+# Configuration
 
-OpenCRM читает стандартную конфигурацию .NET: секции JSON задаются в формате `Parent:Child`, а для переменных окружения двоеточие заменяется двойным подчёркиванием, например `ConnectionStrings__OpenCRMConnection`.
+**English** | [Русский](configuration.ru.md)
 
-Веб-приложение загружает стандартные `appsettings.json` и `appsettings.{Environment}.json`, затем общий `brand.json`, переменные окружения и аргументы командной строки. При совпадении ключей поздний источник переопределяет ранний. Поэтому локальные значения и секреты задавайте через окружение или секреты разработки, не добавляя их в файлы репозитория.
+OpenCRM reads standard .NET configuration: JSON sections use `Parent:Child`, while environment variables replace the colon with a double underscore, for example `ConnectionStrings__OpenCRMConnection`.
 
-## Основные секции
+The web application loads the standard `appsettings.json` and `appsettings.{Environment}.json`, then the shared `brand.json`, environment variables, and command-line arguments. When keys overlap, a later source overrides an earlier one. Supply local values and secrets through the environment or development secrets rather than committing them to repository files.
 
-| Секция или ключ | Назначение и базовое поведение |
+## Main sections
+
+| Section or key | Purpose and default behavior |
 | --- | --- |
-| `ConnectionStrings:OpenCRMConnection` | Подключение основной CRM к PostgreSQL. Задавайте `ConnectionStrings__OpenCRMConnection`; ключ должен быть настроен для миграций и запуска WebApp. |
-| `Brand:DisplayName`, `Brand:PublicBaseUrl` | Название приложения и публичный адрес. Сервер допускает одноимённые переменные `Brand__DisplayName` и `Brand__PublicBaseUrl`. Остальные поля бренда задаются в общем JSON. Подробнее — [configuration/README.md](../configuration/README.md). |
-| `EmailConfirmation:Required` | По умолчанию `false`. В базовом режиме регистрация не требует почтового подтверждения. Если включить подтверждение, отдельно настройте и подключите доставку писем. |
-| `Notifications:Transport` | По умолчанию `Disabled`. При этом базовый вход и работа CRM обходятся без брокера и Worker. Для доставки используется `RabbitMq` вместе с отдельным Notification Worker. `InMemory` предназначен для изолированных тестов, а не для постоянной доставки. |
-| `RabbitMq:*` | Настройки брокера и ApplicationId для обмена сообщениями с Worker. Одних параметров брокера недостаточно: Worker должен быть запущен и настроен на ту же инфраструктуру. |
-| `PlatformPolicy:Commercial:Enabled` | По умолчанию `false`: CRM работает без тарифных ограничений. `true` включает коммерческий модуль и инициализацию встроенных планов. Цены, квоты и условия своей установки нужно проверить и настроить; для реальных покупок отдельно подключается платёжная инфраструктура. |
-| `Assistant:*`, `AssistantTelegram:*` | Настройки ИИ-помощника и Telegram-взаимодействия. Помощник выключен по умолчанию; включение требует собственной конфигурации провайдера и необходимых каналов. Не добавляйте ключи провайдера в отслеживаемые JSON. |
-| `PaymentsService:*`, `YooKassa:*` | Интеграция подписок с сервисом платежей и настройками YooKassa. По умолчанию сервис платежей выключен; для включения нужны собственные ключи, адреса возврата и соответствующий платежный сервис. |
-| `S3:*` | Параметры объектного хранилища. Учетные данные задаются отдельно; они не нужны для базового локального запуска. |
-| `IdentitySettings:*` | Политики паролей, входа и блокировки аккаунтов. Значения читаются из одноимённой секции appsettings. |
-| `Security:AllowedCorsOrigins` | Разрешённые источники браузерных запросов. Для собственного развертывания укажите адреса его клиентских приложений. |
-| `ReverseProxy:KnownProxy` | В Production требуется IP доверенного обратного прокси; значение не нужно для локального профиля разработки. |
+| `ConnectionStrings:OpenCRMConnection` | Connects the main CRM to PostgreSQL. Set `ConnectionStrings__OpenCRMConnection`; it must be configured for migrations and WebApp startup. |
+| `Brand:DisplayName`, `Brand:PublicBaseUrl` | Application name and public URL. Server processes accept the corresponding `Brand__DisplayName` and `Brand__PublicBaseUrl` variables. Other brand fields are set in the shared JSON. See [configuration/README.md](../configuration/README.md). |
+| `EmailConfirmation:Required` | Defaults to `false`. Registration in the base mode does not require email verification. If you enable verification, configure and connect email delivery separately. |
+| `Notifications:Transport` | Defaults to `Disabled`. Basic sign-in and CRM work then require neither a broker nor the Worker. Delivery uses `RabbitMq` with a separate Notification Worker. `InMemory` is intended for isolated tests, not persistent delivery. |
+| `RabbitMq:*` | Broker settings and ApplicationId for exchanging messages with the Worker. Broker settings alone are insufficient: the Worker must be running and configured for the same infrastructure. |
+| `PlatformPolicy:Commercial:Enabled` | Defaults to `false`: the CRM runs without plan restrictions. `true` enables the commercial module and initialization of built-in plans. Review and configure prices, quotas, and terms for your installation; real purchases require separate payment infrastructure. |
+| `Assistant:*`, `AssistantTelegram:*` | AI assistant and Telegram interaction settings. The assistant is disabled by default; enabling it requires your own provider and channel configuration. Do not commit provider keys in tracked JSON. |
+| `PaymentsService:*`, `YooKassa:*` | Subscription integration with the payment service and YooKassa settings. The payment service is disabled by default; enabling it requires your own keys, return URLs, and a corresponding payment service. |
+| `S3:*` | Object storage parameters. Credentials are configured separately and are unnecessary for basic local setup. |
+| `IdentitySettings:*` | Password, sign-in, and account lockout policies. Values come from the corresponding appsettings section. |
+| `Security:AllowedCorsOrigins` | Allowed browser request origins. For your deployment, specify the addresses of its client applications. |
+| `ReverseProxy:KnownProxy` | The trusted reverse proxy IP is required in Production; this value is unnecessary for the local development profile. |
 
-Переменные окружения задаются процессу, который использует соответствующую настройку. Настройки WebApp не заменяют настройки отдельного Worker или платежного сервиса.
+Provide environment variables to the process that uses each setting. WebApp settings do not replace the separate Worker's or payment service's settings.
 
-## Секреты и локальные значения
+## Secrets and local values
 
-Строки подключения, пароль RabbitMQ, ключи ИИ и платёжных провайдеров, SMTP-пароль и ключи объектного хранилища храните в секрет-хранилище окружения или в локальной конфигурации, не включённой в Git. Для разработки используйте переменные окружения текущего сеанса. `dotnet user-secrets` применим только к проекту с настроенным `UserSecretsId`; общего идентификатора для WebApp, проекта миграций и сервисов нет. Секреты задавайте тому приложению, которое их читает.
+Keep connection strings, the RabbitMQ password, AI and payment provider keys, SMTP credentials, and object storage keys in the environment's secret store or local configuration excluded from Git. For development, use the current session's environment variables. `dotnet user-secrets` applies only to a project with a configured `UserSecretsId`; WebApp, the migrations project, and the services do not share a common ID. Supply secrets to the application that reads them.
 
-Файл `configuration/brand.json` не является хранилищем секретов. Серверные процессы поддерживают `Brand__DisplayName` и `Brand__PublicBaseUrl`; настольные приложения используют JSON. При общем развертывании согласуйте файл бренда и адрес между процессами.
+`configuration/brand.json` is not a secret store. Server processes support `Brand__DisplayName` and `Brand__PublicBaseUrl`; desktop applications use JSON. Keep the brand file and URL consistent across processes in a shared deployment.
 
-## Опциональные интеграции
+## Optional integrations
 
-### Уведомления и email
+### Notifications and email
 
-Обычная регистрация работает при `Notifications:Transport=Disabled` и `EmailConfirmation:Required=false`. Настройка `Smtp:*` относится к отдельному сервису Notification Worker, а не является самостоятельной настройкой отправки из WebApp. Полная схема подключения брокера и Worker, его SMTP, переменных окружения и шаблонов описана в [документации сервиса уведомлений](../services/notifications/README.md).
+Normal registration works with `Notifications:Transport=Disabled` and `EmailConfirmation:Required=false`. The `Smtp:*` settings belong to the separate Notification Worker, rather than independently enabling sending from WebApp. See the [notification service documentation](../services/notifications/README.md) for the broker/Worker connection, SMTP, environment variables, and templates.
 
-Перед включением обязательного подтверждения проверьте полную цепочку доставки писем. Само значение `EmailConfirmation:Required=true` почтовый сервер не настраивает.
+Verify the complete email delivery chain before requiring verification. Setting `EmailConfirmation:Required=true` does not configure an email server.
 
-### Коммерческий модуль и платежи
+### Commercial module and payments
 
-Минимальное включение коммерческого режима в WebApp — `PlatformPolicy__Commercial__Enabled=true` и перезапуск приложения. При старте инициализируется встроенный набор коммерческих планов. Проверьте и настройте цены, квоты и условия своей установки через администрирование до предложения покупок пользователям. Само включение режима не подключает оплату. Для реальных покупок отдельно настройте платежный сервис, возвращаемые адреса и секреты по [документации интеграции платежей](payments-service-integration.md). Не включайте коммерческий режим только ради базовой работы CRM.
+To enable commercial mode in WebApp, set `PlatformPolicy__Commercial__Enabled=true` and restart the application. Startup initializes the built-in commercial plans. Review and configure prices, quotas, and terms through administration before offering purchases to users. Enabling the mode does not connect payments. For real purchases, configure the payment service, return URLs, and secrets separately using the [payment integration documentation](payments-service-integration.md). Do not enable commercial mode merely to use the basic CRM.
 
-### ИИ-помощник
+### AI assistant
 
-Секция `Assistant` содержит переключатель `Enabled`, URL и разрешённые адреса провайдера, модели, секретный ключ провайдера `Assistant__RouterApiKey` (устаревший альтернативный ключ: `AiPilot__ApiKey`), лимиты и параметры обработки. По умолчанию `Enabled=false`. ИИ-помощник — опциональная серверная интеграция; её включение требует настроенного провайдера и секретов в окружении. Описание серверного исполнения и безопасности находится в [документе об ИИ-помощнике](ai-assistant.md).
+The `Assistant` section contains the `Enabled` switch, provider URL and allowed addresses, models, provider secret key `Assistant__RouterApiKey` (legacy alternative: `AiPilot__ApiKey`), limits, and processing parameters. `Enabled=false` by default. The AI assistant is an optional server-side integration; enabling it requires a configured provider and environment secrets. See the [AI assistant document](ai-assistant.md) for server-side execution and security.
 
-## Где проверить состав настроек
+## Where to inspect available settings
 
-- Начальные значения WebApp и секции: `src/OpenCRM.WebApp/appsettings.json` и `src/OpenCRM.WebApp/appsettings.Development.json`.
-- Порядок источников конфигурации: `src/OpenCRM.WebApp/Program.cs`.
-- Подключение PostgreSQL, Identity и Hangfire: `src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs`.
-- Настройки помощника: `src/OpenCRM.WebApp/Infrastructure/Assistant/AssistantOptions.cs`.
-- Общие настройки бренда: `configuration/brand.json` и `configuration/README.md`.
-- Отдельные настройки уведомлений: `services/notifications/src/Notifications.Worker/appsettings.json` и `services/notifications/README.md`.
-- Настройки сервиса платежей: `services/payments/README.md` и файлы `appsettings.json` соответствующих проектов.
+- WebApp defaults and sections: `src/OpenCRM.WebApp/appsettings.json` and `src/OpenCRM.WebApp/appsettings.Development.json`.
+- Configuration source order: `src/OpenCRM.WebApp/Program.cs`.
+- PostgreSQL, Identity, and Hangfire registration: `src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs`.
+- Assistant settings: `src/OpenCRM.WebApp/Infrastructure/Assistant/AssistantOptions.cs`.
+- Shared brand settings: `configuration/brand.json` and `configuration/README.md`.
+- Separate notification settings: `services/notifications/src/Notifications.Worker/appsettings.json` and `services/notifications/README.md`.
+- Payment service settings: `services/payments/README.md` and the respective projects' `appsettings.json` files.

@@ -1,51 +1,53 @@
-# Микросервисы OpenCRM
+# OpenCRM microservices
 
-OpenCRM сочетает модульное CRM-ядро и отдельные сервисы уведомлений и платежей. Прикладная CRM работает в ASP.NET Core host; фоновые интеграционные задачи вынесены в собственные приложения.
+**English** | [Русский](microservices.ru.md)
 
-## Зачем они выделены
+OpenCRM combines a modular CRM core with separate notification and payment services. The application CRM runs in an ASP.NET Core host; background integration tasks run in their own applications.
 
-- **Отдельное развёртывание.** Сервис можно обновлять и запускать независимо от веб-интерфейса CRM.
-- **Свои настройки и данные.** Подключения, секреты и служебная БД принадлежат конкретному сервису.
-- **Отдельные worker.** Обработка очередей и взаимодействие с провайдером выполняются вне пользовательского HTTP-запроса.
-- **Опциональное подключение.** Для локальной регистрации и основной работы CRM эти сервисы не обязательны.
+## Why they are separate
 
-Состав веб-хоста и границы предметных модулей описаны в [архитектуре](architecture-current.md).
+- **Independent deployment.** Update and run a service independently of the CRM web interface.
+- **Own settings and data.** Connections, secrets, and the service database belong to that service.
+- **Separate workers.** Queue processing and provider interaction happen outside the user's HTTP request.
+- **Optional integration.** These services are not required for local registration and basic CRM work.
 
-## Карта компонентов
+See [architecture](architecture-current.md) for web host composition and business module boundaries.
 
-| Компонент | Ответственность | Документация |
+## Component map
+
+| Component | Responsibility | Documentation |
 | --- | --- | --- |
-| WebApp и модули | Пользователи, организации, права, рабочие данные CRM, документы, учёт оплат заказов | [Локальный запуск](local-run.md) |
-| Notifications | Очереди доставки, шаблоны, адаптеры подключённых каналов, фоновые попытки и статусы | [README сервиса](../services/notifications/README.md), [интеграция с ядром](notifications.md) |
-| Payments | Платёжные операции и статусы, подключение провайдера и фоновая сверка | [README сервиса](../services/payments/README.md), [интеграция с ядром](payments-service-integration.md) |
+| WebApp and modules | Users, organizations, permissions, CRM operational data, documents, work order payment tracking | [Local setup](local-run.md) |
+| Notifications | Delivery queues, templates, connected channel adapters, background attempts and statuses | [Service README](../services/notifications/README.md), [core integration](notifications.md) |
+| Payments | Payment operations and statuses, provider integration, background reconciliation | [Service README](../services/payments/README.md), [core integration](payments-service-integration.md) |
 
-## Уведомления
+## Notifications
 
-Исходники находятся в [`services/notifications`](../services/notifications), решение — [`NotificationService.slnx`](../services/notifications/NotificationService.slnx). Сервис содержит API и Worker. Конкретные каналы и внешние провайдеры включаются собственной конфигурацией.
+Source: [`services/notifications`](../services/notifications); solution: [`NotificationService.slnx`](../services/notifications/NotificationService.slnx). The service contains an API and Worker. Enable specific channels and external providers through your own configuration.
 
-В базовой CRM `Notifications:Transport=Disabled`. Чтобы подключить реальную доставку, подготовьте сервис, RabbitMQ, его БД и параметры нужных каналов, затем задайте WebApp транспорт `RabbitMq` и согласованные параметры брокера. Отсутствие SMTP не блокирует парольную регистрацию и внутренние обращения поддержки.
+The basic CRM uses `Notifications:Transport=Disabled`. To connect real delivery, prepare the service, RabbitMQ, its database, and the required channel parameters, then set the WebApp transport to `RabbitMq` with matching broker settings. Lack of SMTP does not block password registration or internal support requests.
 
-Не путайте отключённую доставку с тестовым `InMemory`: он не является рабочей почтовой доставкой.
+Do not confuse disabled delivery with the test-only `InMemory` transport: it does not provide production email delivery.
 
-Пошаговые параметры и команды: [README Notifications](../services/notifications/README.md). Локальное контейнерное окружение описано в [compose.yaml](../services/notifications/compose.yaml).
+For step-by-step parameters and commands, see [Notifications README](../services/notifications/README.md). The local container environment is described in [compose.yaml](../services/notifications/compose.yaml).
 
-## Платежи
+## Payments
 
-Исходники находятся в [`services/payments`](../services/payments). У сервиса собственные API, хранилище и параметры провайдера. Для включения интеграции нужны собственные адреса, ключи, разрешённые URL возврата и согласованные служебные параметры.
+Source: [`services/payments`](../services/payments). This service has its own API, storage, and provider parameters. Integration requires your own addresses, keys, allowed return URLs, and matching service settings.
 
-Коммерческие подписки OpenCRM по умолчанию выключены. Включение коммерческого режима и подключение платёжного провайдера — отдельные действия. Рабочий учёт оплат клиентских заказов в CRM не требует продажи подписок на саму платформу.
+OpenCRM commercial subscriptions are disabled by default. Enabling commercial mode and connecting a payment provider are separate actions. Tracking payments for customers' work orders in the CRM does not require selling subscriptions to the platform itself.
 
-Порядок запуска, параметры и ограничения: [README Payments](../services/payments/README.md). Связь с ядром: [интеграция сервиса платежей](payments-service-integration.md). Контейнерное окружение: [compose.yaml](../services/payments/compose.yaml).
+See [Payments README](../services/payments/README.md) for startup, parameters, and limitations; [payment service integration](payments-service-integration.md) for the connection to the core; and [compose.yaml](../services/payments/compose.yaml) for the container environment.
 
-## Настройка своей установки
+## Configure your installation
 
-1. Сначала поднимите и проверьте [базовую CRM](local-run.md).
-2. Выберите нужную интеграцию и прочитайте README её сервиса.
-3. Создайте отдельные служебные БД и передайте секреты соответствующим процессам.
-4. Примените миграции нужного сервиса и запустите его API/Worker по его инструкции.
-5. Настройте согласованные адреса и служебные ключи на обеих сторонах связи.
-6. Проверьте health endpoints, обработку тестовой операции и отказ/повтор до подключения рабочих провайдеров.
+1. Start and validate the [basic CRM](local-run.md) first.
+2. Choose the integration you need and read its service README.
+3. Create separate service databases and supply secrets to the corresponding processes.
+4. Apply the service's migrations and start its API/Worker according to its guide.
+5. Configure matching addresses and service keys on both sides of the connection.
+6. Check health endpoints, a test operation, and failure/retry behavior before connecting production providers.
 
-Имена переменных и их префиксы зависят от приложения. Окружение WebApp не настраивает автоматически процессы Notifications и Payments. Подробности: [конфигурация](configuration.md) и README каждого сервиса.
+Environment variable names and prefixes depend on the application. WebApp's environment does not automatically configure Notifications and Payments. See [configuration](configuration.md) and each service's README.
 
-При обновлении сохраняйте данные и согласовывайте контракты ядра и сервиса. Изменение версии PostgreSQL и перемещение каталога данных требуют отдельной подготовки; существующие базы и тома не заменяйте пустыми ради повторного запуска.
+Preserve data and coordinate core/service contracts when upgrading. A PostgreSQL version change or moving its data directory requires separate preparation; do not replace existing databases or volumes with empty ones merely to restart.

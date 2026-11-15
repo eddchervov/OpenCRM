@@ -1,12 +1,10 @@
 # NotificationService
 
-Микросервис уведомлений для OpenCRM и других приложений. Один процесс Worker принимает
-команды через RabbitMQ, хранит состояние в PostgreSQL, отправляет email/SMS и возвращает
-результаты в очередь приложения. Команды принимаются только через RabbitMQ.
-На внутреннем порту 8080 может работать обратный вебхук почтового провайдера;
-HTTP API для отправки уведомлений отсутствует.
+**English** | [Русский](README.ru.md)
 
-## Поток сообщений
+A notification microservice for OpenCRM and other applications. One Worker process receives commands through RabbitMQ, stores state in PostgreSQL, sends email/SMS, and returns results to the application's queue. Commands are accepted only through RabbitMQ. An email provider callback webhook may run on internal port 8080; there is no HTTP API for sending notifications.
+
+## Message flow
 
 ```text
 OpenCRM → notifications-opencrm-commands → Worker → PostgreSQL + outbox
@@ -20,26 +18,24 @@ OpenCRM → notifications-opencrm-commands → Worker → PostgreSQL + outbox
 OpenCRM ← notifications-opencrm-results ← RabbitMQ
 ```
 
-Приём команд и доставка выполняются разными обработчиками в одном процессе. Внутренняя
-очередь сохранена для совместимости с ранее принятыми заданиями и отложенной отправкой.
+Command acceptance and delivery use different handlers in the same process. The internal queue is retained for compatibility with previously accepted jobs and deferred sends.
 
-## Возможности
+## Features
 
-- Адресные команды создания уведомлений, обновления шаблонов и запроса состояния.
-- Отдельные очереди команд и результатов для каждого приложения.
-- Идемпотентность по ApplicationId и нормализованному IdempotencyKey.
-- Transactional inbox/outbox для входящих команд; bus outbox для результатов доставки.
-- Отложенная отправка, четыре попытки и восстановление аренды после падения Worker.
-- Состояния queued, processing, retrying, provider-accepted, simulated, failed, not-found.
-- LogOnly по умолчанию: настоящие письма и SMS не отправляются.
-- PostgreSQL, RabbitMQ, JSON-логи, Docker Compose и CI.
+- Addressed commands for notification creation, template updates, and status requests.
+- Separate command and result queues for each application.
+- Idempotency by ApplicationId and normalized IdempotencyKey.
+- Transactional inbox/outbox for incoming commands; bus outbox for delivery results.
+- Deferred delivery, four attempts, and lease recovery after a Worker crash.
+- queued, processing, retrying, provider-accepted, simulated, failed, and not-found states.
+- LogOnly by default: no real emails or SMS are sent.
+- PostgreSQL, RabbitMQ, JSON logs, Docker Compose, and CI.
 
-`provider-accepted` означает принятие провайдером, а не подтверждённую доставку получателю.
-`simulated` отдельно обозначает LogOnly. Подтверждения доставки от провайдеров пока не реализованы.
+`provider-accepted` means acceptance by a provider, not confirmed recipient delivery. `simulated` separately indicates LogOnly. Provider delivery acknowledgments are not yet implemented.
 
-Исходники находятся в `services/notifications` репозитория OpenCRM. Все проекты сервиса также включены в корневой `OpenCRM.sln`. Команды в этом документе выполняются из папки сервиса; `NotificationService.slnx` позволяет собирать и проверять его отдельно. Публикация Worker и миграции его базы остаются независимыми от OpenCRM.
+Sources reside in `services/notifications` in the OpenCRM repository. All service projects are also included in the root `OpenCRM.sln`. Commands in this document run from the service directory; `NotificationService.slnx` allows a separate build and test run. Worker deployment and its database migrations remain independent of OpenCRM.
 
-## Структура
+## Structure
 
 ```text
 src/
@@ -54,93 +50,51 @@ tests/
     Integration                 БД, брокер, Razor и регистрация DI
 ```
 
-## Локальный запуск
+## Local setup
 
-Команды этого раздела выполняются из каталога `services/notifications`.
+Run this section's commands from `services/notifications`.
 
-1. Скопировать `.env.example` в `.env` и задать собственные значения для пустых `POSTGRES_PASSWORD` и `RABBITMQ_PASSWORD`.
-2. Выполнить `docker compose up --build -d`.
-3. Проверить `docker compose logs --tail=100 worker` и consumers в RabbitMQ UI на `http://localhost:15672`.
+1. Copy `.env.example` to `.env` and supply your own values for the empty `POSTGRES_PASSWORD` and `RABBITMQ_PASSWORD`.
+2. Run `docker compose up --build -d`.
+3. Inspect `docker compose logs --tail=100 worker` and consumers in the RabbitMQ UI at `http://localhost:15672`.
 
-Пример команд и обработчиков результатов: [интеграция OpenCRM](docs/opencrm-integration.md).
-Добавление приложения: `RabbitMq__Applications__1=catalog` в environment Worker.
-Идентификаторы состоят из строчных латинских букв, цифр и дефиса, не длиннее 100 символов.
-У каждого приложения должен быть отдельный пользователь RabbitMQ с доступом только
-к собственным очередям. Список Applications создаёт маршруты, но не заменяет права брокера.
+For example commands and result handlers, see [OpenCRM integration](docs/opencrm-integration.md). Add an application using `RabbitMq__Applications__1=catalog` in the Worker's environment. IDs consist of lowercase Latin letters, digits, and hyphens and are limited to 100 characters. Each application must have a separate RabbitMQ user with access only to its own queues. The Applications list creates routes but does not replace broker permissions.
 
 ## Production
 
-Worker использует стандартные ключи конфигурации .NET без префикса `NOTIFICATIONS_`. WebApplication.CreateBuilder загружает appsettings, а в Development — user-secrets проекта `src/Notifications.Worker`; затем Program добавляет общий `brand.json`, переменные окружения без префикса и аргументы командной строки. Для прямого запуска задавайте, например, `ConnectionStrings__NotificationsDb`, `RabbitMq__Host`, `RabbitMq__Password` и `Delivery__LogOnly`.
+The Worker uses standard .NET configuration keys without the `NOTIFICATIONS_` prefix. WebApplication.CreateBuilder loads appsettings and, in Development, user-secrets for `src/Notifications.Worker`; Program then adds the shared `brand.json`, unprefixed environment variables, and command-line arguments. For direct startup, set values such as `ConnectionStrings__NotificationsDb`, `RabbitMq__Host`, `RabbitMq__Password`, and `Delivery__LogOnly`.
 
-Для Production и прямого запуска Worker задавайте стандартные ключи без префикса: `ConnectionStrings__NotificationsDb`, `RabbitMq__Host`, `RabbitMq__Username`, `RabbitMq__Password` и `Delivery__LogOnly`. Храните секреты во внешнем хранилище и передавайте процессу Worker через переменные окружения; отслеживаемые appsettings содержат только имена параметров и пустые значения секретов.
+For Production and direct Worker startup, use unprefixed standard keys: `ConnectionStrings__NotificationsDb`, `RabbitMq__Host`, `RabbitMq__Username`, `RabbitMq__Password`, and `Delivery__LogOnly`. Keep secrets in an external store and provide them as Worker environment variables; tracked appsettings contain only parameter names and empty secret values.
 
-EF design-time фабрика определяет окружение по `DOTNET_ENVIRONMENT`, затем по `ASPNETCORE_ENVIRONMENT`. В Development она загружает User Secrets с тем же UserSecretsId, что и Worker, затем — все переменные окружения без префикса; окружение имеет приоритет. Для миграций достаточно передать `ConnectionStrings__NotificationsDb`.
+The EF design-time factory determines the environment from `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`. In Development, it loads User Secrets with the same UserSecretsId as the Worker, then all unprefixed environment variables; the environment takes precedence. Migrations need only `ConnectionStrings__NotificationsDb`.
 
-## Настройки интеграций
+## Integration settings
 
-Адреса, порты, тайм-аут SMS.ru, отображаемое имя отправителя, список приложений и режимы
-задаются в src/Notifications.Worker/appsettings.json и переопределяются окружением.
-В классах Options нет рабочих адресов, портов, имён или режима LogOnly по умолчанию.
-Пустые строки и коллекции в свойствах означают незаполненную настройку.
+Addresses, ports, SMS.ru timeout, sender display name, application list, and modes are configured in src/Notifications.Worker/appsettings.json and overridden through the environment. Options classes do not supply working default addresses, ports, names, or LogOnly mode. Empty strings and collections mean a setting has not been filled in.
 
-Worker проверяет обязательные параметры до запуска обработчиков. Delivery:LogOnly должен
-быть задан явно; отсутствие значения не включает реальную отправку.
-Email:Enabled, Sms:Enabled, Telegram:Enabled и TelegramClient:Enabled позволяют включить нужные каналы независимо.
-При LogOnly=true секреты внешних провайдеров не требуются.
+The Worker validates required parameters before starting consumers. Delivery:LogOnly must be explicit; an absent value does not enable real sending. Email:Enabled, Sms:Enabled, Telegram:Enabled, and TelegramClient:Enabled enable channels independently. With LogOnly=true, external provider secrets are unnecessary.
 
-Для локального compose достаточно задать только `POSTGRES_PASSWORD` и `RABBITMQ_PASSWORD` в `.env`: compose передаёт остальные обязательные значения, включая `Delivery:LogOnly=true`, включённые email/SMS-каналы, SMTP-порт и параметры SMS.ru. В режиме `LogOnly` секреты SMTP и SMS.ru не проверяются и реальная отправка не выполняется.
+For local compose, set only `POSTGRES_PASSWORD` and `RABBITMQ_PASSWORD` in `.env`: compose supplies the remaining required values, including `Delivery:LogOnly=true`, enabled email/SMS channels, SMTP port, and SMS.ru parameters. In `LogOnly`, SMTP and SMS.ru secrets are not validated and nothing is actually sent.
 
-Для реальной отправки только email установите DELIVERY_LOG_ONLY=false, EMAIL_ENABLED=true,
-SMS_ENABLED=false и заполните SMTP_HOST, SMTP_PORT, SMTP_FROM_ADDRESS.
-При заданном SMTP_USERNAME обязателен SMTP_PASSWORD; relay без аутентификации допустим.
-Пустой `SMTP_FROM_NAME` в `.env.example` оставляет `Smtp:FromName` общему названию из `brand.json`; явное непустое значение переопределяет бренд.
-Для реальных SMS включите SMS_ENABLED=true и задайте SMSRU_API_KEY.
-Для сообщений владельцу включите TELEGRAM_ENABLED=true, задайте TELEGRAM_BOT_TOKEN и
-TELEGRAM_OWNER_CHAT_ID. Бот отправляет сообщения только получателю `owner`.
-Если прямое соединение с Bot API недоступно, можно использовать шлюз в `telegram-relay`.
-После его публикации задайте TELEGRAM_RELAY_URL (HTTPS-адрес с `/sendMessage`) и
-TELEGRAM_RELAY_KEY. При таком режиме токен бота и ID чата задаются как секреты Worker
-`TELEGRAM_BOT_TOKEN`, `TELEGRAM_OWNER_CHAT_ID`, а `RELAY_KEY` должен совпадать с
-TELEGRAM_RELAY_KEY в NotificationService. Прямой режим сохраняется, если адрес шлюза пуст.
-Для реальной отправки по-прежнему нужны TELEGRAM_ENABLED=true и DELIVERY_LOG_ONLY=false.
-OpenCRM отдельно включает постановку сообщений через TelegramAdminNotifications__Enabled=true.
-Шлюз публикуется из каталога `telegram-relay`: `npx wrangler deploy`, затем
-`npx wrangler secret put RELAY_KEY`, `npx wrangler secret put TELEGRAM_BOT_TOKEN`
-и `npx wrangler secret put TELEGRAM_OWNER_CHAT_ID`. После этого укажите выданный
-HTTPS-адрес Worker с `/sendMessage` в TELEGRAM_RELAY_URL. RELAY_KEY должен совпадать
-с TELEGRAM_RELAY_KEY; секреты не записывайте в `wrangler.jsonc`.
-Для клиентского Telegram используйте отдельный канал `telegram-client`: включите
-TELEGRAM_CLIENT_ENABLED=true, задайте TELEGRAM_CLIENT_CREDENTIAL_BASE_URL (HTTPS-адрес OpenCRM),
-TELEGRAM_CLIENT_CREDENTIAL_KEY, TELEGRAM_CLIENT_RELAY_URL (Worker с `/sendOrganizationMessage`)
-и TELEGRAM_CLIENT_RELAY_KEY. Ключ OpenCRM должен совпадать с
-TelegramOrganizationNotifications__ServiceKey, а relay-ключ — с секретом Worker RELAY_KEY.
-Клиентский получатель передаётся как `<organizationGuidN>:<chatId>`. Для отправки Worker
-запрашивает токен через GET `/api/internal/notification-bots/telegram/{organizationId:N}`
-с заголовками X-Notification-Service-Key и X-Notification-Key. Ответ содержит `botToken`;
-токен не попадает в очередь уведомлений или базу NotificationService.
-Worker также предоставляет защищённые POST `/getOrganizationBot` и
-`/setOrganizationWebhook` для проверки токена и регистрации webhook. Последний задаёт
-адрес `/updates/{organizationId}` на самом Worker. Входящие обновления Worker пересылает
-только на фиксированный адрес OpenCRM из `OPENCRM_BASE_URL`, в
-`/api/internal/notification-bots/telegram/{organizationId}/updates`, сохраняя
-`X-Telegram-Bot-Api-Secret-Token` для проверки в OpenCRM. Укажите
-`npx wrangler secret put OPENCRM_BASE_URL` при настройке Worker. После первого deploy
-задайте URL самого Worker командой `npx wrangler secret put TELEGRAM_WEBHOOK_BASE_URL`;
-Worker использует эту фиксированную основу для адреса webhook, а не заголовок Host.
-Для клиентских сообщений MAX включите MAX_ENABLED=true и задайте MAX_CREDENTIAL_BASE_URL
-(HTTPS-адрес OpenCRM) и MAX_CREDENTIAL_KEY. Этот ключ должен совпадать с
-MaxNotifications__ServiceKey в OpenCRM; там доставка включается через
-MaxNotifications__Enabled=true. Токены ботов организаций остаются в OpenCRM:
-NotificationService запрашивает нужный токен перед отправкой и не хранит его в очереди.
-Неверные URL, порты и тестовые значения вместо ключей останавливают запуск.
+For real email-only sending, set DELIVERY_LOG_ONLY=false, EMAIL_ENABLED=true, SMS_ENABLED=false, and fill in SMTP_HOST, SMTP_PORT, SMTP_FROM_ADDRESS. If SMTP_USERNAME is set, SMTP_PASSWORD is required; an unauthenticated relay is allowed. An empty `SMTP_FROM_NAME` in `.env.example` lets `Smtp:FromName` use the shared name from `brand.json`; an explicit nonempty value overrides branding.
 
-Design-time фабрика EF не подставляет локальную базу или пароль: строка подключения обязательна, в Development она берётся из user-secrets Worker или `ConnectionStrings__NotificationsDb`, в Production — из этой переменной окружения.
-Режим --migrate проверяет только базу и не требует RabbitMQ или провайдеров.
+For real SMS, enable SMS_ENABLED=true and set SMSRU_API_KEY.
 
-## Каналы и провайдеры
+For owner messages, enable TELEGRAM_ENABLED=true and set TELEGRAM_BOT_TOKEN and TELEGRAM_OWNER_CHAT_ID. The bot sends only to recipient `owner`. If direct Bot API connectivity is unavailable, use the gateway in `telegram-relay`. After deployment, set TELEGRAM_RELAY_URL (an HTTPS URL ending in `/sendMessage`) and TELEGRAM_RELAY_KEY. In this mode, provide the bot token and chat ID as gateway Worker secrets `TELEGRAM_BOT_TOKEN`, `TELEGRAM_OWNER_CHAT_ID`; `RELAY_KEY` must match TELEGRAM_RELAY_KEY in NotificationService. Direct mode remains active if the gateway URL is empty. Real sending still requires TELEGRAM_ENABLED=true and DELIVERY_LOG_ONLY=false. OpenCRM separately enables message queuing through TelegramAdminNotifications__Enabled=true.
 
-Бизнес-логика и команды работают с каналами email/sms/telegram через INotificationChannelSender.
-Выбор адаптера задаётся отдельно от его параметров подключения:
+Deploy the gateway from `telegram-relay` with `npx wrangler deploy`, then `npx wrangler secret put RELAY_KEY`, `npx wrangler secret put TELEGRAM_BOT_TOKEN`, and `npx wrangler secret put TELEGRAM_OWNER_CHAT_ID`. Set TELEGRAM_RELAY_URL to the assigned Worker's HTTPS URL with `/sendMessage`. RELAY_KEY must match TELEGRAM_RELAY_KEY; never store secrets in `wrangler.jsonc`.
+
+For customer Telegram, use the separate `telegram-client` channel: enable TELEGRAM_CLIENT_ENABLED=true and set TELEGRAM_CLIENT_CREDENTIAL_BASE_URL (the OpenCRM HTTPS URL), TELEGRAM_CLIENT_CREDENTIAL_KEY, TELEGRAM_CLIENT_RELAY_URL (Worker with `/sendOrganizationMessage`), and TELEGRAM_CLIENT_RELAY_KEY. The OpenCRM key must match TelegramOrganizationNotifications__ServiceKey; the relay key must match the gateway Worker's RELAY_KEY secret. The customer recipient is `<organizationGuidN>:<chatId>`. Before sending, the Worker retrieves the token through GET `/api/internal/notification-bots/telegram/{organizationId:N}` with X-Notification-Service-Key and X-Notification-Key headers. The response contains `botToken`; the token never enters the notification queue or NotificationService database.
+
+The gateway Worker also exposes protected POST `/getOrganizationBot` and `/setOrganizationWebhook` endpoints to validate tokens and register webhooks. The latter sets `/updates/{organizationId}` on the gateway Worker itself. It forwards incoming updates only to the fixed OpenCRM address from `OPENCRM_BASE_URL`, at `/api/internal/notification-bots/telegram/{organizationId}/updates`, preserving `X-Telegram-Bot-Api-Secret-Token` for OpenCRM validation. Set `npx wrangler secret put OPENCRM_BASE_URL` during gateway setup. After the first deployment, set the gateway Worker's own URL using `npx wrangler secret put TELEGRAM_WEBHOOK_BASE_URL`; it uses this fixed base, not the Host header, for webhook URLs.
+
+For customer MAX messages, enable MAX_ENABLED=true and set MAX_CREDENTIAL_BASE_URL (OpenCRM HTTPS URL) and MAX_CREDENTIAL_KEY. This key must match MaxNotifications__ServiceKey in OpenCRM, where delivery is enabled with MaxNotifications__Enabled=true. Organization bot tokens remain in OpenCRM: NotificationService retrieves the required token before sending and does not store it in a queue. Invalid URLs, ports, and test values in place of keys prevent startup.
+
+The EF design-time factory does not insert a local database or password: a connection string is required. In Development it comes from Worker user-secrets or `ConnectionStrings__NotificationsDb`; in Production it comes from that environment variable. The --migrate mode validates only the database and needs neither RabbitMQ nor providers.
+
+## Channels and providers
+
+Business logic and commands work with email/sms/telegram channels through INotificationChannelSender. Adapter selection is separate from its connection parameters:
 
 ```json
 {
@@ -151,77 +105,48 @@ Design-time фабрика EF не подставляет локальную б�
 }
 ```
 
-Параметры SmsRu (BaseUrl, ApiKey и другие) относятся только к адаптеру SMS.ru;
-Smtp содержит настройки SMTP-адаптера, Telegram — BotToken, OwnerChatId и
-RequestTimeoutSeconds. Эти параметры не являются общими настройками канала.
-В окружении выбор задаётся через SMS_PROVIDER, EMAIL_PROVIDER и TELEGRAM_PROVIDER.
-Настройки выключенного канала не проверяются и его адаптер не регистрируется.
+SmsRu parameters (BaseUrl, ApiKey, and others) belong only to the SMS.ru adapter; Smtp contains SMTP adapter settings; Telegram contains BotToken, OwnerChatId, and RequestTimeoutSeconds. They are not shared channel settings. In the environment, selection uses SMS_PROVIDER, EMAIL_PROVIDER, and TELEGRAM_PROVIDER. A disabled channel's settings are not validated and its adapter is not registered.
 
-Сейчас реализованы smsru для SMS, smtp для email, telegram для админских сообщений и
-telegram-client для клиентских сообщений от имени организации.
-Неизвестное имя провайдера останавливает
-запуск: оно не заменяется неявно на SMS.ru. Для другого сервиса добавляется реализация
-INotificationChannelSender, её регистрация и проверка параметров в Infrastructure.
-После этого адаптер выбирается в конфигурации. OpenCRM, сообщения RabbitMQ,
-NotificationDispatcher и модель базы остаются общими для всех провайдеров.
-Одной замены BaseUrl недостаточно: протокол и формат ответа у поставщиков различаются.
+Current implementations are smsru for SMS, smtp for email, telegram for administrative messages, and telegram-client for customer messages on an organization's behalf. An unknown provider name prevents startup rather than implicitly falling back to SMS.ru. To support another service, add an INotificationChannelSender implementation, registration, and parameter validation in Infrastructure, then select it in configuration. OpenCRM, RabbitMQ messages, NotificationDispatcher, and the database model remain shared across providers. Changing BaseUrl alone is insufficient: providers use different protocols and response formats.
 
-## Шаблоны писем
+## Email templates
 
-Системные письма находятся в Templates/OpenCRM/V1 проекта Infrastructure как .cshtml
-с общим макетом и типизированными моделями. OpenCRM передаёт TemplateKey, TemplateVersion
-и Data; регистрировать системные шаблоны через брокер не требуется.
-Сервис проверяет параметры и сохраняет готовое письмо до queued.
-Отложенная отправка и повторы используют одно и то же содержимое.
-Оформление и доступ задаёт SystemTemplates:Applications: у профиля приложения есть
-BrandName и список Templates. Добавление клиента не требует правок кода.
-Редактируемые рассылки и SMS сохраняют отдельный механизм шаблонов из БД.
+System emails reside in Infrastructure's Templates/OpenCRM/V1 as .cshtml with a shared layout and typed models. OpenCRM passes TemplateKey, TemplateVersion, and Data; system templates do not need registration through the broker. The service validates parameters and stores the rendered email before queued. Deferred delivery and retries use the same content. SystemTemplates:Applications determines appearance and access: each application profile has BrandName and a Templates list. Adding a client requires no code changes. Editable campaigns and SMS retain a separate database-template mechanism.
 
-[Шаблоны, модели и версии](docs/templates.md) ·
-[Примеры параметров](examples/system-emails)
+[Templates, models, and versions](docs/templates.md) · [Parameter examples](examples/system-emails)
 
-## Миграции
+## Migrations
 
-Таблицы и история EF используют схему `notifications`. Версии шаблонов и снимки писем
-добавляет миграция 20260909054007_VersionedTemplateSnapshots. Начальная миграция сохранена.
-Порядок обновления и ограничения отката описаны в [инструкции шаблонов](docs/templates.md).
+Tables and EF history use the `notifications` schema. Migration 20260909054007_VersionedTemplateSnapshots adds template versions and email snapshots. The initial migration is retained. See the [template guide](docs/templates.md) for update order and rollback restrictions.
 
-В production автоматические миграции отключены. Отдельный запуск из образа Worker:
+Automatic migrations are disabled in production. Run them separately from the Worker image:
 
 ```bash
 docker run --rm --env-file .env образ-worker --migrate
 ```
 
-Этот режим применяет миграции и завершает процесс без запуска consumers и отправки уведомлений.
-Для команд EF с SDK используйте Infrastructure как startup project с design-time фабрикой:
+This mode applies migrations and exits without starting consumers or sending notifications. For EF commands with the SDK, use Infrastructure as the startup project with its design-time factory:
 
 ```bash
 dotnet tool restore
 dotnet tool run dotnet-ef database update --project src/Notifications.Infrastructure --startup-project src/Notifications.Infrastructure
 ```
 
-Команда EF в Development читает строку подключения из user-secrets Worker, затем переменные окружения; в Production — только из окружения. Сам `.env` она не загружает.
-[SQL объединения схем](scripts/maintenance/consolidate-schema.sql) сохранён как ручной
-скрипт обслуживания, повторный запуск не нужен.
+In Development, EF reads the connection string from Worker user-secrets and then environment variables; in Production, only the environment. It does not load `.env` itself. The [schema consolidation SQL](scripts/maintenance/consolidate-schema.sql) is retained as a manual maintenance script; it does not need another run.
 
-## Проверка
+## Validation
 
 ```bash
 dotnet build NotificationService.slnx -c Release
 dotnet test NotificationService.slnx -c Release
 ```
 
-Контейнерные интеграционные тесты требуют работающий Docker и сами создают/удаляют
-изолированные PostgreSQL 15 и RabbitMQ 4. Они используют тестового отправителя без
-внешних писем/SMS. Проверки Razor и регистрации DI работают без Docker.
-Без Docker доступны модульные проверки:
+Container integration tests require running Docker and create/remove their own isolated PostgreSQL 15 and RabbitMQ 4. They use a test sender without external email/SMS. Razor and DI registration checks work without Docker. Unit tests are available without Docker:
 
 ```bash
 dotnet test NotificationService.slnx -c Release --filter "FullyQualifiedName~.Unit."
 ```
 
-Подробнее о границах, гарантиях и ограничениях: [архитектура](docs/architecture.md).
+See [architecture](docs/architecture.md) for boundaries, guarantees, and limitations.
 
-На Windows при ручном указании Docker Desktop endpoint используйте формат
-`$env:DOCKER_HOST = "npipe://./pipe/dockerDesktopLinuxEngine"` для текущего процесса PowerShell.
-Строка Docker CLI с четырьмя слешами после `npipe:` не подходит используемой версии Testcontainers.
+On Windows, when specifying the Docker Desktop endpoint manually, use `$env:DOCKER_HOST = "npipe://./pipe/dockerDesktopLinuxEngine"` for the current PowerShell process. The Docker CLI string with four slashes after `npipe:` is incompatible with the Testcontainers version in use.

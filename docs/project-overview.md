@@ -1,13 +1,15 @@
-# Обзор OpenCRM
+# OpenCRM overview
 
-OpenCRM — система для ведения клиентов и связанных с ними рабочих процессов организаций.
+**English** | [Русский](project-overview.ru.md)
 
-## Состав решения
+OpenCRM manages customers and the related operational workflows of organizations.
 
-- `src/OpenCRM.WebApp` — серверный веб-хост, страницы и API.
-- `src/OpenCRM.Frontend` — клиентские интерфейсы и общие компоненты.
-- `src/OpenCRM.Modules.*` — предметная логика.
-- `src/OpenCRM.Infrastructure.*` — интеграции с хранилищами и внешними компонентами.
-- `services/notifications` и `services/payments` — отдельные фоновые сервисы.
+## Solution contents
 
-Сборка основного набора проектов выполняется через `OpenCRM.sln`. Для настройки и локального запуска см. корневой [README](../README.md); архитектурные границы описаны в [технической документации](architecture-current.md).
+- `src/OpenCRM.WebApp` — server web host, pages, and API.
+- `src/OpenCRM.Frontend` — client interfaces and shared components.
+- `src/OpenCRM.Modules.*` — business logic.
+- `src/OpenCRM.Infrastructure.*` — storage and external component integrations.
+- `services/notifications` and `services/payments` — separate background services.
+
+Build the main set of projects using `OpenCRM.sln`. For configuration and local setup, see the root [README](../README.md); architectural boundaries are described in the [technical documentation](architecture-current.md).

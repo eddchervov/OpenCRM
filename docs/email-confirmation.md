@@ -1,33 +1,35 @@
-# Обязательное подтверждение email
+# Required email confirmation
 
-Новые и существующие пользователи с `EmailConfirmed = false` после входа попадают на `/auth/verify-email`. До подтверждения недоступны личная техника, организации, демо, заказы и остальные прикладные функции. Данные и членство сохраняются.
+**English** | [Русский](email-confirmation.ru.md)
 
-Экран использует общие стили страниц входа. Он показывает адрес текущего аккаунта, просит открыть почту и перейти по ссылке из письма. Доступны повторная отправка, кнопка «Я подтвердил email — продолжить», поддержка и выход. Повторная отправка защищена antiforgery и действующей политикой `EmailDelivery`; адрес берётся из аккаунта, а не из формы.
+After signing in, new and existing users with `EmailConfirmed = false` are redirected to `/auth/verify-email`. Until confirmation, personal vehicles, organizations, demos, orders, and other application features are unavailable. Data and memberships are retained.
 
-После постановки письма в очередь действует пауза 60 секунд на аккаунт, включая первоначальную отправку при регистрации. Кнопка показывает обратный отсчёт и блокируется сразу после нажатия. Сервер атомарно резервирует отправку до обращения к почтовому сервису: параллельные запросы, другая вкладка, обновление страницы и старый маршрут повторной отправки не создают дополнительных писем в этот интервал. При ошибке постановки в очередь резерв снимается и можно повторить попытку. Ранее выданные действительные ссылки остаются пригодны для подтверждения.
+The page uses the shared sign-in styles. It displays the current account address and asks the user to open their inbox and follow the link in the email. It provides resend, “I confirmed my email — continue”, support, and sign-out actions. Resending is protected by antiforgery and the active `EmailDelivery` policy; the address comes from the account, not from the form.
 
-Независимый лимит `EmailDelivery` — три запроса за десять минут на IP — сохраняется и учитывает в том числе подавленные повторы. При его исчерпании обязательный экран показывает сообщение и время ожидания вместо JSON-ошибки. Пауза аккаунта хранится в памяти текущего процесса; перезапуск приложения её сбрасывает. При переходе к нескольким экземплярам приложения потребуется общее хранилище ограничения.
+After an email is queued, an account-level 60-second cooldown applies, including to the initial registration email. The button displays a countdown and is disabled immediately after being pressed. Before contacting the mail service, the server atomically reserves the send: parallel requests, another tab, a page refresh, and the legacy resend route do not create additional emails during this interval. If queueing fails, the reservation is released and another attempt is allowed. Previously issued valid links remain usable for confirmation.
 
-После подтверждения ограничение снимается на следующем запросе в той же сессии. Переход на главную сохраняет обычную навигацию: существующему участнику открывается выбранная организация, пользователю без организаций — начало создания организации. Права и тарифные ограничения продолжают действовать в обычном порядке.
+The independent `EmailDelivery` limit of three requests per IP address per ten minutes remains in effect and counts suppressed retries too. When the limit is reached, the required page shows a message and wait time instead of a JSON error. The account cooldown is held in the current process's memory; restarting the application clears it. Multiple application instances will require shared rate-limit storage.
 
-## Серверная проверка
+After confirmation, the restriction is lifted on the next request in the same session. Going to the home page preserves normal navigation: an existing member is taken to the selected organization; a user without organizations is taken to the start of organization creation. Permissions and subscription restrictions continue to apply as usual.
 
-`EmailConfirmationMiddleware` работает после `UseAuthentication` и до `UseAuthorization`. Для маршрутов с политикой он сначала выполняет её аутентификационную часть через `IPolicyEvaluator`, чтобы распознать JWT и использовать правильную схему. Затем читает актуальный аккаунт из БД: ранее выданные cookie и JWT не обходят ограничение.
+## Server-side enforcement
 
-Для HTML возвращается перенаправление на экран подтверждения; для API — HTTP 403 с `code = email_confirmation_required` и `confirmationUrl`. Запрещённые действия, включая POST, не выполняются.
+`EmailConfirmationMiddleware` runs after `UseAuthentication` and before `UseAuthorization`. For routes with a policy, it first evaluates the authentication part through `IPolicyEvaluator` to recognize JWTs and use the correct scheme. It then reads the current account from the database: previously issued cookies and JWTs do not bypass the restriction.
 
-Исключения отмечены `AllowUnconfirmedEmailAttribute`: подтверждение и повторная отправка, вход/регистрация, восстановление доступа, выход/отзыв токена, удаление аккаунта, возврат из имперсонации, поддержка, юридические документы, страницы ошибок, health checks и публичная статика. Одного `AllowAnonymous` для обхода недостаточно. Панель администратора и Hangfire требуют подтверждения даже при наличии разрешающей метаинформации статики.
+HTML requests are redirected to the confirmation page; API requests receive HTTP 403 with `code = email_confirmation_required` and `confirmationUrl`. Prohibited actions, including POST requests, are not executed.
 
-В поддержке кнопка «Новое обращение» открывает отдельную форму `/personal/support/create`. На странице списка остаются обращения и выбранная переписка. Успешная отправка возвращает к списку с созданным обращением; при ошибке введённые значения сохраняются в форме. Список, форма создания и ответы доступны вошедшему пользователю без подтверждения email. Antiforgery, лимит создания обращений и проверка доступа к организации сохраняются.
+Exceptions are marked with `AllowUnconfirmedEmailAttribute`: confirmation and resending, sign-in/registration, account recovery, sign-out/token revocation, account deletion, return from impersonation, support, legal documents, error pages, health checks, and public static assets. `AllowAnonymous` alone is not sufficient to bypass enforcement. The administration panel and Hangfire still require confirmation even when static metadata would otherwise permit access.
 
-Повторная отправка исключена из общего submit-loader, поскольку собственный обработчик управляет состоянием кнопки: общий обработчик в capture-фазе блокировал кнопку, а обработчик формы отменял этот же запрос как повторный. Совместное исполнение `site.js` и `email-verification.js` сохраняет поведение: первый запрос проходит, повторный блокируется, серверная пауза отсчитывается и разрешает отправку после истечения. Существование ящика не проверяется браузером и не влияет на отсчёт после постановки письма в очередь; успешная постановка в очередь не гарантирует доставку на несуществующий адрес.
+In support, the “New request” button opens a separate form at `/personal/support/create`. The list page continues to show requests and the selected conversation. Successful submission returns to the list with the new request; on failure, entered values remain in the form. The list, creation form, and replies are available to a signed-in user without email confirmation. Antiforgery, the request creation limit, and organization access checks remain in force.
 
-Стили обычных ссылок `.auth-links` исключают элементы `.btn`, чтобы не перекрывать белую надпись «Продолжить работу» на странице успешного подтверждения. Кнопки `.auth-btn` центрируют содержимое по обеим осям.
+Resending is excluded from the general submit loader because its own handler manages the button state: the general handler in the capture phase disabled the button, while the form handler cancelled that same request as a duplicate. Running `site.js` and `email-verification.js` together preserves the intended behavior: the first request proceeds, a duplicate is blocked, the server cooldown is counted down, and sending is allowed again when it expires. The browser does not check whether the mailbox exists and does not change the countdown after the email is queued; successful queueing does not guarantee delivery to a nonexistent address.
 
-`RequireConfirmedEmail` и `RequireConfirmedAccount` намеренно остаются выключенными: вход по паролю создаёт ограниченную сессию для экрана подтверждения. Доступ к функциям контролирует middleware. Вход по коду из почты подтверждает адрес и сразу допускает обычную работу.
+The `.auth-links` styles for ordinary links exclude `.btn` elements so they do not cover the white “Continue working” text on the successful-confirmation page. `.auth-btn` buttons center their contents on both axes.
 
-API-регистрация сохраняет ответ с токенами и дополнительно отправляет письмо подтверждения. До подтверждения эти токены позволяют только перечисленные исключения; прикладные запросы получают HTTP 403. Ошибка отправки письма не открывает доступ, повторная отправка остаётся доступной.
+`RequireConfirmedEmail` and `RequireConfirmedAccount` intentionally remain disabled: password sign-in creates a restricted session for the confirmation page. Middleware controls access to features. Signing in with an email code confirms the address and immediately allows normal use.
 
-## Границы защиты
+API registration retains its response with tokens and also sends a confirmation email. Before confirmation, those tokens allow only the listed exceptions; application requests receive HTTP 403. Failure to send an email does not grant access, and resending remains available.
 
-Подтверждение требует доступа к ящику и закрывает использование выдуманного или чужого адреса без такого доступа. Оно не запрещает создание неподтверждённой записи аккаунта и не блокирует временный ящик, на который можно получить письмо. Независимые лимиты запросов, отправки писем и неудачных входов сохраняются; капча отдельно отложена в [плане безопасности](README.md).
+## Protection boundaries
+
+Confirmation requires access to the mailbox and prevents use of a fabricated or someone else's address without that access. It does not prevent creating an unconfirmed account record and does not block a temporary mailbox that can receive the email. Independent limits for requests, email sends, and failed sign-ins remain in place; CAPTCHA is separately deferred in the [security plan](README.md).

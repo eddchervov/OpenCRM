@@ -1,43 +1,45 @@
-# Переписка с клиентами
+# Customer conversations
 
-## Клиенты и каналы
+**English** | [Русский](communications.ru.md)
 
-Организация подключает собственного бота. Постоянный идентификатор бота хранится отдельно от имени и зашифрованного токена. Подключения, подтверждённые внешние учётные записи клиентов, диалоги, сообщения, вложения и отметки прочтения хранятся в отдельных связанных таблицах.
+## Customers and channels
 
-Список переписки группируется по клиенту. Неизвестный отправитель остаётся отдельным контактом: совпадение имени или телефона автоматически не связывает его с карточкой клиента. Отключённые подключения сохраняют историю для просмотра.
+An organization connects its own bot. The persistent bot identifier is stored separately from its name and encrypted token. Connections, verified external customer accounts, conversations, messages, attachments, and read receipts are stored in separate related tables.
 
-Клиент начинает общение с ботом или переходит по приглашению. CRM не создаёт личный диалог по одному номеру телефона. Подключение обрабатывается по идентичности внешней учётной записи и времени события, чтобы устаревшее событие не отменяло более новое состояние.
+The conversation list is grouped by customer. An unknown sender remains a separate contact: matching names or phone numbers do not automatically link them to a customer record. Disabled connections retain their history for viewing.
 
-Отключение атомарно отзывает связи, закрывает диалоги для отправки, очищает адрес автоматических уведомлений и отменяет неотправленные сообщения. Если отправка уже началась, операция возвращает `409`, пока результат не определён. Входящее сообщение само по себе не восстанавливает отозванную связь. Повторный запуск бота возобновляет только существующее подтверждённое подключение.
+The customer starts communicating with the bot or follows an invitation. The CRM does not create a private conversation from a phone number alone. Connection processing uses the external account identity and event timestamp so an outdated event cannot undo newer state.
 
-Перенос диалога и ручная отвязка также выполняются одной транзакцией. Старые связи остаются отозванными, прежние адреса уведомлений очищаются, ожидающие сообщения отменяются. Ручная связь не включает автоматические уведомления новому клиенту. Адрес доставки MAX хранится отдельно от идентификатора чата.
+Disconnecting atomically revokes links, closes conversations for sending, clears the automatic notification address, and cancels unsent messages. If sending has already started, the operation returns `409` until the outcome is known. An incoming message alone does not restore a revoked link. Restarting the bot resumes only an existing verified connection.
 
-## Права и шаблоны
+Moving a conversation and manually unlinking it also use a single transaction. Old links remain revoked, previous notification addresses are cleared, and pending messages are canceled. A manual link does not enable automatic notifications for the new customer. The MAX delivery address is stored separately from the chat ID.
 
-Сервер проверяет `messages.view`, `messages.send`, `messages.manage` и `messages.templates.manage` вместе с членством пользователя, типом организации и доступом к рабочему пространству. Без `clients.view` данные карточки клиента скрыты; поля обслуживания требуют `maintenance.view`. Прочтение учитывается отдельно для каждого сотрудника.
+## Permissions and templates
 
-Группы и шаблоны принадлежат модулю Communications. Они имеют порядок, версии и архив; редактирование устаревшей версии возвращает конфликт. Разрешённые подстановки: `organization.name`, `client.name`, `maintenance.date`, `maintenance.time`, `maintenance.vehicle`. Произвольные выражения и скрипты не исполняются.
+The server checks `messages.view`, `messages.send`, `messages.manage`, and `messages.templates.manage` together with user membership, organization type, and workspace access. Without `clients.view`, customer record data is hidden; maintenance fields require `maintenance.view`. Read state is tracked separately for each employee.
 
-Предпросмотр строится по сохранённой версии шаблона, диалогу и при необходимости обслуживанию. Сотрудник может отредактировать текст и вручную отправить его. Сообщение сохраняет окончательный текст, `MessageTemplateId`, `MessageTemplateVersion` и `MaintenanceId`; последующие изменения шаблона историю не меняют. Повтор запроса с прежним `RequestId` возвращает существующее сообщение.
+Groups and templates belong to the Communications module. They support ordering, versions, and archiving; editing an outdated version returns a conflict. Allowed substitutions: `organization.name`, `client.name`, `maintenance.date`, `maintenance.time`, `maintenance.vehicle`. Arbitrary expressions and scripts are not executed.
 
-Если у обслуживания указан покупатель, контекст доступен его переписке. Владелец автомобиля используется только для старых записей без покупателя.
+A preview uses the saved template version, conversation, and optional maintenance record. The employee can edit the text and send it manually. The message stores the final text, `MessageTemplateId`, `MessageTemplateVersion`, and `MaintenanceId`; later template changes do not alter history. Repeating a request with the same `RequestId` returns the existing message.
 
-## Доставка и восстановление
+If a maintenance record specifies a buyer, its context is available in that buyer's conversations. The vehicle owner is used only for older records without a buyer.
 
-Сообщение и намерение доставки записываются в одной транзакции основной базы данных. RabbitMQ получает провайдера и идентификаторы сообщения/запроса; текст, токены и байты файлов в очередь не помещаются. Очереди MAX и Telegram разделены, размер очередей и параллелизм ограничены.
+## Delivery and recovery
 
-Сервис уведомлений сначала записывает команду в durable inbox и только затем подтверждает RabbitMQ. Ограниченные обработчики арендуют задания из базы данных; ожидающие попытки сохраняются там вместо бесконечной повторной постановки в очередь. Дедупликация учитывает провайдера, сообщение и `RequestId`.
+The message and delivery intent are written in one transaction in the primary database. RabbitMQ receives the provider and message/request IDs; message text, tokens, and file bytes are not placed on the queue. MAX and Telegram queues are separate, with bounded queue sizes and concurrency.
 
-Для нескольких приложений `Conversations:ApplicationId` выбирает приложение переписки и должен совпадать с `RabbitMq:ApplicationId` соответствующего клиента. Автоматический выбор допустим, только если приложение одно.
+The notification service first writes the command to a durable inbox, then acknowledges RabbitMQ. Bounded handlers lease jobs from the database; pending attempts remain there instead of being requeued indefinitely. Deduplication accounts for the provider, message, and `RequestId`.
 
-Перед внешним вызовом фиксируется начало попытки. Восстановление использует прежний `LeaseId`: подтверждённый результат читается из базы данных, а потерянный после начала внешнего вызова помечается как неподтверждённый и автоматически повторно не отправляется. Сотрудник проверяет получение перед повторной отправкой. Гарантия однократной доставки зависит от поддержки идемпотентности мессенджером.
+For multiple applications, `Conversations:ApplicationId` selects the conversation application and must match the corresponding client's `RabbitMq:ApplicationId`. Automatic selection is allowed only when there is one application.
 
-Более ранние ожидающие или отправляемые сообщения блокируют последующие сообщения того же диалога. При активной аренде или отложенной попытке API возвращает `409` с `Retry-After`; ожидание ограничено 24 часами.
+The start of an attempt is recorded before the external call. Recovery uses the previous `LeaseId`: a confirmed result is read from the database, while a result lost after the external call began is marked unconfirmed and is not automatically resent. The employee verifies receipt before sending again. Exactly-once delivery guarantees depend on the messenger's idempotency support.
 
-## Файлы и журнал
+Earlier pending or sending messages block subsequent messages in the same conversation. With an active lease or deferred attempt, the API returns `409` with `Retry-After`; the waiting period is limited to 24 hours.
 
-Исходящие файлы ограничены 20 МБ и шифруются Data Protection перед сохранением в S3. Доступ к содержимому проходит через авторизованный API без публичной ссылки на расшифрованный файл. Незавершённые загрузки изолированы по сотруднику и диалогу и удаляются через сутки.
+## Files and log
 
-Входящие файлы загружаются через проверенное подключение провайдера и защищённый API. Произвольные URL не принимаются; адрес MAX проверяется до обращения к CDN, токен бота CDN не передаётся. Доступность входящего файла зависит от сохранности сообщения у провайдера и действующего подключения; текст и метаданные хранятся в системе.
+Outgoing files are limited to 20 MB and encrypted with Data Protection before storage in S3. Content access goes through an authorized API without a public link to the decrypted file. Incomplete uploads are isolated by employee and conversation and deleted after one day.
 
-Журнал уведомлений показывает событие, окончательный текст, канал, время и результат. Просмотр журнала не создаёт повторную отправку.
+Incoming files are downloaded through a verified provider connection and protected API. Arbitrary URLs are not accepted; the MAX URL is validated before contacting the CDN, and the bot token is not forwarded to the CDN. Incoming file availability depends on the provider retaining the message and the connection remaining valid; text and metadata are stored in the system.
+
+The notification log shows the event, final text, channel, time, and result. Viewing the log does not trigger another send.

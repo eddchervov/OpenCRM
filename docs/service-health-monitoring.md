@@ -1,14 +1,16 @@
-# Проверки готовности сервисов
+# Service readiness checks
 
-Сервисы платежей и уведомлений предоставляют внутренние HTTP-маршруты:
+**English** | [Русский](service-health-monitoring.ru.md)
 
-| Маршрут | Назначение |
+The payment and notification services expose internal HTTP endpoints:
+
+| Endpoint | Purpose |
 | --- | --- |
-| `/health/live` | Процесс отвечает; зависимости не проверяются. |
-| `/health/ready` | Проверяются настроенные зависимости сервиса, включая PostgreSQL и шину сообщений. |
+| `/health/live` | The process responds; dependencies are not checked. |
+| `/health/ready` | Checks the service's configured dependencies, including PostgreSQL and the message bus. |
 
-Успешная проверка возвращает HTTP 200. Состояния Degraded и Unhealthy возвращают HTTP 503. Readiness не подтверждает доставку конкретного письма, проведение платежа или работоспособность всех бизнес-сценариев; это проверяется отдельно.
+A successful check returns HTTP 200. Degraded and Unhealthy states return HTTP 503. Readiness does not confirm delivery of a particular email, payment processing, or every business scenario; validate these separately.
 
-Веб-приложение предоставляет `/api/health/ready` для проверки своего подключения к БД. Режим сервисов `--migrate` выполняет миграции и завершается до запуска HTTP-обработчиков.
+The web application exposes `/api/health/ready` to check its database connection. The services' `--migrate` mode applies migrations and exits before starting HTTP handlers.
 
-Адреса установки, прокси, ограничения запросов, мониторинг и адресатов оповещений определяет владелец развёртывания. Публикуйте только необходимые проверки и не раскрывайте наружу строки подключения, секреты или подробности исключений. Готовая конфигурация конкретного сервера в ядро не входит.
+The deployment owner determines installation URLs, proxies, request restrictions, monitoring, and alert recipients. Expose only the checks you need and do not disclose connection strings, secrets, or exception details externally. The core does not include a ready-made configuration for a particular server.

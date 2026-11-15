@@ -1,0 +1,47 @@
+@startuml authentication_sequence
+title opencrm.example.invalid — регистрация и аутентификация
+
+autonumber
+actor "Пользователь" as User
+boundary "Web / API" as UI
+control "AuthController" as Controller
+control "ASP.NET Identity" as Identity
+control "AuthTokenService" as Tokens
+database "PostgreSQL" as Db
+
+alt Регистрация
+  User -> UI : email, пароль, согласия
+  UI -> Controller : Register
+  Controller -> Identity : CreateAsync
+  Identity -> Db : INSERT ApplicationUser
+  Controller -> Db : профиль и базовый тариф
+  Controller --> UI : cookie или JWT
+  UI --> User : вход выполнен
+else Веб-вход
+  User -> UI : email и пароль
+  UI -> Controller : Login
+  Controller -> Identity : PasswordSignInAsync
+  Identity -> Db : проверить пользователя
+  Identity --> Controller : Identity cookie
+  Controller --> User : redirect в кабинет
+else API-вход
+  User -> UI : email и пароль
+  UI -> Tokens : LoginAsync
+  Tokens -> Identity : CheckPasswordAsync
+  Identity -> Db : проверить пользователя
+  Tokens -> Db : сохранить sessionId,\nhash refresh secret и expiry
+  Tokens --> User : access JWT + refresh token
+else Обновление JWT
+  User -> Tokens : refresh token
+  Tokens -> Db : проверить session, hash и expiry
+  Tokens -> Db : отозвать старый refresh token
+  Tokens -> Db : сохранить новый refresh token
+  Tokens --> User : новая пара токенов
+end
+
+note over Controller,Tokens
+  Google Login отключен комментариями.
+  Обычная регистрация и вход активны.
+end note
+
+@enduml

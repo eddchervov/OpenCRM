@@ -1,100 +1,102 @@
-# Связь услуг со справочником организации
+# Linking services to an organization's catalog
 
-В одной записи организации можно смешивать услуги и наборы из справочника с несколькими произвольными работами. У произвольной работы обязательны название, количество и цена; `CatalogItemId` остаётся пустым, элемент справочника автоматически не создаётся. Если ID указан, сервер проверяет существование, организацию, тип и доступность услуги. Ручные записи личного кабинета без организации сохраняют прежнее поведение.
+**English** | [Русский](service-catalog-integrity.ru.md)
 
-Быстрая запись детейлинга и СТО передаёт состав работ в `Services`; прежний `ServiceId` поддерживается для совместимости при отсутствии списка. Для строки с `CatalogItemId` сервер берёт название из справочника. Для произвольной работы сохраняет введённое название. Идентификатор и текстовый снимок названия возвращаются в карточке записи. Цена остаётся согласованной ценой конкретной работы и не зависит от будущих изменений справочника.
+An organization record can combine catalog services and bundles with several arbitrary jobs. An arbitrary job requires a name, quantity, and price; `CatalogItemId` remains empty and no catalog item is created automatically. If an ID is supplied, the server validates that the service exists, belongs to the organization, has the correct type, and is available. Existing personal-account records without an organization retain their previous behavior.
 
-При редактировании существующей строки с тем же ID сервер сохраняет её историческое название. Архивная услуга разрешена только для уже существовавших строк; добавить дополнительную строку архивной услуги нельзя. Изменение связи при одинаковых названиях также сохраняется и фиксируется в истории.
+Quick Detailing and Service Station appointments send their work composition in `Services`; the old `ServiceId` is supported for compatibility when the list is absent. For a row with `CatalogItemId`, the server uses the catalog name. For an arbitrary job, it saves the entered name. The appointment card returns both the ID and the text snapshot of the name. The price remains the agreed price for that particular job and is unaffected by future catalog changes.
 
-Удаление услуг переводит их в архив, включая ещё не использованные услуги. ID никогда не переиспользуется. Архивные услуги доступны в истории и могут быть восстановлены. Правила остальных типов справочников не изменены.
+When editing an existing row with the same ID, the server preserves its historical name. An archived service is allowed only on an existing row; an archived service cannot be added as an additional row. Changing the link when names are identical is also persisted and recorded in history.
 
-## Формы
+Deleting services archives them, including services that have never been used. IDs are never reused. Archived services remain available in history and can be restored. Rules for other catalog types are unchanged.
 
-- Кнопка «Выбрать услуги» открывает шаблоны из `services` и наборы. Кнопка «Произвольная работа» добавляет строку для ручного ввода; её можно нажимать несколько раз. `workTypes` содержит этапы процесса и не используется как замена услугам.
-- Начальные услуги по-прежнему создаются в базе через `OrganizationScenarioCatalogService.EnsureDefaultsAsync`; встроенных запасных списков в формах нет.
-- Полная форма редактирует все услуги записи, учитывает сумму всех строк и не теряет вторую и последующие услуги.
-- Пустой `CatalogItemId` означает произвольную работу. Указанный, но некорректный ID по-прежнему отклоняется. Добавление шаблонов сохраняет все ранее введённые строки.
-- «Изменить» в окне выбора открывает соответствующий справочник услуг или наборов в новой вкладке, сохраняя открытую форму. Ссылка доступна при наличии доступа к справочникам.
-- Для архивного элемента показывается отметка «архив», а после переименования — историческое и текущее названия.
+## Forms
 
-## Старые данные
+- “Select services” opens templates from `services` and service bundles. “Custom job” adds a row for manual input and can be used multiple times. `workTypes` contains process stages and is not a substitute for services.
+- Initial services are still created in the database through `OrganizationScenarioCatalogService.EnsureDefaultsAsync`; forms do not contain built-in fallback lists.
+- The full form edits all services on an appointment, considers the total of every row, and does not lose the second or later services.
+- An empty `CatalogItemId` means a custom job. A supplied but invalid ID is still rejected. Adding templates preserves all previously entered rows.
+- “Edit” in the selection dialog opens the relevant service or bundle directory in a new tab while keeping the form open. The link is available when the user can access the directory.
+- An archived item is marked “archived”; after a rename, both its historical and current names are shown.
 
-После разрешения произвольных работ отсутствие `CatalogItemId` само по себе не является ошибкой. Скрипты прежнего восстановления нельзя повторно применять ко всем строкам без связи.
+## Existing data
 
-Структура базы для нормализации не менялась: `CatalogItemId` уже существовал в JSON строках `Maintenance.Details`; перенос строк в таблицу выполнен миграцией нормализации ниже.
+After custom jobs were allowed, a missing `CatalogItemId` alone is not an error. Legacy restoration scripts must not be applied again to all unlinked rows.
 
-1. Сделать резервную копию базы и выполнить `scripts/maintenance/audit-service-links.sql`. Это только чтение, включая исторические и удалённые записи организаций; личные записи и материалы исключены.
-2. Просмотреть статусы: `can_link` — единственное совпадение, `not_found` — совпадения нет, `ambiguous` — несколько услуг, `invalid_link` — ID не указывает на услугу этой организации, `linked` / `archived` — связь существует.
-3. Скрипт связывает только строки без ID с единственной одноимённой услугой той же организации, без учёта регистра и пробелов по краям. Архивные элементы учитываются как исторические. Имена, цены, описания и порядок строк не меняются. Скрипт транзакционный и повторяемый; существующие некорректные ссылки не перезаписываются.
-4. Повторить аудит. Остаток исправлять явным выбором услуги в редакторе. Не угадывать соответствия по похожим названиям и не превращать этапы вроде «Приемка» в услуги автоматически.
+The database schema did not change for normalization: `CatalogItemId` already existed in JSON rows in `Maintenance.Details`; moving rows into a table was done by the normalization migration below.
 
-Для отмены восстановления связей использовать резервную копию: скрипт не хранит исходные связи в отдельной таблице.
+1. Back up the database and run `scripts/maintenance/audit-service-links.sql`. It is read-only and includes historical and deleted organization records; personal records and materials are excluded.
+2. Review statuses: `can_link` means one match, `not_found` means no match, `ambiguous` means multiple services, `invalid_link` means the ID does not point to a service in that organization, and `linked` / `archived` mean a link exists.
+3. The script links only rows without an ID that have exactly one same-name service in the same organization, ignoring case and surrounding whitespace. Archived items count as historical matches. Names, prices, descriptions, and row order do not change. The script is transactional and repeatable; existing invalid links are not overwritten.
+4. Run the audit again. Resolve remaining cases by explicitly selecting a service in the editor. Do not guess based on similar names or automatically turn stages such as “Reception” into services.
 
-Назначение «Обслуживание» — разовая нормализация тестовых данных, не поведение приложения. На момент той нормализации API требовал явного выбора услуги; сейчас допускаются и произвольные работы.
+Use the backup to undo a link restoration: the script does not store the original links in a separate table.
 
-## Проверки
+“Maintenance” describes a one-time normalization of test data, not application behavior. At the time of that normalization the API required an explicit service selection; custom jobs are now allowed too.
 
-`MaintenanceServiceCatalogTests` проверяет сохранение через сервис на PostgreSQL: несуществующие, чужие, архивные ID и этапы, произвольные работы рядом с шаблонами без создания элементов справочника, исторические названия и цены, несколько услуг, изменение только ID, запрет создания автомобиля при ошибочной услуге. SQL-проверка включает архив, неоднозначные названия, чужую организацию, этапы, некорректные ссылки, сохранность остальных данных и повторный запуск.
+## Verification
 
-Браузерная проверка охватывает три клиента, создание и редактирование, сохранение ID, несколько строк, архив, пустой справочник, светлую и тёмную темы и ширины 320–1440 px.
+`MaintenanceServiceCatalogTests` checks saving through the service on PostgreSQL: nonexistent, foreign, and archived IDs and stages; custom jobs alongside templates without creating catalog items; historical names and prices; multiple services; changing only an ID; and preventing vehicle creation when a service is invalid. SQL checks cover archived items, ambiguous names, another organization, stages, invalid links, preserving other data, and repeat execution.
 
-## Состав наборов и другие структурированные поля — требования
+Browser checks cover all three clients, creation and editing, preserving IDs, multiple rows, archived items, an empty directory, light/dark themes, and widths of 320–1440 px.
 
-### Состав наборов
+## Bundle composition and other structured fields — requirements
 
-`OrganizationScenarioCatalogItem.ServiceIds` хранился как `uuid[]`, а не JSON. Это отношения между элементами справочника; состав перенесён в таблицу OrganizationServiceBundleItems. Сейчас [ValidateServiceSettingsAsync](../src/OpenCRM.Modules.Catalog/CatalogCommandService.cs) уже проверяет от 1 до 100 разных активных услуг этой организации. Отсутствие внешних ключей на элементы массива — ограничение модели хранения, а не отсутствие этой проверки в сервисе. Перенос не должен ослаблять действующие правила. Сейчас архивирование через каталог оставляет набор с такой услугой недоступным в редакторе, а настройка организации запрещает выключить услугу, входящую в активный набор. Это различие входов не исправляется внешним ключом; до реализации определить, сохраняем ли правила каждого входа или отдельно согласуем их унификацию.
+### Bundle composition
 
-Критерии реализации:
+`OrganizationScenarioCatalogItem.ServiceIds` was stored as `uuid[]`, not JSON. These are relationships between catalog items; composition has been moved to `OrganizationServiceBundleItems`. `ValidateServiceSettingsAsync` in [CatalogCommandService.cs](../src/OpenCRM.Modules.Catalog/CatalogCommandService.cs) already validates 1–100 distinct active services in the organization. Missing foreign keys on array elements are a storage-model limitation, not an absence of service-level validation. The migration must not weaken current rules. Currently, archiving a service through the catalog leaves a bundle containing it unavailable in the editor, while organization setup prevents disabling a service included in an active bundle. This difference between entry points is not fixed by adding a foreign key; before implementation, decide whether to preserve each entry point's rules or agree on a separate task to unify them.
 
-1. Связь содержит BundleId, ServiceId и позицию, сохраняющую порядок исходного массива. Пара BundleId/ServiceId и позиция внутри набора уникальны; поиск наборов по ServiceId имеет подходящий индекс. Количество пока не добавлять: текущая модель включает услугу один раз, а количество в заказе — отдельное понятие.
-2. Ссылки указывают на существующие записи справочника. Набор и услуга принадлежат одной организации и имеют соответствующие KindCode. Одни внешние ключи только по ID не обеспечивают эти два правила: способ защиты проверяется при проектировании схемы, сервисная валидация сохраняется.
-3. Архивирование услуги или набора сохраняет связи. Новое применение набора с недоступной услугой остаётся запрещённым, а уже записанные строки заказа, их имена, цены и количество не пересчитываются. Изменение существующих правил редактирования набора с архивной услугой требует отдельной предметной задачи.
-4. DTO/API по-прежнему выдают ServiceIds в исходном порядке. Обновить чтение, создание и изменение наборов, проверку использования услуг при настройке организации и экспорт бухгалтерских данных. Проверить общие потребители трёх CRM-клиентов: отображение, выбор, недоступность, длительность и отсутствие дублей строк. Отдельный процесс детейлинга не расширяется.
-5. До миграции проверить сохранённые массивы: пустые наборы, дубли, отсутствующие ID, чужая организация, неверный тип, содержимое у записей другого типа. Архивная услуга сама по себе не означает повреждённую ссылку. Некорректные строки не удалять и не заменять автоматически; зафиксировать их и способ разрешения до применения ограничений.
-6. Перенести все корректные связи с сохранением позиции; сверить состав и порядок до/после, включая архивные наборы. Определить совместимость со старой версией приложения и порядок выпуска до удаления массива. Down должен восстанавливать массивы в том же порядке; если откат теряет данные, это явно описывается. Проверить атрибуты EF-миграции, Designer, snapshot и соседнюю корректную миграцию по правилам проекта.
-7. Выполнить сборку, существующие BundlesReferenceOnlyActiveServicesOfTheirOrganization и проверки длительности/каталога на PostgreSQL, сборки затронутых клиентов. Без проверки миграции на PostgreSQL пункт остаётся на проверке; сравнение SQL и сборка не заменяют перенос данных.
+Implementation criteria:
 
-Сущность OrganizationServiceBundleItem и таблица OrganizationServiceBundleItems сохраняют состав и позицию. Внешние ключи через (Id, OrganizationId, KindCode) и проверки фиксированных типов защищают организационную область. Уникальность позиции задана отложенным ограничением PostgreSQL: это позволяет менять порядок за одно SaveChanges без промежуточных конфликтов. В EF остаётся обычный индекс; SQL-ограничение поддерживается миграцией. Новые абстракции доступа к данным ради одного переноса не требуются.
+1. A relationship contains `BundleId`, `ServiceId`, and a position preserving the original array order. `(BundleId, ServiceId)` and position within a bundle are unique; bundle lookup by `ServiceId` has a suitable index. Do not add quantity for now: the current model includes a service once, while order quantity is a separate concept.
+2. References point to existing catalog records. The bundle and service belong to the same organization and have the expected `KindCode`. Foreign keys on ID alone do not enforce both rules: validate the schema protection approach during design and retain service validation.
+3. Archiving a service or bundle preserves relationships. New use of a bundle with an unavailable service remains prohibited, and existing order rows, names, prices, and quantities are not recalculated. Changing existing rules for editing a bundle with an archived service requires a separate domain task.
+4. DTO/API responses continue to return `ServiceIds` in the original order. Update bundle reading, creation, and editing, service usage checks during organization setup, and accounting-data export. Check shared consumers in all three CRM clients: display, selection, availability, duration, and prevention of duplicate rows. Do not expand the separate Detailing process.
+5. Before migration, check saved arrays for empty bundles, duplicates, missing IDs, another organization, incorrect type, and data on records of another type. An archived service alone does not mean a damaged link. Do not delete or replace invalid rows automatically; record them and decide how to resolve them before applying constraints.
+6. Migrate all valid relationships while preserving positions; compare composition and ordering before and after, including archived bundles. Define compatibility with the old application version and release order before removing the array. Down must restore arrays in the same order; explicitly describe any data loss on rollback. Check EF migration attributes, Designer, snapshot, and the last valid neighboring migration according to project rules.
+7. Build, run existing `BundlesReferenceOnlyActiveServicesOfTheirOrganization` and duration/catalog PostgreSQL checks, and build affected clients. Without migration verification on PostgreSQL, the item remains unverified; comparing SQL and building are not substitutes for migrating data.
 
-### Перенос строк заказов
+`OrganizationServiceBundleItem` and `OrganizationServiceBundleItems` preserve composition and position. Foreign keys over `(Id, OrganizationId, KindCode)` and fixed-type checks enforce organization boundaries. Position uniqueness uses a deferred PostgreSQL constraint so ordering can be changed in one `SaveChanges` without intermediate conflicts. EF retains a regular index; the migration maintains the SQL constraint. No new data-access abstractions are needed for this one migration.
 
-MaintenanceDetails содержит ключ (MaintenanceId, DetailId), позицию и все прежние поля строки. Внешний ключ на заказ удаляет дочерние строки только при физическом удалении заказа; soft-delete сохраняет их. Имена, цены, исполнители и материалы остаются историческими снимками. Nullable ID справочника сохраняются как были: существующий аудит и восстановление допускают старые некорректные ссылки. FK на эти исторические ID сейчас не вводится; для него понадобится отдельное согласование и проверка старых данных. Связи выполненных операций, фото и отчётов по DetailId сохраняются.
+### Moving order rows
 
-Изменение коллекции согласовывается по DetailId, сохраняя отслеживаемые EF строки и проверку версии заказа. Порядок задаётся Position, уникальность позиции — отложенным ограничением PostgreSQL. Поиск и отчётность обращаются к таблице строк; скрипты проверки и однозначного восстановления связей обновляются под новую схему. API продолжает возвращать прежние DTO.
+`MaintenanceDetails` contains the `(MaintenanceId, DetailId)` key, position, and all previous row fields. A foreign key to the order deletes child rows only on physical order deletion; soft delete retains them. Names, prices, performers, and materials remain historical snapshots. Nullable catalog IDs remain as they were: existing audit and restoration allow legacy invalid links. A foreign key on these historical IDs is not introduced now; it requires separate agreement and validation of old data. Links to completed operations, photos, and reports by `DetailId` are preserved.
 
-### Миграция и выпуск
+Collection updates are reconciled by `DetailId`, preserving tracked EF rows and order-version checks. `Position` defines ordering; position uniqueness uses a deferred PostgreSQL constraint. Search and reporting read the row table; validation and unambiguous link-restoration scripts are updated for the new schema. The API continues to return the previous DTOs.
 
-Миграция 20261009011254_NormalizeServiceBundlesAndMaintenanceDetails создаёт обе таблицы в одном транзакционном переходе. Up проверяет состав наборов, типы и организацию ссылок, JSON-структуру строк, неизвестные поля, пустые и повторяющиеся DetailId. Ошибка останавливает миграцию: данные не удаляются и идентификаторы не заменяются автоматически. Поля и порядок переносятся через WITH ORDINALITY; количество строк сверяется до удаления прежних колонок. Нераспознанные поля требуют расширения схемы переноса.
+### Migration and release
 
-Перед применением сделать резервную копию и проверить Up/Down на копии PostgreSQL. Остановить старые экземпляры приложения и фоновые обработчики, затем выполнить миграцию и запустить новую версию: совместная работа версий после удаления колонок не поддерживается. Down восстанавливает массивы ServiceIds и JSON Details с ORDER BY Position до удаления таблиц. Восстанавливаются предметные значения, а не исходное форматирование JSON; JSON null отклоняется до переноса. Внутренние MaintenanceId/Position не попадают в восстановленный JSON.
+Migration `20261009011254_NormalizeServiceBundlesAndMaintenanceDetails` creates both tables in one transactional transition. Up validates bundle composition, reference types and organization ownership, JSON row structure, unknown fields, and empty or duplicate `DetailId` values. An error stops the migration: data is not deleted and IDs are not replaced automatically. Fields and order are migrated with `WITH ORDINALITY`; row counts are checked before old columns are dropped. Unrecognized fields require expanding the migration schema.
 
-### Остальные структурированные поля
+Back up the database and test Up/Down on a PostgreSQL copy before applying. Stop old application instances and background handlers, then run the migration and start the new version; versions cannot run together after the columns are removed. Down restores `ServiceIds` arrays and JSON `Details` ordered by `Position` before dropping the tables. Domain values are restored, not original JSON formatting; JSON null is rejected before migration. Internal `MaintenanceId`/`Position` fields are not included in restored JSON.
 
-| Поле | Текущее решение | Условие пересмотра |
+### Other structured fields
+
+| Field | Current decision | When to reconsider |
 | --- | --- | --- |
-| Maintenance.Details | Перенесено в таблицу MaintenanceDetails. | Пересматривать схему при конкретной предметной потребности, сохраняя снимки, порядок и идентификаторы. Миграция нормализации уже проверена. |
-| CrmImportBatch.RowsJson | Оставить jsonb для существующего пакетного импорта. CrmImportService загружает и десериализует весь список; файл ограничен 10 МБ. Это не доказывает достаточную производительность для любых данных. | Измеренные ограничения памяти/времени, постраничная обработка, отдельные статусы строк или повтор отдельных ошибок. Тогда проектировать CrmImportRows и состояние обработки. |
-| CrmImportBatch.ResultJson | Оставить итоговый снимок пакета. | При переходе на построчную обработку вынести требуемые результаты строк вместе с ними; общий итог может остаться JSON. |
-| MaintenanceHistoryEvent.PayloadJson | Оставить jsonb с переменными подробностями события; сами события уже отдельные строки. | Конкретные поля регулярной фильтрации/отчётности выделять отдельно, сохраняя исторический payload. |
-| EmailMessage.TemplateDataJson | Оставить JSON параметров конкретного сообщения и шаблона. | Изменение внешнего контракта шаблона или доказанная необходимость запросов по определённым параметрам, без массовой нормализации. |
-| Organization.WorkingDays | Реализована отдельная модель дней и перерывов; integer[] и общие часы пока остаются совместимыми сводными полями. | Миграция и сохранение проверены на PostgreSQL; исключения по датам требуют отдельного решения. См. [график организации](organization-setup.md). |
+| Maintenance.Details | Moved into `MaintenanceDetails`. | Revisit the schema for a concrete domain need, preserving snapshots, order, and IDs. The normalization migration has been checked. |
+| CrmImportBatch.RowsJson | Keep JSONB for the existing batch import. `CrmImportService` loads and deserializes the whole list; the file is limited to 10 MB. This does not prove sufficient performance for all data sizes. | Measured memory/time limits, paged processing, separate row statuses, or retrying individual failures. Then design `CrmImportRows` and processing state. |
+| CrmImportBatch.ResultJson | Keep as the final batch snapshot. | If processing moves to individual rows, move needed row results with them; the overall summary can remain JSON. |
+| MaintenanceHistoryEvent.PayloadJson | Keep JSONB with variable event details; events themselves already have separate rows. | Extract concrete fields used for frequent filters/reports, preserving the historical payload. |
+| EmailMessage.TemplateDataJson | Keep JSON template parameters for a specific message and template. | A change to the external template contract or proven need to query particular parameters, without broad normalization. |
+| Organization.WorkingDays | A separate model for days and breaks is implemented; `integer[]` and shared hours remain as compatible summary fields for now. | Migration and saving were checked on PostgreSQL; date exceptions require a separate decision. See [organization schedule](organization-setup.md). |
 
-Первоначальная инвентаризация не меняла прикладной код или схему БД. График по дням и перерывы, а также состав наборов и строки заказов реализованы отдельными изменениями. Применение и откат нормализации проверены на PostgreSQL; изменения импорта этим этапом не добавлялись.
+The initial inventory changed neither application code nor database schema. The day-by-day schedule and breaks, bundle composition, and order rows were implemented in separate changes. Applying and rolling back normalization were checked on PostgreSQL; this stage did not add import changes.
 
-## Посты, закрытие и сохранность истории — проверка
+## Work bays, closure, and history preservation — verification
 
-Запись пока связана с постом текстовым `Maintenance.Location`. Поэтому ещё не использованный пользовательский пост можно переименовать или удалить, а когда-либо использованный — только закрыть и вернуть в работу. Историческое имя нельзя присвоить другому новому посту. Использованный пост не удаляется физически; закрытие не отменяет и не переносит его записи автоматически. Перед закрытием интерфейс перечисляет незавершённые назначения и предупреждает о ручном переносе.
+An appointment is currently linked to a bay using text in `Maintenance.Location`. Therefore, a never-used custom bay can be renamed or deleted, while a bay that has ever been used can only be closed and reopened. A historical name cannot be assigned to a different new bay. A used bay is never physically deleted; closing it does not automatically cancel or move its appointments. Before closure, the interface lists unfinished assignments and warns that they must be moved manually.
 
-По результатам независимого аудита исправлены:
+The following were fixed based on an independent audit:
 
-- Два активных новых поста с одинаковым названием раньше создавались как разные строки, но становились одной ёмкостью расписания. Теперь создание, переименование и восстановление проверяют занятые активные и исторические имена с учётом регистра и пробелов, под блокировкой организации. Конкурентные одинаковые создания сохраняют только один пост. Ранее сохранённые дубли автоматически не объединяются и не удаляются.
-- Закрытые посты с прежними записями остаются в расписании детейлинга и СТО с отметкой «Закрыт», но новые слоты для них не предлагаются. Активный старый тёзка закрытого поста сохраняет доступность по прежнему строковому контракту.
-- Закрытый пост больше нельзя заново забронировать переносом уже существующей записи. Общая проверка применяется при полном редактировании, переносе записи, отдельном обновлении даты и возврате отменённой/выполненной записи в занимающий слот статус. Отказ не меняет даты, статус, версию, строки и историю. Исправление комментария/цены без новой брони, начало и завершение прежней работы допускаются; можно перенести запись на другой активный пост.
+- Two active new bays with the same name used to be separate rows but represented one schedule capacity. Creation, renaming, and restoring now check occupied active and historical names case-insensitively and ignoring surrounding whitespace, under an organization lock. Concurrent creations with the same name keep only one bay. Existing duplicates are not automatically merged or deleted.
+- Closed bays with previous appointments remain in Detailing and Service Station schedules with a “Closed” mark, but no new slots are offered for them. An active legacy bay with the same name as a closed bay remains available under the previous string-based contract.
+- A closed bay can no longer be booked again by rescheduling an existing appointment. The shared check applies to full edits, appointment rescheduling, separate date updates, and returning a cancelled/completed appointment to a status that occupies a slot. Rejection does not change dates, status, version, rows, or history. Editing a comment/price without a new booking, starting and completing existing work are allowed; an appointment can be moved to another active bay.
 
-Услуги сохраняют прежний контракт: изменение названия, цены и длительности справочника не пересчитывает сохранённый заказ или расписание; архив запрещает новые строки услуги и сохраняет старые. Удаление услуги означает архив, включая неиспользованную; ID и исторические снимки сохраняются. Набор с архивной услугой требует исправления состава перед новым использованием.
+Services retain their previous contract: changing a directory name, price, or duration does not recalculate a saved order or schedule; archiving prevents new service rows and preserves old rows. Deleting a service means archiving it, including unused services; IDs and historical snapshots remain. A bundle containing an archived service must have its composition fixed before it can be used again.
 
-Проверены реальные PostgreSQL-сценарии каталога, ограничения переноса по всем маршрутам, сохранность исторических строк услуг; интерфейс проверен отдельно на демонстрационном API. В одном из старых тестовых контейнеров каталога отсутствовала конфигурация VehicleRegistrationPlatePolicy: исправлена регистрация реальной конфигурации в тестовой фикстуре, производственная конфигурация не менялась.
+Real PostgreSQL checks covered the catalog, rescheduling restrictions across all routes, and preservation of historical service rows; the interface was checked separately against a demo API. One old catalog test container lacked `VehicleRegistrationPlatePolicy` configuration; the real configuration was registered in the test fixture, with no production configuration change.
 
-Полноценное переименование использованного поста остаётся ограничением текущей модели. Безопасное развитие требует стабильного WorkPostId, отдельного исторического названия и проверки старых неоднозначных назначений.
+Renaming a used bay remains a limitation of the current model. Safe support requires a stable `WorkPostId`, a separate historical name, and checks for old ambiguous assignments.
 
-Покрытие включает положительные проверки переименования и удаления неиспользованного поста, а также изменение только времени и повторное открытие через общую форму. Полный сквозной рабочий день с настоящим Billing в эти результаты не входит.
+Coverage includes positive checks for renaming and deleting an unused bay, changing only the time, and reopening through the shared form. A complete end-to-end workday with real Billing is not included in these results.

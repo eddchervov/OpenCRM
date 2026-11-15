@@ -1,147 +1,69 @@
-# Архитектура
+# Architecture
 
-NotificationService содержит один исполняемый проект Notifications.Worker.
-OpenCRM и другие приложения определяют повод уведомления; сервис владеет шаблонами,
-доставкой, повторами и историей. Общие базы и доменные модели приложений не используются.
+**English** | [Русский](architecture.ru.md)
 
-## Внешняя граница
+NotificationService has one executable project, Notifications.Worker. OpenCRM and other applications determine why a notification is needed; the service owns templates, delivery, retries, and history. It does not share applications' databases or domain models.
 
-Публичные контракты находятся в Notifications.Contracts:
+## External boundary
 
-| Команда | Назначение | Результат |
-|---|---|---|
-| SendNotification | Создать уведомление с ключом идемпотентности | NotificationStatusChanged |
-| GetNotificationStatus | Получить состояние по исходному ключу | NotificationStatusChanged |
-| UpsertNotificationTemplate | Сохранить шаблон | NotificationTemplateUpdated |
+Public contracts reside in Notifications.Contracts:
 
-Некорректные данные дают NotificationCommandRejected с MessageId исходной команды.
-Повреждённые envelopes и инфраструктурные ошибки после исчерпания транспортных повторов
-попадают в очередь `*_error`; для них бизнес-подтверждение не гарантируется.
+| Command | Purpose | Result |
+| --- | --- | --- |
+| SendNotification | Create a notification with an idempotency key | NotificationStatusChanged |
+| GetNotificationStatus | Retrieve state by the original key | NotificationStatusChanged |
+| UpsertNotificationTemplate | Store a template | NotificationTemplateUpdated |
 
-Команды отправляются через MassTransit Send в `notifications-{applicationId}-commands`.
-ConfigureConsumeTopology отключена: общая публикация типа команды не связывается со
-всеми приложениями. ApplicationId выводится из входной очереди; передавать его в теле
-команды не требуется. Адрес ответа тоже выбирает сервис, пользовательский ResponseAddress
-для бизнес-результатов не используется.
+Invalid data produces NotificationCommandRejected with the original command's MessageId. Malformed envelopes and infrastructure failures that exhaust transport retries go to the `*_error` queue; business acknowledgment is not guaranteed for them.
 
-Результаты адресно отправляются в `notifications-{applicationId}-results`, без глобального
-Publish. Полномочия приложений ограничиваются пользователями и разрешениями RabbitMQ.
-Приложению нельзя предоставлять доступ к очередям других приложений, внутреннему
-notifications-dispatch или общей административной учётной записи.
+Commands use MassTransit Send to `notifications-{applicationId}-commands`. ConfigureConsumeTopology is disabled: publishing the command type globally does not bind it to every application. ApplicationId is derived from the incoming queue and need not be passed in the command body. The service also selects the response address; a user-supplied ResponseAddress is not used for business results.
 
-## Транзакции и повторы
+Results are sent directly to `notifications-{applicationId}-results`, without global Publish. RabbitMQ users and permissions limit application authority. Do not give an application access to other applications' queues, the internal notifications-dispatch queue, or a shared administrator account.
 
-Внешний consumer использует EF consumer outbox/inbox. Обработка команды и исходящие
-сообщения фиксируются в одной транзакции. Inbox устраняет повторы одного MessageId;
-уникальный индекс (ApplicationId, IdempotencyKey) защищает от повторных команд с новым
-MessageId. Ключ обрезается по краям перед поиском и сохранением. При повторе первое
-уведомление остаётся исходным: новые данные не заменяют его содержимое.
+## Transactions and retries
 
-Внутренний NotificationDispatchRequested сохраняет прежний контракт и очередь.
-Отправляющий consumer создаёт отдельную область зависимостей с bus outbox. Она позволяет
-сохранить попытку, состояние и адресное событие одной транзакцией, не удерживая inbox-
-транзакцию во время SMTP/HTTP-вызова. Повторы доставки выполняются отдельно от регистрации.
+The external consumer uses EF consumer outbox/inbox. Command processing and outgoing messages commit in one transaction. The inbox eliminates duplicate MessageIds; a unique (ApplicationId, IdempotencyKey) index protects against repeated commands with a new MessageId. The key is trimmed before lookup and persistence. On repetition, the first notification remains authoritative: new data does not replace its content.
 
-Планировщик каждые 10 секунд публикует готовые отложенные задания и освобождает аренды
-обработки старше 10 минут. При освобождении сбрасывается отметка прежней публикации.
-Атомарный UPDATE захватывает уведомление; терминальные записи повторно не отправляются.
-После четырёх начатых попыток обычные ошибки провайдера дают failed. Инфраструктурные сбои,
-которые не удалось обработать, остаются в error queue и требуют диагностики.
+The internal NotificationDispatchRequested retains its original contract and queue. The sending consumer creates a separate dependency scope with a bus outbox. It can persist the attempt, state, and addressed event in one transaction without holding the inbox transaction during an SMTP/HTTP call. Delivery retries are separate from registration.
 
-Это доставка сообщений как минимум один раз. Если провайдер принял сообщение, а процесс
-завершился до фиксации результата, повторная внешняя отправка возможна. Абсолютной гарантии
-однократной отправки нет без поддержки идемпотентности провайдером. Ошибка сохранения после
-успешного вызова не классифицируется как отказ провайдера.
+Every 10 seconds, the scheduler publishes due deferred jobs and releases processing leases older than 10 minutes. Releasing a lease resets the previous publication marker. An atomic UPDATE claims the notification; terminal records are not resent. After four started attempts, ordinary provider errors result in failed. Unhandled infrastructure failures remain in the error queue and require diagnosis.
 
-## Переписка с клиентами в Telegram
+This provides at-least-once message delivery. If the provider accepted a message but the process exited before persisting the result, an external send may be repeated. There is no absolute exactly-once sending guarantee without provider idempotency support. A persistence failure after a successful call is not classified as provider rejection.
 
-Исходящие сообщения переписки сохраняются в OpenCRM и публикуются как
-`ConversationDeliveryWakeup(ProviderCode, MessageId, RequestId)` в отдельную очередь канала:
-`notifications-{applicationId}-conversation-{provider}`. Контракт знает только разрешённые
-значения Telegram и MAX; для каждого подключённого адаптера создаётся собственная очередь и
-worker, поэтому параллелизм и отказоустойчивость провайдеров не зависят друг от друга. Сигнал
-содержит только идентификаторы; токены и байты вложений передаются через защищённый HTTPS API
-после захвата delivery lease. RabbitMQ используется как wake-up, а окончательное состояние
-отправки хранится в OpenCRM и NotificationsService.
+## Telegram customer conversations
 
-Worker объявляет отдельную durable queue с `x-overflow=reject-publish`; стандартные пределы
-составляют 500 сообщений и 8 MiB, а prefetch и параллелизм ограничены. Также заранее объявляется
-bounded error queue с пределами 500 сообщений и 8 MiB, которая отклоняет новые публикации при
-достижении ёмкости. OpenCRM отправляет в exchange основной очереди с mandatory и ожидаемым
-publisher ack. Это не позволяет publisher создать очередь без тех же аргументов и сохраняет
-команду в outbox, если брокер не принял публикацию. Увеличивайте пределы только после оценки
-памяти и скорости обработки.
+Outgoing conversation messages are stored in OpenCRM and published as `ConversationDeliveryWakeup(ProviderCode, MessageId, RequestId)` to a separate channel queue: `notifications-{applicationId}-conversation-{provider}`. The contract recognizes only Telegram and MAX; each connected adapter gets its own queue and worker, keeping provider concurrency and resilience independent. The signal carries identifiers only; tokens and attachment bytes are transferred through a protected HTTPS API after acquiring a delivery lease. RabbitMQ is a wake-up mechanism; final delivery state is stored in OpenCRM and NotificationsService.
 
-Rabbit consumer только делает `INSERT ... ON CONFLICT DO NOTHING` в durable inbox и подтверждает
-сообщение брокеру после фиксации строки. Он не вызывает OpenCRM или Telegram. Ограниченное число
-worker забирает due-записи через `FOR UPDATE SKIP LOCKED`, сохраняет аренду и время следующей
-попытки; ошибки core API и ответы 409 переводятся в устойчивый backoff. Повторный wake-up с теми
-же идентификаторами не создаёт вторую запись и не вызывает провайдера параллельно. Необработанные
-записи старше 24 часов становятся `expired` и видны в периодическом снимке очереди.
+The Worker declares a separate durable queue with `x-overflow=reject-publish`; default limits are 500 messages and 8 MiB, with bounded prefetch and concurrency. It also predeclares a bounded error queue of 500 messages and 8 MiB that rejects new publications at capacity. OpenCRM publishes to the main queue's exchange with mandatory routing and waits for a publisher acknowledgment. This prevents a publisher from creating a queue with different arguments and retains the command in the outbox if the broker rejects publication. Increase limits only after evaluating memory and processing throughput.
 
-Ошибки при сохранении inbox проходят три ограниченных повтора MassTransit. После них исходное
-сообщение попадает в ограниченную `*_error` очередь. Автоматического массового replay нет; полный
-requeue может повторно вызвать внешний API, если исход отправки остался неопределённым. После
-устранения причины сообщения разбираются адресно, а состояние по `LeaseId` не позволяет слепо
-отправлять повторно уже начатую попытку: такой исход остаётся uncertain. После фиксации inbox
-Rabbit-повторы не нужны: восстановление выполняет DB worker, а после недоступности сервиса OpenCRM
-повторяет публикацию wake-up с теми же идентификаторами.
+The Rabbit consumer only performs `INSERT ... ON CONFLICT DO NOTHING` into the durable inbox and acknowledges the message after the row commits. It does not call OpenCRM or Telegram. A bounded number of workers claim due records with `FOR UPDATE SKIP LOCKED`, persisting the lease and next attempt time; core API errors and 409 responses produce durable backoff. Repeated wake-ups with the same IDs neither create a second row nor call the provider concurrently. Unprocessed records older than 24 hours become `expired` and appear in the periodic queue snapshot.
 
-Основа механизма описана в [документации MassTransit об outbox](https://masstransit.io/documentation/patterns/transactional-outbox).
-Проект сохраняет установленную версию MassTransit 8.5.7.
+Inbox persistence errors get three bounded MassTransit retries. Afterward, the original message enters the bounded `*_error` queue. There is no automatic bulk replay; a complete requeue could repeat an external API call whose outcome is unknown. Once the cause is resolved, investigate messages individually. State by `LeaseId` prevents blindly resending an already started attempt: its outcome remains uncertain. After inbox persistence, Rabbit retries are unnecessary: the database worker performs recovery, and after service unavailability OpenCRM republishes the wake-up with the same IDs.
 
-## Состояния
+The mechanism is based on the [MassTransit outbox documentation](https://masstransit.io/documentation/patterns/transactional-outbox). The project retains MassTransit version 8.5.7.
 
-| Статус результата | Значение |
-|---|---|
-| queued | Уведомление сохранено, в том числе для отложенной отправки |
-| processing | Обработка начата; возвращается при запросе снимка |
-| retrying | Попытка завершилась ошибкой, будут повторы |
-| provider-accepted | Провайдер принял сообщение |
-| simulated | Сработал LogOnly; реальная отправка не выполнялась |
-| failed | Лимит попыток исчерпан |
-| not-found | В приложении нет записи с указанным ключом |
+## States
 
-В существующей БД успешная попытка по-прежнему хранится со статусом Sent.
-Имитация определяется по сохранённому provider id с префиксом `log:`, поэтому снимок
-остаётся корректным после перезапуска или переключения LogOnly.
+| Result status | Meaning |
+| --- | --- |
+| queued | Notification saved, including deferred sends |
+| processing | Processing started; returned when requesting a snapshot |
+| retrying | An attempt failed; retries will follow |
+| provider-accepted | Provider accepted the message |
+| simulated | LogOnly applied; no real send occurred |
+| failed | Attempt limit exhausted |
+| not-found | The application has no record with that key |
 
-События могут повторяться и приходить с задержкой. Клиент устраняет дубли по EventId,
-сопоставляет их по ApplicationId/IdempotencyKey, учитывает AttemptCount и не заменяет
-терминальное состояние более ранним. GetNotificationStatus позволяет восстановить снимок.
-Старые уведомления не получают события задним числом; их состояние можно запросить по ключу.
+The existing database still stores a successful attempt with Sent status. Simulation is identified by a persisted provider ID prefixed with `log:`, so the snapshot remains correct after restart or a LogOnly change.
 
-Шаблоны имеют неизменяемую Version в ключе (ApplicationId, Key, Channel, Version).
-Повтор регистрации того же содержимого подтверждается, перезапись версии отклоняется.
-Для шаблонов БД клиент ждёт NotificationTemplateUpdated с нужной версией.
-Системные письма с ключами system/* компилируются из Razor .cshtml вместе с Worker.
-Доступ и название приложения задаёт SystemTemplates:Applications.
-Они используют типизированные модели и общий макет
-своей версии. Их нельзя зарегистрировать или заменить командой из брокера.
-Приём команды формирует и сохраняет снимок письма вместе с outbox. Доставка и повторы
-не перечитывают шаблон; старые задания получают снимок версии 1 перед первой отправкой.
-Подробности и порядок миграции: [шаблоны](templates.md).
+Events may be duplicated or delayed. Clients deduplicate by EventId, match ApplicationId/IdempotencyKey, consider AttemptCount, and never replace terminal state with an earlier one. GetNotificationStatus restores a snapshot. Old notifications do not receive retroactive events; their state can be requested by key.
 
-HTTP API отправки уведомлений и HTTP health endpoints отсутствуют. Состояние процесса
-проверяется через Docker/логи и consumers. При включённом UnisenderGo:WebhookEnabled
-Worker принимает подписанные события на /webhooks/unisender-go и передаёт общий контракт
-NotificationDeliveryReported в очередь приложения. ProviderWebhookEvents и bus outbox
-фиксируются одной транзакцией. Повторы определяются по устойчивому EventId.
-Успешный SMTP-вызов означает принятие провайдером; delivered приходит отдельным событием.
-NotificationStatusChanged.Content содержит снимок готового письма только для приложения-владельца.
+Templates have an immutable Version in the (ApplicationId, Key, Channel, Version) key. Registering the same content again is acknowledged; overwriting a version is rejected. For database templates, the client waits for NotificationTemplateUpdated with the required version. System emails under system/* compile from Razor .cshtml with the Worker. SystemTemplates:Applications determines access and application name. They use typed models and a layout belonging to their own version. They cannot be registered or replaced by a broker command. Command acceptance renders and persists the email snapshot with the outbox. Delivery and retries do not reread the template; old jobs get a version 1 snapshot before their first send. See [templates](templates.md) for details and migration order.
 
-## Смена провайдера
+There is no HTTP notification-sending API or HTTP health endpoints. Check process state through Docker/logs and consumers. With UnisenderGo:WebhookEnabled, the Worker accepts signed events at /webhooks/unisender-go and forwards the shared NotificationDeliveryReported contract to the application queue. ProviderWebhookEvents and the bus outbox commit in one transaction. Stable EventId determines duplicates. A successful SMTP call means provider acceptance; delivered arrives as a separate event. NotificationStatusChanged.Content contains the rendered email snapshot only for its owning application.
 
-NotificationDispatcher зависит от INotificationChannelSender и выбирает реализацию по
-каналу. Название SMS.ru не входит в доменную модель или контракты RabbitMQ.
-Email:Provider, Sms:Provider и Telegram:Provider задают конкретный адаптер в Infrastructure;
-секции Smtp, SmsRu и Telegram содержат только параметры соответствующих интеграций.
-Переход на новый протокол требует адаптера, регистрации и валидации конфигурации;
-бизнес-логика и клиенты сервиса при этом не меняются.
+## Switching providers
 
-Конкретные адаптеры и их настройки расположены в отдельных папках Infrastructure:
-Providers/SmsRu содержит SmsRuNotificationSender и SmsRuOptions, Providers/Smtp содержит
-EmailNotificationSender и SmtpOptions. Пространства имён соответствуют папкам.
-Providers/Telegram содержит TelegramNotificationSender и TelegramOptions. Он принимает
-только логический адрес `owner`, а его конфигурация хранит токен бота и chat_id владельца.
-Общие настройки доставки и регистрация зависимостей остаются в Infrastructure.
+NotificationDispatcher depends on INotificationChannelSender and selects an implementation by channel. SMS.ru is not part of the domain model or RabbitMQ contracts. Email:Provider, Sms:Provider, and Telegram:Provider select a specific Infrastructure adapter; Smtp, SmsRu, and Telegram sections contain only their respective integration parameters. A new protocol requires an adapter, registration, and configuration validation; business logic and service clients remain unchanged.
+
+Concrete adapters and settings reside in separate Infrastructure directories: Providers/SmsRu contains SmsRuNotificationSender and SmsRuOptions; Providers/Smtp contains EmailNotificationSender and SmtpOptions. Namespaces match directories. Providers/Telegram contains TelegramNotificationSender and TelegramOptions. It accepts only the logical `owner` address; its configuration stores the bot token and owner's chat_id. Shared delivery settings and dependency registration remain in Infrastructure.

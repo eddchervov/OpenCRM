@@ -1,60 +1,62 @@
-# Выгрузка данных организации в ZIP
+# Exporting organization data as ZIP
 
-Экспорт доступен текущему владельцу организации независимо от Free/PRO; право проверяется при запросе, перед сборкой, перед публикацией и при каждом скачивании.
+**English** | [Русский](organization-data-export.ru.md)
 
-## Подготовка и скачивание
+The current organization owner can export data regardless of Free/PRO. Authorization is checked when requested, before building, before publishing, and on every download.
 
-`POST /api/v1/organizations/{organizationId}/data-export` с анти-CSRF ставит сохранённое задание в очередь. Повторный запрос возвращает то же активное задание или готовый архив в пределах суток. `GET .../data-export/status` возвращает состояние; `GET .../data-export/{jobId}/file` передаёт готовый ZIP. Старый GET `.../data-export` скачивает только уже готовый архив, без запуска сборки.
+## Preparing and downloading
 
-Очередью владеет модуль Organizations, WebApp запускает фоновый worker. Состояния: queued → running → ready; при сбое — failed, после удаления готового файла — expired. Уникальный частичный индекс запрещает два queued/running задания одной организации. Короткая общая транзакционная блокировка PostgreSQL ограничивает размер всей очереди; отдельный advisory slot допускает одну сборку на все экземпляры приложения, работающие с этой БД. Слот удерживается до завершения загрузки архива в хранилище.
+`POST /api/v1/organizations/{organizationId}/data-export` with anti-CSRF protection queues a persisted job. A repeated request returns the same active job or a ready archive within the 24-hour period. `GET .../data-export/status` returns the state; `GET .../data-export/{jobId}/file` streams a ready ZIP. The legacy `GET .../data-export` downloads only an already-ready archive; it does not start a build.
 
-Формат ZIP версии 1 и явный перечень полей сохранены. EF читает строки последовательно через контекст без retry buffering, без tracking и AutoInclude. Метаданные собираются в RepeatableRead; транзакция завершается до обращения к фотографиям и документам. Список файлов и отсутствующих вложений хранится во временных JSONL. Вложения копируются по одному, без сжатия уже сжатых медиа. ZIP лежит на временном диске, не в MemoryStream. Хранилище получает его поток без дополнительного SHA-256 прохода.
+The Organizations module owns the queue; WebApp runs the background worker. States are `queued` → `running` → `ready`; a failure results in `failed`, and deletion of a ready file results in `expired`. A unique partial index prevents two queued/running jobs for one organization. A short shared PostgreSQL transaction lock limits the overall queue size; a separate advisory slot permits one build across all application instances using that database. The slot is held until the archive upload to storage finishes.
 
-Клиент опрашивает состояние активного задания, а скачивание поручает браузеру по защищённому адресу: Blob всего файла не создаётся. Ошибки подготовки и скачивания показываются в настройках. Закрытие раздела прекращает опрос, но не удаляет серверное задание; при возвращении состояние загружается заново. Автоматическое скачивание после подготовки выполняется только в оставшемся открытым разделу после клика пользователя.
+ZIP format version 1 and the explicit field list are preserved. EF reads rows sequentially through a context without retry buffering, tracking, or AutoInclude. Metadata is collected under RepeatableRead; the transaction ends before photos and documents are accessed. File lists and missing attachments are stored in temporary JSONL files. Attachments are copied one at a time, without recompressing already-compressed media. The ZIP is written to temporary disk, not a MemoryStream. Storage receives the stream without an additional SHA-256 pass.
 
-Суточное ограничение отсчитывается от успешного завершения, не от запроса. Старый `LastDataExportRequestedAt` не используется: он мог содержать неудачные попытки прежнего механизма. Failed разрешает новый запрос после короткой задержки. Повторное скачивание ready не пересобирает ZIP. Пропавший готовый объект переводит задание в failed и освобождает суточный лимит. Результат публикации фиксируется CAS и аудитом в одной транзакции: при неизвестном результате commit нельзя отозвать уже готовый архив.
+The client polls the active job state and asks the browser to download through a protected URL; it does not create a Blob for the entire file. Preparation and download errors are shown in settings. Closing the section stops polling but does not delete the server job; returning reloads its state. Automatic download after preparation occurs only if the section remains open after the user click.
 
-После перезапуска queued сохраняется; прежнее running при освобождённом слоте помечается failed, без автоматического повтора. Пользователь может запросить его заново. Нормальные отказы не скрывают историю и не меняют рабочие данные организации.
+The daily limit starts after successful completion, not when requested. The legacy `LastDataExportRequestedAt` is not used because it may contain failed attempts from the previous mechanism. A failed job permits another request after a short delay. Downloading a ready archive again does not rebuild the ZIP. If a ready object is missing, the job becomes failed and the daily limit is released. Publication results are committed with CAS and audit in one transaction: if the commit result is unknown, an already-ready archive cannot be revoked.
 
-## Ограничения ресурсов
+Queued jobs survive a restart; a previous `running` job is marked failed once its slot is released, without an automatic retry. The user can request it again. Normal failures do not hide history or modify organization business data.
 
-Настройки секции `OrganizationDataExport` (для окружения WebApp — префикс `OPENCRM_OrganizationDataExport__`):
+## Resource limits
 
-| Параметр | По умолчанию |
+Settings under `OrganizationDataExport` (for the WebApp environment, prefix `OPENCRM_OrganizationDataExport__`):
+
+| Parameter | Default |
 | --- | --- |
-| MaxArchiveBytes | 1 ГиБ готового ZIP |
-| MaxSourceBytes | 4 ГиБ фактически прочитанных JSON и вложений |
-| MaxRows | 1 000 000 строк суммарно |
-| MaxFiles | 20 000 вложений |
-| MaxTextCharacters | 2 000 000 символов в текстовом поле |
-| MaxJsonFieldBytes | 8 МиБ в JSONB истории обслуживания |
-| TimeoutSeconds | 900 секунд на подготовку и загрузку |
-| MinimumFreeDiskBytes | 1 ГиБ свободного места; проверяется перед сборкой и через каждые 16 МиБ ZIP |
-| QueueLimit | 20 queued/running заданий |
-| RetryDelaySeconds | 60 секунд после отказа |
-| RetentionHours | 24 часа готового файла; допускается 24–168 |
-| SpoolDirectory | отдельный `opencrm-exports` внутри системного temp |
+| MaxArchiveBytes | 1 GiB completed ZIP |
+| MaxSourceBytes | 4 GiB of JSON and attachments actually read |
+| MaxRows | 1,000,000 rows total |
+| MaxFiles | 20,000 attachments |
+| MaxTextCharacters | 2,000,000 characters in a text field |
+| MaxJsonFieldBytes | 8 MiB in maintenance-history JSONB |
+| TimeoutSeconds | 900 seconds for preparation and upload |
+| MinimumFreeDiskBytes | 1 GiB free; checked before building and every 16 MiB of ZIP output |
+| QueueLimit | 20 queued/running jobs |
+| RetryDelaySeconds | 60 seconds after a failure |
+| RetentionHours | 24 hours for a ready file; 24–168 allowed |
+| SpoolDirectory | separate `opencrm-exports` directory inside system temp |
 
-Два общих PostgreSQL слота ограничивают одновременные скачивания. Поток освобождает слот при Dispose, в том числе после обрыва HTTP. Ограничения проверяются по фактическим байтам; неизвестный Content-Length их не обходит. При превышении ZIP не выдаётся частично: задание получает понятный отказ, временные файлы удаляются. Настройки увеличивать только после проверки диска и времени работы на целевом сервере.
+Two shared PostgreSQL slots limit simultaneous downloads. The stream releases a slot on Dispose, including after an interrupted HTTP connection. Limits use actual byte counts; an unknown Content-Length does not bypass them. If a limit is exceeded, no partial ZIP is delivered: the job receives a clear failure and temporary files are deleted. Increase settings only after checking disk and runtime on the target server.
 
-Это ограничивает объём одной операции, а не обещает нулевую нагрузку. EF материализует одну строку; перед этим серверная проверка отсекает слишком длинные экспортируемые строки и JSONB. PostgreSQL при проверке JSONB всё же обрабатывает само значение. Полную нагрузку на БД, S3 и сеть при производственном объёме нужно измерять отдельно; локальный тест с 32 МиБ подтверждает потоковое копирование, но не заменяет такой прогон.
+This limits the size of one operation; it does not guarantee zero load. EF materializes one row; before that, server validation rejects overly long exported strings and JSONB. PostgreSQL still processes the JSONB value itself during validation. Full load on the database, S3, and network must be measured separately at production scale; a local 32 MiB test confirms streaming copy but does not replace that measurement.
 
-В простое worker делает только лёгкую DB-проверку раз в 15 секунд, без создания S3-клиента; при работе — пауза 3 секунды. Готовые/неудачные объекты очищаются пакетами по 5, метаданные старше 30 дней без файла — по 100. Прежние spool-файлы собственного префикса очищаются после двух интервалов timeout; чужие файлы и reparse points не удаляются. Аудит сохраняется.
+When idle, the worker performs only a lightweight database check every 15 seconds without creating an S3 client; while working, it pauses for 3 seconds. Ready/failed objects are cleaned in batches of 5; metadata older than 30 days without a file is cleaned in batches of 100. Old spool files with the service's own prefix are removed after twice the timeout interval; unrelated files and reparse points are not deleted. Audit data is retained.
 
-## Закрытое хранилище и выпуск
+## Private storage and deployment
 
-Готовые ZIP требуют **отдельного** `S3:PrivateBucketName` (`OPENCRM_S3__PrivateBucketName`). Пустое имя или совпадение с обычным бакетом запрещено до постановки задания. Обычные медиа продолжают использовать прежний бакет. Ключи архивов и URL S3 не возвращаются клиенту; скачивание идёт через API с повторной проверкой владельца.
+Completed ZIPs require a **separate** `S3:PrivateBucketName` (`OPENCRM_S3__PrivateBucketName`). An empty name or one matching the regular bucket is rejected before a job is queued. Regular media continues to use the existing bucket. Archive keys and S3 URLs are never returned to the client; downloads go through the API, which rechecks ownership.
 
-Перед развёртыванием по [инструкции развёртывания](README.md):
+Before deployment, following the [deployment instructions](README.md):
 
-1. Подготовить отдельный закрытый бакет и доступ приложения на put/get/delete. Добавить настройку private bucket в закрытую конфигурацию и явную передачу переменной в Compose OpenCRM; одного изменения `.env` недостаточно. Запретить анонимное чтение и listing политикой бакета; случайный GUID и private ACL сами по себе такой гарантией не являются.
-2. Проверить реальный anonymous GET точного тестового ключа: доступ должен быть запрещён, в том числе через внешний CDN/домен. Локальный S3 mock не доказывает производственную политику доступа.
-3. Настроить lifecycle удаления объектов с префиксом `organization-exports/` после 8 дней как страховку от удалённых организаций и потери DB-метаданных; не затрагивать рабочие медиа. Штатная очистка ready выполняется после RetentionHours.
-4. Выделить spool с достаточным свободным местом. Увеличение лимита архива требует пересчёта дискового резерва. Данные БД и S3 не размещать в этом каталоге.
-5. Проверить миграцию `20261030065903_AddOrganizationDataExportJobs` с выбранным выпуском и применить по штатному порядку; затем проверить owner/member, queued/ready, повторное скачивание, отказ и повтор после сбоя.
+1. Prepare a separate private bucket and application access for put/get/delete. Add the private-bucket setting to protected configuration and explicitly pass the variable into OpenCRM Compose; changing `.env` alone is insufficient. Deny anonymous reads and listing in the bucket policy; a random GUID and private ACL alone do not guarantee this.
+2. Test an actual anonymous GET for an exact test key: access must be denied, including through an external CDN/domain. A local S3 mock does not prove the production access policy.
+3. Configure a lifecycle rule to delete objects under `organization-exports/` after 8 days as a safeguard against deleted organizations and lost database metadata; do not affect business media. Normal cleanup of ready files follows `RetentionHours`.
+4. Allocate a spool directory with enough free space. Increasing the archive limit requires recalculating disk reserve. Do not put database or S3 data in this directory.
+5. Check migration `20261030065903_AddOrganizationDataExportJobs` against the selected release and apply it through the standard process; then check owner/member access, queued/ready states, repeated download, failure, and retry after failure.
 
-Up создаёт только таблицу заданий с FK организации и индексами. Down удаляет очередь и метаданные готовых ZIP, не меняя рабочие данные и аудит; файлы S3 при SQL-откате не удаляются. Перед намеренным откатом остановить worker и сохранить список незавершённых/готовых объектов для очистки по закрытому бакету; БД при откате приложения автоматически не откатывать. Повторный Up создаёт пустую очередь.
+Up creates only the job table with an organization FK and indexes. Down removes the queue and ready-ZIP metadata without changing business data or audit; SQL rollback does not delete S3 files. Before an intentional rollback, stop the worker and save the list of unfinished/ready objects for cleanup in the private bucket; do not automatically roll back the database when rolling back the application. A subsequent Up creates an empty queue.
 
-В пакет также входит `20261030073145_ExpandOrganizationAuditDescription`: `Description` аудита переводится из varchar(1200) в text, поскольку полная смена прав роли превышала прежнюю длину и отменяла сохранение. Up сохраняет историю. Down удерживает блокировку таблицы и отказывается с ошибкой при наличии описаний длиннее 1200; автоматического усечения нет. Для такого состояния полный откат схемы намеренно недоступен без отдельного решения по сохранённому аудиту.
+The package also includes `20261030073145_ExpandOrganizationAuditDescription`: audit `Description` changes from varchar(1200) to text because a full role-permission change exceeded the previous length and cancelled the save. Up preserves history. Down locks the table and refuses with an error if descriptions longer than 1200 characters exist; no automatic truncation occurs. In that state, a full schema rollback is intentionally unavailable without a separate decision about retained audit records.
 
-Штатное хранение готового архива — 24 часа, страхующий lifecycle — 8 дней; фотографии остаются в прежнем бакете.
+Normal ready-archive retention is 24 hours; the safety lifecycle rule is 8 days. Photos remain in the existing bucket.

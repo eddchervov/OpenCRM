@@ -1,52 +1,54 @@
-# Стартовая настройка организации
+# Organization setup
 
-Мастер автоматически открывается на рабочем столе при первом переходе в новую организацию детейлинга или СТО. Подписи соответствуют выбранному сценарию. При закрытии её можно снова открыть через «Продолжить настройку». После завершения блок и кнопка исчезают с рабочего стола. После завершения посты и услуги редактируются в «Справочниках», рабочие часы — в «Настройках организации». Автопарк не показывает мастер. В настройках организации доступен отдельный блок «Рабочие часы и перерывы». Хранение настроек и API общие; публичные страницы не меняются.
+**English** | [Русский](organization-setup.ru.md)
 
-## Шаги
+The setup wizard opens automatically on the workspace when a user first visits a new Detailing or Service Station organization. Labels match the selected scenario. If dismissed, the wizard can be reopened with “Continue setup”. Once completed, the panel and button disappear from the workspace. After completion, service bays and services can be edited in “Directories”, and working hours in “Organization settings”. Fleet organizations do not show the wizard. Organization settings include a separate “Working hours and breaks” section. Settings storage and the API are shared; public pages are unchanged.
 
-1. Рабочие посты: существующие позиции подставляются, можно включить нужные, переименовать неиспользуемые и добавить свои.
-2. Услуги: выбираются действующие позиции и цены. Пустая цена остаётся неизвестной, а не нулевой. Сохранённые обслуживания и их цены не пересчитываются.
-3. Рабочие дни и часы: для каждого дня задаются открытие, закрытие и несколько перерывов. График задаёт подсветку рабочих часов в календарях, а верхние поля диапазона и слотная сетка получают часы выбранного дня. Записи вне графика остаются доступны. Интервал рабочего дня не переходит через полночь.
-4. Завершение: перейти к первой записи или вернуться на рабочий стол. Сохранённые данные можно изменить в справочниках и настройках организации.
+## Steps
 
-«Позже» закрывает мастер. Сохранённые шаги находятся в базе, незаконченный ввод сохраняется в браузере отдельно для каждой организации. Черновик с устаревшей версией не подменяет серверные данные. «Пропустить» не сохраняет изменения текущего шага.
+1. **Work bays:** existing entries are preselected. You can enable the ones you need, rename unused entries, and add your own.
+2. **Services:** choose active entries and prices. An empty price remains unknown rather than becoming zero. Saved maintenance records and their prices are not recalculated.
+3. **Working days and hours:** set opening and closing times and any number of breaks for each day. The schedule highlights working hours in calendars; the range fields at the top and the slot grid use the selected day's hours. Appointments outside the schedule remain accessible. A working day cannot run past midnight.
+4. **Finish:** go to the first appointment or return to the workspace. Saved data can be changed in directories and organization settings.
 
-## Сохранность и доступ
+“Later” closes the wizard. Completed steps are stored in the database; unfinished input is stored separately in the browser for each organization. A draft from an outdated version does not overwrite server data. “Skip” does not save changes from the current step.
 
-Настройка требует права `workspace.profile.edit` и возможности записи по подписке. Страница не показывает мастер сотрудникам без управления настройками и в режиме чтения. Проверка на сервере обязательна.
+## Data integrity and access
 
-Каждый шаг сохраняется одной транзакцией. Блокировка организации и номер версии защищают от одновременных изменений и повторного сохранения устаревшего шага. Элементы сохраняют идентификаторы и системные коды: штатное заполнение справочников не создаёт отключённые позиции заново. Чужие идентификаторы, повторяющиеся имена, некорректные цены и график отклоняются.
+Setup requires the `workspace.profile.edit` permission and write access under the subscription. The page does not show the wizard to employees who cannot manage settings or when the organization is in read-only mode. Server-side authorization is required.
 
-Нельзя отключить используемую услугу, участника активного набора или пост, на который уже есть запись. Используемый пост нельзя переименовать через мастер, поскольку существующие записи связываются с ним по названию.
+Each step is saved in a single transaction. Organization locking and a revision number protect against concurrent changes and resaving an outdated step. Items retain their IDs and system codes: normal directory initialization does not recreate disabled entries. Foreign IDs, duplicate names, invalid prices, and invalid schedules are rejected.
 
-## Миграция
+A service in use, a member of an active set, or a bay with an existing appointment cannot be disabled. A bay in use cannot be renamed in the wizard because existing appointments are linked to it by name.
 
-`20260916100913_AddOrganizationSetup` добавляет только поля в `Organizations`: шаг, версию и завершение мастера, начало/конец рабочего дня и дни недели. Существующие организации получают незавершённую настройку без установленного графика. Миграция не меняет записи, оплаты и каталог.
+## Migration
 
-`Down` удаляет прогресс мастера и график; добавленные через мастер услуги и посты остаются в существующем справочнике. Перед откатом учитывать потерю настроек графика.
+`20260916100913_AddOrganizationSetup` adds only fields to `Organizations`: wizard step, revision, completion status, workday start and end, and weekdays. Existing organizations receive an incomplete setup with no schedule configured. The migration does not change appointments, payments, or the catalog.
 
-## Первое открытие
+`Down` removes wizard progress and the schedule; services and bays added through the wizard remain in the existing directory. Consider the loss of schedule settings before rolling back.
 
-`SetupAutoOpenPending` устанавливается при создании организации. Существующие организации при миграции получают `false`: обновление не навязывает им мастер. Для сотрудника без права управления настройками и в режиме чтения автоматического показа нет.
+## First open
 
-После загрузки справочников клиент атомарно отмечает первое открытие через `POST /setup/open`. Только одно из одновременно открытых окон получает разрешение автоматического показа. Отметка хранится в организации и не зависит от браузера. Закрытие крестиком, Escape или «Позже» не завершает настройку, но повторного автоматического показа уже нет. До завершения настройки ручное открытие доступно по кнопке «Продолжить настройку» при наличии прав.
+`SetupAutoOpenPending` is set when an organization is created. Existing organizations receive `false` during migration; an update does not force them to use the wizard. Automatic display is disabled for employees without settings-management permission and in read-only mode.
 
-`20260916102622_AddOrganizationSetupAutoOpen` добавляет один булевый столбец с `false` для существующих строк. `Down` удаляет только отметку первого показа.
+After directories load, the client atomically records the first open through `POST /setup/open`. Only one of several simultaneously open windows is allowed to display the wizard automatically. The flag is stored on the organization and is independent of the browser. Closing with the X, Escape, or “Later” does not complete setup, but automatic display will not happen again. Until setup is complete, users with permission can reopen it with “Continue setup”.
 
-## Рабочие часы по дням и перерывы
+`20260916102622_AddOrganizationSetupAutoOpen` adds one Boolean column, with `false` for existing rows. `Down` removes only the first-display flag.
 
-В настройках СТО и автопарка — «Рабочие часы и перерывы»; в детейлинге — третий шаг существующего мастера. Редактор общий: семь дней, выходной либо время открытия/закрытия, добавление и удаление перерывов без искусственного лимита их числа. Сервер проверяет день недели, обязательные часы рабочего дня, положительную длительность, границы и непересечение перерывов. Сохраняется прежнее требование хотя бы одного рабочего дня. Переход через полночь, праздники и исключения по конкретным датам не входят в эту версию. Это часы организации, а не смены сотрудников.
+## Working hours by day and breaks
 
-Недельный график хранится в OrganizationWorkingDays, перерывы — в OrganizationWorkingDayBreaks. Составной ключ рабочего дня — организация/день; ключ перерыва дополнительно содержит начало. Обновление всей недели проходит под блокировкой организации и SetupRevision в существующей транзакции. API setup добавляет WeeklySchedule; старые WorkingDays/WorkdayStart/WorkdayEnd пока сохраняются как совместимые сводные поля. Старый формат записи отклоняется, если способен потерять разные часы или перерывы уже сохранённого графика.
+In Service Station and Fleet settings this section is called “Working hours and breaks”; in Detailing it is the third step of the existing wizard. The shared editor covers all seven days. Each day can be marked as a day off or assigned opening and closing times, with breaks added or removed without an artificial limit. The server validates weekdays, required workday hours, positive duration, time bounds, and overlapping breaks. The existing requirement for at least one working day remains. Overnight schedules, holidays, and date-specific exceptions are outside this version. These are organization hours, not employee shifts.
 
-Календари трёх CRM-клиентов показывают рабочие интервалы с исключёнными перерывами. В слотной сетке видны часы выбранного дня и отметки «Вне графика»; при выборе рабочего дня диапазон сверху и сетка получают одинаковые часы; его можно вручную изменить для просмотра, не меняя сохранённый график организации. СТО и автопарк, как и детейлинг, показывают в календаре полный день 00:00–24:00. Заказы не скрываются и не запрещаются только из-за выходного или перерыва.
+The weekly schedule is stored in `OrganizationWorkingDays`; breaks are stored in `OrganizationWorkingDayBreaks`. The workday composite key is organization/day; the break key also includes its start time. Updating the entire week runs under an organization lock and `SetupRevision` in the existing transaction. The setup API adds `WeeklySchedule`; legacy `WorkingDays`/`WorkdayStart`/`WorkdayEnd` fields remain as compatible summary fields for now. The legacy write format is rejected if it could lose different hours or breaks from a saved schedule.
 
-### Миграция недельного графика
+Calendars in all three CRM clients show working intervals with breaks removed. The slot grid displays the selected day's hours and “Outside working hours” markers. When a working day is selected, the top range and grid use the same hours; the range can be changed manually for viewing without changing the organization's saved schedule. Service Station and Fleet, like Detailing, show a full-day calendar range of 00:00–24:00. Orders are not hidden or prohibited solely because they fall on a day off or during a break.
 
-20261009005033_AddOrganizationWeeklyWorkingHours добавляет две таблицы с внешними ключами и проверками времени, переносит каждый прежний рабочий день с общими часами без перерывов. Дубли выбранных дней сворачиваются в одну строку. При заданных днях с недопустимым номером или отсутствующими/обратными часами миграция останавливается с ошибкой, не угадывая расписание. Организация без выбранных дней остаётся без настроенного графика. Старые колонки и сами заказы не удаляются.
+### Weekly schedule migration
 
-Down удаляет новые таблицы только если у организаций нет перерывов и разных часов по дням. В противном случае откат останавливается, поскольку прежняя схема не может сохранить эти данные. Перед таким откатом нужен экспорт полного графика и отдельное решение о приведении к общим часам либо восстановлении резервной копии; автоматического преобразования с потерей данных нет.
+`20261009005033_AddOrganizationWeeklyWorkingHours` adds two tables with foreign keys and time checks, then migrates each existing working day using the old shared hours and no breaks. Duplicate selected weekdays are collapsed into one row. If selected days contain an invalid weekday number or missing/reversed hours, the migration stops with an error instead of guessing the schedule. An organization with no selected days remains without a configured schedule. Old columns and orders are not deleted.
 
-## Подключение СТО
+`Down` removes the new tables only if organizations have no breaks and no different hours by day. Otherwise rollback stops because the old schema cannot preserve that data. Before such a rollback, export the full schedule and decide separately whether to convert it to shared hours or restore a backup. No automatic data-losing conversion is performed.
 
-Мастер подключён к рабочему дню СТО наравне с детейлингом. Код сценария берётся из `context.shell.scenario.code`; для СТО используется `service-station`. Подписи мастера и плашки соответствуют автосервису. Серверная отметка первого открытия и проверки доступа прежние, миграция не требуется. Сценарий покрыт проверками в `src/OpenCRM.Frontend/tests/workspaceSetupWizard.test.mjs`.
+## Service Station integration
+
+The wizard is connected to the Service Station workday in the same way as to Detailing. The scenario code comes from `context.shell.scenario.code`; Service Station uses `service-station`. Wizard labels and badges match the auto repair scenario. The server-side first-open marker and access checks are unchanged; no migration is required. The scenario is covered by `src/OpenCRM.Frontend/tests/workspaceSetupWizard.test.mjs`.

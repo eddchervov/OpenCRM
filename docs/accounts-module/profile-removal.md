@@ -1,25 +1,27 @@
-# Удаление сценариев и возможностей аккаунта
+# Removing account scenarios and capabilities
 
-## Действующая модель
+**English** | [Русский](profile-removal.ru.md)
 
-Аккаунт не имеет режима, типа организации, рекомендаций и включённых возможностей. Accounts владеет регистрацией, входом, удалением пользователя и пользовательскими записями. Личная техника доступна каждому пользователю. Доступ к организации определяется членством, правами и подпиской выбранной организации.
+## Current model
 
-Organizations владеет `OrganizationTypeDefinitions` и `IOrganizationTypeCatalog`. Поддерживаемые коды фиксированы: `detailing`, `service-station`, `fleet`. Ограничение БД связывает `IsSupported` с этими тремя кодами. Создание и варианты фильтра рассылок используют только `IsSupported && IsActive`; чтение названий существующих организаций включает исторические записи. Архивная запись типа не создаёт новый рабочий процесс. `OrganizationScenarioProcessCatalog` сохраняет описания исторических процессов и использует общие `OrganizationTypeCodes`.
+An account has no mode, organization type, recommendations, or enabled capabilities. Accounts owns registration, sign-in, user deletion, and personal records. Personal vehicles are available to every user. Access to an organization is determined by membership, permissions, and the subscription of the selected organization.
 
-Миграция `20261015071909_RemoveAccountProfiles` переносит все названия, описания, активность, порядок, идентификаторы и даты старого каталога. Для отсутствующего поддерживаемого кода создаётся стандартная запись. Существующие коды организаций и сохранённых кампаний не переписываются. Код без записи справочника отображается как исходный код.
+Organizations owns `OrganizationTypeDefinitions` and `IOrganizationTypeCatalog`. Supported codes are fixed: `detailing`, `service-station`, and `fleet`. A database constraint ties `IsSupported` to these three codes. Creation and mailing-filter options use only `IsSupported && IsActive`; reading names of existing organizations includes historical records. An archived type record does not create a new workflow. `OrganizationScenarioProcessCatalog` retains descriptions of historical processes and uses shared `OrganizationTypeCodes`.
 
-Значение активности из старых миграций нельзя подставлять вместо текущего. Миграция сохраняет старые названия и настройки, но исторические типы не становятся доступными для нового создания.
+Migration `20261015071909_RemoveAccountProfiles` moves all names, descriptions, activity flags, order, IDs, and dates from the old catalog. A standard record is created for any supported code that is missing. Existing organization codes and saved campaign values are not rewritten. A code without a directory record is displayed as the original code.
 
-Удалены API `/api/v1/account-profile`, `/api/v1/admin/account-profiles`, сервисы и DTO профиля, поля режима в запросах регистрации и входа, профильные поля админки и пять таблиц: `UserAccountFeatures`, `UserAccountProfiles`, `AccountScenarioFeatures`, `AccountFeatureDefinitions`, `AccountScenarioDefinitions`. Страница «Рабочие пространства» остаётся по прежнему MVC-маршруту `Personal/AccountProfile`, но не хранит профиль; пустые POST выбора режима и сохранения профиля удалены.
+An activity value from old migrations must not be substituted for the current value. The migration preserves old names and settings, but historical types do not become available for new creation.
 
-## Перед публикацией
+The following were removed: API routes `/api/v1/account-profile` and `/api/v1/admin/account-profiles`, profile services and DTOs, mode fields in registration and sign-in requests, profile fields in the admin interface, and five tables: `UserAccountFeatures`, `UserAccountProfiles`, `AccountScenarioFeatures`, `AccountFeatureDefinitions`, and `AccountScenarioDefinitions`. The “Workspaces” page remains on its previous MVC route `Personal/AccountProfile` but no longer stores a profile; empty POST handlers for mode selection and profile saving were removed.
 
-Подготовка к выпуску должна включать следующие действия на выбранной серверной ревизии по общей инструкции развёртывания:
+## Before release
 
-1. Проверить обращения к удаляемым API в журналах сервера и внешних интеграциях. В исходниках четырёх Vue-клиентов потребителей нет. Сопоставить период журналов с реальным использованием; отсутствие исходников внешних клиентов не доказывает отсутствие обращений.
-2. Сохранить полный согласованный `pg_dump` рабочей БД до применения миграции. Проверить читаемость и пробное восстановление в отдельную БД. Резерв содержит персональные данные; хранить его вне репозитория и общедоступных каталогов по принятому порядку.
-3. Выполнить и сохранить результаты запросов ниже, выгрузить содержимое пяти удаляемых таблиц вместе с резервом. Проверить неизвестные коды, нестандартные названия/активность/порядок и наличие трёх поддерживаемых строк. Не исправлять коды автоматически и не переносить тип исторического профиля в организацию.
-4. Применить миграцию к восстановленной копии, проверить сохранность названий/кодов и рабочие сценарии. Только затем включать миграцию в выпуск.
+Prepare the selected server revision for release using the shared deployment instructions:
+
+1. Check server and external integration logs for calls to the APIs being removed. No consumers were found in the source of the four Vue clients. Compare the log period with actual usage; absence of external client source does not prove there are no calls.
+2. Save a consistent full `pg_dump` of the production database before applying the migration. Check readability and perform a trial restore to a separate database. The backup contains personal data; keep it outside the repository and public directories under the established process.
+3. Run and save the results of the queries below, and export all five tables being removed alongside the backup. Check unknown codes, non-standard names/activity/order, and the presence of the three supported rows. Do not correct codes automatically or move the historical profile type into an organization.
+4. Apply the migration to a restored copy and check that names/codes and working scenarios are preserved. Only then include the migration in a release.
 
 ```sql
 SELECT "Code", "Name", "Description", "IsActive", "SortOrder", "CreatedAt", "UpdatedAt"
@@ -47,10 +49,10 @@ SELECT "TargetOrganizationTypeCode", COUNT(*) FROM "EmailCampaigns"
 GROUP BY "TargetOrganizationTypeCode";
 ```
 
-## Откат
+## Rollback
 
-`Down` возвращает схему пяти таблиц и переносит обратно все названия типов организаций с идентификаторами и настройками. Профили, функции и связи он **не восстанавливает**: для них нужен резерв до `Up`.
+`Down` recreates the schema of the five tables and migrates all organization type names back, with IDs and settings. It does **not** restore profiles, features, or relationships; a backup taken before `Up` is required for those.
 
-При откате остановить запись приложения и сначала проверить порядок на отдельной копии. После `Down` таблицы сценариев уже содержат перенесённые записи: перед восстановлением пяти таблиц из согласованного резерва очистить их совместно, затем восстановить данные и значения sequence. Данные загружать в порядке определений функций/сценариев, профилей, связей сценариев и возможностей пользователей; не перезагружать `AspNetUsers`, организации или другие рабочие таблицы выборочно. Сопоставить количество, идентификаторы и связи с резервом. Возвращать старую версию приложения только после проверки совместимой схемы. Полное восстановление БД из резерва — отдельное решение, поскольку теряет изменения после резервирования; автоматически его не выполнять.
+When rolling back, stop application writes and first test the sequence on a separate copy. After `Down`, the scenario tables already contain the migrated entries: before restoring the five tables from the consistent backup, clear these entries together, then restore the data and sequence values. Load data in this order: feature/scenario definitions, profiles, scenario links, and user capabilities. Do not selectively reload `AspNetUsers`, organizations, or other production tables. Compare counts, IDs, and relationships with the backup. Return to the old application version only after checking the compatible schema. Full database restore is a separate decision because it loses changes made since the backup; do not perform it automatically.
 
-Локальный интеграционный тест использует отдельный PostgreSQL, проверяет `Up`, `Down`, восстановление всех пяти таблиц из согласованных SQL-копий и повторный `Up`. Это не заменяет проверку резервной копии рабочей БД и серверных потребителей.
+The local integration test uses a separate PostgreSQL instance and checks `Up`, `Down`, restoring all five tables from consistent SQL copies, and a repeated `Up`. It does not replace validation of the production database backup and server consumers.

@@ -1,21 +1,23 @@
-# Сервис оплаты подписок opencrm.example.invalid
+# Subscription payment service for opencrm.example.invalid
 
-Автономный Payments на .NET 10 со своей PostgreSQL и RabbitMQ. Все три проекта включены в `OpenCRM.sln`: `Payments.Contracts` и `Payments.Service` находятся в `Services/Payments`, `Payments.Tests` — в `Tests`. Проекты не ссылаются на OpenCRM. Checkout и Billing подключены через отдельный финансовый транспорт; [инструкция интеграции и восстановления](../../docs/payments-service-integration.md), порядок production описан в разделе «Серверная установка» этого документа.
+**English** | [Русский](README.ru.md)
 
-Это отдельный этап [проекта архитектуры](../../docs/payments-service-design.md): приём команд, сохранение операций, адаптер тестовой и рабочей ЮKassa, webhook inbox, сверка, возвраты и надёжная доставка состояния. Выдача подписки, промокоды и текущее оформление чеков остаются в основном приложении.
+Standalone Payments on .NET 10 with its own PostgreSQL and RabbitMQ. All three projects are included in `OpenCRM.sln`: `Payments.Contracts` and `Payments.Service` are in `Services/Payments`, and `Payments.Tests` is in `Tests`. They do not reference OpenCRM. Checkout and Billing connect through a separate financial transport; see the [integration and recovery guide](../../docs/payments-service-integration.md). Production setup follows the server setup section referenced by this guide.
 
-## Режимы и границы
+This is a separate stage of the [architecture design](../../docs/payments-service-design.md): command intake, operation persistence, test/live YooKassa adapters, webhook inbox, reconciliation, refunds, and reliable state delivery. Subscription grants, promotional codes, and current receipt generation remain in the main application.
 
-- `Disabled` — режим по умолчанию. Сохраняются receipt и отказ `payments_disabled`; исполняемая денежная операция не создаётся. Включение режима не запускает отклонённые команды.
-- `YooKassaTest` — явный режим тестового магазина. Нужны shop ID и секрет с префиксом `test_`; проверяется `test=true` в ответе. 
-- `YooKassaLive` — рабочий магазин с явным `IsTest=false`, числовым shop ID и ключом `live_`. Режим поручения, сохранённого платежа, магазина и ответа провайдера должны совпадать.
-- Поддерживается одностадийная разовая оплата подписки с `capture=true`. Автоплатежи, сохранение карт и эквайринг студий не включены. `Purpose=subscription`, `InitiationMode=customer`; другие значения отвергаются.
-- Неопределённый исход не означает отказ. Повтор сохраняет исходные тело/ключ; после 23 часов от первой возможной отправки новый POST блокируется и операция требует разбора. GET известного объекта остаётся доступен после этого срока.
-- Полный и частичный возвраты имеют отдельные команды, операции, ключи и резерв сумм. Состояние денег подтверждается API провайдера. Billing фиксирует возврат и требует ручного разбора доступа; автоматическое сокращение подписки не выполняется.
+## Modes and boundaries
 
-## Запуск отдельного контура
+- `Disabled` is the default mode. A receipt and `payments_disabled` rejection are stored; no executable monetary operation is created. Enabling a mode does not execute previously rejected commands.
+- `YooKassaTest` explicitly uses a test store. It requires a shop ID and a secret prefixed with `test_`; the response must have `test=true`.
+- `YooKassaLive` uses a live store with explicit `IsTest=false`, a numeric shop ID, and a `live_` key. The intent, stored payment, store, and provider response modes must match.
+- Single-stage, one-off subscription payment with `capture=true` is supported. Automatic payments, saving cards, and acquiring for studios are not enabled. `Purpose=subscription`, `InitiationMode=customer`; other values are rejected.
+- An unknown outcome is not a failure. Retries preserve the original body/key; after 23 hours from the first possible send, a new POST is blocked and the operation requires investigation. GET for a known object remains available after this period.
+- Full and partial refunds have separate commands, operations, keys, and amount reservations. Monetary state is confirmed through the provider API. Billing records the refund and requires manual entitlement review; it does not automatically shorten a subscription.
 
-Выполнить в PowerShell 7 из корня репозитория. Для каждого запуска конфигурации пароли должны сохраняться прежними, если используются существующие volumes. Пример создаёт новые случайные значения для первого запуска. Сохраните их в собственном защищённом хранилище и используйте те же значения при последующих запусках с этими volumes:
+## Start a separate environment
+
+Run from the repository root in PowerShell 7. Preserve the same passwords on subsequent starts when reusing existing volumes. This example generates random values for the first start. Save them in your own protected store and reuse the same values for later starts with these volumes:
 
 ```powershell
 $env:PAYMENTS_POSTGRES_PASSWORD = [Guid]::NewGuid().ToString('N') + [Guid]::NewGuid().ToString('N')
@@ -24,34 +26,34 @@ $env:PAYMENTS_SERVICE_KEY = [Convert]::ToHexString([Security.Cryptography.Random
 docker compose -f services/payments/compose.yaml up -d --build
 ```
 
-Стек `payments-service` использует собственные volumes, БД `payments`, пользователя `payments` и RabbitMQ virtual host `payments`. Контейнер миграций завершается до старта сервиса. При обычном запуске приложение не применяет миграции автоматически. Контейнер приложения работает без root.
+The `payments-service` stack uses its own volumes, the `payments` database and user, and the `payments` RabbitMQ virtual host. The migrations container finishes before the service starts. Normal application startup does not automatically apply migrations. The application container runs without root.
 
-Локальные адреса: HTTP `http://localhost:5087`, PostgreSQL `localhost:5434`, AMQP `localhost:5674`, RabbitMQ management `http://localhost:15674`. Порты привязаны только к loopback. Для внешнего webhook нужны отдельный HTTPS reverse proxy и тестовый магазин; этот Compose не является боевым развёртыванием.
+Local addresses: HTTP `http://localhost:5087`, PostgreSQL `localhost:5434`, AMQP `localhost:5674`, RabbitMQ management `http://localhost:15674`. Ports bind only to loopback. External webhooks require a separate HTTPS reverse proxy and test store; this Compose setup is not a production deployment.
 
-Для выполнения тестовых запросов ЮKassa задать `PAYMENTS_MODE=YooKassaTest`, `PAYMENTS_SHOP_ID` и `PAYMENTS_TEST_SECRET_KEY` в защищённом окружении и пересоздать только сервис Payments. Эти значения не должны браться из настроек основного приложения. Переключение уже принятых операций между merchant account не поддерживается: аккаунт фиксируется в поручении, несовпадение блокирует исполнение.
+To make YooKassa test requests, set `PAYMENTS_MODE=YooKassaTest`, `PAYMENTS_SHOP_ID`, and `PAYMENTS_TEST_SECRET_KEY` in a protected environment and recreate only the Payments service. Do not take these values from the main application's configuration. Switching already accepted operations between merchant accounts is unsupported: the account is fixed in the intent, and a mismatch blocks execution.
 
-Для запуска без Docker приложение принимает `ConnectionStrings__PaymentsDb`, `Payments__ServiceKey`, `RabbitMq__Host`, `RabbitMq__Port`, `RabbitMq__VirtualHost`, `RabbitMq__Username`, `RabbitMq__Password`. Значения из `appsettings.json` не содержат паролей. Миграции выполняются отдельным запуском:
+For startup without Docker, the application accepts `ConnectionStrings__PaymentsDb`, `Payments__ServiceKey`, `RabbitMq__Host`, `RabbitMq__Port`, `RabbitMq__VirtualHost`, `RabbitMq__Username`, and `RabbitMq__Password`. Values in `appsettings.json` contain no passwords. Apply migrations in a separate invocation:
 
 ```powershell
 dotnet run --project services/payments/src/Payments.Service -- --migrate
 dotnet run --project services/payments/src/Payments.Service
 ```
 
-`/health/live` проверяет процесс, `/health/ready` — доступность схемы Payments и транспорта MassTransit. Здоровый сервис в режиме `Disabled` не означает возможность списания.
+`/health/live` checks the process; `/health/ready` checks Payments schema availability and MassTransit transport. A healthy service in `Disabled` mode does not mean charging is possible.
 
-## Контракты
+## Contracts
 
-Команды посылаются адресно через MassTransit `Send` в `queue:payments-opencrm-commands`. HTTP-команды создания оплаты отсутствуют. Доступ к RabbitMQ vhost и очередям выдаётся только доверенному приложению; поле `ApplicationId` не заменяет транспортную авторизацию.
+Send commands directly through MassTransit `Send` to `queue:payments-opencrm-commands`. There are no HTTP payment-creation commands. Grant RabbitMQ vhost and queue access only to the trusted application; `ApplicationId` does not replace transport authorization.
 
-| Контракт | Основные поля |
+| Contract | Main fields |
 | --- | --- |
-| `CreatePayment` | `CommandId`, `ApplicationId=opencrm`, `PurchaseId`, `AmountMinor` в копейках, `Currency=RUB`, описание, `ReturnUrl`, инициатор/покупатель `BuyerId`, получатель доступа `BeneficiaryId`. |
-| `RequestRefund` | `CommandId`, `ApplicationId`, `PurchaseId`, сумма в копейках, причина и автор запроса. |
-| `PaymentStateChanged` | `EventId`, `PurchaseId`, ID поручения, возрастающая `AggregateVersion`, состояние создания и платежа, суммы, provider ID, ссылка, признак теста. |
-| `PaymentCommandRejected` | ID команды/покупки и код отказа до создания новой денежной операции. |
-| `PaymentOperationStateChanged` | ID операции/команды, Kind/Status, безопасный код ошибки; в том числе отменённый/отклонённый возврат. |
+| `CreatePayment` | `CommandId`, `ApplicationId=opencrm`, `PurchaseId`, `AmountMinor` in kopecks, `Currency=RUB`, description, `ReturnUrl`, initiator/buyer `BuyerId`, entitlement recipient `BeneficiaryId`. |
+| `RequestRefund` | `CommandId`, `ApplicationId`, `PurchaseId`, amount in kopecks, reason, and request author. |
+| `PaymentStateChanged` | `EventId`, `PurchaseId`, intent ID, increasing `AggregateVersion`, creation/payment state, amounts, provider ID, URL, test flag. |
+| `PaymentCommandRejected` | Command/purchase ID and rejection code before a new monetary operation is created. |
+| `PaymentOperationStateChanged` | Operation/command ID, Kind/Status, safe error code, including canceled/rejected refunds. |
 
-Новый клиент ссылается только на `Payments.Contracts`. Пример команды из отдельного тестового отправителя:
+A new client references only `Payments.Contracts`. Example command from a separate test sender:
 
 ```csharp
 var purchaseId = Guid.NewGuid();
@@ -73,30 +75,30 @@ await endpoint.Send(new CreatePayment(
     MerchantAccountId: "<shopId тестового магазина>"));
 ```
 
-Результаты отправляются в отдельную durable очередь `payments-opencrm-events`. Она накапливает сообщения, пока потребитель не подключён. Подтверждение брокера не означает выдачу подписки. Billing хранит долговечный inbox и последнюю версию; выдача доступа и AppliedAt атомарны. Подтверждение выдачи доступа обратно в Payments пока не реализовано; состояние применения хранится и проверяется в OpenCRM.
+Results go to the separate durable `payments-opencrm-events` queue. It retains messages while no consumer is connected. Broker acknowledgment does not mean a subscription has been granted. Billing stores a durable inbox and the latest version; entitlement grants and AppliedAt are atomic. Acknowledgment of entitlement application back to Payments is not yet implemented; application state is stored and checked in OpenCRM.
 
-Повтор `CommandId` с тем же содержимым ничего не создаёт, с другим содержимым получает отказ. Повтор `PurchaseId` с неизменным поручением и новым `CommandId` не создаёт второй платёж. Нельзя менять цену, валюту или получателя уже принятого поручения. Billing резервирует незавершённую покупку получателя; несовместимые покупки под разными PurchaseId блокируются до известного результата.
+Repeating `CommandId` with identical content creates nothing; different content is rejected. Repeating `PurchaseId` with an unchanged intent and a new `CommandId` does not create a second payment. The price, currency, or beneficiary of an accepted intent cannot change. Billing reserves the beneficiary's unfinished purchase; incompatible purchases under different PurchaseIds are blocked until the outcome is known.
 
-`ReturnUrl` должен точно совпасть с базовым адресом из `Payments:AllowedReturnUrls` плюс `?purchaseId={PurchaseId:D}`; список по умолчанию содержит только текущий HTTPS-маршрут завершения оплаты. При включении самостоятельного тестового интерфейса его разрешённый URL задаётся явно. Передача суммы ограничена положительным RUB-платежом до 1 000 000 рублей.
+`ReturnUrl` must exactly match a base URL from `Payments:AllowedReturnUrls` plus `?purchaseId={PurchaseId:D}`; by default, the list contains only the current HTTPS payment completion route. Explicitly configure the allowed URL when enabling a standalone test interface. Amounts are limited to positive RUB payments up to 1,000,000 rubles.
 
-## HTTP и обработка уведомлений
+## HTTP and notification processing
 
-- `GET /internal/payments/opencrm/{purchaseId}` требует `X-Payments-Key`. Возвращает проверенное состояние и операции без тела запроса, провайдерских ключей и данных банковской карты. Это внутренний серверный API: его ключ нельзя выдавать браузеру.
-- `POST /webhooks/yookassa` принимает ограниченный JSON, сохраняет непроверенный сигнал и отвечает HTTP 200 после записи. Повтор не создаёт новую запись. БД недоступна — успешного подтверждения нет. Неверный JSON/тип события получает 400, превышение лимита — отказ ограничителя.
-- Worker перепроверяет объект через API ЮKassa, сверяет сумму, RUB, merchant account, `test` и внутренний ID поручения. Webhook не может самостоятельно подтвердить оплату. Неизвестный объект остаётся в очереди повторной проверки: уведомление может опередить ответ создания.
-- Сохранённые вебхуки и операции обрабатываются после перезапуска. Просроченная аренда допускает новый Worker; токен аренды защищает запись от старого исполнителя. Полученные деньги не откатываются из-за ошибки другой операции.
+- `GET /internal/payments/opencrm/{purchaseId}` requires `X-Payments-Key`. It returns verified state and operations without request bodies, provider keys, or card data. This is an internal server API: never give its key to a browser.
+- `POST /webhooks/yookassa` accepts bounded JSON, stores an unverified signal, and returns HTTP 200 after persistence. A duplicate creates no new record. If the database is unavailable, no success acknowledgment is returned. Invalid JSON/event types receive 400; exceeding limits triggers limiter rejection.
+- The Worker rechecks the object through the YooKassa API, verifying the amount, RUB, merchant account, `test`, and internal intent ID. A webhook alone cannot confirm payment. Unknown objects remain queued for rechecking: a notification may arrive before the creation response.
+- Stored webhooks and operations are processed after restart. An expired lease allows another Worker to take over; the lease token protects the record from an old executor. Received money is not rolled back because another operation failed.
 
-Чужие приложения не получают результаты через HTTP API. Сервисный ключ один для единственного доверенного приложения первого этапа; многоприложенная авторизация потребует отдельной конфигурации.
+Other applications cannot obtain results through the HTTP API. There is one service key for the single trusted application of the initial stage; multi-application authorization requires separate configuration.
 
-## База и миграция
+## Database and migration
 
-EF Core 10, Npgsql, схема `payments`, отдельная таблица истории миграций. Начальная миграция создаёт поручения, операции с FK, долговечную дедупликацию команд, webhook inbox и EF inbox/outbox MassTransit. `CommandId` сохраняется независимо от очистки транспортного inbox. Суммы — целые копейки; ограничения БД запрещают отрицательные/превышающие оплату возвраты и дубли provider ID.
+EF Core 10, Npgsql, the `payments` schema, and a separate migration history table. The initial migration creates intents, operations with foreign keys, durable command deduplication, a webhook inbox, and MassTransit EF inbox/outbox. `CommandId` is preserved independently of transport inbox cleanup. Amounts are integer kopecks; database constraints prohibit negative refunds, refunds exceeding the payment, and duplicate provider IDs.
 
-`InitialPayments.Down` удаляет таблицы сервиса вместе со всеми платёжными данными. Это технический откат схемы пустого контура, а не безопасный откат работающих оплат. После начала использования восстановление требует резервирования и сверки провайдера; автоматический откат БД не выполняется. Перед боевым применением нужны проверенный процесс резервирования/восстановления, реестры провайдера и разбор финансовых инцидентов из проекта архитектуры.
+`InitialPayments.Down` drops the service tables and all payment data. It is a technical schema rollback for an empty environment, not a safe rollback of active payments. Once used, recovery requires backups and provider reconciliation; no automatic database rollback is performed. Before production use, establish a verified backup/restore process, provider registers, and financial incident handling described in the architecture design.
 
-## Проверки
+## Validation
 
-Из корня репозитория:
+From the repository root:
 
 ```powershell
 dotnet sln OpenCRM.sln list
@@ -106,6 +108,6 @@ dotnet test services/payments/tests/Payments.Tests/Payments.Tests.csproj --filte
 dotnet build OpenCRM.sln
 ```
 
-Integration требует Docker и запускает собственные временные PostgreSQL/RabbitMQ со случайными портами. HTTP-адаптер проверяется управляемым имитатором; реальные списания и настоящее API ЮKassa в автоматических тестах не используются. Основная БД и запущенный OpenCRM для этих проверок не нужны.
+Integration tests require Docker and start their own temporary PostgreSQL/RabbitMQ instances on random ports. The HTTP adapter is checked using a controlled simulator; automated tests do not perform real charges or call the real YooKassa API. These checks need neither the main database nor a running OpenCRM instance.
 
-Ограничения текущего состояния: сверка внешних реестров, неизвестных локально платежей и операторские уведомления требуют отдельной приёмки. Исторические оплаты/чеки сохранены в OpenCRM; автоматический перенос истории в новую БД не выполняется. Эквайринг студий и автоматические списания остаются будущими расширениями. Настоящее API ЮKassa и боевые списания в автотестах не использовались. Боевой режим и внешняя доставка webhook не проверялись.
+Current limitations: reconciliation of external registers, payments unknown locally, and operator notifications require separate acceptance testing. Historical payments/receipts remain in OpenCRM; history is not automatically transferred to the new database. Studio acquiring and automatic charges remain future extensions. Automated tests have not used the real YooKassa API or live charges. Live mode and external webhook delivery have not been verified.

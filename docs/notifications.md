@@ -1,115 +1,117 @@
-# Уведомления OpenCRM через RabbitMQ
+# OpenCRM notifications through RabbitMQ
 
-В основном приложении `OpenCRM.Modules.Notifications` владеет письмами, уведомлениями сайта, обработчиками outbox/результатов и настройками MAX/Telegram. Он регистрирует сервисы через `AddOpenCRMNotifications`; сценарии аккаунтов и подписок используют узкие контракты. Предметные события и намерения сохраняются в общей БД OpenCRM.
+**English** | [Русский](notifications.ru.md)
 
-Отдельный NotificationService в `services/notifications` формирует письма из Razor-шаблонов и обращается к провайдерам. Его Worker, БД и образ остаются самостоятельными; обмен идёт через `Notifications.Contracts` и RabbitMQ. Основное приложение не использует SMTP, SMS.ru или ключи Unisender. Модуль проверяется в `OpenCRM.Modules.Notifications.Tests`, сервис доставки — в `Notifications.Tests`.
+Within the main application, `OpenCRM.Modules.Notifications` owns emails, website notifications, outbox/result handlers, and MAX/Telegram settings. It registers services through `AddOpenCRMNotifications`; account and subscription scenarios use narrow contracts. Domain events and intents are stored in OpenCRM's shared database.
 
-Оба приложения получают серверные секреты из собственного серверного файла конфигурации окружения, разработка использует отдельные user-secrets. Действующая схема приведена в [описании конфигурации](../configuration/README.md).
+The separate NotificationService in `services/notifications` renders Razor emails and calls providers. Its Worker, database, and image remain independent; communication uses `Notifications.Contracts` and RabbitMQ. The main application does not use SMTP, SMS.ru, or Unisender keys. The module is tested in `OpenCRM.Modules.Notifications.Tests`, and the delivery service in `Notifications.Tests`.
 
-## Почему база и RabbitMQ нужны одновременно
+Both applications obtain server secrets from their own server environment configuration; development uses separate user-secrets. See the [configuration description](../configuration/README.md) for the current arrangement.
 
-1. OpenCRM сохраняет бизнес-изменение и задание на уведомление в своей базе. Например, обращение в поддержку и письмо о нём фиксируются одной транзакцией.
-2. Фоновый обработчик OpenCRM читает свою таблицу EmailMessages и передаёт задание в RabbitMQ.
-3. Worker получает команду из RabbitMQ, сохраняет её в своей базе и отправляет письмо.
-4. Результат возвращается через RabbitMQ и обновляет журнал OpenCRM.
+## Why both a database and RabbitMQ are needed
 
-Запись в базе — сохранённое намерение, RabbitMQ — транспорт между приложениями. Если брокер недоступен, намерение остаётся в базе и отправляется позже. Если Worker остановлен, очередь хранит команду до его запуска. Worker не нужны доступ к базе OpenCRM и знание её таблиц. Другие приложения работают с ним через те же контракты.
+1. OpenCRM saves the business change and notification job in its database. For example, a support request and its email are recorded in one transaction.
+2. An OpenCRM background handler reads its EmailMessages table and sends the job to RabbitMQ.
+3. The Worker receives the command, saves it in its own database, and sends the email.
+4. The result returns through RabbitMQ and updates the OpenCRM log.
 
-Это схема outbox с повторной доставкой команд. Стабильный NotificationKey позволяет Worker распознать повтор. Единственная физическая отправка SMTP не гарантируется: сбой после принятия письма провайдером, но до сохранения результата может привести к повтору.
+The database record is a persisted intent; RabbitMQ transports it between applications. If the broker is unavailable, the intent remains in the database for later sending. If the Worker is stopped, the queue retains the command until it starts. The Worker needs neither access to OpenCRM's database nor knowledge of its tables. Other applications use the same contracts.
 
-## Подключение
+This is an outbox pattern with repeated command delivery. A stable NotificationKey lets the Worker recognize duplicates. A single physical SMTP send is not guaranteed: failure after provider acceptance but before result persistence may cause repetition.
+
+## Connection
 
 Development: RabbitMq:Host=192.0.2.1, ApplicationId=opencrm-development.
-Развёртывание: адрес брокера и сеть задаёт оператор; ApplicationId=opencrm.
+Deployment: the operator supplies the broker address and network; ApplicationId=opencrm.
 
-Общие параметры: порт 5672, VirtualHost=/, Username=
+Shared parameters: port 5672, VirtualHost=/, Username=
 
-Команды идут через MassTransit Send в notifications-<applicationId>-commands, результаты — в notifications-<applicationId>-results. Одна очередь результатов соответствует одной базе приложения. Локальная база не должна конкурировать за результаты production: для неё выделен opencrm-development.
+Commands use MassTransit Send to notifications-<applicationId>-commands; results go to notifications-<applicationId>-results. Each results queue corresponds to one application database. A local database must not compete for production results; opencrm-development is reserved for it.
 
-## Письма и журнал
+## Emails and log
 
-| Сценарий | Razor-шаблон |
+| Scenario | Razor template |
 | --- | --- |
-| Подтверждение email | system/email-confirmation |
-| Восьмизначный код входа | system/login-code |
-| Сброс пароля в браузере | system/password-reset |
-| Сброс пароля из мобильного приложения | system/password-reset-mobile |
-| Обращение в поддержку | system/support-message |
-| Оплаченная подписка, демо, доступность демо | system/subscription-notice |
-| Приглашение нового пользователя в организацию | system/custom-email в фирменном макете |
-| Письмо из редактора и массовая рассылка | system/custom-email |
+| Email confirmation | system/email-confirmation |
+| Eight-digit login code | system/login-code |
+| Browser password reset | system/password-reset |
+| Mobile application password reset | system/password-reset-mobile |
+| Support request | system/support-message |
+| Paid subscription, demo, demo availability | system/subscription-notice |
+| Invite a new user to an organization | system/custom-email within the branded layout |
+| Editor email and bulk campaign | system/custom-email |
 
-OpenCRM передаёт ключ и данные. При приглашении адреса без аккаунта оформленное письмо ставится в ту же транзакцию, что и приглашение. Ссылка ведёт на вход по email-коду и затем к списку приглашений; принять приглашение можно только после подтверждения адреса. Worker использует скомпилированные cshtml версии 1 и общий макет. Для system/custom-email содержимое редактора передаётся как htmlBody; оно вставляется в макет как HTML, но не исполняется как Razor. Регистрация временных HTML-шаблонов не нужна.
+OpenCRM passes the key and data. When inviting an address without an account, the rendered email is queued in the same transaction as the invitation. The link leads to email-code sign-in and then the invitation list; acceptance requires email verification. The Worker uses compiled version 1 cshtml and the shared layout. For system/custom-email, editor content is supplied as htmlBody; it is inserted as HTML, not executed as Razor. Temporary HTML template registration is unnecessary.
 
-## Уведомления владельцу в Telegram
+## Owner notifications in Telegram
 
-При создании аккаунта, самостоятельном удалении аккаунта и подтверждённой оплате подписки OpenCRM сохраняет запись в TelegramNotificationOutbox. Для оплаты она создаётся в транзакции активации подписки, поэтому повторный вебхук не добавляет второе уведомление. Регистрация охватывает сайт, вход по email-коду и API. Сообщение содержит email, ID пользователя и доступные сведения о событии; пароль, коды входа и платёжные реквизиты не передаются.
+On account creation, self-deletion, and confirmed subscription payment, OpenCRM saves a TelegramNotificationOutbox record. For payment, this occurs in the subscription activation transaction, so repeated webhooks do not add another notification. Registration covers the website, email-code sign-in, and API. Messages contain the email, user ID, and available event details; passwords, login codes, and payment credentials are not transmitted.
 
-Фоновый обработчик отправляет команду с каналом `telegram` и логическим адресатом `owner` в NotificationService. Повтор команды использует тот же ключ события. Статусы доставки возвращаются в TelegramNotificationOutbox. При прямой отправке токен бота и ID чата задаются в NotificationService (`Telegram__BotToken`, `Telegram__OwnerChatId`); через Cloudflare Worker они хранятся в секретах шлюза, а NotificationService получает только адрес и ключ доступа. Реальная отправка включается через `Telegram__Enabled=true` и `Delivery__LogOnly=false`. Пока `TelegramAdminNotifications__Enabled=false`, обработчик Telegram не регистрируется, а задания остаются в базе OpenCRM. После готовности NotificationService нужно включить `TelegramAdminNotifications__Enabled=true` у OpenCRM и перезапустить приложение. Для реальной отправки владелец должен начать диалог с ботом. Сбой Telegram не отменяет бизнес-операцию, а Worker повторяет доставку. При сбое после принятия сообщения Telegram возможен дубль.
+A background handler sends a command with channel `telegram` and logical recipient `owner` to NotificationService. Command retries use the same event key. Delivery statuses return to TelegramNotificationOutbox. For direct delivery, configure the bot token and chat ID in NotificationService (`Telegram__BotToken`, `Telegram__OwnerChatId`); when using a Cloudflare Worker, they are gateway secrets and NotificationService receives only its URL and access key. Real sending requires `Telegram__Enabled=true` and `Delivery__LogOnly=false`. While `TelegramAdminNotifications__Enabled=false`, the Telegram handler is not registered and jobs remain in OpenCRM's database. After preparing NotificationService, set `TelegramAdminNotifications__Enabled=true` in OpenCRM and restart it. The owner must start a conversation with the bot for actual delivery. Telegram failure does not undo the business operation; the Worker retries. A failure after Telegram accepts a message may cause a duplicate.
 
-## Уведомления клиентам организаций в Telegram
+## Organization customer notifications in Telegram
 
-У каждой организации свой Telegram-бот. Владелец создаёт его через BotFather и вводит токен в настройках организации; токен хранится защищённым в OpenCRM. Клиент получает из своей карточки одноразовую ссылку и сам запускает бота. Согласие, чат и история отделены от MAX и от админского Telegram-бота. Первые события: создание, перенос и отмена записи, готовность автомобиля к выдаче. Каждому каналу создаётся отдельное уведомление, поэтому организация может включить MAX, Telegram или оба. Сценарий работает в детейлинге, СТО и автопарке для обслуживаний, у которых автомобиль связан с клиентом организации; внутренняя техника автопарка без клиентской карточки не получает клиентские сообщения.
+Each organization has its own Telegram bot. The owner creates it through BotFather and enters its token in organization settings; OpenCRM stores the token securely. A customer receives a one-time link from their record and starts the bot themselves. Consent, chat, and history are separate from MAX and the administrative Telegram bot. Initial events are appointment creation, rescheduling, cancellation, and vehicle readiness for handover. A separate notification is created per channel, allowing MAX, Telegram, or both. The scenario works in detailing, repair shops, and fleets for maintenance records whose vehicle is linked to an organization customer; internal fleet vehicles without a customer record do not receive customer messages.
 
-OpenCRM ставит клиентское сообщение в очередь с каналом `telegram-client`. NotificationService запрашивает токен только для действующего сообщения, проверенного клиента, совпадающего чата и активной организации, затем отправляет его через Cloudflare Worker. Worker также проверяет токен бота, регистрирует webhook и пересылает входящие события на OpenCRM; OpenCRM проверяет отдельный секрет бота. Текст и статус сообщения видны в карточке клиента и обслуживания. Для включения задаются `TelegramOrganizationNotifications:Enabled`, `ServiceKey`, `RelayBaseUrl`, `RelayKey` в OpenCRM и параметры `TelegramClient` в NotificationService. `TelegramClient:CredentialKey` равен `ServiceKey`, `TelegramClient:RelayKey` равен `RelayKey`, а ключ Worker `RELAY_KEY` равен `RelayKey`. В Worker нужны `OPENCRM_BASE_URL` и `TELEGRAM_WEBHOOK_BASE_URL`. Админский `/sendMessage` использует прежний фиксированный бот и чат.
+OpenCRM queues customer messages with channel `telegram-client`. NotificationService retrieves a token only for a valid message, verified customer, matching chat, and active organization, then sends through the Cloudflare Worker. The Worker also verifies bot tokens, registers webhooks, and forwards incoming events to OpenCRM; OpenCRM validates a separate bot secret. Message text/status appear in the customer and maintenance records. Enable with `TelegramOrganizationNotifications:Enabled`, `ServiceKey`, `RelayBaseUrl`, and `RelayKey` in OpenCRM and the `TelegramClient` settings in NotificationService. `TelegramClient:CredentialKey` equals `ServiceKey`, `TelegramClient:RelayKey` equals `RelayKey`, and gateway `RELAY_KEY` equals `RelayKey`. The gateway needs `OPENCRM_BASE_URL` and `TELEGRAM_WEBHOOK_BASE_URL`. Administrative `/sendMessage` retains its fixed bot and chat.
 
-## Уведомления клиентам организаций в MAX
+## Organization customer notifications in MAX
 
-Каждая организация подключает собственного одобренного бота MAX в настройках организации. Владелец вводит токен; OpenCRM проверяет бота и регистрирует HTTPS-вебхук автоматически. Токен и секрет вебхука хранятся зашифрованными средствами ASP.NET Data Protection; ключи в `DataProtection:KeysDirectory` должны сохраняться между обновлениями. Для вебхука используется `AppSettings:BaseUrl`.
+Each organization connects its own approved MAX bot in organization settings. The owner enters the token; OpenCRM verifies the bot and automatically registers an HTTPS webhook. ASP.NET Data Protection encrypts the token and webhook secret; preserve keys in `DataProtection:KeysDirectory` across upgrades. The webhook uses `AppSettings:BaseUrl`.
 
-Сотрудник выдаёт из карточки клиента одноразовую ссылку. Клиент сам запускает бота, после чего вебхук связывает его ID MAX с карточкой. Без этой связи сообщения не ставятся в очередь. Остановка бота клиентом отключает отправку. Первые события: создание, перенос и отмена записи, готовность техники к выдаче. Сценарий работает в детейлинге, СТО и автопарке, если техника связана с клиентом организации. OpenCRM проверяет актуальность записи и согласие клиента, затем передаёт уведомление через RabbitMQ в NotificationService. Микросервис перед отправкой получает токен бота по защищённому HTTPS-запросу в OpenCRM; токен не попадает в очередь. Текст и статус видны в карточке клиента и обслуживания. Для включения нужны `MaxNotifications__Enabled=true`, `MaxNotifications__ServiceKey` в OpenCRM и `MAX_ENABLED=true`, `MAX_CREDENTIAL_BASE_URL`, `MAX_CREDENTIAL_KEY` в NotificationService. При неопределённом ответе MAX повтор может создать дубль.
+An employee issues a one-time link from the customer record. The customer starts the bot, and the webhook links their MAX ID to the record. Without that link, messages are not queued. Stopping the bot disables sending. Initial events are appointment creation, rescheduling, cancellation, and vehicle readiness. This works in detailing, repair shops, and fleets when the vehicle is linked to an organization customer. OpenCRM checks appointment validity and customer consent, then passes the notification through RabbitMQ to NotificationService. Before sending, the microservice retrieves the token through a protected HTTPS request to OpenCRM; the token never enters the queue. Text and status appear in customer and maintenance records. Enable with `MaxNotifications__Enabled=true` and `MaxNotifications__ServiceKey` in OpenCRM and `MAX_ENABLED=true`, `MAX_CREDENTIAL_BASE_URL`, and `MAX_CREDENTIAL_KEY` in NotificationService. An unknown MAX response may result in a duplicate on retry.
 
-NotificationStatusChanged.Content возвращает готовые Subject, Body, IsHtml и TextBody в очередь приложения-владельца. OpenCRM сохраняет их для просмотра письма в админке. До первого ответа Worker журнал содержит предварительную тему, а исходные параметры находятся в TemplateDataJson.
+NotificationStatusChanged.Content returns final Subject, Body, IsHtml, and TextBody to the owning application's queue. OpenCRM saves them for email viewing in administration. Before the first Worker response, the log has a preliminary subject and original parameters in TemplateDataJson.
 
-Мобильное письмо сохраняет opencrm:// и резервную веб-ссылку. Срок действия кода входа остаётся один час, очередь его не продлевает.
+Mobile emails preserve opencrm:// and a fallback web link. Login codes still expire after one hour; queuing does not extend validity.
 
-## Надёжность и статусы
+## Reliability and statuses
 
-EmailMessages служит журналом и постоянной исходящей очередью. NextDispatchAt определяет следующую передачу или проверку. FOR UPDATE SKIP LOCKED позволяет нескольким экземплярам OpenCRM разбирать очередь.
+EmailMessages is both the log and durable outbox. NextDispatchAt determines the next dispatch or status check. FOR UPDATE SKIP LOCKED lets several OpenCRM instances process the queue.
 
-При отсутствии результата OpenCRM посылает GetNotificationStatus. Ответ not-found повторно ставит исходную команду с тем же ключом. Повторные терминальные результаты не увеличивают счётчики. Старые состояния не заменяют новые.
+When no result arrives, OpenCRM sends GetNotificationStatus. A not-found response requeues the original command with the same key. Repeated terminal results do not increase counters. Older states do not replace newer ones.
 
-- queued — задание сохранено.
-- retrying — Worker повторяет отправку.
-- sent / provider-accepted — провайдер принял сообщение, доставка адресату ещё не подтверждена.
-- simulated — LogOnly, реальной отправки не было.
-- failed — команда отклонена или попытки закончились ошибкой.
+- queued — job saved.
+- retrying — the Worker is retrying.
+- sent / provider-accepted — the provider accepted the message; recipient delivery remains unconfirmed.
+- simulated — LogOnly; nothing was actually sent.
+- failed — command rejected or attempts exhausted.
 
-Счётчик рассылки SentCount и SentAt напоминания обновляются после provider-accepted. SimulatedCount считается отдельно. Пауза/отмена рассылки останавливает постановку следующих получателей; уже переданные задания не отзываются. Терминальная ошибка остаётся в журнале, автоматически новое задание для неё не создаётся.
+Campaign SentCount and reminder SentAt update after provider-accepted. SimulatedCount is tracked separately. Pausing/canceling a campaign stops queuing further recipients; already dispatched jobs are not recalled. Terminal failures remain in the log without automatically creating new jobs.
 
-## События провайдера
+## Provider events
 
-Unisender отправляет HTTPS-вебхук на /webhooks/unisender-go. Reverse proxy направляет этот путь в notifications-worker:8080. Worker проверяет подпись, сохраняет событие вместе с outbox и возвращает NotificationDeliveryReported через RabbitMQ. OpenCRM хранит EventId и обновляет журнал одной транзакцией: повтор не увеличивает счётчики открытий/переходов. Отписка или жалоба снимает согласие на рекламную рассылку.
+Unisender sends an HTTPS webhook to /webhooks/unisender-go. A reverse proxy forwards it to notifications-worker:8080. The Worker verifies the signature, saves the event with its outbox, and returns NotificationDeliveryReported through RabbitMQ. OpenCRM stores EventId and updates the log in one transaction: duplicates do not increase open/click counts. Unsubscribe or complaint events revoke advertising campaign consent.
 
-Вебхук — обратный канал провайдера. HTTP API для отправки уведомлений из OpenCRM отсутствует.
+The webhook is a provider callback channel. There is no HTTP API for sending notifications from OpenCRM.
 
-Для всех новых писем обязательны application_id и notification_key. Подписанные вебхуки без этих полей игнорируются.
+Every new email requires application_id and notification_key. Signed webhooks lacking these fields are ignored.
 
-## Развёртывание
+## Deployment
 
-1. Остановить старый Worker и обновить его образ. Применить все миграции NotificationService, включая VersionedTemplateSnapshots и 20260909092759_ProviderWebhookEvents, затем запустить Worker. Обновлённая конфигурация разрешает оба профиля opencrm/opencrm-development и все перечисленные шаблоны.
-2. Для Unisender задать EMAIL_PROVIDER=unisender-go, SMTP-настройки, UNISENDER_WEBHOOK_ENABLED=true и UNISENDER_WEBHOOK_KEY в серверном .env.
-3. Настроить собственный HTTPS-маршрут `/webhooks/unisender-go` к Worker. Адрес, TLS и правила прокси задаются при развёртывании; секрет webhook проверяет сервис.
-4. Остановить старый OpenCRM. Применить 20260909083524_AddNotificationOutbox и 20260909092118_CompleteNotificationIntegration к его базе.
-5. Задать EmailPreferences__UnsubscribeTokenSecret. Для сохранения действующих ссылок отписки перенести прежнее эффективное значение EmailSettings:UnsubscribeTokenSecret, а если его не было — EmailSettings:Password. Это отдельная настройка подписи ссылок; дальнейшая смена SMTP-пароля её не меняет.
-6. Задать Support__NotificationEmail, RabbitMq__Password, подключить приложение к сети с брокером и запустить OpenCRM.
-7. Проверить команды, результаты и журнал. Delivery:LogOnly отключать только при намеренном включении реальной отправки.
+1. Stop the old Worker and update its image. Apply all NotificationService migrations, including VersionedTemplateSnapshots and 20260909092759_ProviderWebhookEvents, then start the Worker. Updated configuration allows both opencrm/opencrm-development profiles and all listed templates.
+2. For Unisender, set EMAIL_PROVIDER=unisender-go, SMTP settings, UNISENDER_WEBHOOK_ENABLED=true, and UNISENDER_WEBHOOK_KEY in the server's .env.
+3. Configure your own HTTPS `/webhooks/unisender-go` route to the Worker. Deployment determines the URL, TLS, and proxy rules; the service verifies the webhook secret.
+4. Stop the old OpenCRM. Apply 20260909083524_AddNotificationOutbox and 20260909092118_CompleteNotificationIntegration to its database.
+5. Set EmailPreferences__UnsubscribeTokenSecret. To retain existing unsubscribe links, transfer the previous effective EmailSettings:UnsubscribeTokenSecret or, if absent, EmailSettings:Password. This separately signs links; future SMTP password changes do not affect it.
+6. Set Support__NotificationEmail and RabbitMq__Password, connect the application to the broker's network, and start OpenCRM.
+7. Verify commands, results, and the log. Disable Delivery:LogOnly only when intentionally enabling real sending.
 
-Секреты для локальной разработки задаются в user-secrets.
+Local development secrets are supplied through user-secrets.
 
-Пример миграции OpenCRM из корня репозитория:
+Example OpenCRM migration from the repository root:
 
 ~~~powershell
 dotnet ef database update --project src/OpenCRM.Infrastructure.Migrations --startup-project src/OpenCRM.Infrastructure.Migrations
 ~~~
 
-Design-time factory читает appsettings и переменные окружения. Для нужной базы задайте ConnectionStrings__OpenCRMConnection.
+The design-time factory reads appsettings and environment variables. Set ConnectionStrings__OpenCRMConnection for the intended database.
 
-Down AddNotificationOutbox запрещён при необработанных заданиях. Откат удаляет служебные поля и статистику simulated. Down CompleteNotificationIntegration удаляет идентификаторы дедупликации и возвращает ограничение темы 300 символов; при более длинных темах PostgreSQL отклонит сужение, содержимое не обрезается автоматически. Возвращённое поле TemplateRegisteredAt не восстанавливает прежние значения.
+Down for AddNotificationOutbox is forbidden with unprocessed jobs. Rollback removes service fields and simulated statistics. Down for CompleteNotificationIntegration removes deduplication IDs and restores the 300-character subject limit; PostgreSQL rejects narrowing when longer subjects exist rather than truncating content. Restoring TemplateRegisteredAt does not restore its previous values.
 
-## Сборка и проверки
+## Build and validation
 
-NotificationService находится в `services/notifications`, его проекты включены в `OpenCRM.sln`. Рабочий код зависит только от Notifications.Contracts. Реализация Worker подключена к тестовому проекту для сквозной проверки. Сервис сохраняет собственные настройки сборки, Docker-образ, Compose и базу данных; его можно собирать и публиковать отдельно от OpenCRM. Команды ниже выполняются из корня репозитория.
+NotificationService resides in `services/notifications`; its projects are included in `OpenCRM.sln`. Production code depends only on Notifications.Contracts. The test project references the Worker implementation for end-to-end checks. The service retains its own build settings, Docker image, Compose, and database; it can be built and deployed separately. Run the following from the repository root.
 
 ~~~powershell
 docker build -f src/Dockerfile -t opencrm .
@@ -118,34 +120,16 @@ dotnet test services/notifications/NotificationService.slnx
 docker build -f services/notifications/src/Notifications.Worker/Dockerfile -t notification-service-worker services/notifications
 ~~~
 
-Тесты запускают отдельные PostgreSQL 15 и RabbitMQ в Docker. Сквозной тест использует настоящий Worker, Razor, оба обработчика OpenCRM и HTTP-вебхук; LogOnly исключает реальные письма. Production-база и очереди не используются.
+Tests start separate PostgreSQL 15 and RabbitMQ instances in Docker. The end-to-end test uses the real Worker, Razor, both OpenCRM handlers, and an HTTP webhook; LogOnly prevents real emails. Production databases and queues are not used.
 
-## SMTP: исходящая сеть Worker
+## SMTP: outbound Worker network
 
-Отправка письма — исходящее TLS-соединение из сети Worker. Платформа не задаёт MTU, адреса
-и имена сетей: их определяет окружение развёртывания. У части провайдеров и каналов при MTU 1500
-и фрагментации пакетов возможен тайм-аут TLS; тогда уменьшите MTU сети Worker
-средствами вашей установки и перезапустите только контейнер Worker.
-Очереди RabbitMQ и базы при такой правке не очищаются. Проверка сертификатов TLS обязательна
-и не отключается; признак корректной настройки — завершённая отправка письма.
+Email delivery uses an outbound TLS connection from the Worker's network. The platform does not prescribe MTU, network addresses, or names: the deployment environment determines them. Some providers and networks may encounter TLS timeouts with MTU 1500 and packet fragmentation; reduce the Worker network MTU through your installation's tools and restart only the Worker container if needed. Do not clear RabbitMQ queues or databases for this change. TLS certificate validation is mandatory and is never disabled; a completed email send indicates correct configuration.
 
-## Письма из админки
+## Emails from administration
 
-В разделе «История email» кнопка «Написать письмо» открывает общий редактор.
-Получатель — произвольный email (аккаунт не требуется), выбранный пользователь,
-тип организации или все пользователи. Поиск пользователей обращается ко всей базе;
-ответ содержит до 30 совпадений. Перед отправкой можно проверить адреса и посмотреть текст.
+In “История email” (Email history), “Написать письмо” (Compose email) opens the shared editor. Recipients may be any email address (no account required), a selected user, an organization type, or all users. User search covers the entire database and returns up to 30 matches. Review addresses and preview the text before sending.
 
-Обычный текст экранируется и сохраняет абзацы; HTML доступен отдельным режимом.
-Все письма отправляются через кампанию, outbox OpenCRM и шаблон
-system/custom-email микросервиса. Фирменный макет добавляет Worker;
-редактору не требуется передавать шапку или подвал. Результаты остаются в истории email.
-При отправке на произвольный адрес фильтры подтверждения и согласия недоступны.
+Plain text is escaped and preserves paragraphs; HTML is a separate mode. All emails use a campaign, the OpenCRM outbox, and the microservice's system/custom-email template. The Worker adds the branded layout; the editor need not supply a header/footer. Results remain in email history. Verification and consent filters are unavailable for an arbitrary address.
 
-Оформление всех системных писем и писем из админки находится в общем
-Templates/OpenCRM/V1/_Layout.cshtml репозитория NotificationService.
-Название бренда берётся из общего configuration/brand.json (ProjectBrand) и переносится
-в профили SystemTemplates и в подписи Email:FromName и Smtp:FromName как значение по умолчанию:
-явно заданная настройка окружения или приложения имеет приоритет. Метка письма — первая буква
-названия; приложение может задать свою метку через SystemTemplates:Applications:<applicationId>:BrandMark.
-Адрес отправителя задаётся отдельно (Smtp:FromAddress).
+The shared Templates/OpenCRM/V1/_Layout.cshtml in NotificationService defines the appearance of all system and administrative emails. Branding comes from configuration/brand.json (ProjectBrand) and fills SystemTemplates profiles plus Email:FromName and Smtp:FromName as defaults: explicit environment/application settings take precedence. The email mark is the name's first letter; applications may specify their own through SystemTemplates:Applications:<applicationId>:BrandMark. The sender address is configured separately with Smtp:FromAddress.

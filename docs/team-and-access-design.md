@@ -1,25 +1,26 @@
-# Команда и доступ в организацию
+# Organization Team and Access
 
-## Единый список
+**English** | [Русский](team-and-access-design.ru.md)
 
-В рабочем меню есть один пункт «Команда». Список объединяет исполнителей, пользователей CRM и ожидающие приглашения. Каждая строка показывает имя (если карточки исполнителя нет — email), роль в CRM, состояние связи и кнопку «Карточка». Поиск работает по имени, телефону, email, роли и состоянию. Архив исполнителей можно показать отдельно.
+## Unified list
 
-Один человек может быть представлен карточкой исполнителя, учётной записью CRM или обеими сущностями. Записи объединяются только по явной связи EmployeeId/MemberId либо приглашению с EmployeeId. Совпадение имён или email не создаёт связь автоматически.
+The workspace menu has one item, “Team.” The list brings together employees, CRM users, and pending invitations. Each row shows a name (or an email address when no employee profile exists), the CRM role, relationship status, and a “Profile” button. Search covers name, phone, email, role, and status. Archived employees can be shown separately.
 
-В карточке исполнителя редактируются имя, телефон и активность. Если доступа к CRM нет, из карточки можно пригласить человека по email или связать с существующим пользователем. Карточка пользователя CRM без исполнителя предлагает создать карточку исполнителя или связать существующую. У приглашения есть карточка со статусом и действием отзыва. Связанная карточка показывает роль CRM и позволяет изменить её при наличии права.
+A person may be represented by an employee profile, a CRM account, or both. Records are linked only through an explicit EmployeeId/MemberId relationship or an invitation with an EmployeeId. Matching names or email addresses do not create a link automatically.
 
-## Добавление человека
+The employee profile lets an authorized user edit the name, phone number, and active status. If the person has no CRM access, the owner can invite them by email or link them to an existing user. A CRM user without an employee profile is offered the option to create one or link an existing profile. An invitation has its own status card and revoke action. A linked profile shows the CRM role and allows it to be changed when the current user has permission.
 
-Кнопка «Добавить человека» предлагает выбор:
+## Adding a person
 
-- «Исполнитель»: имя, необязательный телефон и один из способов доступа — без CRM, приглашение по email или связь с существующим пользователем CRM.
-- «Пользователь CRM»: email и роль; карточка исполнителя пока не создаётся.
+The “Add person” button offers two choices:
 
-Создание исполнителя с приглашением и создание исполнителя для существующего пользователя выполняются атомарно. Сервер проверяет права, организацию, дубликаты связей и ограничения приглашений. Создание карточки не меняет роль связанного CRM пользователя.
+- “Employee”: a name, optional phone number, and one access option—no CRM access, an email invitation, or a link to an existing CRM user.
+- “CRM user”: an email address and role; no employee profile is created yet.
 
-## Права и навигация
+Creating an employee with an invitation, and creating an employee for an existing user, are atomic operations. The server checks permissions, organization membership, duplicate links, and invitation limits. Creating an employee profile does not change the linked CRM user's role.
 
-Управление исполнителями требует employees.manage, приглашение — members.invite, изменение роли и ручная связь — members.roles.manage. Права проверяются сервером независимо от отображения кнопок. Карточка исполнителя сама по себе не даёт доступа к CRM. Если пользователю доступен только список исполнителей, сведения о CRM и действия доступа скрыты.
+## Permissions and navigation
 
-Маршрут #employees открывает «Команду». Старый #members сохраняет расширенное управление участниками и правами; отдельного пункта для него в рабочем меню нет. Смена, график и итоги должны появиться в этом же разделе позднее. Исполнитель работает через «Мои работы».
+Managing employee profiles requires `employees.manage`; inviting someone requires `members.invite`; changing a role or creating a manual link requires `members.roles.manage`. The server enforces permissions independently of whether buttons are shown. An employee profile alone does not grant CRM access. When a user can only view the employee list, CRM details and access actions are hidden.
 
+The `#employees` route opens “Team.” The legacy `#members` route retains expanded member and permission management; there is no separate item for it in the workspace menu. Shifts, schedules, and totals are expected to appear in this same section later. Employees use “My work.”

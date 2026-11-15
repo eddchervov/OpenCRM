@@ -1,21 +1,23 @@
-# Границы платежного сервиса
+# Payment service boundaries
 
-Платежный сервис реализует технический обмен с провайдером оплаты. Веб-приложение владеет правами организации и коммерческой политикой; сервис платежей не назначает роли и не предоставляет доступ к CRM самостоятельно.
+**English** | [Русский](payments-service-design.ru.md)
 
-В базовой установке `PlatformPolicy:Commercial:Enabled=false`: для основной работы CRM покупка подписки не требуется. Реквизиты продавца, доступные продукты, цены, правила чеков, ключи провайдера и разрешённые адреса возврата задаёт владелец конкретной установки. Готовых рабочих настроек продавца в поставке нет.
+The payment service implements technical communication with a payment provider. The web application owns organization permissions and commercial policy; the payment service does not assign roles or independently grant CRM access.
 
-## Инварианты обработки
+The base installation has `PlatformPolicy:Commercial:Enabled=false`: a subscription purchase is not required for core CRM work. The installation owner supplies seller details, available products, prices, receipt rules, provider keys, and allowed return URLs. No working seller configuration is included.
 
-- Команда содержит устойчивый идентификатор операции. Повтор той же команды не создаёт повторного списания.
-- Изменённые сумма, валюта или предмет покупки не должны заменять ранее принятые условия операции с тем же идентификатором.
-- Внешние уведомления проверяются, сохраняются во входящем журнале и обрабатываются с защитой от повторов.
-- Изменение денежного состояния сохраняется отдельно от выдачи бизнес-прав. Состояния доставляются потребителю через надёжную исходящую очередь.
-- Неопределённый результат запроса требует сверки с провайдером. Автоматическое повторение потенциально выполненного списания недопустимо.
-- Возврат является денежным фактом. Решение о ранее выданных правах принимает коммерческий слой приложения.
-- История операций, основание административного изменения и идентификаторы провайдера сохраняются для сверки; секреты не включаются в пользовательские ответы и журналы.
+## Processing invariants
 
-## Подключение и проверка
+- A command contains a stable operation ID. Repeating the same command does not create a duplicate charge.
+- Changed amounts, currency, or purchased items must not replace previously accepted operation terms under the same ID.
+- External notifications are verified, persisted in an inbox, and processed with duplicate protection.
+- Changes to monetary state are persisted separately from granting business entitlements. States reach consumers through a reliable outbox.
+- An unknown request outcome requires provider reconciliation. Automatically repeating a potentially completed charge is unacceptable.
+- A refund is a monetary fact. The application's commercial layer decides what happens to previously granted entitlements.
+- Operation history, reasons for administrative changes, and provider IDs are retained for reconciliation; secrets are excluded from user responses and logs.
 
-В составе сервиса есть провайдерские адаптеры; их наличие не означает включение оплаты или готовность конкретного продавца к приёму денег. Контракты и настройки описаны в [README сервиса](../services/payments/README.md) и [интеграции с приложением](payments-service-integration.md).
+## Integration and validation
 
-Перед подключением проверяют идемпотентность, изменение условий повторной команды, повтор webhook, неизвестный исход, сверку, возврат и повторную доставку состояния. Локальные автоматические проверки не заменяют приёмку настроенного провайдера. Ручной [учёт оплат заказа](maintenance-services-payments.md) остаётся отдельным механизмом и сам по себе не списывает деньги через платежный сервис.
+The service includes provider adapters; their presence does not enable payments or mean a particular seller is ready to accept money. See the [service README](../services/payments/README.md) and [application integration](payments-service-integration.md) for contracts and configuration.
+
+Before connecting, validate idempotency, changed terms in a repeated command, duplicate webhooks, unknown outcomes, reconciliation, refunds, and repeated state delivery. Local automated checks do not replace acceptance testing of a configured provider. Manual [work order payment tracking](maintenance-services-payments.md) remains a separate mechanism and does not itself charge money through the payment service.

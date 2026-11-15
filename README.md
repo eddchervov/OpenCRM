@@ -49,25 +49,25 @@ git clone https://github.com/eddchervov/OpenCRM.git
 cd OpenCRM
 ```
 
-Follow the [local setup guide (Russian)](docs/local-run.md) for dependencies, your own PostgreSQL instance, connection configuration, build commands, migrations, and HTTPS. It includes commands for Bash and PowerShell.
+Follow the [local setup guide](docs/local-run.md) for dependencies, your own PostgreSQL instance, connection configuration, build commands, migrations, and HTTPS. It includes commands for Bash and PowerShell.
 
 Once the application is running, open **https://localhost:7142**, register an account, and create an organization. By default, password sign-in does not require an email service or email verification.
 
 ## Documentation
 
-The project overview is available in English and Russian. The detailed guides linked below are currently in Russian; their English translations are not yet available.
+All project guides are available in English and Russian. Use the language links at the top of each document; navigation stays in the selected language. Code samples and screenshots preserve their original content.
 
 | Task | Guide |
 | --- | --- |
-| Run the CRM from scratch | [Local setup (RU)](docs/local-run.md) |
-| Configure your installation and integrations | [Configuration (RU)](docs/configuration.md) |
-| Connect notifications and payments | [Microservices (RU)](docs/microservices.md) |
-| Assign the first administrator and access the admin interfaces | [Administration (RU)](docs/administration.md) |
-| Build your product and receive core updates | [Customization and extensions (RU)](docs/extending-opencrm.md) |
-| Develop the shared core and validate changes | [Contributing (RU)](CONTRIBUTING.md) |
-| Understand module boundaries | [Architecture (RU)](docs/architecture-current.md) |
-| Change the installation name and public URLs | [Brand configuration (RU)](configuration/README.md) |
-| Find documentation for a particular feature | [Documentation index (RU)](docs/README.md) |
+| Run the CRM from scratch | [Local setup](docs/local-run.md) |
+| Configure your installation and integrations | [Configuration](docs/configuration.md) |
+| Connect notifications and payments | [Microservices](docs/microservices.md) |
+| Assign the first administrator and access the admin interfaces | [Administration](docs/administration.md) |
+| Build your product and receive core updates | [Customization and extensions](docs/extending-opencrm.md) |
+| Develop the shared core and validate changes | [Contributing](CONTRIBUTING.md) |
+| Understand module boundaries | [Architecture](docs/architecture-current.md) |
+| Change the installation name and public URLs | [Brand configuration](configuration/README.md) |
+| Find documentation for a particular feature | [Documentation index](docs/README.md) |
 
 ## Architecture
 
@@ -95,7 +95,7 @@ flowchart LR
 
 Start with configuration: your own database, branding, and integrations. Keep product-specific interface and behavior changes separate from shared fixes. Contribute improvements that benefit all installations to OpenCRM; update your product from `upstream/main` and validate it before deployment.
 
-In the current architecture, new implementations and modules are explicitly registered in the host and client build. See the [customization guide (Russian)](docs/extending-opencrm.md) for the workflow, available extension points, and limitations.
+In the current architecture, new implementations and modules are explicitly registered in the host and client build. See the [customization guide](docs/extending-opencrm.md) for the workflow, available extension points, and limitations.
 
 ## License and attribution
 

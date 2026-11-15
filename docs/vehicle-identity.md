@@ -1,26 +1,28 @@
-# Автомобиль без известной марки и модели
+# Vehicles with an unknown make or model
 
-Марка и модель необязательны при создании техники и быстрой записи. Сохраняются только введённые данные: неизвестные `BrandId`, `ModelId`, `ManualBrandName` и `ManualModelName` остаются `null`. Госномер, VIN, номер кузова, двигателя, СТС либо пользовательское название по-прежнему должны позволять идентифицировать технику. Для быстрой записи требуется госномер.
+**English** | [Русский](vehicle-identity.ru.md)
 
-`Автомобиль · А667РО142` — подпись для интерфейса и документов. Она не записывается в марку, модель или название. Если известна только часть марки/модели, сохраняется эта часть; отсутствующее значение не придумывается. Настоящее пользовательское название сохраняется отдельно.
+Make and model are optional when creating a vehicle or a quick appointment. Only entered data is stored: unknown `BrandId`, `ModelId`, `ManualBrandName`, and `ManualModelName` remain `null`. A license plate, VIN, body number, engine number, registration certificate, or user-defined name must still identify the vehicle. A license plate is required for a quick appointment.
 
-В редакторе можно дополнить тот же автомобиль вручную или выбрать модель из справочника. Идентификатор автомобиля, записи, фотографии и история при этом не меняются. Повторная быстрая запись использует существующий автомобиль по нормализованному госномеру в пределах организации. Редактировать его данные следует через карточку автомобиля.
+`Vehicle · A667PO142` is a label for the interface and documents. It is not stored as the make, model, or name. If only part of the make or model is known, that part is saved; a missing value is never invented. A genuine user-defined name is stored separately.
 
-Предложение в общий справочник создаётся только при наличии обеих вручную введённых частей. Пустые поля и подпись интерфейса не становятся предложениями.
+The same vehicle can later be completed manually in the editor or matched to a model in the catalog. Its vehicle ID, appointments, photos, and history do not change. A subsequent quick appointment reuses the existing vehicle by its normalized license plate within the organization. Edit vehicle details through the vehicle card.
 
-## Старые подстановки
+A suggestion for the shared catalog is created only when both make and model were entered manually. Empty fields and the interface label do not become suggestions.
 
-Для проверки используется `scripts/maintenance/audit-vehicle-identities.sql`: только `SELECT`, допустим режим подключения только для чтения.
+## Legacy placeholders
 
-Очистка подготовлена в `scripts/maintenance/clean-vehicle-identities.sql`. Это обслуживающий скрипт для `psql`, а не миграция схемы. Порядок применения:
+Use `scripts/maintenance/audit-vehicle-identities.sql` for review; it contains only `SELECT` statements, and a read-only connection is suitable.
 
-1. Опубликовать исправление и остановить экземпляры старой версии, создающие подстановки.
-2. Выполнить аудит и пробный запуск скрипта без параметра `apply`.
-3. Применить скрипт с `-v apply=true -v backup_file=<новый-абсолютный-путь.json>`, используя настроенное подключение. Для каждой попытки указывать новый файл резервной копии и хранить его вне Git: он содержит исходные данные автомобилей.
-4. Повторить аудит и проверить карточки найденных автомобилей.
+Cleanup is prepared in `scripts/maintenance/clean-vehicle-identities.sql`. This is an operational `psql` script, not a schema migration. Apply it as follows:
 
-Обрабатываются только автомобили без связей со справочником, у которых ручная модель точно совпадает с госномером, а название совпадает с прежней формулой «марка модель госномер». Очищаются сгенерированные модель и название. Марка очищается только при совпадении с прежней подстановкой для типа техники; настоящая марка сохраняется. Пользовательские названия, неоднозначные совпадения и техника из справочника не изменяются.
+1. Deploy the fix and stop instances of the old version that create placeholders.
+2. Run the audit and a dry run of the script without the `apply` parameter.
+3. Apply the script with `-v apply=true -v backup_file=<new-absolute-path.json>` using the configured connection. Specify a new backup file for every attempt and keep it outside Git: it contains original vehicle data.
+4. Run the audit again and inspect the affected vehicle cards.
 
-Перед изменениями скрипт сохраняет JSON исходных строк. Ошибка записи резервной копии прерывает очистку. Удаляются только связанные ожидающие предложения, если они не используются автомобилями вне набора очистки. Одобренные предложения и общий справочник не изменяются. Связи с обслуживанием и историей сохраняются.
+The script processes only vehicles without catalog links where the manual model exactly matches the license plate and the name matches the previous “make model license-plate” formula. It clears the generated model and name. The make is cleared only when it matches the former placeholder for the vehicle type; a real make is retained. User-defined names, ambiguous matches, and catalog vehicles are left unchanged.
 
-Очистка поддерживает: пробный запуск, ошибку резервного копирования с откатом, сохранение настоящей марки и истории, повторный запуск без изменений. Для восстановления после применения нужно использовать сохранённые значения по `Id`, предварительно проверив, что карточки не были дополнены пользователями после очистки.
+Before making changes, the script saves the original rows as JSON. If writing the backup fails, cleanup is aborted. It removes related pending suggestions only if they are not used by vehicles outside the cleanup set. Approved suggestions and the shared catalog are unchanged. Maintenance and history links are preserved.
+
+Cleanup supports a dry run, rollback on backup failure, preservation of a real make and history, and repeat execution without additional changes. To restore data after applying the script, use the saved values by `Id` after checking that users have not updated the cards since cleanup.

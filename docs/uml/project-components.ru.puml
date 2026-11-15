@@ -1,0 +1,63 @@
+@startuml project_components
+title opencrm.example.invalid — зависимости проектов
+
+top to bottom direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+component "OpenCRM.WebApp" as Web
+component "Infrastructure.Auth" as Auth
+component "Infrastructure.Admin" as Admin
+component "Infrastructure.BL" as BL
+component "Infrastructure.Payments" as Payments
+component "Infrastructure.FileStorage" as Files
+component "Infrastructure.Migrations" as Migrations
+component "Infrastructure.Data" as Data
+component "Services.Interfaces" as Contracts
+component "Domain.Interfaces" as DomainInterfaces
+component "Domain" as Domain
+component "Helpers" as Helpers
+
+Web --> Auth
+Web --> Admin
+Web --> BL
+Web --> Payments
+Web --> Files
+Web --> Data
+Web --> Migrations
+Web --> Helpers
+
+Auth --> Contracts
+Auth --> Domain
+Admin --> Contracts
+Admin --> Data
+Admin --> Domain
+BL --> Contracts
+BL --> Data
+BL --> DomainInterfaces
+BL --> Domain
+BL --> Helpers
+Payments --> Contracts
+Payments --> Data
+Payments --> Domain
+Files --> Contracts
+Files --> Data
+Files --> DomainInterfaces
+Files --> Domain
+Files --> Helpers
+Migrations --> Data
+Data --> DomainInterfaces
+Data --> Domain
+Contracts --> DomainInterfaces
+Contracts --> Domain
+Contracts -[#red,dashed]-> Data : архитектурный долг
+DomainInterfaces --> Domain
+
+note right of Contracts
+  Слой контрактов зависит от EF/Data.
+  Желательно перенести инфраструктурные
+  типы из Services.Interfaces.
+end note
+
+@enduml

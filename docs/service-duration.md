@@ -1,21 +1,23 @@
-# Длительность услуг и планирование записи
+# Service duration and appointment scheduling
 
-В справочниках услуг и наборов появилось необязательное поле «Длительность, мин». Оно задаёт непрерывное время занятости поста, включая сушку и ожидание. Значение — целое число от 1 до 525600; пустое поле означает неизвестное время. В списке и меню выбора время показывается в часах и минутах. Длительность услуги также доступна в стартовом мастере детейлинга.
+**English** | [Русский](service-duration.ru.md)
 
-При создании записи после выбора начала и услуг рассчитываются плановые дата и время окончания. Длительности суммируются с учётом количества. Полный набор, выбранный через меню, может иметь собственную длительность; если она не задана, используются длительности составляющих услуг. Если набора целиком нет в записи, используются оставшиеся отдельные услуги. Общие услуги пересекающихся наборов не учитываются дважды. Дополнительные единицы услуги увеличивают время отдельно.
+Service and service-set directories now have an optional “Duration, min” field. It specifies the continuous time for which a bay is occupied, including drying and waiting. The value is an integer from 1 to 525600; an empty field means the duration is unknown. Lists and selection menus display time in hours and minutes. Service duration is also available in the Detailing setup wizard.
 
-Если длительность хотя бы одной необходимой услуги неизвестна, точный расчёт недоступен. Ранее автоматически рассчитанное окончание очищается; введённое вручную остаётся. Изменение даты или времени окончания пользователем выключает автопересчёт. Кнопка «Рассчитать окончание» позволяет явно вернуться к расчёту по услугам.
+When creating an appointment, the planned end date and time are calculated after the start and services are selected. Durations are summed using each service quantity. A complete service set selected from the menu can have its own duration; if none is set, the durations of its component services are used. If the complete set is not part of the appointment, the remaining individual services are used. Shared services in overlapping sets are counted only once. Additional units of a service increase the duration separately.
 
-В существующих записях автоматический пересчёт выключен: открытие редактора, изменение справочника и состава услуг сами по себе не сдвигают расписание. Набор раскрывается в отдельные услуги, как и раньше; его переопределённое время используется при выборе в текущей форме. Сохраняются конкретные плановые даты и время записи. Повторный явный расчёт в редакторе использует доступный состав услуг, поскольку принадлежность строк историческому набору не хранится.
+If the duration of any required service is unknown, an exact calculation is unavailable. A previously auto-calculated end time is cleared; a manually entered end time is retained. When a user changes the end date or time, automatic recalculation is disabled. The “Calculate end time” button explicitly resumes calculation from the services.
 
-Ночь и нерабочие часы входят в длительность: это занятость поста, а не трудозатраты мастера. Занятость проверяется существующей проверкой интервалов, в том числе после перехода на другой день. При конфликте запись сохранить нельзя. Публичные страницы не меняются; расчёт используется в общих формах организаций и быстрой записи детейлинга и СТО.
+Automatic recalculation is disabled for existing appointments: opening the editor, changing the directory, or changing the service list does not itself move the schedule. A service set is expanded into individual services as before; its overridden duration is used when the set is selected in the current form. Specific planned appointment dates and times are saved. An explicit recalculation in the editor uses the available service composition because the stored rows do not retain their historical set membership.
 
-## Миграция
+Nighttime and non-working hours count toward duration: this is bay occupancy, not technician labor time. Occupancy is checked by the existing interval validation, including across midnight. An appointment cannot be saved if it conflicts. Public pages are unchanged; the calculation is used in shared organization forms and quick Detailing and Service Station appointments.
 
-`20260916122918_AddServiceDuration` (EF Core 10.0.7) добавляет nullable integer `DurationMinutes` в `OrganizationScenarioCatalogItems`. У существующих позиций значение остаётся пустым; записи обслуживания не изменяются. Проверены DbContext/Migration в Designer, snapshot, сборка, отсутствие расхождений модели и применение цепочки миграций на отдельной тестовой PostgreSQL.
+## Migration
 
-`Down` удаляет только этот столбец: длительности справочника теряются, сохранённые плановые даты и время записей остаются.
+`20260916122918_AddServiceDuration` (EF Core 10.0.7) adds nullable integer `DurationMinutes` to `OrganizationScenarioCatalogItems`. Existing entries remain empty; maintenance records are unchanged. DbContext/Migration metadata in Designer, the snapshot, the build, model consistency, and application of the migration chain to a separate test PostgreSQL instance were checked.
 
-## Проверки
+`Down` removes only this column: directory durations are lost, while saved planned appointment dates and times remain.
 
-Серверные тесты проверяют сохранение, изменение и очистку длительности, недопустимые значения, наборы, сохранность расписания существующей записи и сохранение через мастер. Браузерная проверка собранного клиента с тестовым API покрывает сложение и количество услуг, полночь, ручное окончание, неизвестную длительность, наборы, конфликт поста, отправляемые даты и время, существующую запись и светлую/тёмную темы на ширинах 320–1440 px.
+## Verification
+
+Server tests verify saving, updating, and clearing duration, invalid values, service sets, preservation of an existing appointment schedule, and saving through the wizard. A browser check of the built client with a test API covers duration summation and quantities, midnight, manual end time, unknown duration, service sets, bay conflicts, submitted dates and times, existing appointments, and light/dark themes at widths of 320–1440 px.

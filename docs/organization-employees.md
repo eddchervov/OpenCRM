@@ -1,23 +1,25 @@
-# Сотрудники организации
+# Organization employees
 
-Сотрудники — исполнители работ без обязательных аккаунтов. Их карточки находятся в разделе «Команда» рабочего меню детейлинга, СТО и автопарка. Имя обязательно, телефон необязателен. Архивация сохраняет старые назначения, но запрещает новые. Профессий и специализаций нет.
+**English** | [Русский](organization-employees.ru.md)
 
-«Команда» показывает исполнителей, пользователей CRM и ожидающие приглашения в одном списке. В каждой строке есть имя (для пользователя без карточки — email), роль CRM, состояние связи и кнопка «Карточка». В карточке можно связать пользователя с исполнителем или создать карточку исполнителя; при добавлении нового человека выбирают «Исполнитель» либо «Пользователь CRM», затем способ доступа. `#employees` ведёт к списку команды, а старый адрес `#members` сохраняет расширенное управление доступом. «Настройки организации» открываются одной кнопкой без выпадающего меню, а «Справочники» находятся в группе «Работа». Старый адрес `#catalog` сохраняется. Права проверяются независимо; наличие сотрудника не даёт доступа к CRM.
+Employees perform work without needing their own accounts. Their cards are in the “Team” section of the Detailing, Service Station, and Fleet workspace menus. A name is required; a phone number is optional. Archiving preserves previous assignments but prevents new ones. Job titles and specializations are not modeled.
 
-В списках выбора ответственного за клиента пользователь CRM показывается по имени явно связанного сотрудника этой организации; без имени используется email. Только при совпадении полных имён к ним добавляется email в скобках, в той же строке. В карточке и списке клиентов назначенный ответственный также отображается по имени сотрудника. Отвязка возвращает отображение по email; имена в истории выполненных работ не переписываются.
+“Team” shows employees, CRM users, and pending invitations in one list. Each row shows a name (or the email for a user without an employee card), CRM role, link status, and a “Card” button. A card can link a user to an employee or create an employee card. When adding someone, choose “Employee” or “CRM user”, then choose an access method. `#employees` opens the team list; the legacy `#members` route retains expanded access management. “Organization settings” opens from a single button without a dropdown, while “Directories” is in the “Work” group. The legacy `#catalog` route remains available. Permissions are checked independently; having an employee record does not grant CRM access.
 
-Принятые правила объединения описаны отдельно: [«Команда и доступ»](team-and-access-design.md).
+In customer-assignee selectors, a CRM user is displayed using the name of the employee explicitly linked to that user in this organization; if the employee has no name, the email is used. Email is added in parentheses on the same line only when full names collide. The assigned owner is also shown by employee name in customer cards and lists. Unlinking restores email display; names in completed-work history are not rewritten.
 
-Управлять справочником сотрудников позволяет право `employees.manage` (по умолчанию владелец и администратор). Назначать исполнителей позволяет существующее право редактирования обслуживаний. В режиме чтения изменение недоступно.
+The agreed merge rules are documented separately in [“Team and access”](team-and-access-design.md).
 
-В записи хранится `EmployeeId`, а `Performer` содержит серверный снимок имени. Для организаций произвольный текст исполнителя больше не сохраняется. Личная техника сохраняет прежнее поведение. В строке услуги можно указать отдельного сотрудника; отсутствие назначения означает «Как в записи». Материалам исполнитель не назначается.
+The `employees.manage` permission controls the employee directory (granted to the owner and administrator by default). The existing maintenance-edit permission controls assigning performers. Editing is unavailable in read-only mode.
 
-Сервер проверяет принадлежность сотрудника организации и его активность. Неизменённое архивное назначение можно сохранить при редактировании других данных. Переименование сотрудника не переписывает имена в прошлых записях. Смена и снятие исполнителя фиксируются в истории с автором, временем, прежним и новым назначением; различаются даже сотрудники с одинаковыми именами. Сохранение назначения из карточки использует версию записи для защиты от параллельных изменений.
+A record stores `EmployeeId`, and `Performer` contains a server-side snapshot of the name. Organizations no longer save a free-form performer name. Personal vehicles retain the previous behavior. A service line can specify a separate employee; no assignment means “Same as the record”. Materials cannot have a performer assigned.
 
-## Миграции
+The server verifies that the employee belongs to the organization and is active. An unchanged archived assignment can be saved while editing other data. Renaming an employee does not rewrite names in past records. Changing or removing a performer is recorded in history with the author, time, previous assignment, and new assignment; employees with identical names remain distinguishable. Saving an assignment from the card uses the record version to protect against concurrent changes.
 
-Перед запуском приложения необходимы `PreserveFullMaintenanceHistory` и `AddOrganizationEmployees`. Первая снимает ограничение длины описания истории. Вторая создаёт справочник и очищает ручные имена исполнителей только у техники организаций. Старое имя сохраняется в событии «Переход на справочник сотрудников» с отображаемым автором «Системное обновление»; обязательный технический `UserId` события наследуется от исходной записи. Пользователи и участники не создаются и не удаляются.
+## Migrations
 
-Откат `AddOrganizationEmployees` восстанавливает очищенные имена из этих событий, пока справочник сотрудников пуст. При наличии сотрудников откат останавливается, чтобы не потерять новые данные. Откат ограничения истории также останавливается, если уже появились описания длиннее 1000 символов.
+Apply `PreserveFullMaintenanceHistory` and `AddOrganizationEmployees` before starting the application. The first removes the history-description length limit. The second creates the directory and clears manually entered performer names only for organization vehicles. The old name is retained in a “Migration to employee directory” event with the displayed author “System update”; the required technical `UserId` for the event is inherited from the original record. Users and organization members are neither created nor deleted.
 
-Проверки: серверные сценарии изоляции организаций, прав, архивирования, версий и истории; миграция с заполненными данными и откат; браузерные сценарии трёх клиентов, светлая и тёмная темы, ширины 320–1500 px.
+Rolling back `AddOrganizationEmployees` restores cleared names from these events while the employee directory is empty. If employees exist, rollback stops to avoid losing new data. Rolling back the history length change also stops if descriptions longer than 1000 characters have since been added.
+
+Verification covers server scenarios for organization isolation, permissions, archiving, versions, and history; migration with populated data and rollback; and browser scenarios in all three clients, light and dark themes, and widths of 320–1500 px.

@@ -1,17 +1,19 @@
-# Подготовка OpenCRM и технические разделы
+# OpenCRM preparation and technical sections
 
-План подготовки OpenCRM и навигация по технической документации.
+**English** | [Русский](plan.ru.md)
 
-- [Архитектура приложения](architecture-current.md)
-- [Рабочие области и данные организаций](README.md#рабочие-области)
-- [Уведомления](notifications.md)
-- [Интеграция платежей](payments-service-integration.md)
-- [Контроль состояния сервисов](service-health-monitoring.md)
-- [Диаграммы компонентов и моделей](README.md#диаграммы)
-- [Локальная настройка и запуск](../README.md#локальный-запуск)
+OpenCRM preparation notes and technical documentation navigation.
 
-## Иллюстрации интерфейса
+- [Application architecture](architecture-current.md)
+- [Workspaces and organization data](README.md#workspaces)
+- [Notifications](notifications.md)
+- [Payment integration](payments-service-integration.md)
+- [Service health monitoring](service-health-monitoring.md)
+- [Component and model diagrams](README.md#diagrams)
+- [Local configuration and setup](local-run.md)
 
-Внутренние экраны CRM и иллюстрации технических процессов поставляются без прежнего бренда и персональных данных. Исходный интерфейс за пределами скрытых областей сохраняется. Публичные страницы, SEO-материалы и статьи конкретного сайта не входят в базовую поставку.
+## Interface illustrations
 
-Концептуальные изображения в [описании приёмки](detailing-intake.md) и [процессе обращений](inquiries-design.md) показывают структуру процесса, а не точный контракт текущего интерфейса. Тарифные подписи на иллюстрациях относятся к опциональному коммерческому модулю; в базовом режиме платные ограничения выключены.
+Internal CRM screens and technical process illustrations are supplied without the previous brand or personal data. The original interface outside hidden areas is preserved. Public pages, SEO materials, and a particular website's articles are not included in the base distribution.
+
+Concept images in the [intake description](detailing-intake.md) and [inquiry workflow](inquiries-design.md) illustrate process structure rather than an exact contract of the current interface. Plan labels in illustrations refer to the optional commercial module; paid restrictions are disabled in the base mode.

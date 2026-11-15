@@ -1,123 +1,123 @@
-# Ручные обращения до записи: проект второго этапа
+# Manual Inquiries Before Booking: Phase Two Design
 
-Документ описывает процесс обработки обращений до создания записи. Контракты API, хранение данных и ограничения миграции приведены в [описании реализации](inquiries-implementation.md).
+**English** | [Русский](inquiries-design.ru.md)
 
-## Пользовательский процесс
+This document describes handling inquiries before an appointment is created. API contracts, data storage, and migration constraints are in the [implementation document](inquiries-implementation.md).
 
-Клиент спрашивает о полировке → администратор сохраняет обращение → уточняет объём и договаривается о звонке → выбирает услугу, автомобиль и время → создаёт запись. Обращение может существовать без зарегистрированного клиента и автомобиля. Сохранение обращения и перевод в «Готовы к записи» не занимают пост.
+## User workflow
 
-Открытые этапы: «Новое», «Уточняем», «Предложение», «Готовы к записи». Завершение: «Записан» со связью на запись либо «Закрыто» с причиной. Отмена или завершение заказа позднее не должны автоматически переписывать историю обращения.
+A customer asks about polishing → an administrator records an inquiry → clarifies the scope and arranges a call → selects a service, vehicle, and time → creates an appointment. An inquiry can exist without a registered customer or vehicle. Saving an inquiry or moving it to “Ready to book” does not reserve a bay.
 
-Можно начать с имени или другого обозначения контакта и описания интереса; известный телефон сохраняется сразу. Для продолжения разговора нужен доступный способ связи, но отсутствие телефона у посетителя не должно мешать ручному обращению. Минимальные обязательные поля уточняются при реализации формы. Ответственный должен быть действующим участником выбранной организации.
+Open stages: “New,” “Clarifying,” “Proposal,” and “Ready to book.” Terminal outcomes: “Booked,” linked to an appointment, or “Closed,” with a reason. Later cancellation or completion of the work order must not rewrite inquiry history.
 
-## Три экрана
+The user can start with a name or another contact label and a description of the customer's interest; a known phone number is saved immediately. A usable contact method is needed to continue the conversation, but a visitor without a phone number must still be able to make a manual inquiry. Required form fields are finalized during implementation. The assignee must be an active member of the selected organization.
 
-### Обращения
+## Three screens
 
-![Доска ручных обращений](mockups/inquiries-board-concept.png)
+### Inquiries
 
-Новый пункт в существующей группе «Клиенты». Доска и список показывают одни данные; фильтры — ответственный, источник, этап и срок следующего действия. Закрытые и записанные доступны через фильтр. На телефоне основное представление — компактный список. Переход этапа должен работать кнопкой и с клавиатуры; перетаскивание не является условием первого выпуска.
+![Manual inquiries board](mockups/inquiries-board-concept.png)
 
-Счётчики и страницы рассчитываются сервером по разрешённым обращениям выбранной организации. Для доски нужны отдельные количества и ограниченные порции карточек по этапам, а не загрузка всей базы в браузер. «Сайт» или «Телефон» на карточке — вручную выбранный источник, а не подключённый канал.
+A new item in the existing “Customers” group. The board and list show the same data; filters include assignee, source, stage, and next-action due date. Closed and booked items are available through a filter. On phones, the primary view is a compact list. Stage changes must work by button and keyboard; drag-and-drop is not required for the first release.
 
-### Карточка
+The server calculates counts and pages from inquiries the current user may access in the selected organization. The board needs separate counts and bounded batches of cards per stage, rather than loading the entire database into the browser. “Website” or “Phone” on a card is a manually selected source, not a connected channel.
 
-![Карточка обращения](mockups/inquiries-card-concept.png)
+### Profile
 
-Слева — контакт, интерес, источник, выбранные связи и история; справа — одно следующее действие, срок и ответственный. Описание автомобиля со слов клиента отличается от выбранного автомобиля в базе. Заметка о звонке остаётся заметкой: она не означает отправленное сообщение или запись телефонного разговора.
+![Inquiry profile](mockups/inquiries-card-concept.png)
 
-Имя и телефон без связи с карточкой клиента сохраняются в обращении. При создании записи администратор выбирает найденного клиента либо явно создаёт нового через существующую проверку совпадений. Нельзя автоматически считать одинаковый телефон доказательством одной личности или перепривязывать существующее авто при смене клиента.
+The left side contains the contact, interest, source, selected relationships, and history; the right side contains one next action, its due date, and the assignee. A vehicle description provided by the customer is distinct from a vehicle selected from the database. A call note is just a note; it does not mean a message was sent or a phone call was recorded.
 
-### Создание записи
+A name and phone number without a customer-profile link are stored on the inquiry. When creating an appointment, an administrator explicitly selects a matching customer or explicitly creates a new one using the existing duplicate check. The system must not treat a matching phone number as proof of identity or relink an existing vehicle when its customer changes.
 
-![Переход в форму записи](mockups/inquiries-conversion-concept.png)
+### Create appointment
 
-Кнопка открывает существующую форму с контекстом обращения. В неё добавляется предварительное заполнение клиента, контакта, выбранного автомобиля, описания интереса и заметки. Интерес в свободном тексте не превращается автоматически в услугу справочника с выдуманной ценой или длительностью: услугу подтверждает администратор. После выбора времени действуют обычные серверные проверки занятости и доступа.
+![Transition to the appointment form](mockups/inquiries-conversion-concept.png)
 
-Ответственный обращения не становится автоматически исполнителем работ или получателем уведомлений. Поле ответственного на макете иллюстрирует контекст менеджера; точное размещение в форме уточняется при реализации. Плательщик и владелец автомобиля сохраняют существующие отдельные правила.
+The button opens the existing form with inquiry context. The form is prefilled with the customer, contact, selected vehicle, interest description, and note. Free-text interest is not automatically converted into a catalog service with an invented price or duration; an administrator confirms the service. Existing server-side availability and access checks apply after a time is selected.
 
-Макеты сгенерированы по принятому тёмному интерфейсу OpenCRM; точная сетка и подписи не являются готовым контрактом. Реализация обязана поддерживать светлую тему и мобильную компоновку. Все контакты, автомобили, услуги и сроки демонстрационные. Иллюстрации описывают пользовательский процесс и не задают оформление конкретной установки.
+The inquiry assignee does not automatically become the worker or a notification recipient. The assignee field in the mockup illustrates manager context; its exact placement in the form is decided during implementation. Payer and vehicle-owner behavior keep their existing separate rules.
 
-## Владельцы и связи модулей
+The mockups were generated using the accepted dark OpenCRM interface; their exact grid and labels are not a production contract. Implementation must support light theme and mobile layout. All contacts, vehicles, services, and dates are demonstration data. The illustrations describe a user workflow and do not prescribe the branding of a particular installation.
 
-Сохраняется модульный монолит, общий `OpenCRMContext` и PostgreSQL. Новое самостоятельное приложение или микросервис для обращений не нужны.
+## Module ownership and relationships
+
+Keep the modular monolith, shared `OpenCRMContext`, and PostgreSQL. Inquiries do not need a new standalone application or microservice.
 
 ```mermaid
 flowchart LR
-    UI[Общие экраны детейлинга и СТО] --> C[Clients: обращение и история]
-    C --> W[Workspace: следующие действия]
-    UI --> B[Organizations: конвертация в запись]
+    UI[Shared detailing and repair shop screens] --> C[Clients: inquiry and history]
+    C --> W[Workspace: next actions]
+    UI --> B[Organizations: convert to appointment]
     B --> C
-    B --> V[Выбор клиента и автомобиля]
-    B --> M[Maintenance: плановая запись]
+    B --> V[Select customer and vehicle]
+    B --> M[Maintenance: scheduled appointment]
 ```
 
-| Область | Предлагаемая ответственность |
+| Area | Proposed responsibility |
 | --- | --- |
-| `OpenCRM.Modules.Clients`, область `Inquiries` | Обращения, этапы, заметки, ответственный, следующее действие и связь с результатом. Контракты — в существующем `OpenCRM.Modules.Clients.Contracts`. |
-| `OpenCRM.Modules.Organizations/Bookings` | Координация превращения обращения в запись с использованием действующих сервисов клиентов, автомобиля и заказа. |
-| `OpenCRM.Modules.Maintenance` | Сам заказ, строки услуг, статус исполнения и последующие оплаты. Второй тип заказа для CRM не вводится. |
-| `OpenCRM.Modules.Workspace` | Пункт меню, разрешённые счётчики и блок следующих действий в рабочем дне. |
-| `packages/workspace` | Общие компоненты и API обращений для детейлинга и СТО; сценарные оболочки сохраняют свои особенности формы записи. |
+| `OpenCRM.Modules.Clients`, `Inquiries` area | Inquiries, stages, notes, assignee, next action, and link to the result. Contracts live in the existing `OpenCRM.Modules.Clients.Contracts`. |
+| `OpenCRM.Modules.Organizations/Bookings` | Coordinate inquiry conversion using existing customer, vehicle, and work-order services. |
+| `OpenCRM.Modules.Maintenance` | Own the work order, service rows, execution status, and later payments. Do not introduce a second CRM order type. |
+| `OpenCRM.Modules.Workspace` | Menu item, permission-filtered counts, and next-action block in Workday. |
+| `packages/workspace` | Shared inquiry components and API for detailing and auto service; scenario shells retain their appointment-form differences. |
 
-Реализация обращений не должна ссылаться на реализацию другого модуля. Координатор записи использует контракт Clients для блокировки/проверки обращения и сохранения связи внутри общей транзакции. Контракты не возвращают EF-сущности, `DbContext` или `IQueryable`. Вызовы согласуются с существующими границами, описанными в [текущей архитектуре](architecture-current.md).
+Inquiry implementation must not depend on another module’s implementation. The booking coordinator uses the Clients contract to lock/check the inquiry and save its relationship in the shared transaction. Contracts do not return EF entities, `DbContext`, or `IQueryable`. Calls must follow the existing boundaries described in the [current architecture](architecture-current.md).
 
-## Данные
+## Data
 
-Достаточно двух новых таблиц; названия предварительные.
+Two new tables should be sufficient; names are provisional.
 
-- `OrganizationInquiries`: идентификатор и организация, контакт и телефон, необязательные FK клиента и автомобиля, описание автомобиля со слов клиента, интересующая работа, код источника, этап, ответственный, текст и срок следующего действия, причина закрытия, необязательный FK созданного обслуживания, версия, время создания и изменения.
-- `OrganizationInquiryEvents`: FK обращения, автор, время, тип события и текст заметки либо исторические значения изменения. Создание, смена этапа, ответственного, срока, выполнение действия, закрытие и конвертация оставляют историю.
+- `OrganizationInquiries`: identifier and organization, contact and phone, optional customer and vehicle foreign keys, customer-provided vehicle description, requested work, source code, stage, assignee, next-action text and due date, closure reason, optional created-maintenance foreign key, version, creation and update timestamps.
+- `OrganizationInquiryEvents`: inquiry foreign key, author, timestamp, event type, and note text or historical values of a change. Creation, stage and assignee changes, due-date changes, action completion, closure, and conversion are recorded.
 
-Изменяемые связи хранятся в колонках с FK, история не заменяет их JSON-полями. Для событий возможен исторический payload по существующим правилам, но для первого объёма простых колонок достаточно. Связи проверяются на принадлежность той же организации; удаление связанной карточки не должно каскадно уничтожать историю обращения.
+Mutable relationships belong in foreign-key columns; history does not replace them with JSON fields. Event payloads may follow existing historical-payload conventions, but simple columns are enough for the first scope. Relationships must be checked for same-organization ownership; deleting a linked profile must not cascade-delete inquiry history.
 
-Нужны индексы по организации/этапу, ответственному/сроку и нормализованному телефону для поиска, а также уникальность непустой ссылки на созданное обслуживание. В первом объёме одно обращение создаёт одну запись. Несколько разных обращений одного человека разрешены: телефон не является уникальным ключом обращения. Параллельное редактирование защищается версией с понятным конфликтом, а не молчаливым затиранием.
+Add indexes for organization/stage, assignee/due date, and normalized phone search, and make a non-empty link to created maintenance unique. Initially one inquiry creates one appointment. Multiple inquiries for one person are allowed: phone number is not a unique inquiry key. Concurrent edits use a version and a clear conflict rather than silently overwriting each other.
 
-## Следующее действие и существующий Planning
+## Next action and existing Planning module
 
-Проверка кода показала: `OrganizationSchedulerTask` допускает отсутствие автомобиля и клиента, поддерживает звонок, ответственного и срок напоминания. Но `SchedulerTaskCommandService` требует включённый `SchedulerModule` и право `scheduler.manage` через `SchedulerAccess`. Эти права нельзя автоматически выдавать сотруднику, который работает с обращениями.
+Code inspection showed that `OrganizationSchedulerTask` allows a missing vehicle and customer and supports a call, assignee, and reminder deadline. However, `SchedulerTaskCommandService` requires the `SchedulerModule` to be enabled and the `scheduler.manage` permission through `SchedulerAccess`. Those permissions must not be granted automatically to an employee working with inquiries.
 
-Для первого объёма предлагается ровно одно следующее действие как часть обращения: текст, срок, тот же ответственный. Выполнение оставляет событие и очищает текущий срок; затем можно назначить новое действие. Это не отдельная система задач, фоновых напоминаний и рассылок. Не создаётся вторая копия действия в Planning.
+For the first release, an inquiry has exactly one next action: text, due date, and the same assignee. Completing it leaves a history event and clears the current due date; a new action can then be set. This is not a separate task, background-reminder, or messaging system. A duplicate action is not created in Planning.
 
-Рабочий день получает небольшой блок «Связаться с клиентами» через разрешённую выборку Clients: просроченное и на выбранный день, со ссылкой в обращение. Текущий `OrganizationWorkdayQueryService` читает обслуживания; нельзя искусственно выдавать обращения за обслуживания ради повторного использования этой выборки. Срок хранится как момент времени, ввод и отображение используют часовой пояс организации.
+Workday gets a small “Contact customers” panel from an authorized Clients query: overdue actions and those due on the selected day, with a link to the inquiry. The current `OrganizationWorkdayQueryService` reads maintenance records; inquiries must not be disguised as maintenance just to reuse that query. A due date is stored as an instant, with input and display in the organization’s time zone.
 
-Если понадобится несколько независимых задач на обращение, нужно заново оценить общий механизм Planning и его права; такого расширения в первый выпуск не входит.
+If multiple independent tasks per inquiry are needed, the shared Planning mechanism and its permissions must be reevaluated; that extension is outside the first release.
 
-## Конвертация без второй записи
+## Conversion without a duplicate appointment
 
-Предлагаемый маршрут: `POST /api/v1/organizations/{organizationId}/inquiries/{inquiryId}/booking`. Тело содержит подтверждённые данные записи и версию обращения; обычные CRUD/история/смена этапа работают через API обращений. Названия DTO и точный состав маршрутов уточняются при реализации.
+Proposed route: `POST /api/v1/organizations/{organizationId}/inquiries/{inquiryId}/booking`. The body contains confirmed appointment details and the inquiry version; ordinary CRUD, history, and stage changes use the inquiries API. DTO names and the exact route set are finalized during implementation.
 
-1. Проверить членство, право управления обращением и создания обслуживания, доступность записи и режим чтения подписки.
-2. Открыть одну транзакцию через существующий `IApplicationUnitOfWork` и заблокировать строку обращения в этой организации.
-3. Если результат уже связан — вернуть тот же идентификатор записи без повторного создания. Проверка повторного результата идёт раньше конфликта устаревшей версии; при этом сохраняются проверки доступа к результату.
-4. Проверить версию и открытое состояние, выбранные связи, услугу, время и пост. Использовать существующую защиту от конкурентного занятия поста.
-5. Создать/выбрать клиента и автомобиль существующими сервисами, затем создать плановую запись с действующими строками услуг.
-6. Сохранить FK результата, завершающий этап и событие, закрыть следующее действие. Явно вызвать `SaveChanges` перед коммитом: `ApplicationUnitOfWork` сам этого не делает.
+1. Check membership, permission to manage inquiries and create maintenance, appointment availability, and subscription read-only mode.
+2. Start one transaction through the existing `IApplicationUnitOfWork` and lock the inquiry row in this organization.
+3. If a result is already linked, return the same appointment ID without creating another. Check for the existing result before checking for a stale version, while retaining access checks on the result.
+4. Check the version and open state, selected relationships, service, time, and bay. Use the existing protection against concurrent bay booking.
+5. Create or select the customer and vehicle through existing services, then create a planned appointment with the existing service rows.
+6. Save the result foreign key, terminal stage, and event, and clear the next action. Explicitly call `SaveChanges` before commit: `ApplicationUnitOfWork` does not do this itself.
 
-Ошибка на любом шаге откатывает весь результат. Повтор после потерянного ответа и два одновременных нажатия возвращают одну запись. Отключение кнопки в браузере лишь улучшает интерфейс; защиту обеспечивает сервер. Существующие quick-endpoint не дают такой гарантии для обращения, поэтому отправка предзаполненной формы идёт через маршрут конвертации. Обычная запись без обращения сохраняет свой текущий маршрут.
+An error at any step rolls back the entire result. Retrying after a lost response and two simultaneous clicks return one appointment. Disabling the browser button only improves the interface; the server provides the protection. Existing quick-booking endpoints do not provide this guarantee for an inquiry, so a prefilled form is submitted through the conversion route. Appointments without an inquiry keep their current route.
 
-Режим «Простой / По этапам» должен быть общим для детейлинга и СТО. Ограничение только СТО не является согласованным продуктовым требованием. Простой режим убирает промежуточные этапы: для оформления выполненной работы достаточно внести автомобиль, услуги и сумму и сохранить результат. Режим «По этапам» позволяет вести работу по статусам. Отдельное намерение «записать на будущий визит» должно резервировать время и не означать выполненную работу даже в простом режиме; внутренний плановый статус не требует показывать всю цепочку этапов. Нельзя автоматически считать каждую новую запись выполненной только из-за простого режима. Ниже описано обнаруженное текущее расхождение, а не желаемое различие направлений. Общий режим реализован отдельным локальным пакетом; [реализация и проверки](simple-maintenance-workflow.md). Реализация обращений и её проверки описаны в отдельном протоколе выше.
+The “Simple / Staged” mode must be shared by detailing and auto service. Limiting it to auto service is not an agreed product requirement. Simple mode removes intermediate stages: to record completed work, it is enough to enter the vehicle, services, and amount and save. “Staged” mode supports tracking work by status. A separate “book a future visit” intent must reserve time and must not mean completed work, even in simple mode; an internal planned status does not require showing the full stage sequence. A new appointment must not be treated as completed automatically just because simple mode is enabled. The distinction described here is an observed current discrepancy, not a desired difference between scenarios. The shared mode has been implemented in a separate local package; see [simple maintenance workflow](simple-maintenance-workflow.md). Inquiry implementation and checks are described separately above.
 
-Будущая запись в простом режиме: единый сценарий для детейлинга и СТО — «Запланировано → Выдать → Выдано». Создание будущего визита сохраняет плановую запись и резервирует пост; в карточке не требуется проходить «В работе», «Проверка» и «Готов к выдаче». Основное действие — «Выдать». Оно одной серверной операцией завершает работу и фиксирует фактическую выдачу через существующие поля обслуживания, без фиктивных отчётов о прохождении промежуточных этапов. Наступление даты визита само по себе не завершает работу и не фиксирует выдачу. Выдача не означает оплату: действующие права и правила расчётов проверяются отдельно. Перенос и отмена записи сохраняются. Для режима «По этапам» остаётся последовательное ведение работ. Этот общий рабочий процесс реализован локально отдельным пакетом до обращений.
+Future appointments in simple mode use one workflow for detailing and auto service: “Planned → Hand over → Handed over.” Creating a future visit preserves the planned appointment and reserves a bay; the card does not require “In progress,” “Review,” or “Ready for handover.” The main action is “Hand over.” A single server operation completes the work and records the actual handover using existing maintenance fields, without fake reports of intermediate stages. Reaching the appointment date does not itself complete the work or record handover. Handover does not mean payment; existing permissions and calculation rules are checked separately. Rescheduling and cancellation remain available. “Staged” mode continues to track work sequentially. This shared workflow was implemented locally in a separate package before inquiries.
 
-Обнаруженное расхождение исправлено: быстрые сервисы обоих направлений принимают явное намерение `IsPlannedBooking` с безопасным значением `true` по умолчанию. При конвертации обращения требуется передавать плановое намерение; пользовательский переход «Выдать» затем выполняется общей командой простого режима. Исправлять статус постфактум не требуется. Явное `false` используется для оформления уже выполненной работы в простом режиме. В детейлинге форма записи требует госномер; обращение до перехода в запись его не требует.
+A discovered discrepancy was fixed: quick-booking services in both scenarios accept an explicit `IsPlannedBooking` intent, defaulting safely to `true`. Inquiry conversion must send the planned intent; the user’s “Hand over” transition then uses the shared simple-mode command. No post-hoc status repair is needed. Explicit `false` is used to record already completed work in simple mode. Detailing’s appointment form requires a registration number; an inquiry does not require one before conversion.
 
-## Доступ и границы выпуска
+## Access and release boundaries
 
-Предложение: отдельные права чтения и управления обращениями; право создавать обслуживание проверяется дополнительно при конвертации. Ответственный — действующий участник организации, но назначение ответственным само по себе не выдаёт права. «Только мои» — фильтр интерфейса, не замена серверной авторизации. Детализация доступа к чужим обращениям должна следовать принятой модели прав; сервер фильтрует данные, историю и счётчики одинаково.
+Proposal: separate permissions to view and manage inquiries; permission to create maintenance is additionally checked during conversion. The assignee must be an active organization member, but assignment alone grants no permissions. “Mine only” is an interface filter, not a substitute for server authorization. Access to other people’s inquiries must follow the accepted permission model; the server filters data, history, and counts consistently.
 
-Общий процесс применяется к детейлингу и СТО. Новые страницы не включаются для скрытого автопарка. Источник вводится вручную. Переписка, телефония, формы сайта, ИИ, эквайринг, автоматические сообщения, несколько воронок, конструктор автоматизаций и отдельный глобальный раздел задач в этот объём не входят.
+The shared workflow applies to detailing and auto service. New pages are not enabled for the hidden fleet scenario. Sources are entered manually. Messaging, telephony, website forms, AI, acquiring, automated messages, multiple pipelines, an automation builder, and a separate global tasks section are outside this scope.
 
-## Проверка при реализации
+## Implementation verification
 
-Проверить обращение без авто/клиента, ручной выбор существующего клиента, разные обращения с одним телефоном, закрытие с причиной, срок и смену ответственного, конфликт версий, изоляцию организаций и режим чтения. Для конвертации обязательны проверки двух одновременных запросов, повтора после потери ответа, ошибки/отката между созданием заказа и связью, занятого поста и планового статуса в обоих режимах детейлинга и СТО. Для простого режима дополнительно проверить выдачу плановой записи одним действием без промежуточных этапов, отсутствие автоматической выдачи при наступлении даты и независимость статуса оплаты. Миграции проверяются по соседним EF-миграциям, атрибутам, designer и snapshot согласно AGENTS; в исходном предложении миграций не было.
+Check inquiries without a vehicle/customer, manual selection of an existing customer, different inquiries sharing a phone number, closure with a reason, due dates and assignee changes, version conflicts, organization isolation, and read-only mode. Conversion must test two simultaneous requests, retry after a lost response, failure/rollback between work-order creation and linking, an occupied bay, and planned status in both detailing and auto service modes. In simple mode, also verify one-action handover of a planned appointment without intermediate stages, no automatic handover when the date arrives, and payment-status independence. Check migrations against neighboring EF migrations, attributes, Designer, and snapshot according to AGENTS; the original proposal had no migrations.
 
-## Проверенные точки текущего кода
+## Verified points in the current code
 
-- `src/OpenCRM.Modules.Clients` и `src/OpenCRM.Modules.Clients.Contracts` — существующий владелец карточек клиентов.
-- `src/OpenCRM.Domain/OrganizationSchedulerTask.cs`, `src/OpenCRM.Modules.Planning/SchedulerAccess.cs`, `SchedulerTaskCommandService.cs` — возможности задач и ограничения прав.
-- `src/OpenCRM.Modules.Organizations/Bookings/OrganizationDetailingQuickBookingService.cs`, `OrganizationAutoServiceQuickBookingService.cs`, `QuickBookingSupport.cs` — создание записи и разрешение клиента.
-- `src/OpenCRM.WebApp/Controllers/Api/V1/Organizations/OrganizationDetailingQuickBookingsApiController.cs` — существующая транзакционная оболочка быстрой записи.
-- `src/OpenCRM.Infrastructure.Common/ApplicationUnitOfWork.cs` — транзакция без автоматического `SaveChanges`.
-- `src/OpenCRM.Modules.Workspace/Workday/OrganizationWorkdayQueryService.cs` — текущая выборка рабочего дня.
-- `src/OpenCRM.Frontend/Scenarios/detailing-client/src/components/QuickBookingSection.vue` и аналог СТО — существующие формы и частичная поддержка начальных данных. Предзаполнение клиента и контекста обращения ещё нужно добавить.
+- `src/OpenCRM.Modules.Clients` and `src/OpenCRM.Modules.Clients.Contracts` — existing owner of customer profiles.
+- `src/OpenCRM.Domain/OrganizationSchedulerTask.cs`, `src/OpenCRM.Modules.Planning/SchedulerAccess.cs`, `SchedulerTaskCommandService.cs` — task capabilities and access restrictions.
+- `src/OpenCRM.Modules.Organizations/Bookings/OrganizationDetailingQuickBookingService.cs`, `OrganizationAutoServiceQuickBookingService.cs`, `QuickBookingSupport.cs` — appointment creation and customer resolution.
+- `src/OpenCRM.WebApp/Controllers/Api/V1/Organizations/OrganizationDetailingQuickBookingsApiController.cs` — existing transactional wrapper for quick booking.
+- `src/OpenCRM.Infrastructure.Common/ApplicationUnitOfWork.cs` — transaction does not call `SaveChanges` automatically.

@@ -1,5 +1,5 @@
 @startuml project_components
-title opencrm.example.invalid — зависимости проектов
+title opencrm.example.invalid — project dependencies
 
 top to bottom direction
 skinparam componentStyle rectangle
@@ -51,13 +51,13 @@ Data --> DomainInterfaces
 Data --> Domain
 Contracts --> DomainInterfaces
 Contracts --> Domain
-Contracts -[#red,dashed]-> Data : архитектурный долг
+Contracts -[#red,dashed]-> Data : architectural debt
 DomainInterfaces --> Domain
 
 note right of Contracts
-  Слой контрактов зависит от EF/Data.
-  Желательно перенести инфраструктурные
-  типы из Services.Interfaces.
+  The contracts layer depends on EF/Data.
+  Infrastructure types should be moved
+  out of Services.Interfaces.
 end note
 
 @enduml

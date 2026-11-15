@@ -1,66 +1,68 @@
-# Свой продукт на основе OpenCRM
+# Build your product on OpenCRM
 
-OpenCRM — общая CRM-основа. Сначала используйте готовые настройки, затем добавляйте отличия своего продукта, сохраняя общие исправления в ядре.
+**English** | [Русский](extending-opencrm.ru.md)
 
-## Выберите уровень изменения
+OpenCRM is a shared CRM foundation. Start with the available settings, then add your product's differences while keeping shared fixes in the core.
 
-| Что требуется | Где менять |
+## Choose the level of change
+
+| Requirement | Where to change it |
 | --- | --- |
-| Название, адрес установки, подключения, провайдеры | [Конфигурация](configuration.md), [бренд](../configuration/README.md) |
-| Уведомления, платежи и обработка фоновых операций | [Отдельные микросервисы](microservices.md) |
-| Свои справочные статьи | Реализация `IOrganizationWikiContentProvider` и её регистрация в хосте |
-| Собственный экран или сценарий | Клиентское приложение и общие `packages/ui`, `packages/workspace` |
-| Общая бизнес-возможность или исправление | Соответствующий модуль `OpenCRM.Modules.*` и его тесты |
-| Полностью новый модуль | Проект, контракты, явная регистрация в хосте, клиентский маршрут и тесты |
+| Name, installation URL, connections, providers | [Configuration](configuration.md), [branding](../configuration/README.md) |
+| Notifications, payments, and background operations | [Separate microservices](microservices.md) |
+| Your own help articles | Implement `IOrganizationWikiContentProvider` and register it in the host |
+| A custom screen or scenario | Client application and shared `packages/ui`, `packages/workspace` |
+| A shared business capability or fix | The relevant `OpenCRM.Modules.*` module and its tests |
+| A completely new module | Project, contracts, explicit host registration, client route, and tests |
 
-## Что уже поддерживается
+## What is already supported
 
-Настройки установки отделены от прикладного кода. Бизнес-модули, контракты, инфраструктурные реализации и общие UI-компоненты находятся в отдельных проектах и пакетах. Стандартная DI-контейнеризация позволяет заменять предусмотренные реализации при сборке хоста.
+Installation settings are separate from application code. Business modules, contracts, infrastructure implementations, and shared UI components reside in separate projects and packages. Standard dependency injection lets you replace supported implementations when composing the host.
 
-Состав приложения сейчас явно собирается в [Program.cs](../src/OpenCRM.WebApp/Program.cs) и [регистрациях сервисов](../src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs). Новое расширение нужно добавить в исходники/проекты, зарегистрировать и собрать. Автоматическая загрузка плагинов, самостоятельный SDK надстроек и готовый отдельный product host пока не реализованы.
+The application is currently explicitly composed in [Program.cs](../src/OpenCRM.WebApp/Program.cs) and [service registrations](../src/OpenCRM.WebApp/Extensions/ServiceCollectionExtensions.cs). Add a new extension to the source/projects, register it, and build it. Automatic plugin loading, a standalone extension SDK, and a ready-made separate product host have not yet been implemented.
 
-## 1. Начните с конфигурации
+## 1. Start with configuration
 
-Настройте собственные значения, не изменяя общее поведение:
+Configure your own values without changing shared behavior:
 
-- Файл [`configuration/brand.json`](../configuration/brand.json) определяет бренд и публичные адреса.
-- Строки подключения и секреты передаются своему процессу через окружение или секрет-хранилище.
-- Почта, ИИ и платёжная инфраструктура включаются по мере необходимости.
-- `PlatformPolicy__Commercial__Enabled` управляет опциональным коммерческим режимом.
+- [`configuration/brand.json`](../configuration/brand.json) defines branding and public URLs.
+- Supply connection strings and secrets to the relevant process through environment variables or a secret store.
+- Enable email, AI, and payment infrastructure as needed.
+- `PlatformPolicy__Commercial__Enabled` controls the optional commercial mode.
 
-Сервер поддерживает переменные `Brand__DisplayName` и `Brand__PublicBaseUrl`; настольные приложения используют файл бренда. Согласуйте настройки всех процессов своей поставки. Изменение бренда не отменяет обязательное указание автора OpenCRM.
+The server supports `Brand__DisplayName` and `Brand__PublicBaseUrl`; desktop applications use the brand file. Keep settings consistent across all processes in your distribution. Changing branding does not remove the required OpenCRM author attribution.
 
-Подробности и порядок источников настроек: [конфигурация](configuration.md).
+See [configuration](configuration.md) for details and configuration source precedence.
 
-## 2. Отделите свою версию от upstream
+## 2. Separate your version from upstream
 
-Для отдельного продукта заведите собственный fork/репозиторий. В его клоне `origin` должен вести на ваш продукт, а `upstream` — на OpenCRM.
+Create your own fork/repository for a separate product. In its clone, `origin` should point to your product and `upstream` to OpenCRM.
 
 ```bash
 git remote add upstream https://github.com/eddchervov/OpenCRM.git
 git remote -v
 ```
 
-Если `upstream` уже настроен, повторно добавлять его не нужно. Эти команды относятся к клону вашего продукта.
+If `upstream` is already configured, do not add it again. These commands apply to your product's clone.
 
-Держите небольшие отдельные изменения:
+Keep changes small and separate:
 
-- Конфигурацию развёртывания и секреты — отдельно от общего репозитория.
-- Продуктовые классы — в своих файлах/пространствах имён и, при необходимости, проектах.
-- Свои экраны — в продуктовых компонентах с переиспользованием общих UI-пакетов.
-- Общие исправления — в соответствующих модулях OpenCRM, без второго ручного исправления той же логики в продукте.
+- Deployment configuration and secrets belong outside the shared repository.
+- Put product-specific classes in their own files/namespaces and, when appropriate, projects.
+- Build your screens as product components reusing shared UI packages.
+- Make shared fixes in the relevant OpenCRM modules, avoiding a second manual fix of the same logic in the product.
 
-Текущий практический механизм получения общей логики — обновление из upstream. Отдельная упаковка ядра в готовый NuGet SDK не поставляется.
+Updating from upstream is the current practical mechanism for receiving shared logic. A separately packaged, ready-made NuGet core SDK is not provided.
 
-## 3. Используйте существующие точки расширения
+## 3. Use existing extension points
 
-### Справка
+### Help content
 
-Контракт [`IOrganizationWikiContentProvider`](../src/OpenCRM.WebApp/Models/Organizations/IOrganizationWikiContentProvider.cs) описывает доступность контента, поиск и получение статей. Базовая поставка регистрирует пустой источник; пункт справки скрывается при отсутствии контента.
+The [`IOrganizationWikiContentProvider`](../src/OpenCRM.WebApp/Models/Organizations/IOrganizationWikiContentProvider.cs) contract describes content availability, search, and article retrieval. The base distribution registers an empty provider; the help item is hidden when no content is available.
 
-Контракт и модель статьи сейчас находятся в проекте WebApp. Практический вариант — реализовать источник в продуктовой папке/пространстве имён внутри WebApp и заменить регистрацию после стандартной настройки сервисов хоста. Прямое вынесение такого класса в проект, который ссылается на WebApp и одновременно подключается из WebApp, создаст циклическую зависимость; для этого сначала нужно отдельно изменить границы контракта/композиции.
+The contract and article model currently reside in WebApp. A practical approach is to implement the provider in a product-specific folder/namespace within WebApp and replace its registration after the host's standard service configuration. Moving this class directly into a project that references WebApp and is simultaneously referenced by WebApp creates a circular dependency; first change the contract/composition boundaries separately if you need this arrangement.
 
-Пример для уже реализованного внутри хоста `ProductWikiContentProvider`: в `ConfigureBuilder` файла `Program.cs` после штатной регистрации presentation-сервисов замените регистрацию источника:
+For a `ProductWikiContentProvider` already implemented within the host, replace the provider registration in `ConfigureBuilder` in `Program.cs`, after the standard presentation service registration:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -72,32 +74,32 @@ builder.Services.Replace(ServiceDescriptor.Singleton<
     ProductWikiContentProvider>());
 ```
 
-Это пример подключения класса в существующем хосте. Сам класс нужно реализовать; добавление DLL в каталог приложения без регистрации его не подключает. Учитывайте singleton-жизненный цикл и потокобезопасность.
+This illustrates connecting a class in the existing host. You must implement the class itself; placing a DLL in the application directory without registration does not connect it. Account for the singleton lifetime and thread safety.
 
-### Интерфейс
+### Interface
 
-- [`packages/ui`](../src/OpenCRM.Frontend/packages/ui) содержит общие элементы интерфейса.
-- [`packages/workspace`](../src/OpenCRM.Frontend/packages/workspace) содержит рабочее пространство и CRM-компоненты.
-- [`Scenarios`](../src/OpenCRM.Frontend/Scenarios) содержит клиентские приложения.
-- [`Admin`](../src/OpenCRM.Frontend/Admin) содержит административные приложения.
+- [`packages/ui`](../src/OpenCRM.Frontend/packages/ui) contains shared UI elements.
+- [`packages/workspace`](../src/OpenCRM.Frontend/packages/workspace) contains the workspace and CRM components.
+- [`Scenarios`](../src/OpenCRM.Frontend/Scenarios) contains client applications.
+- [`Admin`](../src/OpenCRM.Frontend/Admin) contains administration applications.
 
-Переиспользуйте существующие компоненты, стили темы и обработку прав. Для дат и времени используйте общие `UiDatePicker` и `UiTimePicker`. После изменения клиентских компонентов собирайте workspaces и проверяйте нужные сценарии, узкий экран и обе темы.
+Reuse existing components, theme styles, and permission handling. Use the shared `UiDatePicker` and `UiTimePicker` for dates and times. After changing client components, build the workspaces and check the relevant scenarios, narrow screens, and both themes.
 
-### Коммерческий режим
+### Commercial mode
 
-Для штатного включения достаточно предусмотренной конфигурации; затем настройте собственные планы, цены и интеграции. Контракт [`IPlatformCommercialPolicy`](../src/OpenCRM.Modules.Billing.Contracts/IPlatformCommercialPolicy.cs) используется частью бизнес-логики. Другие компоненты, включая фильтры HTTP, регистрацию платежей и фоновых задач, также читают `PlatformPolicy:Commercial:Enabled` напрямую. Поэтому одной подмены интерфейса недостаточно для переключения всей установки: используйте штатную настройку и проверяйте согласованность обоих режимов.
+Use the supported configuration to enable the standard mode, then configure your own plans, prices, and integrations. Part of the business logic uses [`IPlatformCommercialPolicy`](../src/OpenCRM.Modules.Billing.Contracts/IPlatformCommercialPolicy.cs). Other components, including HTTP filters, payment registration, and background jobs, also read `PlatformPolicy:Commercial:Enabled` directly. Replacing the interface alone therefore does not switch the entire installation: use the standard setting and verify consistency in both modes.
 
-Сохраняйте членство, роли, проверки прав и технические ограничения независимо от коммерческих настроек.
+Preserve membership, roles, permission checks, and technical limits regardless of commercial settings.
 
-### Провайдеры и собственная бизнес-логика
+### Providers and your own business logic
 
-Сначала проверьте, поддерживает ли существующая интеграция нужный протокол и настройки. Для нового протокола потребуется реализация адаптера и его явное подключение через DI. Регистрации инфраструктуры находятся в `src/OpenCRM.Infrastructure.*` и файлах `*ServiceCollectionExtensions.cs`.
+First check whether an existing integration supports the protocol and settings you need. A new protocol requires an adapter implementation and explicit DI registration. Infrastructure registrations reside in `src/OpenCRM.Infrastructure.*` and `*ServiceCollectionExtensions.cs` files.
 
-Добавляя модуль, определите его ответственность, публичные контракты, регистрацию и тесты. Взаимодействуйте через контракты соседних модулей. Если нужны новые таблицы, спроектируйте владение данными и миграции; автоматическое обнаружение произвольных сущностей не предполагается.
+When adding a module, define its responsibility, public contracts, registration, and tests. Interact through neighboring modules' contracts. If new tables are needed, design data ownership and migrations; arbitrary entities are not discovered automatically.
 
-## 4. Получайте обновления ядра
+## 4. Receive core updates
 
-В клоне своего продукта, сохранив рабочие изменения, создайте отдельную ветку обновления:
+In your product's clone, save your working changes and create a separate update branch:
 
 ```bash
 git fetch upstream
@@ -105,15 +107,15 @@ git switch -c update/opencrm-core
 git merge upstream/main
 ```
 
-После слияния:
+After merging:
 
-1. Разберите конфликты, сохраняя продуктовые настройки и проверки ядра.
-2. Восстановите зависимости, выполните сборку и уместные [тесты](../CONTRIBUTING.md#проверки).
-3. Проверьте миграции на отдельной БД и основные сценарии своей установки.
-4. Только затем включайте обновление в поставку своего продукта.
+1. Resolve conflicts while preserving product settings and core checks.
+2. Restore dependencies, build, and run appropriate [tests](../CONTRIBUTING.md#validation).
+3. Validate migrations on a separate database and check your installation's main scenarios.
+4. Only then include the update in your product's release.
 
-Конфликты возможны, особенно при изменении тех же общих файлов. Небольшие продуктовые изменения в отдельных компонентах упрощают обновление. Общую ошибку исправляйте в OpenCRM, а затем переносите исправление в продукт через upstream.
+Conflicts are possible, especially when the same shared files have changed. Small product changes in separate components simplify updates. Fix a shared bug in OpenCRM, then bring the fix into your product through upstream.
 
-## Авторство
+## Attribution
 
-Свои название, оформление и функциональность менять можно. Сохраняйте [условия лицензии](../LICENSE) и видимое указание OpenCRM и автора [eddchervov](https://github.com/eddchervov) на сайте/веб-интерфейсе, включая коммерческие и закрытые надстройки.
+You may change your product's name, appearance, and functionality. Retain the [license terms](../LICENSE) and visible OpenCRM attribution to the author [eddchervov](https://github.com/eddchervov) on the website/web interface, including commercial and closed-source customizations.

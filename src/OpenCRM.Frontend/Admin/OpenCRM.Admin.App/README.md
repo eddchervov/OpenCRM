@@ -1,100 +1,102 @@
 # opencrm.example.invalid Admin — Avalonia
 
-Добавлен раздел «ИИ-помощник» с глобальным выключением, каналами, моделями, бюджетами, доступом организаций, аудитом, расходами и сверкой неизвестной стоимости. Права настройки и просмотра расходов проверяются раздельно; конфликт версии настроек требует повторной проверки администратором. Общий выключатель скрывает кнопку и предпросмотр Free после обновления CRM. Подробности — в [документации помощника](../../../../docs/ai-assistant.md).
+**English** | [Русский](README.ru.md)
 
-Карточка организации поддерживает принудительную архивацию и восстановление любых неудалённых организаций с правом `Admin.Users.Manage`, причиной и явным подтверждением. Действует прежний срок очистки архива в 30 дней; после потери ответа новое действие заблокировано до сверки статуса. [Серверный контракт и ограничения](../../../../docs/admin-organizations.md). Для этих действий нужно обновление серверного API, отдельно от desktop-публикации.
+The “ИИ-помощник” (AI assistant) section provides global disablement, channels, models, budgets, organization access, audit, spending, and reconciliation of unknown costs. Configuration and spending permissions are checked separately; a settings version conflict requires the administrator to review again. The global switch hides the button and Free preview after a CRM update. See [assistant documentation](../../../../docs/ai-assistant.md).
 
-Самостоятельный desktop-клиент на .NET 10 и Avalonia для Windows и macOS: вход по email и паролю, профиль администратора только для чтения и дашборд. Чёрная тема с белым текстом используется независимо от темы операционной системы.
+Organization records support forced archiving/restoring of any undeleted organization with `Admin.Users.Manage`, a reason, and explicit confirmation. The existing 30-day archive cleanup period applies; after a lost response, new actions are blocked until status reconciliation. See [server contract and restrictions](../../../../docs/admin-organizations.md). These actions require a server API update independently of desktop deployment.
 
-## Запуск
+A standalone .NET 10/Avalonia desktop client for Windows and macOS: email/password login, read-only administrator profile, and dashboard. It uses a black theme with white text regardless of OS theme.
 
-Из корня репозитория:
+## Start
+
+From the repository root:
 
 ```powershell
 dotnet run --project src/OpenCRM.Frontend/Admin/OpenCRM.Admin.App
 ```
 
-Адрес API задаётся в `appsettings.json` рядом с приложением. По умолчанию используется `https://opencrm.example.invalid/`. Для локального сервера можно передать адрес через переменную окружения:
+The API URL is configured in `appsettings.json` beside the application. The default is `https://opencrm.example.invalid/`. For a local server, supply the address through an environment variable:
 
 ```powershell
 $env:OPENCRM_ADMIN_API_URL = 'https://localhost:7142/'
 dotnet run --project src/OpenCRM.Frontend/Admin/OpenCRM.Admin.App
 ```
 
-HTTP разрешён только для loopback-адресов. Проверка сертификатов HTTPS не отключается. Для текущего VPN клиент использует HTTP/1.1. Настройки API, ключи подписи JWT и доступ к базе данных в desktop не передаются.
+HTTP is allowed only for loopback addresses. HTTPS certificate validation is never disabled. The client uses HTTP/1.1 for the current VPN. Server API settings, JWT signing keys, and database access are not passed to the desktop application.
 
-Для входа в рабочий сервер нужны серверные изменения административной авторизации из этого этапа. Локальная заготовка сама не обновляет сервер и не меняет существующую веб-админку.
+Signing in to a running server requires the administrative authentication server changes from this stage. The local application scaffold does not itself update the server or change the existing web admin interface.
 
-## Вход и права
+## Sign-in and permissions
 
-- `POST /api/v1/auth/login` выдаёт пару токенов после проверки email и пароля.
-- `GET /api/v1/admin/current-user` проверяет право `Admin.Access` или актуальную роль `System` на сервере. После успешного ответа открывается дашборд, если он разрешён, иначе профиль.
-- Сервер сверяет административные роли и разрешения с БД при каждом запросе; снятие роли или удаление пользователя блокирует доступ с прежним JWT.
-- Клиент повторно загружает профиль и права каждую минуту и по кнопке «Обновить» в профиле. При 401/403 профиля сессия закрывается; 403 дашборда закрывает страницу и обновляет права.
-- В Windows refresh-токен сохраняется с защитой DPAPI текущего пользователя в `%LOCALAPPDATA%/OpenCRM/Admin/Sessions`, отдельно для каждого адреса API. Пароль и access-токен не сохраняются. При запуске клиент обновляет токены и проверяет профиль и права на сервере. Перенос portable-приложения на другой компьютер или запуск другим пользователем Windows требует нового входа. На macOS сохранение сессии пока не поддерживается.
-- Истекающий access token обновляется через `POST /api/v1/auth/refresh`. После ответа 401 один раз повторяется запрос чтения профиля или отчёта.
-- Обычное закрытие окна сохраняет вход. «Выйти» удаляет сохранённую сессию и вызывает `POST /api/v1/auth/revoke`. Перед отзывом истёкший access token обновляется. При отсутствии сети отзыв на сервере не гарантируется; локальная сессия удаляется. Истечение refresh-токена или отказ сервера в авторизации удаляет сохранённый вход; временный сетевой сбой его сохраняет.
-- В Windows для одного пользователя запускается только один экземпляр desktop-клиента, чтобы параллельные окна не использовали один ротируемый refresh-токен.
+- `POST /api/v1/auth/login` issues a token pair after validating email/password.
+- `GET /api/v1/admin/current-user` checks `Admin.Access` or a current `System` role on the server. On success, it opens the dashboard if allowed, otherwise the profile.
+- The server checks administrative roles/permissions against the database on every request; removing a role or deleting a user blocks access with an old JWT.
+- The client reloads profile/permissions every minute and through “Обновить” (Refresh) in the profile. Profile 401/403 closes the session; dashboard 403 closes the page and refreshes permissions.
+- On Windows, the refresh token is protected with current-user DPAPI in `%LOCALAPPDATA%/OpenCRM/Admin/Sessions`, separately for each API URL. Passwords and access tokens are not saved. At startup, the client refreshes tokens and checks server profile/permissions. Moving the portable app to another computer or running as another Windows user requires signing in again. Session persistence on macOS is not yet supported.
+- Expiring access tokens refresh through `POST /api/v1/auth/refresh`. After a 401, a profile/report read is retried once.
+- Closing the window normally preserves sign-in. “Выйти” (Sign out) deletes the saved session and calls `POST /api/v1/auth/revoke`. An expired access token is refreshed before revocation. Without connectivity, server revocation is not guaranteed; the local session is deleted. Refresh-token expiry or authorization rejection deletes saved sign-in; a temporary network failure preserves it.
+- Windows allows one desktop instance per user so parallel windows do not share a rotating refresh token.
 
-Меню включает только разрешённые разделы. Пункты с отметкой «позже» не выполняют действий; соответствующие экраны ещё не перенесены. Профиль не содержит форм изменения email, ролей или прав.
+The menu contains only permitted sections. Items marked “позже” (later) perform no actions; their screens have not yet been ported. The profile has no forms for changing email, roles, or permissions.
 
-## Счётчики меню
+## Menu counters
 
-Значки пользователей, обращений и истории email показывают новые записи с последнего успешного просмотра соответствующего раздела. При первом использовании учитываются записи с начала текущего локального дня; затем непросмотренные записи сохраняются через смену дня и перезапуск приложения. Отметки хранятся в `admin.NavigationReadStates` для аккаунта и раздела.
+User, request, and email history badges show new records since the corresponding section was last successfully viewed. First use counts records from the start of the current local day; afterward unread records persist across midnight and application restarts. Read markers are stored in `admin.NavigationReadStates` per account/section.
 
-Значок платежей показывает общую очередь оплаченных платежей с незавершённой обработкой или без загруженного чека, за всё время. Обработка завершена при статусе `completed`; чек присутствует при сохранённом файле или URL. Пока хотя бы одно условие не выполнено, платёж остаётся в очереди. Неоплаченные, отменённые и полностью возвращённые платежи в неё не входят. Просмотр раздела не изменяет эту очередь и не сохраняет для неё отметку просмотра.
+The payments badge shows the all-time queue of paid payments with unfinished processing or no uploaded receipt. Processing is complete at `completed`; a receipt exists when a file or URL is saved. While either condition is unmet, the payment remains queued. Unpaid, canceled, and fully refunded payments are excluded. Viewing the section neither changes the queue nor saves a read marker for it.
 
-При загрузке пользователей, обращений или истории email клиент получает серверную временную границу через `GET /api/v1/admin/navigation/counts?unread=true`. Только после успешной загрузки актуального экрана он подтверждает её через `POST /api/v1/admin/navigation/sections/{section}/viewed`. Ошибка или отмена загрузки не сбрасывает значок; события после границы остаются новыми. Параллельные подтверждения могут только продвигать отметку вперёд. Счётчики обновляются раз в минуту, а после подтверждения — сразу. Очередь предложений каталога показывает все ожидающие модерации заявки независимо от просмотра.
+When loading users, requests, or email history, the client obtains a server time boundary through `GET /api/v1/admin/navigation/counts?unread=true`. Only after successfully loading the current screen does it acknowledge that boundary through `POST /api/v1/admin/navigation/sections/{section}/viewed`. A load error or cancellation does not clear the badge; events after the boundary remain new. Concurrent acknowledgments can only advance the marker. Counters refresh every minute and immediately after acknowledgment. The catalog proposal queue shows every pending moderation request regardless of viewing.
 
-Запрос `/navigation/counts` без `unread=true` сохраняет дневную статистику для прежних клиентов. Для непросмотренных событий необходимы обновлённый сервер и миграция `AddAdminNavigationReadStates`; сервер без поля `AsOfUtc` не получает подтверждений просмотра от нового клиента.
+`/navigation/counts` without `unread=true` retains daily statistics for older clients. Unread events require an updated server and `AddAdminNavigationReadStates` migration; a server without `AsOfUtc` receives no viewed acknowledgments from the new client.
 
-## Пользователи
+## Users
 
-Раздел открывается с `Admin.Users.View` или ролью `System`. Таблица занимает оставшуюся рабочую область, заголовки и пагинация закреплены; размер страницы по умолчанию 50, доступны 25/50/100. Поиск по email/телефону применяется кнопкой «Найти» или Enter, размер страницы и переключатель удалённых применяются сразу. «Сбросить» очищает поиск и возвращает первоначальную сортировку. Отдельного фильтра UTM нет.
+Requires `Admin.Users.View` or `System`. The table fills the remaining workspace, with fixed headers/pagination; default page size is 50, with 25/50/100 available. Email/phone search applies on “Найти” (Find) or Enter; page size and deleted-user switches apply immediately. “Сбросить” (Reset) clears search and restores initial sorting. There is no separate UTM filter.
 
-Сортировка выполняется сервером при нажатии на заголовки пользователя, техники, ТО, организаций, последнего входа, регистрации и UTM-источника; повторное нажатие меняет направление. Стрелка в заголовке обозначает текущий порядок. Счётчики техники, ТО и организаций показаны отдельными колонками сразу после пользователя, затем идут последний вход и регистрация. UTM-источник — метка первого привлечения пользователя, не способ авторизации. Колонка личного тарифа убрана: тарифы управляются организациями. Нажатие на число организаций открывает их вкладку в карточке, где у каждой свои роль, статус и тариф. Список не загружает overview для каждой строки.
+Server sorting is triggered by user, vehicle, maintenance, organization, last login, registration, and UTM source headers; another click reverses direction. A header arrow shows the current order. Vehicle, maintenance, and organization counts appear separately immediately after the user, followed by last login and registration. UTM source is first-acquisition attribution, not an authentication method. The personal plan column is removed: plans belong to organizations. Clicking the organization count opens their tab in the record, where each has its own role, status, and plan. The list does not load an overview per row.
 
-Карточка открывается кнопкой в строке, двойным щелчком или Enter на выбранном пользователе. Возврат сохраняет страницу, выбор и поиск. Выделенная строка и строка под мышью используют тёмные фоны с контрастным текстом.
+Open a record through the row button, double-click, or Enter on the selected user. Returning preserves the page, selection, and search. Selected/hovered rows use dark backgrounds with contrasting text.
 
-«Карточка» содержит обзор, организации, подписки, платежи, технику и ТО, обращения и индивидуальные возможности. Шапка показывает пользователя, статус, даты входа и регистрации, счётчики входов и организаций. Вкладки оформлены контрастными кнопками, обзор расположен в две колонки на широком экране, остальные записи показаны списком; поля показаны компактными колонками или строками «название — значение». Смешанные счётчики записей на вкладках убраны. Во вкладке организаций показано только текущее членство или владение, отдельные карточки истории приглашений отсутствуют. Статус выбирается локально: активные по умолчанию, архивированные или удалённые; выбор сохраняется при обновлении карточки. Внутри организации показана дата вступления; дата и автор приглашения добавляются только при совпадении принятого приглашения с организацией, email пользователя и датой вступления. Если подходящее приглашение отсутствует в ответе API, эти поля не подставляются из других записей. Вкладка подписок показывает только подписки организаций с локальным выбором активных (по умолчанию), завершённых или всех; выбор сохраняется при обновлении. Старые личные тарифы и события их истории не отображаются. «Личная техника и ТО» исключает технику с `OrganizationId` и показывает обслуживания только известных личных машин. API ограничивает общую выборку 30 машинами и 20 обслуживаниями; при достижении лимита это отмечено в интерфейсе, записи с неизвестной принадлежностью не выдаются за личные. Хронология свёрнута. Поля можно выделять и копировать; время отображается в локальном часовом поясе. Финансовые вкладки и тарифы скрываются без `Admin.Billing.View`. Ответ карточки запрашивается только при открытии и по кнопке обновления; списки не обновляются таймером. При выходе и отзыве доступа данные очищаются, при уходе запросы отменяются. Обновление карточки сохраняет выбранную вкладку.
+The record includes overview, organizations, subscriptions, payments, vehicles/maintenance, support requests, and individual features. Its header shows the user, status, login/registration dates, and login/organization counts. Tabs use high-contrast buttons; the overview has two columns on wide screens, other records use lists, and fields use compact columns or name/value rows. Mixed tab record counters are removed. The organizations tab shows only current membership/ownership, without separate invitation history cards. Local status selection is active by default, archived, or deleted and survives refresh. Organization entries show join dates; invitation date/author appear only if an accepted invitation matches the organization, user email, and join date. If the API supplies no matching invitation, other records are not substituted. The subscriptions tab shows only organization subscriptions with active (default), completed, or all selected locally; selection survives refresh. Old personal plans/history are hidden. Personal vehicles and maintenance exclude vehicles with `OrganizationId` and show maintenance only for known personal vehicles. The API caps the overall selection at 30 vehicles and 20 maintenance records; the interface explicitly marks reaching a limit, and unknown ownership is not presented as personal. The timeline is collapsed. Fields can be selected/copied; timestamps use the local time zone. Financial tabs/plans are hidden without `Admin.Billing.View`. Record data loads only on opening or refresh, not a timer. Sign-out/access revocation clears data; navigation cancels requests. Refresh preserves the selected tab.
 
-Используются существующие `GET /api/v1/admin/users` и `/users/{userId}/overview`. Сервер ограничивает некоторые коллекции последними записями: при достижении ограничения вкладка показывает это явно. Раздел предназначен для просмотра; изменение пользователя, подписок и вход от его имени не добавлены.
+Uses existing `GET /api/v1/admin/users` and `/users/{userId}/overview`. The server limits some collections to recent records; tabs explicitly disclose when limits are reached. This is a viewing section; user/subscription editing and impersonation were not added.
 
-Ограничение существующего API: `overview` требует только `Admin.Users.View` и включает финансовые данные в JSON независимо от `Admin.Billing.View`. Скрытие этих данных в desktop регулирует интерфейс и не заменяет серверную проверку прав. Серверная часть в рамках этого переноса не менялась.
+Existing API limitation: `overview` requires only `Admin.Users.View` and includes financial JSON regardless of `Admin.Billing.View`. Desktop hiding is a UI control, not a substitute for server authorization. The server was not changed as part of this port.
 
-## Дашборд
+## Dashboard
 
-Карточки имеют компактную ширину и переносятся на следующую строку в узком окне. Общий переключатель «Сегодня / 7 дней / Месяц» находится над первым блоком и управляет обращениями, созданными и отправленными письмами, ошибками писем, предложениями в каталог, платежами, регистрациями и входами. Порядок основных блоков: «Сайт и коммуникации» → «Платежи» → «Регистрации и входы» → «Посещения и поисковый трафик».
+Cards have compact widths and wrap in narrow windows. The shared Today / 7 days / Month selector above the first block controls support requests, created/sent/failed emails, catalog proposals, payments, registrations, and logins. Main block order: Website and communications → Payments → Registrations and logins → Visits and search traffic.
 
-Отправленные письма считаются по дате отправки `SentAt`, включая письма, созданные до периода, доставленные, открытые и прочитанные; имитации отправки исключены. Ошибки показывают письма выбранного периода создания с текущим статусом `failed`. Общая статистика пользователей, организаций, техники, финансов и коммуникаций находится в самом низу и загружается отдельным запросом только по кнопке «Загрузить статистику», без автообновления; её справочные строки сохраняют явно подписанные интервалы. «График всей активности» первоначально свёрнут и раскрывается стрелкой.
+Sent emails count by `SentAt`, including emails created before the period and delivered/opened/read emails, excluding simulations. Errors show emails created in the selected period whose current status is `failed`. Overall user, organization, vehicle, finance, and communication statistics are at the bottom and load separately only through “Загрузить статистику” (Load statistics), without automatic refresh; reference rows retain explicit intervals. The all-activity chart starts collapsed and expands with an arrow.
 
-Блок платежей показывает поступления с учётом возвратов, число платежей, оплаченные покупки без отметки о выдаче чека и просроченные чеки старше суток за выбранный период. Чеки относятся к периоду по дате оплаты `PaidAt`. Периоды совпадают с основным дашбордом: календарные дни UTC, сегодня, последние 7 или 30 дней. Полностью возвращённые оплаты исключены; частичный возврат не освобождает от оформления чека. При ненулевом `failedActivationCount` появляется отдельный красный блок: оплата получена, но подписка не активирована. Он учитывает сбои за всё время независимо от периода, чтобы старая ошибка не скрылась при выборе «Сегодня».
+The payment block shows receipts net of refunds, payment counts, paid purchases without a receipt-issued marker, and receipts overdue by more than one day for the selected period. Receipts belong to a period by `PaidAt`. Periods match the main dashboard: UTC calendar days, today, last 7 or 30 days. Fully refunded payments are excluded; partial refunds do not remove the receipt obligation. Nonzero `failedActivationCount` shows a separate red warning: payment received but subscription not activated. It includes all-time failures regardless of the selected period so choosing Today cannot hide an old failure.
 
-«Вошли пользователи» показывает число пользователей, чей последний вход попадает в выбранный период. Google Search Console и Яндекс Метрика показывают поисковый трафик и посещения сайта; этот блок открыт сразу. На широком окне Метрика и Google стоят рядом, а целевые визиты и UTM-источники — следующей парой. В узком окне провайдеры располагаются столбцом. Графики целевых визитов первоначально свёрнуты; таблица UTM также раскрывается отдельно.
+Logged-in users counts users whose last login falls within the selected period. Google Search Console and Yandex Metrica show search traffic and website visits; this block starts expanded. On wide windows, Metrica/Google are side by side, followed by goal visits/UTM sources. On narrow windows, providers stack. Goal-visit charts and the UTM table start separately collapsed.
 
-Используются `GET /api/v1/admin/dashboard`, `/dashboard/external-analytics` и `/billing/attention?periodDays=1`. Последний возвращает готовые счётчики, включая `missingReceiptCount` и эхо `periodDays`; desktop не запрашивает `/billing/purchases`. Сервер выполняет агрегированные SQL-запросы без загрузки истории покупок и email. Для веб-админки вызов `/billing/attention` без периода сохраняет прежний подсчёт за всё время.
+Uses `GET /api/v1/admin/dashboard`, `/dashboard/external-analytics`, and `/billing/attention?periodDays=1`. The last endpoint returns calculated counters, including `missingReceiptCount` and an echoed `periodDays`; desktop does not request `/billing/purchases`. The server runs aggregate SQL without loading purchase/email history. For web administration, `/billing/attention` without a period retains all-time counts.
 
-- Основной период: сегодня, 7 дней, месяц. Финансовые показатели видны только с `Admin.Billing.View` или ролью `System`.
-- Автообновление: 5, 10, 30 или 60 секунд, по умолчанию 10. Выбор сохраняется в `%LOCALAPPDATA%/OpenCRM/Admin/dashboard-refresh.txt`. Запросы не выполняются в скрытой странице, неактивном или свёрнутом окне. Уход со страницы, выход и закрытие приложения отменяют загрузку.
-- Счётчики платежей обновляются с основной сводкой и при смене периода. Старые значения чеков сразу очищаются при переключении дат. При первом отказе вместо неизвестного числа показывается «—», при повторном отказе того же периода сохраняются последние значения с предупреждением. Основной дашборд и счётчики биллинга загружаются независимо.
-- До обновления боевого сервера старый контракт не подтверждает период чеков. Клиент показывает «—» и сообщение о необходимости обновления, сохраняя доступное глобальное предупреждение об ошибках активации. Цифры за всё время не подменяют выбранный период.
-- Для периодных email сервер добавляет `sentEmails` и `failedEmails` в `period`. До обновления старый контракт показывает для них «—» с сообщением; фиксированные 7-дневные KPI не подставляются вместо выбранного периода.
-- Ошибка обновления сохраняет прежние данные того же периода с предупреждением. Смена периода очищает периодную сводку и графики, чтобы старые значения не отображались под новым периодом.
-- Внешние отчёты имеют собственный период 7 или 30 дней. Основное автообновление и ручное обновление сводки не запрашивают внешнюю аналитику. «Обновить отчёты» передаёт `refresh=true`.
-- Показатели внешних отчётов разделены по единицам измерения. Нажатие на показатель фильтрует графики; повторное нажатие или «Все показатели» возвращает все серии. Пропуски не соединяются линией. Значения точки доступны при наведении и с клавиатуры стрелками, Home и End. Дневные значения и UTM-источники раскрываются отдельно.
+- Main period: today, 7 days, month. Financial metrics require `Admin.Billing.View` or `System`.
+- Automatic refresh: 5, 10, 30, or 60 seconds; default 10. Saved in `%LOCALAPPDATA%/OpenCRM/Admin/dashboard-refresh.txt`. Requests stop on hidden pages and inactive/minimized windows. Navigation, sign-out, and closing cancel loading.
+- Payment counters refresh with the summary and on period changes. Old receipt values clear immediately when dates change. The first failure shows “—” instead of an unknown count; a repeated failure for the same period keeps the last values with a warning. Main dashboard and billing counters load independently.
+- Before the production server is updated, the old contract cannot confirm the receipt period. The client shows “—” and an update-required message while preserving any global activation-failure warning. All-time counts never substitute for the selected period.
+- For period-specific email metrics, the server adds `sentEmails` and `failedEmails` to `period`. Until updated, the old contract shows “—” with a message; fixed seven-day KPIs do not substitute for the selected period.
+- Refresh failure preserves prior data for the same period with a warning. Changing period clears the period summary/charts so old values never appear under a new period.
+- External reports have their own 7/30-day period. Automatic and manual summary refresh do not request external analytics. Refresh reports passes `refresh=true`.
+- External report metrics are separated by units. Clicking a metric filters charts; clicking again or choosing All metrics restores all series. Missing points are not connected. Point values are accessible by hover and keyboard arrows, Home, End. Daily values and UTM sources expand separately.
 
-Переходы из сводки и UTM-отчёта в пользователей, биллинг и коммуникации будут подключены после переноса соответствующих desktop-разделов. Показатели сайта сохранены; дальнейшее сокращение состава и уточнение дизайна выполняются после просмотра рабочей сводки.
+Navigation from the summary/UTM report to users, billing, and communications will be connected after the corresponding desktop sections are ported. Website metrics are retained; further reduction and design refinement follow inspection of the working summary.
 
-## Структура
+## Structure
 
-- `OpenCRM.Admin.App`: XAML, ViewModel, оболочка, настройки и жизненный цикл окна.
-- `OpenCRM.Admin.Api`: HTTP, сессия и небольшие клиентские DTO без зависимостей от Domain, EF и серверных сервисов.
-- `OpenCRM.Admin.App.Tests`: проверки ViewModel и настоящих XAML-экранов через Avalonia Headless.
-- `OpenCRM.Admin.Api.Tests`: проверки сессии, обновления токенов, отказов и HTTP-контрактов.
+- `OpenCRM.Admin.App`: XAML, ViewModel, shell, settings, and window lifecycle.
+- `OpenCRM.Admin.Api`: HTTP, session, and small client DTOs without Domain, EF, or server service dependencies.
+- `OpenCRM.Admin.App.Tests`: ViewModel and actual XAML screen tests through Avalonia Headless.
+- `OpenCRM.Admin.Api.Tests`: Session, token refresh, rejection, and HTTP contract tests.
 
-Новые проекты находятся в папке решения `Frontend/Admin`. Старый Chrome-лаунчер `OpenCRM.Admin.Launcher` сохраняется отдельно.
+New projects reside in the `Frontend/Admin` solution folder. The old Chrome launcher `OpenCRM.Admin.Launcher` remains separate.
 
-## Проверки
+## Validation
 
 ```powershell
 dotnet test tests/OpenCRM.Admin.Api.Tests
@@ -102,28 +104,28 @@ dotnet test tests/OpenCRM.Admin.App.Tests
 dotnet test tests/OpenCRM.Infrastructure.Tests -p:BuildScenarioClientsOnBuild=false --filter 'FullyQualifiedName~AdminAuthenticationApiTests|FullyQualifiedName~AdminAuthorizationHttpTests'
 ```
 
-Последняя команда использует Docker, PostgreSQL и RabbitMQ через существующую фикстуру. Она проверяет реальные контроллеры входа и профиля, Identity, JWT, отказ обычному пользователю, административные политики, обновление и отзыв токенов.
+The last command uses Docker, PostgreSQL, and RabbitMQ through the existing fixture. It tests real sign-in/profile controllers, Identity, JWT, ordinary-user rejection, administrative policies, token refresh, and revocation.
 
-Для сохранения снимков настоящих XAML-экранов на тестовых данных:
+To capture actual XAML screens with test data:
 
 ```powershell
 $env:OPENCRM_ADMIN_SCREENSHOTS = "$PWD/output/admin-desktop"
 dotnet test tests/OpenCRM.Admin.App.Tests
 ```
 
-Эти снимки показывают тестовый профиль, а не вход в рабочий сервер.
+These images show a test profile, not a production-server session.
 
-## Платежи и подписки
+## Payments and subscriptions
 
-Раздел доступен с `Admin.Billing.View`. Вкладки платежей и подписок организаций используют серверные страницы по 25, 50 или 100 записей, поиск, статусы и сортировку по заголовкам. Платежи можно отобрать за сегодня, 7 или 30 дней либо за всё время. Ограничение сводки в 300 платежей не применяется к этим спискам. Для будущих подписок предусмотрен отдельный статус «Ещё не началась».
+Requires `Admin.Billing.View`. Payment and organization-subscription tabs use server pagination with 25/50/100 entries, search, statuses, and header sorting. Payments support today, 7/30 days, or all-time filtering. The summary's 300-payment cap does not apply to these lists. Future subscriptions have a separate Not started status.
 
-Кнопка «Открыть», двойной щелчок или Enter открывают подробности и историю изменений. Возврат сохраняет страницу; выход и отзыв прав очищают данные. Для списка нужны новые серверные эндпоинты `GET /api/v1/admin/billing/payments` и `GET /api/v1/admin/billing/subscriptions/organizations`. При старой версии сервера клиент показывает сообщение о необходимости обновления.
+Open, double-click, or Enter displays details/change history. Returning preserves the page; sign-out/access revocation clears data. Lists require new server endpoints `GET /api/v1/admin/billing/payments` and `GET /api/v1/admin/billing/subscriptions/organizations`. With an older server, the client shows an update-required message.
 
-## Сборки для ОС
+## OS builds
 
 ```powershell
 dotnet publish src/OpenCRM.Frontend/Admin/OpenCRM.Admin.App -c Release -r win-x64 --self-contained true -o output/AdminApp/win-x64
 dotnet publish src/OpenCRM.Frontend/Admin/OpenCRM.Admin.App -c Release -r osx-arm64 --self-contained true -o output/AdminApp/osx-arm64
 ```
 
-Для Intel Mac используется `osx-x64`. Сборка под macOS не заменяет проверку на MacBook. Подписанный `.app`, установщик и автоматическое обновление относятся к следующему этапу поставки.
+Use `osx-x64` for Intel Macs. Building for macOS does not replace testing on a MacBook. A signed `.app`, installer, and automatic updates belong to a subsequent distribution stage.

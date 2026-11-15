@@ -1,22 +1,24 @@
-# Журнал услуг детейлинга
+# Detailing service journal
 
-Раздел `#work-journal` показывает записи организации за всё время. По умолчанию выбран статус «Выполнено». Можно выбрать все статусы, запланированные, выполняемые или отменённые записи. Планирование по дням и календарь остаются в разделе «Записи».
+**English** | [Русский](service-journal.ru.md)
 
-Одна строка соответствует одному обслуживанию и содержит все его услуги, автомобиль, клиента, статус, плановую и фактическую даты, сумму с учётом скидки. Нажатие открывает `#maintenance/{id}`. Материалы входят в сумму, но не перечисляются как услуги.
+The `#work-journal` section shows organization appointments from all time. The default status is “Completed”. You can select all, planned, in-progress, or cancelled appointments. Day-by-day scheduling and the calendar remain in “Appointments”.
 
-Поиск по услугам, клиенту, марке, модели и госномеру выполняется в PostgreSQL до пагинации. Строки услуг находятся в таблице `MaintenanceDetails`; параметризованный SQL выполняется в `OpenCRM.Modules.Workspace/Queries/OrganizationMaintenanceJournalQueryService.cs`. Символы `%` и `_` ищутся буквально. Ответ содержит только текущую страницу и общее количество подходящих записей.
+One row represents one maintenance record and includes all its services, vehicle, customer, status, planned and actual dates, and total after discount. Selecting a row opens `#maintenance/{id}`. Materials are included in the total but are not listed as services.
 
-Период необязателен. Для выполненных записей используется дата выполнения, для остальных — плановая дата. Если в старой записи соответствующая дата отсутствует, фильтрация использует сохранённую дату обслуживания `Date`. Верхняя граница включает весь выбранный день. Сортировка — от новых дат к старым, затем по плановому времени, времени создания и идентификатору.
+Search by service, customer, make, model, and license plate is performed in PostgreSQL before pagination. Service rows are in the `MaintenanceDetails` table; parameterized SQL is executed by `OpenCRM.Modules.Workspace/Queries/OrganizationMaintenanceJournalQueryService.cs`. `%` and `_` are searched literally. The response contains only the current page and the total number of matching records.
+
+The date range is optional. Completed records use the completion date; other records use the planned date. If an old record has no such date, filtering uses the stored maintenance `Date`. The upper bound includes the entire selected day. Results are sorted from newest to oldest, then by planned time, creation time, and ID.
 
 API: `GET /api/v1/organizations/{organizationId}/maintenance-journal`.
 
-- `status`: `0` — все, `1` — запланировано, `2` — в работе, `3` — выполнено (по умолчанию), `4` — отменено.
-- `dateFrom`, `dateTo`: необязательные даты `YYYY-MM-DD`.
-- `search`: необязательный текст, до 200 символов.
-- `page`, `pageSize`: страница и её размер; сервер ограничивает размер до 100.
+- `status`: `0` — all, `1` — planned, `2` — in progress, `3` — completed (default), `4` — cancelled.
+- `dateFrom`, `dateTo`: optional `YYYY-MM-DD` dates.
+- `search`: optional text, up to 200 characters.
+- `page`, `pageSize`: page and page size; the server limits the size to 100.
 
-Нужны членство в организации и права `WorkJournalView` и `MaintenanceView`. Без `ClientsView` имена клиентов скрыты и не участвуют в поиске. Удалённые обслуживания и удалённые автомобили исключаются; чужие организации недоступны.
+Organization membership and `WorkJournalView` and `MaintenanceView` permissions are required. Without `ClientsView`, customer names are hidden and excluded from search. Deleted maintenance records and deleted vehicles are excluded; other organizations are inaccessible.
 
-Миграций и изменений данных нет. Существующий смешанный журнал СТО и автопарка сохраняет свой API и поведение.
+There are no migrations or data changes. The existing combined Service Station and Fleet journal retains its API and behavior.
 
-Проверки `MaintenanceJournalTests`: статусы, давние записи, пагинация, исключение чужих и удалённых данных, поиск по ручным и каталожным названиям, услуги и материалы, ограничения доступа к клиентам, период и порядок записей. Браузерная проверка выполняется на тестовых ответах API в светлой и тёмной темах, включая узкие экраны, ошибки загрузки и переход в карточку.
+`MaintenanceJournalTests` checks statuses, older records, pagination, exclusion of other organizations and deleted data, search by manual and catalog names, services and materials, customer access restrictions, date range, and ordering. Browser checks use test API responses in light and dark themes, including narrow screens, loading errors, and navigation to the record card.

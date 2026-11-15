@@ -1,33 +1,35 @@
-# Разработка OpenCRM
+# Developing OpenCRM
 
-Улучшайте общую CRM-основу в ядре; особенности конкретного сайта или продукта держите в своей надстройке. Практический процесс разделения и обновлений описан в [руководстве по расширению](docs/extending-opencrm.md).
+**English** | [Русский](CONTRIBUTING.ru.md)
 
-## Подготовка
+Develop improvements to the shared CRM foundation in the core; keep features specific to a website or product in your own customization layer. The [extension guide](docs/extending-opencrm.md) describes the separation and update workflow.
 
-1. Выполните [локальный запуск](docs/local-run.md).
-2. Прочитайте [архитектуру](docs/architecture-current.md), ближайший `AGENTS.md` и `.editorconfig` изменяемого компонента.
-3. Найдите существующий модуль, контракт, UI-компонент или адаптер с подходящей ответственностью.
+## Preparation
 
-Для интеграционных тестов нужен Docker: они используют изолированные PostgreSQL и RabbitMQ. Секреты и реальные учётные данные для них не требуются.
+1. Complete the [local setup](docs/local-run.md).
+2. Read the [architecture](docs/architecture-current.md), the nearest `AGENTS.md`, and the `.editorconfig` for the component you will change.
+3. Find an existing module, contract, UI component, or adapter with the appropriate responsibility.
 
-## Где менять код
+Integration tests require Docker: they use isolated PostgreSQL and RabbitMQ instances. They do not require secrets or real credentials.
 
-| Изменение | Область |
+## Where to make changes
+
+| Change | Area |
 | --- | --- |
-| Бизнес-правила и операции CRM | `src/OpenCRM.Modules.*` |
-| Межмодульные API и DTO | Соответствующие проекты `*.Contracts` |
-| Хранение, БД, провайдеры | `src/OpenCRM.Infrastructure.*` |
-| HTTP-слой, страницы, регистрация модулей | `src/OpenCRM.WebApp` |
-| Клиентские экраны | `src/OpenCRM.Frontend/Scenarios` |
-| Общий интерфейс | `src/OpenCRM.Frontend/packages/ui`, `packages/workspace` |
-| Административные приложения | `src/OpenCRM.Frontend/Admin` |
-| Микросервисы | `services/notifications`, `services/payments` |
+| CRM business rules and operations | `src/OpenCRM.Modules.*` |
+| Cross-module APIs and DTOs | The corresponding `*.Contracts` projects |
+| Storage, databases, providers | `src/OpenCRM.Infrastructure.*` |
+| HTTP layer, pages, module registration | `src/OpenCRM.WebApp` |
+| Client screens | `src/OpenCRM.Frontend/Scenarios` |
+| Shared interface | `src/OpenCRM.Frontend/packages/ui`, `packages/workspace` |
+| Administration applications | `src/OpenCRM.Frontend/Admin` |
+| Microservices | `services/notifications`, `services/payments` |
 
-Переиспользуйте контракты и компоненты. Сохраняйте роли, проверки прав, изоляцию организаций и существующие данные. Не включайте внешние интеграции или коммерческие ограничения для базового режима без соответствующей конфигурации.
+Reuse contracts and components. Preserve roles, permission checks, organization isolation, and existing data. Do not enable external integrations or commercial restrictions in the base mode without the corresponding configuration.
 
-## Проверки
+## Validation
 
-Полное решение включает Windows WPF Launcher. Следующие команды для всего решения выполняйте на Windows из корня репозитория:
+The full solution includes the Windows WPF Launcher. Run these solution-wide commands on Windows from the repository root:
 
 ```bash
 dotnet tool restore
@@ -36,22 +38,22 @@ dotnet build OpenCRM.sln
 dotnet test OpenCRM.sln --no-restore -p:BuildScenarioClientsOnBuild=false
 ```
 
-Основное решение включает серверные тестовые проекты, включая сервисы. Обычная сборка собирает и клиентские приложения; предварительно выполните `npm ci` в `src/OpenCRM.Frontend`, как указано в инструкции запуска.
+The main solution includes backend test projects, including the services. A normal build also builds the client applications; first run `npm ci` in `src/OpenCRM.Frontend`, as described in the setup guide.
 
-Для backend-разработки на Linux/macOS собирайте веб-проект и запускайте конкретные проекты модульных тестов; Windows Launcher проверяйте на Windows. Например:
+For backend development on Linux/macOS, build the web project and run the individual module test projects; validate the Windows Launcher on Windows. For example:
 
 ```bash
 dotnet restore src/OpenCRM.WebApp/OpenCRM.WebApp.csproj
 dotnet build src/OpenCRM.WebApp/OpenCRM.WebApp.csproj
 ```
 
-Для изменения отдельного модуля можно выполнить его проект тестов:
+When changing an individual module, you can run its test project:
 
 ```bash
 dotnet test tests/OpenCRM.Modules.Clients.Tests/OpenCRM.Modules.Clients.Tests.csproj -p:BuildScenarioClientsOnBuild=false
 ```
 
-В модульных проектах серверные проверки разделены на `Unit` и `Integration`. Полный прогон должен включать обе группы. Проверка только Unit не заменяет HTTP, БД, брокер и рендер документов.
+Backend checks in module projects are separated into `Unit` and `Integration`. A full run must include both groups. Unit tests alone do not replace checks of HTTP, databases, the broker, and document rendering.
 
 Frontend, Bash:
 
@@ -71,27 +73,38 @@ npm run build
 Pop-Location
 ```
 
-Для проверки границ backend выполните в PowerShell 7:
+To check backend boundaries, run the following in PowerShell 7:
 
 ```powershell
 ./scripts/assert-backend-boundaries.ps1
 ```
 
-Выбирайте дополнительные проверки по риску изменения. Для UI проверьте клавиатуру, узкий экран и светлую/тёмную тему; для доступа — владельца, участника без нужного права и постороннего пользователя.
+Choose additional checks based on the risks of your change. For UI changes, check keyboard access, narrow screens, and light/dark themes; for access control, test the owner, a member without the required permission, and an unrelated user.
 
-## Модули, проекты и данные
+## Modules, projects, and data
 
-- Новый серверный тестовый проект включайте в `OpenCRM.sln`, папку решения `Tests` и обе конфигурации сборки.
-- Тесты модуля держите в его проекте; общие фикстуры — в общей тестовой библиотеке, без ссылок между тестовыми проектами.
-- Изменение модели БД сопровождайте согласованной миграцией. Проверьте метаданные, основной файл, designer и snapshot по соседним миграциям; выполните сборку и проверку на отдельной БД.
-- Резервирование, обновление рабочей БД и откат продумывайте отдельно от компиляции приложения.
-- Тестовые данные должны быть фиктивными, валидными и различимыми. Случайное обнуление паролей, токенов или уникальных телефонов может сломать смысл проверок.
-- Исправляя тест, сохраняйте проверяемый контракт. Не заменяйте содержательные assertions без причины и не скрывайте проблему дополнительным ожиданием.
+- Include each new backend test project in `OpenCRM.sln`, the `Tests` solution folder, and both build configurations.
+- Keep a module's tests in its own project and shared fixtures in the shared testing library, without references between test projects.
+- Accompany database model changes with a consistent migration. Check metadata, the main file, designer, and snapshot against neighboring migrations; build and validate on a separate database.
+- Plan backups, production database updates, and rollback separately from application compilation.
+- Test data must be fictitious, valid, and distinguishable. Accidentally clearing passwords, tokens, or unique phone numbers can invalidate the purpose of tests.
+- Preserve the contract under test when fixing a test. Do not replace meaningful assertions without a reason or conceal a problem by adding a delay.
 
-## Перед отправкой изменения
+## Documentation languages
 
-Опишите проблему и получившееся поведение. Укажите выполненные проверки и то, что осталось непроверенным. Обновите документацию соответствующего модуля, если изменили контракт, настройки или способ запуска.
+English is the default language for project documentation. Each guide has a Russian version next to it: `guide.md` and `guide.ru.md`. Keep both versions synchronized when changing behavior, configuration, or instructions.
 
-Сохраните кодировку и переводы строк. Комментарии к добавляемому коду пишите по-русски. В изменения не должны попадать секреты, настройки вашей рабочей установки, результаты сборки и временные отчёты.
+- Retain the `English | Русский` links below the document title.
+- Link to the matching language version of a guide and update heading anchors when translating titles.
+- Share screenshots and other binary assets across both versions; translate captions rather than duplicating images.
+- Preserve commands, API identifiers, configuration keys, migration IDs, and executable examples. Russian UI labels or voice examples may remain quoted with an English explanation.
+- Translate diagram labels while preserving identifiers and relationships; standalone PlantUML sources use paired `.puml` and `.ru.puml` files.
+- Do not translate or change third-party license texts or operational `AGENTS.md` instructions as part of guide translation.
 
-Сохраняйте [лицензию](LICENSE), уведомление об авторстве и видимую подпись OpenCRM и автора [eddchervov](https://github.com/eddchervov).
+## Before submitting a change
+
+Describe the problem and resulting behavior. List the checks you ran and what remains unverified. Update the relevant module documentation when you change a contract, configuration, or startup procedure.
+
+Preserve encoding and line endings. Write comments in newly added code in Russian. Do not include secrets, settings from your own running installation, build output, or temporary reports in your changes.
+
+Retain the [license](LICENSE), copyright notice, and visible OpenCRM attribution to the author [eddchervov](https://github.com/eddchervov).

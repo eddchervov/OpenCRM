@@ -1,122 +1,124 @@
-# Перенос данных из другой CRM
+# Importing data from another CRM
 
-## Модули и вход в интерфейс
+**English** | [Русский](universal-crm-import.ru.md)
 
-Мастер находится в настройках выбранной организации и использует общий компонент `packages/workspace` для детейлинга, СТО и автопарка.
-Серверный жизненный цикл пакета, разбор файлов, сопоставление, подготовка и журнал применения принадлежат `OpenCRM.Modules.Imports`.
-Исторические заказы, строки услуг, оплаты и события создаёт специальный контракт `IImportBusinessRecordProcessor` модуля `OpenCRM.Modules.Maintenance`.
-HTTP-контроллер и фоновый обработчик находятся в `OpenCRM.WebApp`. Контракты мастера пока размещены в `OpenCRM.Services.Interfaces/Imports`.
+## Modules and entry point
 
-## Поддерживаемые данные
+The wizard is in the selected organization's settings and uses the shared `packages/workspace` component for Detailing, Service Station, and Fleet.
+The server-side package lifecycle, file parsing, matching, preparation, and application log belong to `OpenCRM.Modules.Imports`.
+Historical orders, service lines, payments, and events are created through the dedicated `IImportBusinessRecordProcessor` contract in `OpenCRM.Modules.Maintenance`.
+The HTTP controller and background handler are in `OpenCRM.WebApp`. Wizard contracts are currently in `OpenCRM.Services.Interfaces/Imports`.
 
-- Клиенты и автомобили, включая связь по внешнему идентификатору клиента.
-- Исторические заказы в статусах `completed` и `cancelled`. Активные заказы и их расписание не переносятся.
-- Строки услуг или работ: название, описание, целое количество, цена единицы. Нужна хотя бы одна строка на заказ.
-- Отдельные оплаты, включая отменённые: сумма, дата, способ и дата отмены. Действующие оплаты не могут превышать итог заказа.
-- События истории с исходной датой, текстом и автором. В OpenCRM они явно отмечены как импортированные события.
+## Supported data
 
-Даты задаются как `ГГГГ-ММ-ДД` или ISO 8601; время без смещения трактуется как UTC.
-Суммы задаются без разделителей тысяч, с десятичной точкой и точностью до копеек; предел соответствует `numeric(18,2)`.
-Для строки услуги дополнительно действуют обычные правила Maintenance: количество от 1 до 10000, стоимость всей строки не выше 999999999, текст без HTML и до 1000 символов.
-Итог заказа должен совпасть с суммой строк за вычетом скидки. Складские движения, текущие уведомления, чеки и банковские операции при историческом импорте не запускаются.
+- Customers and vehicles, including links by an external customer ID.
+- Historical orders in `completed` and `cancelled` states. Active orders and their schedules are not imported.
+- Service/work lines: name, description, integer quantity, unit price. Every order requires at least one line.
+- Separate payments, including cancelled payments: amount, date, method, and cancellation date. Active payments cannot exceed the order total.
+- History events with original date, text, and author. In OpenCRM they are explicitly marked as imported events.
 
-Покупатель заказа и плательщик оплаты не выводятся из текущего владельца автомобиля.
-Поле `partyName` хранит историческое имя. Необязательный `partyClientId` связывает его с включённым клиентом того же пакета либо с ранее перенесённым клиентом той же исходной базы; для такой связи нужно явно передать историческое имя.
-При отсутствии исходной связи сохраняется только текстовый снимок либо неизвестное значение.
+Dates use `YYYY-MM-DD` or ISO 8601; a time without an offset is treated as UTC.
+Amounts use no thousands separator, a decimal point, and cent precision; the limit is `numeric(18,2)`.
+Service lines also follow the normal Maintenance rules: quantity from 1 to 10000, line total no more than 999999999, no HTML, and up to 1000 characters.
+The order total must equal the sum of lines less discount. Inventory movements, current notifications, receipts, and banking operations are not triggered by historical import.
 
-## Файлы и сопоставление
+The order's buyer and payment payer are not inferred from the vehicle's current owner.
+`partyName` stores the historical name. Optional `partyClientId` links it to an enabled customer in the same package or to a customer previously imported from the same source database; for this link, the historical name must be supplied explicitly.
+If no source link exists, only the text snapshot or an unknown value is retained.
 
-Новый пакет принимает CSV, XLSX, ZIP с CSV или ограниченную текстовую SQL-выгрузку до 50 МБ и 100000 исходных строк суммарно по таблицам.
-До 100 столбцов на таблицу, до 10000 символов в ячейке, до 200 МБ распакованного XLSX. Формулы Excel отклоняются.
-Старые синхронные HTTP-контракты клиентов и техники сохранены с прежними пределами 10 МБ/5000 строк; форма использует новый пакетный API.
+## Files and mapping
 
-ZIP объединяет до 100 непустых CSV в один пакет с общими связями. Суммарный распакованный размер ограничен 200 МБ, отдельный CSV — 50 МБ, число записей архива с папками — 200.
-Файлы читаются из архива без извлечения на диск; вложенные архивы, SQL внутри ZIP, исполняемые файлы и пути с выходом из папки отклоняются.
+A new package accepts CSV, XLSX, ZIP containing CSV, or a restricted text SQL export up to 50 MB and 100,000 source rows total across tables.
+There can be up to 100 columns per table, 10,000 characters per cell, and 200 MB of unpacked XLSX data. Excel formulas are rejected.
+Legacy synchronous HTTP contracts for customers and vehicles remain with their previous limits of 10 MB/5000 rows; the form uses the new batch API.
 
-SQL-файл всегда разбирается как данные. Поддержаны только:
+ZIP combines up to 100 non-empty CSV files into one package with shared relationships. The total unpacked size is limited to 200 MB, each CSV to 50 MB, and archive entries including folders to 200.
+Files are read directly from the archive without extracting to disk; nested archives, SQL inside ZIP, executables, and paths escaping the folder are rejected.
 
-- `INSERT INTO table (column, ...) VALUES ('text', 123, NULL, ...);`, в том числе несколько кортежей.
-- Текстовый PostgreSQL `COPY table (column, ...) FROM stdin;` с окончанием `\.`.
+SQL files are always parsed as data. Only these formats are supported:
 
-Строки INSERT используют удвоение одинарной кавычки; COPY поддерживает обычные текстовые escape-последовательности.
-Исполнение SQL, DDL, процедуры, выражения, бинарные дампы, `.bak`, восстановление чужой БД и неподдерживаемые диалекты отсутствуют.
-Нужна выгрузка только данных с явными столбцами; незнакомые команды завершают подготовку понятной ошибкой.
-Это не адаптер к любой структуре CRM: тип каждой таблицы и связи пользователь проверяет в мастере.
+- `INSERT INTO table (column, ...) VALUES ('text', 123, NULL, ...);`, including multiple tuples.
+- Text PostgreSQL `COPY table (column, ...) FROM stdin;` terminated by `\.`.
 
-Автоматическое сопоставление работает только для однозначных известных заголовков. Столбцы можно выбирать вручную и объединять.
-Перед перестроением подготовленных записей требуется отдельное подтверждение потери ручных правок.
-Внешний ID автомобиля нужен для связи заказов; внешний ID заказа — для строк, оплат и истории.
-Один исторический заказ ограничен 1000 дочерними строками, чтобы его можно было применить целиком.
+INSERT strings use doubled single quotes; COPY supports standard text escape sequences.
+SQL execution, DDL, procedures, expressions, binary dumps, `.bak`, restoring another database, and unsupported dialects are not supported.
+Use a data-only export with explicit columns; unknown commands stop preparation with a clear error.
+This is not an adapter for every CRM schema: the user verifies each table type and relationship in the wizard.
 
-Для каждого сопоставленного поля можно явно выбрать преобразование: телефон в цифры с заменой российского начального 8 на 7, дату по одному из разрешённых точных форматов, десятичное число без пробелов с точкой либо словарь исходных и целевых значений.
-Словарь помогает сопоставить статусы и способы оплаты чужой CRM. Неизвестное значение словаря или дата другого формата останавливают подготовку с указанием таблицы, строки и поля; произвольные программы не исполняются.
-Результат преобразований доступен в обычном редактируемом просмотре до подтверждения.
+Automatic mapping is limited to unambiguous known headers. Columns can be selected manually and combined.
+Rebuilding prepared rows requires separate confirmation because it discards manual edits.
+An external vehicle ID is needed to link orders; an external order ID is needed for lines, payments, and history.
+A historical order is limited to 1000 child rows so it can be applied as a whole.
 
-Личный профиль организации сохраняет структуру заголовков, сопоставления, преобразования и имя источника, без строк выгрузки.
-Профиль применяется только к совместимой структуре таблиц с подтверждением перестроения; порядок столбцов проверяется.
-До 50 профилей на автора в организации; повторное сохранение под тем же названием заменяет настройки атомарно. Просмотр и удаление доступны только автору.
+Each mapped field can have an explicit transformation: phone digits with an initial Russian 8 replaced by 7, a date in one of the allowed exact formats, a decimal number without spaces using a period, or a source/target dictionary.
+A dictionary helps map statuses and payment methods from another CRM. An unknown dictionary value or a date in another format stops preparation and identifies the table, row, and field; arbitrary programs are not executed.
+Transformed values are available in the regular editable review before confirmation.
 
-Перед подтверждением показывается предварительная сверка новых записей, суммы завершённых заказов, активных оплат и неоплаченного остатка.
-Дубли, исключённые строки, отменённые заказы и отменённые платежи не увеличивают финансовые итоги. При ошибках итоги предварительные; до их исправления применение запрещено.
+A personal organization profile stores header structure, mappings, transformations, and source name, but not export rows.
+A profile applies only to a compatible table structure and requires confirmation before rebuilding; column order is checked.
+An author can have up to 50 profiles per organization; saving again under the same name atomically replaces the settings. Only the author can view or delete them.
 
-## Обработка и восстановление
+Before confirmation, the wizard shows a preliminary reconciliation of new records, totals for completed orders, active payments, and outstanding balance.
+Duplicates, excluded rows, cancelled orders, and cancelled payments do not increase financial totals. If errors exist, the totals are provisional; import is blocked until they are fixed.
 
-`OrganizationImportDrafts` содержит состояние и версию пакета. Исходные строки, кандидаты и временный файл хранятся отдельно в `OrganizationImportSourceRow`, `OrganizationImportRow`, `OrganizationImportFile`.
-JSON в этих таблицах — формат исходных данных и снимков подготовки; рабочие клиенты, автомобили, заказы, строки и оплаты создаются в обычной реляционной модели.
-После успешного разбора временный файл удаляется атомарно с сохранением подготовленных таблиц.
+## Processing and recovery
 
-Форма запрашивает до 100 кандидатов на страницу, исходные таблицы показывает образцом до 20 строк.
-Поиск и фильтры выполняются на сервере. Сохраняются только изменённые строки текущей страницы, затем фоновая проверка пересчитывает связи и сводку всего пакета.
-До завершения проверки подтверждение и дальнейшее редактирование блокируются.
-Несохранённые правки дополнительно копируются в `sessionStorage` текущего пользователя, организации и версии пакета.
-Несовпавшую с сервером локальную версию нельзя применить автоматически; её можно скачать как CSV перед явным удалением.
+`OrganizationImportDrafts` stores package state and version. Source rows, candidates, and temporary files are stored separately in `OrganizationImportSourceRow`, `OrganizationImportRow`, and `OrganizationImportFile`.
+JSON in these tables is the format for source data and preparation snapshots; working customers, vehicles, orders, lines, and payments are created in the regular relational model.
+After successful parsing, the temporary file is atomically deleted while prepared tables are retained.
 
-`OrganizationImportWorker` обрабатывает сохранённую очередь небольшими шагами независимо от HTTP-запроса.
-Один пакет защищён межпроцессной advisory-блокировкой PostgreSQL. Применение очередной партии и отметки журнала фиксируются одной транзакцией.
-Порядок: клиенты → автомобили → целые агрегаты заказов со строками, оплатами и историей.
-Обычно партия содержит до 250 клиентов/автомобилей либо до 500 строк заказов; крупный одиночный заказ не разрывается между транзакциями.
-Каждая партия применяется атомарно в транзакции под блокировкой организации. Перед каждой страницей новых клиентов или автомобилей квоты пересчитываются с учётом уже созданных записей; лимит Free также включает архивированные автомобили и удалённых из интерфейса клиентов.
-Если другая операция занимает оставшиеся места между страницами, новая страница целиком останавливается до вставок, а уже завершённые страницы сохраняются. Пакет получает состояние паузы с причиной и может быть возобновлён после освобождения мест или корректировки данных; повтор не создаёт заново уже применённые строки.
-Права, квоты и актуальность клиентов/техники перепроверяются перед партиями. Изменившийся результат возвращается на просмотр.
+The form requests up to 100 candidates per page and previews up to 20 rows from source tables.
+Search and filters run on the server. Only changed rows on the current page are saved; a background check then recalculates relationships and the package summary.
+Confirmation and further editing are blocked until the check finishes.
+Unsaved changes are also copied to `sessionStorage` for the current user, organization, and package version.
+A local version that differs from the server cannot be applied automatically; it can be downloaded as CSV before explicit deletion.
 
-После перезапуска приложения незавершённые задания подхватываются из БД. Повтор подтверждения и возобновление одного пакета не создают его записи повторно.
-Пауза действует между партиями. Уже применённые строки доступны только для чтения; остальные можно исправить и проверить перед продолжением.
-Для исторических заказов обязательно постоянное имя конкретной исходной базы CRM (`SourceKey`), общее для всех её выгрузок. Имя нормализуется по краям и без учёта регистра.
-Разные базы одного продукта CRM должны иметь разные имена. Имя файла источником не является; после начала переноса менять источник нельзя.
-Постоянный реляционный реестр `OrganizationImportIdentity` хранит уникальный ключ организации, источника, типа записи и внешнего ID, типизированную связь с клиентом/автомобилем/заказом и SHA-256 отпечаток подготовленных данных.
-Внешние ID сопоставляются без учёта регистра. Для клиентов и техники в режиме источника требуются внешние ID; CSV справочника без ID можно импортировать без источника, с обычной проверкой телефонов/VIN/номеров и без межфайлового реестра.
+`OrganizationImportWorker` processes the persisted queue in small steps independently of HTTP requests.
+A PostgreSQL advisory lock protects one package across processes. Applying each batch and its log markers is one transaction.
+Order: customers → vehicles → complete order aggregates including lines, payments, and history.
+A typical batch contains up to 250 customers/vehicles or 500 order rows; a large individual order is never split between transactions.
+Each batch is applied atomically in a transaction under an organization lock. Before each page of new customers or vehicles, quotas are recalculated to account for records already created; Free limits include archived vehicles and customers removed from the interface.
+If another operation consumes the remaining capacity between pages, the next page is stopped before any inserts; completed pages remain saved. The package enters a paused state with a reason and can resume after capacity is freed or data is adjusted; retry does not recreate already-applied rows.
+Permissions, quotas, and the current state of customers/vehicles are rechecked before each batch. A changed result is returned for review.
 
-Одинаковый ключ и содержимое связываются с прежней записью. Изменённые исходные данные либо удалённая/недоступная цель дают конфликт, без переписывания текущих карточек и истории.
-Исторический заказ сравнивается целиком вместе с включёнными работами, платежами и событиями, с сохранением порядка работ. Совпавший агрегат пропускается целиком, в том числе если он больше обычной партии.
-Новые заказы могут ссылаться на клиентов и автомобили, уже перенесённые из этой базы. Отдельное добавление платежей или истории к прежнему заказу не поддерживается: нужны полная сверка агрегата и отдельный процесс обновления.
-Регистрация внешнего ID, создание рабочего объекта и отметка журнала фиксируются в одной транзакции; перед применением проверка повторяется под блокировкой организации.
-Ранее перенесённые пакеты без источника автоматически в реестр не включаются: их происхождение нельзя надёжно определить по имени файла.
+After an application restart, unfinished jobs are resumed from the database. Repeating confirmation or resuming one package does not duplicate its records.
+Pausing occurs between batches. Already-applied rows are read-only; remaining rows can be corrected and checked before continuing.
+Historical orders require a stable name for the source CRM database (`SourceKey`), shared by all its exports. The name is normalized by trimming and case-insensitive comparison.
+Different databases for the same CRM product must use different names. A filename is not a source identifier; the source cannot be changed after import starts.
+The permanent relational registry `OrganizationImportIdentity` stores a unique organization, source, record type, and external-ID key, a typed link to customer/vehicle/order, and a SHA-256 fingerprint of prepared data.
+External IDs are matched case-insensitively. Customers and vehicles imported in source mode require external IDs; a directory CSV without IDs can be imported without a source, using ordinary phone/VIN/plate checks and without a cross-file registry.
 
-Общего отката всех уже завершённых партий нет. Частичный результат явно показывается; полный CSV-отчёт содержит исходные ссылки, суммы, даты, целевые ID и время применения каждой строки.
-Пакет и журнал не удаляются автоматически, чтобы сохранялись возможность продолжения и происхождение созданных записей.
+A matching key and content link to the existing record. Changed source data or a deleted/inaccessible target produces a conflict without rewriting current cards or history.
+A historical order is compared as a whole with included jobs, payments, and events, preserving job order. A matching aggregate is skipped as a whole, even if it is larger than a normal batch.
+New orders can refer to customers and vehicles previously imported from this database. Adding payments or history alone to a previous order is unsupported; the full aggregate must be reconciled through a separate update process.
+Registering an external ID, creating the business object, and recording the log marker occur in one transaction; the check is repeated under the organization lock before application.
+Packages imported earlier without a source are not automatically added to the registry: their origin cannot be reliably determined from filenames.
 
-## Доступ и миграции
+There is no global rollback across already completed batches. Partial results are shown explicitly; a full CSV report includes source links, amounts, dates, target IDs, and application time for every row.
+Packages and logs are not automatically deleted, preserving continuation and provenance of created records.
 
-Для базового мастера нужны права управления профилем, просмотра/создания клиентов и техники и управления их связями, а также соответствующие модули подписки.
-Для применения заказов нужны просмотр/создание заказов и модуль заказов; для оплат — просмотр/управление финансами и финансовый модуль.
-Автор может читать и готовить собственный файл в рамках базового доступа. Чужой пакет может содержать ещё не размеченную финансовую информацию, поэтому его просмотр и изменение дополнительно требуют полного доступа к заказам и финансам.
-Все маршруты ограничены выбранной организацией; автор действия берётся из текущей аутентифицированной учётной записи. Записывающие HTTP-запросы защищены antiforgery.
+## Access and migrations
 
-Нужны миграции `AddOrganizationImportDrafts`, `AddOrganizationImportBatchStorage` и `AddImportProfilesAndSourceIdentity`.
-Откат третьей миграции удаляет профили и межфайловой реестр источников, сохраняя рабочие записи и пакеты. После такого отката теряется межфайловая защита; перед дальнейшим переносом нужна отдельная сверка.
-Откат второй миграции удаляет построчные черновики и их журнал: восстановить их в старом JSON-формате автоматически нельзя.
-Созданные рабочие записи остаются; откат схемы не отменяет состоявшийся перенос. До отката нужен резерв пакетов и отдельное решение по частичным результатам.
-Миграции проверяются на временной PostgreSQL, а не на рабочей базе.
+The base wizard requires profile-management, customer/vehicle view and creation, and relationship-management permissions, plus the relevant subscription modules.
+Applying orders requires order view/create permission and the orders module; payments require finance view/manage permissions and the finance module.
+An author can read and prepare their own file with base access. Another user's package may contain financial information not yet categorized, so viewing or changing it additionally requires full order and finance access.
+Every route is scoped to the selected organization; the action author comes from the current authenticated account. Write HTTP requests are protected by antiforgery.
 
-Первую реальную выгрузку каждой новой CRM следует проверять пилотом: структуру связей, статусы, исторических покупателей, суммы заказов и оплат.
-Предел 100000 строк является защитным ограничением; он не гарантирует одинаковое время обработки для всех файлов и конфигураций сервера.
+Required migrations: `AddOrganizationImportDrafts`, `AddOrganizationImportBatchStorage`, and `AddImportProfilesAndSourceIdentity`.
+Rolling back the third migration deletes profiles and the cross-file source registry while retaining working records and packages. This removes cross-file protection; a separate reconciliation is required before importing again.
+Rolling back the second migration deletes row-level drafts and their log; automatic conversion back to the old JSON format is not possible.
+Created business records remain; a schema rollback does not undo an import that already completed. Back up packages and make a separate decision about partial results before rollback.
+Check migrations on temporary PostgreSQL, not on a working database.
 
-## Административный CRM-импорт — исправление целостности
+Pilot the first real export from every new CRM: check relationship structure, statuses, historical buyers, order totals, and payment totals.
+The 100,000-row limit is a safety bound; it does not guarantee the same processing time for every file or server configuration.
 
-Это отдельный от универсального мастера административный путь `/api/v1/admin/crm-import/*`. Его сервис и разбор файлов теперь принадлежат `OpenCRM.Modules.Imports.Crm`; интерфейс и прежние поля DTO — `OpenCRM.Services.Interfaces.Imports`. Политика ManagePermissions, маршруты, CSV/JSON/XML, CrmImportBatch и формат RowsJson/ResultJson сохранены.
+## Administrative CRM import — integrity fix
 
-Предпросмотр по-прежнему выбирает пользователя и его организацию. При подтверждении выбранный batch.UserId используется для проверки членства; фактический администратор берётся из аутентифицированного NameIdentifier и передаётся отдельно. В истории клиента и техники сохраняются администратор, EventType=imported, RelatedEntityType=crm-import и RelatedEntityId=batch.Id. Историческим пакетам события автоматически не дописываются.
+This is a separate administrative path from the universal wizard: `/api/v1/admin/crm-import/*`. Its service and file parsing now belong to `OpenCRM.Modules.Imports.Crm`; the interface and existing DTO fields remain in `OpenCRM.Services.Interfaces.Imports`. `ManagePermissions` policy, routes, CSV/JSON/XML, `CrmImportBatch`, and `RowsJson`/`ResultJson` formats are preserved.
 
-Подтверждение блокирует сначала организацию, затем пакет, повторно проверяет исходные строки и допустимое число автомобилей. Для добавления техники применяется общий IVehicleLimitQueryService от владельца организации: отсутствие VehiclesView у выбранного участника не меняет административный сценарий. Импорт только клиентов не требует свободного лимита техники и не вызывает эту проверку. Разрешение обходить лимит администратору не вводилось.
+Preview still selects a user and their organization. On confirmation, the selected `batch.UserId` is used to validate membership; the actual administrator is taken from the authenticated `NameIdentifier` and passed separately. Customer and vehicle history retains the administrator, `EventType=imported`, `RelatedEntityType=crm-import`, and `RelatedEntityId=batch.Id`. Events are not backfilled into historical packages.
 
-Клиенты, автомобили, история и результат пакета сохраняются в одной транзакции; сбой финального сохранения откатывает предыдущие вставки. Повторное подтверждение остаётся конфликтом и не создаёт новые записи. Два разных пакета конкурируют за общую вместимость организации; проверка лимита выполняется после получения блокировки. Схема БД и публичный JSON не менялись.
+Confirmation locks the organization first, then the package, and rechecks source rows and allowed vehicle count. Vehicle creation uses the organization's shared `IVehicleLimitQueryService`: missing `VehiclesView` for the selected member does not change the admin workflow. A customer-only import does not require vehicle capacity and does not call this check. No admin exception to limits was added.
+
+Customers, vehicles, history, and package result are saved in one transaction; a final save failure rolls back earlier inserts. Repeated confirmation remains a conflict and does not create records again. Separate packages compete for the same organization capacity; the limit is checked after acquiring the lock. The database schema and public JSON were not changed.

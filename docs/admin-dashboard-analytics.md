@@ -1,9 +1,11 @@
-# Административный дашборд CRM
+# CRM administration dashboard
 
-Дашборд показывает данные самой CRM: пользователей, организации, обслуживания, платежи и использование возможностей. Доступ к финансовым показателям определяется административными разрешениями.
+**English** | [Русский](admin-dashboard-analytics.ru.md)
 
-Период отчёта и обновление данных задаются в интерфейсе. Серверный кеш обслуживает повторные запросы; после изменения серверной логики показатели должны пересчитываться согласованно с выбранным периодом.
+The dashboard shows CRM data: users, organizations, maintenance records, payments, and feature usage. Access to financial metrics is controlled by administrative permissions.
 
-Аналитика публичного сайта, рекламные источники и подключения внешних счётчиков в платформу не входят. Их реализует приложение, использующее OpenCRM.
+The reporting period and data refresh are selected in the interface. A server-side cache serves repeated requests; after server logic changes, metrics must be recalculated consistently with the selected period.
 
-Техническая реализация находится в `src/OpenCRM.Infrastructure.Admin/AdminDashboardService.cs`, API — в административных контроллерах веб-приложения. Изменения состава показателей необходимо согласовывать с веб- и настольным административными интерфейсами и их тестами.
+Public website analytics, advertising sources, and connections to external tracking services are not part of the platform. An application built on OpenCRM implements those itself.
+
+The implementation is in `src/OpenCRM.Infrastructure.Admin/AdminDashboardService.cs`; the API is in the web application's administration controllers. Changes to the metrics must be coordinated across the web and desktop administration interfaces and their tests.

@@ -1,31 +1,33 @@
-# Управление подписками в админках OpenCRM
+# Subscription management in the OpenCRM admin interfaces
 
-Раздел относится к опциональной коммерческой политике. В нейтральной установке `PlatformPolicy:Commercial:Enabled=false`, подписка для работы CRM не требуется. Цены, предложения и пробные условия определяет владелец установки.
+**English** | [Русский](admin-subscriptions.ru.md)
 
-## Организации и доступ
+This section belongs to the optional commercial policy. In a neutral installation, `PlatformPolicy:Commercial:Enabled=false`, and a subscription is not required to use the CRM. The installation owner determines prices, offers, and trial terms.
 
-Подписка PRO принадлежит организации. Детейлинг и СТО без действующей подписки продолжают базовую работу на бессрочном Free. Личная техника доступна каждому аккаунту; личные тарифы и подписки прежней модели сохраняются для совместимости.
+## Organizations and access
 
-В веб-админке появился отдельный список «Организации», включая организации на Free без записей платных подписок. Доступ требует `Admin.Users.View`. Поиск выполняется сервером по названию/ИНН и владельцу/участнику, страницы содержат до 25 организаций. На узком экране используются карточки. Ссылка «Организации и подписки» открывает соответствующую вкладку владельца. Desktop использует действующий список организаций. Архивные, удалённые и неактивные организации не обозначаются как продолжающие базовую работу на Free.
+A PRO subscription belongs to an organization. Detailing and Service Station organizations without an active subscription continue basic operation on Free with no expiration. Personal vehicles are available to every account; personal plans and subscriptions from the previous model remain for compatibility.
 
-В разделе «Платежи и подписки» веб-админки первыми открываются подписки организаций. Free не создаёт искусственную запись подписки и не включается в статистику платных подписок. В карточках видны состояние, срок, источник и история; сохраняются поиск и фильтры по статусу, тарифу и источнику.
+The web admin interface has a separate “Organizations” list, including Free organizations without paid subscription records. Access requires `Admin.Users.View`. The server searches by name/TIN and owner/member; each page contains up to 25 organizations. Cards are used on narrow screens. “Organizations and subscriptions” opens the corresponding owner tab. Desktop uses the existing organization list. Archived, deleted, and inactive organizations are not shown as continuing basic operation on Free.
 
-## Административные действия
+The web admin “Payments and subscriptions” section opens on organization subscriptions. Free does not create a synthetic subscription record and is excluded from paid-subscription statistics. Cards show status, term, source, and history; search and filters by status, plan, and source remain available.
 
-Администратор с правом `Admin.Billing.Manage` может продлить подписку на 1–366 дней, выдать обычный платный тариф без платежа или завершить действующие подписки. Нужна причина; продление и остановка проверяют срок, полученный при открытии формы. Журнал хранит действие, автора, причину и даты. Ручная выдача обозначается как PRO для детейлинга и СТО.
+## Administrative actions
 
-Обычная выдача демо детейлингу и СТО скрыта в обоих клиентах и запрещена сервером. Для пробного PRO используются организационные промокоды с подарочными днями. Код, срок, тариф, направления и ограничения задаются в редакторе; имя `30days` не является системным условием. Отзыв ранее выданного демо сохраняется. После завершения PRO или отзыва последнего демо организация продолжает базовую работу на Free, история сохраняется. Неиспользованный оплаченный срок автоматически не восстанавливается.
+An administrator with `Admin.Billing.Manage` can extend a subscription by 1–366 days, grant a regular paid plan without payment, or end active subscriptions. A reason is required; extension and cancellation validate the term shown when the form was opened. The audit log stores the action, author, reason, and dates. A manual grant is labeled PRO for Detailing and Service Station.
 
-Прежние личные подписки и скрытый автопарк сохраняют свои правила. Для них выдача и отзыв старого демо остаются доступны. Отзыв демо завершает только демо-подписку; остановка завершает все действующие подписки выбранной цели. Платежи этими действиями не переписываются.
+Regular demo grants for Detailing and Service Station are hidden in both clients and forbidden by the server. Organizational promo codes with bonus days are used for PRO trials. The code, term, plan, scenarios, and limits are configured in the editor; `30days` is not a system requirement. Revoking a previously issued demo remains supported. When PRO expires or the last demo is revoked, the organization continues basic operation on Free and its history is preserved. Unused paid time is not restored automatically.
 
-## Тарифы и лимиты
+Previous personal subscriptions and the hidden Fleet scenario retain their rules. Granting and revoking the old demo remains available for them. Revoking a demo ends only the demo subscription; stopping a subscription ends all active subscriptions for the selected target. These actions do not rewrite payments.
 
-Системный Free определяется группой `workspace.free.v1`, показывается бесплатным и бессрочным и не предлагается для покупки, подарочной выдачи, отключения или удаления. Системная группа, стоимость и признаки доступности защищены. Технический `DurationDays` не задаёт срок работы на Free.
+## Plans and limits
 
-Квоты и возможности Free редактируются. Назначения `workspace.clients.limit` и `workspace.vehicles.limit` нельзя снять, но числовые значения можно менять. Лимит автомобилей синхронизируется с формой тарифа; после сохранения возможностей редактор перечитывается. Веб-редактор остаётся открытым после сохранения тарифа и игнорирует запоздавший ответ возможностей ранее выбранного плана. Возможности не сохраняются до успешной загрузки.
+System Free is identified by the `workspace.free.v1` group. It is shown as free and unlimited in duration and is not offered for purchase, promotional grant, disabling, or deletion. Its system group, price, and availability flags are protected. Technical `DurationDays` does not set a Free access period.
 
-Варианты PRO задают реальные цену, срок и возможности. Прежние базовые, демо- и личные тарифы явно обозначены; их данные и оплаченные условия сохраняются. Free исключён из выбора тарифа организационных промокодов.
+Free quotas and capabilities are editable. The `workspace.clients.limit` and `workspace.vehicles.limit` assignments cannot be removed, but their numeric values can be changed. The vehicle limit is synchronized with the plan form; after saving capabilities, the editor reloads them. The web editor stays open after saving a plan and ignores a late capability response for a previously selected plan. Capabilities are not saved until loading succeeds.
 
-## История и проверка
+PRO options set the actual price, term, and capabilities. Previous base, demo, and personal plans are explicitly identified; their data and paid terms are preserved. Free is excluded from organizational promo-code plan selection.
 
-Источники `paid`, `demo` и `manual` сохраняются. Старые записи с `unknown` не переклассифицируются по догадке; ручное продление не меняет исходный источник. Прежняя миграция `AddAdminSubscriptionAudits` добавляла источник и журнал; её откат удаляет эти данные. Новые миграции не требуются.
+## History and verification
+
+The `paid`, `demo`, and `manual` sources are retained. Legacy `unknown` records are not reclassified by guesswork; a manual extension does not change the original source. The earlier `AddAdminSubscriptionAudits` migration added the source and audit log; rolling it back deletes this data. No new migrations are required.

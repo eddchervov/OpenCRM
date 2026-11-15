@@ -1,133 +1,131 @@
-# Подключение opencrm.example.invalid к Payments
+# Connect opencrm.example.invalid to Payments
 
-Подключены разовые покупки и продления личных и организационных подписок opencrm.example.invalid. Эквайринг заказов студий, автоплатежи и изменение доступа после возврата сюда не входят. Возврат фиксируется как денежный факт; уже предоставленный доступ изменяется администратором вручную.
+**English** | [Русский](payments-service-integration.ru.md)
 
-## Что является источником состояния
+One-off purchases and renewals of personal and organization subscriptions for opencrm.example.invalid are integrated. Studio work order acquiring, automatic payments, and entitlement changes after refunds are outside this scope. A refund is recorded as a monetary fact; an administrator changes already granted access manually.
 
-Payments владеет запросами к ЮKassa, ключами магазина, денежными фактами, возвратами и своей БД. OpenCRM владеет снимком условий покупки, правами получателя и выдачей доступа. Приложения обмениваются контрактами через отдельный RabbitMQ vhost; прямого доступа к чужой БД нет.
+## Source of state
 
-OpenCRM сохраняет покупку, платёж и неизменяемую команду в одной транзакции до сети. Клиент получает HTTP 202 и PurchaseId. GET /api/v1/payments/purchases/{purchaseId} доступен только владельцу покупки; страница результата использует этот точный ID. Наличие ссылки или оплата не означает, что подписка уже активирована.
+Payments owns YooKassa requests, store keys, monetary facts, refunds, and its database. OpenCRM owns the purchase terms snapshot, beneficiary entitlements, and access grants. Applications exchange contracts through a separate RabbitMQ vhost; neither accesses the other's database directly.
 
-Outbox повторяет исходные ID и тело, inbox проверяет EventId и версию. Резерв получателя блокирует одновременные несовместимые покупки. Условия тарифа и возможности фиксируются при создании; для продления снимок начинает действовать с GrantedFrom. Выдача подписки и AppliedAt сохраняются одной транзакцией с блокировкой получателя и покупки. Сбой БД после оплаты повторяет применение, а не списание.
+OpenCRM saves the purchase, payment, and immutable command in one transaction before network access. The client receives HTTP 202 and PurchaseId. GET /api/v1/payments/purchases/{purchaseId} is available only to the purchase owner; the result page uses that exact ID. A URL or payment does not mean the subscription is already activated.
 
-Исторические оплаты сохраняют PaymentProviderCode=yookassa и прежний маршрут. Новые покупки получают payments-service. Старые обработчики, сверка и ручная подмена денежного статуса не изменяют такие покупки. Принятая через МС покупка не переводится в старый gateway при сетевой ошибке или переключении конфигурации.
+The outbox repeats original IDs and bodies; the inbox verifies EventId and version. A beneficiary reservation blocks simultaneous incompatible purchases. Plan terms and features are snapshotted at creation; for renewal, the snapshot applies from GrantedFrom. Subscription grants and AppliedAt commit together while locking the beneficiary and purchase. A database failure after payment retries entitlement application, not the charge.
 
-## Конфигурация тестового подключения
+Historical payments retain PaymentProviderCode=yookassa and the previous route. New purchases use payments-service. Old handlers, reconciliation, and manual monetary status changes do not modify these purchases. A purchase accepted through the microservice never falls back to the old gateway on a network failure or configuration change.
 
-По умолчанию PaymentsService:Enabled=false. Настройки ниже передаются защищённым окружением, не коммитятся с реальными значениями:
+## Test connection configuration
 
-| Настройка OpenCRM | Назначение |
+PaymentsService:Enabled=false by default. Supply these settings through a protected environment; never commit real values:
+
+| OpenCRM setting | Purpose |
 | --- | --- |
-| PaymentsService__Enabled=true | Подключить отдельную шину, consumer, отправку и восстановление существующих покупок. |
-| PaymentsService__AcceptNewPurchases=false | Остановить новые покупки при сохранении Enabled=true: старые покупки, события и выдача доступа продолжают обрабатываться. |
-| PaymentsService__MerchantAccountId | ID тестового магазина собственной настройки; совпадает с Payments:MerchantAccountId и фиксируется в команде. |
-| PaymentsService__ExpectedIsTest=true | Обязательный тестовый режим текущей реализации. |
-| PaymentsService__BaseUrl | Приватный адрес Payments; HTTPS, HTTP разрешён только для loopback. |
-| PaymentsService__ServiceKey | Общий с Payments:ServiceKey секрет, минимум 32 символа. |
-| PaymentsService__Host / Port / VirtualHost | Отдельный RabbitMQ vhost, по умолчанию payments; не /. |
-| PaymentsService__Username / Password | Учётная запись только для нужного финансового транспорта. |
-| PaymentsService__ReturnUrl | HTTPS адрес /payment/complete с учётом внешнего PathBase. |
-| PaymentsService__AllowedReturnUrls__0 | Разрешённый базовый HTTPS адрес возврата, без query/fragment. |
-| PaymentsService__AllowedConfirmationHosts__0 | Доверенный домен подтверждения ЮKassa; точный домен и его поддомены. |
+| PaymentsService__Enabled=true | Connect the separate bus, consumer, dispatch, and existing purchase recovery. |
+| PaymentsService__AcceptNewPurchases=false | Stop new purchases while retaining Enabled=true: old purchases, events, and access grants continue processing. |
+| PaymentsService__MerchantAccountId | Your configured test shop ID; matches Payments:MerchantAccountId and is fixed in the command. |
+| PaymentsService__ExpectedIsTest=true | Required test mode for the current implementation. |
+| PaymentsService__BaseUrl | Private Payments URL; HTTPS, with HTTP allowed only for loopback. |
+| PaymentsService__ServiceKey | Secret shared with Payments:ServiceKey, at least 32 characters. |
+| PaymentsService__Host / Port / VirtualHost | Separate RabbitMQ vhost, default payments; not /. |
+| PaymentsService__Username / Password | Account restricted to the required financial transport. |
+| PaymentsService__ReturnUrl | HTTPS /payment/complete address accounting for external PathBase. |
+| PaymentsService__AllowedReturnUrls__0 | Allowed base HTTPS return URL without query/fragment. |
+| PaymentsService__AllowedConfirmationHosts__0 | Trusted YooKassa confirmation domain: exact domain and its subdomains. |
 
-В Payments те же базовые адреса задаются через Payments:AllowedReturnUrls. Команда добавляет единственный параметр ?purchaseId={ID:D}. Не добавлять к whitelist произвольные адреса клиента. ServiceKey не является ключом магазина; ключи ЮKassa находятся только в Payments. Не использовать действующий магазин/секрет старого gateway для автоматического включения нового пути.
+Payments uses the same base URLs through Payments:AllowedReturnUrls. The command adds only ?purchaseId={ID:D}. Do not allowlist arbitrary client URLs. ServiceKey is not a shop key; YooKassa keys reside only in Payments. Do not reuse the old gateway's live shop/secret to enable the new path automatically.
 
-Текущий Payments поддерживает Disabled и YooKassaTest. Disabled сохраняет receipt отказа и результат payments_disabled без исполняемой операции. Ранее созданные операции без зафиксированного режима помещаются миграцией в ManualReview. Включение режима или изменение merchant не должно оживлять неизвестные старые поручения. Режим реальных списаний намеренно не поддержан этой версией.
+The current Payments implementation supports Disabled and YooKassaTest. Disabled stores a rejection receipt and payments_disabled result without an executable operation. A migration puts previously created operations lacking a fixed mode into ManualReview. Enabling a mode or changing merchant must not revive unknown old intents. This version intentionally does not support real charging mode.
 
-Команды CreatePayment/RequestRefund используют schema 2: неизменяемые MerchantAccountId, IssuedAt и NotAfter. Срок нового POST фиксируется при создании команды и ограничен 23 часами; восстановление из старого резерва не начинает его заново. Старые операции без PostBefore допускают только сверку известного объекта, новое списание блокируется. ID заказа/операции и ключ провайдера воспроизводятся из исходной команды; повтор после отката БД использует те же параметры. Таймаут охватывает заголовки и тело ответа. Уведомления и денежные события остаются schema 1.
+CreatePayment/RequestRefund use schema 2: immutable MerchantAccountId, IssuedAt, and NotAfter. The deadline for a new POST is fixed at command creation and limited to 23 hours; restoring an old backup does not restart it. Old operations without PostBefore allow only reconciliation of a known object and block new charges. Order/operation IDs and provider keys are reproduced from the original command; retries after database restoration use the same parameters. Timeouts cover response headers and body. Notifications and monetary events remain schema 1.
 
-## Возвраты и ручная проверка
+## Refunds and manual review
 
-Полный возврат до выдачи доступа закрывает покупку без активации. Любой частичный возврат до выдачи блокирует автоматическую активацию и требует разбора. Полный или частичный возврат после выдачи не сокращает подписку; покупка получает refund_requires_access_review. Неудачный или неопределённый возврат сохраняется отдельным событием с CommandId, OperationId, Status и безопасным кодом ошибки, не подменяя подтверждённые денежные суммы.
+A full refund before access is granted closes the purchase without activation. Any partial refund before granting blocks automatic activation and requires review. A full or partial refund after granting does not shorten the subscription; the purchase receives refund_requires_access_review. Failed or unknown refunds persist as separate events with CommandId, OperationId, Status, and a safe error code, without replacing confirmed monetary amounts.
 
-OpenCRM получает подтверждения возвратов и их ошибок; команды отправить деньги обратно из админки нет. RequestRefund остаётся защищённым внутренним контрактом Payments. Нельзя выдавать ручную отметку «возвращено» за выполненный возврат провайдером. Новая финансовая команда требует отдельного интерфейса с проверкой полномочий и подтверждением суммы.
+OpenCRM receives refund confirmations and errors; there is no admin command for sending money back in this part of the integration. RequestRefund remains a protected internal Payments contract. A manual “refunded” marker must not be presented as a provider-completed refund. A new financial command requires a dedicated interface with authorization and amount confirmation.
 
-## Журнал и восстановление
+## Journal and recovery
 
-В OpenCRM: SubscriptionPurchases — состояние применения, SubscriptionPaymentCommands — исходящие поручения/lease/попытки, SubscriptionPaymentEvents — долговечный inbox и этапы/коды. В Payments: ProviderOperations — тело/ключ/режим/lease, CommandReceipts — дедупликация, PaymentAuditEntries — журнал без UPDATE/DELETE, WebhookNotifications — входящие сигналы. Raw payload, ключи, Authorization, заголовки, платёжные реквизиты и тела ошибок не выводятся в диагностический ILogger.
+In OpenCRM: SubscriptionPurchases stores application state, SubscriptionPaymentCommands stores outgoing intents/leases/attempts, and SubscriptionPaymentEvents is the durable inbox with stages/codes. In Payments: ProviderOperations stores body/key/mode/lease; CommandReceipts handles deduplication; PaymentAuditEntries is a journal without UPDATE/DELETE; WebhookNotifications stores incoming signals. Raw payloads, keys, Authorization, headers, payment credentials, and error response bodies are never written to diagnostic ILogger output.
 
-Каждое исключение нового процесса получает Stage, идентификаторы, тип исключения и безопасный код; при недоступной БД остаётся ILogger. Сохранение финансового события и его применение атомарны. Webhook получает 200 только после сохранения сигнала, а денежный факт перепроверяется GET у провайдера. Подпись webhook сама по себе не выдаёт доступ.
+Each exception in the new flow receives Stage, identifiers, exception type, and a safe code; ILogger remains available when the database is unavailable. Financial event persistence and application are atomic. A webhook gets 200 only after its signal is saved; monetary facts are rechecked with provider GET. A webhook signature alone grants no access.
 
-| Сбой | Поведение и действия оператора |
+| Failure | Behavior and operator action |
 | --- | --- |
-| Нет RabbitMQ или потерян ACK | Команда остаётся в outbox/lease; повторяется тот же ID/тело, backoff до 5 минут. Проверить брокер и права vhost, не создавать новый checkout. |
-| Дубликат/перестановка события | Inbox и возрастающая версия исключают повторную выдачу/откат денег. Конфликт содержимого одного EventId журналируется Critical. |
-| Потерян webhook/событие | Payments опрашивает провайдера, OpenCRM читает приватный снимок примерно раз в минуту до активации и раз в 15 минут после неё; ошибки откладываются с журналом. Восстанавливаются также результаты операций возврата. |
-| GET 401/403/чужая покупка | Ошибка и задержка сверки журналируются. Уже сохранённое проверенное succeeded не теряет право на активацию; иначе NeedsAttention. Только полностью совпавший снимок может снять временную ошибку связи; возврат или финансовый конфликт не скрывается. |
-| Payments вернул 404 после отправки | При отсутствии ACK и ID заказа можно возобновить только исходную команду schema 2 с целым хешем, совпавшими ID/суммой/валютой/магазином и неистёкшим NotAfter. Действующий lease сохраняется. При известном заказе, сохранённом ACK или нарушении проверок — карантин и разбор; SentAt автоматически не сбрасывается. |
-| Таймаут/5xx провайдера после POST | OutcomeUnknown, исходное тело/ключ; после 23 часов новый POST запрещён, известный объект можно проверять GET. Не считать таймаут отказом. |
-| Сумма/валюта/merchant/test/metadata не совпали | ManualReview/NeedsAttention, без выдачи доступа; сверить оригинал покупки и объект провайдера. |
-| БД недоступна/сбой выдачи доступа | Транзакция откатывается; платёж остаётся подтверждённым, повторяется выдача после восстановления. Смотреть ILogger, затем inbox/application journal. |
-| Клиент повторил/перезагрузил страницу | Сохраняются ключ операции и PurchaseId; проверка своей покупки вместо новой оплаты. |
-| Сообщение исчерпало retries | Проверить очереди payments-opencrm-commands_error, payments-opencrm-events_error и *_skipped. Восстанавливать доставку исходного сообщения с теми же предметными ID после устранения причины. |
+| RabbitMQ unavailable or ACK lost | Command remains in outbox/lease; identical ID/body are retried with backoff up to 5 minutes. Check broker/vhost permissions; do not create a new checkout. |
+| Duplicate/reordered event | Inbox and increasing version prevent duplicate grants or monetary rollback. Conflicting contents under one EventId are logged as Critical. |
+| Webhook/event lost | Payments polls the provider; OpenCRM reads a private snapshot roughly once a minute before activation and every 15 minutes afterward; errors defer with journal entries. Refund operation results are also recovered. |
+| GET 401/403/another owner's purchase | Log error and reconciliation delay. Previously persisted verified succeeded retains eligibility for activation; otherwise NeedsAttention. Only a fully matching snapshot can clear a temporary connection error; refunds or financial conflicts are not hidden. |
+| Payments returns 404 after dispatch | With neither ACK nor order ID, only the original schema 2 command may resume, with intact hash, matching IDs/amount/currency/shop, and unexpired NotAfter. Preserve an active lease. Known orders, a saved ACK, or failed checks require quarantine/review; SentAt is not reset automatically. |
+| Provider timeout/5xx after POST | OutcomeUnknown with original body/key; after 23 hours a new POST is forbidden, but GET may check a known object. A timeout is not rejection. |
+| Amount/currency/merchant/test/metadata mismatch | ManualReview/NeedsAttention without an access grant; compare the original purchase and provider object. |
+| Database unavailable/access grant failure | Transaction rolls back; payment remains confirmed and access application retries after recovery. Inspect ILogger, then the inbox/application journal. |
+| Client retries/reloads the page | Preserve operation key and PurchaseId; check the existing owned purchase instead of starting another payment. |
+| Message exhausts retries | Inspect payments-opencrm-commands_error, payments-opencrm-events_error, and *_skipped. After fixing the cause, restore delivery of the original message with the same domain IDs. |
 
-До включения денежного контура нужны внешнее хранение/срок хранения логов, оповещения по очередям ошибок, возрасту outbox, activation_pending, needs_attention и расхождению реестров. Приложение не создаёт инфраструктурные алерты автоматически. Отсутствие ошибок в логе не заменяет сверку реестра провайдера.
+Before enabling monetary processing, provide external log storage/retention and alerts for error queues, outbox age, activation_pending, needs_attention, and register discrepancies. The application does not create infrastructure alerts automatically. A lack of log errors does not replace reconciliation with the provider register.
 
-## Миграции и откат
+## Migrations and rollback
 
-В OpenCRM добавлена 20261025071834_AddPaymentsServicePurchases; в Payments — 20261025140000_HardenPaymentExecutionAndAudit и 20261025180000_AddProviderOperationPostBefore. Проверяются основной файл, Designer с DbContext/Migration, snapshot и HasPendingModelChanges. Денежные snapshots/команды защищены от изменения. Down новой схемы OpenCRM запрещён при покупках/командах/событиях. Down hardening Payments запрещён при финансовом аудите или неизвестном режиме операций; Down PostBefore запрещён при принятых операциях с зафиксированным сроком. Пустая схема допускает технический rollback; автоматический rollback рабочей БД не выполнять.
+OpenCRM adds 20261025071834_AddPaymentsServicePurchases; Payments adds 20261025140000_HardenPaymentExecutionAndAudit and 20261025180000_AddProviderOperationPostBefore. Validate the main file, Designer with DbContext/Migration, snapshot, and HasPendingModelChanges. Monetary snapshots/commands are protected from modification. Down for the new OpenCRM schema is forbidden when purchases/commands/events exist. Payments hardening Down is forbidden with financial audit or operations of unknown mode; PostBefore Down is forbidden with accepted operations carrying a deadline. An empty schema permits technical rollback; never automatically roll back an active database.
 
-Для остановки продаж использовать AcceptNewPurchases=false при Enabled=true и перезапуск совместимой версии OpenCRM. Сквозной тест проверяет: покупка pending → перезапуск с запретом новых покупок → отказ новой покупке → succeeded прежней покупки → однократная выдача доступа. Enabled=false отключает финансовый транспорт целиком и допустим для пустого/неподключённого контура; при любых существующих покупках МС запуск с Enabled=false блокируется, включая уже применённые: поздние возвраты тоже требуют наблюдения.
+To stop sales, use AcceptNewPurchases=false with Enabled=true and restart a compatible OpenCRM version. The end-to-end test covers pending purchase → restart with new purchases blocked → new purchase rejected → previous purchase succeeded → one access grant. Enabled=false disables all financial transport and is appropriate for an empty/unconnected environment; startup with Enabled=false is blocked when any microservice purchases exist, including applied ones, because late refunds still need monitoring.
 
-При откате приложения нельзя отключать потребление принятых покупок и включать для них прямое списание. Сохранить сервис восстановления либо остановить новые покупки до совместимой версии. Резервировать обе БД и RabbitMQ согласно собственному процессу публикации. Восстановление старого резерва одной БД требует сверки второй БД, провайдера и реестра; автоматического поиска всех потерянных покупок в реестрах пока нет.
+Application rollback must not disable consumption for accepted purchases or enable direct charging for them. Retain the recovery service or stop new purchases until a compatible version is available. Back up both databases and RabbitMQ under your own release process. Restoring an old backup of one database requires reconciling the other database, provider, and register; automatic discovery of all lost purchases in registers is not yet implemented.
 
-## Проверка и оставшиеся границы
+## Validation and remaining boundaries
 
-Автотесты используют отдельные контейнеры PostgreSQL/RabbitMQ и управляемого провайдера, без реальных списаний и запросов к настоящему API ЮKassa. Сквозная проверка связывает два процесса, две БД, отдельную шину, приватный HTTP, повтор команд/событий и перезапуск consumer.
+Automated tests use separate PostgreSQL/RabbitMQ containers and a controlled provider, with no real charges or real YooKassa API calls. End-to-end validation connects two processes, two databases, a separate bus, private HTTP, repeated commands/events, and consumer restart.
 
-Перед боевым подключением остаются: проверка внешнего HTTPS webhook/сети, сверка реестров/восстановление из резервов, алерты и приёмка боевого режима. Эти проверки не подменяются fake-провайдером или readiness. Источники контракта: [формат API ЮKassa](https://yookassa.ru/developers/using-api/interaction-format), [webhook](https://yookassa.ru/developers/using-api/webhooks).
+Before production integration, validate external HTTPS webhook/network access, register reconciliation/backup recovery, alerts, and live mode. Fake providers and readiness do not replace these checks. Contract sources: [YooKassa API format](https://yookassa.ru/developers/using-api/interaction-format), [webhooks](https://yookassa.ru/developers/using-api/webhooks).
 
-## Проверка с настоящим тестовым API ЮKassa
+## Validation with the real YooKassa test API
 
-Секрет магазина хранится локально в защищённом файле и передаётся только процессу МС; в исходники, manifest и логи он не записывается. Дополнительный режим тестового стенда включается явно через PAYMENTS_BROWSER_PROVIDER=YooKassaTest и не заменяет штатный адаптер на fake. Магазин/ключ проверяются штатной конфигурацией YooKassaTest; ответы с test=false не принимаются.
+Store the shop secret locally in a protected file and supply it only to the microservice process; never write it into source, manifests, or logs. Explicitly enable the test environment mode with PAYMENTS_BROWSER_PROVIDER=YooKassaTest; it does not replace the normal adapter with a fake. Standard YooKassaTest configuration validates the shop/key; responses with test=false are rejected.
 
-Проверяемые сценарии (без внешнего API и реальных денег):
+Scenarios to validate (without external API or real money in the automated suite):
 
-- Аутентификация в официальном API.
-- Оплата тестового тарифа тестовым кошельком: ЮKassa возвращает succeeded/test=true, OpenCRM применяет один период доступа. Автосписания не включаются.
-- Частичный возврат и возврат остатка проходят через МС; срок подписки не сокращается, требуется ручной разбор доступа.
-- Повтор исходного POST с исходным телом и Idempotence-Key до PostBefore должен вернуть тот же payment ID без создания нового объекта оплаты.
-- Тестовая карта для insufficient_funds показывает отказ попытки; денежный объект остаётся pending с возможностью повторить оплату, доступ не выдаётся.
+- Authentication against the official API.
+- Pay for a test plan using a test wallet: YooKassa returns succeeded/test=true and OpenCRM applies one access period. Automatic charging is not enabled.
+- Partial refund followed by refund of the remainder through the microservice; subscription duration is not shortened and manual entitlement review is required.
+- Repeating the original POST with its original body and Idempotence-Key before PostBefore must return the same payment ID without creating another payment object.
+- An insufficient_funds test card rejects the attempt; the monetary object remains pending with payment retry available, and no access is granted.
 
-Внешняя доставка webhook проверяется отдельно: локальные адреса не публикуются в интернете. Боевой режим не включается.
+External webhook delivery is checked separately: local URLs are not exposed on the internet. Live mode is not enabled.
 
-Повторный локальный запуск выполняется на временном стенде с тестовым магазином ЮKassa:
-сервис платежей и браузерный прогон работают на отдельной копии локальной базы, исходная
-база сайта не заменяется. Секрет тестового магазина передаётся защищённым файлом ключа;
-значения не сохраняются в репозитории.
+Repeated local runs use a temporary environment with a YooKassa test shop: the payment service and browser checks use a separate copy of the local database; the website's original database is not replaced. Pass the shop secret through a protected key file; do not save values in the repository.
 
-Стенд временный: для сохранения финансовых фактов перед его остановкой делается резерв
-отдельной базы сервиса платежей.
+This environment is temporary: back up its separate payment service database before shutdown if monetary facts must be retained.
 
-## Карточка платежа в админке
+## Payment record in administration
 
-Карточка МС разделяет подтверждённые деньги, возвраты и исторический период выданного доступа. По денежному факту показан следующий шаг администратора. ID ЮKassa отделён от внутреннего ID МС. Журнал свёрнут по умолчанию, события имеют понятные подписи; коды раскрываются отдельно, вложенной прокрутки нет. Ручная подмена статуса МС недоступна. Неизвестный идентификатор покупки показывает отсутствие результата и не подставляет последнюю успешную оплату; отменённая покупка не активирует доступ. Повторный POST с исходным ключом и телом не создаёт второй объект оплаты, а чтение GET не создаёт объект вовсе. Переход к подпискам открывает список нужного получателя, включая остановленные подписки.
+The microservice record separates confirmed money, refunds, and the historical granted access period. Each monetary fact shows the administrator's next action. The YooKassa ID is separate from the internal microservice ID. The journal is collapsed by default; events have clear labels, codes expand separately, and there is no nested scrolling. Manual microservice status replacement is unavailable. An unknown purchase ID displays no result rather than substituting the last successful payment; canceled purchases do not activate access. Repeating a POST with the original key/body creates no second payment object, and a GET creates no object at all. Navigation to subscriptions opens the correct beneficiary's list, including stopped subscriptions.
 
-## Действия администратора
+## Administrator actions
 
-Веб- и desktop-клиенты используют общий GET/POST `/api/v1/admin/billing/payments/{id}/service-actions`. Чтение требует ViewBilling, выполнение — ManageBilling; автор берётся из действующей сессии. POST сохраняет реляционную запись административной операции до обращения к сети. UUID и тело запроса сохраняются клиентом до определённого ответа; повтор с тем же UUID возвращает исходную операцию, подмена тела/автора/платежа отклоняется. Денежные факты вручную не редактируются.
+Web and desktop clients share GET/POST `/api/v1/admin/billing/payments/{id}/service-actions`. Reading requires ViewBilling; execution requires ManageBilling; the author comes from the current session. POST persists a relational administrative operation before network access. The client retains the UUID and request body until a definitive response; repeating the same UUID returns the original operation, while altered body/author/payment is rejected. Monetary facts cannot be edited manually.
 
-- «Проверить платёж» запрашивает внеочередное чтение ЮKassa через МС. Принятие запроса и фактическое подтверждение нового LastReconciledAt различаются. Для возврата и повтора выдачи нужна совпадающая с текущими фактами проверка за последние 5 минут.
-- «Вернуть деньги» принимает весь доступный остаток либо часть суммы с точностью до копейки, причину и подтверждение. Команда RequestRefund записывается в существующий outbox. Ожидающий или неизвестный возврат резервирует покупку и запрещает следующую попытку и автоматическую выдачу доступа. Подтверждение операции возврата без нового денежного снимка не освобождает резерв.
-- «Повторить выдачу доступа» повторно проверяет подтверждённую оплату, свежесть снимка, отсутствие возвратов/конфликтов и ранее выданного периода. Работает через прежний идемпотентный applicator; не создаёт списания.
-- «Завершить разбор» сохраняет решение, автора и комментарий независимо от денежных фактов. Новый существенный конфликт или возврат снова требует разбора. Это не снимает технические ограничения и не меняет доступ. Продление/остановка подписки остаются отдельными административными действиями.
+- “Проверить платёж” (Check payment) requests an immediate YooKassa read through the microservice. Request acceptance differs from actual confirmation of a new LastReconciledAt. Refunds and grant retries require a check within the last 5 minutes matching current facts.
+- “Вернуть деньги” (Refund money) accepts the full available remainder or a partial kopeck-precision amount, reason, and confirmation. RequestRefund is written to the existing outbox. A pending/unknown refund reserves the purchase and blocks subsequent attempts and automatic access grants. Confirming the refund operation without a new monetary snapshot does not release the reservation.
+- “Повторить выдачу доступа” (Retry access grant) revalidates confirmed payment, snapshot freshness, absence of refunds/conflicts, and the previously granted period. It uses the existing idempotent applicator and does not create a charge.
+- “Завершить разбор” (Complete review) saves the decision, author, and comment independently of monetary facts. A new material conflict or refund requires review again. This neither removes technical restrictions nor changes access. Subscription renewal/stopping remain separate administrative actions.
 
-Полная причина до 500 символов и автор сохраняются в локальном аудите. Для контракта МС причина ограничивается 128 символами без разрыва суррогатной пары; длинный идентификатор автора заменяется стабильным SHA256-представлением. После окончательного отказа без денежной операции новый возврат возможен только после свежей проверки и доказательства безопасного отказа по связанным неизменяемым журналам. Неизвестный исход под это исключение не попадает.
+The full reason, up to 500 characters, and author are retained in the local audit. The microservice contract reason is limited to 128 characters without splitting a surrogate pair; a long author ID is replaced with a stable SHA256 representation. After a definitive rejection without a monetary operation, another refund is allowed only after a fresh check and proof of safe rejection from related immutable journals. An unknown outcome does not qualify for this exception.
 
-Миграции `20261025134829_AddSubscriptionPaymentAdminActions` и `20261025135503_AddVerifiedAdminPaymentSnapshot` созданы EF Core 10.0.7, имеют согласованные Designer/DbContext/Migration и snapshot. Пустой Down/Up проверяется; откат непустого административного финансового журнала запрещён в обеих миграциях.
+Migrations `20261025134829_AddSubscriptionPaymentAdminActions` and `20261025135503_AddVerifiedAdminPaymentSnapshot` were created with EF Core 10.0.7 and have consistent Designer/DbContext/Migration metadata and snapshot. Empty Down/Up is validated; both migrations prohibit rollback of a nonempty administrative financial journal.
 
-## Серверная установка
+## Server setup
 
-Новые покупки подписок направляются в Payments (`YooKassaLive`, `IsTest=false`, `Enabled=true`, `AcceptNewPurchases=true`). Рабочие shop ID и ключ хранятся в закрытой конфигурации без вывода и переноса в исходники. Старых реальных оплат нет; данные прежнего учёта не удаляются, миграция истории денег не выполняется. Прежний публичный адрес `/api/webhook/yookassa` через точный location Nginx направлен в inbox МС. Другого публичного входа к МС и его внутренним API нет.
+New subscription purchases are routed to Payments (`YooKassaLive`, `IsTest=false`, `Enabled=true`, `AcceptNewPurchases=true`). Live shop IDs/keys remain in private configuration and are never printed or copied into source. There are no old real payments; previous accounting data is not deleted and monetary history is not migrated. The previous public `/api/webhook/yookassa` address is routed through an exact Nginx location to the microservice inbox. There is no other public entry to the microservice or its internal APIs.
 
-Развёртывание использует собственные базу `payments`, роль PostgreSQL без superuser, vhost `payments` и отдельные учётные записи брокера для сайта и МС. Compose и секреты устраиваются по образцу уведомлений: отдельный compose-файл, ссылка `.env` на защищённый каталог конфигурации, права 600. Общие PostgreSQL/RabbitMQ, контейнер уведомлений, ключи Data Protection и другие приложения сохраняются.
+Deployment uses its own `payments` database, a nonsuperuser PostgreSQL role, a `payments` vhost, and separate broker accounts for the website and microservice. Arrange Compose and secrets like notifications: a separate compose file, an `.env` link into a protected configuration directory, and mode 600 permissions. Preserve shared PostgreSQL/RabbitMQ, the notification container, Data Protection keys, and other applications.
 
-Добавлены явный рабочий режим, проверка соответствия test/live во всех денежных путях и отдельное разрешение HTTP для точного внутреннего hostname. Сверка успешных платежей ограничена: первые сутки от первого подтверждения каждые 15 минут, затем ежедневно до 30 дней и еженедельно позже; полностью возвращённые и отменённые больше не обходятся. Неопределённые операции восстанавливаются своей очередью. Время подтверждения хранит миграция `20261025190000_RecordVerifiedPaymentSuccessTime`; Down запрещён при заполненном времени.
+An explicit live mode, test/live consistency checks on all monetary paths, and a separate HTTP allowance for the exact internal hostname are included. Successful-payment reconciliation is bounded: every 15 minutes during the first day after initial confirmation, daily until 30 days, and weekly afterward; fully refunded and canceled payments are no longer scanned. Unknown operations recover through their own queue. Migration `20261025190000_RecordVerifiedPaymentSuccessTime` stores confirmation time; Down is forbidden when it is populated.
 
-Закрытый API возвращает 401 без ключа и 404 для отсутствующей покупки с ключом; внешний доступ к нему — 404. Оба финансовых consumer должны быть подключены; очереди пусты. При закрытых продажах и нуле поручений остановка МС даёт неуспешный ответ webhook; после восстановления синтаксически неверный сигнал отклоняется 400.
+The private API returns 401 without a key and 404 for a missing purchase with a key; external access returns 404. Both financial consumers must be connected and queues empty. With sales closed and zero intents, stopping the microservice makes the webhook return an unsuccessful response; after recovery, a syntactically invalid signal is rejected with 400.
 
-Устанавливается `check-opencrm-payments.py` с запуском каждые две минуты: проверяет готовность, consumers, error/skipped, ручной разбор, неизвестные операции, задержки сверки и webhook. Состояние сохраняется в файле health-проверки, изменения пишутся в системный журнал с меткой `opencrm-payments`. Это локальный технический контроль, не доставка уведомлений оператору. Денежный аудит остаётся в БД; JSON-логи Docker ротируются.
+`check-opencrm-payments.py` is installed to run every two minutes, checking readiness, consumers, error/skipped queues, manual review, unknown operations, reconciliation delays, and webhooks. State is saved in a health-check file and changes go to the system journal with the `opencrm-payments` tag. This is local technical monitoring, not operator notification delivery. Monetary audit remains in the database; Docker JSON logs rotate.
 
-Резервы и образы отката сохраняются до приёмки установленной версии; после первой покупки МС откат не должен отключать восстановление.
+Retain backups and rollback images until the installed version is accepted; after the first microservice purchase, rollback must not disable recovery.
 
-Дополнительно проверяются DNS и TLS-доступ к API ЮKassa из сетевого пространства рабочего контейнера: чтение настроек подтверждает ожидаемый рабочий магазин, `test=false` и enabled; денежная операция не создаётся.
+Additionally, validate DNS and TLS access to the YooKassa API from the running container's network namespace: reading settings confirms the expected live shop, test=false, and enabled; no monetary operation is created.

@@ -1,19 +1,19 @@
 @startuml system_architecture
-title opencrm.example.invalid — общая архитектура
+title opencrm.example.invalid — system architecture
 
 left to right direction
 skinparam componentStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
-actor "Посетитель" as Visitor
-actor "Пользователь /\nсотрудник" as User
-actor "Администратор" as Admin
-actor "Клиент организации" as Client
+actor "Visitor" as Visitor
+actor "User /\nemployee" as User
+actor "Administrator" as Admin
+actor "Organization customer" as Client
 
-rectangle "Клиентские интерфейсы" {
-  component "Публичный сайт\nRazor / MVC" as PublicWeb
-  component "Личный кабинет\nRazor + Vue 2" as Cabinet
+rectangle "Client interfaces" {
+  component "Public website\nRazor / MVC" as PublicWeb
+  component "Account area\nRazor + Vue 2" as Cabinet
   component "REST API\n/api/v1" as Api
   component "Admin API\n/api/v1/admin" as AdminApi
 }
@@ -69,8 +69,8 @@ Controllers --> Captcha
 Controllers --> Seq : logs
 
 note right of Auth
-  Обычная регистрация активна.
-  Google Login отключен.
+  Standard registration is enabled.
+  Google Login is disabled.
 end note
 
 @enduml

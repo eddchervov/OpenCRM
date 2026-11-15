@@ -1,5 +1,5 @@
 @startuml domain_model
-title opencrm.example.invalid — основная предметная модель
+title opencrm.example.invalid — core domain model
 
 hide methods
 skinparam classAttributeIconSize 0
@@ -136,8 +136,8 @@ SubscriptionPlan "1" *-- "0..*" SubscriptionPlanFeature
 FeatureDefinition "1" -- "0..*" SubscriptionPlanFeature
 
 note bottom of Maintenance
-  Details хранится как JSON,
-  а не в отдельной таблице.
+  Details is stored as JSON,
+  not in a separate table.
 end note
 
 @enduml

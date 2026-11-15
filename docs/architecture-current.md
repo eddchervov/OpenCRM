@@ -1,20 +1,22 @@
-# Архитектура приложения
+# Application architecture
 
-Решение разделяет веб-хост, предметные модули, клиентские приложения и фоновые сервисы.
+**English** | [Русский](architecture-current.ru.md)
 
-## Основные компоненты
+The solution separates the web host, business modules, client applications, and background services.
 
-- `src/OpenCRM.WebApp` — ASP.NET Core host для веб-интерфейса, API и фоновых задач.
-- `src/OpenCRM.Modules.*` — предметные модули и их контракты.
-- `src/OpenCRM.Infrastructure.*` — доступ к базе данных, внешним сервисам и окружению.
-- `src/OpenCRM.Frontend` — клиентские приложения, административный интерфейс и общие UI-пакеты.
-- `services/notifications` и `services/payments` — отдельные сервисы с собственными решениями и конфигурацией.
-- `tests` и `services/*/tests` — тестовые проекты.
+## Main components
 
-Основное решение .NET находится в `OpenCRM.sln`. Каждый отдельный сервис может иметь своё решение, инструкции запуска и набор параметров конфигурации.
+- `src/OpenCRM.WebApp` — the ASP.NET Core host for the web interface, API, and background jobs.
+- `src/OpenCRM.Modules.*` — business modules and their contracts.
+- `src/OpenCRM.Infrastructure.*` — access to the database, external services, and environment.
+- `src/OpenCRM.Frontend` — client applications, administration interface, and shared UI packages.
+- `services/notifications` and `services/payments` — separate services with their own solutions and configuration.
+- `tests` and `services/*/tests` — test projects.
 
-## Изменение компонентов
+The main .NET solution is `OpenCRM.sln`. Each separate service may have its own solution, startup instructions, and configuration parameters.
 
-Перед изменением межмодульного взаимодействия проверь публичные контракты в `*.Contracts` и существующие регистрации зависимостей. Настройки подключений передавай приложению из локальной конфигурации или переменных окружения; не фиксируй секреты и данные конкретных развёртываний в исходниках.
+## Changing components
 
-Ответственность модулей, фактические связи и конфигурационные параметры определяются кодом и файлами проектов. Диаграммы UML в соседней папке служат иллюстрацией и должны обновляться вместе с соответствующими архитектурными изменениями.
+Before changing cross-module interaction, inspect public contracts in `*.Contracts` and the existing dependency registrations. Supply connection settings through local configuration or environment variables; do not hard-code secrets or deployment-specific data in source files.
+
+Module responsibilities, actual relationships, and configuration parameters are defined by the code and project files. UML diagrams in the neighboring directory are illustrative and should be updated alongside the corresponding architecture changes.

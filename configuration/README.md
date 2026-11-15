@@ -1,10 +1,12 @@
 # configuration
 
-Папка содержит общий файл бренда `brand.json`, используемый всеми приложениями решения.
+**English** | [Русский](README.ru.md)
+
+This directory contains the shared `brand.json` file used by every application in the solution.
 
 ## brand.json
 
-Структура файла:
+File structure:
 
 ```json
 {
@@ -18,16 +20,16 @@
 }
 ```
 
-- `DisplayName` — название проекта в интерфейсе, документах и шаблонах уведомлений.
-- `PublicBaseUrl` — публичный HTTPS-адрес с базовым путём; из него формируются canonical URL, robots, sitemap и адреса возврата платежей.
-- `TelegramUrl`, `VkUrl`, `InstagramUrl` — ссылки на сообщества, если они настроены.
+- `DisplayName` — the project name in the interface, documents, and notification templates.
+- `PublicBaseUrl` — the public HTTPS URL including the base path; it is used to construct canonical URLs, robots, sitemap, and payment return URLs.
+- `TelegramUrl`, `VkUrl`, `InstagramUrl` — community links, when configured.
 
-Секретов в этом файле нет и быть не должно: ключи провайдеров, строки подключения и адрес отправителя писем настраиваются отдельно в каждом приложении. Для локальных секретов рекомендуется использовать переменные окружения. Собственные `dotnet user-secrets` каждого проекта остаются отдельными: общего UserSecretsId для WebApp и EF-проектов не существует.
+This file contains no secrets and must never contain them: provider keys, connection strings, and the email sender address are configured separately in each application. Environment variables are recommended for local secrets. Each project's `dotnet user-secrets` remains separate: there is no shared UserSecretsId for WebApp and the EF projects.
 
-## Как файл используется
+## How the file is used
 
-Файл читается общим классом `Helpers.ProjectBrand` и подключается в WebApp, notifications, payments и desktop как linked-файл с именем `brand.json` в выходном каталоге. Серверные процессы поддерживают переменные `Brand__DisplayName` и `Brand__PublicBaseUrl`; настольные приложения читают общий JSON-файл.
+The shared `Helpers.ProjectBrand` class reads the file. WebApp, notifications, payments, and desktop include it as a linked file named `brand.json` in the output directory. Server processes support the `Brand__DisplayName` and `Brand__PublicBaseUrl` environment variables; desktop applications read the shared JSON file.
 
-После изменения `brand.json` пересоберите нужные приложения либо разложите одинаковую версию файла в каталоги запуска всех процессов.
+After changing `brand.json`, rebuild the required applications or distribute the same file version to every process's launch directory.
 
-После изменения настроек перезапустите использующие их процессы.
+Restart the processes that use the settings after changing them.
