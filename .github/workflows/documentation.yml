@@ -1,0 +1,26 @@
+name: Documentation
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "**/*.md"
+      - "docs/uml/**"
+      - "docs/images/**"
+      - "scripts/check-documentation.py"
+      - ".github/workflows/documentation.yml"
+  pull_request:
+    paths:
+      - "**/*.md"
+      - "docs/uml/**"
+      - "docs/images/**"
+      - "scripts/check-documentation.py"
+      - ".github/workflows/documentation.yml"
+permissions:
+  contents: read
+jobs:
+  documentation:
+    name: Documentation links and language versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check-documentation.py

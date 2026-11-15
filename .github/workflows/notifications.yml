@@ -4,6 +4,9 @@ on:
     branches: ["main"]
     paths:
       - "services/notifications/**"
+      - "services/payments/**"
+      - "configuration/brand.json"
+      - ".config/dotnet-tools.json"
       - "src/**"
       - "integrations/**"
       - "tests/**"
@@ -27,6 +30,9 @@ on:
   pull_request:
     paths:
       - "services/notifications/**"
+      - "services/payments/**"
+      - "configuration/brand.json"
+      - ".config/dotnet-tools.json"
       - "src/**"
       - "integrations/**"
       - "tests/**"
@@ -162,6 +168,48 @@ jobs:
         with:
           name: ${{ matrix.module }}-coverage
           path: ${{ runner.temp }}/${{ matrix.module }}-coverage
+  additional-backend-tests:
+    name: Backend tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Assistant
+            project: tests/OpenCRM.Assistant.Tests/OpenCRM.Assistant.Tests.csproj
+          - name: Communications
+            project: tests/OpenCRM.Modules.Communications.Tests/OpenCRM.Modules.Communications.Tests.csproj
+          - name: Imports
+            project: tests/OpenCRM.Modules.Imports.Tests/OpenCRM.Modules.Imports.Tests.csproj
+          - name: Payments service
+            project: services/payments/tests/Payments.Tests/Payments.Tests.csproj
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Run backend tests
+        run: dotnet test "${{ matrix.project }}" --configuration Release -m:1 -p:BuildScenarioClientsOnBuild=false
+  admin-tests:
+    name: Desktop administration tests (${{ matrix.project }})
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [OpenCRM.Admin.Api.Tests, OpenCRM.Admin.App.Tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Run admin tests
+        run: dotnet test "tests/${{ matrix.project }}/${{ matrix.project }}.csproj" --configuration Release -m:1 -p:BuildScenarioClientsOnBuild=false
   docker:
     runs-on: ubuntu-latest
     defaults:
@@ -211,8 +259,10 @@ jobs:
       - run: docker build --file src/Dockerfile --tag opencrm:ci .
       - name: Apply migrations to the temporary database
         run: |
-          dotnet tool install dotnet-ef --version 10.0.7 --tool-path "$RUNNER_TEMP/ef-tools"
-          "$RUNNER_TEMP/ef-tools/dotnet-ef" database update --project src/OpenCRM.Infrastructure.Migrations --configuration Release
+          dotnet tool restore
+          dotnet restore src/OpenCRM.Infrastructure.Migrations/OpenCRM.Infrastructure.Migrations.csproj
+          dotnet build src/OpenCRM.Infrastructure.Migrations/OpenCRM.Infrastructure.Migrations.csproj --configuration Release --no-restore
+          dotnet ef database update --project src/OpenCRM.Infrastructure.Migrations --startup-project src/OpenCRM.Infrastructure.Migrations --configuration Release --no-build
       - name: Start OpenCRM
         run: |
           docker run --detach --name opencrm-ci --network host \
