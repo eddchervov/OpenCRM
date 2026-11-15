@@ -1,19 +1,15 @@
-# Organizations in the OpenCRM desktop admin interface
+# Organizations in the OpenCRM admin interfaces
 
 **English** | [Русский](admin-organizations.ru.md)
 
-The “Organizations” list contains organizations owned by any user, including existing organizations in the hidden Fleet scenario. Search by organization and owner, cards, statistics, member lists, and audit history are retained. Read access requires `Admin.Users.View`; changing a status also requires `Admin.Users.Manage`. System administrators follow the existing server access rules.
+The web and desktop administration clients list organizations across supported and legacy scenarios. Search and organization details include the owner, status, members, usage counts, and audit information. Reading requires `Admin.Users.View`; changing organization status also requires `Admin.Users.Manage`.
 
-The card provides “Force archive” and “Restore from archive”. The action requires a reason of up to 2000 characters and a separate confirmation checkbox. Before execution, the selected organization's name, owner, and ID are shown. Deleted organizations cannot be changed; restoration is available only from the archive.
+Administrators can force-archive or restore an organization. The action requires a reason of up to 2000 characters and explicit confirmation. Deleted organizations cannot be changed; restoration is available only from the archive. Administrative archiving is permitted even when user-facing `Organizations:ArchivingEnabled` is disabled, does not require the administrator to be a member, and does not replace the owner. The server performs the change in a transaction and records the administrator and reason in the organization audit events.
 
-Administrative archiving works when user-facing `Organizations:ArchivingEnabled` is disabled, does not require the administrator to be a member of the organization, and does not replace the owner. The user-facing restriction remains in effect. The server performs the operation inside a transaction under the existing organization lock and records the actual administrator and reason in `organization.admin_archived` / `organization.admin_restored` events.
+Archiving closes workspace access for members. Routine cleanup marks an archived organization as deleted after 30 days. Until cleanup, it can be restored with its data. An archived organization continues to occupy an organization-creation slot of its type.
 
-Archiving closes workspace access for members. The existing retention period applies: after 30 days, routine cleanup marks the organization as deleted. Before then, it can be restored with its data and current subscription terms. An archived organization continues to occupy a slot for creating an organization of its type.
+The desktop API is `POST /api/v1/admin/organizations/{id}/archive` and `/restore`, with body `{ "reason": "..." }`. Empty or overlong reasons are rejected; invalid state returns a conflict. If the desktop client loses the response, it does not retry the write and blocks further status changes until the card refreshes successfully. The server API must be updated separately from the desktop client.
 
-API: `POST /api/v1/admin/organizations/{id}/archive` and `/restore`, body `{ "reason": "..." }`, successful response `{ "message": "..." }`. An empty or overly long reason is rejected; an invalid current status returns a conflict. If the desktop client loses the response, it does not retry the write and blocks further status changes until the card refreshes successfully.
+## Optional commercial information
 
-Publishing the desktop client and publishing server APIs are separate operations. The server must contain this update for the new actions to work; copying the desktop build does not update the server.
-
-## Web list and Free/PRO
-
-The web admin interface adds a separate organization list, search, server-side pagination, mobile cards, and navigation to an owner's organizations. In both clients, active Detailing and Service Station organizations without a subscription show unlimited Free; archived and deleted organizations retain their actual state. Server cards return the system Free name without an artificial end date. Subscription management details are in the [subscription guide](admin-subscriptions.md).
+`PlatformPolicy:Commercial:Enabled` defaults to `false`. When disabled, billing and subscription information is omitted from the administration interface and organization records. When enabled, active Detailing and Service Station organizations without a paid subscription use unlimited Free access; archived and deleted organizations keep their actual status. Commercial controls also require the relevant billing permission. See [subscription management](admin-subscriptions.md).

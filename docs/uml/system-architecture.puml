@@ -1,76 +1,75 @@
 @startuml system_architecture
-title opencrm.example.invalid — system architecture
+title OpenCRM — modular CRM and service integrations
 
 left to right direction
 skinparam componentStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
-actor "Visitor" as Visitor
-actor "User /\nemployee" as User
+actor "CRM user" as User
 actor "Administrator" as Admin
-actor "Organization customer" as Client
 
-rectangle "Client interfaces" {
-  component "Public website\nRazor / MVC" as PublicWeb
-  component "Account area\nRazor + Vue 2" as Cabinet
-  component "REST API\n/api/v1" as Api
-  component "Admin API\n/api/v1/admin" as AdminApi
+rectangle "OpenCRM clients" {
+  component "CRM web interface\n+ REST API" as CrmClient
+  component "Web admin\nVue" as AdminWeb
+  component "Desktop admin\nAvalonia" as AdminDesktop
 }
 
-rectangle "OpenCRM.WebApp\nASP.NET Core 10" {
-  component "Authentication\nIdentity Cookie + JWT" as Auth
-  component "MVC/API Controllers" as Controllers
-  component "Business Services" as Services
-  component "Organization Permissions" as Permissions
-  component "Subscription Features" as Features
-  component "Hangfire Jobs" as Jobs
-  component "PDF / DOCX" as Documents
-  component "Media Services" as Media
+rectangle "OpenCRM modular host\nASP.NET Core" {
+  component "Authentication\nIdentity + JWT" as Auth
+  component "CRM modules\norganizations, clients, vehicles,\nmaintenance, workspace" as Modules
+  component "Admin APIs" as AdminApi
+  component "Optional AI assistant" as AI
+  component "Outbox dispatchers" as Outbox
 }
 
-database "PostgreSQL\nbusiness + identity + hangfire" as Db
-cloud "S3-compatible storage" as S3
-cloud "YooKassa" as YooKassa
-cloud "SMTP / UniSender Go" as Email
-cloud "SMS.ru" as Sms
-cloud "Seq" as Seq
-cloud "Google reCAPTCHA" as Captcha
+database "Main PostgreSQL\nCRM + identity" as MainDb
+cloud "Configured file storage\noptional media integration" as Storage
+queue "RabbitMQ\nservice message transport" as Rabbit
+cloud "Optional AI provider" as AIProvider
 
-Visitor --> PublicWeb
-User --> Cabinet
-User --> Api
-Admin --> AdminApi
-Client --> PublicWeb
+rectangle "Notifications service" {
+  component "Notifications.Worker" as NotifyWorker
+  database "Notifications database" as NotifyDb
+  cloud "Configured delivery providers" as Delivery
+}
 
-PublicWeb --> Controllers
-Cabinet --> Controllers
-Api --> Controllers
-AdminApi --> Controllers
+rectangle "Payments service" {
+  component "Payments.Service" as PaymentsWorker
+  database "Payments database" as PaymentsDb
+  cloud "Configured payment provider" as PaymentProvider
+}
 
-Controllers --> Auth
-Controllers --> Services
-Services --> Permissions
-Services --> Features
-Services --> Documents
-Services --> Media
-Services --> Db
-Auth --> Db
-Permissions --> Db
-Features --> Db
-Jobs --> Db
-Media --> S3
-Services --> YooKassa
-YooKassa --> Controllers : webhook
-Services --> Email
-Email --> Controllers : delivery webhook
-Services --> Sms
-Controllers --> Captcha
-Controllers --> Seq : logs
+User --> CrmClient
+Admin --> AdminWeb
+Admin --> AdminDesktop
+CrmClient --> Auth
+CrmClient --> Modules
+AdminWeb --> AdminApi
+AdminDesktop --> AdminApi
+AdminApi --> Auth
+AdminApi --> Modules
+Modules --> MainDb
+Auth --> MainDb
+Outbox --> MainDb
+Modules --> Storage
+Outbox --> Rabbit
+Rabbit --> NotifyWorker
+NotifyWorker --> NotifyDb
+NotifyWorker --> Delivery
+Rabbit --> PaymentsWorker
+PaymentsWorker --> PaymentsDb
+PaymentsWorker --> PaymentProvider
+PaymentsWorker --> Rabbit : state events
+AI ..> AIProvider : optional provider
 
-note right of Auth
-  Standard registration is enabled.
-  Google Login is disabled.
+note bottom of CrmClient
+  OpenCRM is the CRM application, not a public marketing website.
+end note
+
+note bottom of Rabbit
+  External providers are configured by each installation.
+  Core sign-in and CRM work do not require payment or AI providers.
 end note
 
 @enduml

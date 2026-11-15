@@ -1,34 +1,42 @@
 @startuml maintenance_sequence
-title opencrm.example.invalid — create a maintenance record
+title OpenCRM — create maintenance record
 
 autonumber
-actor "Employee" as Employee
-boundary "Maintenance / Workspace API" as Api
-control "Permission Service" as Permission
-control "Subscription Service" as Subscription
-control "Maintenance Service" as Maintenance
-control "Audit Service" as Audit
-database "PostgreSQL" as Db
+actor "Organization member" as User
+boundary "Workspace API" as Api
+control "MaintenanceCreateService" as Create
+control "MaintenanceAccess" as Access
+control "WorkspaceAccessService" as Workspace
+control "OrganizationEntitlementReader" as Entitlements
+database "Main PostgreSQL" as Db
 
-Employee -> Api : maintenance data
-Api -> Permission : maintenance.edit
-Permission -> Db : membership, role, overrides
-Db --> Permission : access
-Permission --> Api : allowed
+User -> Api : create maintenance + detail rows
+Api -> Create : CreateAsync
+Create -> Access : EnsureCanWriteWorkspaceAsync
+Access -> Workspace : require membership and permission
+Workspace -> Db : organization, member role, permission overrides
+Db --> Workspace : active organization and role
+Workspace -> Entitlements : resolve workspace features
+alt Commercial mode disabled (default)
+  Entitlements -> Entitlements : use platform defaults; skip plan lookup
+else Commercial mode enabled
+  Entitlements -> Db : load active subscription and plan features
+  Db --> Entitlements : subscription snapshot
+end
+Entitlements --> Workspace : allowed features
+Workspace --> Access : write access granted
+Access --> Create : authorized
 
-Api -> Subscription : check write access and features
-Subscription -> Db : active organization subscription
-Db --> Subscription : plan snapshot
-Subscription --> Api : write enabled
+Create -> Create : map detail DTOs to MaintenanceDetail rows
+Create -> Db : INSERT Maintenance + MaintenanceDetail rows
+Db --> Create : saved IDs
+Create -> Db : save history and related state
+Create --> Api : maintenance ID
+Api --> User : created
 
-Api -> Maintenance : CreateAsync
-Maintenance -> Db : validate vehicle and organization
-Maintenance -> Db : INSERT Maintenance
-Maintenance -> Db : history, defects,\ncounters, and materials
-Maintenance -> Audit : add event
-Audit -> Db : INSERT OrganizationAuditEvent
-Db --> Maintenance : commit
-Maintenance --> Api : Maintenance DTO
-Api --> Employee : 201 Created
+note over Workspace,Entitlements
+  Membership, role, and permission checks remain required in both modes.
+  Commercial mode adds plan-based feature and quota checks.
+end note
 
 @enduml

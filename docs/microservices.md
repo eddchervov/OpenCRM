@@ -23,7 +23,7 @@ See [architecture](architecture-current.md) for web host composition and busines
 
 ## Notifications
 
-Source: [`services/notifications`](../services/notifications); solution: [`NotificationService.slnx`](../services/notifications/NotificationService.slnx). The service contains an API and Worker. Enable specific channels and external providers through your own configuration.
+Source: [`services/notifications`](../services/notifications); solution: [`NotificationService.slnx`](../services/notifications/NotificationService.slnx). The service has one executable, `Notifications.Worker`, hosting queue handlers, health endpoints, and configured provider callbacks. There is no HTTP notification-sending API. Enable specific channels and external providers through your own configuration.
 
 The basic CRM uses `Notifications:Transport=Disabled`. To connect real delivery, prepare the service, RabbitMQ, its database, and the required channel parameters, then set the WebApp transport to `RabbitMq` with matching broker settings. Lack of SMTP does not block password registration or internal support requests.
 

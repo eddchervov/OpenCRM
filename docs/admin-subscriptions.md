@@ -2,7 +2,7 @@
 
 **English** | [Русский](admin-subscriptions.ru.md)
 
-This section belongs to the optional commercial policy. In a neutral installation, `PlatformPolicy:Commercial:Enabled=false`, and a subscription is not required to use the CRM. The installation owner determines prices, offers, and trial terms.
+This is an optional module controlled by `PlatformPolicy:Commercial:Enabled`, which defaults to `false`. When disabled, commercial administration sections are hidden and a subscription is not required to use the CRM. The installation owner enables the module and configures prices, offers, and trial terms.
 
 ## Organizations and access
 
@@ -28,6 +28,6 @@ Free quotas and capabilities are editable. The `workspace.clients.limit` and `wo
 
 PRO options set the actual price, term, and capabilities. Previous base, demo, and personal plans are explicitly identified; their data and paid terms are preserved. Free is excluded from organizational promo-code plan selection.
 
-## History and verification
+## Existing records
 
-The `paid`, `demo`, and `manual` sources are retained. Legacy `unknown` records are not reclassified by guesswork; a manual extension does not change the original source. The earlier `AddAdminSubscriptionAudits` migration added the source and audit log; rolling it back deletes this data. No new migrations are required.
+Disabling commercial mode hides its administration controls and omits commercial details from current admin responses. It does not delete historical plans, subscriptions, payments, or audit records. Legacy sources such as `paid`, `demo`, `manual`, and `unknown` remain as stored; records are not reclassified automatically.

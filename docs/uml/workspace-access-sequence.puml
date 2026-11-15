@@ -1,42 +1,58 @@
 @startuml workspace_access_sequence
-title opencrm.example.invalid — workspace access check
+title OpenCRM — organization workspace access
 
 autonumber
-actor "Employee" as Employee
+actor "Organization member" as User
 boundary "Workspace API" as Api
+control "WorkspaceAccessService" as Access
 control "OrganizationPermissionService" as Permissions
-control "OrganizationSubscriptionService" as Subscription
-control "Business Service" as Service
-database "PostgreSQL" as Db
+control "OrganizationEntitlementReader" as Entitlements
+control "CRM module service" as Module
+database "Main PostgreSQL" as Db
 
-Employee -> Api : perform operation
-Api -> Permissions : HasPermission(userId, organizationId, permission)
-Permissions -> Db : organization and membership
-Db --> Permissions : roleCode
-Permissions -> Db : role permission overrides
-Db --> Permissions : overrides
-Permissions -> Permissions : role defaults + overrides
-
-alt No membership or permission
-  Permissions --> Api : denied
-  Api --> Employee : 403 Forbidden
-else Permission granted
-  Permissions --> Api : allowed
-  Api -> Subscription : CheckWorkspaceAccess
-  Subscription -> Db : active subscription and plan features
-  Db --> Subscription : access snapshot
-
-  alt Plan allows changes
-    Subscription --> Api : write enabled
-    Api -> Service : execute use case
-    Service -> Db : transaction
-    Db --> Service : result
-    Service --> Api : DTO
-    Api --> Employee : 200 / 201
-  else Plan expired or feature disabled
-    Subscription --> Api : read-only / feature denied
-    Api --> Employee : plan restriction
+User -> Api : request workspace operation
+Api -> Access : authorize organization operation
+Access -> Db : load active organization and membership
+Db --> Access : roleCode / no membership
+alt Organization missing or membership absent
+  Access --> Api : deny
+  Api --> User : 403 / not found
+else Membership exists
+  Access -> Permissions : resolve role defaults + explicit overrides
+  Permissions -> Db : load organization permissions
+  Db --> Permissions : granted / denied
+  alt Required permission absent
+    Permissions --> Access : deny
+    Access --> Api : deny
+    Api --> User : 403 Forbidden
+  else Permission granted
+    Permissions --> Access : allow
+    Access -> Entitlements : resolve workspace entitlement
+    alt Commercial mode disabled (default)
+      Entitlements -> Entitlements : do not query a subscription plan
+      Entitlements --> Access : base workspace features
+    else Commercial mode enabled
+      Entitlements -> Db : load subscription, plan, limits, and features
+      Db --> Entitlements : commercial entitlement
+      Entitlements --> Access : plan-based access
+    end
+    alt Write or requested feature is allowed
+      Access --> Api : authorized
+      Api -> Module : execute operation
+      Module -> Db : persist CRM changes
+      Db --> Module : committed result
+      Module --> Api : result DTO
+      Api --> User : 200 / 201
+    else Read-only or feature/limit restriction
+      Access --> Api : deny operation
+      Api --> User : access restriction
+    end
   end
 end
+
+note over Access,Entitlements
+  Membership and role permissions are always enforced.
+  Commercial mode adds plan-based restrictions; it does not replace authorization.
+end note
 
 @enduml

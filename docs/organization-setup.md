@@ -15,7 +15,7 @@ The setup wizard opens automatically on the workspace when a user first visits a
 
 ## Data integrity and access
 
-Setup requires the `workspace.profile.edit` permission and write access under the subscription. The page does not show the wizard to employees who cannot manage settings or when the organization is in read-only mode. Server-side authorization is required.
+Setup requires membership and the `workspace.profile.edit` permission. Subscription write restrictions additionally apply only when `PlatformPolicy:Commercial:Enabled=true`. The page hides the wizard from employees without the required permission and in an applicable read-only mode. Server-side authorization is required.
 
 Each step is saved in a single transaction. Organization locking and a revision number protect against concurrent changes and resaving an outdated step. Items retain their IDs and system codes: normal directory initialization does not recreate disabled entries. Foreign IDs, duplicate names, invalid prices, and invalid schedules are rejected.
 

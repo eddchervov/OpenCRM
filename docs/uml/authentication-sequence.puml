@@ -1,47 +1,57 @@
 @startuml authentication_sequence
-title opencrm.example.invalid — registration and authentication
+title OpenCRM — registration and authentication
 
 autonumber
 actor "User" as User
-boundary "Web / API" as UI
-control "AuthController" as Controller
+boundary "Web or API" as Client
+control "AuthController" as WebAuth
+control "AccountRegistrationService" as Registration
 control "ASP.NET Identity" as Identity
 control "AuthTokenService" as Tokens
-database "PostgreSQL" as Db
+control "Email confirmation policy" as EmailPolicy
+database "Main PostgreSQL" as Db
+queue "Notification outbox" as Mail
 
-alt Registration
-  User -> UI : email, password, consent
-  UI -> Controller : Register
-  Controller -> Identity : CreateAsync
+alt Web registration
+  User -> Client : email, password, required personal-data consent
+  Client -> WebAuth : Register
+  WebAuth -> Registration : CreateAsync
+  Registration -> Identity : create ApplicationUser
   Identity -> Db : INSERT ApplicationUser
-  Controller -> Db : profile and base plan
-  Controller --> UI : cookie or JWT
-  UI --> User : signed in
+  Registration --> WebAuth : account created
+  WebAuth -> EmailPolicy : IsRequired
+  alt EmailConfirmation:Required = false (default)
+    EmailPolicy --> WebAuth : confirmation not required
+    WebAuth --> Client : registration succeeds; sign-in continues
+  else Email confirmation enabled
+    EmailPolicy --> WebAuth : confirmation required
+    WebAuth -> Mail : queue confirmation message
+    WebAuth --> Client : confirmation page
+  end
 else Web sign-in
-  User -> UI : email and password
-  UI -> Controller : Login
-  Controller -> Identity : PasswordSignInAsync
-  Identity -> Db : validate user
-  Identity --> Controller : Identity cookie
-  Controller --> User : redirect to account
+  User -> Client : email and password
+  Client -> WebAuth : Login
+  WebAuth -> Identity : PasswordSignInAsync
+  Identity -> Db : validate account and password
+  WebAuth -> EmailPolicy : check optional confirmation policy
+  WebAuth --> Client : sign-in result / confirmation redirect
 else API sign-in
-  User -> UI : email and password
-  UI -> Tokens : LoginAsync
+  User -> Client : email and password
+  Client -> Tokens : LoginAsync
   Tokens -> Identity : CheckPasswordAsync
-  Identity -> Db : validate user
-  Tokens -> Db : save sessionId,\nrefresh secret hash and expiry
-  Tokens --> User : access JWT + refresh token
-else JWT refresh
+  Identity -> Db : validate account and password
+  Tokens -> Db : persist refresh-token hash and expiry
+  Tokens --> Client : access JWT + refresh token
+else API token refresh
   User -> Tokens : refresh token
-  Tokens -> Db : validate session, hash, and expiry
-  Tokens -> Db : revoke old refresh token
-  Tokens -> Db : save new refresh token
-  Tokens --> User : new token pair
+  Tokens -> Db : validate and revoke current token
+  Tokens -> Db : persist rotated refresh-token hash
+  Tokens --> User : new access JWT + refresh token
 end
 
-note over Controller,Tokens
-  Google Login is commented out.
-  Standard registration and sign-in are enabled.
+note over Registration,Db
+  Registration creates an ApplicationUser. There is no required AccountProfile
+  row or organization tariff in this flow.
 end note
 
 @enduml

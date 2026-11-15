@@ -1,44 +1,59 @@
 @startuml payment_sequence
-title opencrm.example.invalid — оплата и активация подписки
+title OpenCRM — оплата и активация подписки
 
 autonumber
 actor "Пользователь" as User
 boundary "OpenCRM.WebApp" as App
-control "YooKassaService" as PaymentService
-entity "YooKassa API" as YooKassa
-control "YooKassaWebhookController" as Webhook
-control "Subscription Service" as Subscription
-database "PostgreSQL" as Db
+control "RoutedPaymentCreationGateway" as Gateway
+database "Основной PostgreSQL OpenCRM" as CrmDb
+queue "RabbitMQ" as Bus
+control "Payments.Service" as PaymentService
+database "PostgreSQL Payments" as PaymentDb
+participant "Настроенный платёжный провайдер" as Provider
+control "SubscriptionPaymentEventProcessor" as Processor
 
-User -> App : выбрать тариф
-App -> Db : создать local payment
-App -> PaymentService : CreatePayment
-PaymentService -> YooKassa : POST payment + idempotency key
-YooKassa --> PaymentService : confirmation URL
-PaymentService --> App : payment response
-App --> User : redirect на оплату
+User -> App : купить тариф
+App -> Gateway : CreateAsync
+Gateway -> CrmDb : транзакция: покупка + команда CreatePayment в outbox
+CrmDb --> Gateway : покупка сохранена
+Gateway --> App : ID ожидающей покупки
+App --> User : подготовка оплаты началась
 
-YooKassa -> Webhook : payment.waiting_for_capture
-Webhook -> PaymentService : VerifyNotification
-PaymentService -> YooKassa : GET payment
-YooKassa --> PaymentService : каноническое состояние
-PaymentService --> Webhook : valid
-Webhook -> PaymentService : CapturePayment
-PaymentService -> YooKassa : capture
+Gateway -> Bus : диспетчер outbox отправляет CreatePayment
+Bus -> PaymentService : CreatePayment
+PaymentService -> PaymentDb : создать операцию провайдера
+PaymentService -> Provider : создать платёж
+Provider --> PaymentService : ссылка на оплату и состояние Pending
+PaymentService -> PaymentDb : сохранить состояние провайдера
+PaymentService --> Bus : PaymentStateChanged(Pending, ConfirmationUrl)
+Bus --> Processor : доставить событие состояния
+Processor -> CrmDb : проверить событие; сохранить Pending и ссылку на оплату
 
-YooKassa -> Webhook : payment.succeeded
-Webhook -> PaymentService : повторная проверка
-PaymentService -> YooKassa : GET payment
-YooKassa --> PaymentService : succeeded
-Webhook -> Db : найти local payment
+User -> App : запросить состояние покупки
+App -> Gateway : GetAsync
+Gateway -> CrmDb : прочитать состояние покупки и ссылку на оплату
+CrmDb --> Gateway : состояние Pending и ссылка на оплату
+Gateway --> App : состояние Pending и confirmation URL
+App --> User : открыть ссылку на оплату
+User -> Provider : подтвердить и оплатить
+Provider --> PaymentService : webhook платежа
+PaymentService -> PaymentDb : сохранить webhook во входящий inbox
+PaymentService -> Provider : проверить текущее состояние платежа
+Provider --> PaymentService : проверенное оплаченное состояние
+PaymentService -> PaymentDb : применить проверенное состояние
+PaymentService --> Bus : PaymentStateChanged(Succeeded)
+Bus --> Processor : доставить событие об оплате
+Processor -> CrmDb : проверить событие; применить состояние транзакционно
 
-alt Уже processing или completed
-  Webhook --> YooKassa : 200 OK
-else Новый успешный платеж
-  Webhook -> Subscription : активировать подписку
-  Subscription -> Db : transaction:\nsubscription + payment + history/audit
-  Db --> Subscription : commit
-  Webhook --> YooKassa : 200 OK
+alt Первая корректная оплата
+  Processor -> CrmDb : выдать подписку один раз; установить AppliedAt
+else Повторное, устаревшее или некорректное событие
+  Processor -> CrmDb : отклонить или записать без повторной выдачи
 end
+
+note over Gateway,PaymentService
+  Это основной путь через микросервис. Routed gateway сохраняет
+  прежний путь оплаты внутри приложения как fallback при выключенном Payments service.
+end note
 
 @enduml

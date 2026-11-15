@@ -37,7 +37,7 @@ OpenCRM ← notifications-opencrm-results ← RabbitMQ
 - PostgreSQL, RabbitMQ, JSON-логи, Docker Compose и CI.
 
 `provider-accepted` означает принятие провайдером, а не подтверждённую доставку получателю.
-`simulated` отдельно обозначает LogOnly. Подтверждения доставки от провайдеров пока не реализованы.
+`simulated` отдельно обозначает LogOnly. При настроенных callback Unisender подписанные события провайдера могут отдельно подтвердить доставку; принятие SMTP само по себе её не подтверждает.
 
 Исходники находятся в `services/notifications` репозитория OpenCRM. Все проекты сервиса также включены в корневой `OpenCRM.sln`. Команды в этом документе выполняются из папки сервиса; `NotificationService.slnx` позволяет собирать и проверять его отдельно. Публикация Worker и миграции его базы остаются независимыми от OpenCRM.
 
@@ -191,8 +191,10 @@ BrandName и список Templates. Добавление клиента не т
 В production автоматические миграции отключены. Отдельный запуск из образа Worker:
 
 ```bash
-docker run --rm --env-file .env образ-worker --migrate
+docker run --rm --env ConnectionStrings__NotificationsDb notification-service-worker --migrate
 ```
+
+Перед этой командой задайте `ConnectionStrings__NotificationsDb` в окружении запуска и используйте собранный вами образ. Имена подстановки из Compose `.env` не заменяют ключи конфигурации .NET Worker.
 
 Этот режим применяет миграции и завершает процесс без запуска consumers и отправки уведомлений.
 Для команд EF с SDK используйте Infrastructure как startup project с design-time фабрикой:

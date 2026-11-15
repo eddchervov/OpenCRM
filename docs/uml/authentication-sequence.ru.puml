@@ -1,47 +1,57 @@
 @startuml authentication_sequence
-title opencrm.example.invalid — регистрация и аутентификация
+title OpenCRM — регистрация и аутентификация
 
 autonumber
 actor "Пользователь" as User
-boundary "Web / API" as UI
-control "AuthController" as Controller
+boundary "Web или API" as Client
+control "AuthController" as WebAuth
+control "AccountRegistrationService" as Registration
 control "ASP.NET Identity" as Identity
 control "AuthTokenService" as Tokens
-database "PostgreSQL" as Db
+control "Политика подтверждения email" as EmailPolicy
+database "Основной PostgreSQL" as Db
+queue "Outbox уведомлений" as Mail
 
-alt Регистрация
-  User -> UI : email, пароль, согласия
-  UI -> Controller : Register
-  Controller -> Identity : CreateAsync
+alt Регистрация через Web
+  User -> Client : email, пароль, обязательное согласие на обработку данных
+  Client -> WebAuth : Register
+  WebAuth -> Registration : CreateAsync
+  Registration -> Identity : создать ApplicationUser
   Identity -> Db : INSERT ApplicationUser
-  Controller -> Db : профиль и базовый тариф
-  Controller --> UI : cookie или JWT
-  UI --> User : вход выполнен
-else Веб-вход
-  User -> UI : email и пароль
-  UI -> Controller : Login
-  Controller -> Identity : PasswordSignInAsync
-  Identity -> Db : проверить пользователя
-  Identity --> Controller : Identity cookie
-  Controller --> User : redirect в кабинет
-else API-вход
-  User -> UI : email и пароль
-  UI -> Tokens : LoginAsync
+  Registration --> WebAuth : аккаунт создан
+  WebAuth -> EmailPolicy : IsRequired
+  alt EmailConfirmation:Required = false (по умолчанию)
+    EmailPolicy --> WebAuth : подтверждение не требуется
+    WebAuth --> Client : регистрация успешна; вход продолжается
+  else Подтверждение email включено
+    EmailPolicy --> WebAuth : требуется подтверждение
+    WebAuth -> Mail : поставить письмо подтверждения в очередь
+    WebAuth --> Client : страница подтверждения
+  end
+else Вход через Web
+  User -> Client : email и пароль
+  Client -> WebAuth : Login
+  WebAuth -> Identity : PasswordSignInAsync
+  Identity -> Db : проверить аккаунт и пароль
+  WebAuth -> EmailPolicy : проверить необязательную политику подтверждения
+  WebAuth --> Client : результат входа / переход к подтверждению
+else Вход через API
+  User -> Client : email и пароль
+  Client -> Tokens : LoginAsync
   Tokens -> Identity : CheckPasswordAsync
-  Identity -> Db : проверить пользователя
-  Tokens -> Db : сохранить sessionId,\nhash refresh secret и expiry
-  Tokens --> User : access JWT + refresh token
-else Обновление JWT
+  Identity -> Db : проверить аккаунт и пароль
+  Tokens -> Db : сохранить хеш refresh-токена и срок действия
+  Tokens --> Client : access JWT + refresh token
+else Обновление API-токена
   User -> Tokens : refresh token
-  Tokens -> Db : проверить session, hash и expiry
-  Tokens -> Db : отозвать старый refresh token
-  Tokens -> Db : сохранить новый refresh token
-  Tokens --> User : новая пара токенов
+  Tokens -> Db : проверить и отозвать текущий токен
+  Tokens -> Db : сохранить хеш нового refresh-токена
+  Tokens --> User : новый access JWT + refresh token
 end
 
-note over Controller,Tokens
-  Google Login отключен комментариями.
-  Обычная регистрация и вход активны.
+note over Registration,Db
+  Регистрация создаёт ApplicationUser. В этом потоке нет обязательной строки
+  AccountProfile или тарифа организации.
 end note
 
 @enduml

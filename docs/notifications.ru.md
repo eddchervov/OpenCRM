@@ -6,7 +6,7 @@
 
 Отдельный NotificationService в `services/notifications` формирует письма из Razor-шаблонов и обращается к провайдерам. Его Worker, БД и образ остаются самостоятельными; обмен идёт через `Notifications.Contracts` и RabbitMQ. Основное приложение не использует SMTP, SMS.ru или ключи Unisender. Модуль проверяется в `OpenCRM.Modules.Notifications.Tests`, сервис доставки — в `Notifications.Tests`.
 
-Оба приложения получают серверные секреты из собственного серверного файла конфигурации окружения, разработка использует отдельные user-secrets. Действующая схема приведена в [описании конфигурации](../configuration/README.ru.md).
+Каждый процесс читает собственную конфигурацию и переменные окружения. В разработке user-secrets применяются только к проектам с `UserSecretsId`. Compose читает `.env` для подстановки переменных; запущенный напрямую процесс .NET не загружает этот файл автоматически. См. [описание конфигурации](../configuration/README.ru.md).
 
 ## Почему база и RabbitMQ нужны одновременно
 
@@ -115,9 +115,9 @@ NotificationService находится в `services/notifications`, его пр�
 
 ~~~powershell
 docker build -f src/Dockerfile -t opencrm .
-dotnet test tests/OpenCRM.Notifications.Tests/OpenCRM.Notifications.Tests.csproj
+dotnet test tests/OpenCRM.Modules.Notifications.Tests/OpenCRM.Modules.Notifications.Tests.csproj
 dotnet test services/notifications/NotificationService.slnx
-docker build -f services/notifications/src/Notifications.Worker/Dockerfile -t notification-service-worker services/notifications
+docker build -f services/notifications/src/Notifications.Worker/Dockerfile -t notification-service-worker .
 ~~~
 
 Тесты запускают отдельные PostgreSQL 15 и RabbitMQ в Docker. Сквозной тест использует настоящий Worker, Razor, оба обработчика OpenCRM и HTTP-вебхук; LogOnly исключает реальные письма. Production-база и очереди не используются.

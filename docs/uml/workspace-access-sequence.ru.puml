@@ -1,42 +1,58 @@
 @startuml workspace_access_sequence
-title opencrm.example.invalid — проверка доступа к рабочему пространству
+title OpenCRM — доступ к рабочему пространству организации
 
 autonumber
-actor "Сотрудник" as Employee
-boundary "Workspace API" as Api
+actor "Участник организации" as User
+boundary "API рабочего пространства" as Api
+control "WorkspaceAccessService" as Access
 control "OrganizationPermissionService" as Permissions
-control "OrganizationSubscriptionService" as Subscription
-control "Business Service" as Service
-database "PostgreSQL" as Db
+control "OrganizationEntitlementReader" as Entitlements
+control "Сервис модуля CRM" as Module
+database "Основной PostgreSQL" as Db
 
-Employee -> Api : выполнить операцию
-Api -> Permissions : HasPermission(userId, organizationId, permission)
-Permissions -> Db : организация и membership
-Db --> Permissions : roleCode
-Permissions -> Db : role permission overrides
-Db --> Permissions : overrides
-Permissions -> Permissions : defaults роли + overrides
-
-alt Нет membership или permission
-  Permissions --> Api : denied
-  Api --> Employee : 403 Forbidden
-else Permission разрешен
-  Permissions --> Api : allowed
-  Api -> Subscription : CheckWorkspaceAccess
-  Subscription -> Db : активная подписка и plan features
-  Db --> Subscription : access snapshot
-
-  alt Тариф разрешает изменение
-    Subscription --> Api : write enabled
-    Api -> Service : выполнить use case
-    Service -> Db : transaction
-    Db --> Service : result
-    Service --> Api : DTO
-    Api --> Employee : 200 / 201
-  else Тариф истек или функция выключена
-    Subscription --> Api : read-only / feature denied
-    Api --> Employee : ограничение тарифа
+User -> Api : запрос операции рабочего пространства
+Api -> Access : проверить доступ к организации
+Access -> Db : загрузить активную организацию и членство
+Db --> Access : roleCode / членства нет
+alt Организация отсутствует или членства нет
+  Access --> Api : отказ
+  Api --> User : 403 / не найдено
+else Членство есть
+  Access -> Permissions : определить права роли и явные переопределения
+  Permissions -> Db : загрузить права организации
+  Db --> Permissions : разрешено / запрещено
+  alt Нет требуемого разрешения
+    Permissions --> Access : отказ
+    Access --> Api : отказ
+    Api --> User : 403 Forbidden
+  else Разрешение выдано
+    Permissions --> Access : разрешено
+    Access -> Entitlements : определить права рабочего пространства
+    alt Коммерческий режим выключен (по умолчанию)
+      Entitlements -> Entitlements : не запрашивать тариф подписки
+      Entitlements --> Access : базовые возможности пространства
+    else Коммерческий режим включён
+      Entitlements -> Db : загрузить подписку, тариф, лимиты и возможности
+      Db --> Entitlements : коммерческие права
+      Entitlements --> Access : доступ по тарифу
+    end
+    alt Запись или запрошенная возможность разрешена
+      Access --> Api : доступ подтверждён
+      Api -> Module : выполнить операцию
+      Module -> Db : сохранить изменения CRM
+      Db --> Module : результат сохранён
+      Module --> Api : DTO результата
+      Api --> User : 200 / 201
+    else Только чтение или ограничение функции/лимита
+      Access --> Api : отказ в операции
+      Api --> User : ограничение доступа
+    end
   end
 end
+
+note over Access,Entitlements
+  Членство и права ролей обязательны всегда.
+  Коммерческий режим добавляет ограничения тарифа, но не заменяет авторизацию.
+end note
 
 @enduml

@@ -1,8 +1,8 @@
-# Voice pilot commands for opencrm.example.invalid
+# Voice assistant commands
 
 **English** | [Русский](voice-ai-actions.ru.md)
 
-The complete catalog of 75 executable commands opens through “Доступные команды” (Available commands) in the `/assistant/{organizationId}` dialog (local entry: `/ai-pilot`). Use one command per phrase. The assistant first reads the object through the ordinary API and shows the proposed changes; writes occur after confirmation. Deletion and cancellation require an additional checkbox. Select a specific work order when several match; specify the line number when work items share a name.
+The complete catalog of 75 executable commands opens through “Доступные команды” (Available commands) in the CRM workspace's `#assistant` section. Use one command per phrase. The assistant first reads the object through the ordinary API and shows the proposed changes; writes occur after confirmation. Deletion and cancellation require an additional checkbox. Select a specific work order when several match; specify the line number when work items share a name.
 
 | Area | Available actions |
 | --- | --- |

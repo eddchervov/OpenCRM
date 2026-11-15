@@ -2,6 +2,9 @@
 
 **English** | [Русский](admin-finance.ru.md)
 
+This guide describes the optional commercial module. It is available only when `PlatformPolicy:Commercial:Enabled=true`; the setting defaults to `false`. A deployment must configure its payment provider, notification service, Hangfire, and private file storage before using the corresponding workflows.
+
+
 Before purchasing or renewing a workspace plan, the buyer states whether they are acting as an individual or on behalf of an organization/sole proprietor. For an organization or sole proprietor, the legal name or sole proprietor's full name and a 10- or 12-digit TIN with a valid checksum are required. The selected details are saved in the payment record when it is created. The workspace name alone does not determine the buyer type. Legacy payments retain the `unknown` type.
 
 The admin section “Finance” → “Payments and subscriptions” → “Purchases and self-employed receipts” lists confirmed purchases without limiting results to the first 300 payments. Cancelled payments remain in payment history but are not counted as purchases, even if an old, incorrect payment date was stored. The list shows the buyer, TIN, user, plan, amount, payment date, and payment status. Records can be searched and filtered; the interface shows payment count, total amount, and the number of paid receipts not marked as issued. The 30-day total and payment count use the confirmed payment date; the amount is net of refunds. Cancelled attempts are not revenue.

@@ -23,7 +23,7 @@ OpenCRM сочетает модульное CRM-ядро и отдельные �
 
 ## Уведомления
 
-Исходники находятся в [`services/notifications`](../services/notifications), решение — [`NotificationService.slnx`](../services/notifications/NotificationService.slnx). Сервис содержит API и Worker. Конкретные каналы и внешние провайдеры включаются собственной конфигурацией.
+Исходники находятся в [`services/notifications`](../services/notifications), решение — [`NotificationService.slnx`](../services/notifications/NotificationService.slnx). В сервисе один исполняемый проект `Notifications.Worker`: обработчики очередей, health endpoints и настроенные callback провайдеров. HTTP API отправки уведомлений отсутствует. Конкретные каналы и внешние провайдеры включаются собственной конфигурацией.
 
 В базовой CRM `Notifications:Transport=Disabled`. Чтобы подключить реальную доставку, подготовьте сервис, RabbitMQ, его БД и параметры нужных каналов, затем задайте WebApp транспорт `RabbitMq` и согласованные параметры брокера. Отсутствие SMTP не блокирует парольную регистрацию и внутренние обращения поддержки.
 

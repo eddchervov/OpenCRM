@@ -55,7 +55,7 @@
 - [Модуль аккаунтов: спецификация переноса](accounts-module/spec.ru.md).
 - [Административный дашборд CRM](admin-dashboard-analytics.ru.md).
 - [Оплаты подписок и чеки НПД](admin-finance.ru.md).
-- [Организации в desktop-админке opencrm.example.invalid](admin-organizations.ru.md).
+- [Организации в desktop-админке OpenCRM](admin-organizations.ru.md).
 - [Управление подписками в админках OpenCRM](admin-subscriptions.ru.md).
 - [Серверный ИИ-помощник OpenCRM](ai-assistant.ru.md).
 - [Карточка клиента](client-card.ru.md).
@@ -63,7 +63,7 @@
 - [Общая оболочка CRM](crm-workspace-shell.ru.md).
 - [Приёмка и фотографии до / после](detailing-intake.ru.md).
 - [Рабочий день организации](detailing-workday.ru.md).
-- [Обязательное подтверждение email](email-confirmation.ru.md).
+- [Опциональное подтверждение email](email-confirmation.ru.md).
 - [Смены и учёт сотрудников в OpenCRM](employee-shifts-design.ru.md).
 - [Реализация рабочего места исполнителя и контроля администратора](employee-workplace-implementation.ru.md).
 - [Рабочее место исполнителя](employee-workplace.ru.md).
@@ -76,4 +76,4 @@
 - [Общий простой режим детейлинга и СТО](simple-maintenance-workflow.ru.md).
 - [Развитие СТО и автопарка](sto-fleet-development.ru.md).
 - [Команда и доступ в организацию](team-and-access-design.ru.md).
-- [Команды голосового пилота opencrm.example.invalid](voice-ai-actions.ru.md).
+- [Команды голосового помощника](voice-ai-actions.ru.md).

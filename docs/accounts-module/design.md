@@ -4,7 +4,7 @@
 
 > Historical document for a completed extraction. Old stages, commands, and intermediate statuses are not current assignments. Open work is listed in the [index](../README.md); current boundaries are described in the current architecture.
 
-Model clarification: an account has no mode; personal vehicles are available to everyone, while type and permissions belong to the selected organization. Checks and automatic writes of `AccountMode` have been removed from user workflows. Legacy profile fields and the v1 API form remain for compatibility and do not determine access; obsolete profile PUT and mode-selection POST requests no longer change state. The organization type catalog remains active. The design below records the original module extraction, not the former separation of users into modes.
+Current model: accounts have no mode; personal vehicles are available to everyone, and organization type and permissions belong to the selected organization. Legacy account profiles and their fields were removed, rather than retained as a compatibility model; see [profile removal](profile-removal.md). The organization type catalog remains active. The design below records the historical extraction and must not be used as the current schema/API contract.
 
 Decision for extracting `OpenCRM.Modules.Accounts`. It follows the specification (`spec.md`): the module owns its implementation and registers its own services; contracts remain shared. There is exactly one separate architectural choice here: replacing the static registration dependency on notifications, described in section 3.
 

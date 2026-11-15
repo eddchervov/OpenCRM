@@ -108,3 +108,9 @@ Describe the problem and resulting behavior. List the checks you ran and what re
 Preserve encoding and line endings. Write comments in newly added code in Russian. Do not include secrets, settings from your own running installation, build output, or temporary reports in your changes.
 
 Retain the [license](LICENSE), copyright notice, and visible OpenCRM attribution to the author [eddchervov](https://github.com/eddchervov).
+
+With Python 3 installed, validate local documentation links, heading anchors, language pairs, and screenshot paths from the repository root:
+
+```powershell
+python scripts/check-documentation.py
+```

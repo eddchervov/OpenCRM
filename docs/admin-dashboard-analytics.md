@@ -2,10 +2,8 @@
 
 **English** | [Русский](admin-dashboard-analytics.ru.md)
 
-The dashboard shows CRM data: users, organizations, maintenance records, payments, and feature usage. Access to financial metrics is controlled by administrative permissions.
+The OpenCRM administration dashboard reports on CRM activity: registrations, organizations, maintenance records, and (when commercial mode is enabled) payments. It does not include analytics for a public website, advertising attribution, search-engine services, or third-party tracking providers. Installations can add their own site analytics outside the OpenCRM core.
 
-The reporting period and data refresh are selected in the interface. A server-side cache serves repeated requests; after server logic changes, metrics must be recalculated consistently with the selected period.
+Dashboard access requires `Admin.Dashboard.View` or the `System` role. The desktop dashboard supports Today, 7 days, and Month periods, automatic or manual refresh, and a separately loaded overall statistics view. Payment data is available only to administrators with `Admin.Billing.View` or the `System` role. The web dashboard applies the same server-side permission checks.
 
-Public website analytics, advertising sources, and connections to external tracking services are not part of the platform. An application built on OpenCRM implements those itself.
-
-The implementation is in `src/OpenCRM.Infrastructure.Admin/AdminDashboardService.cs`; the API is in the web application's administration controllers. Changes to the metrics must be coordinated across the web and desktop administration interfaces and their tests.
+The server API is `GET /api/v1/admin/dashboard`; implementation is in `src/OpenCRM.Infrastructure.Admin/AdminDashboardService.cs` and `src/OpenCRM.WebApp/Controllers/Admin/Api/DashboardApiController.cs`. Coordinate changes to the response DTO with both administration clients.

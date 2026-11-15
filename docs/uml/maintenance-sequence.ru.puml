@@ -1,34 +1,42 @@
 @startuml maintenance_sequence
-title opencrm.example.invalid — создание обслуживания
+title OpenCRM — создание записи об обслуживании
 
 autonumber
-actor "Сотрудник" as Employee
-boundary "Maintenance / Workspace API" as Api
-control "Permission Service" as Permission
-control "Subscription Service" as Subscription
-control "Maintenance Service" as Maintenance
-control "Audit Service" as Audit
-database "PostgreSQL" as Db
+actor "Участник организации" as User
+boundary "API рабочего пространства" as Api
+control "MaintenanceCreateService" as Create
+control "MaintenanceAccess" as Access
+control "WorkspaceAccessService" as Workspace
+control "OrganizationEntitlementReader" as Entitlements
+database "Основной PostgreSQL" as Db
 
-Employee -> Api : данные обслуживания
-Api -> Permission : maintenance.edit
-Permission -> Db : membership, role, overrides
-Db --> Permission : access
-Permission --> Api : allowed
+User -> Api : создать обслуживание и строки работ
+Api -> Create : CreateAsync
+Create -> Access : EnsureCanWriteWorkspaceAsync
+Access -> Workspace : проверить членство и разрешение
+Workspace -> Db : организация, роль участника, переопределения прав
+Db --> Workspace : активная организация и роль
+Workspace -> Entitlements : определить возможности пространства
+alt Коммерческий режим выключен (по умолчанию)
+  Entitlements -> Entitlements : применить базовые настройки; не искать тариф
+else Коммерческий режим включён
+  Entitlements -> Db : загрузить активную подписку и возможности тарифа
+  Db --> Entitlements : снимок подписки
+end
+Entitlements --> Workspace : доступные возможности
+Workspace --> Access : запись разрешена
+Access --> Create : доступ подтверждён
 
-Api -> Subscription : проверить write access и features
-Subscription -> Db : active organization subscription
-Db --> Subscription : plan snapshot
-Subscription --> Api : write enabled
+Create -> Create : преобразовать DTO строк в MaintenanceDetail
+Create -> Db : INSERT Maintenance и строки MaintenanceDetail
+Db --> Create : сохранённые идентификаторы
+Create -> Db : сохранить историю и связанные данные
+Create --> Api : ID обслуживания
+Api --> User : создано
 
-Api -> Maintenance : CreateAsync
-Maintenance -> Db : проверить vehicle и organization
-Maintenance -> Db : INSERT Maintenance
-Maintenance -> Db : история, дефекты,\nсчетчики и материалы
-Maintenance -> Audit : добавить событие
-Audit -> Db : INSERT OrganizationAuditEvent
-Db --> Maintenance : commit
-Maintenance --> Api : Maintenance DTO
-Api --> Employee : 201 Created
+note over Workspace,Entitlements
+  Членство, роль и разрешение обязательны в обоих режимах.
+  Коммерческий режим добавляет проверки возможностей и квот тарифа.
+end note
 
 @enduml

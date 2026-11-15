@@ -2,6 +2,8 @@
 
 **English** | [Русский](inquiries-design.ru.md)
 
+Subscription and read-only restrictions in this design apply when `PlatformPolicy:Commercial:Enabled=true`. The default base mode does not require a paid plan; membership and action permissions remain mandatory.
+
 This document describes handling inquiries before an appointment is created. API contracts, data storage, and migration constraints are in the [implementation document](inquiries-implementation.md).
 
 ## User workflow

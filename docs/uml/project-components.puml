@@ -1,63 +1,44 @@
 @startuml project_components
-title opencrm.example.invalid — project dependencies
+title OpenCRM — application project layers
 
 top to bottom direction
 skinparam componentStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
-component "OpenCRM.WebApp" as Web
-component "Infrastructure.Auth" as Auth
-component "Infrastructure.Admin" as Admin
-component "Infrastructure.BL" as BL
-component "Infrastructure.Payments" as Payments
-component "Infrastructure.FileStorage" as Files
-component "Infrastructure.Migrations" as Migrations
-component "Infrastructure.Data" as Data
-component "Services.Interfaces" as Contracts
-component "Domain.Interfaces" as DomainInterfaces
-component "Domain" as Domain
-component "Helpers" as Helpers
+component "OpenCRM.WebApp\ncomposition root / HTTP host" as Web
+component "OpenCRM.Modules.*\napplication modules" as Modules
+component "Infrastructure.Auth / Admin / Payments / FileStorage" as Infrastructure
+component "Services.Interfaces\nshared service contracts" as ServiceContracts
+component "Modules.*.Contracts\nmodule service contracts and DTOs" as ModuleContracts
+component "Infrastructure.Data\nEF Core / Identity" as Data
+component "Domain.Interfaces\nrepository and unit-of-work abstractions" as DomainInterfaces
+component "Domain\nentities and rules" as Domain
 
-Web --> Auth
-Web --> Admin
-Web --> BL
-Web --> Payments
-Web --> Files
-Web --> Data
-Web --> Migrations
-Web --> Helpers
-
-Auth --> Contracts
-Auth --> Domain
-Admin --> Contracts
-Admin --> Data
-Admin --> Domain
-BL --> Contracts
-BL --> Data
-BL --> DomainInterfaces
-BL --> Domain
-BL --> Helpers
-Payments --> Contracts
-Payments --> Data
-Payments --> Domain
-Files --> Contracts
-Files --> Data
-Files --> DomainInterfaces
-Files --> Domain
-Files --> Helpers
-Migrations --> Data
+Web --> Infrastructure
+Web --> Modules
+Modules --> ServiceContracts
+Modules --> ModuleContracts
+Modules --> Data
+Modules --> Domain
+Infrastructure --> ServiceContracts
+Infrastructure --> Data
+Infrastructure --> Domain
 Data --> DomainInterfaces
 Data --> Domain
-Contracts --> DomainInterfaces
-Contracts --> Domain
-Contracts -[#red,dashed]-> Data : architectural debt
+ServiceContracts --> ModuleContracts
+ServiceContracts --> Domain
+ModuleContracts --> Domain
 DomainInterfaces --> Domain
 
-note right of Contracts
-  The contracts layer depends on EF/Data.
-  Infrastructure types should be moved
-  out of Services.Interfaces.
+note right of ServiceContracts
+  Services.Interfaces references Domain and module contracts.
+  It does not reference Infrastructure.Data or EF Core.
+end note
+
+note bottom of Web
+  The WebApp wires the modules and infrastructure into one host.
+  Payments.Service and Notifications.Worker are separate service projects.
 end note
 
 @enduml

@@ -1,8 +1,8 @@
-# Connect opencrm.example.invalid to Payments
+# Connecting OpenCRM to Payments
 
 **English** | [Русский](payments-service-integration.ru.md)
 
-One-off purchases and renewals of personal and organization subscriptions for opencrm.example.invalid are integrated. Studio work order acquiring, automatic payments, and entitlement changes after refunds are outside this scope. A refund is recorded as a monetary fact; an administrator changes already granted access manually.
+One-off purchases and renewals of personal and organization subscriptions for OpenCRM are integrated. Studio work order acquiring, automatic payments, and entitlement changes after refunds are outside this scope. A refund is recorded as a monetary fact; an administrator changes already granted access manually.
 
 ## Source of state
 
@@ -22,9 +22,9 @@ PaymentsService:Enabled=false by default. Supply these settings through a protec
 | --- | --- |
 | PaymentsService__Enabled=true | Connect the separate bus, consumer, dispatch, and existing purchase recovery. |
 | PaymentsService__AcceptNewPurchases=false | Stop new purchases while retaining Enabled=true: old purchases, events, and access grants continue processing. |
-| PaymentsService__MerchantAccountId | Your configured test shop ID; matches Payments:MerchantAccountId and is fixed in the command. |
-| PaymentsService__ExpectedIsTest=true | Required test mode for the current implementation. |
-| PaymentsService__BaseUrl | Private Payments URL; HTTPS, with HTTP allowed only for loopback. |
+| PaymentsService__MerchantAccountId | Your selected test or live shop ID; matches Payments:MerchantAccountId and is fixed in the command. |
+| PaymentsService__ExpectedIsTest | Must match the provider mode: `true` for `YooKassaTest`, `false` for `YooKassaLive`. Default: `true`. |
+| PaymentsService__BaseUrl | Private Payments URL; HTTPS, or HTTP for loopback/an explicitly configured exact `InternalHttpHost`. |
 | PaymentsService__ServiceKey | Secret shared with Payments:ServiceKey, at least 32 characters. |
 | PaymentsService__Host / Port / VirtualHost | Separate RabbitMQ vhost, default payments; not /. |
 | PaymentsService__Username / Password | Account restricted to the required financial transport. |
@@ -34,7 +34,7 @@ PaymentsService:Enabled=false by default. Supply these settings through a protec
 
 Payments uses the same base URLs through Payments:AllowedReturnUrls. The command adds only ?purchaseId={ID:D}. Do not allowlist arbitrary client URLs. ServiceKey is not a shop key; YooKassa keys reside only in Payments. Do not reuse the old gateway's live shop/secret to enable the new path automatically.
 
-The current Payments implementation supports Disabled and YooKassaTest. Disabled stores a rejection receipt and payments_disabled result without an executable operation. A migration puts previously created operations lacking a fixed mode into ManualReview. Enabling a mode or changing merchant must not revive unknown old intents. This version intentionally does not support real charging mode.
+Payments supports `Disabled`, `YooKassaTest`, and `YooKassaLive`. `Disabled` stores a rejection receipt and `payments_disabled` result without an executable operation. Active modes require consistent merchant ID, test/live flag, and secret-key prefix. Previously created operations without a fixed mode are migrated to `ManualReview`; enabling a mode or changing merchant must not revive unknown old intents. Live mode is available in code but requires your own provider configuration and operational acceptance.
 
 CreatePayment/RequestRefund use schema 2: immutable MerchantAccountId, IssuedAt, and NotAfter. The deadline for a new POST is fixed at command creation and limited to 23 hours; restoring an old backup does not restart it. Old operations without PostBefore allow only reconciliation of a known object and block new charges. Order/operation IDs and provider keys are reproduced from the original command; retries after database restoration use the same parameters. Timeouts cover response headers and body. Notifications and monetary events remain schema 1.
 
@@ -42,7 +42,7 @@ CreatePayment/RequestRefund use schema 2: immutable MerchantAccountId, IssuedAt,
 
 A full refund before access is granted closes the purchase without activation. Any partial refund before granting blocks automatic activation and requires review. A full or partial refund after granting does not shorten the subscription; the purchase receives refund_requires_access_review. Failed or unknown refunds persist as separate events with CommandId, OperationId, Status, and a safe error code, without replacing confirmed monetary amounts.
 
-OpenCRM receives refund confirmations and errors; there is no admin command for sending money back in this part of the integration. RequestRefund remains a protected internal Payments contract. A manual “refunded” marker must not be presented as a provider-completed refund. A new financial command requires a dedicated interface with authorization and amount confirmation.
+OpenCRM receives refund confirmations and failures. Authorized administrators can request a refund through the protected actions described in [Administrator actions](#administrator-actions); `RequestRefund` is dispatched through the financial outbox. A manually entered status is not a provider-confirmed refund. Authorization, amount confirmation, idempotency, and provider reconciliation remain mandatory.
 
 ## Journal and recovery
 
@@ -81,21 +81,28 @@ Before production integration, validate external HTTPS webhook/network access, r
 
 ## Validation with the real YooKassa test API
 
-Store the shop secret locally in a protected file and supply it only to the microservice process; never write it into source, manifests, or logs. Explicitly enable the test environment mode with PAYMENTS_BROWSER_PROVIDER=YooKassaTest; it does not replace the normal adapter with a fake. Standard YooKassaTest configuration validates the shop/key; responses with test=false are rejected.
+Keep the test shop credentials in your own secret store and supply them only to the test process. For a separately deployed service, configure `Payments__Mode=YooKassaTest`, its test merchant ID and `test_` secret; provider responses with `test=false` are rejected.
 
-Scenarios to validate (without external API or real money in the automated suite):
+The optional [manual browser harness](../tests/OpenCRM.Infrastructure.Tests/Integration/PaymentsBrowserHarnessTests.cs) starts a temporary Payments service, PostgreSQL, and RabbitMQ. It requires Docker and a local HTTPS certificate. It does not start WebApp or automatically complete the browser acceptance scenarios.
 
-- Authentication against the official API.
-- Pay for a test plan using a test wallet: YooKassa returns succeeded/test=true and OpenCRM applies one access period. Automatic charging is not enabled.
-- Partial refund followed by refund of the remainder through the microservice; subscription duration is not shortened and manual entitlement review is required.
-- Repeating the original POST with its original body and Idempotence-Key before PostBefore must return the same payment ID without creating another payment object.
-- An insufficient_funds test card rejects the attempt; the monetary object remains pending with payment retry available, and no access is granted.
+| Harness environment variable | Meaning |
+| --- | --- |
+| `PAYMENTS_BROWSER_HARNESS=1` | Explicitly enables this manual test; otherwise it is skipped. |
+| `PAYMENTS_BROWSER_PROVIDER=YooKassaTest` | Selects the real test API; the default is the controlled `Fake` provider. This is not a deployed service setting. |
+| `PAYMENTS_BROWSER_SHOP_ID` | Numeric ID of your test shop. |
+| `PAYMENTS_BROWSER_TEST_KEY` | Its `test_` secret, supplied through your protected process environment, never committed. |
+| `PAYMENTS_BROWSER_MAIN_CONNECTION` | Optional connection string to a disposable main CRM database. When supplied, the harness seeds test scenario data into it. Never target a working installation. |
+| `PAYMENTS_BROWSER_ARTIFACTS` | Optional private output directory; defaults to ignored `artifacts/payments-browser-qa`. Its temporary configuration contains local service credentials. |
 
-External webhook delivery is checked separately: local URLs are not exposed on the internet. Live mode is not enabled.
+After setting these variables in the test process environment, run from the repository root:
 
-Repeated local runs use a temporary environment with a YooKassa test shop: the payment service and browser checks use a separate copy of the local database; the website's original database is not replaced. Pass the shop secret through a protected key file; do not save values in the repository.
+```text
+dotnet test tests/OpenCRM.Infrastructure.Tests/OpenCRM.Infrastructure.Tests.csproj --filter FullyQualifiedName~PaymentsBrowserHarnessTests
+```
 
-This environment is temporary: back up its separate payment service database before shutdown if monetary facts must be retained.
+The service listens at `https://localhost:7245`; the harness assumes the separately started test WebApp returns to `https://localhost:7244/payment/complete`. It waits for an operator-created `stop` file in the artifact directory or ends after 60 minutes. Its containers are temporary and disposed on shutdown. Retain any required payment facts before stopping it.
+
+Operator acceptance with a real test shop must cover authentication, a successful test payment and single entitlement grant, partial/full refunds and manual access review, a repeated original idempotent command, and a rejected test-card attempt. These checks contact the external test API without charging real money; automated suites use controlled providers. External webhook delivery, register reconciliation, and backup recovery require separate acceptance. Local callback URLs are not publicly reachable, and this harness cannot enable live mode.
 
 ## Payment record in administration
 
@@ -116,16 +123,13 @@ Migrations `20261025134829_AddSubscriptionPaymentAdminActions` and `202610251355
 
 ## Server setup
 
-New subscription purchases are routed to Payments (`YooKassaLive`, `IsTest=false`, `Enabled=true`, `AcceptNewPurchases=true`). Live shop IDs/keys remain in private configuration and are never printed or copied into source. There are no old real payments; previous accounting data is not deleted and monetary history is not migrated. The previous public `/api/webhook/yookassa` address is routed through an exact Nginx location to the microservice inbox. There is no other public entry to the microservice or its internal APIs.
+The base installation keeps commercial mode and the payment transport disabled. To sell platform subscriptions, configure your own plans, enable `PlatformPolicy:Commercial:Enabled`, and connect Payments separately. Work-order payment tracking does not require this integration.
 
-Deployment uses its own `payments` database, a nonsuperuser PostgreSQL role, a `payments` vhost, and separate broker accounts for the website and microservice. Arrange Compose and secrets like notifications: a separate compose file, an `.env` link into a protected configuration directory, and mode 600 permissions. Preserve shared PostgreSQL/RabbitMQ, the notification container, Data Protection keys, and other applications.
+1. Provision a separate service database with a nonsuperuser role, a private RabbitMQ vhost, and restricted service accounts. Supply secrets through protected configuration outside the repository. Back up both application databases and preserve Data Protection keys before upgrades.
+2. Start with `YooKassaTest`. Match the merchant ID, `Payments:IsTest`, and OpenCRM's `PaymentsService:ExpectedIsTest`. Live mode requires `YooKassaLive`, `IsTest=false`, a matching live key, and `ExpectedIsTest=false`; changing one flag alone is insufficient.
+3. Keep the internal Payments API private. Use HTTPS or explicitly allow only the exact internal hostname through `PaymentsService:InternalHttpHost`; require the shared service key. Expose only the necessary provider callback, `/webhooks/yookassa`, through your own HTTPS proxy. Do not reuse a previous installation's routes or network topology without checking them.
+4. Apply both applications' migrations and start their consumers before accepting purchases. Validate readiness, broker permissions, command/event delivery, and recovery after a service interruption. Use `AcceptNewPurchases=false` to stop new purchases while retaining processing of already accepted operations.
+5. Arrange your own log retention, readiness checks, error/skipped-queue alerts, unknown-operation and reconciliation-delay monitoring, and operator notifications. No installation-specific monitoring script or schedule is supplied by OpenCRM.
+6. Complete test-shop payment/refund, duplicate-message, access-grant, and backup-recovery acceptance before enabling live sales. Provider credentials, public TLS/DNS, and outbound provider access must be verified from the service environment. Readiness alone does not prove monetary processing.
 
-An explicit live mode, test/live consistency checks on all monetary paths, and a separate HTTP allowance for the exact internal hostname are included. Successful-payment reconciliation is bounded: every 15 minutes during the first day after initial confirmation, daily until 30 days, and weekly afterward; fully refunded and canceled payments are no longer scanned. Unknown operations recover through their own queue. Migration `20261025190000_RecordVerifiedPaymentSuccessTime` stores confirmation time; Down is forbidden when it is populated.
-
-The private API returns 401 without a key and 404 for a missing purchase with a key; external access returns 404. Both financial consumers must be connected and queues empty. With sales closed and zero intents, stopping the microservice makes the webhook return an unsuccessful response; after recovery, a syntactically invalid signal is rejected with 400.
-
-`check-opencrm-payments.py` is installed to run every two minutes, checking readiness, consumers, error/skipped queues, manual review, unknown operations, reconciliation delays, and webhooks. State is saved in a health-check file and changes go to the system journal with the `opencrm-payments` tag. This is local technical monitoring, not operator notification delivery. Monetary audit remains in the database; Docker JSON logs rotate.
-
-Retain backups and rollback images until the installed version is accepted; after the first microservice purchase, rollback must not disable recovery.
-
-Additionally, validate DNS and TLS access to the YooKassa API from the running container's network namespace: reading settings confirms the expected live shop, test=false, and enabled; no monetary operation is created.
+Retain recovery capability for all accepted purchases, including late refunds. Do not discard monetary history, restore one database without reconciling its counterpart, or automatically roll back an active financial database. Backup retention and release acceptance belong to the operator of each installation.

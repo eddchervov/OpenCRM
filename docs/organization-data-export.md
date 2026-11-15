@@ -47,7 +47,7 @@ When idle, the worker performs only a lightweight database check every 15 second
 
 Completed ZIPs require a **separate** `S3:PrivateBucketName` (`OPENCRM_S3__PrivateBucketName`). An empty name or one matching the regular bucket is rejected before a job is queued. Regular media continues to use the existing bucket. Archive keys and S3 URLs are never returned to the client; downloads go through the API, which rechecks ownership.
 
-Before deployment, following the [deployment instructions](README.md):
+Before enabling export in your installation:
 
 1. Prepare a separate private bucket and application access for put/get/delete. Add the private-bucket setting to protected configuration and explicitly pass the variable into OpenCRM Compose; changing `.env` alone is insufficient. Deny anonymous reads and listing in the bucket policy; a random GUID and private ACL alone do not guarantee this.
 2. Test an actual anonymous GET for an exact test key: access must be denied, including through an external CDN/domain. A local S3 mock does not prove the production access policy.

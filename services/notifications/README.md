@@ -31,7 +31,7 @@ Command acceptance and delivery use different handlers in the same process. The 
 - LogOnly by default: no real emails or SMS are sent.
 - PostgreSQL, RabbitMQ, JSON logs, Docker Compose, and CI.
 
-`provider-accepted` means acceptance by a provider, not confirmed recipient delivery. `simulated` separately indicates LogOnly. Provider delivery acknowledgments are not yet implemented.
+`provider-accepted` means acceptance by a provider, not confirmed recipient delivery. `simulated` separately indicates LogOnly. With configured Unisender callbacks, signed provider events can report delivery separately; SMTP acceptance alone does not confirm delivery.
 
 Sources reside in `services/notifications` in the OpenCRM repository. All service projects are also included in the root `OpenCRM.sln`. Commands in this document run from the service directory; `NotificationService.slnx` allows a separate build and test run. Worker deployment and its database migrations remain independent of OpenCRM.
 
@@ -122,8 +122,10 @@ Tables and EF history use the `notifications` schema. Migration 20260909054007_V
 Automatic migrations are disabled in production. Run them separately from the Worker image:
 
 ```bash
-docker run --rm --env-file .env образ-worker --migrate
+docker run --rm --env ConnectionStrings__NotificationsDb notification-service-worker --migrate
 ```
+
+Export `ConnectionStrings__NotificationsDb` in the calling environment before this command and use the image you built. Compose `.env` substitution names are not a replacement for the Worker's .NET configuration keys.
 
 This mode applies migrations and exits without starting consumers or sending notifications. For EF commands with the SDK, use Infrastructure as the startup project with its design-time factory:
 

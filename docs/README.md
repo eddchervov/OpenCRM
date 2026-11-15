@@ -63,7 +63,7 @@ Restart the processes that use the settings after changing them.
 - [Shared CRM Shell](crm-workspace-shell.md).
 - [Vehicle Intake and Before/After Photos](detailing-intake.md).
 - [Organization Workday](detailing-workday.md).
-- [Required email confirmation](email-confirmation.md).
+- [Optional email confirmation](email-confirmation.md).
 - [Employee Shifts and Time Tracking in OpenCRM](employee-shifts-design.md).
 - [Implementation: Employee Workspace and Administrator Oversight](employee-workplace-implementation.md).
 - [Employee Workspace](employee-workplace.md).
@@ -76,4 +76,4 @@ Restart the processes that use the settings after changing them.
 - [Shared simplified Detailing and Service Station workflow](simple-maintenance-workflow.md).
 - [Service Station and Fleet development](sto-fleet-development.md).
 - [Organization Team and Access](team-and-access-design.md).
-- [Voice pilot commands for opencrm.example.invalid](voice-ai-actions.md).
+- [Voice assistant commands](voice-ai-actions.md).

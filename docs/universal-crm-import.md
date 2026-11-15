@@ -99,7 +99,7 @@ Packages and logs are not automatically deleted, preserving continuation and pro
 
 ## Access and migrations
 
-The base wizard requires profile-management, customer/vehicle view and creation, and relationship-management permissions, plus the relevant subscription modules.
+The base wizard requires profile-management, customer/vehicle view and creation, and relationship-management permissions, plus the relevant subscription modules only when `PlatformPolicy:Commercial:Enabled=true`. In the default base mode, no paid plan is required; membership and permissions are still enforced.
 Applying orders requires order view/create permission and the orders module; payments require finance view/manage permissions and the finance module.
 An author can read and prepare their own file with base access. Another user's package may contain financial information not yet categorized, so viewing or changing it additionally requires full order and finance access.
 Every route is scoped to the selected organization; the action author comes from the current authenticated account. Write HTTP requests are protected by antiforgery.

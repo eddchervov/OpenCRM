@@ -6,7 +6,7 @@ Within the main application, `OpenCRM.Modules.Notifications` owns emails, websit
 
 The separate NotificationService in `services/notifications` renders Razor emails and calls providers. Its Worker, database, and image remain independent; communication uses `Notifications.Contracts` and RabbitMQ. The main application does not use SMTP, SMS.ru, or Unisender keys. The module is tested in `OpenCRM.Modules.Notifications.Tests`, and the delivery service in `Notifications.Tests`.
 
-Both applications obtain server secrets from their own server environment configuration; development uses separate user-secrets. See the [configuration description](../configuration/README.md) for the current arrangement.
+Each process reads its own configuration and environment variables. Development user-secrets apply only to projects configured with a `UserSecretsId`. Compose reads `.env` for variable substitution; a directly started .NET process does not automatically load that file. See the [configuration description](../configuration/README.md).
 
 ## Why both a database and RabbitMQ are needed
 
@@ -115,9 +115,9 @@ NotificationService resides in `services/notifications`; its projects are includ
 
 ~~~powershell
 docker build -f src/Dockerfile -t opencrm .
-dotnet test tests/OpenCRM.Notifications.Tests/OpenCRM.Notifications.Tests.csproj
+dotnet test tests/OpenCRM.Modules.Notifications.Tests/OpenCRM.Modules.Notifications.Tests.csproj
 dotnet test services/notifications/NotificationService.slnx
-docker build -f services/notifications/src/Notifications.Worker/Dockerfile -t notification-service-worker services/notifications
+docker build -f services/notifications/src/Notifications.Worker/Dockerfile -t notification-service-worker .
 ~~~
 
 Tests start separate PostgreSQL 15 and RabbitMQ instances in Docker. The end-to-end test uses the real Worker, Razor, both OpenCRM handlers, and an HTTP webhook; LogOnly prevents real emails. Production databases and queues are not used.

@@ -2,7 +2,7 @@
 
 **English** | [Русский](employee-shifts-design.ru.md)
 
-> One solution for detailing and auto service, built on the existing employee and shift model. The sections below distinguish what already works from what is still proposed. Development is tracked in the [product plan](README.md); remaining visual acceptance is in the [interface plan](README.md).
+> One solution for detailing and auto service, built on the existing employee and shift model. The sections below distinguish what already works from what is still proposed. Related guides are listed in the [documentation index](README.md). Proposed phases below are design options, not a promised implementation schedule.
 
 ## At a glance
 

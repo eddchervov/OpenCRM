@@ -1,8 +1,8 @@
-# Subscription payment service for opencrm.example.invalid
+# OpenCRM subscription payment service
 
 **English** | [Русский](README.ru.md)
 
-Standalone Payments on .NET 10 with its own PostgreSQL and RabbitMQ. All three projects are included in `OpenCRM.sln`: `Payments.Contracts` and `Payments.Service` are in `Services/Payments`, and `Payments.Tests` is in `Tests`. They do not reference OpenCRM. Checkout and Billing connect through a separate financial transport; see the [integration and recovery guide](../../docs/payments-service-integration.md). Production setup follows the server setup section referenced by this guide.
+Standalone Payments on .NET 10 with its own PostgreSQL and RabbitMQ. All three projects are included in `OpenCRM.sln`: `Payments.Contracts` and `Payments.Service` are in `Services/Payments`, and `Payments.Tests` is in `Tests`. They do not reference OpenCRM. Checkout and Billing connect through a separate financial transport; see the [integration and recovery guide](../../docs/payments-service-integration.md). Production requirements are listed in [Server setup](../../docs/payments-service-integration.md#server-setup).
 
 This is a separate stage of the [architecture design](../../docs/payments-service-design.md): command intake, operation persistence, test/live YooKassa adapters, webhook inbox, reconciliation, refunds, and reliable state delivery. Subscription grants, promotional codes, and current receipt generation remain in the main application.
 

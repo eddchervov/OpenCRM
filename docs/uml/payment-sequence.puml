@@ -1,44 +1,59 @@
 @startuml payment_sequence
-title opencrm.example.invalid — payment and subscription activation
+title OpenCRM — payment and subscription activation
 
 autonumber
 actor "User" as User
 boundary "OpenCRM.WebApp" as App
-control "YooKassaService" as PaymentService
-entity "YooKassa API" as YooKassa
-control "YooKassaWebhookController" as Webhook
-control "Subscription Service" as Subscription
-database "PostgreSQL" as Db
+control "RoutedPaymentCreationGateway" as Gateway
+database "OpenCRM main PostgreSQL" as CrmDb
+queue "RabbitMQ" as Bus
+control "Payments.Service" as PaymentService
+database "Payments PostgreSQL" as PaymentDb
+participant "Configured payment provider" as Provider
+control "SubscriptionPaymentEventProcessor" as Processor
 
-User -> App : select plan
-App -> Db : create local payment
-App -> PaymentService : CreatePayment
-PaymentService -> YooKassa : POST payment + idempotency key
-YooKassa --> PaymentService : confirmation URL
-PaymentService --> App : payment response
-App --> User : redirect to payment
+User -> App : purchase plan
+App -> Gateway : CreateAsync
+Gateway -> CrmDb : transaction: purchase + CreatePayment outbox command
+CrmDb --> Gateway : persisted purchase
+Gateway --> App : pending purchase ID
+App --> User : payment preparation started
 
-YooKassa -> Webhook : payment.waiting_for_capture
-Webhook -> PaymentService : VerifyNotification
-PaymentService -> YooKassa : GET payment
-YooKassa --> PaymentService : canonical state
-PaymentService --> Webhook : valid
-Webhook -> PaymentService : CapturePayment
-PaymentService -> YooKassa : capture
+Gateway -> Bus : outbox dispatches CreatePayment
+Bus -> PaymentService : CreatePayment
+PaymentService -> PaymentDb : create provider operation
+PaymentService -> Provider : create payment
+Provider --> PaymentService : payment link and pending state
+PaymentService -> PaymentDb : save provider state
+PaymentService --> Bus : PaymentStateChanged(Pending, ConfirmationUrl)
+Bus --> Processor : deliver state event
+Processor -> CrmDb : validate event; save pending state and payment link
 
-YooKassa -> Webhook : payment.succeeded
-Webhook -> PaymentService : revalidate
-PaymentService -> YooKassa : GET payment
-YooKassa --> PaymentService : succeeded
-Webhook -> Db : find local payment
+User -> App : request purchase state
+App -> Gateway : GetAsync
+Gateway -> CrmDb : read purchase state and payment link
+CrmDb --> Gateway : pending state and payment link
+Gateway --> App : pending state and confirmation URL
+App --> User : open payment link
+User -> Provider : approve and pay
+Provider --> PaymentService : payment webhook
+PaymentService -> PaymentDb : persist webhook in inbox
+PaymentService -> Provider : verify current payment state
+Provider --> PaymentService : verified paid state
+PaymentService -> PaymentDb : apply verified state
+PaymentService --> Bus : PaymentStateChanged(Succeeded)
+Bus --> Processor : deliver paid state event
+Processor -> CrmDb : validate event; apply state transactionally
 
-alt Already processing or completed
-  Webhook --> YooKassa : 200 OK
-else New successful payment
-  Webhook -> Subscription : activate subscription
-  Subscription -> Db : transaction:\nsubscription + payment + history/audit
-  Db --> Subscription : commit
-  Webhook --> YooKassa : 200 OK
+alt First valid paid state
+  Processor -> CrmDb : grant subscription once; set AppliedAt
+else Duplicate, stale, or invalid event
+  Processor -> CrmDb : reject or record without a second grant
 end
+
+note over Gateway,PaymentService
+  This is the primary configured microservice path. The routed gateway
+  retains a legacy in-process fallback when the Payments service is disabled.
+end note
 
 @enduml

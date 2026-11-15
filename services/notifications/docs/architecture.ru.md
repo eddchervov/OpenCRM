@@ -124,8 +124,9 @@ Rabbit-повторы не нужны: восстановление выполн
 не перечитывают шаблон; старые задания получают снимок версии 1 перед первой отправкой.
 Подробности и порядок миграции: [шаблоны](templates.ru.md).
 
-HTTP API отправки уведомлений и HTTP health endpoints отсутствуют. Состояние процесса
-проверяется через Docker/логи и consumers. При включённом UnisenderGo:WebhookEnabled
+HTTP API отправки уведомлений отсутствует. Worker предоставляет `/health/live` и
+`/health/ready`; readiness возвращает HTTP 503 при состоянии degraded или unhealthy.
+Помимо health-ответов проверяйте логи и consumers. При включённом UnisenderGo:WebhookEnabled
 Worker принимает подписанные события на /webhooks/unisender-go и передаёт общий контракт
 NotificationDeliveryReported в очередь приложения. ProviderWebhookEvents и bus outbox
 фиксируются одной транзакцией. Повторы определяются по устойчивому EventId.

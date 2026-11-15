@@ -1,76 +1,75 @@
 @startuml system_architecture
-title opencrm.example.invalid — общая архитектура
+title OpenCRM — модульная CRM и интеграционные сервисы
 
 left to right direction
 skinparam componentStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
-actor "Посетитель" as Visitor
-actor "Пользователь /\nсотрудник" as User
+actor "Пользователь CRM" as User
 actor "Администратор" as Admin
-actor "Клиент организации" as Client
 
-rectangle "Клиентские интерфейсы" {
-  component "Публичный сайт\nRazor / MVC" as PublicWeb
-  component "Личный кабинет\nRazor + Vue 2" as Cabinet
-  component "REST API\n/api/v1" as Api
-  component "Admin API\n/api/v1/admin" as AdminApi
+rectangle "Клиенты OpenCRM" {
+  component "Веб-интерфейс CRM\n+ REST API" as CrmClient
+  component "Веб-админка\nVue" as AdminWeb
+  component "Desktop-админка\nAvalonia" as AdminDesktop
 }
 
-rectangle "OpenCRM.WebApp\nASP.NET Core 10" {
-  component "Authentication\nIdentity Cookie + JWT" as Auth
-  component "MVC/API Controllers" as Controllers
-  component "Business Services" as Services
-  component "Organization Permissions" as Permissions
-  component "Subscription Features" as Features
-  component "Hangfire Jobs" as Jobs
-  component "PDF / DOCX" as Documents
-  component "Media Services" as Media
+rectangle "Модульный хост OpenCRM\nASP.NET Core" {
+  component "Аутентификация\nIdentity + JWT" as Auth
+  component "Модули CRM\nорганизации, клиенты, техника,\nобслуживание, рабочее пространство" as Modules
+  component "Административные API" as AdminApi
+  component "Опциональный ИИ-помощник" as AI
+  component "Диспетчеры outbox" as Outbox
 }
 
-database "PostgreSQL\nbusiness + identity + hangfire" as Db
-cloud "S3-compatible storage" as S3
-cloud "YooKassa" as YooKassa
-cloud "SMTP / UniSender Go" as Email
-cloud "SMS.ru" as Sms
-cloud "Seq" as Seq
-cloud "Google reCAPTCHA" as Captcha
+database "Основной PostgreSQL\nCRM + идентификация" as MainDb
+cloud "Настроенное файловое хранилище\nопциональная интеграция медиа" as Storage
+queue "RabbitMQ\nтранспорт сообщений сервисов" as Rabbit
+cloud "Внешний ИИ-провайдер, опционально" as AIProvider
 
-Visitor --> PublicWeb
-User --> Cabinet
-User --> Api
-Admin --> AdminApi
-Client --> PublicWeb
+rectangle "Сервис уведомлений" {
+  component "Notifications.Worker" as NotifyWorker
+  database "База уведомлений" as NotifyDb
+  cloud "Настроенные провайдеры доставки" as Delivery
+}
 
-PublicWeb --> Controllers
-Cabinet --> Controllers
-Api --> Controllers
-AdminApi --> Controllers
+rectangle "Платёжный сервис" {
+  component "Payments.Service" as PaymentsWorker
+  database "База платежей" as PaymentsDb
+  cloud "Настроенный платёжный провайдер" as PaymentProvider
+}
 
-Controllers --> Auth
-Controllers --> Services
-Services --> Permissions
-Services --> Features
-Services --> Documents
-Services --> Media
-Services --> Db
-Auth --> Db
-Permissions --> Db
-Features --> Db
-Jobs --> Db
-Media --> S3
-Services --> YooKassa
-YooKassa --> Controllers : webhook
-Services --> Email
-Email --> Controllers : delivery webhook
-Services --> Sms
-Controllers --> Captcha
-Controllers --> Seq : logs
+User --> CrmClient
+Admin --> AdminWeb
+Admin --> AdminDesktop
+CrmClient --> Auth
+CrmClient --> Modules
+AdminWeb --> AdminApi
+AdminDesktop --> AdminApi
+AdminApi --> Auth
+AdminApi --> Modules
+Modules --> MainDb
+Auth --> MainDb
+Outbox --> MainDb
+Modules --> Storage
+Outbox --> Rabbit
+Rabbit --> NotifyWorker
+NotifyWorker --> NotifyDb
+NotifyWorker --> Delivery
+Rabbit --> PaymentsWorker
+PaymentsWorker --> PaymentsDb
+PaymentsWorker --> PaymentProvider
+PaymentsWorker --> Rabbit : события состояний
+AI ..> AIProvider : опциональный провайдер
 
-note right of Auth
-  Обычная регистрация активна.
-  Google Login отключен.
+note bottom of CrmClient
+  OpenCRM — приложение CRM, а не публичный маркетинговый сайт.
+end note
+
+note bottom of Rabbit
+  Внешние провайдеры настраивает владелец установки.
+  Для входа и основной работы CRM платёжный или ИИ-провайдер не нужен.
 end note
 
 @enduml
