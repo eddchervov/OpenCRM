@@ -35,6 +35,40 @@ const visibleNavigationItems = computed(() => navigationItems.filter(item =>
   currentUserStore.isSystem || currentUserStore.currentUser?.permissions.includes(item.permission) === true
 ))
 
+interface AdminProductSection {
+  title: string
+  url: string
+  permission: string
+}
+
+function readProductSections(): AdminProductSection[] {
+  const content = document.querySelector<HTMLMetaElement>('meta[name="admin-product-sections"]')?.content
+  if (!content) {
+    return []
+  }
+
+  try {
+    const sections: unknown = JSON.parse(content)
+    if (!Array.isArray(sections)) {
+      return []
+    }
+
+    return sections.filter((section): section is AdminProductSection =>
+      typeof section === 'object' && section !== null &&
+      typeof section.title === 'string' && typeof section.url === 'string' &&
+      typeof section.permission === 'string' && section.title.length > 0 &&
+      section.url.startsWith('/') && !section.url.startsWith('//') &&
+      !section.url.includes('\\') && !section.url.includes('?') && !section.url.includes('#') &&
+      !/[\u0000-\u001f\u007f]/.test(section.url) && section.permission.length > 0
+    )
+  } catch {
+    return []
+  }
+}
+
+const productSections = readProductSections()
+const visibleProductSections = computed(() => productSections.filter(section => canSee(section.permission)))
+
 const financeNavigationItems = [
   { label: 'Платежи и подписки', to: '/finance/billing', permission: 'Admin.Billing.View', commercial: true }
 ]
@@ -196,6 +230,18 @@ onUnmounted(() => {
         <template v-if="communicationsNavigationItems.some(item => canSee(item.permission))">
           <div class="admin-navigation__section">Коммуникации</div>
           <RouterLink v-for="item in communicationsNavigationItems.filter(item => canSee(item.permission))" :key="item.to" :to="item.to" class="admin-navigation__link">{{ item.label }}</RouterLink>
+        </template>
+
+        <template v-if="visibleProductSections.length > 0">
+          <div class="admin-navigation__section">Разделы продукта</div>
+          <a
+            v-for="section in visibleProductSections"
+            :key="section.url"
+            :href="section.url"
+            class="admin-navigation__link"
+          >
+            {{ section.title }}
+          </a>
         </template>
 
         <template v-if="currentUserStore.isSystem">

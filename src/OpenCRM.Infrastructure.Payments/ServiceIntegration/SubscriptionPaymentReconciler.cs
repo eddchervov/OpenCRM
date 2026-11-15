@@ -53,7 +53,7 @@ internal sealed class SubscriptionPaymentReconciler(
         var timeout = client.Timeout > TimeSpan.Zero && client.Timeout < TimeSpan.FromSeconds(15)
             ? client.Timeout : TimeSpan.FromSeconds(15);
         deadline.CancelAfter(timeout);
-        using var response = await client.GetAsync($"internal/payments/opencrm/{id:D}", HttpCompletionOption.ResponseHeadersRead, deadline.Token);
+        using var response = await client.GetAsync($"internal/payments/{options.Value.ApplicationId}/{id:D}", HttpCompletionOption.ResponseHeadersRead, deadline.Token);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             await this.DeferAsync(id, "service_purchase_not_found", cancellationToken);
@@ -70,7 +70,7 @@ internal sealed class SubscriptionPaymentReconciler(
         var json = await ReadBoundedAsync(response.Content, deadline.Token);
         var snapshot = JsonSerializer.Deserialize<RemotePaymentSnapshot>(json, s_json)
             ?? throw new JsonException("Пустой денежный снимок сервиса.");
-        if (snapshot.PurchaseId != id || snapshot.ApplicationId != "opencrm")
+        if (snapshot.PurchaseId != id || snapshot.ApplicationId != options.Value.ApplicationId)
         {
             await this.DeferAsync(id, "service_identity_mismatch", cancellationToken);
             return;
@@ -83,14 +83,14 @@ internal sealed class SubscriptionPaymentReconciler(
             return;
         }
 
-        await processor.ReceiveAsync(new PaymentStateChanged(Guid.NewGuid(), "opencrm", id, snapshot.Id, snapshot.Version,
+        await processor.ReceiveAsync(new PaymentStateChanged(Guid.NewGuid(), options.Value.ApplicationId, id, snapshot.Id, snapshot.Version,
             creation.Status, snapshot.PaymentStatus, snapshot.AmountMinor, snapshot.RefundedAmountMinor, snapshot.Currency,
             snapshot.ProviderPaymentId, snapshot.ConfirmationUrl, clock.GetUtcNow(), snapshot.IsTest), cancellationToken);
         foreach (var operation in snapshot.Operations.Where(item => item.Kind == "Refund"))
         {
             var fingerprint = JsonSerializer.Serialize(operation);
             var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(fingerprint));
-            await processor.ReceiveAsync(new PaymentOperationStateChanged(new Guid(hash.AsSpan(0, 16)), "opencrm", id, snapshot.Id,
+            await processor.ReceiveAsync(new PaymentOperationStateChanged(new Guid(hash.AsSpan(0, 16)), options.Value.ApplicationId, id, snapshot.Id,
                 operation.Id, operation.CommandId, operation.Kind, operation.Status, operation.LastError, operation.UpdatedAt), cancellationToken);
         }
 
@@ -219,7 +219,7 @@ internal sealed class SubscriptionPaymentReconciler(
 
         return command.Id == purchase.Id && command.PurchaseId == purchase.Id
             && payload.SchemaVersion == 2 && payload.CommandId == command.Id && payload.PurchaseId == purchase.Id
-            && payload.ApplicationId == "opencrm" && payload.MerchantAccountId == options.Value.MerchantAccountId
+            && payload.ApplicationId == options.Value.ApplicationId && payload.MerchantAccountId == options.Value.MerchantAccountId
             && payload.AmountMinor == purchase.AmountMinor && payload.Currency == purchase.Currency
             && payload.IssuedAt != default && payload.NotAfter != default
             && payload.IssuedAt <= nowUtc.AddMinutes(5) && payload.NotAfter > nowUtc

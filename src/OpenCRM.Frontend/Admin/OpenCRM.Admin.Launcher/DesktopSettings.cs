@@ -40,6 +40,39 @@ internal sealed class DesktopSettings
         return settings;
     }
 
+    /// <summary> Загружает каталог профиля Chrome из необязательной настройки бренда. </summary>
+    public static string LoadChromeProfileDirectory()
+    {
+        var settingsPath = Path.Combine(AppContext.BaseDirectory, "brand.json");
+        if (!File.Exists(settingsPath))
+        {
+            return GetDefaultChromeProfileDirectory();
+        }
+
+        using var document = JsonDocument.Parse(File.ReadAllText(settingsPath));
+        if (!document.RootElement.TryGetProperty("AdminDesktop", out var desktopSettings) ||
+            desktopSettings.ValueKind != JsonValueKind.Object ||
+            !desktopSettings.TryGetProperty("ChromeProfileDirectory", out var value) ||
+            value.ValueKind != JsonValueKind.String)
+        {
+            return GetDefaultChromeProfileDirectory();
+        }
+
+        var configuredPath = value.GetString();
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            return GetDefaultChromeProfileDirectory();
+        }
+
+        var profileDirectory = Environment.ExpandEnvironmentVariables(configuredPath);
+        if (!Path.IsPathFullyQualified(profileDirectory))
+        {
+            throw new InvalidDataException("Путь AdminDesktop:ChromeProfileDirectory должен быть абсолютным.");
+        }
+
+        return profileDirectory;
+    }
+
     /// <summary> Преобразует строку в Uri админ-панели. </summary>
     private static Uri CreateAdminPanelUri(string value)
     {
@@ -51,4 +84,10 @@ internal sealed class DesktopSettings
 
         return uri;
     }
+
+    private static string GetDefaultChromeProfileDirectory() => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Администрирование",
+        "AdminDesktop",
+        "Chrome");
 }

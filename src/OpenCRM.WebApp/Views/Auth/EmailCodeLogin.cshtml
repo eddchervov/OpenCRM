@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = $"Войти по коду из email {Brand.DisplayNameLower}";
-    const string PersonalDataConsentRequiredMessage = "Необходимо дать согласие на обработку персональных данных.";
 }
 
 <div class="auth-page email-code-login-page">
@@ -35,23 +34,7 @@
                                 Аккаунт с таким email еще не найден. Мы можем создать его после подтверждения кода.
                             </div>
 
-                            <div class="form-check mb-2">
-                                <input asp-for="PersonalDataProcessingConsent"
-                                       class="form-check-input"
-                                       type="checkbox"
-                                       required
-                                       data-val="true"
-                                       data-val-required="@PersonalDataConsentRequiredMessage"
-                                       data-msg-required="@PersonalDataConsentRequiredMessage"
-                                       oninvalid="this.setCustomValidity('@PersonalDataConsentRequiredMessage')"
-                                       oninput="this.setCustomValidity('')"
-                                       onchange="this.setCustomValidity('')" />
-                                <label class="form-check-label small" asp-for="PersonalDataProcessingConsent">
-                                    Я даю согласие на обработку персональных данных.
-                                    @* Страницы правовых документов размещает владелец установки. *@
-                                </label>
-                                <span asp-validation-for="PersonalDataProcessingConsent" class="text-danger d-block"></span>
-                            </div>
+                            <partial name="_RegistrationConsentFields" model="Model.PersonalDataProcessingConsent" />
                         }
 
                         <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Отправить код</button>

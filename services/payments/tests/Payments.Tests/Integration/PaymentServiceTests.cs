@@ -378,6 +378,60 @@ public sealed class PaymentServiceTests(PaymentServiceFixture fixture) : IClassF
     }
 
     [Fact]
+    public async Task RejectedProductCommandIsPublishedToConfiguredEventsQueue()
+    {
+        var received = new TaskCompletionSource<PaymentCommandRejected>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var database = fixture.CreateDatabase();
+        using var host = Host.CreateDefaultBuilder().ConfigureServices(services =>
+        {
+            services.AddLogging();
+            services.AddSingleton(database);
+            services.AddSingleton<IOptions<PaymentOptions>>(Options.Create(new PaymentOptions
+            {
+                Mode = "Disabled",
+                ApplicationId = "sample-crm",
+                MerchantAccountId = "12345",
+                AllowedReturnUrls = ["https://opencrm.example.invalid/payment/complete"]
+            }));
+            services.AddSingleton<TimeProvider>(TimeProvider.System);
+            services.AddSingleton<IPaymentProvider, DisabledPaymentProvider>();
+            services.AddScoped<PaymentEventPublisher>();
+            services.AddScoped<PaymentCommandService>();
+            services.AddMassTransit(registration =>
+            {
+                registration.AddConsumer<PaymentCommandConsumer>();
+                registration.UsingInMemory((context, transport) =>
+                {
+                    transport.ReceiveEndpoint("payments-sample-crm-commands", endpoint =>
+                        endpoint.ConfigureConsumer<PaymentCommandConsumer>(context));
+                    transport.ReceiveEndpoint("payments-sample-crm-events", endpoint =>
+                        endpoint.Handler<PaymentCommandRejected>(message =>
+                        {
+                            received.TrySetResult(message.Message);
+                            return Task.CompletedTask;
+                        }));
+                });
+            });
+        }).Build();
+
+        await host.StartAsync();
+        try
+        {
+            var bus = host.Services.GetRequiredService<IBus>();
+            var endpoint = await bus.GetSendEndpoint(new Uri("queue:payments-sample-crm-commands"));
+            await endpoint.Send(PaymentServiceFixture.Command() with { ApplicationId = "sample-crm", AmountMinor = 0 });
+
+            var rejection = await received.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal("sample-crm", rejection.ApplicationId);
+            Assert.Equal("invalid_payment", rejection.Reason);
+        }
+        finally
+        {
+            await host.StopAsync();
+        }
+    }
+
+    [Fact]
     public async Task PrivateReadRequiresServiceKeyAndLimitsApplication()
     {
         var command = PaymentServiceFixture.Command();

@@ -1,4 +1,5 @@
 export type Export1CCapabilities = {
+  processingDownloadUrl?: string | null
   canExport: boolean
   canExportBp3?: boolean
   canExportOrders: boolean

@@ -50,6 +50,25 @@ public sealed class CorePresentationTests(EmptyContentRootFixture contentRootFix
         Assert.Empty(wikiContent.Search("CRM"));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CompiledAssistantRendersPreviewAndInteractiveEmbeddedView(bool preview)
+    {
+        await using var app = await this.CreateApplicationAsync();
+        using var client = app.GetTestClient();
+        client.BaseAddress = new Uri("https://localhost");
+
+        var response = await client.GetAsync($"/__tests/assistant/{preview}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("data-ai-pilot", html);
+        Assert.Contains("noindex,nofollow", html);
+        Assert.Contains("Hosting Test", html);
+        Assert.Equal(!preview, html.Contains("/js/ai-pilot.js", StringComparison.Ordinal));
+    }
+
     private async Task<WebApplication> CreateApplicationAsync()
     {
         Assert.Empty(Directory.EnumerateFileSystemEntries(contentRootFixture.ContentRoot));

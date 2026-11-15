@@ -213,7 +213,7 @@ internal sealed class MicroservicePaymentCreationGateway(
             await promotions.ClaimAsync(operation);
             await context.SaveChangesAsync();
             await promotions.AttachPaymentAsync(operation, payment);
-            var command = new CreatePayment(operation.Id, "opencrm", operation.Id, checked((long)(draft.Amount * 100)), "RUB",
+            var command = new CreatePayment(operation.Id, options.Value.ApplicationId, operation.Id, checked((long)(draft.Amount * 100)), "RUB",
                 $"Подписка {brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName}: {plan.Name}"[..Math.Min(128, $"Подписка {brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName}: {plan.Name}".Length)],
                 $"{resultUrl}?purchaseId={operation.Id:D}", operation.UserId,
                 organizationId?.ToString("D") ?? operation.UserId,

@@ -66,7 +66,7 @@ internal static class PaymentsServiceIntegrationRegistration
                     host.Username(settings.Username);
                     host.Password(settings.Password);
                 });
-                transport.ReceiveEndpoint("payments-opencrm-events", endpoint =>
+                transport.ReceiveEndpoint(settings.EventsQueueName, endpoint =>
                 {
                     endpoint.ConfigureConsumeTopology = false;
                     endpoint.PublishFaults = false;

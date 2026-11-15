@@ -1,9 +1,11 @@
 using Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using OpenCRM.Domain;
 using OpenCRM.Infrastructure.Data;
 using OpenCRM.Modules.Billing.Contracts;
 using OpenCRM.Modules.Billing.Contracts.Dtos;
+using OpenCRM.Modules.Billing.Features;
 using OpenCRM.Services.Interfaces.Features.Dtos;
 using OpenCRM.Services.Interfaces.Organizations.Dtos;
 using OpenCRM.Services.Interfaces.Subscriptions.Dtos;
@@ -13,7 +15,8 @@ namespace OpenCRM.Modules.Billing;
 /// <summary> Читатель данных подписок и возможностей организации. </summary>
 internal sealed class OrganizationEntitlementReader(
     OpenCRMContext context,
-    IPlatformCommercialPolicy platformCommercialPolicy)
+    IPlatformCommercialPolicy platformCommercialPolicy,
+    IConfiguration? configuration = null)
 {
     /// <summary> Код источника промо-доступа. </summary>
     private const string PromoSourceCode = "promo";
@@ -98,6 +101,9 @@ internal sealed class OrganizationEntitlementReader(
         var featuresByCode = effectivePlan?.Features
             .ToDictionary(feature => feature.FeatureDefinition.Code, StringComparer.OrdinalIgnoreCase)
             ?? new Dictionary<string, SubscriptionPlanFeature>(StringComparer.OrdinalIgnoreCase);
+        var defaults = configuration is null
+            ? new CommercialPlanDefaults()
+            : CommercialPlanDefaults.FromConfiguration(configuration);
 
         var snapshot = new FeatureAccessSnapshotDto();
         foreach (var definition in definitions)
@@ -114,7 +120,7 @@ internal sealed class OrganizationEntitlementReader(
             snapshot.Features.Add(SubscriptionEntitlementMapper.MapSnapshotFeatureValue(
                 definition,
                 assignment,
-                OrganizationEntitlementReader.GetDefaultIntegerValue(definition, effectivePlan)));
+                OrganizationEntitlementReader.GetDefaultIntegerValue(definition, effectivePlan, defaults)));
         }
 
         return snapshot;
@@ -308,20 +314,33 @@ internal sealed class OrganizationEntitlementReader(
     }
 
     /// <summary> Возвращает целочисленное значение возможности по умолчанию. </summary>
-    private static int GetDefaultIntegerValue(FeatureDefinition definition, SubscriptionPlan? currentPlan)
+    private static int GetDefaultIntegerValue(
+        FeatureDefinition definition,
+        SubscriptionPlan? currentPlan,
+        CommercialPlanDefaults defaults)
     {
         if (definition.Code == FeatureCodes.WorkspaceClientsLimit)
         {
             return currentPlan?.Group == SubscriptionPlanCatalogCodes.OrganizationFreeGroup
-                ? PlatformDefaults.ClientLimit
+                ? defaults.FreeClientLimit
                 : PlatformDefaults.ClientLimit;
         }
 
         if (definition.Code == FeatureCodes.WorkspaceVehiclesLimit)
         {
-            return currentPlan?.VehicleLimit ?? PlatformDefaults.VehicleLimit;
+            return currentPlan?.VehicleLimit
+                ?? (currentPlan?.Group == SubscriptionPlanCatalogCodes.OrganizationFreeGroup
+                    ? defaults.FreeVehicleLimit
+                    : PlatformDefaults.VehicleLimit);
         }
 
-        return definition.Code == FeatureCodes.WorkspaceMembersLimit ? PlatformDefaults.WorkspaceMembersLimit : 0;
+        if (definition.Code != FeatureCodes.WorkspaceMembersLimit)
+        {
+            return 0;
+        }
+
+        return currentPlan?.Group == SubscriptionPlanCatalogCodes.OrganizationFreeGroup
+            ? defaults.FreeMembersLimit
+            : defaults.WorkspaceMembersLimit;
     }
 }

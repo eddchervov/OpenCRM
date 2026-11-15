@@ -20,7 +20,8 @@ public sealed class Export1CApiController(
     IOrganizationSubscriptionService organizationSubscriptionService,
     IOrganizationPermissionService organizationPermissionService,
     IExport1CService export1CService,
-    ILogger<Export1CApiController> logger) : ControllerBase
+    ILogger<Export1CApiController> logger,
+    IConfiguration? configuration = null) : ControllerBase
 {
     /// <summary> Возвращает доступные возможности выгрузки в 1С для организации. </summary>
     [HttpGet("/api/v1/organizations/{organizationId:guid}/accounting-export/capabilities")]
@@ -46,6 +47,9 @@ public sealed class Export1CApiController(
 
             return Ok(new
             {
+                ProcessingDownloadUrl = configuration?["Export1C:ProcessingDownloadUrl"] is { } url && this.Url.IsLocalUrl(url)
+                    ? this.Url.Content(url.StartsWith("~/", StringComparison.Ordinal) ? url : "~" + url)
+                    : null,
                 CanExport = canExport,
                 CanExportBp3 = canExport && await organizationSubscriptionService.HasFeatureAsync(user.Id, organizationId, FeatureCodes.FinanceExport1C),
                 CanExportOrders = canExport && await organizationPermissionService.HasPermissionAsync(user.Id, organizationId, OrganizationPermissionCodes.MaintenanceView),

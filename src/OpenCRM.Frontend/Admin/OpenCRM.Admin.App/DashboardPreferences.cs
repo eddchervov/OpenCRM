@@ -8,11 +8,12 @@ internal static class DashboardPreferences
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OpenCRM", "Admin", "dashboard-refresh.txt");
 
     /// <summary> Загружает интервал обновления панели в секундах. </summary>
-    public static int LoadRefreshSeconds()
+    public static int LoadRefreshSeconds(string? filePath = null)
     {
+        var path = filePath ?? DashboardPreferences.s_path;
         try
         {
-            if (File.Exists(DashboardPreferences.s_path) && int.TryParse(File.ReadAllText(DashboardPreferences.s_path), out var seconds)
+            if (File.Exists(path) && int.TryParse(File.ReadAllText(path), out var seconds)
                 && seconds is 5 or 10 or 30 or 60)
             {
                 return seconds;
@@ -27,12 +28,13 @@ internal static class DashboardPreferences
     }
 
     /// <summary> Сохраняет интервал обновления панели в секундах. </summary>
-    public static void SaveRefreshSeconds(int seconds)
+    public static void SaveRefreshSeconds(int seconds, string? filePath = null)
     {
+        var path = filePath ?? DashboardPreferences.s_path;
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(DashboardPreferences.s_path)!);
-            File.WriteAllText(DashboardPreferences.s_path, seconds.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, seconds.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

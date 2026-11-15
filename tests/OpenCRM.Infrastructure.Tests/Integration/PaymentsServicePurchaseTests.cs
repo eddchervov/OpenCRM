@@ -380,6 +380,35 @@ public sealed class PaymentsServicePurchaseTests(NotificationFixture fixture) : 
     }
 
     [Fact]
+    public async Task ProductApplicationIdIsUsedForNewPaymentCommandsAndEvents()
+    {
+        this._options.ApplicationId = "sample-crm";
+        var id = await this.CreateAsync();
+        await using var context = fixture.CreateContext();
+        var command = JsonSerializer.Deserialize<CreatePayment>((await context.SubscriptionPaymentCommands.SingleAsync()).Payload)!;
+
+        Assert.Equal("sample-crm", command.ApplicationId);
+        await this.Processor(context).ReceiveAsync(this.Event(id, 1, "Succeeded") with { ApplicationId = "sample-crm" });
+
+        var purchase = await context.SubscriptionPurchases.AsNoTracking().Include(item => item.Payment).SingleAsync();
+        Assert.Equal("Succeeded", purchase.ProviderStatus);
+        Assert.Equal(SubscriptionPurchaseStatuses.ActivationPending, purchase.ApplicationStatus);
+    }
+
+    [Fact]
+    public async Task EventFromAnotherApplicationIsRejected()
+    {
+        var id = await this.CreateAsync();
+        await using var context = fixture.CreateContext();
+        await this.Processor(context).ReceiveAsync(this.Event(id, 1, "Succeeded") with { ApplicationId = "sample-crm" });
+
+        var purchase = await context.SubscriptionPurchases.AsNoTracking().Include(item => item.Payment).SingleAsync();
+        Assert.Equal("financial_snapshot_mismatch", purchase.LastErrorCode);
+        Assert.NotEqual("Succeeded", purchase.ProviderStatus);
+        Assert.Null(purchase.Payment.PaidAt);
+    }
+
+    [Fact]
     public async Task FinancialMismatchAfterSuccessBlocksActivationUntilReview()
     {
         var id = await this.CreateAsync();

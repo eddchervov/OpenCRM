@@ -11,9 +11,6 @@ public static class FeatureBootstrapper
     /// <summary> Блокировка инициализации. </summary>
     private static readonly SemaphoreSlim Locker = new(1, 1);
 
-    /// <summary> Лимит участников рабочего пространства по умолчанию. </summary>
-    private const int DefaultWorkspaceMembersLimit = PlatformDefaults.WorkspaceMembersLimit;
-
     /// <summary> Гарантирует наличие значений возможностей по умолчанию. </summary>
     public static async Task EnsureDefaultsAsync(OpenCRMContext context)
     {
@@ -33,15 +30,20 @@ public static class FeatureBootstrapper
     /// Вызывается только когда коммерческий режим включён настройкой
     /// PlatformPolicy:Commercial:Enabled.
     /// </summary>
-    public static async Task EnsureCommercialPlansAsync(OpenCRMContext context)
+    public static Task EnsureCommercialPlansAsync(OpenCRMContext context) =>
+        FeatureBootstrapper.EnsureCommercialPlansAsync(context, new CommercialPlanDefaults());
+
+    /// <summary> Инициализирует новые коммерческие планы с настройками конкретной установки.</summary>
+    internal static async Task EnsureCommercialPlansAsync(OpenCRMContext context, CommercialPlanDefaults defaults)
     {
+        defaults.Validate();
         await Locker.WaitAsync();
         try
         {
             await EnsureDeprecatedDefinitionsAsync(context);
-            await EnsureSystemPlansAsync(context);
-            await EnsureDefaultPlanFeaturesAsync(context);
-            await EnsureFreePlanAsync(context);
+            await EnsureSystemPlansAsync(context, defaults);
+            await EnsureDefaultPlanFeaturesAsync(context, defaults);
+            await EnsureFreePlanAsync(context, defaults);
         }
         finally
         {
@@ -77,7 +79,7 @@ public static class FeatureBootstrapper
     }
 
     /// <summary> Гарантирует наличие привязок возможностей тарифов по умолчанию. </summary>
-    private static async Task EnsureDefaultPlanFeaturesAsync(OpenCRMContext context)
+    private static async Task EnsureDefaultPlanFeaturesAsync(OpenCRMContext context, CommercialPlanDefaults defaults)
     {
         var featureDefinitions = await context.FeatureDefinitions.ToListAsync();
         var plans = await context.SubscriptionPlans.ToListAsync();
@@ -154,7 +156,7 @@ public static class FeatureBootstrapper
                 EnsurePlanFeature(existingAssignments, context, plan.Id, featureIdsByCode[FeatureCodes.DataImport], boolValue: true);
                 EnsurePlanFeature(existingAssignments, context, plan.Id, featureIdsByCode[FeatureCodes.FinanceExport1C], boolValue: true);
                 EnsurePlanFeature(existingAssignments, context, plan.Id, workspaceVehiclesLimitFeatureId, intValue: plan.VehicleLimit);
-                EnsurePlanFeature(existingAssignments, context, plan.Id, workspaceMembersLimitFeatureId, intValue: DefaultWorkspaceMembersLimit);
+                EnsurePlanFeature(existingAssignments, context, plan.Id, workspaceMembersLimitFeatureId, intValue: defaults.WorkspaceMembersLimit);
                 if (featureIdsByCode.TryGetValue(FeatureCodes.AnalyticsModule, out var analyticsModuleFeatureId))
                 {
                     EnsurePlanFeature(existingAssignments, context, plan.Id, analyticsModuleFeatureId, boolValue: true);
@@ -189,7 +191,7 @@ public static class FeatureBootstrapper
     }
 
     /// <summary> Создаёт самостоятельный Free, сохраняя прежний базовый тариф и оплаченные условия. </summary>
-    private static async Task EnsureFreePlanAsync(OpenCRMContext context)
+    private static async Task EnsureFreePlanAsync(OpenCRMContext context, CommercialPlanDefaults defaults)
     {
         const string FreePlanDescription = "Базовая работа одного владельца без ограничения срока.";
         var plan = await context.SubscriptionPlans.SingleOrDefaultAsync(item =>
@@ -206,7 +208,7 @@ public static class FeatureBootstrapper
                 PlanTypeCode = SubscriptionPlanCatalogCodes.PlanTypes.Business,
                 Price = 0,
                 DurationDays = 30,
-                VehicleLimit = PlatformDefaults.VehicleLimit,
+                VehicleLimit = defaults.FreeVehicleLimit,
                 IsActive = true
             };
 
@@ -254,8 +256,8 @@ public static class FeatureBootstrapper
             var limit = definition.Code switch
             {
                 FeatureCodes.WorkspaceVehiclesLimit => plan.VehicleLimit,
-                FeatureCodes.WorkspaceClientsLimit => PlatformDefaults.ClientLimit,
-                FeatureCodes.WorkspaceMembersLimit => PlatformDefaults.WorkspaceMembersLimit,
+                FeatureCodes.WorkspaceClientsLimit => defaults.FreeClientLimit,
+                FeatureCodes.WorkspaceMembersLimit => defaults.FreeMembersLimit,
                 _ => 0
             };
 
@@ -308,7 +310,7 @@ public static class FeatureBootstrapper
     }
 
     /// <summary> Гарантирует наличие системных тарифов. </summary>
-    private static async Task EnsureSystemPlansAsync(OpenCRMContext context)
+    private static async Task EnsureSystemPlansAsync(OpenCRMContext context, CommercialPlanDefaults defaults)
     {
         var businessDefaultPlan = await context.SubscriptionPlans
             .FirstOrDefaultAsync(x =>
@@ -348,7 +350,7 @@ public static class FeatureBootstrapper
                 Description = "Тестовый бизнес-тариф для рабочего пространства организации.",
                 Price = 0,
                 DurationDays = 30,
-                VehicleLimit = PlatformDefaults.VehicleLimit,
+                VehicleLimit = defaults.DemoVehicleLimit,
                 Order = 0,
                 Group = "Демо",
                 PlanTypeCode = SubscriptionPlanCatalogCodes.PlanTypes.Business,

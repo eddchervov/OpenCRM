@@ -99,7 +99,7 @@ internal sealed class SubscriptionPaymentAdminWorker(
         deadline.CancelAfter(TimeSpan.FromSeconds(15));
         if (action.ProviderCheckRequestedAt == null)
         {
-            using var post = new HttpRequestMessage(HttpMethod.Post, $"internal/payments/opencrm/{action.PurchaseId:D}/reconcile")
+            using var post = new HttpRequestMessage(HttpMethod.Post, $"internal/payments/{options.Value.ApplicationId}/{action.PurchaseId:D}/reconcile")
             {
                 Content = JsonContent.Create(new { OperationId = action.Id })
             };
@@ -123,12 +123,12 @@ internal sealed class SubscriptionPaymentAdminWorker(
             action.ProviderCheckRequestedAt = scheduled.RequestedAt.UtcDateTime;
         }
 
-        using var snapshotResponse = await client.GetAsync($"internal/payments/opencrm/{action.PurchaseId:D}",
+        using var snapshotResponse = await client.GetAsync($"internal/payments/{options.Value.ApplicationId}/{action.PurchaseId:D}",
             HttpCompletionOption.ResponseHeadersRead, deadline.Token);
         snapshotResponse.EnsureSuccessStatusCode();
         var snapshot = JsonSerializer.Deserialize<CheckSnapshot>(await ReadBoundedAsync(snapshotResponse.Content, deadline.Token), s_json)
             ?? throw new JsonException("Пустой снимок проверки.");
-        if (snapshot.PurchaseId != action.PurchaseId || snapshot.ApplicationId != "opencrm")
+        if (snapshot.PurchaseId != action.PurchaseId || snapshot.ApplicationId != options.Value.ApplicationId)
         {
             await this.RecordAsync(action.Id, "failed", "service_identity_mismatch", true, cancellationToken);
             return;

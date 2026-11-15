@@ -17,7 +17,8 @@ internal sealed class FeatureDefaultsInitializer(OpenCRMContext context, IConfig
         // базовая поставка их не создаёт.
         if (configuration.GetValue("PlatformPolicy:Commercial:Enabled", false))
         {
-            await FeatureBootstrapper.EnsureCommercialPlansAsync(context);
+            var defaults = CommercialPlanDefaults.FromConfiguration(configuration);
+            await FeatureBootstrapper.EnsureCommercialPlansAsync(context, defaults);
         }
     }
 }

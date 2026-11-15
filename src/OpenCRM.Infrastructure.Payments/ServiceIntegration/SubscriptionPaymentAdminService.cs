@@ -163,7 +163,7 @@ internal sealed class SubscriptionPaymentAdminService(
 
                 var providerActor = actorUserId.Length <= 128 ? actorUserId
                     : "admin-sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(actorUserId)));
-                var payload = JsonSerializer.Serialize(new RequestRefund(operation.Id, "opencrm", purchase.Id,
+                var payload = JsonSerializer.Serialize(new RequestRefund(operation.Id, options.Value.ApplicationId, purchase.Id,
                     operation.AmountMinor!.Value, TrimProviderReason(operation.Reason), providerActor, IssuedAt: new(now, TimeSpan.Zero),
                     NotAfter: new DateTimeOffset(now, TimeSpan.Zero).AddHours(23), MerchantAccountId: original.MerchantAccountId));
                 context.SubscriptionPaymentCommands.Add(new SubscriptionPaymentCommand
@@ -309,7 +309,7 @@ internal sealed class SubscriptionPaymentAdminService(
         var expectedActor = action.ActorUserId.Length <= 128 ? action.ActorUserId
             : "admin-sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(action.ActorUserId)));
         if (payload == null || payload.SchemaVersion != 2 || payload.CommandId != action.Id || payload.PurchaseId != purchase.Id
-            || payload.ApplicationId != "opencrm" || payload.AmountMinor != action.AmountMinor
+            || payload.ApplicationId != options.Value.ApplicationId || payload.AmountMinor != action.AmountMinor
             || payload.Reason != action.Reason && payload.Reason != TrimProviderReason(action.Reason)
             || payload.RequestedBy != action.ActorUserId && payload.RequestedBy != expectedActor)
         {

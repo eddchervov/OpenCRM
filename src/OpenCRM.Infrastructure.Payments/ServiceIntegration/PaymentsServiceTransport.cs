@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MassTransit;
+using Microsoft.Extensions.Options;
 using Payments.Contracts;
 
 namespace OpenCRM.Infrastructure.Payments.ServiceIntegration;
@@ -15,15 +16,18 @@ internal interface ISubscriptionPaymentCommandTransport
     Task SendAsync(string kind, string payload, Guid commandId, Guid purchaseId, CancellationToken cancellationToken);
 }
 
-internal sealed class PaymentsServiceCommandTransport(IPaymentsServiceBus bus) : ISubscriptionPaymentCommandTransport
+internal sealed class PaymentsServiceCommandTransport(
+    IPaymentsServiceBus bus,
+    IOptions<PaymentsServiceOptions> options) : ISubscriptionPaymentCommandTransport
 {
     public async Task SendAsync(string kind, string payload, Guid commandId, Guid purchaseId, CancellationToken cancellationToken)
     {
-        var endpoint = await bus.GetSendEndpoint(new Uri("queue:payments-opencrm-commands"));
+        var endpoint = await bus.GetSendEndpoint(new Uri($"queue:{options.Value.CommandsQueueName}"));
         if (kind == "create")
         {
             var command = JsonSerializer.Deserialize<CreatePayment>(payload) ?? throw new JsonException();
-            if (command.CommandId != commandId || command.PurchaseId != purchaseId || command.ApplicationId != "opencrm")
+            if (command.CommandId != commandId || command.PurchaseId != purchaseId
+                || command.ApplicationId != options.Value.ApplicationId)
             {
                 throw new JsonException("Реквизиты сохранённой команды не совпадают с покупкой.");
             }
@@ -35,7 +39,8 @@ internal sealed class PaymentsServiceCommandTransport(IPaymentsServiceBus bus) :
         if (kind == "refund")
         {
             var command = JsonSerializer.Deserialize<RequestRefund>(payload) ?? throw new JsonException();
-            if (command.CommandId != commandId || command.PurchaseId != purchaseId || command.ApplicationId != "opencrm")
+            if (command.CommandId != commandId || command.PurchaseId != purchaseId
+                || command.ApplicationId != options.Value.ApplicationId)
             {
                 throw new JsonException("Реквизиты сохранённого возврата не совпадают с покупкой.");
             }

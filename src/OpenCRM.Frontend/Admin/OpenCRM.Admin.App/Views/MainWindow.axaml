@@ -114,6 +114,17 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <TextBlock Text="РАЗДЕЛЫ ПРОДУКТА" Classes="caption" Margin="14,20,0,8" LetterSpacing="1"
+                         IsVisible="{Binding HasVisibleProductSections}" />
+              <ItemsControl ItemsSource="{Binding VisibleProductSections}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:AdminProductSection">
+                    <Button Classes="navigation" Content="{Binding Title}"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProductSectionCommand}"
+                            CommandParameter="{Binding}" HorizontalAlignment="Stretch" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
               <ItemsControl ItemsSource="{Binding NavigationItems}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:NavigationItem">

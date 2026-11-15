@@ -1,8 +1,10 @@
 ﻿using Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using OpenCRM.Domain;
 using OpenCRM.Infrastructure.Data;
 using OpenCRM.Modules.Billing.Contracts;
+using OpenCRM.Modules.Billing.Features;
 using OpenCRM.Services.Interfaces.Features;
 using OpenCRM.Services.Interfaces.Features.Dtos;
 
@@ -12,7 +14,8 @@ namespace OpenCRM.Modules.Billing;
 internal sealed class FeatureAccessService(
     OpenCRMContext context,
     IFeatureDefaultsInitializer featureDefaultsInitializer,
-    IPlatformCommercialPolicy? platformCommercialPolicy = null) : IFeatureAccessService
+    IPlatformCommercialPolicy? platformCommercialPolicy = null,
+    IConfiguration? configuration = null) : IFeatureAccessService
 {
     /// <summary> Проверяет наличие возможности у пользователя. </summary>
     public async Task<bool> HasFeatureAsync(string userId, string featureCode)
@@ -178,7 +181,11 @@ internal sealed class FeatureAccessService(
             }
         }
 
-        return FeatureAccessService.CreateDefaultValue(definition);
+        var personalVehicleLimit = platformCommercialPolicy?.CommercialEnabled == true && configuration is not null
+            ? CommercialPlanDefaults.FromConfiguration(configuration).PersonalVehicleLimit
+            : PlatformDefaults.VehicleLimit;
+
+        return FeatureAccessService.CreateDefaultValue(definition, personalVehicleLimit);
     }
 
     /// <summary> Возвращает возможности ядра независимо от сохранённых тарифов и грантов. </summary>
@@ -198,11 +205,11 @@ internal sealed class FeatureAccessService(
     }
 
     /// <summary> Формирует значение по умолчанию для возможности. </summary>
-    private static FeatureValueDto CreateDefaultValue(FeatureDefinition definition)
+    private static FeatureValueDto CreateDefaultValue(FeatureDefinition definition, int personalVehicleLimit)
     {
         if (definition.Code == FeatureCodes.VehiclesLimit)
         {
-            return FeatureAccessService.CreateIntValue(definition, PlatformDefaults.VehicleLimit);
+            return FeatureAccessService.CreateIntValue(definition, personalVehicleLimit);
         }
 
         return FeatureAccessService.CreateBoolValue(definition, false);

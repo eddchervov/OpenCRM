@@ -208,7 +208,9 @@ public static class OpenCRMApplication
     }
 
     /// <summary> Подключает общий HTTP-конвейер к приложению с уже зарегистрированными расширениями. </summary>
-    public static void ConfigureApplication(WebApplication app)
+    /// <param name="app">Приложение с зарегистрированными общими и продуктовыми сервисами.</param>
+    /// <param name="configureProductMiddleware">Обработчики продукта после forwarded headers, до HTTPS, маршрутизации и статических файлов.</param>
+    public static void ConfigureApplication(WebApplication app, Action<WebApplication>? configureProductMiddleware = null)
     {
         ArgumentNullException.ThrowIfNull(app);
         var brand = app.Services.GetRequiredService<Helpers.ProjectBrand>();
@@ -237,6 +239,8 @@ public static class OpenCRMApplication
         app.MapFallbackToController(
             action: "HandleError",
             controller: "Error");
+
+        configureProductMiddleware?.Invoke(app);
 
         app.UseHttpsRedirection();
         app.UseMiddleware<SecurityHeadersMiddleware>();
@@ -294,6 +298,11 @@ public static class OpenCRMApplication
         app.UseRateLimiter();
         app.UseMiddleware<EmailConfirmationMiddleware>();
         app.UseAuthorization();
+
+        if (app.Configuration.GetValue<bool>("UserTracking:Enabled"))
+        {
+            app.UseMiddleware<UserLastAccessMiddleware>();
+        }
 
         app.UseMiddleware<UserActivityMiddleware>();
         app.UseWhen(

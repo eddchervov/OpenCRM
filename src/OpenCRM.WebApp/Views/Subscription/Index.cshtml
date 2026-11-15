@@ -1,7 +1,7 @@
 ﻿@model OpenCRM.WebApp.Models.Subscriptions.SubscriptionViewModel
 @using System.Globalization
 @{
-    Layout = "/Views/Shared/_Layout.cshtml";
+    Layout ??= "/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Тарифы";
     ViewData["SeoDescription"] = $"Бесплатная CRM {Brand.DisplayName} и варианты PRO для детейлинга и автосервиса: стоимость, срок, лимиты и включённые возможности.";
     var isAuthenticated = User.Identity?.IsAuthenticated == true;

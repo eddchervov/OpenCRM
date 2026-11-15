@@ -283,7 +283,8 @@ onMounted(loadCapabilities)
       <section v-if="exportMode === 'bp3'" class="finance-export-page__content" aria-labelledby="export-1c-title">
         <h3 id="export-1c-title" class="ui-section-header">Загрузка в 1С</h3>
         <p>В 1С откройте обработку через «Файл → Открыть». Выберите JSON, организацию и услугу; сопоставьте клиентов и создайте черновики. Перед проведением сверьте договоры, даты и оплаты.</p>
-        <p>Исходники обработки входят в OpenCRM. Готовый файл для своей версии 1С предоставляет администратор установки.</p>
+        <p v-if="capabilities?.processingDownloadUrl"><a :href="capabilities.processingDownloadUrl" download>Скачать обработку для 1С</a></p>
+        <p v-else>Исходники обработки входят в OpenCRM. Готовый файл для своей версии 1С предоставляет администратор установки.</p>
       </section>
 
       <div class="finance-export-page__footer">

@@ -179,7 +179,7 @@ internal sealed class SubscriptionPaymentEventProcessor(
 
     private async Task ApplyStateAsync(SubscriptionPurchase purchase, PaymentStateChanged message, DateTime now, CancellationToken cancellationToken)
     {
-        if (message.SchemaVersion != 1 || message.ApplicationId != "opencrm" || message.EventId == Guid.Empty
+        if (message.SchemaVersion != 1 || message.ApplicationId != options.Value.ApplicationId || message.EventId == Guid.Empty
             || message.PaymentOrderId == Guid.Empty || message.AggregateVersion <= 0
             || message.CreationStatus is not ("NotCreated" or "Prepared" or "Sending" or "OutcomeUnknown" or "AwaitingProvider" or "Resolved" or "Rejected" or "ManualReview")
             || message.AmountMinor != purchase.AmountMinor || message.Currency != purchase.Currency
@@ -314,7 +314,7 @@ internal sealed class SubscriptionPaymentEventProcessor(
     private async Task ApplyRejectionAsync(SubscriptionPurchase purchase, PaymentCommandRejected message, DateTime now, CancellationToken cancellationToken)
     {
         var command = await context.SubscriptionPaymentCommands.SingleOrDefaultAsync(item => item.Id == message.CommandId && item.PurchaseId == purchase.Id, cancellationToken);
-        if (message.SchemaVersion != 1 || message.ApplicationId != "opencrm" || command == null)
+        if (message.SchemaVersion != 1 || message.ApplicationId != options.Value.ApplicationId || command == null)
         {
             this.Attention(purchase, "command_rejection_mismatch", now);
             return;
@@ -354,7 +354,7 @@ internal sealed class SubscriptionPaymentEventProcessor(
     {
         var command = await context.SubscriptionPaymentCommands.SingleOrDefaultAsync(item =>
             item.Id == message.CommandId && item.PurchaseId == purchase.Id, cancellationToken);
-        if (message.SchemaVersion != 1 || message.ApplicationId != "opencrm" || message.EventId == Guid.Empty
+        if (message.SchemaVersion != 1 || message.ApplicationId != options.Value.ApplicationId || message.EventId == Guid.Empty
             || message.OperationId == Guid.Empty || message.PaymentOrderId == Guid.Empty
             || command == null || message.Kind != "Refund" || command.Kind != "refund"
             || message.Status is not ("Prepared" or "Sending" or "OutcomeUnknown" or "AwaitingProvider" or "Resolved" or "Rejected" or "ManualReview"))

@@ -1,4 +1,6 @@
 using MassTransit;
+using Microsoft.Extensions.Options;
+using Payments.Service.Configuration;
 using Payments.Contracts;
 using Payments.Service.Persistence;
 
@@ -8,6 +10,7 @@ public sealed class PaymentCommandConsumer(
     PaymentCommandService commands,
     PaymentDbContext database,
     TimeProvider clock,
+    IOptions<PaymentOptions> options,
     ILogger<PaymentCommandConsumer> logger)
     : IConsumer<CreatePayment>, IConsumer<RequestRefund>
 {
@@ -58,7 +61,7 @@ public sealed class PaymentCommandConsumer(
     private async Task RejectAsync<T>(ConsumeContext<T> context, string applicationId, Guid purchaseId,
         Guid commandId, string reason) where T : class
     {
-        var endpoint = await context.GetSendEndpoint(new Uri("queue:payments-opencrm-events"));
+        var endpoint = await context.GetSendEndpoint(new Uri($"queue:payments-{options.Value.ApplicationId}-events"));
         var eventId = commandId != Guid.Empty ? commandId : context.MessageId ?? Guid.NewGuid();
         await endpoint.Send(new PaymentCommandRejected(eventId, applicationId, purchaseId,
             commandId, reason, clock.GetUtcNow()), context.CancellationToken);

@@ -23,7 +23,7 @@ The reusable [OpenCRM.Hosting](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj) Ra
 
 ## A product host and one source tree
 
-A product application references the [shared hosting library](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj), not the neutral executable. The [product-host MSBuild import](../build/OpenCRM.ProductHost.targets) accepts one `OpenCRMRoot`, adds the shared project and static resources, and builds all CRM clients from that source tree. The consumer supplies its own `brand.json`, `appsettings.json`, and entry point. Client files are rebuilt before the .NET SDK discovers static assets. `dotnet publish --no-build` uses the previously built assets and does not rebuild frontend; build the product first after frontend changes.
+A product application references the [shared hosting library](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj), not the neutral executable. The [product-host MSBuild import](../build/OpenCRM.ProductHost.targets) accepts one `OpenCRMRoot`, adds the shared project and static resources, and builds all CRM clients from that source tree. The consumer supplies its own `brand.json`, `appsettings.json`, and entry point. The optional `configureProductMiddleware` callback of `OpenCRMApplication.ConfigureApplication` runs after forwarded headers and error handling, before HTTPS redirects, security headers, routing, and static files. Use it for product-specific canonical redirects; omitting it keeps the neutral pipeline. Client files are rebuilt before the .NET SDK discovers static assets. `dotnet publish --no-build` uses the previously built assets and does not rebuild frontend; build the product first after frontend changes.
 
 The import copies core defaults as `opencrm.defaults.json`. Load that file before the product's settings, then reapply environment variables and command-line arguments. Register product services after the common builder configuration; apply the common pipeline to the built application. The neutral application remains independently runnable.
 
@@ -43,6 +43,9 @@ Configure your own values without changing shared behavior:
 - Supply connection strings and secrets to the relevant process through environment variables or a secret store.
 - Enable email, AI, and payment infrastructure as needed.
 - `PlatformPolicy__Commercial__Enabled` controls the optional commercial mode.
+- `UserTracking:Enabled` is `false` by default; enable extra visit counters and client-access snapshots only if the product needs them. See [configuration](configuration.md).
+- `AdminDesktop` can move the launcher's Chrome profile and the desktop admin app's local state files; all four optional paths must be absolute. See [configuration](configuration.md#desktop-administration-paths).
+- `Export1C:ProcessingDownloadUrl` optionally advertises a local 1C processing-file URL in the export capabilities response; non-local URLs are ignored.
 
 The server supports `Brand__DisplayName` and `Brand__PublicBaseUrl`; desktop applications use the brand file. Keep settings consistent across all processes in your distribution. Changing branding does not remove the required OpenCRM core attribution.
 
@@ -98,6 +101,32 @@ This illustrates connecting a class in the existing host. You must implement the
 - [`Admin`](../src/OpenCRM.Frontend/Admin) contains administration applications.
 
 Reuse existing components, theme styles, and permission handling. Use the shared `UiDatePicker` and `UiTimePicker` for dates and times. After changing client components, build the workspaces and check the relevant scenarios, narrow screens, and both themes.
+
+### Product links in both admin panels
+
+Add product-owned navigation links to the root `Administration.Sections` array in `brand.json`. The web admin panel and desktop admin app read the same entries; no shared screen needs to be copied. Each entry has this shape:
+
+```json
+{
+  "Administration": {
+    "Sections": [
+      {
+        "Title": "Product analytics",
+        "Url": "/admin/product-analytics",
+        "Permission": "Admin.Dashboard.View"
+      }
+    ]
+  }
+}
+```
+
+`Url` must be a local absolute path beginning with one `/`. Protocol-relative URLs, backslashes, control characters, query strings, and fragments are rejected. The web panel prefixes the current `PathBase`; the desktop app opens the route in the system browser while preserving the server's base path. The desktop app does not pass its session token to that browser. The browser signs in through the normal web flow.
+
+`Permission` is an existing admin permission code. Both interfaces hide entries the current profile cannot see, but this is navigation filtering only: implement authorization on the destination page and its APIs. Do not treat a configured link or a hidden menu item as an access-control boundary.
+
+### Product registration-consent view
+
+The shared registration and email-code sign-in views render `Views/Shared/_RegistrationConsentFields.cshtml` with a `bool` model indicating whether the checkbox was previously selected. To use product-specific consent wording or markup, provide a product view at the same `Views/Shared/_RegistrationConsentFields.cshtml` path. Keep the `PersonalDataProcessingConsent` field name and compatible boolean binding so the shared POST validation continues to work. This is a Razor view override; it does not require changing the shared controller or the core view.
 
 ### Commercial mode
 

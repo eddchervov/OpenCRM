@@ -43,7 +43,7 @@ let requestVersion = 0
 
 const channelName = computed(() => props.channel === 'telegram' ? 'Telegram' : 'MAX')
 const helpUrl = computed(() => props.channel === 'telegram'
-  ? 'https://example.invalid/community'
+  ? 'https://t.me/BotFather'
   : 'https://dev.max.ru/docs/chatbots/bots-create/create')
 const helpLabel = computed(() => props.channel === 'telegram' ? 'BotFather' : 'инструкции MAX')
 const isAvailable = computed(() => props.channel !== 'telegram' || settings.value?.isAvailable !== false)

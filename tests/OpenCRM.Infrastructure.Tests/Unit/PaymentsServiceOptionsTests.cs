@@ -5,6 +5,43 @@ namespace OpenCRM.Infrastructure.Tests.Unit;
 public sealed class PaymentsServiceOptionsTests
 {
     [Fact]
+    public void ApplicationIdDefaultsToOpenCrmAndDefinesQueueNames()
+    {
+        var options = new PaymentsServiceOptions();
+
+        Assert.Equal("opencrm", options.ApplicationId);
+        Assert.Equal("payments-opencrm-commands", options.CommandsQueueName);
+        Assert.Equal("payments-opencrm-events", options.EventsQueueName);
+    }
+
+    [Fact]
+    public void ApplicationIdCanSelectProductQueues()
+    {
+        var options = new PaymentsServiceOptions { ApplicationId = "sample-crm" };
+
+        Assert.True(PaymentsServiceOptions.IsValid(options));
+        var enabledOptions = PaymentsServiceOptionsTests.CreateEnabledOptions("https://payments-service.internal");
+        enabledOptions.ApplicationId = "sample-crm";
+        Assert.True(PaymentsServiceOptions.IsValid(enabledOptions));
+        Assert.Equal("payments-sample-crm-commands", options.CommandsQueueName);
+        Assert.Equal("payments-sample-crm-events", options.EventsQueueName);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("OpenCRM")]
+    [InlineData("-sample-crm")]
+    [InlineData("sample-crm.test")]
+    [InlineData("sample-crm_test")]
+    [InlineData("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn")]
+    public void InvalidApplicationIdsAreRejectedEvenWhenPaymentsAreDisabled(string applicationId)
+    {
+        var options = new PaymentsServiceOptions { ApplicationId = applicationId };
+
+        Assert.False(PaymentsServiceOptions.IsValid(options));
+    }
+
+    [Fact]
     public void PaymentsServiceAllowsPlainHttpOnlyForTheExplicitInternalHost()
     {
         var options = CreateEnabledOptions("http://payments-service:8080");

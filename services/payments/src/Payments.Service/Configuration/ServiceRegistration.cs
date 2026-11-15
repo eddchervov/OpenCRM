@@ -91,7 +91,8 @@ public static class ServiceRegistration
 
     public static bool IsValid(PaymentOptions options)
     {
-        if (options.Mode is not ("Disabled" or "YooKassaTest" or "YooKassaLive") || options.ApplicationId != "opencrm"
+        if (!ServiceRegistration.IsValidApplicationId(options.ApplicationId)
+            || options.Mode is not ("Disabled" or "YooKassaTest" or "YooKassaLive")
             || string.IsNullOrWhiteSpace(options.ServiceKey) || options.ServiceKey.Length < 32 || options.PollSeconds is < 1 or > 60
             || options.RetryWindowHours is < 1 or > 23 || options.MerchantAccountId.Length is < 1 or > 128
             || options.AllowedReturnUrls.Length == 0
@@ -113,5 +114,12 @@ public static class ServiceRegistration
         return options.MerchantAccountId.All(char.IsAsciiDigit)
             && options.IsTest == isTestMode
             && options.SecretKey.StartsWith(isTestMode ? "test_" : "live_", StringComparison.Ordinal);
+    }
+
+    private static bool IsValidApplicationId(string? applicationId)
+    {
+        return !string.IsNullOrEmpty(applicationId) && applicationId.Length <= 64
+            && (char.IsAsciiLetterLower(applicationId[0]) || char.IsAsciiDigit(applicationId[0]))
+            && applicationId.All(character => char.IsAsciiLetterLower(character) || char.IsAsciiDigit(character) || character == '-');
     }
 }

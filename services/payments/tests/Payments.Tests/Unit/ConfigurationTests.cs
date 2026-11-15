@@ -10,6 +10,36 @@ public sealed class ConfigurationTests
         Assert.True(ServiceRegistration.IsValid(ConfigurationTests.CreateOptions()));
     }
 
+    [Fact]
+    public void ApplicationIdDefaultsToOpenCrm()
+    {
+        Assert.Equal("opencrm", new PaymentOptions().ApplicationId);
+    }
+
+    [Fact]
+    public void ApplicationIdCanBeConfiguredPerProduct()
+    {
+        var options = ConfigurationTests.CreateOptions();
+        options.ApplicationId = "sample-crm";
+
+        Assert.True(ServiceRegistration.IsValid(options));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("OpenCRM")]
+    [InlineData("-sample-crm")]
+    [InlineData("sample-crm.test")]
+    [InlineData("sample-crm_test")]
+    [InlineData("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn")]
+    public void InvalidApplicationIdsAreRejected(string applicationId)
+    {
+        var options = ConfigurationTests.CreateOptions();
+        options.ApplicationId = applicationId;
+
+        Assert.False(ServiceRegistration.IsValid(options));
+    }
+
     [Theory]
     [InlineData("Live")]
     [InlineData("YooKassa")]

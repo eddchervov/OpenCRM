@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +13,12 @@ public partial class MainWindowViewModel : ObservableObject
 {
     /// <summary> Клиент административной сессии. </summary>
     private readonly AdminSessionClient _sessionClient;
+
+    /// <summary> Исходный адрес сервера, включая PathBase. </summary>
+    private readonly Uri _serverAddress;
+
+    /// <summary> Дополнительные разделы, заданные продуктом. </summary>
+    private readonly IReadOnlyList<AdminProductSection> _productSections;
 
     /// <summary> Признак ошибки конфигурации приложения. </summary>
     private readonly bool _hasConfigurationError;
@@ -85,9 +92,13 @@ public partial class MainWindowViewModel : ObservableObject
         AdminSessionClient sessionClient,
         Uri serverAddress,
         string? configurationError = null,
-        int refreshSeconds = 60)
+        int refreshSeconds = 60,
+        PendingPaymentActionStore? pendingActionStore = null,
+        IReadOnlyList<AdminProductSection>? productSections = null)
     {
         this._sessionClient = sessionClient;
+        this._serverAddress = serverAddress;
+        this._productSections = productSections ?? [];
         this._hasConfigurationError = configurationError != null;
         this.ServerAddress = serverAddress.GetLeftPart(UriPartial.Authority);
         this.ErrorMessage = configurationError ?? string.Empty;
@@ -126,7 +137,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
         };
         this.InitializeSections();
-        this.Billing = new BillingViewModel(sessionClient);
+        this.Billing = new BillingViewModel(sessionClient, pendingActionStore);
         this.Billing.PermissionsRefreshRequested += this.RefreshPermissionsAsync;
         this.Billing.SessionExpired += () =>
         {
@@ -158,6 +169,12 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary> Список разрешений администратора. </summary>
     public ObservableCollection<PermissionItem> Permissions { get; } = [];
+
+    /// <summary> Доступные дополнительные ссылки продукта. </summary>
+    public ObservableCollection<AdminProductSection> VisibleProductSections { get; } = [];
+
+    /// <summary> Признак наличия доступных дополнительных ссылок продукта. </summary>
+    public bool HasVisibleProductSections => this.VisibleProductSections.Count > 0;
 
     /// <summary> Адрес сервера. </summary>
     public string ServerAddress { get; }
@@ -278,6 +295,19 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         await this.Billing.ActivateAsync();
+    }
+
+    /// <summary> Открывает дополнительный раздел продукта в системном браузере. </summary>
+    [RelayCommand]
+    private void OpenProductSection(AdminProductSection? section)
+    {
+        if (section is null || !this.VisibleProductSections.Contains(section))
+        {
+            return;
+        }
+
+        var sectionUri = section.BuildUri(this._serverAddress);
+        using var browser = Process.Start(new ProcessStartInfo(sectionUri.AbsoluteUri) { UseShellExecute = true });
     }
 
     /// <summary> Признак выполненной аутентификации. </summary>
@@ -524,6 +554,8 @@ public partial class MainWindowViewModel : ObservableObject
         this.Dashboard.SetBillingAccess(this.CanViewBilling);
         this.NavigationItems.Clear();
         this.Permissions.Clear();
+        this.VisibleProductSections.Clear();
+        this.OnPropertyChanged(nameof(HasVisibleProductSections));
         this.StartNavigationUpdates();
         if (profile == null)
         {
@@ -549,6 +581,14 @@ public partial class MainWindowViewModel : ObservableObject
                 && (profile.IsSystem || profile.Permissions.Contains(item.Permission)))
             {
                 this.NavigationItems.Add(item);
+            }
+        }
+
+        foreach (var section in this._productSections)
+        {
+            if (section.IsVisibleTo(profile))
+            {
+                this.VisibleProductSections.Add(section);
             }
         }
 

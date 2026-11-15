@@ -6,6 +6,7 @@ public sealed class PaymentsServiceOptions
     public bool Enabled { get; set; }
     public bool AcceptNewPurchases { get; set; } = true;
     public bool ExpectedIsTest { get; set; } = true;
+    public string ApplicationId { get; set; } = "opencrm";
     public string MerchantAccountId { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = string.Empty;
     public string InternalHttpHost { get; set; } = string.Empty;
@@ -21,8 +22,23 @@ public sealed class PaymentsServiceOptions
     public int SendTimeoutSeconds { get; set; } = 15;
     public string[] AllowedConfirmationHosts { get; set; } = ["yoomoney.ru", "yookassa.ru"];
 
+    public string CommandsQueueName => $"payments-{this.ApplicationId}-commands";
+    public string EventsQueueName => $"payments-{this.ApplicationId}-events";
+
+    public static bool IsValidApplicationId(string? applicationId)
+    {
+        return !string.IsNullOrEmpty(applicationId) && applicationId.Length <= 64
+            && (char.IsAsciiLetterLower(applicationId[0]) || char.IsAsciiDigit(applicationId[0]))
+            && applicationId.All(character => char.IsAsciiLetterLower(character) || char.IsAsciiDigit(character) || character == '-');
+    }
+
     public static bool IsValid(PaymentsServiceOptions options)
     {
+        if (!PaymentsServiceOptions.IsValidApplicationId(options.ApplicationId))
+        {
+            return false;
+        }
+
         if (!options.Enabled)
         {
             return true;

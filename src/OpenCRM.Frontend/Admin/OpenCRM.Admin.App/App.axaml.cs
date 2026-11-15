@@ -25,11 +25,16 @@ public partial class App : Application
         {
             var brand = ProjectBrand.Read(_ => null);
             var address = new Uri(brand.PublicBaseUrl);
+            var storageSettings = new DesktopStorageSettings(null, null);
+            IReadOnlyList<AdminProductSection> productSections = [];
             string? configurationError = null;
             try
             {
                 brand = DesktopSettings.LoadBrand();
                 address = DesktopSettings.LoadApiAddress(brand);
+                var brandFilePath = Path.Combine(AppContext.BaseDirectory, "brand.json");
+                storageSettings = DesktopStorageSettings.Load(brandFilePath);
+                productSections = DesktopSettings.LoadProductSections(brandFilePath);
             }
             catch (Exception exception) when (exception is IOException or JsonException or InvalidOperationException or UnauthorizedAccessException or ArgumentException)
             {
@@ -44,14 +49,24 @@ public partial class App : Application
                 DefaultVersionPolicy = HttpVersionPolicy.RequestVersionExact
             };
 
-            IAdminSessionStore? sessionStore = OperatingSystem.IsWindows() ? new ProtectedAdminSessionStore(address) : null;
+            IAdminSessionStore? sessionStore = OperatingSystem.IsWindows()
+                ? new ProtectedAdminSessionStore(address, storageSettings.SessionDirectory)
+                : null;
             var sessionClient = new AdminSessionClient(httpClient, sessionStore: sessionStore);
-            var viewModel = new MainWindowViewModel(sessionClient, address, configurationError, DashboardPreferences.LoadRefreshSeconds());
+            var viewModel = new MainWindowViewModel(
+                sessionClient,
+                address,
+                configurationError,
+                DashboardPreferences.LoadRefreshSeconds(storageSettings.DashboardPreferencesFile),
+                new PendingPaymentActionStore(storageSettings.PendingActionsDirectory),
+                productSections);
             viewModel.Dashboard.PropertyChanged += (_, eventArgs) =>
             {
                 if (eventArgs.PropertyName == nameof(DashboardViewModel.RefreshSeconds))
                 {
-                    DashboardPreferences.SaveRefreshSeconds(viewModel.Dashboard.RefreshSeconds);
+                    DashboardPreferences.SaveRefreshSeconds(
+                        viewModel.Dashboard.RefreshSeconds,
+                        storageSettings.DashboardPreferencesFile);
                 }
             };
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };

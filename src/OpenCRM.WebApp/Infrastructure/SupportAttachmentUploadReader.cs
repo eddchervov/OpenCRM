@@ -4,8 +4,9 @@ using OpenCRM.Services.Interfaces.Home.Dtos;
 namespace OpenCRM.WebApp.Infrastructure;
 
 /// <summary> Читает файлы формы с ограничениями до выделения памяти под содержимое. </summary>
-internal static class SupportAttachmentUploadReader
+public static class SupportAttachmentUploadReader
 {
+    /// <summary> Читает и проверяет вложения общей переписки и продуктовой формы обратной связи.</summary>
     public static async Task<IReadOnlyList<SupportAttachmentUploadDto>> ReadAsync(
         IReadOnlyList<IFormFile> files, CancellationToken cancellationToken)
     {

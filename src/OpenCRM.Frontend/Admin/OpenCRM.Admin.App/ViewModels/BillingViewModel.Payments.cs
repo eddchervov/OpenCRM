@@ -18,10 +18,10 @@ public partial class BillingViewModel
     private string _operationMessage = string.Empty;
 
     /// <summary> Создаёт рабочее пространство биллинга с отдельной очередью чеков. </summary>
-    public BillingViewModel(AdminSessionClient sessionClient)
+    public BillingViewModel(AdminSessionClient sessionClient, PendingPaymentActionStore? pendingActionStore = null)
     {
         this._sessionClient = sessionClient;
-        this.PaymentActions = new PaymentActionsViewModel(sessionClient);
+        this.PaymentActions = new PaymentActionsViewModel(sessionClient, pendingActionStore);
         this.Purchases = new PurchasesViewModel(sessionClient);
         this.PaymentActions.SessionExpired += () => this.SessionExpired?.Invoke();
         this.Purchases.SessionExpired += () => this.SessionExpired?.Invoke();

@@ -20,11 +20,7 @@ public partial class App
             var settings = DesktopSettings.Load();
             displayName = settings.DisplayName;
             var chromePath = ChromeLocator.FindExecutable();
-            var profileDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Администрирование",
-                "AdminDesktop",
-                "Chrome");
+            var profileDirectory = DesktopSettings.LoadChromeProfileDirectory();
 
             Directory.CreateDirectory(profileDirectory);
 
