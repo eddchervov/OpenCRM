@@ -59,6 +59,10 @@ Normal registration works with `Notifications:Transport=Disabled` and `EmailConf
 
 Verify the complete email delivery chain before requiring verification. Setting `EmailConfirmation:Required=true` does not configure an email server.
 
+### Mobile password-reset links
+
+The notification Worker's `SystemTemplates:Applications:<applicationId>:MobileDeepLinkScheme` setting controls the URI scheme in the mobile password-reset email. It defaults to `opencrm`. Environment variables use double underscores, for example `SystemTemplates__Applications__sample-crm__MobileDeepLinkScheme=sample-crm`. The value must be a URI scheme of up to 64 ASCII letters, digits, plus signs, dots, or hyphens, beginning with a letter. This setting changes only the mobile-app link; the web reset URL remains part of the message data.
+
 ### Commercial module and payments
 
 To enable commercial mode in WebApp, set `PlatformPolicy__Commercial__Enabled=true` and restart the application. Startup initializes the built-in commercial plans. Review and configure prices, quotas, and terms through administration before offering purchases to users. Enabling the mode does not connect payments. For real purchases, configure the payment service, return URLs, and secrets separately using the [payment integration documentation](payments-service-integration.md). Do not enable commercial mode merely to use the basic CRM.

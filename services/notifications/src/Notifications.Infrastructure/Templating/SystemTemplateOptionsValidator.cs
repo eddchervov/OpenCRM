@@ -25,6 +25,11 @@ public sealed class SystemTemplateOptionsValidator : IValidateOptions<SystemTemp
                 return ValidateOptionsResult.Fail($"SystemTemplates:Applications:{applicationId}:BrandName must contain 1-200 characters without control characters.");
             }
 
+            if (!HasValidMobileDeepLinkScheme(profile.MobileDeepLinkScheme))
+            {
+                return ValidateOptionsResult.Fail($"SystemTemplates:Applications:{applicationId}:MobileDeepLinkScheme must be a valid URI scheme.");
+            }
+
             if (!HasValidTemplates(profile.Templates))
             {
                 return ValidateOptionsResult.Fail($"SystemTemplates:Applications:{applicationId}:Templates must contain distinct supported template keys.");
@@ -41,6 +46,14 @@ public sealed class SystemTemplateOptionsValidator : IValidateOptions<SystemTemp
             && !string.IsNullOrWhiteSpace(profile.BrandName)
             && profile.BrandName.Length <= 200
             && !profile.BrandName.Any(char.IsControl);
+    }
+
+    /// <summary> Проверяет, что схема соответствует синтаксису URI без разделителей и управляющих символов. </summary>
+    private static bool HasValidMobileDeepLinkScheme(string? scheme)
+    {
+        return scheme is { Length: > 0 and <= 64 }
+            && char.IsAsciiLetter(scheme[0])
+            && scheme.Skip(1).All(character => char.IsAsciiLetterOrDigit(character) || character is '+' or '.' or '-');
     }
 
     /// <summary> Проверяет, что список шаблонов непуст и содержит допустимые ключи. </summary>

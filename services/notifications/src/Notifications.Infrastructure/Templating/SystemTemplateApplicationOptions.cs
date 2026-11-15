@@ -9,6 +9,9 @@ public sealed class SystemTemplateApplicationOptions
     /// <summary>Короткая текстовая эмблема в шапке письма.</summary>
     public string? BrandMark { get; init; }
 
+    /// <summary>Схема ссылки на мобильное приложение для сброса пароля.</summary>
+    public string MobileDeepLinkScheme { get; init; } = "opencrm";
+
     /// <summary>Список разрешённых ключей системных шаблонов.</summary>
     public string[] Templates { get; init; } = [];
 }

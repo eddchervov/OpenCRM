@@ -47,7 +47,8 @@ public sealed class RazorSystemTemplateRenderer(
         var viewData = new Dictionary<string, object>
         {
             ["BrandName"] = profile.BrandName,
-            ["BrandMark"] = profile.BrandMark ?? string.Empty
+            ["BrandMark"] = profile.BrandMark ?? string.Empty,
+            ["MobileDeepLinkScheme"] = profile.MobileDeepLinkScheme
         };
         var subject = await engine.RenderPartialAsync($"{directory}/Subject.cshtml", model, viewData);
         var body = await engine.RenderAsync($"{directory}/Body.cshtml", model, viewData);

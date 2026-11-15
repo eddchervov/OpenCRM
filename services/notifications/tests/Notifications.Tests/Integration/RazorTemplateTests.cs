@@ -218,6 +218,25 @@ public sealed class RazorTemplateTests
         Assert.False(string.IsNullOrWhiteSpace(content.Subject));
     }
 
+    /// <summary> Проверяет настройку схемы ссылки мобильного приложения и экранирование параметров. </summary>
+    [Fact]
+    public async Task MobilePasswordResetUsesConfiguredApplicationScheme()
+    {
+        using var provider = CreateProvider(templates: ["system/password-reset-mobile"], mobileDeepLinkScheme: "sample-crm");
+        var renderer = provider.GetRequiredService<ISystemTemplateRenderer>();
+        var content = await renderer.RenderAsync(
+            "opencrm",
+            "system/password-reset-mobile",
+            NotificationChannel.Email,
+            1,
+            """{"userId":"user id","code":"a&b","resetUrl":"https://example.com/reset"}""",
+            CancellationToken.None);
+        var decodedBody = WebUtility.HtmlDecode(content.Body);
+
+        Assert.Contains("sample-crm://reset-password?userId=user%20id&code=a%26b", decodedBody);
+        Assert.DoesNotContain("opencrm://reset-password", decodedBody);
+    }
+
     /// <summary> Проверяет письма рабочего бесплатного пространства после окончания тарифа. </summary>
     [Theory]
     [InlineData("upcoming", "После окончания PRO бесплатный тариф Free останется доступен без ограничения срока")]
@@ -384,7 +403,8 @@ public sealed class RazorTemplateTests
     private static ServiceProvider CreateProvider(
         string applicationId = "opencrm",
         string brandName = "opencrm.example.invalid",
-        string[]? templates = null)
+        string[]? templates = null,
+        string? mobileDeepLinkScheme = null)
     {
         templates ??= ["system/email-confirmation", "system/password-reset", "system/subscription-expiring"];
         var settings = new Dictionary<string, string?>
@@ -392,6 +412,10 @@ public sealed class RazorTemplateTests
             [$"SystemTemplates:Applications:{applicationId}:BrandName"] = brandName,
             [$"SystemTemplates:Applications:{applicationId}:BrandMark"] = "O"
         };
+        if (mobileDeepLinkScheme is not null)
+        {
+            settings[$"SystemTemplates:Applications:{applicationId}:MobileDeepLinkScheme"] = mobileDeepLinkScheme;
+        }
         for (var index = 0; index < templates.Length; index++)
         {
             settings[$"SystemTemplates:Applications:{applicationId}:Templates:{index}"] = templates[index];
