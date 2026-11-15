@@ -11,7 +11,7 @@ public sealed class ProjectBrand
     public const string DefaultName = "OpenCRM";
 
     /// <summary> Постоянная ссылка проекта на GitHub. </summary>
-    public const string GitHubUrl = "https://github.com/eddchervov";
+    public const string GitHubUrl = "https://github.com/eddchervov/OpenCRM";
 
     /// <summary> Создаёт неизменяемые настройки бренда. </summary>
     public ProjectBrand(

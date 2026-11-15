@@ -107,7 +107,7 @@ Describe the problem and resulting behavior. List the checks you ran and what re
 
 Preserve encoding and line endings. Write comments in newly added code in Russian. Do not include secrets, settings from your own running installation, build output, or temporary reports in your changes.
 
-Retain the [license](LICENSE), copyright notice, and visible OpenCRM attribution to the author [eddchervov](https://github.com/eddchervov).
+Retain the [license](LICENSE), copyright notice, and visible “Based on [OpenCRM](https://github.com/eddchervov/OpenCRM)” attribution. The interface does not need the author's name or profile link; author information remains in the core README and license.
 
 With Python 3 installed, validate local documentation links, heading anchors, language pairs, and screenshot paths from the repository root:
 

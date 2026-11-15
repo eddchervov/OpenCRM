@@ -30,7 +30,7 @@ Configure your own values without changing shared behavior:
 - Enable email, AI, and payment infrastructure as needed.
 - `PlatformPolicy__Commercial__Enabled` controls the optional commercial mode.
 
-The server supports `Brand__DisplayName` and `Brand__PublicBaseUrl`; desktop applications use the brand file. Keep settings consistent across all processes in your distribution. Changing branding does not remove the required OpenCRM author attribution.
+The server supports `Brand__DisplayName` and `Brand__PublicBaseUrl`; desktop applications use the brand file. Keep settings consistent across all processes in your distribution. Changing branding does not remove the required OpenCRM core attribution.
 
 See [configuration](configuration.md) for details and configuration source precedence.
 
@@ -118,4 +118,4 @@ Conflicts are possible, especially when the same shared files have changed. Smal
 
 ## Attribution
 
-You may change your product's name, appearance, and functionality. Retain the [license terms](../LICENSE) and visible OpenCRM attribution to the author [eddchervov](https://github.com/eddchervov) on the website/web interface, including commercial and closed-source customizations.
+You may change your product's name, appearance, and functionality. Retain the [license terms](../LICENSE) and visible “Based on [OpenCRM](https://github.com/eddchervov/OpenCRM)” attribution on the website/web interface, including commercial and closed-source customizations.

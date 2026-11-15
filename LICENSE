@@ -16,19 +16,19 @@ or substantial portions of the Software.
 2. Visible attribution. If the Software or a derivative work is used to
 provide a user-facing website or web application, including as a hosted
 service, that interface shall display a legible attribution notice on its
-main page or in a common footer. The notice shall identify OpenCRM and its
-author eddchervov and include a clickable link to
-https://github.com/eddchervov. The following notice satisfies this condition:
+main page or in a common footer. The notice shall identify OpenCRM and
+include a clickable link to https://github.com/eddchervov/OpenCRM. The
+following notice satisfies this condition:
 
-    Based on OpenCRM - author eddchervov
+    Based on OpenCRM
 
-The Russian notice "На базе OpenCRM · автор eddchervov" or an accurate
-translation preserving the project name, author identifier, and link is also
-permitted. Attribution shall not be hidden from ordinary users or replaced
-solely by a notice in source code, legal files, or an inaccessible page.
-Changing the product name, branding, or functionality does not remove this
-condition. Modifications may remain private, provided that these conditions
-are met.
+The Russian notice "На базе OpenCRM" or an accurate translation preserving
+the project name and link is also permitted. The interface notice does not
+need to include the author's name or a link to the author's profile.
+Attribution shall not be hidden from ordinary users or replaced solely by a
+notice in source code, legal files, or an inaccessible page. Changing the
+product name, branding, or functionality does not remove this condition.
+Modifications may remain private, provided that these conditions are met.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

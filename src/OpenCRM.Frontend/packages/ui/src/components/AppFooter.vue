@@ -23,6 +23,6 @@ withDefaults(defineProps<{
         </div>
       </section>
     </div>
-    <div class="opencrm-footer__copy">На базе OpenCRM · автор <a href="https://github.com/eddchervov" target="_blank" rel="noopener noreferrer">eddchervov</a> · © {{ brand }}, {{ year }}</div>
+    <div class="opencrm-footer__copy">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a> · © {{ brand }}, {{ year }}</div>
   </footer>
 </template>

@@ -180,8 +180,8 @@ In the current architecture, new implementations and modules are explicitly regi
 
 OpenCRM is distributed under the [OpenCRM Attribution License 1.0](LICENSE). It permits use, modification, redistribution, and commercial products; your own modifications may remain private provided you comply with the license conditions.
 
-Keep the copyright notice and the required visible attribution on your website or web interface:
+Retain the copyright and license notices in copies of the software. On your website or web interface, display:
 
-> На базе OpenCRM · автор [eddchervov](https://github.com/eddchervov)
+> Based on [OpenCRM](https://github.com/eddchervov/OpenCRM)
 
-The line means “Powered by OpenCRM · author eddchervov.” The attribution requirement also applies if you rename or redesign your product. See `LICENSE` for the full terms; third-party components retain their own licenses.
+Author of OpenCRM: [eddchervov](https://github.com/eddchervov). Your interface only needs the project name and repository link; displaying the author's name or profile link there is not required. The attribution requirement also applies if you rename or redesign your product. See `LICENSE` for the full terms; third-party components retain their own licenses.

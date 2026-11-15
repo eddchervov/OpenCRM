@@ -288,7 +288,7 @@ onBeforeUnmount(() => {
         <WorkspaceProSectionPreview :context="context" :section-code="activeSection" :title="lockedSection.title" />
       </WorkspaceProLock>
       <slot v-else />
-      <footer class="crm-attribution">На базе OpenCRM · автор <a href="https://github.com/eddchervov" target="_blank" rel="noopener noreferrer">eddchervov</a></footer>
+      <footer class="crm-attribution">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a></footer>
     </main>
 
     <dialog v-if="sections.length > 1" id="crm-mobile-menu" ref="mobileMenu" class="crm-mobile-menu" aria-label="Навигация организации" @close="restorePage" @click="($event.target === mobileMenu) && closeMenu()">
