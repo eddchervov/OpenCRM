@@ -470,6 +470,7 @@ public class S3FileStorageProvider : IFileStorageService
                 BucketName = _bucketName,
                 Key = path,
                 Expires = DateTime.UtcNow.Add(expiration),
+                Protocol = new Uri(this._serviceUrl).Scheme == Uri.UriSchemeHttp ? Protocol.HTTP : Protocol.HTTPS,
                 Verb = HttpVerb.GET
             };
 
