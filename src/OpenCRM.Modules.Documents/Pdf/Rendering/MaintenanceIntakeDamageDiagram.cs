@@ -47,7 +47,7 @@ internal static class MaintenanceIntakeDamageDiagram
                         .TranslateX(labelX).TranslateY(labelY)
                         .Width(markerSize).Height(markerSize).AlignCenter().AlignMiddle()
                         .Text(damage.Number.ToString(CultureInfo.InvariantCulture))
-                        .FontFamily(PdfDocumentComponents.FontFamily).FontSize(10 * scale).Bold().FontColor("#202631");
+                        .FontFamily(PdfDocumentComponents.FontFamily).FontSize(10 * scale).Bold().FontColor("#000000");
                 }
             });
         });
