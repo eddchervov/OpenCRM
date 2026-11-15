@@ -47,6 +47,6 @@
 
 Стандартный локальный HTTPS-профиль использует `https://localhost:7142`; порядок настройки приведён в [README](local-run.ru.md). Доставка уведомлений по умолчанию выключена. Внешние интеграции настраиваются владельцем установки отдельно.
 
-![Реальная карточка обращения в локальном приложении](mockups/inquiries-card-example.png)
+![Реальная карточка обращения в локальном приложении](images/screenshots/inquiry-card.jpg)
 
-![Обновлённая доска обращений](mockups/inquiries-board-example.png)
+![Обновлённая доска обращений](images/screenshots/inquiries-board.jpg)

@@ -12,6 +12,8 @@ Open stages: “New,” “Clarifying,” “Proposal,” and “Ready to book.�
 
 The user can start with a name or another contact label and a description of the customer's interest; a known phone number is saved immediately. A usable contact method is needed to continue the conversation, but a visitor without a phone number must still be able to make a manual inquiry. Required form fields are finalized during implementation. The assignee must be an active member of the selected organization.
 
+> **Design concepts:** the three illustrations below are mockups, not current application captures. See the [screenshot gallery](screenshots.md) for the running CRM.
+
 ## Three screens
 
 ### Inquiries

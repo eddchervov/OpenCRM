@@ -6,6 +6,18 @@
 
 OpenCRM combines a working web application, shared business modules, administration interfaces, and independent notification and payment microservices. Start with the core CRM, configure it for your team, and extend it with the features you need.
 
+## CRM interface
+
+Real screenshots from a local OpenCRM installation with fictitious demonstration data and commercial mode disabled. The interface shown is Russian; both documentation languages share the same images.
+
+![OpenCRM workday in dark theme: appointments, work in progress, ready and handed-over vehicles](docs/images/screenshots/workday-dark.jpg)
+
+| Customer records | Work statistics |
+| --- | --- |
+| [![Customer list in light theme](docs/images/screenshots/clients.jpg)](docs/screenshots.md#customers) | [![Operational statistics in dark theme](docs/images/screenshots/statistics.jpg)](docs/screenshots.md#statistics) |
+
+[**Explore all 12 screenshots →**](docs/screenshots.md) — light and dark themes, appointments, work orders, intake, inquiries, permissions, and public pages.
+
 ## Why OpenCRM
 
 - **A working foundation.** Accounts, organizations, membership, permissions, customers, vehicles, appointments, work orders, inventory, documents, and operational finances.
@@ -14,33 +26,6 @@ OpenCRM combines a working web application, shared business modules, administrat
 - **Your own configuration.** Set your installation name, URLs, connections, and providers through configuration. Shared UI components are reused across client applications.
 - **Self-hosted operation.** The basic CRM only needs PostgreSQL. SMTP, RabbitMQ, AI, and payment providers are optional integrations.
 - **Optional commercial features.** Plans, subscriptions, and promotional codes remain available as an optional capability. Paid restrictions are disabled by default; membership, roles, and permission checks remain enforced.
-
-## CRM interface
-
-Example screens with demonstration data. These screenshots show a configured organization: menu items and the PRO label depend on configuration. Commercial mode is disabled in a default installation. The screenshots show the Russian UI; this documentation language switch does not change the application language.
-
-### Vehicle intake and work orders
-
-Vehicle inspection, damage annotations, payment information, and work order documents.
-
-![Vehicle intake: damage diagram, payment information, and documents](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/intake.png)
-
-<details>
-<summary>Work statistics and role permissions</summary>
-
-### Work statistics
-
-Organization metrics, work trends, and accrued amounts. These are operational CRM statistics.
-
-![Organization statistics: work metrics and charts](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/statistics.png)
-
-### Roles and permissions
-
-Configure members' access to sections and actions within an organization.
-
-![Organization roles: configuring worker permissions](src/OpenCRM.Frontend/packages/workspace/src/assets/pro/role-permissions.png)
-
-</details>
 
 ## Quick start
 

@@ -47,6 +47,6 @@ Migration `20261023100103_AddOrganizationInquiries` was created with EF Core 10.
 
 The standard local HTTPS profile uses `https://localhost:7142`; setup steps are in the [README](local-run.md). Notification delivery is disabled by default. The installation owner configures external integrations separately.
 
-![Inquiry profile in the local application](mockups/inquiries-card-example.png)
+![Inquiry profile in the local application](images/screenshots/inquiry-card.jpg)
 
-![Updated inquiry board](mockups/inquiries-board-example.png)
+![Updated inquiry board](images/screenshots/inquiries-board.jpg)

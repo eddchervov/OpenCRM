@@ -6,6 +6,7 @@ Guides for running and extending the CRM core, along with component architecture
 
 ## Getting started
 
+- [Interface gallery: 12 current screenshots](screenshots.md).
 - [OpenCRM core overview](../README.md).
 - [Local setup: dependencies, database, migrations, and first sign-in](local-run.md).
 - [Configure your installation](configuration.md).
