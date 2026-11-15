@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
+    <InternalsVisibleTo Include="OpenCRM.Infrastructure.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Domain\OpenCRM.Domain.csproj" />
+    <ProjectReference Include="..\..\services\payments\src\Payments.Contracts\Payments.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Data\OpenCRM.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\OpenCRM.Services.Interfaces\OpenCRM.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Billing.Contracts\OpenCRM.Modules.Billing.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Payments.Contracts\OpenCRM.Modules.Payments.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Promotions.Contracts\OpenCRM.Modules.Promotions.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Helpers/Helpers.csproj" />
+  </ItemGroup>
+</Project>

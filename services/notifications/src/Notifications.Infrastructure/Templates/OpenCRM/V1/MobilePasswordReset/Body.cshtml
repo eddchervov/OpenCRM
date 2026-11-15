@@ -1,0 +1,9 @@
+@model MobilePasswordResetModel
+@{
+    Layout = "/Templates/OpenCRM/V1/_Layout.cshtml";
+    var mobileUrl = $"opencrm://reset-password?userId={Uri.EscapeDataString(Model.UserId)}&code={Uri.EscapeDataString(Model.Code)}";
+}
+<h1>Восстановление доступа</h1>
+<p>Пожалуйста, сбросьте пароль <a href="@mobileUrl">в мобильном приложении</a>.</p>
+<p>Если ссылка не открывается, используйте <a href="@Model.ResetUrl">веб-форму сброса</a>.</p>
+<p>Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>

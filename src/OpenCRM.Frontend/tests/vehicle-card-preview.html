@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — демонстрация карточки техники</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import detailingPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/detailing.webp'
+    import fleetPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/fleet.webp'
+
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const isEmpty = params.has('empty')
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const vehicleId = '1'
+    const today = new Date()
+    const dateString = (offset = 0) => {
+      const date = new Date(today)
+      date.setDate(date.getDate() + offset)
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    }
+
+    const sectionName = scenario === 'detailing' ? 'Автомобили' : scenario === 'fleet' ? 'Техника' : 'Автомобили'
+    const maintenanceName = scenario === 'detailing' ? 'Услуги' : scenario === 'fleet' ? 'Обслуживание' : 'Заказ-наряды'
+    const clientName = scenario === 'fleet' ? 'Транспортный отдел' : 'Александр Петров'
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: {
+        id: organizationId,
+        name: scenario === 'detailing' ? 'Демо-студия · тестовые данные' : scenario === 'fleet' ? 'Демо-автопарк · тестовые данные' : 'Демо-СТО · тестовые данные',
+        primaryScenarioCode: scenario
+      },
+      workspaceAccess: { isReadOnly: params.has('readonly'), isFreePlan: params.has('free'), isBaseWorkspace: params.has('free'), hasActiveSubscription: !params.has('free'), roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario, modules: params.has('free') ? { photos: false } : undefined, terms: scenario === 'fleet' ? { clients: 'Подразделения' } : undefined },
+        menu: [
+          { code: 'workspace', title: scenario === 'fleet' ? 'Состояние парка' : 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'scheduler', title: scenario === 'fleet' ? 'План ТО' : 'Записи', isVisible: true, groupTitle: 'Основное', urlTemplate: '#scheduler' },
+          { code: 'clients', title: scenario === 'fleet' ? 'Подразделения' : 'Клиенты', isVisible: true, groupTitle: 'Основное', urlTemplate: '#clients' },
+          { code: 'vehicles', title: sectionName, isVisible: true, groupTitle: 'Основное', urlTemplate: '#vehicles' },
+          { code: 'maintenance', title: maintenanceName, isVisible: true, groupTitle: 'Работы', urlTemplate: '#maintenance' },
+          { code: 'maintenance-journal', title: scenario === 'detailing' ? 'Журнал услуг' : 'История работ', isVisible: true, groupTitle: 'Работы', urlTemplate: '#work-journal' }
+        ],
+        quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', schedulerUrl: '#workspace', quickBookingUrl: '#workspace', api: {} }
+    }
+
+    const vehicle = {
+      id: vehicleId, kind: 1, mileageUnit: 1, brandId: 1, brandName: 'BMW', brandLogoKey: 'bmw',
+      modelId: 1, modelName: 'X3', yearIssue: 2021, photoUrl: detailingPhoto, photoId: 'photo-main',
+      registrationPlate: 'А001АА 154', vin: 'WBA12345678901234', bodyNumber: 'X3-G01-2021', engineNumber: 'B48B20',
+      color: 'Серый металлик', registrationCertificate: '99 АА 123456', currentMileage: 68420,
+      currentMileageUpdatedAt: dateString(-2), commissioningDate: '2021-05-12',
+      isArchived: false, isManualEntry: false, dateTimeCreation: '2023-08-15T09:30:00Z',
+      organizationId, organizationClientId: 'client-1', organizationClientName: clientName, maintenanceCount: isEmpty ? 0 : 14
+    }
+
+    const makeMaintenance = (index) => {
+      const daysAgo = index * 18 + 2
+      const active = index === 0
+      const legacy = index === 2
+      const status = active ? 2 : index === 1 || legacy ? 3 : index % 6 === 0 ? 4 : 3
+      const amount = active ? 24000 : index === 1 ? 3500 : legacy ? 12000 : 2500 + index * 380
+      const completedDate = status === 3 ? dateString(-daysAgo) : null
+      const services = active
+        ? [
+            { detailId: `work-${index}-0`, name: scenario === 'detailing' ? 'Полировка кузова · этап 1' : 'Диагностика ходовой', quantity: 1, price: 8000, employeeName: 'Алексей', vatRateCode: 'without_vat' },
+            { detailId: `work-${index}-1`, name: scenario === 'detailing' ? 'Полировка кузова · этап 2' : 'Замена масла и фильтров', quantity: 1, price: 6000, employeeName: 'Алексей', vatRateCode: 'without_vat' },
+            { detailId: `work-${index}-2`, name: scenario === 'detailing' ? 'Керамическое покрытие' : 'Регулировка подвески', quantity: 1, price: 6000, employeeName: 'Мария', vatRateCode: 'without_vat' },
+            { detailId: `work-${index}-3`, name: scenario === 'detailing' ? 'Финишная проверка' : 'Контрольный тест-драйв', quantity: 1, price: 4000, employeeName: 'Мария', vatRateCode: 'without_vat' }
+          ]
+        : [{ detailId: `work-${index}-0`, name: index === 1 ? 'Замена масла' : index === 2 ? 'Плановое ТО' : 'Осмотр и обслуживание', quantity: 1, price: amount, employeeName: 'Алексей', vatRateCode: 'without_vat' }]
+      return {
+        id: String(index + 1), status, type: index % 2 === 0 ? 1 : 2,
+        date: dateString(-daysAgo), plannedDate: dateString(active ? 0 : -daysAgo), plannedStartTime: active ? '10:00' : null,
+        plannedEndTime: active ? '18:00' : null, completedDate, readyForHandoverAt: index === 1 ? dateString(-daysAgo) + 'T14:20:00Z' : null,
+        handedOverAt: index === 1 ? dateString(-daysAgo) + 'T16:10:00Z' : null,
+        location: active ? 'Пост 2' : null, performer: active ? 'Алексей, Мария' : 'Алексей', mileage: 68420 - daysAgo * 12,
+        grossAmount: amount, discountAmount: 0, paidAmount: active ? 10000 : amount, debtAmount: active ? 14000 : 0,
+        materialCostAmount: 0, laborCostAmount: 0, profitAmount: 0,
+        paymentStatus: active ? 'partial' : 'paid', vehicleId,
+        buyerClientId: 'client-1', buyerName: clientName, photoIds: [], linkedDefects: [], maintenanceDetails: services,
+        canEditServices: true, canManagePayments: true, version: 1,
+        comment: active ? 'Согласовать толщину слоя перед нанесением керамики.' : null,
+        intakeRecordedAt: active ? dateString(0) : null
+      }
+    }
+
+    const maintenance = Array.from({ length: isEmpty ? 0 : 14 }, (_, index) => makeMaintenance(index))
+    const history = isEmpty ? [] : [
+      { id: 'event-1', eventType: 'maintenance_completed', title: 'Обслуживание завершено', description: 'Замена масла и фильтров · 3 500 ₽', actorDisplayName: 'Алексей Смирнов', relatedEntityType: 'maintenance', relatedEntityId: '2', relatedUrl: '#maintenance/2', createdAt: dateString(-2) + 'T14:20:00Z' },
+      { id: 'event-2', eventType: 'mileage_updated', title: 'Обновлён пробег', description: '68 420 км', actorDisplayName: 'Александр Петров', createdAt: dateString(-2) + 'T11:10:00Z' },
+      { id: 'event-3', eventType: 'photo_uploaded', title: 'Добавлено фото', description: 'Фото автомобиля', actorDisplayName: 'Александр Петров', createdAt: dateString(-5) + 'T09:00:00Z' }
+    ]
+    const photos = isEmpty ? [] : [
+      { photoId: 'photo-main', url: detailingPhoto, isPrimary: true, createdAt: dateString(-5) },
+      { photoId: 'photo-side', url: fleetPhoto, isPrimary: false, createdAt: dateString(-5) }
+    ]
+    if (!isEmpty && params.get('photos') === '4') {
+      photos.push(
+        { ...photos[0], photoId: 'photo-third', url: `${detailingPhoto}?preview=third`, isPrimary: false },
+        { ...photos[1], photoId: 'photo-fourth', url: `${fleetPhoto}?preview=fourth`, isPrimary: false }
+      )
+    }
+    const albums = isEmpty ? { albums: [] } : {
+      albums: [
+        { albumId: 'album-inspection', vehicleId, title: 'Приёмка', createdAt: dateString(-5), photoCount: 2, primaryPhotoId: 'photo-main', photos },
+        { albumId: 'album-service', vehicleId, title: 'Обслуживание', createdAt: dateString(-2), photoCount: 1, primaryPhotoId: 'photo-side', photos: [photos[1]] }
+      ], limit: { currentCount: 2, maxCount: 10, isLimitedByPlan: false }
+    }
+
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      if (url.pathname.endsWith('/registration-plate-formats')) return originalFetch(input, init)
+      if ((init?.method ?? 'GET').toUpperCase() !== 'GET') {
+        const galleryPhoto = url.pathname.match(/^\/api\/v1\/media\/vehicles\/1\/photos\/([^/]+)(\/primary)?$/)
+        if (url.pathname === '/api/v1/media/vehicles/1/photos' && init?.method === 'POST') {
+          const uploaded = init.body.getAll('formFiles').map(file => ({
+            photoId: crypto.randomUUID(), url: URL.createObjectURL(file), isPrimary: photos.length === 0, createdAt: dateString()
+          }))
+          photos.push(...uploaded)
+          return Response.json(uploaded.map(photo => photo.photoId))
+        }
+        if (galleryPhoto && init?.method === 'DELETE') {
+          const index = photos.findIndex(photo => photo.photoId === galleryPhoto[1])
+          if (index >= 0) photos.splice(index, 1)
+          return new Response(null, { status: 204 })
+        }
+        if (galleryPhoto?.[2] && init?.method === 'POST') {
+          photos.forEach(photo => { photo.isPrimary = photo.photoId === galleryPhoto[1] })
+          return new Response(null, { status: 204 })
+        }
+        if (params.has('form') && url.pathname.match(/^\/api\/v1\/vehicles(?:\/[^/]+)?$/)) {
+          if (params.has('save-error')) return Response.json({message:'Тестовая ошибка сохранения'}, {status:500})
+          Object.assign(vehicle, JSON.parse(init.body))
+          return Response.json(vehicleId)
+        }
+        return new Response(null, {status:403})
+      }
+
+      const maintenancePage = url.pathname.match(/^\/api\/v1\/vehicles\/([^/]+)\/maintenance\/(\d+)\/(\d+)$/)
+      const vehicleMatch = url.pathname.match(/^\/api\/v1\/vehicles\/([^/]+)$/)
+      const historyMatch = url.pathname.match(/^\/api\/v1\/vehicles\/([^/]+)\/history$/)
+      const albumsMatch = url.pathname.match(/^\/api\/v1\/media\/vehicles\/([^/]+)\/albums$/)
+      const photosMatch = url.pathname.match(/^\/api\/v1\/media\/vehicles\/([^/]+)\/photos$/)
+      const page = Number(maintenancePage?.[2] ?? 1)
+      const pageSize = Number(maintenancePage?.[3] ?? 12)
+      const filteredMaintenance = url.searchParams.has('status')
+        ? maintenance.filter(item => item.status === Number(url.searchParams.get('status')))
+        : maintenance
+      const items = filteredMaintenance.slice((page - 1) * pageSize, page * pageSize)
+      const payload = url.pathname.endsWith('/context') ? context
+        : url.pathname.endsWith('/clients/options') ? [{id:'client-1',name:clientName}]
+        : url.pathname.endsWith('/catalog/brands/options') ? [{id:1,name:'BMW'},{id:2,name:'Audi'}]
+        : url.pathname.endsWith('/catalog/models/options') ? [{id:1,name:url.searchParams.get('brandId') === '2' ? 'Q5' : 'X3'}]
+        : vehicleMatch ? (isEmpty ? { ...vehicle, currentMileage: null, photoUrl: null, maintenanceCount: 0 } : vehicle)
+        : maintenancePage ? { items, totalCount: filteredMaintenance.length, page, pageSize, hasMore: page * pageSize < filteredMaintenance.length }
+        : historyMatch ? history
+        : url.pathname.endsWith('/media/vehicles/photos') ? [{ vehicleId, photos }]
+        : albumsMatch ? albums
+        : photosMatch ? photos
+        : url.pathname.endsWith('/progress') ? [
+            { detailId: 'work-0-0', name: maintenance[0]?.maintenanceDetails[0]?.name, employeeName: 'Алексей', status: 4, version: 1, activeTime: '01:30:00' },
+            { detailId: 'work-0-1', name: maintenance[0]?.maintenanceDetails[1]?.name, employeeName: 'Алексей', status: 4, version: 1, activeTime: '01:30:00' },
+            { detailId: 'work-0-2', name: maintenance[0]?.maintenanceDetails[2]?.name, employeeName: 'Мария', status: 2, version: 1, activeTime: '00:45:00' },
+            { detailId: 'work-0-3', name: maintenance[0]?.maintenanceDetails[3]?.name, employeeName: 'Мария', status: 1, version: 1, activeTime: '00:00:00' }
+          ]
+        : url.pathname.endsWith('/reports') ? []
+        : url.pathname.endsWith('/production-report') ? { totalOperations: 2, completedOperations: 1, activeTime: '02:15:00', timeAdjustmentsCount: 0, materials: [] }
+        : null
+      return payload === null ? new Response(null, { status: 404 }) : Response.json(payload)
+    }
+
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: `/api/v1/autoservice/organizations/${organizationId}/workspace/context` }
+    window.opencrmFleetClient = { organizationId, contextUrl: `/api/v1/fleet/organizations/${organizationId}/workspace/context` }
+
+    if (!location.hash) location.hash = params.has('form') ? '#vehicles/1/edit' : '#vehicles/1'
+    if (scenario === 'detailing') {
+      await import('../Scenarios/detailing-client/src/main.ts')
+    } else if (scenario === 'autoservice') {
+      await import('../Scenarios/autoservice-client/src/main.ts')
+    } else {
+      await import('../Scenarios/fleet-client/src/main.ts')
+    }
+  </script>
+</body>
+</html>
+

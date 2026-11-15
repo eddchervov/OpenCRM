@@ -1,0 +1,27 @@
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@{
+    var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var title = ViewData["Title"] as string ?? "ИИ - Голосовой помощник";
+}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta name="project-brand" content="@Brand.DisplayName" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="request-verification-token" content="@antiforgeryToken" />
+    <base target="_top" />
+    <title>@title</title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon2.svg" />
+    <script src="~/js/organizations-entry.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="organizations-entry assistant-page assistant-embedded">
+    <main role="main">
+        @RenderBody()
+    </main>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,48 @@
+﻿@using System.Text.Json
+@using Microsoft.AspNetCore.Antiforgery
+@using OpenCRM.WebApp.Infrastructure
+@inject IAntiforgery Antiforgery
+@inject IWebHostEnvironment Environment
+@{
+    Layout = null;
+    var organizationId = ViewData["OrganizationId"]?.ToString() ?? string.Empty;
+    var contextUrl = ViewData["ContextUrl"]?.ToString() ?? string.Empty;
+    var workspaceUrl = ViewData["WorkspaceUrl"]?.ToString() ?? string.Empty;
+    var title = ViewData["Title"]?.ToString() ?? "Детейлинг";
+    var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var frontendAssets = FrontendAssets.ReadEntry(Environment.WebRootPath, "clients/detailing", "index.html");
+    var hostConfig = new
+    {
+        organizationId,
+        contextUrl,
+        workspaceUrl
+    };
+}
+
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta name="project-brand" content="@Brand.DisplayName" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="request-verification-token" content="@antiforgeryToken" />
+    <meta name="opencrm-path-base" content="@Context.Request.PathBase" />
+    <title>@title</title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon2.svg" />
+    <script>
+        window.opencrmDetailingClient = @Html.Raw(JsonSerializer.Serialize(hostConfig));
+    </script>
+    <script src="/js/site.js" asp-append-version="true"></script>
+    <script src="/lib/fullcalendar/index.global.min.js" asp-append-version="true"></script>
+    <script type="module" crossorigin src="@frontendAssets.Script" asp-append-version="true"></script>
+    @foreach (var stylesheet in frontendAssets.Stylesheets)
+    {
+        <link rel="stylesheet" crossorigin href="@stylesheet" asp-append-version="true" />
+    }
+</head>
+<body>
+    <div id="app"></div>
+    <partial name="_UserActivity" />
+</body>
+</html>

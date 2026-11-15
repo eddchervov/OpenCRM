@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels" xmlns:api="using:OpenCRM.Admin.Api.Models"
+             x:Class="OpenCRM.Admin.App.Views.CrmImportView" x:DataType="vm:CrmImportViewModel">
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="14">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="Импорт CRM" FontSize="28" FontWeight="SemiBold" />
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="8">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="Результат запроса неизвестен. Обновите проверку перед повторным подтверждением."
+                 IsVisible="{Binding IsOutcomeUnknown}" Foreground="#F0C58B" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel MaxWidth="1200" Spacing="18">
+        <Border Classes="configurationSection">
+          <StackPanel Spacing="12" IsEnabled="{Binding !IsBusy}">
+            <TextBlock Text="1. Пользователь и организация" Classes="configurationHeading" />
+            <WrapPanel>
+              <TextBox Text="{Binding Search}" PlaceholderText="Email или телефон пользователя" Width="280" Margin="0,0,10,8" />
+              <Button Content="Найти" Command="{Binding SearchUsersCommand}" Margin="0,0,0,8" />
+            </WrapPanel>
+            <TextBlock Text="Пользователь" Classes="caption" />
+            <WrapPanel>
+              <ComboBox ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" Width="320" Margin="0,0,10,8">
+                <ComboBox.ItemTemplate><DataTemplate x:DataType="api:AdminCrmImportUser"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Content="Показать организации" Command="{Binding LoadOrganizationsCommand}" Margin="0,0,0,8" />
+            </WrapPanel>
+            <TextBlock Text="Организация" Classes="caption" />
+            <ComboBox ItemsSource="{Binding Organizations}" SelectedItem="{Binding SelectedOrganization}" HorizontalAlignment="Left" Width="320">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="api:AdminCrmImportOrganization"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+          </StackPanel>
+        </Border>
+        <Border Classes="configurationSection">
+          <StackPanel Spacing="12">
+            <TextBlock Text="2. Файл и проверка" Classes="configurationHeading" />
+            <TextBlock Text="CSV, XLSX, JSON или XML · до 10 МБ · до 5000 строк" Classes="caption" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="Выбрать файл" Click="OnChooseFile" IsEnabled="{Binding CanSelectFile}" Margin="0,0,12,8" />
+              <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </WrapPanel>
+            <Button Content="Проверить файл" Command="{Binding PreviewFileCommand}" Classes="configurationPrimary" />
+          </StackPanel>
+        </Border>
+        <Border Classes="configurationSection" IsVisible="{Binding HasPreview}">
+          <StackPanel Spacing="14">
+            <TextBlock Text="3. Результат проверки" Classes="configurationHeading" />
+            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" />
+            <TextBlock Text="Этот файл уже импортирован." IsVisible="{Binding Preview.AlreadyImported}" Foreground="#F0C58B" />
+            <WrapPanel>
+              <Button Content="Сохранить отчёт проверки" Click="OnSavePreview" IsEnabled="{Binding CanDownload}" Margin="0,0,10,8" />
+              <Button Content="Начать импорт" Command="{Binding RequestConfirmationCommand}" Classes="configurationPrimary" Margin="0,0,0,8" />
+            </WrapPanel>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <Grid RowDefinitions="Auto,*" MinWidth="700">
+                <Grid ColumnDefinitions="65,2*,150,*" Margin="12,8">
+                  <TextBlock Text="Строка" Classes="caption" />
+                  <TextBlock Grid.Column="1" Text="Данные" Classes="caption" />
+                  <TextBlock Grid.Column="2" Text="Результат" Classes="caption" />
+                  <TextBlock Grid.Column="3" Text="Комментарий" Classes="caption" />
+                </Grid>
+                <ListBox Grid.Row="1" ItemsSource="{Binding Preview.Rows}" Height="300" Background="Transparent"
+                         BorderThickness="0" ItemContainerTheme="{StaticResource AdminListRowTheme}">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="api:AdminCrmImportRow">
+                      <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="12,10">
+                        <Grid ColumnDefinitions="65,2*,150,*" ColumnSpacing="8">
+                          <TextBlock Text="{Binding Number}" Classes="caption" />
+                          <TextBlock Grid.Column="1" Text="{Binding Label}" TextWrapping="Wrap" />
+                          <TextBlock Grid.Column="2" Text="{Binding StatusLabel}" TextWrapping="Wrap" />
+                          <TextBlock Grid.Column="3" Text="{Binding Message}" TextWrapping="Wrap" />
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Grid>
+            </ScrollViewer>
+          </StackPanel>
+        </Border>
+        <Border Classes="configurationSection" IsVisible="{Binding IsConfirmationOpen}">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Подтвердить импорт?" Classes="configurationHeading" />
+            <TextBlock Text="{Binding SelectedOrganization.Name, StringFormat='Организация: {0}'}" TextWrapping="Wrap" />
+            <TextBlock Text="Будут созданы записи из проверенного файла. Дубликаты будут пропущены." TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="Подтвердить импорт" Command="{Binding ConfirmCommand}" Classes="configurationPrimary" Margin="0,0,10,0" />
+              <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" />
+            </WrapPanel>
+          </StackPanel>
+        </Border>
+        <Border Classes="configurationSection" IsVisible="{Binding HasResultReport}">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Импорт завершён" Classes="configurationHeading" />
+            <TextBlock Text="{Binding ResultSummary}" TextWrapping="Wrap" IsVisible="{Binding HasResult}" />
+            <Button Content="Сохранить итоговый отчёт" Click="OnSaveResult" IsEnabled="{Binding CanDownload}" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

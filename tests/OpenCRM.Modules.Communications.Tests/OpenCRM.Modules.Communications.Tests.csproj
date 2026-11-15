@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\OpenCRM.Domain\OpenCRM.Domain.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Infrastructure.Data\OpenCRM.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Infrastructure.Migrations\OpenCRM.Infrastructure.Migrations.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Modules.Communications.Contracts\OpenCRM.Modules.Communications.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Modules.Communications\OpenCRM.Modules.Communications.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Services.Interfaces\OpenCRM.Services.Interfaces.csproj" />
+    <None Include="..\xunit.runner.json" Link="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,464 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration PlatformConfiguration
+@{
+    var commercialEnabled = string.Equals(PlatformConfiguration["PlatformPolicy:Commercial:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
+}
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = $"Сведения об обслуживании";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = "maintenance-details-page-body";
+    var organizationId = ViewData["MaintenanceOrganizationId"] as string ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(organizationId))
+    {
+        organizationId = Context.Request.Query["organizationId"].ToString();
+    }
+    var organizationName = ViewData["MaintenanceOrganizationName"] as string ?? string.Empty;
+    var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? "Моя техника" : "Техника организации";
+    var workspaceSidebar = new OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
+    {
+        OrganizationId = string.IsNullOrWhiteSpace(organizationId) ? Guid.Empty : Guid.Parse(organizationId),
+        OrganizationName = organizationName,
+        CurrentSection = "maintenance",
+        HasClientsModule = ViewData["MaintenanceHasClientsModule"] is bool clientsModule && clientsModule,
+        HasDefectsModule = ViewData["MaintenanceHasDefectsModule"] is bool defectsModule && defectsModule,
+        HasCountersModule = ViewData["MaintenanceHasCountersModule"] is bool countersModule && countersModule,
+        HasSchedulerModule = ViewData["MaintenanceHasSchedulerModule"] is bool schedulerModule && schedulerModule,
+        MembersCount = ViewData["MaintenanceOrganizationMembersCount"] is int membersCount ? membersCount : 0
+    };
+}
+
+<div id="maintenance-details-form">
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+
+    <div v-cloak>
+        <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organizations-page")">
+            <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "container-fluid px-4 px-xxl-5 organization-workspace-shell organization-workspace-shell-wide")">
+                <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organization-workspace-layout")">
+                    @if (!string.IsNullOrWhiteSpace(organizationId))
+                    {
+                        <aside class="organization-workspace-sidebar">
+                            <partial name="/Views/Organizations/_WorkspaceSidebar.cshtml" model="workspaceSidebar" />
+                        </aside>
+                    }
+                    <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organization-workspace-content")">
+        <div class="maintenance-details-container">
+            <!-- Хлебные крошки -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
+                    <li class="breadcrumb-item">
+                        <a :href="getVehicleUrl()" class="text-decoration-none">
+                            <template v-if="vehicle.id">
+                                {{ vehicle.displayName }}
+                                <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                            </template>
+                            <template v-else>
+                                Техника
+                            </template>
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Сведения об обслуживании</li>
+                </ol>
+            </nav>
+
+            <!-- Сведения об обслуживании -->
+            <div class="card maintenance-details-card maintenance-details-card-primary mb-4">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fa fa-info-circle me-2"></i>
+                        Сведения об обслуживании
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>Загружаем данные обслуживания...</span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="maintenance-info-grid">
+                                <div class="maintenance-info-item">
+                                    <label class="maintenance-info-label">Тип обслуживания</label>
+                                    <span class="maintenance-info-value">
+                                        {{ getMaintenanceTypeText(maintenance.type) }}
+                                    </span>
+                                </div>
+
+                                <div class="maintenance-info-item">
+                                    <label class="maintenance-info-label">Дата обслуживания</label>
+                                    <span class="maintenance-info-value">
+                                        <i class="fa fa-calendar me-1 text-muted"></i>
+                                        {{ formatPlannedDateTime() }}
+                                    </span>
+                                </div>
+
+                                <div class="maintenance-info-item" v-if="maintenance.mileage">
+                                    <label class="maintenance-info-label">{{ mileageUnitLabel }}</label>
+                                    <span class="maintenance-info-value">
+                                        <i class="fa fa-tachometer me-1 text-muted"></i>
+                                        {{ maintenance.mileage.toLocaleString() }} {{ mileageUnitShortText }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="maintenance-info-grid">
+                                <div class="maintenance-info-item" v-if="maintenance.location">
+                                    <label class="maintenance-info-label">Место проведения</label>
+                                    <span class="maintenance-info-value">
+                                        <i class="fa fa-map-marker me-1 text-muted"></i>
+                                        {{ maintenance.location }}
+                                    </span>
+                                </div>
+
+                                <div class="maintenance-info-item" v-if="maintenance.price">
+                                    <label class="maintenance-info-label">Общая стоимость</label>
+                                    <span class="maintenance-info-value text-success fw-bold">
+                                        <i class="fa fa-rub me-1"></i>
+                                        {{ formatPrice(maintenance.price) }}
+                                    </span>
+                                </div>
+
+                                <div class="maintenance-info-item">
+                                    <label class="maintenance-info-label">Скачать отчет</label>
+                                    <div class="maintenance-info-value">
+                                        <div v-if="!exportAccess.loaded" class="text-muted small mb-2">
+                                            Проверяем доступные форматы...
+                                        </div>
+                                        <div v-else-if="!hasAnyExportAccess" class="alert alert-warning py-2 px-3 mb-2">
+                                            Экспорт отчетов недоступен для вашего аккаунта.
+                                        </div>
+                                        <div class="dropdown" v-else>
+                                            <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" :disabled="!!documentActionKey">
+                                                <span v-if="documentActionKey" class="spinner-border spinner-border-sm me-2"></span>
+                                                <i v-else class="fa fa-download me-2"></i>
+                                                {{ documentActionKey ? 'Готовим файл...' : 'Выбрать формат' }}
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li class="dropdown-header" v-if="exportAccess.pdf || exportAccess.pdfWithPhotos || exportAccess.word || exportAccess.wordWithPhotos">@(commercialEnabled ? "Входит в тариф" : "Доступные форматы")</li>
+                                                <li v-if="exportAccess.pdfWithPhotos">
+                                                    <button class="dropdown-item" @@click="generatePDF(true)" :disabled="!!documentActionKey">
+                                                        <i class="fa fa-file-pdf-o text-danger me-2"></i>PDF с фото
+                                                    </button>
+                                                </li>
+                                                <li v-if="exportAccess.pdf">
+                                                    <button class="dropdown-item" @@click="generatePDF(false)" :disabled="!!documentActionKey">
+                                                        <i class="fa fa-file-pdf-o text-danger me-2"></i>PDF без фото
+                                                    </button>
+                                                </li>
+                                                <li v-if="exportAccess.wordWithPhotos">
+                                                    <button class="dropdown-item" @@click="generateWord(true)" :disabled="!!documentActionKey">
+                                                        <i class="fa fa-file-word-o text-primary me-2"></i>Word с фото
+                                                    </button>
+                                                </li>
+                                                <li v-if="exportAccess.word">
+                                                    <button class="dropdown-item" @@click="generateWord(false)" :disabled="!!documentActionKey">
+                                                        <i class="fa fa-file-word-o text-primary me-2"></i>Word без фото
+                                                    </button>
+                                                </li>
+
+                                                <li v-if="(exportAccess.pdf || exportAccess.pdfWithPhotos || exportAccess.word || exportAccess.wordWithPhotos) && (!exportAccess.pdf || !exportAccess.pdfWithPhotos || !exportAccess.word || !exportAccess.wordWithPhotos)">
+                                                    <hr class="dropdown-divider">
+                                                </li>
+
+                                                <li class="dropdown-header text-muted" v-if="!exportAccess.pdf || !exportAccess.pdfWithPhotos || !exportAccess.word || !exportAccess.wordWithPhotos">@(commercialEnabled ? "Не входит в тариф" : "Недоступные форматы")</li>
+                                                <li v-if="!exportAccess.pdfWithPhotos">
+                                                    <button class="dropdown-item disabled" disabled>
+                                                        <i class="fa fa-file-pdf-o me-2"></i>PDF с фото
+                                                    </button>
+                                                </li>
+                                                <li v-if="!exportAccess.pdf">
+                                                    <button class="dropdown-item disabled" disabled>
+                                                        <i class="fa fa-file-pdf-o me-2"></i>PDF без фото
+                                                    </button>
+                                                </li>
+                                                <li v-if="!exportAccess.wordWithPhotos">
+                                                    <button class="dropdown-item disabled" disabled>
+                                                        <i class="fa fa-file-word-o me-2"></i>Word с фото
+                                                    </button>
+                                                </li>
+                                                <li v-if="!exportAccess.word">
+                                                    <button class="dropdown-item disabled" disabled>
+                                                        <i class="fa fa-file-word-o me-2"></i>Word без фото
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Детали услуг -->
+            <div class="card maintenance-details-card mb-4" v-if="maintenance.maintenanceDetails && maintenance.maintenanceDetails.length > 0">
+                <div class="card-header bg-gradient-info text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fa fa-wrench me-2"></i>
+                        Выполненные работы и услуги
+                        <span class="badge bg-white text-info ms-2">{{ maintenance.maintenanceDetails.length }}</span>
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover maintenance-services-table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40%">Услуга/Запчасть</th>
+                                    <th style="width: 40%">Описание</th>
+                                    <th style="width: 20%" class="text-end">Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(detail, index) in maintenance.maintenanceDetails" :key="index">
+                                    <td>
+                                        <div class="service-name">
+                                            <small class="text-muted">#{{ index + 1 }}</small>
+                                            {{ detail.name }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="service-description" v-if="detail.description">
+                                            {{ detail.description }}
+                                        </div>
+                                        <span class="text-muted" v-else>—</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="service-price" v-if="detail.price">
+                                            {{ formatPrice(detail.price) }}
+                                        </span>
+                                        <span class="text-muted" v-else>—</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-group-divider" v-if="calculateServicesTotal() > 0">
+                                <tr>
+                                    <td colspan="2" class="text-end fw-bold">Итого работ/услуг:</td>
+                                    <td class="text-end fw-bold text-success">{{ formatPrice(calculateServicesTotal()) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Комментарий -->
+            <div class="card maintenance-details-card mb-4" v-if="maintenance.comment">
+                <div class="card-header bg-gradient-secondary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fa fa-comment me-2"></i>
+                        Комментарий
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="maintenance-comment-content">
+                        <p class="mb-0">{{ maintenance.comment }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Фотографии -->
+            <div class="card maintenance-details-card mb-4" v-if="photoUrls.length > 0 || failedPhotoCount > 0">
+                <div class="card-header bg-gradient-warning text-dark">
+                    <h3 class="card-title mb-0">
+                        <i class="fa fa-camera me-2"></i>
+                        Фотографии
+                        <span class="badge bg-white text-warning ms-2">{{ photoUrls.length + failedPhotoCount }}</span>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="maintenance-photos-grid">
+                        <div class="maintenance-photo-item" v-for="(photoUrl, index) in photoUrls" :key="index">
+                            <img :src="photoUrl"
+                                 class="maintenance-photo-img"
+                                 @@click="openPhotoGallery(index)"
+                                 :alt="'Фото ' + (index + 1)">
+                            <div class="maintenance-photo-overlay">
+                                <button class="btn btn-sm btn-light maintenance-photo-view-btn"
+                                        @@click="openPhotoGallery(index)">
+                                    <i class="fa fa-search-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="maintenance-photo-item bg-light border d-flex flex-column align-items-center justify-content-center text-center p-3"
+                             style="cursor: default;"
+                             v-for="index in failedPhotoCount"
+                             :key="'failed-' + index">
+                            <i class="fa fa-image text-muted mb-2" style="font-size: 2rem;"></i>
+                            <div class="small text-muted">Не удалось загрузить фото</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Действия -->
+            <div class="maintenance-actions-container">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a :href="getVehicleUrl()" class="btn btn-outline-dark w-100">
+                            <i class="fa fa-arrow-left me-2"></i>
+                            К карточке техники
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dropdown">
+                            <button class="btn btn-dark w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fa fa-cog me-2"></i>
+                                Действия
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end w-100">
+                                <li>
+                                    <a :href="getMaintenanceUpdateUrl()"
+                                       class="dropdown-item">
+                                        <i class="fa fa-edit me-2"></i>
+                                        Редактировать
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item text-danger" @@click="deleteMaintenance">
+                                        <i class="fa fa-trash me-2"></i>
+                                        Удалить обслуживание
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модалка подтверждения удаления -->
+        <div class="modal fade" id="deleteMaintenanceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="fa fa-exclamation-triangle me-2"></i>
+                            Подтверждение удаления
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <i class="fa fa-trash fa-3x text-danger mb-3"></i>
+                            <h5>Вы уверены, что хотите удалить это обслуживание?</h5>
+                            <p class="text-muted">
+                                Дата: <strong>{{ formatDate(maintenance.date) }}</strong><br>
+                                Тип: <strong>{{ getMaintenanceTypeText(maintenance.type) }}</strong>
+                            </p>
+                            <p class="text-danger">
+                                <i class="fa fa-warning me-1"></i>
+                                Это действие нельзя будет отменить!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-danger" @@click="confirmDelete" :disabled="deleteSaving">
+                            <span v-if="deleteSaving" class="spinner-border spinner-border-sm me-1"></span>
+                            <i v-else class="fa fa-trash me-1"></i>
+                            {{ deleteSaving ? 'Удаляем...' : 'Удалить' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно галереи -->
+        <div class="modal fade" id="photoModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fa fa-image me-2"></i>
+                            Просмотр фотографии
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div v-if="photoUrls.length > 0">
+                            <img :src="photoUrls[currentPhotoIndex]"
+                                 class="img-fluid rounded maintenance-photo-large"
+                                 :alt="'Фото ' + (currentPhotoIndex + 1)">
+
+                            <div class="maintenance-photo-navigation mt-3">
+                                <button class="btn btn-outline-primary"
+                                        @@click="currentPhotoIndex = (currentPhotoIndex - 1 + photoUrls.length) % photoUrls.length"
+                                        :disabled="photoUrls.length <= 1">
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+
+                                <span class="mx-3 fw-bold">
+                                    {{ currentPhotoIndex + 1 }} / {{ photoUrls.length }}
+                                </span>
+
+                                <button class="btn btn-outline-primary"
+                                        @@click="currentPhotoIndex = (currentPhotoIndex + 1) % photoUrls.length"
+                                        :disabled="photoUrls.length <= 1">
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно загрузки -->
+        <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center py-4">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                        <h5>{{ loadingTitle }}</h5>
+                        <p class="text-muted">{{ loadingMessage }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <partial name="_MaintenanceErrorModal" />
+    </div>
+</div>
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/organizations.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/maintenance.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/organizations.min.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/maintenance.min.css" asp-append-version="true" />
+    </environment>
+}
+
+@section Scripts {
+    <script>
+        const maintenanceId = '@(ViewData["MaintenanceId"] ?? string.Empty)';
+        const maintenanceOrganizationId = '@(ViewData["MaintenanceOrganizationId"] ?? string.Empty)';
+    </script>
+    <environment include="Development">
+        <script src="~/app/maintenance.js" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/app/maintenance.js" asp-append-version="true"></script>
+    </environment>
+}
+
+

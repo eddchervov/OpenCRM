@@ -1,0 +1,38 @@
+{
+  "Vehicle": {
+    "BrandName": "Мастерская",
+    "ModelName": "Грузовик",
+    "RegistrationPlate": "А123АА154",
+    "MileageUnit": 2,
+    "YearIssue": 2020,
+    "Name": "Бортовой",
+    "Description": "Автомобиль клиента",
+    "PhotoData": "AQID"
+  },
+  "Maintenance": {
+    "Type": 2,
+    "Date": "03.02.2025",
+    "Location": "Пост 1",
+    "Performer": "Мастер СТО",
+    "Mileage": 654321,
+    "IntakeNotes": "Приёмка: царапина",
+    "Comment": "Согласовано с клиентом",
+    "Price": 4250.75,
+    "MaintenanceDetails": [
+      {
+        "Quantity": 3,
+        "Name": "Заменить узел",
+        "Description": "Историческая строка услуги",
+        "Price": 4250.75
+      }
+    ],
+    "Photos": [
+      {
+        "Caption": "До работы",
+        "ImageData": "AQID"
+      }
+    ],
+    "PhotosCount": 1
+  },
+  "CompanyInfo": "OpenCRM - Ваш надежный помощник по технике"
+}

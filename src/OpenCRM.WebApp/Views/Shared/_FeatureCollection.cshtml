@@ -1,0 +1,85 @@
+﻿@model OpenCRM.WebApp.Models.Features.FeatureCollectionViewModel
+@using Helpers
+
+@{
+    var visibleFeatures = FeaturePresentationHelper
+        .GetVisiblePresentationFeatures(Model.Features, Model.ShowVehiclesLimit)
+        .ToList();
+
+    var rawVisibleFeatures = FeaturePresentationHelper
+        .GetVisibleFeatures(Model.Features, Model.ShowVehiclesLimit)
+        .ToList();
+
+    var vehiclesLimit = Model.ShowVehiclesLimit
+        ? FeaturePresentationHelper.GetVehicleLimit(Model.Features, Model.FallbackVehicleLimit)
+        : null;
+
+    IReadOnlyList<(string Title, string Description)> highlights = Model.ShowProductHighlights
+        ? FeaturePresentationHelper.GetProductHighlights(Model.ProductHighlightsForBusiness)
+        : [];
+}
+
+@if (Model.RenderAsBadges)
+{
+    <div class="@Model.ContainerCssClass">
+        @foreach (var feature in visibleFeatures)
+        {
+            <span class="badge @Model.BadgeCssClass me-1 mb-1">@FeaturePresentationHelper.FormatFeature(feature)</span>
+        }
+
+        @if (Model.ShowVehiclesLimit && vehiclesLimit.HasValue && !rawVisibleFeatures.Any(feature => feature.Code == FeatureCodes.VehiclesLimit))
+        {
+            <span class="badge @Model.BadgeCssClass me-1 mb-1">Лимит техники: @vehiclesLimit</span>
+        }
+    </div>
+}
+else
+{
+    <ul class="@Model.ContainerCssClass">
+        @foreach (var feature in visibleFeatures)
+        {
+            var description = Model.ShowDescriptions
+                ? FeaturePresentationHelper.GetFeatureDescription(feature)
+                : null;
+
+            <li class="d-flex gap-2">
+                <i class="@Model.IconCssClass mt-1"></i>
+                <span>
+                    <span class="fw-semibold">@FeaturePresentationHelper.FormatFeature(feature)</span>
+                    @if (!string.IsNullOrWhiteSpace(description))
+                    {
+                        <span class="d-block text-muted small">@description</span>
+                    }
+                </span>
+            </li>
+        }
+
+        @if (Model.ShowVehiclesLimit && vehiclesLimit.HasValue && !rawVisibleFeatures.Any(feature => feature.Code == FeatureCodes.VehiclesLimit))
+        {
+            <li class="d-flex gap-2">
+                <i class="@Model.IconCssClass mt-1"></i>
+                <span>
+                    <span class="fw-semibold">Лимит техники: @vehiclesLimit</span>
+                    @if (Model.ShowDescriptions)
+                    {
+                        <span class="d-block text-muted small">Сколько единиц техники можно вести в журнале.</span>
+                    }
+                </span>
+            </li>
+        }
+
+        @foreach (var highlight in highlights)
+        {
+            <li class="d-flex gap-2">
+                <i class="@Model.IconCssClass mt-1"></i>
+                <span>
+                    <span class="fw-semibold">@highlight.Title</span>
+                    @if (Model.ShowDescriptions)
+                    {
+                        <span class="d-block text-muted small">@highlight.Description</span>
+                    }
+                </span>
+            </li>
+        }
+    </ul>
+}

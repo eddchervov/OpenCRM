@@ -1,0 +1,34 @@
+﻿@model DeleteAccountConfirmationModel
+@{
+    ViewData["Title"] = Model.WasDeleted ? "Аккаунт удалён" : "Не удалось удалить аккаунт";
+}
+
+<div class="auth-page">
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-container extra-narrow-form text-center">
+                <div class="auth-form-wrapper">
+                    <h1 class="auth-title">@ViewData["Title"]</h1>
+                    <div class="auth-alert-message @(Model.WasDeleted ? "alert-success" : "alert-danger")" role="status">@Model.Message</div>
+                    @if (Model.WasDeleted && !string.IsNullOrEmpty(Model.OriginalEmail))
+                    {
+                        <p>Email: @Model.OriginalEmail</p>
+                    }
+                    <div class="auth-links text-center mt-3">
+                        <div class="mb-2">
+                            <a href="@Url.Content("~/")" class="btn btn-dark auth-btn">На главную</a>
+                        </div>
+                        @if (Model.WasDeleted)
+                        {
+                            <a href="~/auth/register" class="auth-link">Зарегистрироваться снова</a>
+                        }
+                        else
+                        {
+                            <a href="~/auth/login" class="auth-link">Войти в аккаунт</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>

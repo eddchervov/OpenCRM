@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.7" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\OpenCRM.Testing\OpenCRM.Testing.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Modules.Planning\OpenCRM.Modules.Planning.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.WebApp\OpenCRM.WebApp.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Infrastructure.Migrations\OpenCRM.Infrastructure.Migrations.csproj" />
+    <None Include="..\xunit.runner.json" Link="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

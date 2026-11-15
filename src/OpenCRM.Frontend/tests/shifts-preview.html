@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — проверка смен</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const isEmployee = params.has('employee')
+    const isReadOnly = params.has('readonly')
+    const canManage = !isEmployee && !isReadOnly
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const organizationName = scenario === 'detailing' ? 'Демо-студия · тестовые данные' : 'Демо-автосервис · тестовые данные'
+    const employee = { id: 'employee-1', name: 'Алексей Смирнов', isActive: true }
+    let nextShiftId = 2
+    let shiftTimeZone = 'Asia/Novosibirsk'
+    const pad = value => String(value).padStart(2, '0')
+    const mondayOf = value => {
+      const date = new Date(value + 'T12:00:00Z')
+      date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7)
+      return date.toISOString().slice(0, 10)
+    }
+    const addDays = (value, days) => {
+      const date = new Date(value + 'T12:00:00Z')
+      date.setUTCDate(date.getUTCDate() + days)
+      return date.toISOString().slice(0, 10)
+    }
+    const today = new Date()
+    const todayLocal = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate())
+    const currentMonday = mondayOf(todayLocal)
+    const previousMonday = addDays(currentMonday, -7)
+    const shifts = [{
+      id: 'shift-1', employeeId: employee.id, employeeName: employee.name,
+      localStartDate: previousMonday, timeZoneId: shiftTimeZone,
+      startLocal: previousMonday + 'T09:00', endLocal: previousMonday + 'T18:00',
+      plannedBreakMinutes: 45, isPublished: true, isCancelled: false, version: 1
+    }]
+    const defaultContext = {
+      user: { id: isEmployee ? 'employee-user' : 'preview-owner', displayName: isEmployee ? employee.name : 'Владелец', email: '' },
+      organization: { id: organizationId, name: organizationName, primaryScenarioCode: scenario },
+      workspaceAccess: { isReadOnly, isBaseWorkspace: false, hasActiveSubscription: true, roleCode: isEmployee ? 'performer' : 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'shifts', title: 'Смены', isVisible: true, groupTitle: 'Работа', urlTemplate: '#shifts' }
+        ],
+        quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', schedulerUrl: '#scheduler', quickBookingUrl: '#scheduler', api: { shell: '/api/v1/organizations/' + organizationId + '/workspace/context', calendar: '', quickBooking: '' } }
+    }
+    const responseError = (status, message) => Response.json({ message }, { status })
+    const weekResponse = weekStart => ({
+      timeZoneId: shiftTimeZone,
+      canManage,
+      canViewAssignments: !isEmployee,
+      employees: [employee],
+      shifts: shifts.filter(shift => shift.startLocal < addDays(weekStart, 7) + 'T00:00' && shift.endLocal > weekStart + 'T00:00').map(shift => ({ ...shift })),
+      assignments: []
+    })
+    const sourceAndTargetAreValid = weekStart => {
+      const day = new Date(weekStart + 'T12:00:00Z').getUTCDay()
+      return day === 1
+    }
+    const collides = candidate => shifts.some(shift => !shift.isCancelled && shift.employeeId === candidate.employeeId
+      && shift.startLocal < candidate.endLocal && shift.endLocal > candidate.startLocal)
+    const copyPreviousWeek = weekStart => {
+      if (!canManage) return responseError(403, 'Недостаточно прав для изменения графика смен.')
+      if (!sourceAndTargetAreValid(weekStart)) return responseError(400, 'Недопустимое начало недели.')
+      const sources = shifts.filter(shift => !shift.isCancelled
+        && shift.localStartDate >= addDays(weekStart, -7) && shift.localStartDate < weekStart)
+      const copies = sources.map((source, index) => {
+        const localStartDate = addDays(source.localStartDate, 7)
+        return {
+          ...source,
+          id: 'shift-' + (nextShiftId + index),
+          localStartDate,
+          startLocal: localStartDate + source.startLocal.slice(10),
+          endLocal: localStartDate + source.endLocal.slice(10),
+          timeZoneId: shiftTimeZone,
+          isPublished: true,
+          isCancelled: false,
+          version: 1
+        }
+      })
+      if (copies.some(collides)) return responseError(400, 'Не удалось повторить неделю: у исполнителя уже есть смена в это время. Существующие смены не изменены.')
+      nextShiftId += copies.length
+      shifts.push(...copies)
+      return Response.json({ count: copies.length })
+    }
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      const method = (init?.method || 'GET').toUpperCase()
+      const shiftRoute = url.pathname.split('/organizations/' + organizationId)[1]
+      if (url.pathname.endsWith('/context') && method === 'GET') return Response.json(defaultContext)
+      if (url.pathname.endsWith('/notifications') && method === 'GET') return Response.json([])
+      if (!shiftRoute?.startsWith('/shifts')) return new Response(null, { status: 404 })
+      if (method === 'GET' && shiftRoute === '/shifts') return Response.json(weekResponse(url.searchParams.get('weekStart') || currentMonday))
+      if (method === 'GET' && shiftRoute === '/shifts/mine') return Response.json(shifts.filter(shift => shift.employeeId === employee.id && shift.isPublished && !shift.isCancelled).map(shift => ({ ...shift })))
+      if (method === 'POST' && shiftRoute === '/shifts/copy-previous-week') {
+        const body = JSON.parse(init.body)
+        return copyPreviousWeek(body.weekStart)
+      }
+      if (method === 'PUT' && shiftRoute === '/shifts/settings') {
+        if (!canManage) return responseError(403, 'Недостаточно прав для изменения графика смен.')
+        shiftTimeZone = JSON.parse(init.body).timeZoneId
+        return Response.json({ saved: true })
+      }
+      if (method === 'POST' && shiftRoute === '/shifts') {
+        if (!canManage) return responseError(403, 'Недостаточно прав для изменения графика смен.')
+        const body = JSON.parse(init.body)
+        const candidate = { ...body, id: 'shift-' + nextShiftId, employeeName: employee.name, localStartDate: body.startLocal.slice(0, 10), timeZoneId: shiftTimeZone, isPublished: true, isCancelled: false, version: 1 }
+        if (collides(candidate)) return responseError(400, 'У исполнителя уже есть смена в это время.')
+        nextShiftId++
+        shifts.push(candidate)
+        return Response.json({ id: candidate.id })
+      }
+      if (method === 'POST' && shiftRoute === '/shifts/publish') {
+        if (!canManage) return responseError(403, 'Недостаточно прав для изменения графика смен.')
+        const body = JSON.parse(init.body)
+        let count = 0
+        for (const shift of shifts) {
+          if (!shift.isCancelled && shift.localStartDate >= body.weekStart && shift.localStartDate < addDays(body.weekStart, 7) && !shift.isPublished) {
+            shift.isPublished = true
+            shift.version++
+            count++
+          }
+        }
+        return Response.json({ count })
+      }
+      const shiftId = shiftRoute.startsWith('/shifts/') && !shiftRoute.slice('/shifts/'.length).includes('/') ? shiftRoute.slice('/shifts/'.length) : null
+      const current = shifts.find(shift => shift.id === shiftId)
+      if (!current) return responseError(404, 'Смена не найдена.')
+      if (method === 'PUT') {
+        if (!canManage) return responseError(403, 'Недостаточно прав для изменения графика смен.')
+        const body = JSON.parse(init.body)
+        if (current.isCancelled || params.has('conflict') || body.version !== current.version) return responseError(409, 'Смена уже изменена. Обновите график.')
+        if (current.isPublished && !body.reason?.trim()) return responseError(400, 'Укажите причину изменения опубликованной смены.')
+        const candidate = { ...current, ...body, localStartDate: body.startLocal.slice(0, 10), timeZoneId: shiftTimeZone, version: current.version + 1 }
+        if (shifts.some(shift => shift.id !== current.id && !shift.isCancelled && shift.employeeId === candidate.employeeId && shift.startLocal < candidate.endLocal && shift.endLocal > candidate.startLocal)) return responseError(400, 'У исполнителя уже есть смена в это время.')
+        Object.assign(current, candidate)
+        return Response.json({ id: current.id })
+      }
+      if (method === 'DELETE') {
+        if (!canManage) return responseError(403, 'Недостаточно прав для изменения графика смен.')
+        const body = JSON.parse(init.body)
+        if (current.isCancelled || params.has('conflict') || body.version !== current.version) return responseError(409, 'Смена уже изменена. Обновите график.')
+        if (current.isPublished && !body.reason?.trim()) return responseError(400, 'Укажите причину отмены опубликованной смены.')
+        current.isCancelled = true
+        current.version++
+        return Response.json({ cancelled: true })
+      }
+      return new Response(null, { status: 405 })
+    }
+    window.opencrmDetailingClient = { organizationId, contextUrl: '/api/v1/organizations/' + organizationId + '/workspace/context' }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: '/api/v1/organizations/' + organizationId + '/workspace/context' }
+    if (!location.hash) location.hash = '#shifts'
+    if (scenario === 'autoservice') await import('../Scenarios/autoservice-client/src/main.ts')
+    else await import('../Scenarios/detailing-client/src/main.ts')
+    window.opencrmShiftsPreview = { shifts, currentMonday, previousMonday, scenario, canManage, isReadOnly }
+  </script>
+</body>
+</html>

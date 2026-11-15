@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Domain\OpenCRM.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Vehicles.Contracts\OpenCRM.Modules.Vehicles.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Maintenance.Contracts\OpenCRM.Modules.Maintenance.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Clients.Contracts\OpenCRM.Modules.Clients.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Organizations.Contracts\OpenCRM.Modules.Organizations.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Billing.Contracts\OpenCRM.Modules.Billing.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Promotions.Contracts\OpenCRM.Modules.Promotions.Contracts.csproj" />
+  </ItemGroup>
+</Project>

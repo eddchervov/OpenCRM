@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мобильный предпросмотр приёмки</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { display: grid; justify-items: center; gap: 12px; margin: 0; padding: 16px; background: #e7eaee; font: 14px "Segoe UI", sans-serif; }
+      iframe { display: block; width: 390px; height: 900px; border: 1px solid #aab2bd; border-radius: 8px; background: #fff; }
+      @media (max-width: 430px) { body { justify-items: start; padding: 0; } iframe { border: 0; border-radius: 0; } }
+    </style>
+  </head>
+  <body>
+    <iframe title="Предпросмотр приёмки на экране шириной 390 пикселей" src="/clients/detailing/intake-damage-preview.html"></iframe>
+    <script>
+      const previewFrame = document.querySelector('iframe')
+      previewFrame.src += location.search
+    </script>
+  </body>
+</html>

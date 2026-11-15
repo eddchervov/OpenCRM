@@ -1,0 +1,213 @@
+@{
+    Layout = "/Views/Personal/_PersonalLayout.cshtml";
+    ViewData["PersonalVehiclePage"] = true;
+    var vehicleId = ViewData["VehicleId"] as string ?? string.Empty;
+    var organizationId = ViewData["VehicleOrganizationId"] as string ?? string.Empty;
+    var organizationName = ViewData["VehicleOrganizationName"] as string ?? string.Empty;
+    var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
+    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? "Карточка техники";
+    var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
+        ? $"/vehicle/{vehicleId}"
+        : $"/vehicle/{vehicleId}?organizationId={organizationId}";
+    var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
+        ? vehicleScenario.BreadcrumbTitle
+        : !string.IsNullOrWhiteSpace(organizationName)
+            ? organizationName
+            : "Организация";
+    var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? vehicleScenario.BreadcrumbTitle : "Техника";
+    ViewData["Title"] = "Фото машины";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = string.IsNullOrWhiteSpace(organizationId)
+        ? "vehicle-card-page-body"
+        : "vehicle-card-page-body organizations-page";
+}
+
+<style>
+    [v-cloak] { display: none; }
+</style>
+
+<div id="vehicle-form" class="vehicle-photo-manager-page">
+    <div id="vehicle-photo-manager" class="vehicle-details-container vehicle-media-manager-container" v-cloak>
+
+
+        <div class="vehicle-details-card vehicle-details-card-primary mb-4">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fa fa-camera"></i>
+                    Фото машины
+                </h3>
+                @if (!string.IsNullOrWhiteSpace(organizationName))
+                {
+                    <div class="text-muted small mt-2">Рабочее пространство: @organizationName</div>
+                }
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    Здесь управляются фото самой машины/техники: внешний вид, ракурсы и важные детали. Максимум 10 фото, за одну загрузку можно отправить до 100 МБ.
+                </div>
+
+                <div class="d-flex flex-column flex-md-row gap-2 align-items-md-center justify-content-between mb-3">
+                    <div class="text-muted">Фото машины загружено: {{ photos.length }} / 10</div>
+                    <label class="btn btn-dark mb-0" role="button" tabindex="0" :class="{ disabled: photos.length >= 10 || photosLoading || photosUploading }">
+                        <i class="fa fa-spinner fa-spin me-2" v-if="photosUploading"></i>
+                        <i class="fa fa-upload me-2" v-else></i>
+                        <span v-if="photosUploading">Загружаем...</span>
+                        <span v-else>Загрузить фото</span>
+                        <input type="file" class="visually-hidden" accept="image/*" multiple @@change="uploadVehiclePhotos" :disabled="photos.length >= 10 || photosLoading || photosUploading">
+                    </label>
+                </div>
+
+                <div v-if="photosUploading" class="vehicle-upload-progress mb-3">
+                    <i class="fa fa-spinner fa-spin me-2"></i>
+                    Загружаем фотографии. Это может занять несколько секунд.
+                </div>
+
+                <div v-if="photosLoading" class="text-muted">
+                    <i class="fa fa-spinner fa-spin me-2"></i>Загружаем фотографии...
+                </div>
+                <div v-else-if="photos.length === 0" class="vehicle-photo-empty">
+                    <i class="fa fa-image"></i>
+                    <div>Фото техники пока не загружены</div>
+                </div>
+                <div v-else class="vehicle-photo-grid">
+                    <div class="vehicle-photo-tile"
+                         :class="{ 'vehicle-photo-tile-primary': photo.isPrimary }"
+                         v-for="(photo, photoIndex) in photos"
+                         :key="photo.photoId">
+                            <button type="button" class="vehicle-photo-open" @@click="openPhotoViewer(photoIndex)" :aria-label="'Открыть фото: ' + (photo.originalFileName || 'Фото техники')">
+                        <img :src="photo.url" :alt="photo.originalFileName || 'Фото техники'">
+                        <span class="vehicle-photo-badge" v-if="photo.isPrimary">Главная</span>
+                            </button>
+                        <div class="vehicle-photo-actions">
+                            <button class="btn btn-sm"
+                                    :class="photo.isPrimary ? 'btn-warning vehicle-photo-primary-action' : 'btn-light'"
+                                    @@click.stop="setPrimaryPhoto(photo)"
+                                    :disabled="photo.isPrimary"
+                                    :title="photo.isPrimary ? 'Это главное фото' : 'Сделать главной'">
+                                <i class="fa fa-star" aria-hidden="true"></i><span>{{ photo.isPrimary ? 'Обложка' : 'На обложку' }}</span>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" aria-label="Удалить фото" @@click.stop="openDeletePhotoModal(photo)" title="Удалить">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="photoManagerErrorModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Ошибка</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">{{ errorMessage }}</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="vehiclePhotoDeleteConfirmModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Удалить фото?</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :disabled="deleteSaving"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Фото машины будет удалено из общей галереи техники.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="deleteSaving">Отмена</button>
+                        <button type="button" class="btn btn-danger" @@click="confirmDeletePhoto" :disabled="deleteSaving">
+                            <i class="fa fa-spinner fa-spin me-2" v-if="deleteSaving"></i>
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="vehiclePhotoViewerModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content vehicle-photo-viewer-modal">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Фото машины</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="currentViewerPhoto" class="vehicle-photo-viewer">
+                            <button type="button"
+                                    class="vehicle-photo-viewer-nav vehicle-photo-viewer-prev"
+                                    @@click="showPreviousViewerPhoto"
+                                    :disabled="!hasMultiplePhotos"
+                                    title="Предыдущее фото">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <img :src="currentViewerPhoto.url" :alt="currentViewerPhoto.originalFileName || 'Фото машины'">
+                            <button type="button"
+                                    class="vehicle-photo-viewer-nav vehicle-photo-viewer-next"
+                                    @@click="showNextViewerPhoto"
+                                    :disabled="!hasMultiplePhotos"
+                                    title="Следующее фото">
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <div class="text-muted small" v-if="currentViewerPhoto">
+                            {{ currentPhotoIndex + 1 }} / {{ photos.length }}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-dark" @@click="downloadCurrentPhoto" :disabled="!currentViewerPhoto || photoDownloading">
+                                <i class="fa fa-spinner fa-spin me-2" v-if="photoDownloading"></i>
+                                <i class="fa fa-download me-2" v-else></i>
+                                Скачать
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    @if (string.IsNullOrWhiteSpace(organizationId))
+    {
+        <link rel="stylesheet" href="~/css/vehicle-card.personal.css" asp-append-version="true" />
+    }
+    else
+    {
+        <link rel="stylesheet" href="~/css/vehicle-card.organization.css" asp-append-version="true" />
+    }
+    <link rel="stylesheet" href="~/css/vehicle-photos.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        const vehicleId = '@vehicleId';
+        const vehicleOrganizationId = '@organizationId';
+    </script>
+    <script src="~/app/vehicle-photos.js" asp-append-version="true"></script>
+}
+
+@section Breadcrumbs {
+    <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
+                @if (!string.IsNullOrWhiteSpace(organizationId))
+                {
+                    <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@vehiclesBreadcrumbText</a></li>
+                }
+                <li class="breadcrumb-item"><a href="@vehicleUrl" class="text-decoration-none">@vehicleDisplayName</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>Фото машины</h1></li>
+            </ol>
+        </nav>
+}

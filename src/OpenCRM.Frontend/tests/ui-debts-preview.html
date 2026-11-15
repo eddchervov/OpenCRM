@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — три результата проверки интерфейса</title>
+  <style>
+    body { margin: 0; background: var(--crm-canvas, #f4f6f9); color: var(--crm-text, #243247); font: 15px/1.6 system-ui, sans-serif; }
+    main { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+    section { margin: 24px 0; padding: 24px; border: 1px solid var(--crm-line, #d9dee7); border-radius: 12px; background: var(--crm-surface, #fff); }
+    h1 { font-size: 26px; } h2 { font-size: 20px; margin-top: 0; }
+    a { color: #3987c9; } button { cursor: pointer; }
+    .time-example { max-width: 540px; margin: 72px 0 20px; }
+    .actions { display: flex; gap: 16px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { createApp, ref } from 'vue/dist/vue.esm-bundler.js'
+    import { initializeWorkspaceTheme } from '@opencrm/ui'
+    import '@opencrm/ui/styles.css'
+    import '../packages/workspace/src/styles.css'
+    import BookingTimeFields from '../packages/workspace/src/components/BookingTimeFields.vue'
+
+    initializeWorkspaceTheme()
+    createApp({
+      components: { BookingTimeFields },
+      setup() {
+        return { start: ref('09:00'), end: ref(''), endDate: ref('2026-10-20'), duration: ref(null) }
+      },
+      template: `<main>
+        <h1>Три результата проверки интерфейса</h1>
+        <p>Локальный просмотр на тестовых данных. Здесь используются рабочие компоненты; изменения не опубликованы.</p>
+        <section>
+          <h2>1. Подсказки в форме записи</h2>
+          <p>Подсказка появляется при выборе услуги без длительности. Её можно закрыть и открыть значком «i». Ручное окончание сохраняется.</p>
+          <div class="time-example"><BookingTimeFields v-model:start="start" v-model:end="end" v-model:end-date="endDate" organization-id="" date="2026-10-20" location="" :duration-minutes="duration" /></div>
+          <div class="actions"><button @click="duration = undefined">Пустой состав услуг</button><button @click="duration = null">Услуга без длительности</button><a href="scheduler-preview.html?unknown-duration&many-services&review#maintenance/new">Полная форма с 25 услугами</a></div>
+        </section>
+        <section>
+          <h2>2. Старые дефекты экранов и 3D-посты</h2>
+          <p>При большом числе постов используются короткие номера без наложения. Любой пост доступен через список, выбранный сохраняется после обновления.</p>
+          <div class="actions"><a href="visualization-preview.html?posts=35#visualization">35 постов</a><a href="visualization-preview.html?posts=100#visualization">100 постов</a><a href="directories-preview.html?long-values#clients">Длинные значения в списке клиентов</a><a href="warehouse-preview.html#materials">Склад</a></div>
+        </section>
+        <section>
+          <h2>3. Календарь и смены</h2>
+          <p>Рабочие часы 09:00–18:00, перерыв 16:00–16:15 и выходная суббота. В сменах доступны повторение прошлой недели, причины изменения и отмены, обработка конфликта версии.</p>
+          <div class="actions"><a href="scheduler-preview.html?work-hours&posts=35#scheduler">Календарь</a><a href="shifts-preview.html#shifts">Смены детейлинга</a><a href="shifts-preview.html?scenario=autoservice#shifts">Смены автосервиса</a></div>
+        </section>
+        <p>Печатные документы исключены из этой работы. Подробные результаты и оставшиеся проверки записаны в docs/ui-review-2026-10-20.md.</p>
+      </main>`
+    }).mount('#app')
+  </script>
+</body>
+</html>

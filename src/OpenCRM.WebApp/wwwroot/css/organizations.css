@@ -1,0 +1,4205 @@
+﻿.organizations-page {
+    padding: 2rem 0 4rem;
+    color: var(--v2-color-ink);
+}
+
+.organizations-page .organizations-shell,
+.organizations-page .organization-workspace-shell {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.organizations-page .organization-workspace-flow {
+    min-width: 0;
+}
+
+.organizations-page .organization-switcher-panel {
+    justify-self: start;
+    width: min(360px, 100%);
+}
+
+.organizations-page .organization-switcher-app {
+    display: grid;
+    gap: .35rem;
+}
+
+.organizations-page .organization-switcher-label {
+    color: #667085;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.organizations-page .organization-switcher-select .vs__dropdown-toggle {
+    min-height: 34px;
+    border-color: rgba(17, 24, 39, .12);
+    border-radius: 7px;
+    background: #fff;
+}
+
+.organizations-page .organization-switcher-select .vs__selected-options {
+    min-width: 0;
+    padding: 0 .35rem;
+}
+
+.organizations-page .organization-switcher-select .vs__selected {
+    min-width: 0;
+    margin: 0;
+}
+
+.organizations-page .organization-switcher-select .vs__search {
+    margin: 0;
+    padding: 0;
+}
+
+.organizations-page .organization-switcher-option {
+    display: grid;
+    gap: .1rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-switcher-option-name {
+    overflow: hidden;
+    color: #111827;
+    font-weight: 750;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-switcher-option-meta {
+    overflow: hidden;
+    color: #6b7280;
+    font-size: .78rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-switcher-option-selected .organization-switcher-option-meta {
+    display: none;
+}
+
+.organizations-page .vs__dropdown-option--highlight .organization-switcher-option-name,
+.organizations-page .vs__dropdown-option--highlight .organization-switcher-option-meta {
+    color: #fff;
+}
+
+.organizations-page .organization-switcher-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #667085;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.organizations-page .organization-switcher-links a {
+    color: #0f766e;
+    font-weight: inherit;
+    text-decoration: none;
+}
+
+.organizations-page .organization-switcher-links span {
+    color: #6b7280;
+}
+
+.organizations-page .organization-switcher-panel .form-select {
+    min-height: 34px;
+    padding-top: .25rem;
+    padding-bottom: .25rem;
+    font-size: .9rem;
+}
+
+.organizations-page .breadcrumb {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-self: start;
+    gap: 0.45rem;
+    padding: 0.85rem 1rem;
+    border-radius: 999px;
+    background: var(--v2-color-surface-alt);
+}
+
+.organizations-page .breadcrumb-item,
+.organizations-page .breadcrumb-item.active,
+.organizations-page .breadcrumb-item + .breadcrumb-item::before {
+    color: #6c757d;
+}
+
+.organizations-page .breadcrumb-item + .breadcrumb-item {
+    padding-left: 0;
+}
+
+.organizations-page .breadcrumb-item a {
+    color: var(--v2-color-brand-strong);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.organizations-page .breadcrumb-item a:hover {
+    color: var(--v2-color-brand);
+}
+
+.organizations-page .organization-workspace-shell-wide {
+    max-width: 1800px;
+}
+
+.organizations-page .organization-upgrade-strip {
+    display: grid;
+    grid-template-columns: minmax(220px, .9fr) minmax(0, 1.8fr) auto;
+    gap: .85rem;
+    align-items: center;
+    padding: .9rem 1rem;
+    border: 1px solid rgba(17, 24, 39, .08);
+    border-left: 4px solid #16a34a;
+    border-radius: 8px;
+    background: #f8fbf9;
+    box-shadow: 0 12px 32px rgba(17, 24, 39, .06);
+}
+
+.organizations-page .organization-upgrade-strip-main {
+    min-width: 0;
+}
+
+.organizations-page .organization-upgrade-strip-kicker {
+    margin-bottom: .15rem;
+    color: #15803d;
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.organizations-page .organization-upgrade-strip-title {
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.organizations-page .organization-upgrade-strip-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .55rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-upgrade-strip-feature {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+    min-width: 0;
+    padding: .55rem .65rem;
+    border: 1px solid rgba(17, 24, 39, .08);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-upgrade-strip-icon {
+    flex: 0 0 auto;
+    width: 1.55rem;
+    height: 1.55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #15803d;
+    font-size: .82rem;
+}
+
+.organizations-page .organization-upgrade-strip-copy {
+    display: grid;
+    gap: .1rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-upgrade-strip-feature-title {
+    color: #111827;
+    font-size: .86rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.organizations-page .organization-upgrade-strip-feature-text {
+    color: #6b7280;
+    font-size: .78rem;
+    line-height: 1.25;
+}
+
+.organizations-page .organization-upgrade-strip-action {
+    white-space: nowrap;
+}
+
+.organizations-page .organization-material-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+.organizations-page .organization-material-toolbar,
+.organizations-page .organization-material-receipt-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.5fr) minmax(260px, 1.2fr) auto;
+    gap: .75rem;
+    align-items: end;
+}
+
+.organizations-page .organization-material-receipt-form {
+    grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1.2fr) minmax(120px, .55fr) minmax(90px, .4fr) minmax(220px, 1fr) auto;
+}
+
+.organizations-page .organization-material-filter-actions {
+    display: flex;
+    gap: .45rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.organizations-page .organization-material-filter-button {
+    min-height: auto;
+    padding: .45rem .8rem;
+}
+
+.organizations-page .organization-material-select .vs__dropdown-toggle {
+    min-height: 46px;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+}
+
+.organizations-page .organization-material-select .vs__dropdown-menu {
+    z-index: 7300;
+}
+
+.organizations-page .organization-material-stock-list,
+.organizations-page .organization-material-movement-list {
+    display: grid;
+}
+
+.organizations-page .organization-material-stock-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, auto) minmax(240px, .9fr);
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--v2-color-border);
+    background: #fff;
+}
+
+.organizations-page .organization-material-stock-item:last-child {
+    border-bottom: 0;
+}
+
+.organizations-page .organization-material-stock-low {
+    background: #fffaf3;
+}
+
+.organizations-page .organization-material-stock-out {
+    background: #fff5f5;
+}
+
+.organizations-page .organization-material-stock-title {
+    color: #111827;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.organizations-page .organization-material-stock-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem .85rem;
+    margin-top: .25rem;
+    color: #6b7280;
+    font-size: .86rem;
+}
+
+.organizations-page .organization-material-stock-link {
+    color: var(--v2-color-brand-strong);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.organizations-page .organization-material-stock-link:hover {
+    color: var(--v2-color-brand);
+    text-decoration: underline;
+}
+
+.organizations-page .organization-material-focus-card .card-body {
+    padding: 1rem 1.1rem;
+}
+
+.organizations-page .organization-material-focus-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.organizations-page .organization-material-stock-qty {
+    display: grid;
+    justify-items: end;
+    gap: .15rem;
+    color: #6b7280;
+    font-size: .86rem;
+}
+
+.organizations-page .organization-material-stock-qty strong {
+    color: #111827;
+    font-size: 1.05rem;
+}
+
+.organizations-page .organization-material-stock-out .organization-material-stock-qty strong {
+    color: #b42318;
+}
+
+.organizations-page .organization-material-stock-low .organization-material-stock-qty strong {
+    color: #8d5b00;
+}
+
+.organizations-page .organization-material-stock-actions {
+    min-width: 0;
+}
+
+.organizations-page .organization-material-stock-actions-title {
+    color: #6b7280;
+    font-size: .74rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+.organizations-page .organization-material-inline-form {
+    display: grid;
+    grid-template-columns: minmax(86px, .55fr) minmax(120px, 1fr) auto;
+    gap: .45rem;
+    margin-top: .55rem;
+}
+
+.organizations-page .organization-material-movement-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-bottom: 1rem;
+}
+
+.organizations-page .organization-material-movement-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    padding: .85rem 0;
+    border-bottom: 1px solid rgba(17,24,39,.08);
+}
+
+.organizations-page .organization-material-movement-item:last-child {
+    border-bottom: 0;
+}
+
+.organizations-page .organization-material-movement-qty {
+    display: grid;
+    gap: .15rem;
+    justify-items: end;
+    text-align: right;
+}
+
+.organizations-page .organization-material-empty {
+    padding: 1.25rem;
+    color: #6b7280;
+    text-align: center;
+}
+
+@media (max-width: 991.98px) {
+    .organizations-page .organization-upgrade-strip,
+    .organizations-page .organization-upgrade-strip-features {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-upgrade-strip-action {
+        width: 100%;
+    }
+
+    .organizations-page .organization-material-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .organizations-page .organization-material-toolbar,
+    .organizations-page .organization-material-receipt-form,
+    .organizations-page .organization-material-stock-item,
+    .organizations-page .organization-material-inline-form {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-material-filter-actions {
+        justify-content: stretch;
+    }
+
+    .organizations-page .organization-material-filter-actions .btn {
+        flex: 1 1 0;
+    }
+
+    .organizations-page .organization-material-stock-qty {
+        justify-items: start;
+    }
+
+    .organizations-page .organization-material-stock-actions-title,
+    .organizations-page .organization-material-movement-qty {
+        justify-items: start;
+        text-align: left;
+    }
+
+    .organizations-page .organization-material-focus-main {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+.organizations-page .organization-wiki-shell {
+    max-width: 1360px;
+    padding-bottom: 3rem;
+}
+
+.organizations-page .organizations-hero,
+.organizations-page .organization-workspace-hero {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.organizations-page .organization-workspace-hero-aligned {
+    align-items: flex-end;
+}
+
+.organizations-page .organization-workspace-hero-spaced {
+    margin-bottom: 1.5rem;
+}
+
+#organization-work-journal-page .organization-workspace-hero-spaced {
+    margin-bottom: 0;
+}
+
+#organization-defect-details-page .organization-workspace-hero-spaced {
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-workspace-headline {
+    display: grid;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-workspace-title-block {
+    display: grid;
+    gap: 0.9rem;
+    max-width: 820px;
+}
+
+.organizations-page .organization-workspace-title {
+    font-size: clamp(1.75rem, 2.8vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: #111827;
+    letter-spacing: 0;
+    word-break: break-word;
+    padding-bottom: 0.1rem;
+}
+
+.organizations-page .organization-workspace-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.organizations-page .organization-workspace-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: #121212;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.organizations-page .organization-workspace-pill-muted {
+    background: #f3f5f7;
+    color: #3b4652;
+    border: 1px solid var(--v2-color-border);
+}
+
+.organizations-page .organization-workspace-description {
+    color: #5f6873;
+    font-size: 0.98rem;
+    line-height: 1.65;
+}
+
+.organizations-page .organization-workspace-description-card {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.35rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.organizations-page .organization-workspace-description-details {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.organizations-page .organization-workspace-description-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: fit-content;
+    color: var(--v2-color-brand-strong);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+
+.organizations-page .organization-workspace-description-summary::-webkit-details-marker {
+    display: none;
+}
+
+.organizations-page .organization-workspace-description-summary::before {
+    content: "\f107";
+    font-family: FontAwesome;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease;
+}
+
+.organizations-page .organization-workspace-description-details[open] .organization-workspace-description-summary::before {
+    transform: rotate(180deg);
+}
+
+.organizations-page .organizations-actions,
+.organizations-page .organization-workspace-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.organizations-page .organizations-actions .btn,
+.organizations-page .organization-workspace-actions .btn {
+    white-space: nowrap;
+}
+
+.organizations-page .organization-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.organizations-page .organization-stat-card,
+.organizations-page .organization-panel,
+.organizations-page .organization-list-item {
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-lg);
+    box-shadow: var(--v2-shadow-sm);
+    background: #fff;
+}
+
+.organizations-page .organization-stat-card .card-body,
+.organizations-page .organization-panel .card-body {
+    padding: 1.25rem;
+}
+
+.organizations-page .organization-stat-value {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.organizations-page .organization-stat-value-text {
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    line-height: 1.25;
+}
+
+.organizations-page .organization-stat-label {
+    color: #6c757d;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-stat-meta {
+    color: #6c757d;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-stat-card-compact {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: var(--v2-radius-md);
+}
+
+.organizations-page .organization-stat-card-compact .organization-stat-value {
+    font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+.organizations-page .organization-stats-grid-compact .organization-stat-card {
+    padding: 0.65rem 0.8rem;
+}
+
+.organizations-page .organization-stats-grid-compact .organization-stat-value {
+    font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+}
+
+.organizations-page .organization-stats-grid-compact .organization-stat-label {
+    font-size: 0.74rem;
+    line-height: 1.2;
+}
+
+.organizations-page .organization-stat-tile {
+    display: grid;
+    gap: 0.22rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+}
+
+.organizations-page .organization-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.organizations-page .organization-workspace-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+
+.organizations-page .organization-wiki-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+    gap: 1.75rem;
+    align-items: start;
+    margin-top: 0.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.organizations-page .organization-wiki-layout > * {
+    min-width: 0;
+}
+
+.organizations-page .organization-workspace-sidebar,
+.organizations-page .organization-workspace-content {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.organizations-page .organization-workspace-layout > *,
+.organizations-page .organization-workspace-content > * {
+    min-width: 0;
+}
+
+.organizations-page .organization-workspace-content {
+    width: 100%;
+}
+
+.organizations-page .organization-workspace-dashboard-tabs {
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-workspace-dashboard-content {
+    display: grid;
+}
+
+.organizations-page .organization-workspace-dashboard-content > .tab-pane {
+    padding-top: 0.5rem;
+}
+
+.organizations-page .organization-workspace-dashboard-stats {
+    margin-bottom: 1.75rem;
+}
+
+#organization-defects-page .organization-content-stack > .organization-workspace-hero {
+    display: none;
+}
+
+#organization-counters-page .organization-content-stack > .organization-workspace-hero {
+    display: none;
+}
+
+#organization-scheduler-page .organization-workspace-layout > .organization-workspace-sidebar {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+#organization-scheduler-page .organization-workspace-layout > .organization-content-stack {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.organizations-page .organization-workspace-dashboard-stat-link {
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.organizations-page .organization-workspace-dashboard-stat-link:hover {
+    border-color: var(--v2-color-brand);
+    box-shadow: var(--v2-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-workspace-signal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.organizations-page .organization-workspace-signal-card {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fffaf3;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.organizations-page .organization-workspace-signal-card:hover {
+    border-color: var(--v2-color-brand);
+    box-shadow: var(--v2-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-workspace-signal-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #4b5563;
+}
+
+.organizations-page .organization-workspace-signal-value {
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: 700;
+    line-height: 1;
+    color: #111827;
+}
+
+.organizations-page .organization-workspace-signal-text {
+    color: #6b7280;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.organizations-page .organization-maintenance-feed {
+    display: grid;
+    gap: 1rem;
+}
+
+.organizations-page .organization-maintenance-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-maintenance-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+}
+
+.organizations-page .organization-maintenance-date-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-maintenance-date-field {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 220px;
+}
+
+.organizations-page .organization-maintenance-date-field .form-label {
+    color: #5f6873;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    flex: 0 0 auto;
+}
+
+.organizations-page .organization-maintenance-date-picker,
+.organizations-page .organization-maintenance-date-picker .vue-ctk-date-time-picker {
+    position: relative;
+    z-index: 1200;
+}
+
+.organizations-page .organization-scheduler-alert {
+    position: sticky;
+    top: 0.75rem;
+    z-index: 7100;
+    box-shadow: var(--v2-shadow-md);
+}
+
+.organizations-page .organization-maintenance-date-picker .datetimepicker {
+    z-index: 5000 !important;
+}
+
+.organizations-page .organization-maintenance-toolbar .datetimepicker {
+    z-index: 5000 !important;
+}
+
+.organizations-page .organization-maintenance-filter-button {
+    min-height: 46px;
+}
+
+.organizations-page .organization-maintenance-list-shell {
+    position: relative;
+    min-height: 160px;
+}
+
+.organizations-page .organization-planner-shell {
+    position: relative;
+    min-height: 560px;
+}
+
+.organizations-page .organization-planner-calendar {
+    --fc-border-color: rgba(17, 24, 39, 0.1);
+    --fc-page-bg-color: #fff;
+    --fc-neutral-bg-color: #f8fafc;
+    --fc-today-bg-color: rgba(47, 158, 68, 0.08);
+    --fc-button-bg-color: #111827;
+    --fc-button-border-color: #111827;
+    --fc-button-hover-bg-color: #000;
+    --fc-button-hover-border-color: #000;
+    --fc-button-active-bg-color: #2f9e44;
+    --fc-button-active-border-color: #2f9e44;
+    color: #111827;
+}
+
+.organizations-page .organization-planner-calendar .fc-toolbar {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.organizations-page .organization-planner-calendar .fc-toolbar-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.organizations-page .organization-planner-calendar .fc-button {
+    border-radius: 8px;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.organizations-page .organization-planner-calendar .fc-daygrid-day-number,
+.organizations-page .organization-planner-calendar .fc-col-header-cell-cushion {
+    color: #111827;
+    text-decoration: none;
+}
+
+.organizations-page .organization-planner-calendar .fc-event {
+    border: 1px solid transparent;
+    border-radius: 7px;
+    min-height: 28px;
+    padding: 0.22rem 0.38rem;
+    cursor: pointer;
+    font-weight: 700;
+    line-height: 1.25;
+    box-shadow: none;
+}
+
+.organizations-page .organization-planner-calendar .fc-event-main {
+    color: inherit;
+}
+
+.organizations-page .organization-planner-calendar .fc-daygrid-event {
+    align-items: flex-start;
+    white-space: normal;
+}
+
+.organizations-page .organization-planner-calendar .fc-timegrid-slot {
+    height: 3.25rem;
+}
+
+.organizations-page .organization-planner-calendar .fc-timegrid-event {
+    overflow: hidden;
+    padding: 0.2rem 0.32rem;
+}
+
+.organizations-page .organization-planner-calendar .fc-timegrid-event .organization-planner-event-content {
+    gap: 0.02rem;
+}
+
+.organizations-page .organization-planner-calendar .fc-timegrid-event .organization-planner-event-title {
+    -webkit-line-clamp: 1;
+}
+
+.organizations-page .organization-planner-calendar .fc-daygrid-event .fc-event-title,
+.organizations-page .organization-planner-calendar .fc-list-event-title,
+.organizations-page .organization-planner-event-title,
+.organizations-page .organization-planner-event-subtitle {
+    color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.organizations-page .organization-planner-event-content {
+    display: grid;
+    gap: 0.08rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-planner-event-title,
+.organizations-page .organization-planner-event-subtitle {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+.organizations-page .organization-planner-event-title {
+    -webkit-line-clamp: 2;
+}
+
+.organizations-page .organization-planner-event-subtitle {
+    color: rgba(17, 24, 39, 0.72);
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.2;
+    -webkit-line-clamp: 1;
+}
+
+.organizations-page .organization-planner-event-progress .organization-planner-event-subtitle {
+    color: rgba(141, 91, 0, 0.78);
+}
+
+.organizations-page .organization-planner-event-planned .organization-planner-event-subtitle {
+    color: rgba(11, 114, 133, 0.78);
+}
+
+.organizations-page .organization-planner-event-default .organization-planner-event-subtitle {
+    color: rgba(54, 79, 199, 0.78);
+}
+
+.organizations-page .organization-planner-calendar .fc-daygrid-day-frame {
+    min-height: 132px;
+}
+
+.organizations-page .organization-planner-calendar .fc-daygrid-more-link {
+    color: #111827;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.organizations-page .organization-planner-calendar .fc-popover {
+    z-index: 7200;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--v2-shadow-md);
+}
+
+.organizations-page .organization-planner-calendar .organization-planner-event-planned {
+    background: #e7f5ff;
+    color: #0b7285;
+    border-color: #99e9f2;
+}
+
+.organizations-page .organization-planner-calendar .organization-planner-event-progress {
+    background: #fff3bf;
+    color: #8d5b00;
+    border-color: #ffd43b;
+}
+
+.organizations-page .organization-planner-calendar .organization-planner-event-default {
+    background: #edf2ff;
+    color: #364fc7;
+    border-color: #bac8ff;
+}
+
+.organizations-page .organization-planner-calendar .fc-list-event-title a,
+.organizations-page .organization-planner-calendar .fc-list-event-time {
+    color: inherit;
+}
+
+body.workspace-planner-maintenance-modal-open .modal-backdrop {
+    z-index: 7280;
+}
+
+body.workspace-planner-maintenance-modal-open #schedulerPlannerMaintenanceModal {
+    z-index: 7290;
+}
+
+.organizations-page .organization-planner-maintenance-modal {
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.organizations-page .organization-planner-modal-subtitle {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    margin-top: 0.15rem;
+}
+
+.organizations-page .organization-planner-modal-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.organizations-page .organization-planner-modal-info {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.organizations-page .organization-planner-modal-info-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.organizations-page .organization-planner-modal-info-item span {
+    color: #6b7280;
+}
+
+.organizations-page .organization-planner-modal-info-item strong {
+    color: #111827;
+    text-align: right;
+}
+
+.organizations-page .organization-planner-modal-comment {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #374151;
+    line-height: 1.45;
+}
+
+.organizations-page .organization-maintenance-feed-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem 1.05rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+}
+
+.organizations-page .organization-maintenance-feed-list {
+    gap: 0.55rem;
+}
+
+.organizations-page .organization-maintenance-feed-list .organization-maintenance-feed-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    border-color: rgba(18, 18, 18, 0.06);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: none;
+}
+
+.organizations-page .organization-maintenance-list-badges,
+.organizations-page .organization-maintenance-list-price {
+    flex-shrink: 0;
+}
+
+.organizations-page .organization-maintenance-list-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    max-width: 300px;
+}
+
+.organizations-page .organization-maintenance-list-badges .badge {
+    white-space: normal;
+    text-align: left;
+}
+
+.organizations-page .organization-maintenance-list-info {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 0.25rem;
+}
+
+.organizations-page .organization-maintenance-feed-list .organization-maintenance-feed-title {
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.organizations-page .organization-maintenance-feed-list .organization-maintenance-feed-comment {
+    display: none;
+}
+
+.organizations-page .organization-maintenance-feed-list .organization-maintenance-feed-meta {
+    gap: 0.45rem 1rem;
+}
+
+.organizations-page .organization-maintenance-list-price {
+    color: #2f9e44;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-maintenance-feed-list .organization-maintenance-feed-actions {
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+.organizations-page .organization-maintenance-feed-main {
+    min-width: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.organizations-page .organization-maintenance-feed-topline,
+.organizations-page .organization-maintenance-feed-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+}
+
+.organizations-page .organization-maintenance-feed-type {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #111827;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.organizations-page .organization-maintenance-feed-date,
+.organizations-page .organization-maintenance-feed-subtitle,
+.organizations-page .organization-maintenance-feed-meta {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.organizations-page .organization-maintenance-feed-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-maintenance-feed-title a {
+    color: #111827;
+    text-decoration: none;
+}
+
+.organizations-page .organization-maintenance-feed-title a:hover {
+    color: var(--v2-color-brand);
+}
+
+.organizations-page .organization-maintenance-feed-comment {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.organizations-page .organization-maintenance-feed-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.organizations-page .organization-quick-maintenance-modal {
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#quickMaintenanceModal {
+    z-index: 7000;
+}
+
+.modal-backdrop.show {
+    z-index: 6900;
+}
+
+.organizations-page .organization-quick-maintenance-search {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 46px;
+}
+
+.organizations-page .organization-quick-maintenance-filters {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.organizations-page .organization-quick-maintenance-client-filter,
+.organizations-page .organization-quick-maintenance-search {
+    min-width: 0;
+}
+
+.organizations-page .organization-quick-maintenance-client-filter .vs__dropdown-toggle {
+    min-height: 46px;
+    border: 1px solid var(--v2-color-border) !important;
+    border-radius: 8px !important;
+    background: #fff;
+    padding: 0.35rem 0.55rem !important;
+}
+
+.organizations-page .organization-quick-maintenance-client-filter .vs__dropdown-menu {
+    z-index: 7100;
+}
+
+.organizations-page .organization-quick-maintenance-search > i {
+    position: static;
+    flex: 0 0 auto;
+    color: #6c757d;
+}
+
+.organizations-page .organization-quick-maintenance-search > .form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-left: 0.75rem;
+}
+
+.organizations-page .organization-quick-maintenance-list {
+    display: grid;
+    gap: 0.65rem;
+    max-height: min(56vh, 520px);
+    overflow-y: auto;
+    padding-right: 0.2rem;
+}
+
+.organizations-page .organization-quick-maintenance-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.9rem;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+    text-align: left;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.organizations-page .organization-quick-maintenance-item:hover,
+.organizations-page .organization-quick-maintenance-item:focus {
+    border-color: #111827;
+    box-shadow: var(--v2-shadow-sm);
+    outline: none;
+}
+
+.organizations-page .organization-quick-maintenance-item.active {
+    border-color: #111827;
+    background: #f8fafc;
+}
+
+.organizations-page .organization-quick-maintenance-item-main {
+    min-width: 0;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.organizations-page .organization-quick-maintenance-title {
+    color: #111827;
+    font-weight: 700;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.organizations-page .organization-quick-maintenance-subtitle,
+.organizations-page .organization-quick-maintenance-mileage {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-quick-maintenance-mileage {
+    align-self: center;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-wiki-sidebar,
+.organizations-page .organization-wiki-content {
+    display: grid;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-wiki-sidebar {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+}
+
+.organizations-page .organization-workspace-sidebar {
+    position: sticky;
+    top: 1.5rem;
+}
+
+.organizations-page .organization-workspace-mobile-nav {
+    display: none;
+}
+
+.organizations-page .organization-workspace-mobile-nav .card-body {
+    padding: 0.75rem;
+}
+
+.organizations-page .organization-workspace-mobile-nav-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 48px;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: #111827;
+    text-align: left;
+}
+
+.organizations-page .organization-workspace-mobile-nav-toggle strong {
+    display: block;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.organizations-page .organization-workspace-mobile-nav-label {
+    display: block;
+    margin-bottom: 0.1rem;
+    color: #6b7280;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.organizations-page .organization-workspace-mobile-nav-toggle .fa {
+    color: var(--v2-color-brand-strong);
+    transition: transform 0.2s ease;
+}
+
+.organizations-page .organization-workspace-mobile-nav-toggle[aria-expanded="true"] .fa {
+    transform: rotate(180deg);
+}
+
+.organizations-page .organization-workspace-mobile-nav-menu {
+    padding-top: 0.75rem;
+}
+
+.organizations-page .organization-workspace-mobile-nav-groups {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.organizations-page .organization-workspace-mobile-nav-group {
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.organizations-page .organization-workspace-mobile-nav-group-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding: 0.65rem 0.75rem;
+    border: 0;
+    background: #f8fafc;
+    color: #111827;
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-align: left;
+}
+
+.organizations-page .organization-workspace-mobile-nav-group-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #6b7280;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.organizations-page .organization-workspace-mobile-nav-group-toggle .fa {
+    color: var(--v2-color-brand-strong);
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.organizations-page .organization-workspace-mobile-nav-group-toggle[aria-expanded="true"] .fa {
+    transform: rotate(180deg);
+}
+
+.organizations-page .organization-workspace-mobile-nav-items {
+    padding: 0.55rem;
+    gap: 0.4rem;
+}
+
+.organizations-page .organization-workspace-mobile-nav-items .organization-workspace-nav-item {
+    min-height: 42px;
+    border-radius: 8px;
+}
+
+.organizations-page .organization-workspace-sidebar .organization-panel .card-header {
+    padding: 0.75rem 0.9rem;
+}
+
+.organizations-page .organization-workspace-sidebar .organization-panel .card-body {
+    padding: 0.8rem;
+}
+
+.organizations-page .organization-workspace-nav {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.organizations-page .organization-workspace-nav-divider {
+    height: 1px;
+    margin: 0.1rem 0;
+    background: var(--v2-color-border);
+}
+
+.organizations-page .organization-workspace-nav-section-label {
+    color: #6c757d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.05rem 0.2rem;
+}
+
+.organizations-page .organization-workspace-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    min-height: 2.4rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+    color: var(--v2-color-ink);
+    text-decoration: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.organizations-page .organization-workspace-nav-item:hover {
+    border-color: var(--v2-color-brand);
+    box-shadow: var(--v2-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-workspace-nav-item-active {
+    border-color: rgba(230, 115, 55, 0.38);
+    background: rgba(230, 115, 55, 0.08);
+    color: #9a4b23;
+    box-shadow: var(--v2-shadow-sm);
+}
+
+.organizations-page .organization-workspace-nav-item-active .organization-workspace-nav-title,
+.organizations-page .organization-workspace-nav-item-active .organization-workspace-nav-meta {
+    color: inherit;
+}
+
+.organizations-page .organization-workspace-nav-item-soon {
+    background: #fafbfc;
+    color: #7b8794;
+    border-style: dashed;
+    cursor: default;
+    box-shadow: none;
+}
+
+.organizations-page .organization-workspace-nav-item-soon:hover {
+    border-color: var(--v2-color-border);
+    box-shadow: none;
+    transform: none;
+}
+
+.organizations-page .organization-workspace-nav-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.organizations-page .organization-client-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.9rem;
+    color: #6b7280;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.organizations-page .organization-client-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.organizations-page .organization-client-tags span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #374151;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.organizations-page .organization-client-tag-select .vs__dropdown-toggle {
+    min-height: 42px;
+    border: 1px solid var(--v2-color-border) !important;
+    border-radius: 8px !important;
+}
+
+.organizations-page .vehicle-card-picker {
+    position: relative;
+}
+
+.organizations-page .vehicle-card-picker-button,
+.organizations-page .vehicle-card-picker-card {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: #111827;
+    text-align: left;
+}
+
+.organizations-page .vehicle-card-picker-button {
+    justify-content: space-between;
+    min-height: 58px;
+    padding: 0.6rem 0.75rem;
+}
+
+.organizations-page .vehicle-card-picker-button:disabled {
+    opacity: 0.72;
+}
+
+.organizations-page .vehicle-card-picker-thumb {
+    display: inline-flex;
+    flex: 0 0 52px;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 40px;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #4b5563;
+    overflow: hidden;
+}
+
+.organizations-page .vehicle-card-picker-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.organizations-page .vehicle-card-picker-current,
+.organizations-page .vehicle-card-picker-card-body {
+    display: grid;
+    gap: 0.12rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.organizations-page .vehicle-card-picker-current strong,
+.organizations-page .vehicle-card-picker-card-body strong {
+    overflow: hidden;
+    color: #111827;
+    font-size: 0.98rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.organizations-page .vehicle-card-picker-current small,
+.organizations-page .vehicle-card-picker-card-body small {
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.organizations-page .vehicle-card-picker-chevron {
+    flex: 0 0 auto;
+    color: var(--v2-color-brand-strong);
+    transition: transform 0.2s ease;
+}
+
+.organizations-page .vehicle-card-picker-open .vehicle-card-picker-chevron {
+    transform: rotate(180deg);
+}
+
+.organizations-page .vehicle-card-picker-panel {
+    position: absolute;
+    z-index: 7300;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--v2-shadow-md);
+}
+
+.organizations-page .vehicle-card-picker-search {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.organizations-page .vehicle-card-picker-list {
+    display: grid;
+    gap: 0.5rem;
+    max-height: 340px;
+    overflow: auto;
+}
+
+.organizations-page .vehicle-card-picker-card {
+    padding: 0.6rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.organizations-page .vehicle-card-picker-card:hover,
+.organizations-page .vehicle-card-picker-card.active {
+    border-color: rgba(230, 115, 55, 0.58);
+    background: #fffaf6;
+}
+
+.organizations-page .vehicle-card-picker-plate {
+    display: inline-flex;
+    width: fit-content;
+    min-height: 22px;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid rgba(17, 24, 39, 0.18);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #111827 !important;
+    font-weight: 800;
+}
+
+.organizations-page .vehicle-card-picker-empty {
+    padding: 0.75rem;
+    border: 1px dashed var(--v2-color-border);
+    border-radius: 8px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.organizations-page .organization-wiki-nav {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-content: start;
+    margin-top: 0.25rem;
+}
+
+.organizations-page .organization-wiki-nav-item {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+    color: var(--v2-color-ink);
+    text-decoration: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.organizations-page .organization-wiki-sidebar .card-body,
+.organizations-page .organization-wiki-content .card-body {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+.organizations-page .organization-wiki-nav-item:hover {
+    border-color: var(--v2-color-brand);
+    box-shadow: var(--v2-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-wiki-nav-item-active {
+    border-color: var(--v2-color-brand);
+    background: #fffaf3;
+}
+
+.organizations-page .organization-wiki-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #111827;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.organizations-page .organization-wiki-nav-content {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.organizations-page .organization-wiki-nav-title {
+    display: block;
+    font-weight: 700;
+    color: #111827;
+}
+
+.organizations-page .organization-wiki-nav-summary {
+    display: block;
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.organizations-page .organization-workspace-nav-meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-workspace-nav-soon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(230, 115, 55, 0.12);
+    color: #b85c28;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-side-stack,
+.organizations-page .organization-content-stack {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.organizations-page .organization-wiki-lead {
+    margin-bottom: 1.25rem;
+    color: #4b5563;
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.organizations-page .organization-wiki-search {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.organizations-page .organization-wiki-search .search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    flex-wrap: nowrap;
+}
+
+.organizations-page .organization-wiki-search .search-input-wrapper > i {
+    flex: 0 0 auto;
+    color: #6c757d;
+}
+
+.organizations-page .organization-wiki-search .search-input-wrapper > .form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.organizations-page .organization-wiki-content .organization-panel,
+.organizations-page .organization-wiki-sidebar .organization-panel {
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-wiki-sidebar .card,
+.organizations-page .organization-wiki-content .card {
+    overflow: hidden;
+}
+
+.organizations-page .organization-wiki-content .card-body {
+    padding: 1.4rem;
+}
+
+.organizations-page .organization-wiki-sidebar .card-body {
+    padding: 1.25rem;
+}
+
+.organizations-page .organization-wiki-article {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.organizations-page .organization-wiki-section {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-wiki-section-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.organizations-page .organization-wiki-paragraph {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.7;
+}
+
+.organizations-page .organization-wiki-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: #374151;
+    line-height: 1.7;
+}
+
+.organizations-page .organization-wiki-note {
+    padding: 0.9rem 1rem;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    background: #fff7ed;
+    color: #92400e;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.organizations-page .organization-panel .card-header {
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-bottom: 1px solid var(--v2-color-border);
+}
+
+.organizations-page .organization-panel .card-header h2,
+.organizations-page .organization-panel .card-header h3,
+.organizations-page .organization-panel .card-header h4 {
+    margin: 0;
+}
+
+.organizations-page .organization-panel .card-header > .d-flex {
+    width: 100%;
+}
+
+.organizations-page .organization-view-toggle {
+    margin-left: auto;
+}
+
+.organizations-page .organization-view-toggle-inline {
+    margin-left: 0;
+    flex-shrink: 0;
+}
+
+.organizations-page .organization-member-email,
+.organizations-page .organization-invitation-email {
+    word-break: break-word;
+}
+
+.organizations-page .organization-role-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.organizations-page .organization-role-form .form-select,
+.organizations-page .organization-role-form .btn {
+    min-width: 0;
+}
+
+.organizations-page .organization-role-form .form-select {
+    flex: 1 1 180px;
+}
+
+.organizations-page .organization-role-form .btn {
+    flex: 0 0 auto;
+}
+
+.organizations-page .organization-row-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.organizations-page .organization-table {
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-table th,
+.organizations-page .organization-table td {
+    vertical-align: middle;
+}
+
+.organizations-page .organization-table td:last-child,
+.organizations-page .organization-table th:last-child {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-create-form .form-text,
+.organizations-page .organization-invite-form .form-text {
+    line-height: 1.55;
+}
+
+.organizations-page .organization-create-form .iti {
+    display: block;
+    width: 100%;
+}
+
+.organizations-page .organization-settings-section {
+    display: grid;
+    gap: 1rem;
+    margin: 1.4rem 0 1.5rem;
+    padding: 1.1rem;
+    border: 1px solid rgba(230, 115, 55, 0.24);
+    border-left: 4px solid var(--v2-color-brand);
+    border-radius: var(--v2-radius-md);
+    background: #fffaf3;
+}
+
+.organizations-page .organization-settings-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding-bottom: 0.95rem;
+    border-bottom: 1px solid rgba(230, 115, 55, 0.18);
+}
+
+.organizations-page .organization-settings-section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #111827;
+    color: #fff;
+}
+
+.organizations-page .organization-settings-section-title {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.organizations-page .organization-settings-section-title h3,
+.organizations-page .organization-settings-subsection-header h4 {
+    margin: 0;
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.organizations-page .organization-settings-section-title div,
+.organizations-page .organization-settings-subsection-header div {
+    margin-top: 0.18rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.organizations-page .organization-settings-section-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(230, 115, 55, 0.14);
+    color: #9a4b23;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-settings-subsection {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 0.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.organizations-page .organization-document-style-preview {
+    height: 100%;
+    min-height: 92px;
+    padding: 1rem;
+    border: 1px solid rgba(18, 18, 18, 0.08);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.organizations-page .organization-document-style-preview-title {
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+    color: #121212;
+}
+
+.organizations-page .organization-billing-current {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+    gap: 1rem;
+    align-items: start;
+}
+
+.organizations-page .organization-empty-state {
+    padding: 3rem 1.25rem;
+    text-align: center;
+}
+
+.organizations-page .organization-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.organizations-page .organization-list-item {
+    padding: 1.25rem;
+}
+
+.organizations-page .organization-list-compact {
+    gap: 0.6rem;
+}
+
+.organizations-page .organization-list-item-compact {
+    padding: 0.7rem 1rem;
+    border-radius: var(--v2-radius-md);
+}
+
+.organizations-page .organization-list-item-title-compact {
+    font-size: 1rem;
+}
+
+.organizations-page .organization-list-meta-compact {
+    gap: 0.9rem;
+}
+
+.organizations-page .organization-list-item-compact .organization-list-item-inner {
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.organizations-page .organization-list-item-compact .organization-list-item-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    align-self: flex-start;
+}
+
+.organizations-page .organization-defect-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.7rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-defect-inline-title {
+    font-weight: 700;
+    color: var(--v2-color-ink);
+    word-break: break-word;
+}
+
+.organizations-page .organization-defect-inline > a,
+.organizations-page .organization-defect-inline > span,
+.organizations-page .organization-defect-inline > strong {
+    min-width: 0;
+}
+
+.organizations-page .organization-defect-inline .badge {
+    flex: 0 0 auto;
+}
+
+.organizations-page .counter-history-comment {
+    margin-top: 0.5rem;
+}
+
+.organizations-page .organization-list-item-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-list-item-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+#organization-clients-page .organization-list-item-inner {
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+#organization-clients-page .organization-list-item-inner > .flex-grow-1 {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#organization-clients-page .organization-list-item-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.organizations-page .organization-list-item-actions-wrap {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.organizations-page .organization-list-item-archived {
+    background: #fbfcfd;
+}
+
+.organizations-page .organization-archive-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: #f3f5f7;
+    border: 1px solid var(--v2-color-border);
+    color: #3b4652;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.organizations-page .organization-vehicles-table-wrap {
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-lg);
+    overflow: hidden;
+}
+
+.organizations-page .organization-vehicles-table {
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-vehicles-table th {
+    background: #f8f9fb;
+    font-size: 0.9rem;
+}
+
+.organizations-page .organization-vehicles-table td,
+.organizations-page .organization-vehicles-table th {
+    padding: 0.95rem 1rem;
+}
+
+.organizations-page .organization-vehicle-description {
+    min-width: 240px;
+    color: #5f6873;
+}
+
+.organizations-page .organization-archive-summary {
+    border-top: 1px solid var(--v2-color-border);
+    padding-top: 1rem;
+}
+
+.organizations-page .organization-plan-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.organizations-page .organization-plan-item {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.1rem 1.15rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+}
+
+.organizations-page .organization-plan-item-current {
+    border-color: #121212;
+    box-shadow: var(--v2-shadow-sm);
+}
+
+.organizations-page .organization-plan-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-plan-price {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-plan-meta {
+    color: #6c757d;
+    font-size: 0.92rem;
+}
+
+.organizations-page .organization-plan-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.organizations-page .defects-search-row {
+    width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .defects-filters {
+    grid-template-columns: minmax(180px, 220px) minmax(220px, 280px) minmax(220px, 260px);
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .defects-filters > * {
+    min-width: 0;
+}
+
+.organizations-page .counters-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .counters-filters > * {
+    min-width: 0;
+}
+
+.organizations-page .counter-primary-filter {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1rem 1rem 0.95rem;
+    border: 1px solid #d9e1e7;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.organizations-page .counter-primary-filter-label {
+    margin: 0;
+    color: #111827;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.organizations-page .counter-primary-filter-caption {
+    color: #6b7280;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.organizations-page .clients-filters {
+    width: 240px;
+    min-width: 0;
+    flex: 0 0 240px;
+}
+
+.organizations-page .clients-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .clients-toolbar > * {
+    min-width: 0;
+}
+
+.organizations-page .clients-toolbar .organization-view-toggle-inline {
+    margin-left: 0;
+}
+
+.organizations-page .clients-segments {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: .5rem;
+    min-width: 0;
+}
+
+.organizations-page .clients-segments .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 34px;
+}
+
+.organizations-page .clients-segments .btn span {
+    color: #6b7280;
+    font-size: .82rem;
+}
+
+.organizations-page .clients-segments .btn.active span {
+    color: inherit;
+}
+
+.organizations-page .clients-search-row {
+    position: relative;
+    flex: 1 1 320px;
+    min-width: 260px;
+}
+
+.organizations-page .clients-search-row > i {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 2;
+}
+
+.organizations-page .clients-search-row .form-control {
+    min-height: 38px;
+    padding-left: 2.25rem;
+}
+
+.organizations-page .clients-filters > * {
+    width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .clients-filters .v-select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .clients-filters .vs__dropdown-toggle {
+    min-height: 38px;
+    border: 1px solid var(--v2-color-border) !important;
+    border-radius: 8px !important;
+    background: #fff;
+    box-shadow: none;
+    padding: .2rem .55rem !important;
+}
+
+.organizations-page .clients-filters .vs__selected-options {
+    flex-wrap: nowrap;
+    align-items: center;
+    padding-left: .15rem;
+}
+
+.organizations-page .clients-filters .vs__selected {
+    display: block;
+    flex: 1 1 auto;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+}
+
+.organizations-page .clients-filters .vs__selected,
+.organizations-page .clients-filters .vs__search,
+.organizations-page .clients-filters .vs__search::placeholder {
+    font-size: .95rem;
+    color: var(--v2-color-ink);
+}
+
+.organizations-page .clients-filters .vs__actions {
+    padding-right: .2rem;
+}
+
+.organizations-page .clients-filters .vs__dropdown-menu {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: min(24rem, calc(100vw - 2rem)) !important;
+    max-height: 18rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 8px;
+    border: 1px solid rgba(18, 18, 18, 0.08);
+    box-sizing: border-box;
+}
+
+.organizations-page .clients-filters .vs__dropdown-option {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding-top: .45rem;
+    padding-bottom: .45rem;
+    padding-right: .9rem;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-client-history-entry-form {
+    display: grid;
+    gap: .75rem;
+}
+
+.organizations-page .organization-client-history-entry-form textarea.form-control {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.organizations-page .organization-client-history-entry-form .btn {
+    justify-self: start;
+}
+
+.organizations-page .organization-scheduler-search-row {
+    width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .organization-scheduler-tabs {
+    margin-bottom: 0;
+    padding: 0.35rem;
+    background: #fff;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    box-shadow: var(--v2-shadow-sm);
+    display: inline-flex;
+    width: fit-content;
+}
+
+.organizations-page .organization-scheduler-tabs .nav-tabs {
+    border-bottom: 0;
+    gap: 0.35rem;
+}
+
+.organizations-page .organization-scheduler-tabs .nav-link {
+    border: 0;
+    border-radius: 6px;
+    color: var(--v2-color-ink-soft);
+    font-weight: 700;
+    min-height: 40px;
+    padding: 0.5rem 0.9rem;
+}
+
+.organizations-page .organization-scheduler-tabs .nav-link.active {
+    background: var(--v2-color-ink);
+    color: #fff;
+}
+
+.organizations-page .organization-scheduler-tab-badge {
+    background-color: #e67337 !important;
+    border: 1px solid #d85f20;
+    color: #fff !important;
+    line-height: 1;
+}
+
+.organizations-page .organization-scheduler-reminder-list {
+    display: grid;
+    gap: .75rem;
+}
+
+.organizations-page .organization-scheduler-reminder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-scheduler-reminder-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.organizations-page .organization-scheduler-tab-content > .tab-pane.active {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.organizations-page .organization-scheduler-list-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.organizations-page .organization-scheduler-list-loading .organization-list-loading-overlay {
+    z-index: 14;
+}
+
+.organizations-page .organization-scheduler-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0 0.95rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 0.95rem;
+    background: #fff;
+    box-shadow: var(--v2-shadow-sm);
+}
+
+.organizations-page .organization-scheduler-search > i {
+    position: absolute;
+    left: 0.95rem;
+    color: #6c757d;
+}
+
+.organizations-page .organization-scheduler-search > .form-control {
+    min-height: 46px;
+    padding-left: 2rem;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.organizations-page .organization-scheduler-filters {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.organizations-page .organization-scheduler-filters > * {
+    min-width: 0;
+}
+
+.organizations-page .organization-scheduler-select .v-select,
+.organizations-page .organization-scheduler-defer-date-picker,
+.organizations-page .organization-scheduler-defer-date-picker .vue-ctk-date-time-picker {
+    width: 100%;
+}
+
+.organizations-page .organization-scheduler-defer-date-picker,
+.organizations-page .organization-scheduler-defer-date-picker .vue-ctk-date-time-picker {
+    position: relative;
+    z-index: 1300;
+}
+
+.organizations-page .organization-scheduler-select .vs__dropdown-toggle,
+.organizations-page .organization-scheduler-defer-date-picker .vue-ctk-date-time-picker-input {
+    min-height: 38px;
+    border-radius: 8px;
+    border-color: var(--v2-color-border);
+    box-shadow: none;
+}
+
+.organizations-page .organization-scheduler-defer-date-picker .field-input,
+.organizations-page .organization-scheduler-defer-date-picker input {
+    min-height: 38px;
+    height: 38px;
+    line-height: 38px;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.organizations-page .organization-scheduler-select .vs__dropdown-menu,
+.organizations-page .organization-scheduler-defer-date-picker .datepicker-container {
+    z-index: 1305;
+}
+
+.organizations-page .organization-scheduler-quick-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-scheduler-create-action {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.organizations-page .organization-scheduler-task-form .form-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+    color: var(--v2-color-ink);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.organizations-page .organization-scheduler-task-section {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-scheduler-task-section-title {
+    margin: 0;
+    color: var(--v2-color-ink);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.organizations-page .organization-scheduler-task-field {
+    min-width: 0;
+}
+
+.organizations-page .organization-required-mark {
+    color: #dc3545;
+    font-weight: 800;
+}
+
+.organizations-page .organization-field-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a939e;
+    cursor: help;
+    line-height: 1;
+}
+
+.organizations-page .organization-field-help:hover,
+.organizations-page .organization-field-help:focus {
+    color: var(--v2-color-accent);
+}
+
+.organizations-page .organization-scheduler-task-field .v-select,
+.organizations-page .organization-scheduler-task-date-picker,
+.organizations-page .organization-scheduler-task-date-picker .vue-ctk-date-time-picker {
+    width: 100%;
+}
+
+.organizations-page .organization-scheduler-task-field .vs__dropdown-toggle,
+.organizations-page .organization-scheduler-task-date-picker .field-input,
+.organizations-page .organization-scheduler-task-date-picker input {
+    min-height: 38px;
+}
+
+.organizations-page .organization-scheduler-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 48px;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--v2-color-ink);
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: var(--v2-shadow-sm);
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.organizations-page .organization-scheduler-chip:hover {
+    color: var(--v2-color-brand-strong);
+    border-color: rgba(230, 115, 55, 0.35);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-scheduler-chip span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    background: #f3f5f7;
+    color: #4b5563;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.organizations-page .organization-scheduler-chip-active {
+    border-color: rgba(230, 115, 55, 0.4);
+    background: rgba(230, 115, 55, 0.08);
+    color: #9a4b23;
+}
+
+.organizations-page .organization-scheduler-chip-active span {
+    background: #e67337;
+    color: #fff;
+}
+
+.organizations-page .organization-scheduler-chip-overdue {
+    border-color: rgba(220, 53, 69, 0.18);
+}
+
+.organizations-page .organization-scheduler-chip-overdue span {
+    background: rgba(220, 53, 69, 0.12);
+    color: #b42318;
+}
+
+.organizations-page .organization-scheduler-chip-focus {
+    border-color: rgba(230, 115, 55, 0.18);
+}
+
+.organizations-page .organization-scheduler-chip-focus span {
+    background: rgba(230, 115, 55, 0.14);
+    color: #b85c28;
+}
+
+.organizations-page .organization-scheduler-chip-soon {
+    border-color: rgba(230, 115, 55, 0.18);
+}
+
+.organizations-page .organization-scheduler-chip-soon span {
+    background: rgba(230, 115, 55, 0.14);
+    color: #b85c28;
+}
+
+.organizations-page .organization-scheduler-quick-filters > :nth-child(4),
+.organizations-page .organization-scheduler-quick-filters > :nth-child(5),
+.organizations-page .organization-scheduler-quick-filters > :nth-child(6),
+.organizations-page .organization-scheduler-quick-filters > :nth-child(7),
+.organizations-page .organization-scheduler-quick-filters > :nth-child(8),
+.organizations-page .organization-scheduler-quick-filters > :nth-child(3),
+.organizations-page .organization-scheduler-quick-filters > :nth-child(11) {
+    display: none;
+}
+
+.organizations-page .organization-scheduler-quick-filters > .organization-scheduler-chip-active {
+    display: inline-flex;
+}
+
+.organizations-page .organization-scheduler-groups {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.organizations-page .organization-scheduler-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-scheduler-section-header {
+    justify-content: flex-start;
+}
+
+.organizations-page .organization-scheduler-item {
+    padding: 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-left-width: 3px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #fff 0%, #fbfbfc 100%);
+    box-shadow: var(--v2-shadow-sm);
+}
+
+.organizations-page .organization-scheduler-item-overdue {
+    border-left-color: #dc3545;
+}
+
+.organizations-page .organization-scheduler-item-soon {
+    border-left-color: #e67337;
+}
+
+.organizations-page .organization-scheduler-item-attention {
+    border-left-color: #e67337;
+}
+
+.organizations-page .organization-scheduler-item-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.organizations-page .organization-scheduler-item-main {
+    display: grid;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-scheduler-item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.organizations-page .organization-scheduler-status,
+.organizations-page .organization-scheduler-source {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.organizations-page .organization-scheduler-section-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0.35em 0.65em;
+    border-radius: var(--bs-border-radius);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 2rem;
+    flex: 0 0 auto;
+    background-color: #e67337 !important;
+    border: 1px solid #d85f20;
+    color: #fff !important;
+}
+
+.organizations-page .organization-scheduler-section-badge-overdue {
+    background: #e67337 !important;
+    color: #fff !important;
+}
+
+.organizations-page .organization-scheduler-section-badge-soon {
+    background: #e67337 !important;
+    color: #fff !important;
+}
+
+.organizations-page .organization-scheduler-section-badge-attention {
+    background: #e67337 !important;
+    color: #fff !important;
+}
+
+.organizations-page .organization-scheduler-status-overdue {
+    background: rgba(220, 53, 69, 0.12) !important;
+    color: #b42318 !important;
+}
+
+.organizations-page .organization-scheduler-status-soon {
+    background: rgba(230, 115, 55, 0.14) !important;
+    color: #b85c28 !important;
+}
+
+.organizations-page .organization-scheduler-status-attention {
+    background: #f3f5f7 !important;
+    color: #4b5563 !important;
+}
+
+.organizations-page .organization-scheduler-source {
+    background: #f3f5f7 !important;
+    color: #4b5563 !important;
+}
+
+.organizations-page .organization-scheduler-workflow {
+    background: #f3f5f7 !important;
+    color: #4b5563 !important;
+}
+
+.organizations-page .organization-scheduler-source-linked-maintenance {
+    background: #f3f5f7 !important;
+    color: #4b5563 !important;
+}
+
+.organizations-page .organization-scheduler-item-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--v2-color-ink);
+}
+
+.organizations-page .organization-scheduler-item-vehicle a {
+    color: var(--v2-color-brand-strong);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.organizations-page .organization-scheduler-item-vehicle a:hover {
+    color: var(--v2-color-brand);
+}
+
+.organizations-page .organization-scheduler-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.9rem;
+    color: #6c757d;
+    font-size: 0.88rem;
+}
+
+.organizations-page .organization-scheduler-actions {
+    display: grid;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    justify-items: end;
+    align-items: start;
+    min-width: 230px;
+}
+
+.organizations-page .organization-scheduler-defer-form {
+    display: grid;
+    grid-template-columns: 150px auto;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: end;
+    margin-top: 0;
+    padding: 0;
+    border-top: 0;
+}
+
+.organizations-page .organization-scheduler-defer-date-app {
+    width: 150px;
+}
+
+.organizations-page .organization-scheduler-workflow-action {
+    min-width: 128px;
+}
+
+.organizations-page .organization-scheduler-workflow-form {
+    width: 100%;
+    margin-top: 0.25rem;
+    padding-top: 0.55rem;
+    border-top: 1px dashed rgba(17, 24, 39, 0.16);
+    text-align: right;
+}
+
+.organizations-page .organization-scheduler-workflow-form + .organization-scheduler-defer-form {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.organizations-page .organization-scheduler-workflow-form .organization-scheduler-workflow-action,
+.organizations-page .organization-scheduler-defer-form .btn {
+    background: #fff;
+    border-color: rgba(17, 24, 39, 0.32);
+    color: #111827;
+}
+
+.organizations-page .organization-scheduler-workflow-form .organization-scheduler-workflow-action:hover,
+.organizations-page .organization-scheduler-defer-form .btn:hover {
+    background: #111827;
+    border-color: #111827;
+    color: #fff;
+}
+
+.organizations-page .organization-scheduler-actions > .btn,
+.organizations-page .organization-scheduler-actions > form,
+.organizations-page .organization-scheduler-actions > a {
+    margin: 0;
+}
+
+.organizations-page .counter-chart-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.organizations-page .counter-chart-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.9fr);
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.organizations-page .counter-section-combined {
+    margin-bottom: 1.25rem;
+    padding: 0 0 1.25rem;
+    border-bottom: 1px solid rgba(33, 37, 41, 0.08);
+}
+
+.organizations-page .counter-chart-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.organizations-page .counter-chart-sidecard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+}
+
+.organizations-page .counter-chart-sidecard-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--v2-color-ink);
+}
+
+.organizations-page .counter-chart-sidecard-subtitle {
+    color: #6c757d;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.organizations-page .counter-chart-sidecard-meta {
+    display: grid;
+    gap: 0.55rem;
+    color: #6c757d;
+    font-size: 0.92rem;
+}
+
+.organizations-page .counter-chart-sidecard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.25rem;
+}
+
+.organizations-page .counter-chart-canvas-wrap {
+    position: relative;
+    min-height: 320px;
+}
+
+.organizations-page .counter-chart-svg {
+    display: block;
+    width: 100%;
+    height: 320px;
+    overflow: visible;
+    text-rendering: geometricPrecision;
+}
+
+.organizations-page .counter-chart-svg text {
+    font-family: inherit;
+}
+
+.organizations-page .counter-chart-axis {
+    stroke: #cfd4dc;
+    stroke-width: 1.2;
+}
+
+.organizations-page .counter-chart-grid {
+    stroke: rgba(33, 37, 41, 0.08);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+}
+
+.organizations-page .counter-chart-line {
+    fill: none;
+    stroke: #e67337;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.organizations-page .counter-chart-point {
+    fill: #e67337;
+    stroke: #ffffff;
+    stroke-width: 2;
+    cursor: pointer;
+}
+
+.organizations-page .counter-chart-point-counter {
+    fill: #e67337;
+}
+
+.organizations-page .counter-chart-point-maintenance {
+    fill: #121212;
+}
+
+.organizations-page .counter-chart-y-label,
+.organizations-page .counter-chart-x-label {
+    fill: #6c757d;
+    font-size: 12px;
+}
+
+.organizations-page .counter-chart-y-label {
+    text-anchor: end;
+}
+
+.organizations-page .counter-chart-x-label {
+    text-anchor: middle;
+}
+
+.organizations-page .organization-empty-state-compact {
+    padding: 0.5rem 0;
+}
+
+.organizations-page .organization-work-journal-filters {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    gap: 0.85rem;
+    align-items: end;
+}
+
+.organizations-page .organization-work-journal-filters > * {
+    min-width: 0;
+}
+
+.organizations-page .organization-work-journal-filters .organization-scheduler-defer-date-app {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.45rem;
+    align-items: center;
+    width: 100%;
+}
+
+.organizations-page .organization-work-journal-filters .organization-scheduler-defer-date-app > .form-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-work-journal-filters .organization-scheduler-defer-date-picker .field-label {
+    display: none !important;
+}
+
+.organizations-page .organization-work-journal-filters .organization-scheduler-defer-date-picker .field-input,
+.organizations-page .organization-work-journal-filters .organization-scheduler-defer-date-picker input {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 38px !important;
+}
+
+.organizations-page .organization-work-journal-filter-actions {
+    display: flex;
+    align-items: end;
+}
+
+.organizations-page .organization-work-journal-filter-actions .btn {
+    min-height: 38px;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-work-journal-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-work-journal-item {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-work-journal-time {
+    display: grid;
+    gap: 0.15rem;
+    color: #6b7280;
+    font-size: 0.82rem;
+}
+
+.organizations-page .organization-work-journal-time strong {
+    color: #111827;
+    font-size: 1rem;
+}
+
+.organizations-page .organization-work-journal-content {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 0;
+}
+
+.organizations-page .organization-work-journal-topline,
+.organizations-page .organization-work-journal-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.85rem;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.organizations-page .organization-work-journal-title {
+    margin: 0;
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-work-journal-description {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.55;
+}
+
+.organizations-page .organization-work-journal-meta {
+    color: #6b7280;
+}
+
+.organizations-page .organization-work-journal-client {
+    color: #111827;
+    font-weight: 700;
+}
+
+.organizations-page .organization-work-journal-meta a {
+    color: var(--v2-color-brand-strong);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.organizations-page .organization-work-journal-meta a:hover {
+    color: var(--v2-color-brand);
+}
+
+.organizations-page .organization-work-journal-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.organizations-page .organization-section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.7rem;
+    min-height: 1.45rem;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid rgba(230, 115, 55, 0.7);
+    border-radius: 6px;
+    background: rgba(230, 115, 55, 0.95);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.organizations-page .organization-role-matrix th,
+.organizations-page .organization-role-matrix td {
+    min-width: 150px;
+}
+
+.organizations-page .organization-role-matrix th:first-child,
+.organizations-page .organization-role-matrix td:first-child {
+    min-width: 190px;
+}
+
+.organizations-page .organization-type-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-type-preset-card {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-type-preset-card.is-active {
+    border-color: rgba(230, 115, 55, 0.6);
+    background: #fffaf6;
+    box-shadow: 0 0 0 2px rgba(230, 115, 55, 0.1);
+}
+
+.organizations-page .organization-type-preset-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-type-preset-title {
+    color: #111827;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.organizations-page .organization-type-preset-active {
+    color: #b45309;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-settings-inline-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 38px;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    border-radius: 6px;
+    background: #fff;
+    color: #111827;
+    font-weight: 800;
+}
+
+.organizations-page .organization-settings-inline-toggle i {
+    font-size: 0.78rem;
+    transition: transform 0.18s ease;
+}
+
+.organizations-page .organization-settings-inline-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.organizations-page .organization-type-preset-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 30px;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    border-radius: 6px;
+    background: #fff;
+    color: #374151;
+    font-size: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-type-preset-toggle i {
+    font-size: 0.75rem;
+    transition: transform 0.18s ease;
+}
+
+.organizations-page .organization-type-preset-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.organizations-page .organization-type-preset-summary {
+    color: #4b5563;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.organizations-page .organization-type-preset-details {
+    display: grid;
+    gap: 0.65rem;
+    padding-top: 0.15rem;
+}
+
+.organizations-page .organization-type-preset-description {
+    color: #4b5563;
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+.organizations-page .organization-type-preset-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.organizations-page .organization-type-preset-tags span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #374151;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.organizations-page .organization-type-preset-focus {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding-left: 1.05rem;
+    color: #6b7280;
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-type-preset-capabilities {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.1rem;
+}
+
+.organizations-page .organization-type-preset-capabilities span {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    color: #374151;
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+.organizations-page .organization-type-preset-capabilities i {
+    color: #2f9e44;
+    line-height: 1.35;
+    margin-top: 0.02rem;
+}
+
+.organizations-page .organization-type-choice-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.organizations-page .organization-type-choice-card {
+    position: relative;
+    cursor: pointer;
+    min-height: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.organizations-page .organization-type-choice-card:hover {
+    border-color: rgba(47, 158, 68, 0.45);
+    box-shadow: var(--v2-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-type-choice-card .form-check-input {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    margin: 0;
+}
+
+.organizations-page .organization-scenario-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.organizations-page .organization-scenario-metric {
+    display: grid;
+    gap: 0.1rem;
+    min-height: 64px;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.organizations-page .organization-scenario-metric:hover {
+    border-color: rgba(230, 115, 55, 0.55);
+    box-shadow: var(--v2-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.organizations-page .organization-scenario-metric-value {
+    color: #111827;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.organizations-page .organization-scenario-metric-label {
+    color: #6b7280;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.organizations-page .organization-scenario-action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.organizations-page .organization-scenario-action-grid .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    white-space: normal;
+}
+
+.organizations-page .organization-card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-defect-details-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+    gap: 1rem;
+}
+
+.organizations-page .organization-client-details-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 1rem;
+}
+
+.organizations-page .organization-client-vehicle-item {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.organizations-page .organization-client-vehicle-photo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 48px;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #4b5563;
+    overflow: hidden;
+}
+
+.organizations-page .organization-client-vehicle-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.organizations-page .organization-client-vehicle-item.is-active {
+    border-color: rgba(230, 115, 55, 0.58);
+    background: #fffaf6;
+    box-shadow: 0 0 0 2px rgba(230, 115, 55, 0.1);
+}
+
+.organizations-page .organization-client-vehicle-actions {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-client-vehicle-link-menu {
+    width: min(420px, calc(100vw - 2rem));
+}
+
+.organizations-page .organization-client-transfer-form {
+    min-width: 0;
+}
+
+.organizations-page .organization-client-transfer-select .vs__dropdown-toggle {
+    min-height: 38px;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+}
+
+.organizations-page .organization-client-transfer-select .vs__dropdown-menu {
+    z-index: 7300;
+}
+
+.organizations-page .organization-client-transfer-option {
+    display: grid;
+    gap: 0.15rem;
+    white-space: normal;
+}
+
+.organizations-page .organization-client-transfer-option strong {
+    color: #111827;
+    line-height: 1.25;
+}
+
+.organizations-page .organization-client-transfer-option span {
+    color: #6b7280;
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+.organizations-page .organization-client-vehicle-picker {
+    display: grid;
+    grid-template-columns: auto minmax(260px, 420px);
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+}
+
+.organizations-page .organization-client-vehicle-picker .form-label {
+    color: #4b5563;
+    font-size: 0.88rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.organizations-page .organization-client-selected-vehicle-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-client-vehicle-plate {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid rgba(17, 24, 39, 0.18);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #111827;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.organizations-page .organization-defect-details-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.organizations-page .organization-defect-description {
+    white-space: pre-line;
+    line-height: 1.55;
+}
+
+.organizations-page .organization-defect-maintenance-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-defect-maintenance-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-defect-maintenance-title {
+    color: var(--v2-color-ink);
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.organizations-page .organization-defect-maintenance-title:hover {
+    color: var(--v2-color-brand-strong);
+}
+
+.organizations-page .organization-defect-maintenance-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.85rem;
+    color: #6b7280;
+    font-size: 0.88rem;
+}
+
+.organizations-page .organization-defect-maintenance-comment {
+    margin: 0.55rem 0 0;
+    color: #4b5563;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.organizations-page .organization-defect-maintenance-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.organizations-page .organization-defect-workflow-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.organizations-page .organization-defect-link-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.organizations-page .organization-defect-history-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.organizations-page .organization-defect-history-item {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.875rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.organizations-page .organization-defect-history-time {
+    display: grid;
+    gap: 0.15rem;
+    align-content: start;
+    color: #6b7280;
+    font-size: 0.82rem;
+}
+
+.organizations-page .organization-defect-history-time strong {
+    color: #111827;
+    font-size: 1rem;
+}
+
+.organizations-page .organization-defect-history-item h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.organizations-page .organization-defect-history-item p {
+    margin: 0.35rem 0 0;
+    white-space: pre-line;
+    color: #4b5563;
+}
+
+.organizations-page .organization-panel-summary .card-body {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.organizations-page #organization-vehicles > .card-body {
+    padding-bottom: 0.85rem;
+}
+
+.organizations-page #organization-vehicles .pagination-section {
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-stats-grid-compact {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0;
+}
+
+.organizations-page .organization-stats-grid-centered {
+    justify-content: center;
+}
+
+.organizations-page .organization-stats-grid-centered .organization-stat-tile {
+    text-align: center;
+    justify-items: center;
+}
+
+.organizations-page .organization-list-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(1px);
+    z-index: 2;
+    border-radius: 0 0 var(--v2-radius-lg) var(--v2-radius-lg);
+}
+
+.organizations-page .organization-list-loading-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--v2-color-border);
+    border-radius: var(--v2-radius-md);
+    background: #fff;
+    color: var(--v2-color-ink);
+    box-shadow: var(--v2-shadow-sm);
+}
+
+.organizations-page .organization-view-toggle .btn {
+    min-width: 112px;
+}
+
+.organizations-page .create-maintenance-date-picker,
+.organizations-page .create-maintenance-date-picker .vue-ctk-date-time-picker {
+    display: block;
+    width: 100%;
+}
+
+.organizations-page .create-maintenance-date-picker .field-input,
+.organizations-page .create-maintenance-date-picker input,
+.organizations-page .create-maintenance-date-picker .vue-ctk-date-time-picker-input {
+    min-height: 46px;
+    width: 100%;
+    line-height: 1.2;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+@media (max-width: 1199.98px) {
+    .organizations-page .organization-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .organizations-page .organization-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-workspace-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-wiki-layout {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .organizations-page .organization-workspace-sidebar {
+        position: static;
+    }
+
+    .organizations-page .organization-workspace-desktop-nav {
+        display: none;
+    }
+
+    .organizations-page .organization-workspace-mobile-nav {
+        display: block;
+    }
+
+    .organizations-page .organization-workspace-mobile-nav {
+        position: sticky;
+        top: 0.75rem;
+        z-index: 20;
+    }
+
+    #organization-scheduler-page .organization-workspace-layout > .organization-workspace-sidebar,
+    #organization-scheduler-page .organization-workspace-layout > .organization-content-stack {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .organizations-page .organization-wiki-sidebar {
+        position: static;
+        order: 2;
+    }
+
+    .organizations-page .organization-wiki-content {
+        order: 1;
+    }
+
+    .organizations-page .organization-wiki-shell {
+        padding-bottom: 2rem;
+    }
+
+    .organizations-page .defects-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .counters-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .clients-filters {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .organizations-page .clients-toolbar {
+        align-items: stretch;
+    }
+
+    .organizations-page .clients-search-row {
+        min-width: 0;
+        flex-basis: 100%;
+    }
+
+    .organizations-page .clients-toolbar .organization-view-toggle-inline {
+        width: 100%;
+    }
+
+    .organizations-page .clients-toolbar .organization-view-toggle-inline .btn {
+        flex: 1 1 0;
+    }
+
+    .organizations-page .organization-scheduler-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .counter-chart-canvas-wrap {
+        min-height: 260px;
+    }
+
+    .organizations-page .counter-chart-svg {
+        height: 260px;
+    }
+
+    .organizations-page .counter-chart-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-workspace-signal-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+@media (max-width: 767.98px) {
+    .organizations-page {
+        padding: 1.25rem 0 3rem;
+    }
+
+    .organizations-page .organization-switcher-panel {
+        width: 100%;
+    }
+
+    .organizations-page .organization-switcher-app {
+        gap: .45rem;
+    }
+
+    .organizations-page .organization-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-workspace-shell {
+        padding-right: 0.85rem;
+        padding-left: 0.85rem;
+    }
+
+    .organizations-page .organization-workspace-layout {
+        gap: 1rem;
+    }
+
+    .organizations-page .organization-scheduler-reminder-item {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .organizations-page .organization-scheduler-reminder-actions {
+        justify-content: flex-start;
+    }
+
+    .organizations-page .organization-workspace-mobile-nav .card-body {
+        padding: 0.55rem;
+    }
+
+    .organizations-page .organization-workspace-mobile-nav-toggle {
+        min-height: 44px;
+        padding: 0.55rem 0.65rem;
+    }
+
+    .organizations-page .organization-workspace-mobile-nav-toggle strong {
+        font-size: 0.95rem;
+    }
+
+    .organizations-page .organization-workspace-mobile-nav-label {
+        font-size: 0.68rem;
+    }
+
+    .organizations-page .breadcrumb {
+        width: 100%;
+        border-radius: var(--v2-radius-md);
+    }
+
+    .organizations-page .organizations-actions,
+    .organizations-page .organization-workspace-actions {
+        width: 100%;
+    }
+
+    .organizations-page .organizations-actions .btn,
+    .organizations-page .organization-workspace-actions .btn {
+        flex: 1 1 100%;
+        white-space: normal;
+    }
+
+    .organizations-page .organization-role-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .organizations-page .organization-role-form .btn,
+    .organizations-page .organization-role-form .form-select {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .organizations-page .organization-table th:last-child,
+    .organizations-page .organization-table td:last-child {
+        white-space: normal;
+    }
+
+    .organizations-page .organization-list-item-compact .organization-list-item-inner {
+        flex-wrap: wrap;
+    }
+
+    .organizations-page .organization-list-item-compact .organization-list-item-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+
+    .organizations-page .organization-scheduler-actions {
+        width: 100%;
+        justify-content: flex-start;
+        min-width: 0;
+    }
+
+    .organizations-page .organization-scheduler-item-top {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-scheduler-quick-filters {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-scheduler-create-action {
+        justify-content: stretch;
+    }
+
+    .organizations-page .organization-scheduler-create-action .btn {
+        width: 100%;
+    }
+
+    .organizations-page .organization-scheduler-chip {
+        justify-content: space-between;
+    }
+
+    .organizations-page .organization-scheduler-actions .btn {
+        flex: 1 1 100%;
+    }
+
+    .organizations-page .organization-scheduler-defer-form {
+        justify-content: stretch;
+    }
+
+    .organizations-page .organization-scheduler-defer-date-app,
+    .organizations-page .organization-scheduler-defer-form .btn {
+        width: 100%;
+    }
+
+    .organizations-page .organization-scheduler-defer-form {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-plan-price {
+        text-align: left;
+    }
+
+    .organizations-page .organization-maintenance-feed-item {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-maintenance-feed-list .organization-maintenance-feed-item {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .organizations-page .organization-maintenance-list-badges {
+        max-width: none;
+    }
+
+    .organizations-page .organization-maintenance-toolbar,
+    .organizations-page .organization-maintenance-date-filter {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .organizations-page .organization-maintenance-date-field,
+    .organizations-page .organization-maintenance-filter-button {
+        width: 100%;
+        max-width: none;
+    }
+
+    .organizations-page .organization-maintenance-feed-actions {
+        justify-content: flex-start;
+    }
+
+    .organizations-page .organization-maintenance-feed-actions .btn {
+        flex: 1 1 100%;
+    }
+
+    .organizations-page .organization-work-journal-filters,
+    .organizations-page .organization-work-journal-item,
+    .organizations-page .organization-billing-current {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-work-journal-actions {
+        justify-content: flex-start;
+    }
+
+    .organizations-page .organization-work-journal-actions .btn {
+        width: 100%;
+    }
+
+    .organizations-page .organization-defect-details-grid,
+    .organizations-page .organization-client-details-grid,
+    .organizations-page .organization-client-vehicle-picker,
+    .organizations-page .organization-type-preset-grid,
+    .organizations-page .organization-scenario-metric-grid,
+    .organizations-page .organization-scenario-action-grid,
+    .organizations-page .organization-defect-details-list,
+    .organizations-page .organization-defect-maintenance-item,
+    .organizations-page .organization-defect-link-form,
+    .organizations-page .organization-defect-history-item {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-defect-maintenance-actions {
+        justify-content: flex-start;
+    }
+
+    .organizations-page .organization-maintenance-header-actions {
+        width: 100%;
+    }
+
+    .organizations-page .organization-planner-shell {
+        min-height: 460px;
+    }
+
+    .organizations-page .organization-planner-calendar .fc-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .organizations-page .organization-planner-calendar .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+
+    .organizations-page .organization-quick-maintenance-item {
+        grid-template-columns: 1fr;
+    }
+
+    .organizations-page .organization-quick-maintenance-mileage {
+        justify-self: flex-start;
+    }
+
+    .organizations-page .organization-quick-maintenance-filters {
+        grid-template-columns: 1fr;
+    }
+}

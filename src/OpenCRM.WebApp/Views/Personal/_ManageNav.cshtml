@@ -1,0 +1,8 @@
+@using OpenCRM.WebApp.Views.Personal
+<nav class="personal-nav" aria-label="Настройки аккаунта">
+    <a id="profile" class="@ManageNavPages.IndexNavClass(ViewContext)" href="/personal" aria-current="@(ManageNavPages.IndexNavClass(ViewContext) == "active" ? "page" : null)"><i class="fa fa-user-o" aria-hidden="true"></i><span>Профиль</span></a>
+    <a id="account-profile" class="@ManageNavPages.AccountProfileNavClass(ViewContext)" href="/personal/accountProfile" aria-current="@(ManageNavPages.AccountProfileNavClass(ViewContext) == "active" ? "page" : null)"><i class="fa fa-building-o" aria-hidden="true"></i><span>Рабочие пространства</span></a>
+    <a id="support" class="@(ViewData["ActivePage"] as string == "Support" ? "active" : null)" href="/personal/support" aria-current="@(ViewData["ActivePage"] as string == "Support" ? "page" : null)"><i class="fa fa-comments-o" aria-hidden="true"></i><span>Обращения</span></a>
+    <a id="personal-vehicles" class="@(ViewData["PersonalVehiclePage"] is true ? "active" : null)" href="/vehicles" aria-current="@(ViewData["PersonalVehiclePage"] is true ? "page" : null)"><i class="fa fa-car" aria-hidden="true"></i><span>Личная техника</span></a>
+    <a id="change-password" class="@ManageNavPages.ChangePasswordNavClass(ViewContext)" href="/personal/changePassword" aria-current="@(ManageNavPages.ChangePasswordNavClass(ViewContext) == "active" ? "page" : null)"><i class="fa fa-lock" aria-hidden="true"></i><span>Пароль</span></a>
+</nav>

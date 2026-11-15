@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+  <UserControl.Styles>
+    <Style Selector="Border.metric">
+      <Setter Property="Background" Value="#191919" />
+      <Setter Property="BorderBrush" Value="#303030" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="10,8" />
+      <Setter Property="Width" Value="170" />
+      <Setter Property="Margin" Value="0,0,8,8" />
+    </Style>
+    <Style Selector="Border.metric.warning">
+      <Setter Property="Background" Value="#201B14" />
+      <Setter Property="BorderBrush" Value="#665035" />
+    </Style>
+    <Style Selector="TextBlock.metric-value">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.metric-value.warning">
+      <Setter Property="Foreground" Value="#EDC28B" />
+    </Style>
+  </UserControl.Styles>
+  <UserControl.Resources>
+    <DataTemplate x:Key="MetricTemplate" x:DataType="vm:DashboardMetric">
+      <Border Classes="metric" Classes.warning="{Binding NeedsAttention}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Title}" Classes="caption" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Value}" Classes="metric-value" Classes.warning="{Binding NeedsAttention}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Detail}" Classes="caption" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="StatisticTemplate" x:DataType="vm:DashboardStatisticGroup">
+      <Border Classes="card" Margin="0,0,8,8" Width="220" Padding="14">
+        <StackPanel Spacing="14">
+          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding Items}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DashboardMetric">
+                <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                  <TextBlock Text="{Binding Title}" Classes="caption" TextWrapping="Wrap" Margin="0,0,12,0" />
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+  <StackPanel Spacing="14">
+    <Grid ColumnDefinitions="Auto,*">
+      <TextBlock Text="Дашборд" Classes="heading" Margin="0,0,24,8" AutomationProperties.AutomationId="DashboardHeading" />
+      <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AutomationId="DashboardRefreshControls">
+        <TextBlock Text="{Binding UpdatedLabel}" Classes="caption" VerticalAlignment="Center" Margin="0,0,16,8" />
+        <TextBlock Text="Автообновление, сек" Classes="caption" VerticalAlignment="Center" Margin="0,0,8,8" />
+        <ComboBox ItemsSource="{Binding RefreshIntervals}" SelectedItem="{Binding RefreshSeconds}" Width="80" Margin="0,0,8,8"
+                  AutomationProperties.AutomationId="DashboardRefreshInterval" />
+        <Button Content="Обновить" Command="{Binding RefreshCommand}" Margin="0,0,0,8" AutomationProperties.AutomationId="DashboardRefresh" />
+      </WrapPanel>
+    </Grid>
+    <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+    <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Height="3" />
+    <WrapPanel AutomationProperties.AutomationId="DashboardPeriodSwitcher">
+      <TextBlock Text="Период" Classes="caption" VerticalAlignment="Center" Margin="0,0,16,6" />
+      <Button Content="Сегодня" Classes.primary="{Binding IsToday}" Command="{Binding SetPeriodCommand}" Margin="0,0,6,6">
+        <Button.CommandParameter><x:Int32>1</x:Int32></Button.CommandParameter>
+      </Button>
+      <Button Content="7 дней" Classes.primary="{Binding IsWeek}" Command="{Binding SetPeriodCommand}" Margin="0,0,6,6">
+        <Button.CommandParameter><x:Int32>7</x:Int32></Button.CommandParameter>
+      </Button>
+      <Button Content="Месяц" Classes.primary="{Binding IsMonth}" Command="{Binding SetPeriodCommand}" Margin="0,0,0,6">
+        <Button.CommandParameter><x:Int32>30</x:Int32></Button.CommandParameter>
+      </Button>
+    </WrapPanel>
+    <Border IsVisible="{Binding HasUrgentPayments}" Background="#401A1A" BorderBrush="#C24F4F" BorderThickness="1"
+            CornerRadius="8" Padding="16" AutomationProperties.AutomationId="DashboardUrgentPayments">
+      <StackPanel Spacing="6">
+        <TextBlock Text="Срочно: ошибка активации подписки" Foreground="#FFD0D0" FontSize="18" FontWeight="Bold" />
+        <TextBlock Text="{Binding UrgentPaymentMessage}" Foreground="#FFD0D0" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+    <views:DashboardAnalyticsPanel>
+      <Border Classes="card" Padding="14" IsVisible="{Binding CanViewBilling}" AutomationProperties.AutomationId="DashboardPaymentsSection">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="Платежи" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding PeriodLabel}" Classes="caption" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock IsVisible="{Binding HasBillingError}" Text="{Binding BillingErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding PaymentMetrics}" ItemTemplate="{StaticResource MetricTemplate}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          </ItemsControl>
+          <TextBlock Text="{Binding ChartPeriodLabel}" Classes="caption" />
+          <views:DashboardChart Series="{Binding PaymentSeries}" Height="200" MinHeight="180" AutomationProperties.AutomationId="DashboardPaymentsChart" />
+        </StackPanel>
+      </Border>
+      <Border Classes="card" Padding="14" AutomationProperties.AutomationId="DashboardRegistrationsSection">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Регистрации и организации" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding PeriodLabel}" Classes="caption" />
+          <ItemsControl ItemsSource="{Binding RegistrationMetrics}" ItemTemplate="{StaticResource MetricTemplate}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          </ItemsControl>
+          <views:DashboardChart Series="{Binding GrowthSeries}" Height="200" MinHeight="180" AutomationProperties.AutomationId="DashboardGrowthChart" />
+        </StackPanel>
+      </Border>
+    </views:DashboardAnalyticsPanel>
+    <Border Classes="card" Padding="14" AutomationProperties.AutomationId="DashboardStatisticsSection">
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="Общая статистика" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,8" TextWrapping="Wrap" />
+          <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <TextBlock Text="{Binding StatisticsUpdatedLabel}" Classes="caption" VerticalAlignment="Center" Margin="0,0,12,8" />
+            <Button Content="Загрузить статистику" Command="{Binding LoadStatisticsCommand}" Margin="0,0,0,8"
+                    ToolTip.Tip="Общая статистика обновляется по этой кнопке" AutomationProperties.AutomationId="DashboardLoadStatistics" />
+          </WrapPanel>
+        </Grid>
+        <TextBlock IsVisible="{Binding HasStatisticsError}" Text="{Binding StatisticsErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <ProgressBar IsVisible="{Binding IsLoadingStatistics}" IsIndeterminate="True" Height="3" />
+        <ItemsControl ItemsSource="{Binding StatisticGroups}" ItemTemplate="{StaticResource StatisticTemplate}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,26 @@
+.support-layout { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.support-main { display: grid; gap: 16px; min-width: 0; }
+.support-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.support-new { width: 100%; max-width: 860px; }
+.support-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.support-list .support-heading { align-items: center; flex-wrap: wrap; }
+.personal-page .support-list .support-heading > .btn { flex-shrink: 0; white-space: nowrap; }
+.personal-page .support-heading h2 { margin: 0; }
+.support-heading span { color: var(--crm-text-muted); }
+.support-list-item { display: grid; gap: 4px; padding: 12px; border-radius: 10px; color: inherit; text-decoration: none; }
+.support-list-item:hover, .support-list-item--active { background: var(--crm-surface-soft); }
+.support-list-item span, .support-list-item small { color: var(--crm-text-muted); }
+.support-form { display: grid; gap: 12px; }
+.support-form label { display: grid; gap: 5px; }
+.support-form input:not([type="checkbox"]), .support-form select, .support-form textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--crm-line); border-radius: 8px; background: var(--crm-surface); color: var(--crm-text); }
+.support-form [hidden] { display: none; }
+.support-form .support-check { display: flex; align-items: center; gap: 8px; }
+.support-form button { justify-self: start; }
+.support-entries { display: grid; gap: 12px; margin-bottom: 18px; }
+.support-entry { max-width: 85%; padding: 12px; border-radius: 12px; background: var(--crm-surface-soft); overflow-wrap: anywhere; }
+.support-entry--user { justify-self: end; background: var(--entry-selected); color: var(--crm-text); }
+.support-entry--status { justify-self: center; text-align: center; background: transparent; color: var(--crm-text-muted); }
+.support-entry p { white-space: pre-wrap; margin: 6px 0; }
+.support-entry time { font-size: 12px; opacity: .7; }
+.support-error { padding: 12px; border-radius: 8px; background: #fff0f0; color: #9b1c1c; }
+@media (max-width: 750px) { .support-layout { grid-template-columns: 1fr; } .support-entry { max-width: 95%; } }

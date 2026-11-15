@@ -1,0 +1,101 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="OpenCRM.Admin.App.App"
+             RequestedThemeVariant="Dark">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://OpenCRM.Admin.App/Styles/AdminSelect.axaml" />
+        <ResourceInclude Source="avares://OpenCRM.Admin.App/Styles/AdminListRow.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <SolidColorBrush x:Key="AppBackground">#090909</SolidColorBrush>
+      <SolidColorBrush x:Key="PanelBackground">#121212</SolidColorBrush>
+      <SolidColorBrush x:Key="PanelBorder">#292929</SolidColorBrush>
+      <SolidColorBrush x:Key="MutedForeground">#B3B3B3</SolidColorBrush>
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme DensityStyle="Compact">
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Dark" Accent="#D5D5D5" RegionColor="#090909" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+    <StyleInclude Source="avares://OpenCRM.Admin.App/Styles/ConfigurationStyles.axaml" />
+    <Style Selector="ComboBox">
+      <Setter Property="Theme" Value="{StaticResource AdminSelectTheme}" />
+    </Style>
+    <Style Selector="ListBoxItem">
+      <Setter Property="Theme" Value="{StaticResource AdminListRowTheme}" />
+    </Style>
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{StaticResource AppBackground}" />
+      <Setter Property="Foreground" Value="#F1F1F1" />
+      <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Foreground" Value="{StaticResource MutedForeground}" />
+    </Style>
+    <Style Selector="TextBlock.caption">
+      <Setter Property="Foreground" Value="{StaticResource MutedForeground}" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.heading">
+      <Setter Property="FontSize" Value="28" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="24" />
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="MinHeight" Value="38" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="Padding" Value="14,8" />
+      <Setter Property="Background" Value="#222222" />
+      <Setter Property="Foreground" Value="#F1F1F1" />
+    </Style>
+    <Style Selector="Button:disabled">
+      <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#333333" />
+      <Setter Property="BorderBrush" Value="#555555" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.navigation">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="14,11" />
+    </Style>
+    <Style Selector="Button.navigation.active">
+      <Setter Property="Background" Value="#242424" />
+      <Setter Property="BorderBrush" Value="#393939" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="NumericUpDown">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Background" Value="#181818" />
+      <Setter Property="Foreground" Value="#F1F1F1" />
+      <Setter Property="BorderBrush" Value="#383838" />
+      <Setter Property="CornerRadius" Value="7" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Background" Value="#181818" />
+      <Setter Property="Foreground" Value="#F1F1F1" />
+      <Setter Property="BorderBrush" Value="#383838" />
+      <Setter Property="CornerRadius" Value="7" />
+    </Style>
+    <Style Selector="TextBox[AcceptsReturn=True]">
+      <Setter Property="VerticalContentAlignment" Value="Top" />
+    </Style>
+  </Application.Styles>
+</Application>

@@ -1,0 +1,68 @@
+@using Microsoft.Extensions.Configuration
+@inject Microsoft.Extensions.Configuration.IConfiguration PlatformConfiguration
+@model OpenCRM.WebApp.Models.Personal.CreateSupportViewModel
+@{
+    ViewData["Title"] = "Новое обращение";
+    ViewData["ActivePage"] = "Support";
+    ViewData["BreadcrumbLinks"] = new[] { ("/personal", "Профиль"), ("/personal/support", "Обращения") };
+    Layout = "_PersonalLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/personal-support.css" asp-append-version="true" />
+}
+
+<section class="profile-card support-new">
+    <h2>Новое обращение</h2>
+    @if (Model.Error != null)
+    {
+        <p class="support-error" role="alert">@Model.Error</p>
+    }
+    <form action="/personal/support/create" method="post" enctype="multipart/form-data" class="support-form">
+        @Html.AntiForgeryToken()
+        <label>Тип обращения
+            <select name="TypeCode" required>
+                <option value="question" selected="@(Model.Request.TypeCode == "question")">Вопрос или консультация</option>
+                <option value="bug" selected="@(Model.Request.TypeCode == "bug")">Ошибка на сайте</option>
+                @if (PlatformConfiguration.GetValue("PlatformPolicy:Commercial:Enabled", false))
+                {
+                    <option value="billing" selected="@(Model.Request.TypeCode == "billing")">Тарифы и оплата</option>
+                }
+                <option value="suggestion" selected="@(Model.Request.TypeCode == "suggestion")">Предложение</option>
+                <option value="cooperation" selected="@(Model.Request.TypeCode == "cooperation")">Реклама и сотрудничество</option>
+            </select>
+        </label>
+        <label class="support-check"><input type="checkbox" name="IsOrganizationQuestion" value="true" id="support-organization-question" checked="@Model.Request.IsOrganizationQuestion"> Вопрос по организации</label>
+        <label id="support-organization-field" hidden="@(!Model.Request.IsOrganizationQuestion)">Организация
+            <select name="OrganizationId" id="support-organization-select" required="@Model.Request.IsOrganizationQuestion">
+                <option value="">Выберите организацию</option>
+                @foreach (var organization in Model.Organizations)
+                {
+                    <option value="@organization.Id" selected="@(Model.Request.OrganizationId == organization.Id)">@organization.Name</option>
+                }
+            </select>
+        </label>
+        <label>Тема <input name="Topic" maxlength="180" required value="@Model.Request.Topic"></label>
+        <label>Сообщение <textarea name="Text" maxlength="4000" rows="6" required>@Model.Request.Text</textarea></label>
+        <partial name="_SupportAttachments" />
+        <div class="support-actions">
+            <button class="btn entry-primary" type="submit">Отправить</button>
+            <a class="btn entry-secondary" href="/personal/support">Отмена</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const checkbox = document.getElementById('support-organization-question');
+            const field = document.getElementById('support-organization-field');
+            const select = document.getElementById('support-organization-select');
+            checkbox.addEventListener('change', () => {
+                field.hidden = !checkbox.checked;
+                select.required = checkbox.checked;
+                if (!checkbox.checked) select.value = '';
+            });
+        })();
+    </script>
+}

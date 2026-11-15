@@ -1,0 +1,30 @@
+﻿@model ConfirmEmailChangeModel
+@{
+    ViewData["Title"] = "Изменение email";
+}
+
+<div class="auth-page">
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-container extra-narrow-form text-center">
+                <div class="auth-form-wrapper">
+                    <h1 class="auth-title">@ViewData["Title"]</h1>
+
+                    <div class="auth-alert-message @(Model.StatusMessage.Contains("Ошибка") || Model.StatusMessage.Contains("некорректна") || Model.StatusMessage.Contains("повреждена") ? "alert-danger" : "alert-success")">
+                        @Model.StatusMessage
+                    </div>
+
+                    <div class="auth-links text-center mt-3">
+                        <div class="mb-2">
+                            <a href="~/personal">Вернуться в профиль</a>
+                        </div>
+                        <div>
+                            <a href="~/">На главную</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+

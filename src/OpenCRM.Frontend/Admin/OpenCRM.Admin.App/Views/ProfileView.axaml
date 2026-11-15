@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             x:Class="OpenCRM.Admin.App.Views.ProfileView"
+             x:DataType="vm:MainWindowViewModel">
+  <StackPanel Spacing="24">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Мой профиль" Classes="heading" />
+        <TextBlock Text="Аккаунт и административные права" Classes="muted" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshProfileCommand}"
+              VerticalAlignment="Center" AutomationProperties.AutomationId="RefreshProfileButton" />
+    </Grid>
+    <Border Classes="card">
+      <StackPanel Spacing="22">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Border Width="60" Height="60" Background="#2B2B2B" CornerRadius="16" Margin="0,0,18,0">
+            <TextBlock Text="{Binding AvatarText}" FontSize="26" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="{Binding ProfileEmail}" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap"
+                       AutomationProperties.AutomationId="ProfileEmail" />
+            <TextBlock Text="{Binding AccessLabel}" Classes="muted" />
+          </StackPanel>
+          <Border Grid.Column="2" Background="#222222" BorderBrush="#3A3A3A" BorderThickness="1"
+                  CornerRadius="6" Padding="10,6" VerticalAlignment="Top" Margin="12,0,0,0">
+            <TextBlock Text="Только чтение" FontSize="12" />
+          </Border>
+        </Grid>
+        <Border BorderBrush="#2B2B2B" BorderThickness="0,1,0,0" Padding="0,22,0,0">
+          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="24" RowSpacing="22">
+            <StackPanel Spacing="8">
+              <TextBlock Text="EMAIL" Classes="caption" LetterSpacing="1" />
+              <SelectableTextBlock Text="{Binding ProfileEmail}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="8">
+              <TextBlock Text="РОЛИ" Classes="caption" LetterSpacing="1" />
+              <SelectableTextBlock Text="{Binding RolesLabel}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Spacing="8">
+              <TextBlock Text="ИДЕНТИФИКАТОР" Classes="caption" LetterSpacing="1" />
+              <SelectableTextBlock Text="{Binding ProfileId}" TextWrapping="Wrap" FontSize="12" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="8">
+              <TextBlock Text="СЕРВЕР" Classes="caption" LetterSpacing="1" />
+              <SelectableTextBlock Text="{Binding ServerAddress}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </StackPanel>
+    </Border>
+    <Border Classes="card">
+      <StackPanel Spacing="16">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="Права доступа" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Grid.Column="1" Text="{Binding Permissions.Count, StringFormat='Всего: {0}'}" Classes="caption" VerticalAlignment="Center" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Permissions}" AutomationProperties.AutomationId="PermissionsList">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:PermissionItem">
+              <Border BorderBrush="#282828" BorderThickness="0,0,0,1" Padding="0,12">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{Binding Title}" TextWrapping="Wrap" Margin="0,0,16,0" />
+                  <TextBlock Grid.Column="1" Text="{Binding Code}" Classes="caption" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

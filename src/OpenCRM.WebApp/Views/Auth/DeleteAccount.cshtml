@@ -1,0 +1,64 @@
+﻿@model DeleteAccountModel
+@{
+    ViewData["Title"] = "Удаление аккаунта";
+    Layout = "/Views/Personal/_PersonalLayout.cshtml";
+}
+
+<section class="profile-card">
+    <form id="delete-account-form" method="post" class="personal-form" data-disable-submit-loader novalidate>
+        @Html.AntiForgeryToken()
+        <div class="personal-warning">
+            <p><strong>Это действие нельзя отменить.</strong></p>
+            <p>Аккаунт и все связанные данные будут удалены без возможности восстановления. Регистрация с тем же email создаст новый пустой аккаунт.</p>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        @if (Model.HasPassword)
+        {
+            <div class="personal-field">
+                <label asp-for="Password">Текущий пароль</label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+        }
+        else
+        {
+            <p class="personal-muted">Для аккаунта не задан локальный пароль. Подтвердите удаление ниже.</p>
+        }
+        <div>
+            <label class="personal-check">
+                <input asp-for="ConfirmDeletion" />
+                <span>Я понимаю, что все мои данные будут удалены навсегда</span>
+            </label>
+            <span asp-validation-for="ConfirmDeletion" class="text-danger"></span>
+        </div>
+        <div class="personal-form-actions">
+            <button type="submit" id="delete-account-submit" class="btn btn-danger" disabled>Удалить аккаунт навсегда</button>
+            <a href="~/personal" class="btn entry-secondary">Отмена</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('delete-account-form');
+            const submit = document.getElementById('delete-account-submit');
+            if (!form || !submit) return;
+
+            const password = form.querySelector('[name="Password"]');
+            const confirm = form.querySelector('[name="ConfirmDeletion"]');
+
+            function refreshDeleteState() {
+                const hasPassword = !password || password.value.trim().length > 0;
+                const confirmed = !!confirm && confirm.checked;
+                submit.disabled = !(hasPassword && confirmed);
+            }
+
+            if (password) password.addEventListener('input', refreshDeleteState);
+            if (confirm) confirm.addEventListener('change', refreshDeleteState);
+            refreshDeleteState();
+        })();
+    </script>
+}
+
+

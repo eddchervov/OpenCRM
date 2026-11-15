@@ -1,0 +1,29 @@
+{
+  "name": "@opencrm/frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "Admin/*",
+    "Scenarios/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "preview:visualization": "node tests/serve-visualization-preview.mjs",
+    "test:checkout": "node --test tests/paymentOperation.test.mjs",
+    "test:intake-damages": "node --test tests/intakeDamageMap.test.mjs",
+    "test:visualization": "node --test tests/workPosts.test.mjs",
+    "build": "npm run build --workspaces --if-present",
+    "build:admin": "npm run build --workspace @opencrm/admin-client",
+    "build:autoservice": "npm run build --workspace @opencrm/autoservice-client",
+    "build:detailing": "npm run build --workspace @opencrm/detailing-client",
+    "build:fleet": "npm run build --workspace @opencrm/fleet-client",
+    "dev:autoservice": "npm run dev --workspace @opencrm/autoservice-client",
+    "dev:admin": "npm run dev --workspace @opencrm/admin-client",
+    "dev:detailing": "npm run dev --workspace @opencrm/detailing-client",
+    "dev:fleet": "npm run dev --workspace @opencrm/fleet-client"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0"
+  }
+}

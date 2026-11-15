@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenCRM — проверка шапок форм</title><style>
+body {margin:0;background:#e9edf2;color:#243041;font:14px/1.4 system-ui,sans-serif}header{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 18px;background:#fff;border-bottom:1px solid #d8e0e8}h1{margin:0;font-size:18px}label{display:flex;align-items:center;gap:6px}select,button{padding:7px 10px;border:1px solid #c8d1dc;border-radius:5px;background:#fff;color:#243041;font:inherit}main{padding:12px;overflow:auto}iframe{display:block;width:100%;height:calc(100vh - 105px);min-height:650px;border:1px solid #c8d1dc;border-radius:8px;background:#fff;margin:auto;box-sizing:border-box}small{color:#667085}a{color:#97481e}</style></head>
+<body><header><h1>Шапки форм</h1><label>Экран <select id="screen">
+<option value="client-card-preview.html#clients/client-1">Карточка клиента</option>
+<option value="visualization-preview.html#workspace">Рабочий день</option>
+<option value="visualization-preview.html#visualization">Визуализация</option>
+<option value="vehicle-card-preview.html?scenario=detailing">Карточка автомобиля</option>
+<option value="vehicle-card-preview.html?scenario=detailing&amp;form">Форма автомобиля</option>
+<option value="vehicle-card-preview.html?scenario=autoservice">Автомобиль · СТО</option>
+<option value="directories-preview.html#clients">Списки и формы клиентов</option>
+<option value="maintenance-card-preview.html#maintenance/1">Карточка работы</option>
+<option value="catalog-preview.html#catalog">Справочники и модалки</option>
+<option value="settings-preview.html#settings">Настройки организации</option>
+<option value="team-preview.html#employees">Команда</option>
+<option value="shifts-preview.html#shifts">Смены</option>
+<option value="billing-preview.html#billing">Тарифы и история</option>
+<option value="warehouse-preview.html">Склад</option>
+<option value="scheduler-preview.html">Запись и календарь</option>
+<option value="admin-header-preview.html#/finance/subscription-plans">Веб-админка</option>
+<option value="personal-header-preview.html">Личный кабинет</option>
+<option value="public-forms-preview.html?organization">Создание организации</option>
+<option value="public-forms-preview.html">Формы входа</option>
+</select></label><label>Тема <select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label><label>Ширина <select id="width"><option value="full">По окну</option><option value="390">Телефон · 390 px</option><option value="768">Планшет · 768 px</option></select></label><a id="open" target="_blank">Открыть отдельно</a><small>Демонстрационные данные</small></header><main><iframe id="preview" title="Предпросмотр выбранной формы"></iframe></main>
+<script>
+const screen = document.getElementById('screen');
+const theme = document.getElementById('theme');
+const width = document.getElementById('width');
+const frame = document.getElementById('preview');
+const themeLabels = ['Включить тёмную тему', 'Включить светлую тему', 'Тёмная тема', 'Светлая тема'];
+let themeObserver;
+
+function themeAttribute() {
+  return screen.value.startsWith('admin-') ? 'adminTheme' : 'crmTheme';
+}
+
+function applyTheme() {
+  const doc = frame.contentDocument;
+  if (!doc) return false;
+  const admin = screen.value.startsWith('admin-');
+  const name = admin
+    ? (theme.value === 'dark' ? 'Тёмная тема' : 'Светлая тема')
+    : (theme.value === 'dark' ? 'Включить тёмную тему' : 'Включить светлую тему');
+  const buttons = [...doc.querySelectorAll('button')];
+  const hasLabel = (button, label) => button.getAttribute('aria-label') === label || button.textContent.trim().includes(label);
+  const button = buttons.find(item => hasLabel(item, name));
+  if (button) button.click();
+  else if (doc.documentElement.dataset[themeAttribute()] !== theme.value) {
+    doc.documentElement.dataset[themeAttribute()] = theme.value;
+  }
+
+  return screen.value.startsWith('personal-') || screen.value.startsWith('public-')
+    || buttons.some(item => themeLabels.some(label => hasLabel(item, label)));
+}
+
+function load() {
+  themeObserver?.disconnect();
+  theme.disabled = screen.value === 'public-forms-preview.html';
+  theme.title = theme.disabled ? 'Формы входа используют светлую тему сайта' : '';
+  frame.src = screen.value;
+  document.getElementById('open').href = screen.value;
+}
+
+screen.onchange = load;
+theme.onchange = applyTheme;
+width.onchange = () => { frame.style.width = width.value === 'full' ? '100%' : width.value + 'px'; };
+frame.onload = () => {
+  themeObserver?.disconnect();
+  const doc = frame.contentDocument;
+  if (!doc) return;
+  let ready = false;
+  themeObserver = new MutationObserver(records => {
+    if (!ready) {
+      ready = applyTheme();
+      return;
+    }
+    if (records.some(record => record.type === 'attributes')) {
+      const value = doc.documentElement.dataset[themeAttribute()];
+      if (value === 'light' || value === 'dark') theme.value = value;
+    }
+  });
+  themeObserver.observe(doc.documentElement, {
+    childList: true, subtree: true, attributes: true,
+    attributeFilter: ['data-crm-theme', 'data-admin-theme']
+  });
+  ready = applyTheme();
+};
+load();
+</script></body></html>

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@opencrm/ui": ["../../packages/ui/src/index.ts"],
+      "@opencrm/ui/projectBrand": ["../../packages/ui/src/projectBrand.ts"],
+      "@opencrm/ui/styles.css": ["../../packages/ui/src/styles.css"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "../../packages/ui/src/**/*.ts",
+    "../../packages/ui/src/**/*.vue",
+    "../../packages/workspace/src/**/*.ts",
+    "../../packages/workspace/src/**/*.vue"
+  ]
+}

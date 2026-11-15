@@ -1,0 +1,143 @@
+@startuml domain_model
+title opencrm.example.invalid — основная предметная модель
+
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+class ApplicationUser {
+  Id: string
+  Email: string
+  IsDeleted: bool
+  LastLogin: DateTime
+}
+
+class Organization {
+  Id: Guid
+  Name: string
+  ScenarioCode: string
+  IsActive: bool
+  IsArchived: bool
+  IsDeleted: bool
+}
+
+class OrganizationMember {
+  OrganizationId: Guid
+  UserId: string
+  RoleCode: string
+}
+
+class OrganizationClient {
+  Id: Guid
+  Name: string
+  StatusCode: string
+  IsDeleted: bool
+}
+
+class Vehicle {
+  Id: Guid
+  VIN: string
+  RegistrationNumber: string
+  CurrentMileage: decimal
+  IsArchived: bool
+  IsDeleted: bool
+}
+
+class Maintenance {
+  Id: Guid
+  Status: MaintenanceStatus
+  MaintenanceDate: DateTime
+  PaidAmount: decimal
+  MaterialCostAmount: decimal
+  LaborCostAmount: decimal
+  Details: JSON
+  IsDeleted: bool
+}
+
+enum MaintenanceStatus {
+  Planned
+  InProgress
+  Completed
+  Cancelled
+}
+
+class VehicleDefect {
+  Id: Guid
+  SeverityCode: string
+  StatusCode: string
+}
+
+class OrganizationSchedulerTask {
+  Id: Guid
+  TypeCode: string
+  PriorityCode: string
+  StatusCode: string
+  ScheduledAt: DateTime
+}
+
+class OrganizationMaterialStock {
+  Id: Guid
+  QuantityOnHand: decimal
+  QuantityReserved: decimal
+  AverageUnitCost: decimal
+}
+
+class OrganizationMaterialMovement {
+  Id: Guid
+  MovementTypeCode: string
+  Quantity: decimal
+  UnitCost: decimal
+}
+
+class OrganizationSubscription {
+  Id: Guid
+  StartDate: DateTime
+  EndDate: DateTime
+}
+
+class SubscriptionPlan {
+  Id: int
+  Name: string
+  Price: decimal
+  VehicleLimit: int
+}
+
+class FeatureDefinition {
+  Id: int
+  Code: string
+  ValueType: string
+}
+
+class SubscriptionPlanFeature {
+  BoolValue: bool?
+  IntValue: int?
+}
+
+ApplicationUser "1" -- "0..*" OrganizationMember
+Organization "1" *-- "1..*" OrganizationMember
+Organization "1" *-- "0..*" OrganizationClient
+Organization "1" *-- "0..*" Vehicle
+OrganizationClient "0..1" -- "0..*" Vehicle
+ApplicationUser "1" -- "0..*" Vehicle : personal owner
+Vehicle "1" *-- "0..*" Maintenance
+Vehicle "1" *-- "0..*" VehicleDefect
+Maintenance --> MaintenanceStatus
+Organization "1" *-- "0..*" OrganizationSchedulerTask
+OrganizationSchedulerTask "0..*" --> "0..1" Vehicle
+OrganizationSchedulerTask "0..*" --> "0..1" OrganizationClient
+OrganizationSchedulerTask "0..*" --> "0..1" Maintenance
+Organization "1" *-- "0..*" OrganizationMaterialStock
+OrganizationMaterialStock "1" *-- "0..*" OrganizationMaterialMovement
+Maintenance "0..1" -- "0..*" OrganizationMaterialMovement
+Organization "1" *-- "0..*" OrganizationSubscription
+SubscriptionPlan "1" -- "0..*" OrganizationSubscription
+SubscriptionPlan "1" *-- "0..*" SubscriptionPlanFeature
+FeatureDefinition "1" -- "0..*" SubscriptionPlanFeature
+
+note bottom of Maintenance
+  Details хранится как JSON,
+  а не в отдельной таблице.
+end note
+
+@enduml

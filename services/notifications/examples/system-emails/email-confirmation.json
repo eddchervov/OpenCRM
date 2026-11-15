@@ -1,0 +1,4 @@
+{
+  "name": "Иван",
+  "confirmationUrl": "https://example.com/confirm-email?request=example&token=example"
+}

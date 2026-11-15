@@ -1,0 +1,659 @@
+﻿@using OpenCRM.WebApp.Infrastructure.Security
+@inject IConfiguration Configuration
+@{
+    Layout = "/Views/Personal/_PersonalLayout.cshtml";
+    ViewData["PersonalVehiclePage"] = true;
+    var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
+    ViewData["Title"] = vehicleScenario.PageTitle;
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = "vehicle-page-body";
+    var emailConfirmed = ViewData["EmailConfirmed"] as bool? ?? false;
+    var transferOrganizationsJson = ViewData["TransferOrganizationsJson"] as string ?? "[]";
+}
+
+<style>
+    [v-cloak] {
+        display: none;
+    }
+</style>
+
+<div id="vehicles-form" v-cloak>
+    <div class="container py-3">
+        <div class="personal-fleet-heading">
+            <span class="text-muted">Автомобили и другая техника вашего аккаунта</span>
+            <button type="button" class="btn btn-dark" @@click="click_addVehicle"><i class="fa fa-plus me-2" aria-hidden="true"></i>@vehicleScenario.AddButtonText</button>
+        </div>
+
+        @if (EmailDeliveryPolicy.IsAvailable(Configuration) && !emailConfirmed)
+        {
+            <div class="email-confirm-card alert alert-warning">
+                Подтвердите email, чтобы не потерять доступ к аккаунту и быстрее восстановить его при необходимости.
+            </div>
+        }
+
+        <div class="personal-fleet-limit" v-if="!loadingLimitInfo && !vehicleLimitInfo.canAddMoreVehicles">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            <span>Достигнут лимит личной техники: {{ activeVehiclesCount }} / {{ vehicleLimitInfo.maxVehiclesForUser }}.</span>
+            <a href="/organizations">Перейти к организациям</a>
+        </div>
+
+        <div class="nav-tabs-container mb-4">
+            <ul class="nav nav-tabs" id="fleetTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            id="active-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#active-fleet"
+                            type="button"
+                            role="tab"
+                            aria-controls="active-fleet"
+                            aria-selected="true"
+                            @@click="switchToActiveTab">
+                        @vehicleScenario.ActiveTabText
+                        <span class="badge bg-success ms-2">{{ activeVehiclesCount }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="archive-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#archive"
+                            type="button"
+                            role="tab"
+                            aria-controls="archive"
+                            aria-selected="false"
+                            @@click="switchToArchiveTab">
+                        Архив
+                        <span class="badge bg-secondary ms-2">{{ archivedVehiclesCount }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="active-fleet" role="tabpanel" aria-labelledby="active-tab">
+                <div class="filters-container mb-4">
+                    <div class="brand-filter">
+                        <v-select :options="availableBrands"
+                                  :reduce="brand => brand.id"
+                                  label="name"
+                                  :clearable="false"
+                                  v-model="selectedBrandFilter">
+                            <template slot="no-options">Нет доступных марок</template>
+                        </v-select>
+                    </div>
+
+                    <div class="brand-filter">
+                        <v-select :options="vehicleKindFilterOptions"
+                                  :reduce="kind => kind.value"
+                                  label="text"
+                                  :clearable="false"
+                                  v-model="selectedKindFilter">
+                            <template slot="no-options">Нет доступных типов</template>
+                        </v-select>
+                    </div>
+
+                    <div class="search-input-wrapper flex-grow-1">
+                        <i class="fa fa-search"></i>
+                        <input ref="searchInput"
+                               type="text"
+                               class="form-control"
+                               v-model.trim="searchQuery"
+                               placeholder="@vehicleScenario.SearchPlaceholder"
+                               @@input="handleSearchInput">
+                        <i v-if="searchLoading" class="fa fa-spinner fa-spin"></i>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" @@click="resetFilters" v-if="hasActiveFilters">Сбросить</button>
+                    </div>
+                </div>
+
+                <div class="vehicles-view-toolbar mb-4" v-if="initialVehiclesLoaded && filteredVehicles.length > 0">
+                    <div class="vehicles-view-title">
+                        <span>{{ paginationInfo }}</span>
+                    </div>
+                    <div class="vehicles-view-toggle" role="group" aria-label="Вид отображения техники">
+                        <button type="button"
+                                class="vehicles-view-button"
+                                :class="{ active: viewMode === 'cards' }"
+                                @@click="setVehicleViewMode('cards')">
+                            <i class="fa fa-th-large me-1"></i>
+                            Карточки
+                        </button>
+                        <button type="button"
+                                class="vehicles-view-button"
+                                :class="{ active: viewMode === 'list' }"
+                                @@click="setVehicleViewMode('list')">
+                            <i class="fa fa-list me-1"></i>
+                            Список
+                        </button>
+                    </div>
+                </div>
+
+                <div class="empty-state text-center py-5" v-if="initialVehiclesLoaded && vehicles.length === 0 && !loadVehicles">
+                    <i class="fa fa-car fa-3x mb-3 text-muted"></i>
+                    <h4 class="mb-2">@vehicleScenario.EmptyTitle</h4>
+                    <p class="text-muted mb-3">@vehicleScenario.EmptyText</p>
+                    <button type="button" class="btn btn-dark" @@click="click_addVehicle">@vehicleScenario.AddButtonText</button>
+                </div>
+
+                <div class="empty-state text-center py-5" v-else-if="initialVehiclesLoaded && filteredVehicles.length === 0 && hasActiveFilters">
+                    <i class="fa fa-search fa-3x mb-3 text-muted"></i>
+                    <h4 class="mb-2">Ничего не найдено</h4>
+                    <p class="text-muted mb-3">Попробуйте изменить фильтры или очистить поиск.</p>
+                    <button type="button" class="btn btn-outline-dark" @@click="resetFilters">Сбросить фильтры</button>
+                </div>
+
+                <div class="text-center py-5" v-else-if="loadVehicles">
+                    <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">@vehicleScenario.LoadingText</p>
+                </div>
+
+                <template v-else>
+                    <div class="row g-4" v-if="viewMode === 'cards'">
+                        <div class="col-md-6 col-xl-4" v-for="vehicle in filteredVehicles" :key="vehicle.id">
+                            <div class="vehicle-card">
+                                <div class="vehicle-image-container">
+                                    <span class="maintenance-badge">{{ maintenanceCountText(vehicle.maintenanceCount) }}</span>
+
+                                    <template v-if="currentVehiclePhotoUrl(vehicle)">
+                                        <img :src="currentVehiclePhotoUrl(vehicle)"
+                                             class="vehicle-image vehicle-image-clickable"
+                                             :alt="getVehicleDisplayName(vehicle)"
+                                             @@click="openVehiclePhotoViewer(vehicle)">
+                                        <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                                type="button"
+                                                class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
+                                                @@click.stop="showPreviousVehiclePhoto(vehicle)"
+                                                title="Предыдущее фото">
+                                            <i class="fa fa-chevron-left"></i>
+                                        </button>
+                                        <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                                type="button"
+                                                class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
+                                                @@click.stop="showNextVehiclePhoto(vehicle)"
+                                                title="Следующее фото">
+                                            <i class="fa fa-chevron-right"></i>
+                                        </button>
+                                        <div v-if="hasMultipleVehiclePhotos(vehicle)" class="vehicle-card-photo-counter">
+                                            {{ (vehicle.currentPhotoIndex || 0) + 1 }} / {{ vehicle.vehiclePhotos.length }}
+                                        </div>
+                                        <div v-if="isVehicleUploading(vehicle.id)" class="photo-upload-overlay">
+                                            <i class="fa fa-spinner fa-spin"></i>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="vehicle-placeholder">
+                                            <i class="fa fa-car fa-3x"></i>
+                                            <div class="mt-2">{{ getVehicleKindText(vehicle.kind) }}</div>
+                                        </div>
+                                        <div v-if="isVehicleUploading(vehicle.id)" class="photo-upload-overlay">
+                                            <i class="fa fa-spinner fa-spin"></i>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="vehicle-card-body">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                        <div>
+                                            <h5 class="vehicle-title mb-1">
+                                                <a :href="getVehicleDetailsUrl(vehicle)">{{ getVehicleDisplayName(vehicle) }}</a>
+                                            </h5>
+                                            <div class="vehicle-name" v-if="vehicle.yearIssue || vehicle.name">
+                                                <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                                <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
+                                                <span v-if="vehicle.name">{{ vehicle.name }}</span>
+                                            </div>
+                                        </div>
+
+                                        <span class="badge text-bg-light border">{{ getVehicleKindText(vehicle.kind) }}</span>
+                                    </div>
+
+                                    <p class="vehicle-description mb-3">{{ vehicle.description || 'Описание не заполнено.' }}</p>
+
+                                    <div class="vehicle-card-footer">
+                                        <a :href="getVehicleDetailsUrl(vehicle)" class="btn-view-maintenance">
+                                            <i class="fa fa-folder-open me-2"></i>
+                                            Открыть карточку
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="vehicle-list" v-else>
+                        <div class="vehicle-list-item" v-for="vehicle in filteredVehicles" :key="'list-' + vehicle.id">
+                            <div class="vehicle-list-photo">
+                                <template v-if="currentVehiclePhotoUrl(vehicle)">
+                                    <img :src="currentVehiclePhotoUrl(vehicle)"
+                                         :alt="getVehicleDisplayName(vehicle)"
+                                         class="vehicle-image-clickable"
+                                         @@click="openVehiclePhotoViewer(vehicle)">
+                                    <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                            type="button"
+                                            class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
+                                            @@click.stop="showPreviousVehiclePhoto(vehicle)"
+                                            title="Предыдущее фото">
+                                        <i class="fa fa-chevron-left"></i>
+                                    </button>
+                                    <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                            type="button"
+                                            class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
+                                            @@click.stop="showNextVehiclePhoto(vehicle)"
+                                            title="Следующее фото">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </button>
+                                </template>
+                                <template v-else>
+                                    <i class="fa fa-car"></i>
+                                </template>
+                                <div v-if="isVehicleUploading(vehicle.id)" class="photo-upload-overlay">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                            </div>
+
+                            <div class="vehicle-list-main">
+                                <div class="vehicle-list-heading">
+                                    <div>
+                                        <h5 class="vehicle-title mb-1">
+                                            <a :href="getVehicleDetailsUrl(vehicle)">{{ getVehicleDisplayName(vehicle) }}</a>
+                                        </h5>
+                                        <div class="vehicle-name" v-if="vehicle.yearIssue || vehicle.name">
+                                            <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                            <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
+                                            <span v-if="vehicle.name">{{ vehicle.name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="vehicle-list-badges">
+                                    <span class="badge text-bg-light border">{{ getVehicleKindText(vehicle.kind) }}</span>
+                                    <span class="maintenance-list-badge">{{ maintenanceCountText(vehicle.maintenanceCount) }}</span>
+                                </div>
+
+                                <p class="vehicle-description mb-0" v-if="vehicle.description">{{ vehicle.description }}</p>
+                            </div>
+
+                            <div class="vehicle-list-actions">
+                                <a :href="getVehicleDetailsUrl(vehicle)" class="btn btn-outline-dark btn-sm">
+                                    <i class="fa fa-folder-open me-1"></i>
+                                    Открыть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="pagination-section mt-4" v-if="filteredVehicles.length > 0">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                        <div class="text-muted">{{ paginationInfo }}</div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <select class="form-select form-select-sm" style="width: auto;" v-model.number="pagination.pageSize" @@change="changePageSize">
+                                <option v-for="size in pageSizeOptions" :key="'page-size-' + size" :value="size">{{ size }}</option>
+                            </select>
+
+                            <ul class="pagination" v-if="totalPages > 1">
+                                <li class="page-item" :class="{ disabled: pagination.page === 1 }">
+                                    <button type="button" class="page-link" @@click="firstPage" :disabled="pagination.page === 1">
+                                        <i class="fa fa-angle-double-left"></i>
+                                    </button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: pagination.page === 1 }">
+                                    <button type="button" class="page-link" @@click="prevPage" :disabled="pagination.page === 1">
+                                        <i class="fa fa-angle-left"></i>
+                                    </button>
+                                </li>
+                                <li class="page-item"
+                                    v-for="page in displayedPages"
+                                    :key="'page-' + page"
+                                    :class="{ active: page === pagination.page, disabled: page === '...' }">
+                                    <button type="button"
+                                            class="page-link"
+                                            :disabled="page === '...'"
+                                            @@click="changePage(page)">
+                                        {{ page }}
+                                    </button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: pagination.page === totalPages }">
+                                    <button type="button" class="page-link" @@click="nextPage" :disabled="pagination.page === totalPages">
+                                        <i class="fa fa-angle-right"></i>
+                                    </button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: pagination.page === totalPages }">
+                                    <button type="button" class="page-link" @@click="lastPage" :disabled="pagination.page === totalPages">
+                                        <i class="fa fa-angle-double-right"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="archive" role="tabpanel" aria-labelledby="archive-tab">
+                <div class="alert alert-warning d-flex align-items-start gap-3 mb-4">
+                    <i class="fa fa-info-circle mt-1"></i>
+                    <div>
+                        <div class="fw-semibold">Архив временный</div>
+                        <div>Удаленная техника хранится ограниченное время, а затем удаляется окончательно. Для каждой записи ниже показан оставшийся срок.</div>
+                    </div>
+                </div>
+
+                <div class="filters-container mb-4">
+                    <div class="brand-filter">
+                        <v-select :options="availableArchivedBrands"
+                                  :reduce="brand => brand.id"
+                                  label="name"
+                                  :clearable="false"
+                                  v-model="selectedArchivedBrandFilter">
+                            <template slot="no-options">Нет доступных марок</template>
+                        </v-select>
+                    </div>
+
+                    <div class="search-input-wrapper flex-grow-1">
+                        <i class="fa fa-search"></i>
+                        <input type="text"
+                               class="form-control"
+                               v-model.trim="archiveSearchQuery"
+                               placeholder="Поиск по архиву"
+                               @@input="handleArchiveSearchInput">
+                        <i v-if="archiveSearchLoading" class="fa fa-spinner fa-spin"></i>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-dark" @@click="applyArchiveSearch">Найти</button>
+                        <button type="button" class="btn btn-outline-secondary" @@click="resetArchiveFilters" v-if="hasActiveArchiveFilters">Сбросить</button>
+                    </div>
+                </div>
+
+                <div class="vehicles-view-toolbar mb-4" v-if="archivedVehicles.length > 0">
+                    <div class="vehicles-view-title">
+                        <span>{{ paginationInfo }}</span>
+                    </div>
+                    <div class="vehicles-view-toggle" role="group" aria-label="Вид отображения техники">
+                        <button type="button"
+                                class="vehicles-view-button"
+                                :class="{ active: viewMode === 'cards' }"
+                                @@click="setVehicleViewMode('cards')">
+                            <i class="fa fa-th-large me-1"></i>
+                            Карточки
+                        </button>
+                        <button type="button"
+                                class="vehicles-view-button"
+                                :class="{ active: viewMode === 'list' }"
+                                @@click="setVehicleViewMode('list')">
+                            <i class="fa fa-list me-1"></i>
+                            Список
+                        </button>
+                    </div>
+                </div>
+
+                <div class="empty-state text-center py-5" v-if="!loadArchivedVehicles && archivedVehicles.length === 0">
+                    <i class="fa fa-archive fa-3x mb-3 text-muted"></i>
+                    <h4 class="mb-2">Архив пуст</h4>
+                    <p class="text-muted mb-0">@vehicleScenario.ArchiveEmptyText</p>
+                </div>
+
+                <div class="text-center py-5" v-else-if="loadArchivedVehicles">
+                    <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">Загружаем архив...</p>
+                </div>
+
+                <template v-else>
+                    <div class="row g-4" v-if="viewMode === 'cards'">
+                        <div class="col-md-6 col-xl-4" v-for="vehicle in archivedVehicles" :key="'archived-' + vehicle.id">
+                            <div class="vehicle-card archived-card">
+                                <div class="vehicle-image-container">
+                                    <span class="archive-timer-badge" :class="getTimerClass(vehicle.daysLeft)">
+                                        <i class="fa fa-clock-o me-1"></i>
+                                        {{ getArchiveDeletionText(vehicle.daysLeft) }}
+                                    </span>
+
+                                    <template v-if="currentVehiclePhotoUrl(vehicle)">
+                                        <img :src="currentVehiclePhotoUrl(vehicle)"
+                                             class="vehicle-image vehicle-image-clickable"
+                                             :alt="getVehicleDisplayName(vehicle)"
+                                             @@click="openVehiclePhotoViewer(vehicle)">
+                                        <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                                type="button"
+                                                class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
+                                                @@click.stop="showPreviousVehiclePhoto(vehicle)"
+                                                title="Предыдущее фото">
+                                            <i class="fa fa-chevron-left"></i>
+                                        </button>
+                                        <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                                type="button"
+                                                class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
+                                                @@click.stop="showNextVehiclePhoto(vehicle)"
+                                                title="Следующее фото">
+                                            <i class="fa fa-chevron-right"></i>
+                                        </button>
+                                        <div v-if="hasMultipleVehiclePhotos(vehicle)" class="vehicle-card-photo-counter">
+                                            {{ (vehicle.currentPhotoIndex || 0) + 1 }} / {{ vehicle.vehiclePhotos.length }}
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="vehicle-placeholder">
+                                            <i class="fa fa-archive fa-3x"></i>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="vehicle-card-body">
+                                    <h5 class="vehicle-title mb-1">{{ getVehicleDisplayName(vehicle) }}</h5>
+                                    <div class="vehicle-name mb-2" v-if="vehicle.yearIssue || vehicle.name">
+                                        <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                        <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
+                                        <span v-if="vehicle.name">{{ vehicle.name }}</span>
+                                    </div>
+
+                                    <div class="archive-info">
+                                        <i class="fa fa-info-circle me-1"></i>
+                                        Дата архивации: <strong>{{ formatDate(vehicle.archiveDate) }}</strong>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                                        <button type="button" class="btn btn-success btn-sm" @@click="restoreFromArchive(vehicle)">
+                                            <i class="fa fa-undo me-1"></i>
+                                            Восстановить
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" @@click="viewArchivedVehicleDetails(vehicle)">
+                                            <i class="fa fa-folder-open me-1"></i>
+                                            Открыть
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="vehicle-list" v-else>
+                        <div class="vehicle-list-item archived-list-item" v-for="vehicle in archivedVehicles" :key="'archived-list-' + vehicle.id">
+                            <div class="vehicle-list-photo">
+                                <template v-if="currentVehiclePhotoUrl(vehicle)">
+                                    <img :src="currentVehiclePhotoUrl(vehicle)"
+                                         :alt="getVehicleDisplayName(vehicle)"
+                                         class="vehicle-image-clickable"
+                                         @@click="openVehiclePhotoViewer(vehicle)">
+                                    <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                            type="button"
+                                            class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
+                                            @@click.stop="showPreviousVehiclePhoto(vehicle)"
+                                            title="Предыдущее фото">
+                                        <i class="fa fa-chevron-left"></i>
+                                    </button>
+                                    <button v-if="hasMultipleVehiclePhotos(vehicle)"
+                                            type="button"
+                                            class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
+                                            @@click.stop="showNextVehiclePhoto(vehicle)"
+                                            title="Следующее фото">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </button>
+                                </template>
+                                <template v-else>
+                                    <i class="fa fa-archive"></i>
+                                </template>
+                            </div>
+
+                            <div class="vehicle-list-main">
+                                <div class="vehicle-list-heading">
+                                    <div>
+                                        <h5 class="vehicle-title mb-1">{{ getVehicleDisplayName(vehicle) }}</h5>
+                                        <div class="vehicle-name" v-if="vehicle.yearIssue || vehicle.name">
+                                            <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                            <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
+                                            <span v-if="vehicle.name">{{ vehicle.name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="archive-info mb-0">
+                                    <i class="fa fa-info-circle me-1"></i>
+                                    Дата архивации: <strong>{{ formatDate(vehicle.archiveDate) }}</strong>
+                                </div>
+                                <div class="archive-info mt-2">
+                                    <span class="archive-list-badge" :class="getTimerClass(vehicle.daysLeft)">
+                                        <i class="fa fa-clock-o me-1"></i>
+                                        {{ getArchiveDeletionText(vehicle.daysLeft) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="vehicle-list-actions">
+                                <button type="button" class="btn btn-success btn-sm" @@click="restoreFromArchive(vehicle)">
+                                    <i class="fa fa-undo me-1"></i>
+                                    Восстановить
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @@click="viewArchivedVehicleDetails(vehicle)">
+                                    <i class="fa fa-folder-open me-1"></i>
+                                    Открыть
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="pagination-section mt-4" v-if="archivedVehicles.length > 0">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                        <div class="text-muted">{{ archivedPaginationInfo }}</div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <select class="form-select form-select-sm" style="width: auto;" v-model.number="archivedPagination.pageSize" @@change="changeArchivePageSize">
+                                <option v-for="size in pageSizeOptions" :key="'archive-page-size-' + size" :value="size">{{ size }}</option>
+                            </select>
+
+                            <ul class="pagination" v-if="archivedTotalPages > 1">
+                                <li class="page-item" :class="{ disabled: archivedPagination.page === 1 }">
+                                    <button type="button" class="page-link" @@click="prevArchivePage" :disabled="archivedPagination.page === 1">
+                                        <i class="fa fa-angle-left"></i>
+                                    </button>
+                                </li>
+                                <li class="page-item"
+                                    v-for="page in archivedDisplayedPages"
+                                    :key="'archive-page-' + page"
+                                    :class="{ active: page === archivedPagination.page, disabled: page === '...' }">
+                                    <button type="button"
+                                            class="page-link"
+                                            :disabled="page === '...'"
+                                            @@click="changeArchivePage(page)">
+                                        {{ page }}
+                                    </button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: archivedPagination.page === archivedTotalPages }">
+                                    <button type="button" class="page-link" @@click="nextArchivePage" :disabled="archivedPagination.page === archivedTotalPages">
+                                        <i class="fa fa-angle-right"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <partial name="_VehicleModals" />
+
+        <div class="modal fade" id="vehiclePhotoViewerModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fa fa-image me-2"></i>
+                            Фото техники
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div v-if="currentPhotos.length > 0">
+                            <img :src="currentPhotos[currentPhotoIndex]"
+                                 class="img-fluid rounded vehicle-photo-viewer-image"
+                                 :alt="'Фото техники ' + (currentPhotoIndex + 1)">
+
+                            <div class="mt-3 d-flex justify-content-center align-items-center">
+                                <button class="btn btn-outline-secondary me-2"
+                                        @@click="currentPhotoIndex = (currentPhotoIndex - 1 + currentPhotos.length) % currentPhotos.length"
+                                        :disabled="currentPhotos.length <= 1">
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+
+                                <span class="mx-2">
+                                    {{ currentPhotoIndex + 1 }} / {{ currentPhotos.length }}
+                                </span>
+
+                                <button class="btn btn-outline-secondary ms-2"
+                                        @@click="currentPhotoIndex = (currentPhotoIndex + 1) % currentPhotos.length"
+                                        :disabled="currentPhotos.length <= 1">
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <p>Нет фотографий для отображения</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa fa-times me-1"></i>
+                            Закрыть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/vehicles.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/vehicles.min.css" asp-append-version="true" />
+    </environment>
+}
+
+@section Scripts {
+    <environment include="Development">
+        <script>
+            window.personalVehicleTransferOrganizations = @Html.Raw(transferOrganizationsJson);
+        </script>
+        <script src="~/app/vehicle-registration-plate.bundle.js" asp-append-version="true"></script>
+        <script src="~/app/vehicles.js" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script>
+            window.personalVehicleTransferOrganizations = @Html.Raw(transferOrganizationsJson);
+        </script>
+        <script src="~/app/vehicle-registration-plate.bundle.js" asp-append-version="true"></script>
+        <script src="~/app/vehicles.js" asp-append-version="true"></script>
+    </environment>
+}
+
+
+
+
+@section Breadcrumbs {
+    <nav aria-label="Хлебные крошки"><ol><li><h1 aria-current="page">Личная техника</h1></li></ol></nav>
+}

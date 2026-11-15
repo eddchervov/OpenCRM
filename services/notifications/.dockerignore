@@ -1,0 +1,24 @@
+**/bin
+**/obj
+.git
+.github
+.vs
+.idea
+.vscode
+TestResults
+*.user
+*.log
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Локальные секреты не включаются в контекст сборки.
+**/appsettings.*.Local.json
+configuration
+**/secrets.json
+_tmp
+artifacts
+outputs
+
+**/appsettings.Local.json

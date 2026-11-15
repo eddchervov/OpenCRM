@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — история промокодов</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const readonly = params.has('readonly')
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: { id: organizationId, name: 'Демо-студия · тестовые данные', primaryScenarioCode: scenario },
+      workspaceAccess: { isReadOnly: readonly, isBaseWorkspace: false, hasActiveSubscription: true, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'billing', title: 'Тарифы', isVisible: true, groupTitle: 'Настройки', urlTemplate: '#billing' }
+        ], quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', api: {} }
+    }
+    const services = [
+      { id: 'wash', name: 'Детейлинг-мойка', unitPrice: 2000, durationMinutes: 60 },
+      { id: 'polish', name: 'Полировка кузова', description: 'Восстановление блеска лакокрасочного покрытия.', unitPrice: 12000, durationMinutes: 180 },
+      { id: 'protection', name: 'Защитное покрытие', unitPrice: 10000, durationMinutes: 120 },
+      { id: 'glass', name: 'Уход за стёклами', unitPrice: 1000, durationMinutes: 30 },
+      { id: 'unknown-price', name: 'Осмотр автомобиля', unitPrice: null, durationMinutes: null },
+      { id: 'archived', name: 'Старая услуга', unitPrice: 500, durationMinutes: 15, isActive: false }
+    ].map((item, index) => ({ kindCode: 'service', code: item.id, sortOrder: index + 1, isSystem: false, isUsed: true, isActive: true, ...item }))
+    if (params.has('many')) for (let index = 1; index <= 50; index++) services.push({ ...services[0], id: 'extra-' + index, name: 'Дополнительная услуга ' + index })
+    const serviceBundles = [{ id: 'bundle', code: 'bundle', kindCode: 'service_bundle', name: 'Полировка и защита', description: 'Мойка, полировка и защитное покрытие.', serviceIds: ['wash', 'polish', 'protection'], durationMinutes: 300, sortOrder: 1, isSystem: false, isUsed: true, isActive: true }]
+    if (params.has('archived-service')) serviceBundles[0].serviceIds.push('archived')
+    const workPosts = [
+      { id: 'post-1', name: 'Бокс 1', description: 'Мойка и подготовка автомобиля.' },
+      { id: 'post-2', name: 'Пост полировки', description: 'Сухая зона для полировки кузова.' }
+    ].map((item, index) => ({ ...item, kindCode: 'work_post', code: item.id, isActive: true, isUsed: params.has('used-post'), isSystem: false, sortOrder: index + 1 }))
+    const materials = [
+      { id: 'material-1', name: 'Автошампунь', description: 'Средство для ручной мойки.' },
+      { id: 'material-2', name: 'Микрофибра', description: 'Салфетка для полировки.' }
+    ].map((item, index) => ({ ...item, kindCode: 'material', code: item.id, isActive: true, isUsed: index === 1, isSystem: false, sortOrder: index + 1 }))
+    const catalog = { organizationId, scenarioCode: scenario, services, serviceBundles, workPosts, materials, workTypes: [], documents: [], planningRules: [] }
+    const catalogLists = { service: services, service_bundle: serviceBundles, work_post: workPosts, material: materials }
+    if (params.has('empty')) { services.length = 0; serviceBundles.length = 0 }
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      const method = (init?.method || 'GET').toUpperCase()
+      if (method !== 'GET') {
+        if (readonly) return new Response(null, { status: 403 })
+        if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка сохранения' }, { status: 500 })
+        const match = url.pathname.match(/\/scenario-catalog(?:\/([^/]+))?$/)
+        if (!match || !['POST', 'PUT'].includes(method)) return new Response(null, { status: 403 })
+        const payload = JSON.parse(init.body)
+        const items = Object.values(catalogLists).flat()
+        if (method === 'PUT') {
+          const item = items.find(item => item.id === match[1])
+          if (!item) return new Response(null, { status: 404 })
+          Object.assign(item, payload)
+          return Response.json(item)
+        }
+        const item = { ...payload, id: crypto.randomUUID(), code: '', isActive: true, isSystem: false, isUsed: false, sortOrder: 10 }
+        catalogLists[item.kindCode].push(item)
+        return Response.json(item)
+      }
+      if (url.pathname.endsWith('/affected-maintenance')) return params.has('no-maintenance-access') ? new Response(null, { status: 403 }) : Response.json({ totalCount: 1, items: [{ maintenanceId: 'preview-record', date: '2026-10-21', vehicleName: 'Демонстрационный автомобиль', registrationPlate: 'А001АА', status: 1 }] })
+      if (url.pathname.endsWith('/billing')) return Response.json({ organization: context.organization, canManageBilling: !params.has('no-access'), availableBusinessPlans: [], workspaceFeatures: [], workspaceVehicleLimit: 100, workspaceMembersLimit: 10 })
+      if (url.pathname.endsWith('/promocodes/history')) {
+        const page = Number(url.searchParams.get('page') || 1)
+        const rows = Array.from({ length: 45 }, (_, index) => ({ id: 45 - index, code: 'DEMO' + (45 - index), name: 'Демонстрационный промокод', benefitTypeCode: 'bonus_days', bonusDays: 30, status: 'consumed', appliedAt: '2026-10-20T10:00:00Z', organizationId, accessUntil: '2026-11-20T10:00:00Z' }))
+        return Response.json({ items: rows.slice((page - 1) * 20, page * 20), totalCount: rows.length, page, pageSize: 20 })
+      }
+      if (url.pathname.endsWith('/context')) return Response.json(context)
+      if (url.pathname.endsWith('/settings')) return Response.json({ organization: context.organization, workspaceFeatures: [], canManageProfile: !readonly, canManageRequisites: false, canArchive: false, scenarioCatalog: catalog })
+      if (url.pathname.endsWith('/scenario-catalog')) return Response.json(catalog)
+      return Response.json([])
+    }
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: `/api/v1/autoservice/organizations/${organizationId}/workspace/context` }
+    window.opencrmFleetClient = { organizationId, contextUrl: `/api/v1/fleet/organizations/${organizationId}/workspace/context` }
+    if (!location.hash) location.hash = '#billing'
+    if (scenario === 'autoservice') await import('../Scenarios/autoservice-client/src/main.ts')
+    else if (scenario === 'fleet') await import('../Scenarios/fleet-client/src/main.ts')
+    else await import('../Scenarios/detailing-client/src/main.ts')
+  </script>
+</body>
+</html>

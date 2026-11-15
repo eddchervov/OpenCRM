@@ -1,0 +1,170 @@
+﻿@model OpenCRM.WebApp.Models.Subscriptions.SubscriptionViewModel
+@using System.Globalization
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Тарифы";
+    ViewData["SeoDescription"] = $"Бесплатная CRM {Brand.DisplayName} и варианты PRO для детейлинга и автосервиса: стоимость, срок, лимиты и включённые возможности.";
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var targetUrl = isAuthenticated ? Url.Content("~/organizations") : Url.Content("~/auth/register");
+    var plans = Model.BusinessPlanGroups
+        .SelectMany(group => group.Plans)
+        .Where(plan => !plan.IsDemoPlan && !plan.IsDefaultPlan)
+        .OrderBy(plan => plan.Order)
+        .ThenBy(plan => plan.DurationDays)
+        .ThenBy(plan => plan.EffectivePrice)
+        .ToList();
+
+    var freeFeatureCodes = new HashSet<string>
+    {
+        FeatureCodes.VehiclesModule,
+        FeatureCodes.ClientsModule,
+        FeatureCodes.MaintenanceModule,
+        FeatureCodes.CountersModule,
+        FeatureCodes.SchedulerModule,
+        FeatureCodes.DocumentsModule,
+        FeatureCodes.WorkJournalModule,
+        FeatureCodes.MaterialsModule,
+        FeatureCodes.WikiModule,
+        FeatureCodes.FinanceModule,
+        FeatureCodes.BillingModule,
+        FeatureCodes.SettingsModule,
+        FeatureCodes.ExportPdf,
+        FeatureCodes.ExportPdfWithPhotos,
+        FeatureCodes.ExportWord,
+        FeatureCodes.ExportWordWithPhotos
+    };
+    var quotaCodes = new HashSet<string>
+    {
+        FeatureCodes.WorkspaceClientsLimit,
+        FeatureCodes.WorkspaceVehiclesLimit,
+        FeatureCodes.VehiclesLimit,
+        FeatureCodes.WorkspaceMembersLimit
+    };
+
+    string FormatLimit(int value) => value == int.MaxValue
+        ? "Без ограничения"
+        : value.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"));
+}
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/subscription.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/subscription.min.css" asp-append-version="true" />
+    </environment>
+}
+
+<div id="subscription-page" class="platform-page subscription-catalog">
+    <div class="container platform-page-shell">
+        <nav aria-label="Хлебные крошки" class="platform-page-breadcrumbs">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@Url.Content("~/")">Главная</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Тарифы</li>
+            </ol>
+        </nav>
+
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success" role="status">@Html.Raw(Model.SuccessMessage)</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.InfoMessage))
+        {
+            <div class="alert alert-info" role="status">@Html.Raw(Model.InfoMessage)</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.WarningMessage))
+        {
+            <div class="alert alert-warning" role="alert">@Html.Raw(Model.WarningMessage)</div>
+        }
+
+        <header class="tariff-heading">
+            <h1 class="platform-page-title">Тарифы</h1>
+            <p>Для детейлинга и автосервиса</p>
+        </header>
+
+        <div id="available-plans" class="tariff-grid">
+            <article class="platform-page-panel tariff-card">
+                <h2>Бесплатный</h2>
+                <div class="tariff-price">0 ₽</div>
+                <p class="tariff-period">Без ограничения срока</p>
+                <ul class="tariff-features">
+                    <li>Работа владельца</li>
+                    <li>Клиенты и автомобили в пределах лимитов</li>
+                    <li>Записи, заказы и услуги</li>
+                    <li>Склад, материалы и учёт оплат</li>
+                    <li>История и акт выполненных работ PDF</li>
+                </ul>
+                <a href="@targetUrl" class="btn btn-outline-dark tariff-action">@(isAuthenticated ? "Мои организации" : "Начать бесплатно")</a>
+            </article>
+
+            @foreach (var plan in plans)
+            {
+                var title = plan.DurationDays switch
+                {
+                    30 => "PRO на месяц",
+                    365 => "PRO на год",
+                    _ => plan.Name
+                };
+                var visibleFeatures = FeaturePresentationHelper.GetVisibleFeatures(plan.Features, includeVehiclesLimit: true).ToList();
+                var includesFreeFeatures = freeFeatureCodes.All(code =>
+                    plan.Features.Any(feature => feature.Code == code && feature.BoolValue == true));
+
+                var additionalFeatures = visibleFeatures
+                    .Where(feature => !includesFreeFeatures || !freeFeatureCodes.Contains(feature.Code))
+                    .Where(feature => !quotaCodes.Contains(feature.Code))
+                    .ToList();
+                var limits = new (string Name, int? Value)[]
+                {
+                    ("Клиенты", visibleFeatures.FirstOrDefault(feature => feature.Code == FeatureCodes.WorkspaceClientsLimit)?.IntValue),
+                    ("Автомобили", FeaturePresentationHelper.GetVehicleLimit(visibleFeatures, plan.VehicleLimit)),
+                    ("Участники", visibleFeatures.FirstOrDefault(feature => feature.Code == FeatureCodes.WorkspaceMembersLimit)?.IntValue)
+                };
+
+                <article class="platform-page-panel tariff-card">
+                    <h2>@title</h2>
+                    <div class="tariff-price">
+                        @if (plan.HasDiscount && plan.Price > plan.EffectivePrice)
+                        {
+                            <s>@plan.Price.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) ₽</s>
+                        }
+                        <span>@plan.EffectivePrice.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) ₽</span>
+                    </div>
+                    <p class="tariff-period">За @plan.DurationDays дн.</p>
+                    <p class="tariff-includes">@(includesFreeFeatures ? "Всё из бесплатного +" : "Возможности тарифа")</p>
+                    <dl class="tariff-limits">
+                        @foreach (var limit in limits)
+                        {
+                            if (!limit.Value.HasValue)
+                            {
+                                continue;
+                            }
+
+                            <div><dt>@limit.Name</dt><dd>@FormatLimit(limit.Value.Value)</dd></div>
+                        }
+                    </dl>
+                    <partial name="_FeatureCollection" model='new OpenCRM.WebApp.Models.Features.FeatureCollectionViewModel
+                    {
+                        Features = additionalFeatures,
+                        RenderAsBadges = false,
+                        ContainerCssClass = "tariff-features tariff-plan-features",
+                        IconCssClass = "fa fa-check"
+                    }' />
+                    @if (visibleFeatures.Any(feature => feature.Code == FeatureCodes.Assistant && feature.BoolValue == true))
+                    {
+                        <p class="tariff-note mb-3">Бюджет ИИ учитывается отдельно.</p>
+                    }
+                    <a href="@targetUrl" class="btn btn-dark tariff-action">@(isAuthenticated ? "Выбрать организацию" : "Выбрать PRO")</a>
+                </article>
+            }
+        </div>
+        @if (plans.Count == 0)
+        {
+            <p class="tariff-note" role="status">Платные тарифы сейчас недоступны.</p>
+        }
+        <p class="tariff-payment">ЮКасса · Чек после оплаты · ИНН [удалено]</p>
+    </div>
+</div>

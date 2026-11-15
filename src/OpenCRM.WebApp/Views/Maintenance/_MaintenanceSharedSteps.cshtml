@@ -1,0 +1,308 @@
+﻿@{
+    var saveAction = ViewData["SaveAction"] as string ?? "saveMaintenance";
+    var saveButtonText = ViewData["SaveButtonText"] as string ?? "Сохранить";
+    var isOrganizationMode = !string.IsNullOrWhiteSpace(ViewData["MaintenanceOrganizationId"] as string);
+    var locationLabel = isOrganizationMode ? "Место проведения" : "Место проведения (СТО)";
+    var locationPlaceholder = isOrganizationMode ? "Площадка, сервис, подрядчик" : "Название автосервиса";
+}
+
+<div class="create-maintenance-step-content" :class="{'active': currentStep === 1}" v-show="currentStep === 1">
+    <div class="card create-maintenance-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa fa-info-circle me-2"></i>
+                Основная информация
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Состояние <span class="text-danger">*</span></label>
+                    <v-select :options="statuses"
+                              :reduce="status => status.id"
+                              label="name"
+                              :clearable="false"
+                              v-model="selectedMaintenance.status"
+                              @@input="changeStatus"
+                              class="create-maintenance-select">
+                        <template slot="no-options">
+                            Не найдено
+                        </template>
+                    </v-select>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Тип обслуживания <span class="text-danger">*</span></label>
+                    <v-select :options="types"
+                              :reduce="m => m.id"
+                              label="name"
+                              :clearable="false"
+                              v-model="selectedMaintenance.type"
+                              class="create-maintenance-select">
+                        <template slot="no-options">
+                            Не найдено
+                        </template>
+                    </v-select>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Плановая дата
+                        <span class="text-danger" v-if="plannedDateRequired">*</span>
+                    </label>
+                    <vue-ctk-date-time-picker class="create-maintenance-date-picker"
+                                             v-model="plannedDatePicker"
+                                              :range="false"
+                                              only-date="true"
+                                              format="DD.MM.YYYY"
+                                              formatted="DD.MM.YYYY"
+                                             output-format="DD.MM.YYYY"
+                                              locale="ru"
+                                              :first-day-of-week="1"
+                                              no-clear-button="true"
+                                              label=""
+                                              @@click.native.stop>
+                    </vue-ctk-date-time-picker>
+                    <div class="form-text" v-if="selectedMaintenance.status === maintenanceStatuses.completed">
+                        Можно оставить пустой, если обслуживание не было заранее запланировано.
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Плановая дата окончания</label>
+                    <input type="date" class="form-control" v-model="selectedMaintenance.plannedEndDate" :min="selectedMaintenance.plannedDate">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Время начала</label>
+                    <input type="time" class="form-control" v-model="selectedMaintenance.plannedStartTime">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Время окончания</label>
+                    <input type="time" class="form-control" v-model="selectedMaintenance.plannedEndTime">
+                </div>
+
+                <div class="col-md-6 mb-3" v-if="showsCompletedDate">
+                    <label class="form-label">Фактическая дата выполнения <span class="text-danger">*</span></label>
+                    <vue-ctk-date-time-picker class="create-maintenance-date-picker"
+                                             v-model="completedDatePicker"
+                                              :range="false"
+                                              only-date="true"
+                                              format="DD.MM.YYYY"
+                                             :max-date="moment().format('YYYY-MM-DD')"
+                                              formatted="DD.MM.YYYY"
+                                             output-format="DD.MM.YYYY"
+                                              locale="ru"
+                                              :first-day-of-week="1"
+                                              no-clear-button="true"
+                                              label=""
+                                              @@click.native.stop>
+                    </vue-ctk-date-time-picker>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">@locationLabel</label>
+                    <input type="text" class="form-control create-maintenance-input"
+                           v-model.trim="selectedMaintenance.location"
+                           placeholder="@locationPlaceholder">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Исполнитель</label>
+                    <input type="text" class="form-control create-maintenance-input"
+                           v-model.trim="selectedMaintenance.performer"
+                           placeholder="Механик, бригада, подрядчик">
+                    <div class="form-text">Кто выполняет или будет выполнять это обслуживание.</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ mileageInputLabel }}</label>
+                    <input type="number" class="form-control create-maintenance-input"
+                           v-model.number="selectedMaintenance.mileage"
+                           @@input="changeMileage"
+                           :placeholder="mileageInputPlaceholder">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end mt-4">
+        <button type="button" class="btn btn-dark create-maintenance-next-step" @@click="nextStep(2)">
+            Далее <i class="fa fa-arrow-right ms-2"></i>
+        </button>
+    </div>
+</div>
+
+<div class="create-maintenance-step-content" :class="{'active': currentStep === 2}" v-show="currentStep === 2">
+    <div class="card create-maintenance-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h3 class="card-title mb-0">
+                <i class="fa fa-wrench me-2"></i>
+                Услуги и работы
+            </h3>
+            <div class="text-muted small">
+                Итого: <strong>{{ maintenanceDetailsTotalText }}</strong>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="services-container">
+                <div class="create-maintenance-service-item card mb-3" v-for="(detail, index) in selectedMaintenance.maintenanceDetails" :key="index">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">
+                                <template v-if="index > 0">
+                                    Услуга {{ index + 1 }}
+                                </template>
+                                <template v-else>
+                                    Услуга
+                                </template>
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-danger create-maintenance-remove-service"
+                                    v-if="index !== 0"
+                                    @@click="removeService(index)">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Название услуги/запчасти <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control create-maintenance-input"
+                                       v-model.trim="detail.name"
+                                       placeholder="Например: Замена масла" required>
+                                <div v-if="!detail.name" class="text-danger small mt-1">
+                                    Заполните название услуги
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Стоимость, руб</label>
+                                <input type="number" class="form-control create-maintenance-input"
+                                       v-model.number="detail.price"
+                                       @@input="normalizeDetailPrice(detail)"
+                                       placeholder="0.00" step="0.01" min="0">
+                            </div>
+                            <div class="col-md-2 mb-3 d-flex align-items-end">
+                                <div class="w-100 small text-muted text-md-end">
+                                    <span v-if="detail.price !== null && detail.price !== undefined">
+                                        {{ formatPrice(detail.price) }}
+                                    </span>
+                                    <span v-else>Стоимость не указана</span>
+                                </div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Описание</label>
+                                <textarea class="form-control create-maintenance-input"
+                                          v-model.trim="detail.description"
+                                          rows="2"
+                                          placeholder="Дополнительная информация..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-dark mt-3" @@click="click_addMaintenanceDetail">
+                <i class="fa fa-plus me-2"></i>Добавить услугу
+            </button>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-dark create-maintenance-prev-step" @@click="prevStep(1)">
+            <i class="fa fa-arrow-left me-2"></i>Назад
+        </button>
+        <button type="button" class="btn btn-dark create-maintenance-next-step" @@click="nextStep(3)">
+            Далее <i class="fa fa-arrow-right ms-2"></i>
+        </button>
+    </div>
+</div>
+
+<div class="create-maintenance-step-content" :class="{'active': currentStep === 3}" v-show="currentStep === 3">
+    <div class="card create-maintenance-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa fa-comment me-2"></i>
+                Дополнительная информация
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Комментарий</label>
+                <textarea class="form-control create-maintenance-input"
+                          v-model.trim="selectedMaintenance.comment"
+                          rows="4"
+                          placeholder="Дополнительные заметки о проведенном обслуживании..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-dark create-maintenance-prev-step" @@click="prevStep(2)">
+            <i class="fa fa-arrow-left me-2"></i>Назад
+        </button>
+        <button type="button" class="btn btn-dark create-maintenance-next-step" @@click="nextStep(4)">
+            Далее <i class="fa fa-arrow-right ms-2"></i>
+        </button>
+    </div>
+</div>
+
+<div class="create-maintenance-step-content" :class="{'active': currentStep === 4}" v-show="currentStep === 4">
+    <div class="card create-maintenance-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa fa-check-circle me-2"></i>
+                Проверка информации
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Основная информация</h5>
+                    <div class="create-maintenance-review-section">
+                        <p><strong>Состояние:</strong> {{ getMaintenanceStatusText(selectedMaintenance.status) }}</p>
+                        <p><strong>Тип:</strong> {{ getTypeName(selectedMaintenance.type) }}</p>
+                        <p><strong>Плановый период:</strong> {{ DD_MM_YYYY(selectedMaintenance.plannedDate) }} {{ selectedMaintenance.plannedStartTime }}<template v-if="selectedMaintenance.plannedEndDate"> — {{ DD_MM_YYYY(selectedMaintenance.plannedEndDate) }} {{ selectedMaintenance.plannedEndTime }}</template></p>
+                        <p v-if="showsCompletedDate"><strong>Фактическая дата выполнения:</strong> {{ DD_MM_YYYY(selectedMaintenance.completedDate) }}</p>
+                        <p><strong>Место:</strong> {{ selectedMaintenance.location || 'Не указано' }}</p>
+                        <p><strong>Исполнитель:</strong> {{ selectedMaintenance.performer || 'Не указан' }}</p>
+                        <p><strong>{{ mileageReviewLabel }}:</strong> {{ mileageReviewValue }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h5>Услуги и работы</h5>
+                    <div class="create-maintenance-review-section">
+                        <div v-if="selectedMaintenance.maintenanceDetails.length === 0">
+                            <p>Услуги не добавлены</p>
+                        </div>
+                        <div v-else v-for="(detail, index) in selectedMaintenance.maintenanceDetails" :key="index" class="pb-2 mb-2" :class="{'border-bottom': index !== selectedMaintenance.maintenanceDetails.length - 1 }">
+                            <strong>{{ index + 1 }}. {{ detail.name }}</strong>
+                            <span v-if="detail.price"><br>Стоимость: {{ formatPrice(detail.price) }}</span>
+                            <span v-if="detail.description"><br>Описание: {{ detail.description }}</span>
+                        </div>
+                        <p class="mt-3 mb-0"><strong>Итого:</strong> {{ maintenanceDetailsTotalText }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="selectedMaintenance.comment" class="create-maintenance-review-section mt-4">
+                <h5>Комментарий</h5>
+                <p>{{ selectedMaintenance.comment }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-dark create-maintenance-prev-step" @@click="prevStep(3)">
+            <i class="fa fa-arrow-left me-2"></i>Назад
+        </button>
+        <button type="button" class="btn btn-success" :disabled="saveModal" @@click="@saveAction">
+            <template v-if="!saveModal">
+                <i class="fa fa-save me-2"></i>@saveButtonText
+            </template>
+            <template v-else>
+                <i class="fa fa-spinner fa-spin fa-fw"></i> Сохранение...
+            </template>
+        </button>
+    </div>
+</div>
+
+
+

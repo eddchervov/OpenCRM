@@ -1,0 +1,6 @@
+@model LoginCodeModel
+@{ Layout = "/Templates/OpenCRM/V1/_Layout.cshtml"; }
+<h1 style="margin:0 0 22px;font-size:28px;line-height:36px;font-weight:800;color:#111827;">Код входа</h1>
+<p>Ваш код для входа в @ViewData["BrandName"]:</p>
+<p style="font-size:24px;font-weight:700;letter-spacing:0.18em;">@Model.Code</p>
+<p>Код действует 1 час. Если вы не запрашивали вход, просто игнорируйте это письмо.</p>

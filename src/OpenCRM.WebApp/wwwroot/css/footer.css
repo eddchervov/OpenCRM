@@ -1,0 +1,102 @@
+/* Footer styles extracted from _Footer.cshtml */
+footer.bg-dark a {
+    white-space: nowrap;
+    padding: 0.25rem 0;
+    transition: color 0.2s ease;
+}
+
+footer.bg-dark a:hover {
+    color: #E67337 !important;
+}
+
+footer .text-orange {
+    color: #E67337 !important;
+}
+
+.site-footer-social {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9rem;
+}
+
+.site-footer-social__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+footer.bg-dark .site-footer-social__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.88rem;
+}
+
+footer.bg-dark .site-footer-social__links a:hover,
+footer.bg-dark .site-footer-social__links a:focus-visible {
+    border-color: #e67337;
+    background: rgba(230, 115, 55, 0.14);
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+    footer .row.justify-content-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    footer .col-auto {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 180px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 767.98px) {
+    .site-footer-social {
+        justify-content: center;
+        text-align: center;
+    }
+
+    footer .row > div {
+        text-align: center;
+        width: 100%;
+    }
+
+    footer h6 {
+        font-size: 1rem;
+        margin-bottom: 1rem !important;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    footer .d-flex {
+        gap: 0.75rem !important;
+    }
+
+    footer.bg-dark a {
+        padding: 0.5rem 0;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 375px) {
+    footer.bg-dark a {
+        padding: 0.4rem 0;
+        font-size: 0.875rem;
+    }
+}

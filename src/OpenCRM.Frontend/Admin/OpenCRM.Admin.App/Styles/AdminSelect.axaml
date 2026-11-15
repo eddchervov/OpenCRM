@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <SolidColorBrush x:Key="ComboBoxDropDownBackground">#191919</SolidColorBrush>
+  <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush">#404040</SolidColorBrush>
+  <Thickness x:Key="ComboBoxDropdownBorderThickness">1</Thickness>
+  <Thickness x:Key="ComboBoxDropdownBorderPadding">5</Thickness>
+  <CornerRadius x:Key="OverlayCornerRadius">9</CornerRadius>
+  <ControlTheme x:Key="AdminSelectItemTheme" TargetType="ComboBoxItem"
+                BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Foreground" Value="#F1F1F1" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#292929" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="^:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="#303B46" />
+      <Setter Property="Foreground" Value="#E3F0FC" />
+    </Style>
+    <Style Selector="^:selected:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#394957" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+  </ControlTheme>
+  <ControlTheme x:Key="AdminSelectTheme" TargetType="ComboBox"
+                BasedOn="{StaticResource {x:Type ComboBox}}">
+    <Setter Property="MinHeight" Value="44" />
+    <Setter Property="Padding" Value="12,8,0,8" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Background" Value="#181818" />
+    <Setter Property="Foreground" Value="#F1F1F1" />
+    <Setter Property="BorderBrush" Value="#383838" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="MaxDropDownHeight" Value="320" />
+    <Setter Property="ItemContainerTheme" Value="{StaticResource AdminSelectItemTheme}" />
+    <Style Selector="^ /template/ PathIcon#DropDownGlyph">
+      <Setter Property="Width" Value="10" />
+      <Setter Property="Height" Value="10" />
+      <Setter Property="Foreground" Value="#A7A7A7" />
+    </Style>
+    <Style Selector="^:pointerover /template/ Border#Background">
+      <Setter Property="Background" Value="#202020" />
+      <Setter Property="BorderBrush" Value="#555555" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#Background">
+      <Setter Property="Background" Value="#262626" />
+      <Setter Property="BorderBrush" Value="#697B8D" />
+    </Style>
+    <Style Selector="^:focus-visible /template/ Border#HighlightBackground">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="#7B98B2" />
+    </Style>
+    <Style Selector="^:dropdownopen /template/ Border#Background">
+      <Setter Property="Background" Value="#202020" />
+      <Setter Property="BorderBrush" Value="#7B98B2" />
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

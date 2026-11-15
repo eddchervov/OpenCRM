@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
+    <PackageReference Include="MimeKit" Version="4.16.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Domain\OpenCRM.Domain.csproj" />
+    <ProjectReference Include="..\Helpers\Helpers.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Data\OpenCRM.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\OpenCRM.Services.Interfaces\OpenCRM.Services.Interfaces.csproj" />
+    <ProjectReference Include="..\..\services\notifications\src\Notifications.Contracts\Notifications.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Communications.Contracts\OpenCRM.Modules.Communications.Contracts.csproj" />
+  </ItemGroup>
+</Project>

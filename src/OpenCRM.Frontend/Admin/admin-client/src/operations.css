@@ -1,0 +1,375 @@
+.operations-page {
+  max-width: 1600px;
+}
+
+.operations-page > h1 {
+  margin: 0 0 20px;
+  font-size: 28px;
+}
+
+.operations-toolbar {
+  display: flex;
+  margin-bottom: 14px;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.operations-toolbar--end {
+  justify-content: flex-end;
+}
+
+.operations-toolbar input,
+.operations-toolbar select,
+.modal-card input,
+.modal-card select,
+.modal-card textarea,
+.standalone-form input,
+.standalone-form select,
+.standalone-form textarea {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d8e0dd;
+  border-radius: 9px;
+  color: #24322e;
+  background: #fff;
+  font: inherit;
+}
+
+.operations-toolbar input {
+  width: min(420px, 100%);
+}
+
+.operations-page .table-wrap {
+  border: 1px solid #dfe6e3;
+  border-radius: 14px;
+  background: #fff;
+  overflow: auto;
+}
+
+.operations-page .data-table {
+  min-width: 760px;
+}
+
+.operations-page > .table-wrap,
+.catalog-columns > .table-wrap {
+  max-height: calc(100vh - 150px);
+}
+
+.operations-page .data-table th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background: #f7f9f8;
+}
+
+.operations-page .data-table tbody tr {
+  cursor: pointer;
+}
+
+.operations-page .data-table small {
+  display: block;
+  margin-top: 3px;
+  color: #74817d;
+}
+
+.modal-backdrop {
+  display: grid;
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  padding: 16px;
+  place-items: center;
+  background: rgb(18 32 28 / 42%);
+}
+
+.modal-card {
+  display: grid;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+  padding: 20px;
+  border-radius: 14px;
+  gap: 14px;
+  overflow: auto;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(18 32 28 / 24%);
+}
+
+.modal-card--compact {
+  width: min(560px, 100%);
+}
+
+.modal-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-heading button {
+  border: 0;
+  color: #71807b;
+  font-size: 24px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal-card label,
+.standalone-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.modal-card label > span,
+.standalone-form label > span {
+  color: #5f6f69;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.modal-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.link-button {
+  display: inline-flex;
+  text-decoration: none;
+  align-items: center;
+}
+
+.standalone-form {
+  display: grid;
+  max-width: 820px;
+  padding: 20px;
+  border: 1px solid #dfe6e3;
+  border-radius: 14px;
+  gap: 14px;
+  background: #fff;
+}
+
+.inline-checks {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.inline-checks label {
+  display: flex;
+  align-items: center;
+}
+
+.recipient-preview {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.message-text {
+  margin: 0;
+  padding: 14px;
+  border-radius: 9px;
+  white-space: pre-wrap;
+  background: #f4f7f6;
+}
+
+.details-list {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  margin: 0;
+  gap: 8px 14px;
+}
+
+.details-list dt {
+  color: #74817d;
+}
+
+.details-list dd {
+  margin: 0;
+}
+
+.danger-link {
+  margin-left: 10px;
+  color: #963c3c;
+}
+
+.email-details {
+  width: min(1000px, 100%);
+}
+
+.email-preview {
+  width: 100%;
+  min-height: 460px;
+  border: 1px solid #dfe6e3;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.email-text {
+  margin: 0;
+  padding: 14px;
+  border-radius: 9px;
+  white-space: pre-wrap;
+  background: #f4f7f6;
+}
+
+.catalog-columns {
+  display: grid;
+  grid-template-columns: minmax(380px, 1fr) minmax(380px, 1fr);
+  gap: 14px;
+}
+
+.catalog-columns tr.selected {
+  background: #f1f8f5;
+}
+
+@media (max-width: 620px) {
+  .modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-grid .span-2 {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 1000px) {
+  .catalog-columns {
+    grid-template-columns: 1fr;
+  }
+}
+.crm-import-page {
+  max-width: 1440px;
+}
+
+.crm-import-form {
+  display: grid;
+  max-width: 860px;
+  padding: 22px;
+  gap: 18px;
+  border: 1px solid #e0e6e3;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.crm-import-form label,
+.crm-import-user-search {
+  display: grid;
+  gap: 8px;
+}
+
+.crm-import-form label > span,
+.crm-import-user-search > label {
+  color: #33443e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.crm-import-form small {
+  color: #77857f;
+  font-size: 12px;
+}
+
+.crm-import-form .operations-toolbar {
+  margin-bottom: 0;
+}
+
+.crm-import-form input[type="file"] {
+  width: 100%;
+}
+
+.crm-import-form > .primary-button {
+  justify-self: start;
+}
+
+.crm-import-preview {
+  margin-top: 24px;
+}
+
+.crm-import-preview__heading,
+.crm-import-preview__actions,
+.crm-import-result {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crm-import-preview__heading {
+  margin-bottom: 14px;
+}
+
+.crm-import-preview h2,
+.crm-import-result h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.crm-import-preview__heading p {
+  margin: 7px 0 0;
+  color: #66756f;
+  font-size: 13px;
+}
+
+.crm-import-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.crm-import-status--create {
+  color: #17614e;
+  background: #e8f6ef;
+}
+
+.crm-import-status--duplicate {
+  color: #81520a;
+  background: #fff4d6;
+}
+
+.crm-import-status--error {
+  color: #9c3333;
+  background: #fff0f0;
+}
+
+.crm-import-preview__actions {
+  margin-top: 14px;
+  color: #66756f;
+  font-size: 13px;
+}
+
+.crm-import-preview__actions .primary-button {
+  flex: 0 0 auto;
+}
+
+.crm-import-result {
+  justify-content: flex-start;
+  margin-top: 20px;
+}
+
+.form-message--warning {
+  color: #81520a;
+  background: #fff4d6;
+}
+
+@media (max-width: 700px) {
+  .crm-import-preview__heading,
+  .crm-import-preview__actions,
+  .crm-import-result {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

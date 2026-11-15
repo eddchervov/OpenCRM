@@ -1,0 +1,11 @@
+﻿namespace OpenCRM.Domain;
+
+public class Generation
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = default!;
+
+    public int ModelId { get; set; }
+    public Model Model { get; set; } = default!;
+}
+

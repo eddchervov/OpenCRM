@@ -1,0 +1,33 @@
+﻿@model ConfirmEmailModel
+@{
+    ViewData["Title"] = "Подтверждение email";
+}
+
+<div class="auth-page">
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-container extra-narrow-form text-center">
+                <div class="auth-form-wrapper">
+                    <h1 class="auth-title">@ViewData["Title"]</h1>
+
+                    <div class="auth-alert-message @(Model.Succeeded ? "alert-success" : "alert-danger")">
+                        @Model.StatusMessage
+                    </div>
+
+                    <div class="auth-links text-center mt-3">
+                        <div class="mb-2">
+                            @if (Model.Succeeded)
+                            {
+                                <a href="@Url.Content(User.Identity?.IsAuthenticated == true ? "~/" : "~/auth/login")" class="btn btn-dark auth-btn">Продолжить работу</a>
+                            }
+                            else
+                            {
+                                <a href="~/auth/verify-email" class="auth-link">Вернуться к подтверждению email</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>

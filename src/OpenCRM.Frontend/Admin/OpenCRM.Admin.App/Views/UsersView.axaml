@@ -1,0 +1,149 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.UsersView"
+             x:DataType="vm:UsersViewModel">
+  <UserControl.Styles>
+    <Style Selector="TextBox">
+      <Setter Property="MinHeight" Value="38" />
+    </Style>
+    <Style Selector="Button.sort-header">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="0,8" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="Button.organization-count">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#B8D8F3" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="Padding" Value="12,6" />
+    </Style>
+  </UserControl.Styles>
+  <UserControl.Resources>
+    <ControlTheme x:Key="UserRowTheme" TargetType="ListBoxItem">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#F1F1F1" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                              HorizontalContentAlignment="Stretch" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="#1D252E" />
+      </Style>
+      <Style Selector="^:selected">
+        <Setter Property="Background" Value="#23384A" />
+      </Style>
+      <Style Selector="^:selected:pointerover">
+        <Setter Property="Background" Value="#2B4358" />
+      </Style>
+    </ControlTheme>
+  </UserControl.Resources>
+  <Grid>
+    <Grid IsVisible="{Binding !IsCardOpen}" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="12">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Text="Пользователи" Classes="heading" AutomationProperties.AutomationId="UsersHeading" />
+        <TextBlock Grid.Column="1" Text="{Binding TotalLabel}" Classes="caption" VerticalAlignment="Center" Margin="12,0" />
+        <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" />
+      </Grid>
+      <Border Grid.Row="1" Background="#191D22" BorderBrush="#414B58" BorderThickness="1" CornerRadius="8" Padding="12">
+        <WrapPanel>
+          <TextBox Text="{Binding Search}" PlaceholderText="Поиск по email или телефону" Width="330" Margin="0,0,8,0"
+                   KeyDown="OnSearchKeyDown" AutomationProperties.AutomationId="UsersSearch" />
+          <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,0"
+                  AutomationProperties.AutomationId="UsersSearchButton" />
+          <Button Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,20,0" />
+          <CheckBox Content="Включая удалённых" IsChecked="{Binding IncludeDeleted}" IsEnabled="{Binding !IsLoading}" VerticalAlignment="Center" />
+        </WrapPanel>
+      </Border>
+      <StackPanel Grid.Row="2" Spacing="6">
+        <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Height="3" />
+      </StackPanel>
+      <WrapPanel Grid.Row="3">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,20,0">
+          <TextBlock Text="На странице" Classes="caption" VerticalAlignment="Center" />
+          <ComboBox ItemsSource="{Binding PageSizes}" SelectedItem="{Binding PageSize}" IsEnabled="{Binding !IsLoading}" Width="74" />
+        </StackPanel>
+        <views:ListPagination PageLabel="{Binding PageLabel}"
+                              PreviousCommand="{Binding PreviousPageCommand}" NextCommand="{Binding NextPageCommand}" />
+      </WrapPanel>
+      <Border Grid.Row="4" Classes="card" Padding="0" ClipToBounds="True" AutomationProperties.AutomationId="UsersTable">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <Grid MinWidth="1000" RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="2.4*,80,80,120,1.2*,90" Margin="12,8" Background="#161A20">
+              <Button Grid.Column="0" Content="{Binding EmailHeader}" Classes="sort-header" Command="{Binding SortCommand}"
+                      AutomationProperties.AutomationId="UsersSort0">
+                <Button.CommandParameter><x:Int32>3</x:Int32></Button.CommandParameter>
+              </Button>
+              <Button Grid.Column="1" Content="{Binding VehiclesHeader}" Classes="sort-header" Command="{Binding SortCommand}"
+                      AutomationProperties.AutomationId="UsersSort1">
+                <Button.CommandParameter><x:Int32>8</x:Int32></Button.CommandParameter>
+              </Button>
+              <Button Grid.Column="2" Content="{Binding MaintenanceHeader}" Classes="sort-header" Command="{Binding SortCommand}"
+                      AutomationProperties.AutomationId="UsersSort2">
+                <Button.CommandParameter><x:Int32>10</x:Int32></Button.CommandParameter>
+              </Button>
+              <Button Grid.Column="3" Content="{Binding OrganizationsHeader}" Classes="sort-header" Command="{Binding SortCommand}"
+                      AutomationProperties.AutomationId="UsersSort3">
+                <Button.CommandParameter><x:Int32>12</x:Int32></Button.CommandParameter>
+              </Button>
+              <Button Grid.Column="4" Content="{Binding RegistrationHeader}" Classes="sort-header" Command="{Binding SortCommand}"
+                      AutomationProperties.AutomationId="UsersSort4">
+                <Button.CommandParameter><x:Int32>2</x:Int32></Button.CommandParameter>
+              </Button>
+            </Grid>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedUser}" ItemContainerTheme="{StaticResource UserRowTheme}"
+                     Background="Transparent" BorderThickness="0" DoubleTapped="OnUserDoubleTapped" KeyDown="OnUsersKeyDown"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.AutomationId="UsersList">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:AdminUserRow">
+                  <Border BorderBrush="#292929" BorderThickness="0,1,0,0" Padding="12,10">
+                    <Grid ColumnDefinitions="2.4*,80,80,120,1.2*,90">
+                      <StackPanel Spacing="3" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding Email}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Email}" />
+                        <TextBlock Text="{Binding Contact}" Classes="caption" />
+                        <TextBlock Text="{Binding Status}" Classes="caption" Foreground="#D89C73" IsVisible="{Binding IsDeleted}" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="1" Text="{Binding VehiclesCount}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                      <TextBlock Grid.Column="2" Text="{Binding MaintenanceCount}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                      <Button Grid.Column="3" Content="{Binding OrganizationsCount}" Classes="organization-count" ToolTip.Tip="Организации и тарифы пользователя"
+                              Command="{Binding $parent[views:UsersView].((vm:UsersViewModel)DataContext).OpenOrganizationsCommand}" CommandParameter="{Binding}" />
+                      <TextBlock Grid.Column="4" Text="{Binding Registered}" Classes="caption" TextWrapping="Wrap" Margin="0,0,8,0" VerticalAlignment="Center" />
+                      <Button Grid.Column="5" Content="Карточка" Padding="10,6" VerticalAlignment="Center"
+                              Command="{Binding $parent[views:UsersView].((vm:UsersViewModel)DataContext).OpenCardCommand}" CommandParameter="{Binding}" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="Пользователи не найдены" Classes="muted" Margin="20,32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <ScrollViewer IsVisible="{Binding IsCardOpen}" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel IsVisible="{Binding IsCardOpen}" Spacing="12">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Button Content="← К списку" Command="{Binding BackToListCommand}" AutomationProperties.AutomationId="UserCardBack" />
+          <TextBlock Grid.Column="1" Text="Карточка" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0"
+                     AutomationProperties.AutomationId="UserCardHeading" />
+          <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCardCommand}" />
+        </Grid>
+        <ProgressBar IsVisible="{Binding IsLoadingCard}" IsIndeterminate="True" Height="3" />
+        <TextBlock IsVisible="{Binding HasCardError}" Text="{Binding CardErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <views:UserCardView DataContext="{Binding Card}" />
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

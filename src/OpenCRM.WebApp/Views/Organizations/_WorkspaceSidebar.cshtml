@@ -1,0 +1,333 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject Microsoft.Extensions.Configuration.IConfiguration PlatformConfiguration
+@using OpenCRM.Modules.Organizations.Contracts
+@using System.Security.Claims
+@using Helpers
+@using OpenCRM.Domain
+@using OpenCRM.Services.Interfaces.Features.Dtos
+@using OpenCRM.Services.Interfaces.Organizations
+@using OpenCRM.WebApp.Navigation
+@using OpenCRM.WebApp.Presentation
+@inject OpenCRM.Modules.Organizations.Contracts.IOrganizationQueryService OrganizationService
+@inject OpenCRM.Modules.Billing.Contracts.IOrganizationEntitlementService OrganizationEntitlementService
+@inject OpenCRM.Services.Interfaces.Organizations.IOrganizationPermissionService OrganizationPermissionService
+@inject OpenCRM.Services.Interfaces.Organizations.IOrganizationWorkspaceShellService OrganizationWorkspaceShellService
+@model OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
+
+@{
+    var resolvedOrganizationId = Model.OrganizationId;
+    if (resolvedOrganizationId == Guid.Empty)
+    {
+        var candidateOrganizationIds = new[]
+        {
+            ViewData["VehicleOrganizationId"]?.ToString(),
+            ViewData["MaintenanceOrganizationId"]?.ToString(),
+            ViewData["OrganizationId"]?.ToString(),
+            ViewContext.RouteData.Values["organizationId"]?.ToString(),
+            Context.Request.Query["organizationId"].ToString()
+        };
+
+        foreach (var candidateOrganizationId in candidateOrganizationIds)
+        {
+            if (Guid.TryParse(candidateOrganizationId, out var parsedOrganizationId))
+            {
+                resolvedOrganizationId = parsedOrganizationId;
+                break;
+            }
+        }
+    }
+
+    var currentPath = Context.Request.Path.Value ?? string.Empty;
+    var currentTab = Context.Request.Query["tab"].ToString();
+    var shell = Model.WorkspaceShell;
+    var terms = OrganizationScenarioPresentationHelper.ResolveTerms(Model.PrimaryScenarioCode);
+    var shellTerms = shell?.Scenario.Terms;
+    var workspaceUrl = resolvedOrganizationId == Guid.Empty
+        ? "/organizations"
+        : OrganizationWorkspaceUrlHelper.Resolve(resolvedOrganizationId, Model.PrimaryScenarioCode);
+    var resolvedCurrentSection = !string.IsNullOrWhiteSpace(Model.CurrentSection)
+        ? Model.CurrentSection
+        : currentPath.Contains("/organizations/", StringComparison.OrdinalIgnoreCase) && currentPath.Contains("/vehicles", StringComparison.OrdinalIgnoreCase) ? "vehicles"
+        : currentPath.Contains("/overview", StringComparison.OrdinalIgnoreCase) ? "overview"
+        : currentPath.Contains("/finance", StringComparison.OrdinalIgnoreCase) ? "finance"
+        : currentPath.Contains("/statistics", StringComparison.OrdinalIgnoreCase) ? "statistics"
+        : currentPath.Contains("/billing", StringComparison.OrdinalIgnoreCase) ? "billing"
+        : currentPath.Contains("/work-journal", StringComparison.OrdinalIgnoreCase) ? "work-journal"
+        : currentPath.Contains("/clients", StringComparison.OrdinalIgnoreCase) ? "clients"
+        : currentPath.Contains("/defects", StringComparison.OrdinalIgnoreCase) ? "defects"
+        : currentPath.Contains("/counters", StringComparison.OrdinalIgnoreCase) ? "counters"
+        : currentPath.Contains("/materials", StringComparison.OrdinalIgnoreCase) ? "materials"
+        : currentPath.Contains("/scheduler", StringComparison.OrdinalIgnoreCase) ? "scheduler"
+        : currentPath.Contains("/wiki", StringComparison.OrdinalIgnoreCase) ? "wiki"
+        : currentPath.Contains("/members", StringComparison.OrdinalIgnoreCase) ? "members"
+        : currentPath.Contains("/settings", StringComparison.OrdinalIgnoreCase) ? "settings"
+        : currentPath.Contains("/requisites", StringComparison.OrdinalIgnoreCase) ? "requisites"
+        : currentPath.Contains("/scenario-catalog", StringComparison.OrdinalIgnoreCase) ? "scenario-catalog"
+        : currentPath.Contains("/activity", StringComparison.OrdinalIgnoreCase) ? "activity"
+        : currentPath.Contains("/maintenance", StringComparison.OrdinalIgnoreCase) ? "maintenance"
+        : currentPath.Contains("/vehicle", StringComparison.OrdinalIgnoreCase) ? "vehicle"
+        : string.Equals(currentTab, "maintenance", StringComparison.OrdinalIgnoreCase) ? "maintenance"
+        : "workspace";
+
+    IReadOnlyList<FeatureValueDto> resolvedFeatures = [];
+    var userId = User.FindFirstValue("UserID") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (resolvedOrganizationId != Guid.Empty && !string.IsNullOrWhiteSpace(userId))
+    {
+        var snapshot = await OrganizationEntitlementService.GetFeatureSnapshotAsync(userId, resolvedOrganizationId);
+        resolvedFeatures = snapshot.Features;
+    }
+
+    var hasVehiclesModule = Model.HasVehiclesModule || resolvedFeatures.Any(x => x.Code == FeatureCodes.VehiclesModule && x.BoolValue == true);
+    var hasClientsModule = Model.HasClientsModule || resolvedFeatures.Any(x => x.Code == FeatureCodes.ClientsModule && x.BoolValue == true);
+    var hasDefectsModule = Model.HasDefectsModule || resolvedFeatures.Any(x => x.Code == FeatureCodes.DefectsModule && x.BoolValue == true);
+    var hasCountersModule = Model.HasCountersModule || resolvedFeatures.Any(x => x.Code == FeatureCodes.CountersModule && x.BoolValue == true);
+    var hasSchedulerModule = Model.HasSchedulerModule || resolvedFeatures.Any(x => x.Code == FeatureCodes.SchedulerModule && x.BoolValue == true);
+    var hasMaterialsModule = Model.HasMaterialsModule || resolvedFeatures.Any(x => x.Code == FeatureCodes.MaterialsModule && x.BoolValue == true);
+    var hasFinanceModule = resolvedFeatures.Any(x => x.Code == FeatureCodes.FinanceModule && x.BoolValue == true);
+    var hasAnalyticsModule = resolvedFeatures.Any(x => x.Code == FeatureCodes.AnalyticsModule && x.BoolValue == true);
+    var canViewVehicles = hasVehiclesModule;
+    var canViewClients = hasClientsModule;
+    var canViewDefects = hasDefectsModule;
+    var canViewCounters = hasCountersModule;
+    var canViewScheduler = hasSchedulerModule;
+    var canViewMaterials = hasMaterialsModule;
+    var canViewFinance = hasFinanceModule;
+    var canViewAnalytics = hasAnalyticsModule;
+    var canViewMaintenance = true;
+    var canViewBilling = false;
+    var canViewWiki = true;
+    var canViewMembers = true;
+    var canManageSettings = Model.CanManageSettings || currentPath.Contains("/settings", StringComparison.OrdinalIgnoreCase);
+
+    if (resolvedOrganizationId != Guid.Empty && !string.IsNullOrWhiteSpace(userId))
+    {
+        canViewVehicles = hasVehiclesModule && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.VehiclesView);
+        canViewClients = hasClientsModule && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.ClientsView);
+        canViewDefects = hasDefectsModule && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.DefectsView);
+        canViewCounters = hasCountersModule && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.CountersView);
+        canViewScheduler = hasSchedulerModule && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.SchedulerView);
+        canViewMaterials = hasMaterialsModule;
+        canViewFinance = hasFinanceModule
+            && (await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.FinanceView)
+                || await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.FinanceManage));
+        canViewAnalytics = hasAnalyticsModule && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.AnalyticsView);
+        canViewBilling = PlatformConfiguration.GetValue("PlatformPolicy:Commercial:Enabled", false)
+            && resolvedFeatures.Any(feature => feature.Code == FeatureCodes.BillingModule && feature.BoolValue == true)
+            && await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.BillingManage);
+        canViewMaintenance = await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.MaintenanceView);
+        canViewWiki = await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.WikiView);
+        canViewMembers = await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.MembersView);
+        canManageSettings = canManageSettings
+            || await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.WorkspaceProfileEdit)
+            || await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.WorkspaceRequisitesEdit)
+            || await OrganizationPermissionService.HasPermissionAsync(userId, resolvedOrganizationId, OrganizationPermissionCodes.WorkspaceArchive);
+    }
+
+    var navigationItems = new List<(string[] Sections, string Title, string Url, int? Count, bool HasDividerBefore, string? SectionLabel, string GroupTitle)>
+    {
+    };
+
+    if (resolvedOrganizationId != Guid.Empty && !string.IsNullOrWhiteSpace(userId))
+    {
+        try
+        {
+            shell ??= await OrganizationWorkspaceShellService.GetAsync(userId, resolvedOrganizationId);
+            navigationItems.AddRange(shell.Menu
+                .Where(item => item.IsVisible && item.Code != "members")
+                .Select(item => (
+                    Sections: item.SectionCodes.Count > 0 ? item.SectionCodes.ToArray() : [item.Code],
+                    item.Title,
+                    Url: item.UrlTemplate,
+                    item.Count,
+                    item.HasDividerBefore,
+                    item.SectionLabel,
+                    item.GroupTitle)));
+        }
+        catch
+        {
+            // Fallback ниже оставляет старое меню доступным, если shell еще не смог собраться.
+        }
+
+        shellTerms = shell?.Scenario.Terms;
+    }
+
+    if (navigationItems.Count == 0)
+    {
+        navigationItems.Add((["workspace"], terms.WorkspaceTitle, workspaceUrl, null, false, null, "Основное"));
+
+        if (canViewVehicles)
+        {
+            navigationItems.Add((["vehicles", "vehicle", "maintenance"], shellTerms?.Vehicles ?? terms.VehiclesTitle, $"{workspaceUrl}#vehicles", null, false, null, "Работа"));
+        }
+
+        if (canViewClients)
+        {
+            navigationItems.Add((["clients"], shellTerms?.Clients ?? terms.ClientsTitle, $"{workspaceUrl}#clients", Model.ClientsCount, false, null, "Работа"));
+        }
+
+        if (canViewDefects)
+        {
+            navigationItems.Add((["defects"], shellTerms?.Defects ?? terms.DefectsTitle, $"{workspaceUrl}#defects", null, false, null, "Работа"));
+        }
+
+        if (canViewCounters)
+        {
+            navigationItems.Add((["counters"], shellTerms?.Counters ?? terms.CountersTitle, $"{workspaceUrl}#counters", null, false, null, "Работа"));
+        }
+
+        if (canViewScheduler)
+        {
+            navigationItems.Add((["scheduler"], shellTerms?.Scheduler ?? terms.SchedulerTitle, $"{workspaceUrl}#scheduler", null, false, null, "Работа"));
+        }
+
+        if (canViewMaterials)
+        {
+            navigationItems.Add((["materials"], shellTerms?.Materials ?? "Склад", $"{workspaceUrl}#materials", null, false, null, "Работа"));
+        }
+
+        if (canViewMaintenance || canViewDefects)
+        {
+            navigationItems.Add((["work-journal"], shellTerms?.WorkJournal ?? terms.WorkJournalTitle, $"{workspaceUrl}#work-journal", null, false, null, "Работа"));
+        }
+
+        if (canViewFinance)
+        {
+            navigationItems.Add((["finance"], "Финансы", $"{workspaceUrl}#finance", null, false, null, "Отчеты"));
+        }
+
+        if (canViewAnalytics)
+        {
+            navigationItems.Add((["statistics"], "Статистика", $"{workspaceUrl}#statistics", null, false, null, "Отчеты"));
+        }
+    }
+
+    bool IsActive(params string[] sections) => sections.Any(section =>
+        string.Equals(resolvedCurrentSection, section, StringComparison.OrdinalIgnoreCase));
+
+    navigationItems.Add((["overview"], "Организация", workspaceUrl, null, true, "Справка и доступ", "Управление"));
+
+    if (canViewBilling && !navigationItems.Any(item => item.Sections.Contains("billing")))
+    {
+        navigationItems.Add((["billing"], shellTerms?.Billing ?? "Тарифы", $"{workspaceUrl}#billing", null, false, null, "Управление"));
+    }
+
+    if (canViewWiki)
+    {
+        navigationItems.Add((["wiki"], shellTerms?.Wiki ?? "Вики", $"{workspaceUrl}#wiki", null, false, null, "Управление"));
+    }
+
+    if (canViewMembers)
+    {
+        navigationItems.Add((["employees", "members"], "Команда", $"{workspaceUrl}#employees", Model.MembersCount, false, null, "Работа"));
+    }
+
+    if (canManageSettings)
+    {
+        navigationItems.Add((["settings", "requisites", "scenario-catalog", "activity"], "Настройки организации", $"{workspaceUrl}#settings", null, false, null, "Управление"));
+    }
+
+    var activeNavigationItem = navigationItems.FirstOrDefault(item => IsActive(item.Sections));
+    var activeNavigationTitle = !string.IsNullOrWhiteSpace(activeNavigationItem.Title)
+        ? activeNavigationItem.Title
+        : "Разделы";
+    var mobileNavId = $"organizationWorkspaceNav-{resolvedOrganizationId:N}";
+    var mobileGroups = navigationItems
+        .GroupBy(item => item.GroupTitle)
+        .Select((group, index) => new
+        {
+            Title = group.Key,
+            Items = group.ToList(),
+            CollapseId = $"{mobileNavId}-group-{index}",
+            IsActive = group.Any(item => IsActive(item.Sections))
+        })
+        .ToList();
+}
+
+<div class="card organization-panel organization-workspace-mobile-nav">
+    <div class="card-body">
+        <button class="organization-workspace-mobile-nav-toggle"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#@mobileNavId"
+                aria-expanded="false"
+                aria-controls="@mobileNavId">
+            <span>
+                <span class="organization-workspace-mobile-nav-label">Текущий раздел</span>
+                <strong>@activeNavigationTitle</strong>
+            </span>
+            <i class="fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="collapse organization-workspace-mobile-nav-menu" id="@mobileNavId">
+            <nav class="organization-workspace-mobile-nav-groups" aria-label="Мобильная навигация по рабочему пространству">
+                @foreach (var group in mobileGroups)
+                {
+                    <section class="organization-workspace-mobile-nav-group">
+                        <button class="organization-workspace-mobile-nav-group-toggle"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#@group.CollapseId"
+                                aria-expanded="@(group.IsActive.ToString().ToLowerInvariant())"
+                                aria-controls="@group.CollapseId">
+                            <span>@group.Title</span>
+                            <span class="organization-workspace-mobile-nav-group-meta">
+                                @group.Items.Count
+                                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                            </span>
+                        </button>
+                        <div class="collapse @(group.IsActive ? "show" : string.Empty)" id="@group.CollapseId">
+                            <div class="organization-workspace-nav organization-workspace-mobile-nav-items">
+                                @foreach (var item in group.Items)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(item.SectionLabel))
+                                    {
+                                        <div class="organization-workspace-nav-section-label">@item.SectionLabel</div>
+                                    }
+
+                                    <a class="organization-workspace-nav-item @(IsActive(item.Sections) ? "organization-workspace-nav-item-active" : string.Empty)"
+                                       href="@item.Url">
+                                        <span class="organization-workspace-nav-title">@item.Title</span>
+                                        @if (item.Count.HasValue)
+                                        {
+                                            <span class="organization-workspace-nav-meta">@item.Count.Value</span>
+                                        }
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </section>
+                }
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="card organization-panel organization-workspace-desktop-nav">
+    <div class="card-header">
+        <h2 class="h6 mb-0">Разделы</h2>
+    </div>
+    <div class="card-body position-relative">
+        <nav class="organization-workspace-nav" aria-label="Навигация по рабочему пространству">
+            @foreach (var item in navigationItems)
+            {
+                if (item.HasDividerBefore)
+                {
+                    <div class="organization-workspace-nav-divider"></div>
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.SectionLabel))
+                {
+                    <div class="organization-workspace-nav-section-label">@item.SectionLabel</div>
+                }
+
+                <a class="organization-workspace-nav-item @(IsActive(item.Sections) ? "organization-workspace-nav-item-active" : string.Empty)"
+                   href="@item.Url">
+                    <span class="organization-workspace-nav-title">@item.Title</span>
+                    @if (item.Count.HasValue)
+                    {
+                        <span class="organization-workspace-nav-meta">@item.Count.Value</span>
+                    }
+                </a>
+            }
+        </nav>
+    </div>
+</div>

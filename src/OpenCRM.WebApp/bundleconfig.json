@@ -1,0 +1,146 @@
+﻿[
+  {
+    "outputFileName": "wwwroot/css/organizations-entry.min.css",
+    "inputFiles": [
+      "wwwroot/css/organizations-entry.css"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/css/site.min.css",
+    "inputFiles": [
+      "wwwroot/css/site.css",
+      "wwwroot/css/pagination.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/subscription.min.css",
+    "inputFiles": [
+      "wwwroot/css/subscription.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/personal.min.css",
+    "inputFiles": [
+      "wwwroot/css/personal.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/vehicles.min.css",
+    "inputFiles": [
+      "wwwroot/css/vehicles.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/vehicle-card.min.css",
+    "inputFiles": [
+      "wwwroot/css/vehicle-card.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/maintenance.min.css",
+    "inputFiles": [
+      "wwwroot/css/maintenance.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/auth.min.css",
+    "inputFiles": [
+      "wwwroot/css/auth.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/organizations.min.css",
+    "inputFiles": [
+      "wwwroot/css/organizations.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/css/footer.min.css",
+    "inputFiles": [
+      "wwwroot/css/footer.css"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/js/site.min.js",
+    "inputFiles": [
+      "wwwroot/js/site.js",
+      "wwwroot/js/utils.js",
+      "wwwroot/js/layout-utils.js"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/app/vehicles.min.js",
+    "inputFiles": [
+      "wwwroot/app/vehicles.js"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/app/vehicle-card.min.js",
+    "inputFiles": [
+      "wwwroot/app/vehicle-card.js"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/app/create-maintenance.min.js",
+    "inputFiles": [
+      "wwwroot/app/create-maintenance.js"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/app/update-maintenance.min.js",
+    "inputFiles": [
+      "wwwroot/app/update-maintenance.js"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  },
+  {
+    "outputFileName": "wwwroot/app/maintenance.min.js",
+    "inputFiles": [
+      "wwwroot/app/maintenance.js"
+    ],
+    "minify": {
+      "enabled": true
+    }
+  }
+]

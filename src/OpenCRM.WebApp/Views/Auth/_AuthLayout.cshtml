@@ -1,0 +1,20 @@
+﻿@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/platform-pages.css" asp-append-version="true" />
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/auth.min.css" asp-append-version="true" />
+    </environment>
+}
+
+@RenderBody()
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}
+

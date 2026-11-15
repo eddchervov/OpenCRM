@@ -1,0 +1,178 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:api="using:OpenCRM.Admin.Api.Models"
+             x:Class="OpenCRM.Admin.App.Views.SiteNotificationsView"
+             x:DataType="vm:SiteNotificationsViewModel">
+  <UserControl.Resources>
+    <ControlTheme x:Key="CardTabTheme" TargetType="TabItem">
+      <Setter Property="Background" Value="#171B20" />
+      <Setter Property="Foreground" Value="#C7CED6" />
+      <Setter Property="BorderBrush" Value="#303841" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="Margin" Value="0,0,8,8" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover"><Setter Property="Background" Value="#242D36" /></Style>
+      <Style Selector="^:selected">
+        <Setter Property="Background" Value="#23384A" />
+        <Setter Property="BorderBrush" Value="#527DA0" />
+        <Setter Property="Foreground" Value="#F5F9FD" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </Style>
+      <Style Selector="^:selected:pointerover"><Setter Property="Background" Value="#2B4358" /></Style>
+      <Style Selector="^:focus-visible"><Setter Property="BorderBrush" Value="#86B5DC" /></Style>
+    </ControlTheme>
+  </UserControl.Resources>
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="Уведомления сайта" Classes="heading" />
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Notice}" IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#A7DCA7" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <TabControl Grid.Row="2" SelectedIndex="{Binding SelectedTabIndex}" SelectionChanged="OnTabSelectionChanged"
+                HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+      <TabControl.Styles>
+        <Style Selector="TabItem"><Setter Property="Theme" Value="{StaticResource CardTabTheme}" /></Style>
+      </TabControl.Styles>
+      <TabItem Header="Рассылка">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+            <Border Classes="configurationSection">
+              <StackPanel Spacing="12" IsEnabled="{Binding CanManage}">
+                <TextBlock Text="Разовое уведомление" Classes="configurationHeading" />
+                <TextBlock Text="Отправка сразу: выберите адресатов и аудиторию перед подтверждением." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding SendWarning}" IsVisible="{Binding IsSendAttempted}" Foreground="#F1D09B" TextWrapping="Wrap" />
+                <Button Content="Проверить историю и начать новое уведомление" Command="{Binding CheckHistoryAndStartNewCommand}" IsVisible="{Binding IsSendAttempted}" HorizontalAlignment="Left" />
+                <TextBox Text="{Binding SendTitle}" PlaceholderText="Заголовок" MaxLength="200" />
+                <TextBox Text="{Binding SendBody}" PlaceholderText="Текст уведомления" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" VerticalContentAlignment="Top" MaxLength="4000" />
+                <TextBlock Text="Кому" FontWeight="SemiBold" />
+                <ComboBox ItemsSource="{Binding RecipientScopes}" SelectedItem="{Binding RecipientScope}" Width="300" HorizontalAlignment="Left">
+                  <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <StackPanel Spacing="8" IsVisible="{Binding IsSelectedUsers}">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBox Text="{Binding UserSearch}" PlaceholderText="Найти пользователей по email" />
+                    <Button Grid.Column="1" Content="Найти" Command="{Binding SearchUsersCommand}" />
+                  </Grid>
+                  <ItemsControl ItemsSource="{Binding FoundUsers}">
+                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:SiteNotificationUserOption"><CheckBox Content="{Binding Email}" IsChecked="{Binding IsSelected}" /></DataTemplate></ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="Выбранные получатели" FontWeight="SemiBold" />
+                  <ItemsControl ItemsSource="{Binding SelectedUsers}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:SiteNotificationUserOption">
+                        <Border Classes="configurationBadge" Margin="0,0,8,8">
+                          <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding Email}" VerticalAlignment="Center" />
+                            <Button Content="Убрать" Padding="8,4" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).RemoveSelectedUserCommand}" CommandParameter="{Binding}" />
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="{Binding SelectedUsers.Count, StringFormat='Выбрано: {0}'}" Classes="caption" />
+                </StackPanel>
+                <TextBlock Text="Аудитории" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding AudienceOptions}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:SiteNotificationAudienceOption"><CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="0,0,18,0" /></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="Выберите всех пользователей либо одну или обе специальные аудитории." Classes="caption" TextWrapping="Wrap" />
+                <Button Content="Отправить уведомление…" Classes="configurationPrimary" Command="{Binding RequestSendCommand}" HorizontalAlignment="Left" IsVisible="{Binding !IsSendConfirmationOpen}" />
+                <Border Classes="configurationSection" IsVisible="{Binding IsSendConfirmationOpen}" Padding="14">
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="Уведомление будет отправлено сразу выбранным пользователям. Проверьте заголовок, текст и аудитории." TextWrapping="Wrap" />
+                    <WrapPanel><Button Content="Подтвердить отправку" Classes="configurationPrimary" Command="{Binding ConfirmSendCommand}" Margin="0,0,8,0" /><Button Content="Назад" Command="{Binding CancelSendCommand}" /></WrapPanel>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="История">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="12" HorizontalAlignment="Stretch">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+              <TextBlock Text="{Binding PageLabel}" Classes="caption" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="Назад" Command="{Binding PreviousHistoryPageCommand}" />
+              <Button Grid.Column="2" Content="Дальше" Command="{Binding NextHistoryPageCommand}" />
+            </Grid>
+            <TextBlock Text="На этой странице уведомлений нет." IsVisible="{Binding IsHistoryEmpty}" Classes="caption" />
+            <ItemsControl ItemsSource="{Binding HistoryItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="api:AdminSiteNotification">
+                  <Border Classes="configurationSection" Padding="14">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                      <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Body}" TextWrapping="Wrap" Classes="muted" />
+                        <TextBlock Text="{Binding RecipientEmail}" Classes="caption" />
+                        <TextBlock Text="{Binding CreatedAt, StringFormat='Создано: {0:dd.MM.yyyy HH:mm}'}" Classes="caption" />
+                      </StackPanel>
+                      <Button Grid.Column="1" Content="Удалить" IsVisible="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).CanManage}" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).RequestDeleteCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border Classes="configurationSection" IsVisible="{Binding PendingDelete, Converter={x:Static ObjectConverters.IsNotNull}}" Padding="14">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Удалить это уведомление из истории?" TextWrapping="Wrap" />
+                <WrapPanel><Button Content="Удалить" Classes="configurationPrimary" Command="{Binding DeleteCommand}" Margin="0,0,8,0" /><Button Content="Отмена" Command="{Binding CancelDeleteCommand}" /></WrapPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Шаблоны">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="12" HorizontalAlignment="Stretch">
+            <Border Classes="configurationSection">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Автоматические шаблоны" Classes="configurationHeading" />
+                <TextBlock Text="Тексты создаются при системных событиях. Получатели определяются автоматически." Classes="caption" TextWrapping="Wrap" />
+                <ItemsControl ItemsSource="{Binding Templates}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="api:AdminSiteNotification">
+                      <Border Classes="configurationSection" Padding="14">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                          <StackPanel Spacing="5"><TextBlock Text="{Binding TypeCode}" Classes="caption" /><TextBlock Text="{Binding Title}" FontWeight="SemiBold" /><TextBlock Text="{Binding Body}" TextWrapping="Wrap" Classes="muted" /></StackPanel>
+                          <Button Grid.Column="1" Content="Изменить" IsVisible="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).CanManage}" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).EditTemplateCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" />
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+            <Border Classes="configurationSection" IsVisible="{Binding EditingTemplate, Converter={x:Static ObjectConverters.IsNotNull}}" Padding="16" IsEnabled="{Binding CanManage}">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Редактирование шаблона" FontSize="16" FontWeight="SemiBold" /><Button Grid.Column="1" Content="Закрыть" Command="{Binding CancelTemplateEditCommand}" /></Grid>
+                <TextBox Text="{Binding TemplateTitle}" PlaceholderText="Заголовок" MaxLength="200" />
+                <TextBox Text="{Binding TemplateBody}" PlaceholderText="Текст шаблона" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalContentAlignment="Top" MaxLength="4000" />
+                <TextBlock Text="Для шаблонов подписки доступны переменные: {organization}, {email}, {plan}, {days}." Classes="caption" TextWrapping="Wrap" />
+                <Button Content="Сохранить шаблон" Classes="configurationPrimary" Command="{Binding SaveTemplateCommand}" HorizontalAlignment="Left" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+  </Grid>
+</UserControl>

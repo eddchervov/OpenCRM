@@ -1,0 +1,39 @@
+{
+  "DocumentStyleCode": "classic",
+  "ScenarioCode": "autoservice",
+  "ActNumber": "42",
+  "ActDate": "03.02.2025",
+  "ExecutorName": "СТО Кириллица",
+  "ExecutorInn": "ИНН",
+  "ExecutorKpp": "КПП",
+  "ExecutorOgrn": "ОГРН",
+  "ExecutorAddress": "Юридический адрес",
+  "ExecutorPhone": "+7 900 000-00-00",
+  "ExecutorEmail": "sto@example.test",
+  "ExecutorSignatoryPosition": "Исполнитель",
+  "ExecutorSignatoryName": "СТО Кириллица",
+  "ExecutorSignatoryBasis": "",
+  "CustomerName": "Клиент",
+  "VehicleTitle": "Мастерская Грузовик · Бортовой",
+  "VehicleRegistrationPlate": "А123АА154",
+  "VehicleVin": "VIN123",
+  "VehicleYear": "2020",
+  "MaintenanceDate": "03.02.2025",
+  "PlannedPeriod": "04.02.2025",
+  "MaintenanceType": "Плановое ТО",
+  "Location": "Пост 1",
+  "Performer": "Мастер СТО",
+  "Mileage": 654321,
+  "MileageLabel": "Моточасы",
+  "MileageUnit": "м/ч",
+  "Comment": "Согласовано с клиентом",
+  "DiscountAmount": 1000,
+  "Works": [
+    {
+      "Quantity": 3,
+      "Name": "Заменить узел",
+      "Description": "Историческая строка услуги",
+      "Price": 4250.75
+    }
+  ]
+}

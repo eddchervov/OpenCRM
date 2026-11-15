@@ -1,0 +1,25 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.log
+.env
+.env.*
+!.env.example
+!.env.*.example
+appsettings.Local.json
+TestResults/
+artifacts/
+
+# Локальные настройки окружений и снимки серверной конфигурации.
+**/appsettings.*.Local.json
+/configuration/**/*.local.*
+/.env
+/.env.development
+/.env.production
+
+**/appsettings.Local.json
+/_tmp

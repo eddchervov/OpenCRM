@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             x:Class="OpenCRM.Admin.App.Views.SmsHistoryView"
+             x:DataType="vm:SmsHistoryViewModel">
+  <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="История SMS" Classes="heading" />
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <Border Grid.Row="2" Classes="configurationSection" Padding="12">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+        <TextBox Text="{Binding Search}" PlaceholderText="Телефон, текст или код SMS" />
+        <TextBlock Grid.Column="1" Text="{Binding TotalCount, StringFormat='Записей: {0:N0}'}" Classes="caption" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+    <Border Grid.Row="3" Classes="configurationSection" Padding="0">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto">
+        <Grid RowDefinitions="Auto,*" MinWidth="1050">
+          <Grid ColumnDefinitions="150,2*,130,170,2*" Margin="16,12">
+            <TextBlock Text="Телефон" Classes="caption" />
+            <TextBlock Grid.Column="1" Text="Текст сообщения" Classes="caption" />
+            <TextBlock Grid.Column="2" Text="Тип / код" Classes="caption" />
+            <TextBlock Grid.Column="3" Text="Дата" Classes="caption" />
+            <TextBlock Grid.Column="4" Text="Ответ провайдера" Classes="caption" />
+          </Grid>
+          <ListBox Grid.Row="1" ItemsSource="{Binding FilteredRows}" Background="Transparent" BorderThickness="0" ItemContainerTheme="{StaticResource AdminListRowTheme}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:SmsHistoryRow">
+                <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="16,12">
+                  <Grid ColumnDefinitions="150,2*,130,170,2*" ColumnSpacing="12">
+                    <TextBlock Text="{Binding Phone}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center"><TextBlock Text="{Binding Type}" /><TextBlock Text="{Binding Code}" Classes="caption" /></StackPanel>
+                    <TextBlock Grid.Column="3" Text="{Binding Date}" Classes="caption" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Text="{Binding Response}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="SMS не найдены." HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+        </Grid>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

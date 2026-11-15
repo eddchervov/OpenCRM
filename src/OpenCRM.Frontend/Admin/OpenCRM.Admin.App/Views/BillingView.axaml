@@ -1,0 +1,178 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.BillingView"
+             x:DataType="vm:BillingViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.sort-header">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="0,8" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="Button.tab.active">
+      <Setter Property="Background" Value="#23384A" />
+      <Setter Property="BorderBrush" Value="#4C7392" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ListBoxItem">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,*" RowSpacing="12">
+    <StackPanel Spacing="12">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Text="Платежи и подписки" Classes="heading" AutomationProperties.AutomationId="BillingHeading" />
+        <TextBlock Grid.Column="1" Text="{Binding TotalLabel}" IsVisible="{Binding !IsPurchasesTab}" Classes="caption" VerticalAlignment="Center" Margin="12,0" />
+        <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" IsVisible="{Binding !IsPurchasesTab}" />
+        <Button Grid.Column="2" Content="Обновить" Command="{Binding Purchases.RefreshCommand}" IsVisible="{Binding IsPurchasesTab}" />
+      </Grid>
+      <WrapPanel Orientation="Horizontal">
+        <Button Content="Платежи" Classes="tab" Classes.active="{Binding IsPaymentTabSelected}" Command="{Binding SetTabCommand}" Margin="0,0,8,6"
+                AutomationProperties.AutomationId="BillingPaymentsTab">
+          <Button.CommandParameter><x:Boolean>True</x:Boolean></Button.CommandParameter>
+        </Button>
+        <Button Content="Подписки организаций" Classes="tab" Classes.active="{Binding IsSubscriptionTabSelected}" Command="{Binding SetTabCommand}" Margin="0,0,8,6"
+                AutomationProperties.AutomationId="BillingSubscriptionsTab">
+          <Button.CommandParameter><x:Boolean>False</x:Boolean></Button.CommandParameter>
+        </Button>
+        <Button Content="Покупки и чеки НПД" Classes="tab" Classes.active="{Binding IsPurchasesTab}"
+                Command="{Binding ShowPurchasesCommand}" Margin="0,0,0,6" AutomationProperties.AutomationId="BillingPurchasesTab" />
+      </WrapPanel>
+      <TextBlock Text="{Binding OperationMessage}" IsVisible="{Binding HasOperationMessage}"
+                 Foreground="#A7D8B1" TextWrapping="Wrap" />
+    </StackPanel>
+    <Grid Grid.Row="1" IsVisible="{Binding IsLedgerListVisible}" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+      <Border Grid.Row="0" Background="#191D22" BorderBrush="#414B58" BorderThickness="1" CornerRadius="8" Padding="12">
+        <WrapPanel>
+          <TextBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" Text="{Binding Search}" PlaceholderText="Пользователь, организация, тариф или ID" Width="310" Margin="0,0,8,6"
+                   KeyDown="OnSearchKeyDown" AutomationProperties.AutomationId="BillingSearch" />
+          <Button Height="44" VerticalAlignment="Center" Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,6" />
+          <Button Height="44" VerticalAlignment="Center" Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,16,6" />
+          <ComboBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="185" Margin="0,0,8,6"
+                    IsEnabled="{Binding !IsLoading}" AutomationProperties.AutomationId="BillingStatus" />
+          <ComboBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" ItemsSource="{Binding PeriodOptions}" SelectedItem="{Binding SelectedPeriod}" Width="145" Margin="0,0,0,6"
+                    IsVisible="{Binding IsPaymentsTab}" IsEnabled="{Binding !IsLoading}" />
+        </WrapPanel>
+      </Border>
+      <StackPanel Grid.Row="1" Spacing="6">
+        <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Height="3" />
+      </StackPanel>
+      <WrapPanel Grid.Row="2">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,20,0">
+          <TextBlock Text="На странице" Classes="caption" VerticalAlignment="Center" />
+          <ComboBox ItemsSource="{Binding PageSizeOptions}" SelectedItem="{Binding PageSize}" IsEnabled="{Binding !IsLoading}" Width="74" />
+        </StackPanel>
+        <views:ListPagination PageLabel="{Binding PageLabel}"
+                              PreviousCommand="{Binding PreviousPageCommand}" NextCommand="{Binding NextPageCommand}" />
+      </WrapPanel>
+      <Border Grid.Row="3" Classes="card" Padding="0" ClipToBounds="True">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <Grid MinWidth="1070" RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="65,2*,1.5*,130,145,145,140,100" Margin="12,8">
+              <TextBlock Text="ID" Classes="caption" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="{Binding CustomerHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="customer" />
+              <Button Grid.Column="2" Content="{Binding PlanHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="plan" />
+              <Button Grid.Column="3" Content="{Binding AmountHeader}" Classes="sort-header" Click="OnAmountSort" />
+              <Button Grid.Column="4" Content="{Binding DateHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="date" />
+              <Button Grid.Column="5" Content="{Binding EndHeader}" IsVisible="{Binding !IsPaymentsTab}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="expires" />
+              <TextBlock Grid.Column="5" Text="Способ оплаты" IsVisible="{Binding IsPaymentsTab}" Classes="caption" VerticalAlignment="Center" />
+              <Button Grid.Column="6" Content="{Binding StatusHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="status" />
+            </Grid>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Background="Transparent" BorderThickness="0"
+                     ItemContainerTheme="{StaticResource AdminListRowTheme}"
+                     DoubleTapped="OnRowDoubleTapped" KeyDown="OnRowsKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     AutomationProperties.AutomationId="BillingList">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:BillingRow">
+                  <Border BorderBrush="#292929" BorderThickness="0,1,0,0" Padding="12,10">
+                    <Grid ColumnDefinitions="65,2*,1.5*,130,145,145,140,100">
+                      <TextBlock Text="{Binding Id}" Classes="caption" VerticalAlignment="Center" />
+                      <StackPanel Grid.Column="1" Spacing="3" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding Customer}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Customer}" />
+                        <TextBlock Text="{Binding Contact}" Classes="caption" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Contact}" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding Plan}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,0" />
+                      <TextBlock Grid.Column="3" Text="{Binding Amount}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                      <TextBlock Grid.Column="4" Text="{Binding Date}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
+                      <TextBlock Grid.Column="5" Text="{Binding EndDate}" IsVisible="{Binding !IsPayment}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
+                      <TextBlock Grid.Column="5" Text="{Binding Source}" IsVisible="{Binding IsPayment}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
+                      <StackPanel Grid.Column="6" VerticalAlignment="Center" Spacing="3" Margin="0,0,8,0">
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+                        <TextBlock Text="Требует внимания" IsVisible="{Binding HasAttention}" Foreground="#D89C73" FontSize="11" />
+                      </StackPanel>
+                      <Button Grid.Column="7" Content="Открыть" Padding="10,6" VerticalAlignment="Center"
+                              Command="{Binding $parent[views:BillingView].((vm:BillingViewModel)DataContext).OpenDetailCommand}" CommandParameter="{Binding}" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Grid.Row="1" IsVisible="{Binding !HasRows}" Text="Записи не найдены" Classes="muted" Margin="20,32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <ScrollViewer Grid.Row="1" IsVisible="{Binding IsLedgerDetailVisible}" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Button Content="← К списку" Command="{Binding BackToListCommand}" />
+          <TextBlock Grid.Column="1" Text="Подробности" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0" />
+          <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" />
+        </Grid>
+        <ProgressBar IsVisible="{Binding IsLoadingDetail}" IsIndeterminate="True" Height="3" />
+        <TextBlock IsVisible="{Binding HasDetailError}" Text="{Binding DetailErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <StackPanel DataContext="{Binding Detail}" x:DataType="vm:BillingDetailViewModel" Spacing="16">
+          <TextBlock Text="{Binding Title}" Classes="heading" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Subtitle}" Classes="caption" />
+          <Border Classes="card">
+            <ItemsControl ItemsSource="{Binding Fields}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:DashboardMetric">
+                  <Grid ColumnDefinitions="220,*" Margin="0,6">
+                    <TextBlock Text="{Binding Title}" Classes="caption" />
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+          <views:PaymentActionsView DataContext="{Binding $parent[views:BillingView].((vm:BillingViewModel)DataContext).PaymentActions}" />
+          <Expander Header="{Binding AuditTitle}" IsExpanded="False">
+            <StackPanel Spacing="10">
+              <TextBlock Text="История пуста" IsVisible="{Binding !HasAudits}" Classes="caption" />
+              <ItemsControl ItemsSource="{Binding Audits}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:DashboardStatisticGroup">
+                    <Border Classes="card" Margin="0,0,0,12">
+                      <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                        <ItemsControl ItemsSource="{Binding Items}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DashboardMetric">
+                              <Grid ColumnDefinitions="220,*" Margin="0,4">
+                                <TextBlock Text="{Binding Title}" Classes="caption" />
+                                <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" />
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Expander>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+    <Border Grid.Row="1" IsVisible="{Binding IsPurchasesTab}">
+      <views:PurchasesView DataContext="{Binding Purchases}" />
+    </Border>
+  </Grid>
+</UserControl>

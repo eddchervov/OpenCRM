@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.SupportMessagesView"
+             x:DataType="vm:SupportMessagesViewModel">
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="Обращения" Classes="heading" AutomationProperties.AutomationId="SupportMessagesHeading" />
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" IsVisible="{Binding !IsDetailOpen}" />
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding SuccessMessage}" Foreground="#A7DCA7" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <Grid Grid.Row="2" IsVisible="{Binding !IsDetailOpen}" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+      <Border Classes="card" Padding="12">
+        <WrapPanel>
+          <TextBox Text="{Binding Search}" PlaceholderText="Тема, текст, email или организация" Width="310" Margin="0,0,8,6" KeyDown="OnSearchKeyDown" AutomationProperties.AutomationId="SupportSearch" />
+          <ComboBox ItemsSource="{Binding SourceOptions}" SelectedItem="{Binding SelectedSource}" Width="190" Margin="0,0,8,6" IsEnabled="{Binding !IsBusy}" />
+          <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="170" Margin="0,0,8,6" IsEnabled="{Binding !IsBusy}" />
+          <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,6" />
+          <Button Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,8,6" />
+        </WrapPanel>
+      </Border>
+      <TextBlock Grid.Row="1" Text="{Binding Summary}" Classes="caption" />
+      <views:ListPagination Grid.Row="2" PageLabel="{Binding PageLabel}"
+                            PreviousCommand="{Binding PreviousPageCommand}" NextCommand="{Binding NextPageCommand}" />
+      <Border Grid.Row="3" Classes="card" Padding="0">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <Grid RowDefinitions="Auto,*" MinWidth="750">
+            <Grid ColumnDefinitions="60,2*,1.5*,1.5*,140,100" Margin="12,10">
+              <TextBlock Text="ID" Classes="caption" />
+              <TextBlock Grid.Column="1" Text="Обращение" Classes="caption" />
+              <TextBlock Grid.Column="2" Text="Организация" Classes="caption" />
+              <TextBlock Grid.Column="3" Text="Отправитель" Classes="caption" />
+              <TextBlock Grid.Column="4" Text="Статус" Classes="caption" />
+              <TextBlock Grid.Column="5" Text="Действия" Classes="caption" />
+            </Grid>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" ItemContainerTheme="{StaticResource AdminListRowTheme}" Background="Transparent" BorderThickness="0"
+                     DoubleTapped="OnRowDoubleTapped" KeyDown="OnRowsKeyDown" AutomationProperties.AutomationId="SupportList">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:SupportMessageRow">
+                  <Border BorderBrush="#292929" BorderThickness="0,1,0,0" Padding="12,10">
+                    <Grid ColumnDefinitions="60,2*,1.5*,1.5*,140,100">
+                      <TextBlock Text="{Binding Id}" Classes="caption" />
+                      <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,8,0">
+                        <TextBlock Text="{Binding Topic}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Type}" Classes="caption" />
+                        <TextBlock Text="{Binding Date}" Classes="caption" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding Organization}" TextWrapping="Wrap" Margin="0,0,8,0" />
+                      <TextBlock Grid.Column="3" Text="{Binding Sender}" TextWrapping="Wrap" Margin="0,0,8,0" />
+                      <TextBlock Grid.Column="4" Text="{Binding Status}" TextWrapping="Wrap" />
+                      <Button Grid.Column="5" Content="Открыть" Padding="10,6" VerticalAlignment="Center" Margin="12,0,0,0" Click="OnOpenRowClick" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="Обращения не найдены." HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+          </Grid>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <Grid Grid.Row="2" IsVisible="{Binding IsDetailOpen}" RowDefinitions="Auto,*" RowSpacing="12">
+      <Grid ColumnDefinitions="*,Auto">
+        <Button Content="← К обращениям" Command="{Binding CloseDetailCommand}" HorizontalAlignment="Left" />
+        <Button Grid.Column="1" Content="Обновить переписку" Command="{Binding RefreshDetailCommand}" />
+      </Grid>
+      <ScrollViewer Grid.Row="1">
+        <StackPanel Spacing="12">
+          <Border Classes="card">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding Detail.Topic}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Detail.OrganizationName}" />
+              <TextBlock Text="{Binding DetailContact}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding DetailDate}" Classes="caption" />
+              <TextBlock Text="{Binding Detail.StatusName}" Classes="caption" />
+              <TextBlock Text="{Binding Detail.SourcePage}" Classes="caption" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Detail.AdminComment}" IsVisible="{Binding !CanManage}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card">
+            <ItemsControl ItemsSource="{Binding Entries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SupportEntryRow">
+                  <Border BorderBrush="#414B58" BorderThickness="0,0,0,1" Padding="0,8,0,12" Margin="0,0,0,8">
+                    <StackPanel Spacing="6">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding Author}" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="{Binding Date}" Classes="caption" />
+                      </Grid>
+                      <SelectableTextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Delivery}" Classes="caption" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+          <Border Classes="card" IsVisible="{Binding CanReply}">
+            <StackPanel Spacing="8" IsEnabled="{Binding !IsBusy}">
+              <TextBlock Text="Ответ отправителю" FontWeight="SemiBold" />
+              <TextBox Text="{Binding ReplyText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" MaxLength="4000" PlaceholderText="Напишите ответ…" AutomationProperties.AutomationId="SupportReply" />
+              <Button Content="Отправить ответ" Command="{Binding SendReplyCommand}" Classes="primary" HorizontalAlignment="Right" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card" IsVisible="{Binding CanManage}">
+            <StackPanel Spacing="8" IsEnabled="{Binding !IsBusy}">
+              <TextBlock Text="Статус" FontWeight="SemiBold" />
+              <ComboBox ItemsSource="{Binding EditStatusOptions}" SelectedItem="{Binding NextStatus}" Width="210" />
+              <TextBlock Text="Внутренний комментарий" FontWeight="SemiBold" />
+              <TextBox Text="{Binding AdminComment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="75" MaxLength="2000" PlaceholderText="Виден только администраторам" />
+              <Button Content="Сохранить статус и комментарий" Command="{Binding SaveDetailsCommand}" HorizontalAlignment="Right" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

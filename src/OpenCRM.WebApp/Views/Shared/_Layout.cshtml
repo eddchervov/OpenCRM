@@ -1,0 +1,118 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using OpenCRM.Domain.Identity
+@using Microsoft.AspNetCore.Antiforgery
+@using OpenCRM.WebApp.Infrastructure.Security
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IAntiforgery Antiforgery
+
+@*
+    Общий макет рабочей части платформы.
+    Публичное оформление сайта (SEO-метаданные, микроразметка, баннер cookie,
+    веб-аналитика, рекламные разделы и подвал с внешними ссылками) намеренно
+    отсутствует: эти материалы задаёт владелец установки на своём сайте.
+*@
+@{
+    var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var pageTitle = ViewData["Title"] as string ?? Brand.DisplayName;
+
+    var bodyClass = "layout-v2";
+    var pageBodyClass = ViewData["BodyClass"] as string;
+    if (!string.IsNullOrWhiteSpace(pageBodyClass))
+    {
+        bodyClass = $"{bodyClass} {pageBodyClass}";
+    }
+
+    var isSensitivePage = SensitivePagePolicy.IsSensitive(Context.Request);
+    var referrerPolicy = isSensitivePage ? "no-referrer" : "strict-origin-when-cross-origin";
+    var seoRobots = "noindex,nofollow";
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta name="project-brand" content="@Brand.DisplayName" />
+    <meta name="project-github" content="@Helpers.ProjectBrand.GitHubUrl" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" type="image/x-icon" href="~/img/favicon2.svg" />
+
+    <title>@pageTitle</title>
+
+    <script type="importmap"></script>
+
+    <meta name="referrer" content="@referrerPolicy">
+    <meta name="robots" content="@seoRobots">
+    <meta name="theme-color" content="#111111">
+
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="~/lib/vue-ctk-date-time-picker/vue-ctk-date-time-picker.css" />
+    <link rel="stylesheet" href="~/lib/vue-select.css" />
+
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/pagination.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/footer.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link href="~/css/site.min.css" rel="stylesheet" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/footer.min.css" asp-append-version="true" />
+    </environment>
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <script src="~/js/organizations-entry.js" asp-append-version="true"></script>
+        <link rel="stylesheet" href="~/css/site-notifications.css" asp-append-version="true" />
+    }
+
+    @await RenderSectionAsync("Styles", required: false)
+
+    <meta name="request-verification-token" content="@antiforgeryToken" />
+</head>
+<body class="@bodyClass">
+    <partial name="_Menu" />
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    @if (ViewData["WorkspaceEntry"] is true)
+    {
+        <footer class="entry-footer">
+            <partial name="_ProjectAttribution" />
+        </footer>
+    }
+    else
+    {
+        <partial name="_Footer" />
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/vue.min.js"></script>
+    <script src="~/lib/axios.min.js"></script>
+    <script src="~/lib/momentjs.min.js"></script>
+    <script src="~/lib/vue-ctk-date-time-picker/vue-ctk-date-time-picker.umd.min.js"></script>
+    <script src="~/lib/vue-select.js"></script>
+    <script src="~/lib/vuejs-paginate/vuejs-paginate.js" asp-append-version="true"></script>
+
+    <environment include="Development">
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/js/utils.js" asp-append-version="true"></script>
+        <script src="~/js/layout-utils.js" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/js/site.min.js" asp-append-version="true"></script>
+    </environment>
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <script src="~/js/site-notifications.js" asp-append-version="true" defer></script>
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

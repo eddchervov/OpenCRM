@@ -1,0 +1,65 @@
+﻿@model OpenCRM.Modules.Vehicles.Contracts.Dtos.GetVehicleDto
+@{
+    var breadcrumbTitle = ViewData["BreadcrumbTitle"] as string ?? string.Empty;
+    var pageTitle = ViewData["PageTitle"] as string ?? string.Empty;
+    var subtitlePrefix = ViewData["SubtitlePrefix"] as string ?? string.Empty;
+    var organizationId = ViewData["MaintenanceOrganizationId"] as string;
+    var organizationName = ViewData["MaintenanceOrganizationName"] as string ?? string.Empty;
+    var returnUrl = ViewData["MaintenanceReturnUrl"] as string;
+    var hideBreadcrumb = ViewData["HideMaintenanceBreadcrumb"] is bool shouldHideBreadcrumb && shouldHideBreadcrumb;
+    var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId)
+        ? "/vehicles"
+        : "/organizations";
+    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
+        ? "Моя техника"
+        : !string.IsNullOrWhiteSpace(organizationName)
+            ? organizationName
+            : "Организация";
+    var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId)
+        ? "/vehicles"
+        : "/organizations";
+    var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
+        ? $"/vehicle/{Model.Id}"
+        : $"/vehicle/{Model.Id}?organizationId={organizationId}";
+}
+
+@if (!hideBreadcrumb)
+{
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
+            <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">Техника</a></li>
+            <li class="breadcrumb-item">
+                <a href="@vehicleUrl" class="text-decoration-none">
+                    @Helpers.VehicleDisplayName.Format(Model.BrandName, Model.ModelName, Model.RegistrationPlate)
+                    @if (Model.YearIssue != null && Model.YearIssue != 0)
+                    {
+                        @Model.YearIssue <text>г.</text>
+                    }
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">@breadcrumbTitle</li>
+        </ol>
+    </nav>
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="page-title">@pageTitle</h1>
+        <p class="page-subtitle">
+            @subtitlePrefix
+            @Helpers.VehicleDisplayName.Format(Model.BrandName, Model.ModelName, Model.RegistrationPlate)
+            @if (Model.YearIssue != null && Model.YearIssue != 0)
+            {
+                @Model.YearIssue <text>г.</text>
+            }
+            @if (!string.IsNullOrEmpty(Model.Name))
+            {
+                @Model.Name
+            }
+        </p>
+    </div>
+</div>
+
+
+

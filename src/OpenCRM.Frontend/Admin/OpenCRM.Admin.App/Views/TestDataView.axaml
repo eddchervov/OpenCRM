@@ -1,0 +1,168 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:api="using:OpenCRM.Admin.Api.Models"
+             x:Class="OpenCRM.Admin.App.Views.TestDataView"
+             x:DataType="vm:TestDataViewModel">
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="14">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+      <StackPanel Spacing="4">
+        <TextBlock Text="Тестовые данные" Classes="heading" />
+        <TextBlock Text="Генерируйте демонстрационную технику, обслуживания и дефекты для организации." Classes="caption" TextWrapping="Wrap" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
+    </Grid>
+
+    <StackPanel Grid.Row="1" Spacing="7">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Message}" IsVisible="{Binding HasMessage}" Foreground="#9CDABB" TextWrapping="Wrap" />
+      <Border IsVisible="{Binding IsGenerationOutcomeUnknown}" Background="#302719" BorderBrush="#80613C" BorderThickness="1" CornerRadius="8" Padding="12">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding OutcomeWarning}" Foreground="#F0C58B" TextWrapping="Wrap" />
+          <Button Content="Обновить данные и проверить результат" Command="{Binding RefreshUnknownOutcomeCommand}" HorizontalAlignment="Left" />
+        </StackPanel>
+      </Border>
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="14">
+        <Border Classes="configurationSection" IsVisible="{Binding !HasSelection}" Padding="0">
+          <StackPanel>
+            <StackPanel Spacing="4" Margin="18,16,18,12">
+              <TextBlock Text="Организации" Classes="configurationHeading" />
+              <TextBlock Text="Найдите организацию, в которой нужно подготовить тестовые данные." Classes="caption" TextWrapping="Wrap" />
+            </StackPanel>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="18,0,18,14">
+              <TextBox Text="{Binding Search}" PlaceholderText="Название организации или email владельца" />
+              <Button Grid.Column="1" Content="Найти" Command="{Binding ApplyFiltersCommand}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="18,0,18,14">
+              <TextBlock Text="{Binding PageLabel}" Classes="caption" VerticalAlignment="Center" IsVisible="{Binding !IsLegacyOrganizationPaging}" />
+              <TextBlock Text="{Binding Page, StringFormat='Страница {0}'}" Classes="caption" VerticalAlignment="Center" IsVisible="{Binding IsLegacyOrganizationPaging}" />
+              <Button Grid.Column="1" Content="Назад" Command="{Binding PreviousPageCommand}" />
+              <Button Grid.Column="2" Content="Дальше" Command="{Binding NextPageCommand}" />
+            </Grid>
+            <TextBlock Text="Сервер возвращает только первые 25 совпадений. Для полной постраничной загрузки требуется обновить сервер."
+                       IsVisible="{Binding IsLegacyOrganizationPaging}" Classes="caption" TextWrapping="Wrap" Margin="18,0,18,14" />
+            <ItemsControl ItemsSource="{Binding Organizations}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="api:AdminTestDataOrganization">
+                  <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="18,12">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="18">
+                      <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding OwnerEmail, FallbackValue='Владелец не указан'}" Classes="caption"
+                                   TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="Техника" Classes="caption" />
+                        <TextBlock Text="{Binding VehiclesCount, StringFormat='{}{0:N0}'}" FontWeight="SemiBold" />
+                      </StackPanel>
+                      <Button Grid.Column="2" Content="Выбрать" Classes="configurationPrimary"
+                              Command="{Binding $parent[UserControl].((vm:TestDataViewModel)DataContext).SelectOrganizationCommand}"
+                              CommandParameter="{Binding}" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border IsVisible="{Binding IsEmpty}" Padding="18,24">
+              <TextBlock Text="Организации не найдены. Измените запрос и попробуйте ещё раз." Classes="caption" TextWrapping="Wrap" />
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="configurationSection" IsVisible="{Binding HasSelection}" Padding="0">
+          <StackPanel>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="18,16,18,14">
+              <StackPanel Spacing="4">
+                <TextBlock Text="{Binding SelectedOrganization.Name}" Classes="configurationHeading" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding SelectedOrganization.OwnerEmail, FallbackValue='Владелец не указан'}" Classes="caption" TextWrapping="Wrap" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Border Classes="configurationBadge" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding SelectedOrganization.ScenarioLabel}" />
+                </Border>
+                <Button Content="← К организациям" Command="{Binding CloseOrganizationCommand}" />
+              </StackPanel>
+            </Grid>
+            <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="18,14" IsVisible="{Binding !HasVehicle}">
+              <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                  <StackPanel Spacing="3">
+                    <TextBlock Text="Техника организации" Classes="configurationHeading" />
+                    <TextBlock Text="Выберите технику для генерации обслуживаний и дефектов." Classes="caption" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="Создать технику" Classes="configurationPrimary"
+                          Command="{Binding RequestVehiclesCommand}" VerticalAlignment="Center" />
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Vehicles}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="api:AdminTestDataVehicle">
+                      <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="12,10">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="18">
+                          <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" />
+                          <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding MaintenanceCount, StringFormat='Обслуживаний: {0:N0}'}" Classes="caption" />
+                            <TextBlock Text="{Binding DefectCount, StringFormat='Дефектов: {0:N0}'}" Classes="caption" />
+                          </StackPanel>
+                          <Button Grid.Column="2" Content="Выбрать"
+                                  Command="{Binding $parent[UserControl].((vm:TestDataViewModel)DataContext).SelectVehicleCommand}"
+                                  CommandParameter="{Binding}" VerticalAlignment="Center" />
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="В этой организации пока нет техники. Создайте её, чтобы перейти к генерации данных." IsVisible="{Binding HasNoVehicles}"
+                           Classes="caption" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <Border IsVisible="{Binding HasVehicle}" BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="18,16">
+              <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Генерация для техники" Classes="configurationHeading" />
+                    <TextBlock Text="{Binding SelectedVehicle.DisplayName}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="← К технике организации" Command="{Binding CloseVehicleCommand}" VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Text="Выберите, какие демонстрационные записи создать." Classes="caption" TextWrapping="Wrap" />
+                <WrapPanel>
+                  <Button Content="Создать обслуживания" Classes="configurationPrimary" Command="{Binding RequestMaintenancesCommand}" Margin="0,0,8,8" />
+                  <Button Content="Создать дефекты" Command="{Binding RequestDefectsCommand}" Margin="0,0,8,8" />
+                </WrapPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <Border Grid.RowSpan="3" IsVisible="{Binding IsConfirmationOpen}" Background="#CC000000" ZIndex="10" Padding="20">
+      <Border Classes="configurationSection" MaxWidth="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="22">
+        <StackPanel Spacing="16">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding ActionTitle}" Classes="configurationHeading" />
+            <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap" />
+          </StackPanel>
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <StackPanel Spacing="7">
+              <TextBlock Text="Количество" Classes="caption" />
+              <NumericUpDown Value="{Binding Count}" Minimum="1" Maximum="{Binding MaximumCount}" ShowButtonSpinner="False" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="7" IsVisible="{Binding IsGeneratingMaintenances}">
+              <TextBlock Text="Состояние" Classes="caption" />
+              <ComboBox ItemsSource="{Binding MaintenanceModes}" SelectedItem="{Binding SelectedMaintenanceMode}" />
+            </StackPanel>
+          </Grid>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Создать" Classes="configurationPrimary" Command="{Binding ConfirmCommand}" />
+            <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>

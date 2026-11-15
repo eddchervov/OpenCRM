@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — демонстрация карточки клиента</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import detailingPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/detailing.webp'
+    import fleetPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/fleet.webp'
+
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const isEmpty = params.has('empty')
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const vehicleId = '1'
+    const today = new Date()
+    const dateString = (offset = 0) => {
+      const date = new Date(today)
+      date.setDate(date.getDate() + offset)
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    }
+
+    const sectionName = scenario === 'detailing' ? 'Автомобили' : scenario === 'fleet' ? 'Техника' : 'Автомобили'
+    const maintenanceName = scenario === 'detailing' ? 'Услуги' : scenario === 'fleet' ? 'Обслуживание' : 'Заказ-наряды'
+    const clientName = scenario === 'fleet' ? 'Транспортный отдел' : 'Александр Петров'
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: {
+        id: organizationId,
+        name: scenario === 'detailing' ? 'Демо-студия · тестовые данные' : scenario === 'fleet' ? 'Демо-автопарк · тестовые данные' : 'Демо-СТО · тестовые данные',
+        primaryScenarioCode: scenario,
+        members: [{ userId: 'member-1', userName: 'Алексей Смирнов' }, { userId: 'member-2', userName: 'Мария Иванова' }]
+      },
+      workspaceAccess: { isReadOnly: params.has('readonly'), isBaseWorkspace: false, hasActiveSubscription: true, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario, terms: scenario === 'fleet' ? { clients: 'Подразделения' } : undefined },
+        menu: [
+          { code: 'workspace', title: scenario === 'fleet' ? 'Состояние парка' : 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'scheduler', title: scenario === 'fleet' ? 'План ТО' : 'Записи', isVisible: true, groupTitle: 'Основное', urlTemplate: '#scheduler' },
+          { code: 'clients', title: scenario === 'fleet' ? 'Подразделения' : 'Клиенты', isVisible: true, groupTitle: 'Основное', urlTemplate: '#clients' },
+          { code: 'vehicles', sectionCodes: ['vehicles','maintenance'], title: sectionName, isVisible: true, groupTitle: 'Основное', urlTemplate: '#vehicles' },
+          { code: 'maintenance', title: maintenanceName, isVisible: true, groupTitle: 'Работы', urlTemplate: '#maintenance' },
+          { code: 'maintenance-journal', title: scenario === 'detailing' ? 'Журнал услуг' : 'История работ', isVisible: true, groupTitle: 'Работы', urlTemplate: '#work-journal' }
+        ],
+        quickActions: params.has('readonly') ? [] : [{code: 'create-maintenance', isVisible: true}, {code: 'create-vehicle', isVisible: true}]
+      },
+      links: { workspaceUrl: '#workspace', schedulerUrl: '#workspace', quickBookingUrl: '#workspace', api: {} }
+    }
+
+
+    const carData = [
+      ['BMW X3', 'А001АА 154', 'bmw'], ['Mercedes-Benz E-Класс', 'М777ММ 154', 'mercedes'],
+      ['Audi Q5', 'К055КК 154', 'audi'], ['Toyota Land Cruiser', 'Т700ТТ 154', 'toyota'],
+      ['Porsche Cayenne', 'Р911РР 154', 'porsche'], ['Kia Sportage', 'О080ОО 154', 'kia']
+    ]
+    const count = isEmpty ? 0 : Number(params.get('vehicles') || 12)
+    const cars = Array.from({ length: count }, (_, index) => {
+      const [displayName, plate, brandLogoKey] = carData[index % carData.length]
+      return { id: String(index + 1), displayName, registrationPlate: index < 6 ? plate : 'Н' + String(index + 1).padStart(3, '0') + 'НН 154', brandLogoKey, photoUrl: !params.has('no-photos') && index % 6 === 0 ? detailingPhoto : null, maintenanceCount: 4, lastMaintenanceDate: dateString(-index * 12 - 1) }
+    })
+    const records = isEmpty ? [] : Array.from({ length: 28 }, (_, index) => ({
+      id: String(index + 1), vehicleId: String(index % 2 + 1), vehicleDisplayName: carData[index % 2][0],
+      status: index === 0 ? 1 : index === 1 ? 2 : index === 7 ? 4 : 3, type: 1,
+      date: dateString(index === 0 ? 3 : -index * 8), plannedDate: dateString(index === 0 ? 3 : -index * 8),
+      plannedStartTime: '10:00', plannedEndTime: '12:00', completedDate: index > 1 ? dateString(-index * 8) : null,
+      serviceNames: index === 27 ? ['Старый заказ'] : index % 2 ? ['Полировка кузова', 'Керамическое покрытие'] : ['Детейлинг-мойка'],
+      grossAmount: index % 2 ? 42000 : 3500, paidAmount: index === 0 ? 0 : index % 2 ? 42000 : 3500,
+      handedOverAt: index > 1 && index !== 7 ? dateString(-index * 8) : null,
+      detailUrl: '#maintenance/' + (index + 1), vehicleUrl: '#vehicles/' + (index % 2 + 1)
+    }))
+    const details = {
+      client: {
+        id: 'client-1', organizationId, name: scenario === 'fleet' ? 'Транспортный отдел' : 'Иванов Александр',
+        firstName: scenario === 'fleet' || params.has('legacy') ? null : 'Александр', lastName: scenario === 'fleet' || params.has('legacy') ? null : 'Иванов', middleName: null,
+        phone: params.has('no-phone') ? null : '+7 000 000-00-00', partyTypeCode: params.has('company') ? 'company' : 'person', statusCode: 'active', statusName: 'Активный',
+        comment: 'Постоянный клиент\nСогласовывать дополнительные работы по телефону.\nПредпочитает забирать автомобиль вечером.',
+        responsibleUserId: 'member-1', responsibleDisplayName: 'Алексей Смирнов', createdAt: '2025-03-15',
+        isArchived: params.has('archived'), tags: [{ id: 'tag-1', name: 'Постоянный' }], vehicles: cars,
+        vehiclesCount: count, maintenanceCount: isEmpty ? 0 : 28, lastMaintenanceDate: isEmpty ? null : dateString(-1)
+      }, canViewMaintenance: !params.has('restricted'), totalPaidAmount: isEmpty ? 0 : 124500, upcomingMaintenance: records[0] || null,
+      recentMaintenances: records, defects: [], historyItems: [], openDefectsCount: 0, closedDefectsCount: 0
+    }
+    if (params.has('company')) Object.assign(details.client, {
+      name: 'ООО «Автосфера»', firstName: null, lastName: null, companyTypeCode: 'legal_entity', inn: '5406123456', kpp: '540601001', legalAddress: 'г. Новосибирск, ул. Ленина, д. 12'
+    })
+    if (params.has('restricted')) context.shell.menu = context.shell.menu.filter(item => !['maintenance', 'vehicles'].includes(item.code))
+    if (params.has('free')) {
+      context.organization.name = 'QA · Формы клиентов · Free'
+      Object.assign(context.workspaceAccess, { isFreePlan: true, isBaseWorkspace: true, hasActiveSubscription: false })
+    }
+
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      const method = (init?.method || 'GET').toUpperCase()
+      if (url.pathname.endsWith('/clients/client-1/comment') && method === 'PUT') {
+        if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка сохранения' }, { status: 500 })
+        const payload = JSON.parse(init.body)
+        if (payload.comment?.length > 4000) return Response.json({ message: 'Комментарий не должен превышать 4000 символов.' }, { status: 400 })
+        details.client.comment = payload.comment
+        return Response.json(details)
+      }
+      if ((url.pathname.endsWith('/clients/client-1') && method === 'PUT') || (url.pathname.endsWith('/clients') && method === 'POST')) {
+        if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка сохранения' }, { status: 500 })
+        const payload = JSON.parse(init.body)
+        Object.assign(details.client, payload, {
+          tags: (payload.tagNamesText || '').split(',').map(name => name.trim()).filter(Boolean).map((name, index) => ({ id: String(index), name })),
+          responsibleDisplayName: context.organization.members.find(member => member.userId === payload.responsibleUserId)?.userName || null,
+          statusName: { active: 'Активный', lead: 'Лид', attention: 'Требует внимания', paused: 'Пауза', lost: 'Потерян' }[payload.statusCode]
+        })
+        if (method === 'POST') {
+          Object.assign(details.client, { vehicles: [], vehiclesCount: 0, maintenanceCount: 0, lastMaintenanceDate: null, createdAt: dateString() })
+          Object.assign(details, { recentMaintenances: [], upcomingMaintenance: null, totalPaidAmount: 0 })
+        }
+        return Response.json(details)
+      }
+      if (method !== 'GET') return new Response(null, { status: 403 })
+      if (url.pathname.endsWith('/context')) return Response.json(context)
+      if (url.pathname.endsWith('/clients/client-1/maintenances')) {
+        if (params.has('history-error')) return Response.json({ message: 'Тестовая ошибка загрузки истории' }, { status: 500 })
+        const searchQuery = (url.searchParams.get('searchQuery') || '').trim().toLocaleLowerCase('ru')
+        const status = url.searchParams.get('status')
+        const page = Math.max(1, Number(url.searchParams.get('page')) || 1)
+        const pageSize = Math.max(1, Number(url.searchParams.get('pageSize')) || 10)
+        const matchingRecords = records.filter(record => {
+          if (status === 'upcoming' && ![1, 2].includes(record.status)) return false
+          if (status === 'completed' && record.status !== 3) return false
+          if (!searchQuery) return true
+          const searchableText = [record.vehicleDisplayName, ...record.serviceNames].join(' ').toLocaleLowerCase('ru')
+          return searchableText.includes(searchQuery)
+        })
+        const start = (page - 1) * pageSize
+        return Response.json({ items: matchingRecords.slice(start, start + pageSize), totalCount: matchingRecords.length, page, pageSize })
+      }
+      if (url.pathname.endsWith('/clients/client-1')) return params.has('error') ? Response.json({message:'Тестовая ошибка загрузки'}, {status:500}) : Response.json(details)
+      if (url.pathname.endsWith('/status')) return Response.json({ isConnected: false, isEnabled: false })
+      if (url.pathname.endsWith('/history')) return Response.json({ items: [], totalCount: 0 })
+      return Response.json([])
+    }
+
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: `/api/v1/autoservice/organizations/${organizationId}/workspace/context` }
+    window.opencrmFleetClient = { organizationId, contextUrl: `/api/v1/fleet/organizations/${organizationId}/workspace/context` }
+
+    if (!location.hash) location.hash = '#clients/client-1'
+    if (scenario === 'detailing') {
+      await import('../Scenarios/detailing-client/src/main.ts')
+    } else if (scenario === 'autoservice') {
+      await import('../Scenarios/autoservice-client/src/main.ts')
+    } else {
+      await import('../Scenarios/fleet-client/src/main.ts')
+    }
+  </script>
+</body>
+</html>
+

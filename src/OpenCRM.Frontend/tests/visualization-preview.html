@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — локальная демонстрация визуализации</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { createVisualizationDemo } from '../packages/workspace/src/components/visualization/demo.ts'
+
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: `/api/v1/autoservice/organizations/${organizationId}/workspace/context` }
+    window.opencrmFleetClient = { organizationId, contextUrl: `/api/v1/fleet/organizations/${organizationId}/workspace/context` }
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: { id: organizationId, name: 'Демо-организация · тестовые данные', primaryScenarioCode: scenario },
+      workspaceAccess: { isReadOnly: true, isBaseWorkspace: false, hasActiveSubscription: true, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario, terms: scenario === 'fleet' ? { clients: 'Подразделения' } : undefined },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'scheduler', title: 'Записи', isVisible: !params.has('noaccess'), groupTitle: 'Основное', urlTemplate: '#scheduler' },
+          { code: 'visualization', title: 'Визуализация', isVisible: true, groupTitle: 'Основное', urlTemplate: '#visualization' }
+        ],
+        quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', schedulerUrl: '#workspace', quickBookingUrl: '#workspace', api: {} }
+    }
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      if (init?.method && init.method !== 'GET') return new Response(null, { status: 403 })
+      const date = new Date()
+      const today = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      const demo = createVisualizationDemo(today)
+      const postCount = Math.min(100, Math.max(1, Number(params.get('posts')) || 4))
+      if (postCount < demo.catalog.length) demo.catalog.length = postCount
+      for (let index = demo.catalog.length; index < postCount; index++) {
+        demo.catalog.push({ ...demo.catalog[0], id: `demo-post-${index}`, code: `demo-${index}`, name: `Пост ${index + 1}`, sortOrder: index })
+      }
+      if (scenario !== 'detailing') {
+        demo.day.inProgress.items[0].services = ['Диагностика ходовой', 'Замена масла']
+        demo.day.inProgress.items[1].services = ['Замена тормозных колодок', 'Контрольный осмотр']
+      }
+      demo.day.inProgress.items[0].performer = 'Алексей Смирнов'
+      demo.day.inProgress.items[0].clientName = scenario === 'fleet' ? 'Транспортный отдел' : 'Александр Петров'
+      if (params.has('extended')) {
+        const source = demo.day.planned.items[0]
+        demo.day.planned.items.push({ ...source, id: '5', vehicleName: 'Mercedes-Benz E-Класс', vehicleBrandLogoKey: 'mercedes', location: 'Пост 4', date: '2099-10-18', startTime: '10:00', endTime: '12:00' })
+        demo.day.planned.items.push({ ...source, id: '6', vehicleName: 'Audi Q5', vehicleBrandLogoKey: 'audi', location: null })
+        demo.day.planned.items.push({ ...source, id: '7', vehicleName: 'Toyota RAV4', location: 'Пост 1' })
+        demo.day.planned.totalCount = demo.day.planned.items.length
+      }
+      if (params.has('empty')) {
+        demo.catalog = []
+        for (const group of Object.values(demo.day)) {
+          if (group && typeof group === 'object' && 'items' in group) { group.items = []; group.totalCount = 0 }
+        }
+        demo.day.hasAnyWork = false
+      }
+      if (params.has('error') && url.pathname.endsWith('/visualization')) return Response.json({ message: 'Тестовая ошибка загрузки' }, { status: 503 })
+      const recordMatch = url.pathname.match(/^\/api\/v1\/maintenance\/([^/]+)$/)
+      const entries = [...demo.day.planned.items, ...demo.day.inProgress.items, ...demo.day.ready.items, ...demo.day.handedOver.items]
+      const entry = entries.find(item => item.id === recordMatch?.[1])
+      const record = entry ? {
+        id: entry.id, status: demo.day.inProgress.items.includes(entry) ? 2 : demo.day.ready.items.includes(entry) ? 3 : 1,
+        type: 1, date: today, vehicleId: entry.id, plannedDate: today,
+        plannedStartTime: entry.startTime, plannedEndTime: entry.endTime,
+        location: entry.location, performer: entry.performer,
+        buyerName: 'Демонстрационный клиент', grossAmount: entry.services.length * 2000,
+        discountAmount: 0, paidAmount: 1000, debtAmount: entry.services.length * 2000 - 1000,
+        paymentStatus: 'partially_paid', materialCostAmount: 0, laborCostAmount: 0, profitAmount: 0,
+        photoIds: [], linkedDefects: [],
+        maintenanceDetails: entry.services.map((name, index) => ({ detailId: 'line-' + index, name, quantity: index === 0 ? 2 : 1, price: 2000 }))
+      } : null
+      const payload = url.pathname.endsWith('/context') ? context
+        : url.pathname.endsWith('/scenario-catalog') ? { workPosts: demo.catalog }
+        : url.pathname.endsWith('/visualization') || url.pathname.endsWith('/workday') ? demo.day
+        : recordMatch ? record
+        : url.pathname.match(/^\/api\/v1\/media\/maintenance\/[^/]+\/photos$/) ? []
+        : url.pathname.endsWith('/notifications') ? [] : null
+      return payload ? Response.json(payload) : new Response(null, { status: 404 })
+    }
+    if (!location.hash) location.hash = '#visualization'
+    if (scenario === 'detailing') await import('../Scenarios/detailing-client/src/main.ts')
+    else if (scenario === 'autoservice') await import('../Scenarios/autoservice-client/src/main.ts')
+    else await import('../Scenarios/fleet-client/src/main.ts')
+  </script>
+</body>
+</html>

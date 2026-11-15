@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.RolesView"
+             x:DataType="vm:RolesViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBoxItem">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="Button.tab.active">
+      <Setter Property="Background" Value="#23384A" />
+      <Setter Property="BorderBrush" Value="#4C7392" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="Роли и права" Classes="heading" AutomationProperties.AutomationId="RolesHeading" />
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock IsVisible="{Binding HasMessage}" Text="{Binding Message}" Foreground="#A8D8B4" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <Grid Grid.Row="2" ColumnDefinitions="190,*" ColumnSpacing="12" IsVisible="{Binding HasRoles}">
+      <Border Classes="card" Padding="8">
+        <ListBox ItemsSource="{Binding Roles}" SelectedItem="{Binding SelectedRole}" ItemContainerTheme="{StaticResource AdminListRowTheme}" Background="Transparent" BorderThickness="0"
+                 AutomationProperties.AutomationId="AdminRolesList">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:RoleOption">
+              <Border BorderBrush="#292929" BorderThickness="0,0,0,1" Padding="10">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Text="Системная" IsVisible="{Binding IsProtected}" Classes="caption" />
+                  <TextBlock IsVisible="{Binding !IsProtected}" Classes="caption" TextWrapping="Wrap">
+                    <Run Text="{Binding PermissionCount}" />
+                    <Run Text=" прав · " />
+                    <Run Text="{Binding UsersCount}" />
+                    <Run Text=" пользователей" />
+                  </TextBlock>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+      <Border Grid.Column="1" Classes="card" Padding="16" IsVisible="{Binding SelectedRole, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+          <Grid>
+            <StackPanel Spacing="3">
+              <TextBlock Text="{Binding SelectedRole.Name}" FontSize="20" FontWeight="SemiBold" />
+              <TextBlock Text="Системная роль защищена от изменения прав" Classes="caption" IsVisible="{Binding SelectedRole.IsLocked}" />
+            </StackPanel>
+          </Grid>
+          <WrapPanel Grid.Row="1">
+              <Button Content="Права" Classes="tab" Classes.active="{Binding !IsMembersTab}" Command="{Binding SelectTabCommand}" Margin="0,0,8,6">
+                <Button.CommandParameter><x:Boolean>False</x:Boolean></Button.CommandParameter>
+              </Button>
+              <Button Content="Участники" Classes="tab" Classes.active="{Binding IsMembersTab}" Command="{Binding SelectTabCommand}" Margin="0,0,8,6">
+                <Button.CommandParameter><x:Boolean>True</x:Boolean></Button.CommandParameter>
+              </Button>
+              <Button Content="Сохранить права" Classes="primary" IsVisible="{Binding !IsMembersTab}" Margin="0,0,0,6"
+                      IsEnabled="{Binding CanEditPermissions}" Command="{Binding SavePermissionsCommand}" />
+          </WrapPanel>
+          <ScrollViewer Grid.Row="2" IsVisible="{Binding !IsMembersTab}" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12">
+              <ItemsControl ItemsSource="{Binding PermissionGroups}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RolePermissionGroup">
+                    <Border Background="#191D22" BorderBrush="#414B58" BorderThickness="1" CornerRadius="8" Padding="12">
+                      <StackPanel Spacing="6">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <ItemsControl ItemsSource="{Binding Permissions}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RolePermissionItem">
+                              <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                        IsEnabled="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).CanEditPermissions}"
+                                        Command="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).TogglePermissionCommand}"
+                                        CommandParameter="{Binding}" />
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="Разрешения не найдены" IsVisible="{Binding !HasGroups}" Classes="muted" />
+            </StackPanel>
+          </ScrollViewer>
+          <Grid Grid.Row="2" IsVisible="{Binding IsMembersTab}" RowDefinitions="Auto,Auto,*" RowSpacing="10">
+            <WrapPanel>
+              <TextBox Text="{Binding MemberSearch}" PlaceholderText="Поиск email или телефона" VerticalContentAlignment="Center" Width="190" Margin="0,0,8,6" />
+              <ComboBox ItemsSource="{Binding AvailableMembers}" SelectedItem="{Binding SelectedMember}"
+                        PlaceholderText="Выберите пользователя" IsEnabled="{Binding HasAvailableMembers}" Width="220" Margin="0,0,8,6">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RoleMemberItem">
+                    <TextBlock Text="{Binding DisplayName}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Content="Назначить" Classes="primary" Command="{Binding AddMemberCommand}" Margin="0,0,0,6" />
+            </WrapPanel>
+            <ProgressBar Grid.Row="1" IsVisible="{Binding IsMembersLoading}" IsIndeterminate="True" Height="3" />
+            <TextBlock Grid.Row="1" Text="Пользователей нет" IsVisible="{Binding !HasMembers}" Classes="muted" />
+            <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+              <ItemsControl ItemsSource="{Binding FilteredMembers}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RoleMemberItem">
+                    <Border BorderBrush="#292929" BorderThickness="0,0,0,1" Padding="10">
+                      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="2">
+                          <TextBlock Text="{Binding Email}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding DisplayName}" Classes="caption" />
+                          <TextBlock Text="{Binding Phone}" Classes="caption" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Снять роль" Classes="danger" Command="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).RequestRemoveMemberCommand}"
+                                CommandParameter="{Binding}" IsEnabled="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).CanManageMembers}" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Grid>
+        </Grid>
+      </Border>
+    </Grid>
+    <TextBlock Grid.Row="2" Text="Роли не найдены" IsVisible="{Binding IsEmpty}" Classes="muted" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <Border Grid.RowSpan="3" Background="#AA000000" IsVisible="{Binding IsRemovalConfirmationOpen}">
+      <Border Classes="card" Padding="18" Width="420" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Снять роль" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Text="Подтвердите снятие роли с выбранного пользователя." TextWrapping="Wrap" />
+          <TextBlock Text="{Binding MemberToRemove.DisplayName}" Classes="caption" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Отмена" Command="{Binding CancelRemoveMemberCommand}" />
+            <Button Content="Снять роль" Classes="danger" Command="{Binding ConfirmRemoveMemberCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>

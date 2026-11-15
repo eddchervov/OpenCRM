@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — локальная демонстрация карточки обслуживания</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import demoPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/detailing.webp'
+    import { createVisualizationDemo } from '../packages/workspace/src/components/visualization/demo.ts'
+
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    window.opencrmDetailingClient = { organizationId }
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: { id: organizationId, name: 'Демо-студия · тестовые данные', primaryScenarioCode: 'detailing' },
+      workspaceAccess: { isReadOnly: new URLSearchParams(location.search).has('readonly'), isBaseWorkspace: false, hasActiveSubscription: true, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: 'detailing' },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'scheduler', title: 'Записи', isVisible: true, groupTitle: 'Основное', urlTemplate: '#scheduler' },
+          { code: 'visualization', title: 'Визуализация', isVisible: true, groupTitle: 'Основное', urlTemplate: '#visualization' }
+        ],
+        quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', schedulerUrl: '#workspace', quickBookingUrl: '#workspace', api: {} }
+    }
+    const originalFetch = window.fetch.bind(window)
+    const params = new URLSearchParams(location.search)
+    const pendingExtraReport = {
+      id: 'old-extra', maintenanceId: '1', detailId: 'line-0', employeeName: 'Алексей',
+      kind: 'extra', text: 'Дополнительная полировка QA', createdAt: new Date().toISOString(), decision: null
+    }
+    if (params.has('free')) {
+      Object.assign(context.workspaceAccess, { isFreePlan: true, hasActiveSubscription: false, exportsEnabled: true })
+      context.shell.scenario.modules = { photos: false, intake: false, members: false }
+    }
+    const catalogServices = [
+      { id: 'wash', name: 'Детейлинг-мойка', unitPrice: 2000, durationMinutes: 60 },
+      { id: 'polish', name: 'Полировка кузова', unitPrice: 12000, durationMinutes: 180 },
+      { id: 'protection', name: 'Защитное покрытие', unitPrice: 10000, durationMinutes: 120 },
+      { id: 'glass', name: 'Уход за стёклами', unitPrice: 1000, durationMinutes: 30 },
+      { id: 'interior', name: 'Химчистка салона', unitPrice: 9000, durationMinutes: 180 },
+      { id: 'leather', name: 'Уход за кожей', unitPrice: 5000, durationMinutes: 60 }
+    ].map(item => ({ ...item, kindCode: 'service', isActive: true }))
+    const catalogBundles = [
+      { id: 'protect-bundle', name: 'Полировка и защита', serviceIds: ['wash', 'polish', 'protection'], durationMinutes: 300 },
+      { id: 'interior-bundle', name: 'Уход за салоном', serviceIds: ['interior', 'leather'], durationMinutes: 240 },
+      { id: 'base-bundle', name: 'Базовый уход', serviceIds: ['wash', 'glass'], durationMinutes: 90 }
+    ].map(item => ({ ...item, kindCode: 'service_bundle', isActive: true }))
+    const payments = [
+      { id: 'payment-1', amount: 6000, methodCode: 'card', createdAt: '2026-10-17T14:32:00+07:00', createdBy: 'Алексей', payerName: 'Александр Иванов', isOpeningBalance: false },
+      { id: 'payment-2', amount: 4000, methodCode: 'cash', createdAt: '2026-10-16T11:10:00+07:00', createdBy: 'Алексей', payerName: 'Александр Иванов', isOpeningBalance: false }
+    ]
+    let savedDetails = null
+    let createdRecord = null
+    let savedIntake = null
+    let intakeDamagesVersion = 1
+    const intakeDiagramVersion = 'sedan-v1'
+    let intakeDamages = [
+      { id: 'demo-front-damage', number: 1, viewCode: 'front', damageType: 'scratch', x: 0.3, y: 0.65, description: 'Царапина на переднем бампере', photoIds: ['before'] },
+      { id: 'demo-left-damage', number: 3, viewCode: 'left', damageType: 'dent', x: 0.55, y: 0.52, description: 'Небольшая вмятина у задней двери', photoIds: [] }
+    ]
+    window.fetch = async (input, init) => {
+      const url = new URL(input instanceof URL ? input.href : typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      if (params.has('extra') && url.pathname.endsWith('/reports/old-extra/decision') && init?.method === 'POST') {
+        const command = JSON.parse(init.body)
+        if (params.has('free') && command.decision === 'approved') {
+          return Response.json({ message: 'Назначение сотрудников недоступно на текущем тарифе.' }, { status: 400 })
+        }
+        Object.assign(pendingExtraReport, { decision: command.decision, decisionReason: command.reason, approvedPrice: command.price })
+        return Response.json(pendingExtraReport)
+      }
+      if (url.pathname.match(/^\/api\/v1\/media\/maintenance\/[^/]+\/photos\/[^/]+\/content$/)) {
+        return originalFetch(demoPhoto, { signal: init?.signal })
+      }
+      if (url.pathname === '/api/v1/vehicles/1/maintenance' && init?.method === 'POST') {
+        createdRecord = JSON.parse(init.body)
+        return Response.json('1')
+      }
+      if (url.pathname === '/api/v1/maintenance/1/intake/damages' && (!init?.method || init.method === 'GET')) {
+        return Response.json({ version: intakeDamagesVersion, diagramVersion: intakeDiagramVersion, damages: intakeDamages })
+      }
+      if (url.pathname.startsWith('/api/v1/maintenance/1/intake/damages/') && init?.method === 'PUT') {
+        const damageId = url.pathname.split('/').at(-1)
+        const { version, diagramVersion, ...damage } = JSON.parse(init.body)
+        if (diagramVersion !== intakeDiagramVersion) return new Response('Версия схемы не совпадает.', { status: 409 })
+        if (version !== intakeDamagesVersion) return new Response('Устаревшая версия повреждений.', { status: 409 })
+        const existing = intakeDamages.find(item => item.id === damageId)
+        if (existing) Object.assign(existing, damage)
+        else intakeDamages.push({ id: damageId, number: Math.max(0, ...intakeDamages.map(item => item.number)) + 1, ...damage })
+        intakeDamagesVersion++
+        return new Response(null, { status: 204 })
+      }
+      if (url.pathname.startsWith('/api/v1/maintenance/1/intake/damages/') && init?.method === 'DELETE') {
+        if (Number(url.searchParams.get('version')) !== intakeDamagesVersion) return new Response('Устаревшая версия повреждений.', { status: 409 })
+        const damageId = url.pathname.split('/').at(-1)
+        intakeDamages = intakeDamages.filter(item => item.id !== damageId)
+        intakeDamagesVersion++
+        return new Response(null, { status: 204 })
+      }
+      if (init?.method && init.method !== 'GET') {
+        if (url.pathname === '/api/v1/maintenance/1/intake' && init.method === 'PUT') {
+          if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка сохранения' }, { status: 500 })
+          const intake = JSON.parse(init.body)
+          intakeDamagesVersion++
+          savedIntake = {
+            intakeMileage: intake.mileage,
+            intakeCompleteness: intake.completeness,
+            intakeVisibleDamage: intake.visibleDamage,
+            intakeNotes: intake.notes,
+            intakeRecordedAt: new Date().toISOString()
+          }
+          return new Response(null, { status: 204 })
+        }
+        if (!params.has('commerce')) return new Response(null, { status: 403 })
+        if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка сохранения' }, { status: 500 })
+        const payload = JSON.parse(init.body)
+        if (url.pathname === '/api/v1/maintenance/1/payments') {
+          if (!payments.some(item => item.id === payload.id)) payments.unshift({ ...payload, payerName: 'Александр Иванов', createdAt: new Date().toISOString(), createdBy: 'Алексей', isOpeningBalance: false })
+        } else if (url.pathname.match(/^\/api\/v1\/maintenance\/1\/payments\/[^/]+\/cancel$/)) {
+          const payment = payments.find(item => item.id === url.pathname.split('/').at(-2))
+          if (payment) Object.assign(payment, { cancelledAt: new Date().toISOString(), cancelledBy: 'Алексей', cancellationReason: payload.reason })
+        } else if (url.pathname === '/api/v1/maintenance/1/services') {
+          savedDetails = payload.details
+        } else return new Response(null, { status: 403 })
+        return new Response(null, { status: 204 })
+      }
+      const date = new Date()
+      const today = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      const demo = createVisualizationDemo(today)
+      const recordMatch = url.pathname.match(/^\/api\/v1\/maintenance\/([^/]+)$/)
+      const entries = [...demo.day.planned.items, ...demo.day.inProgress.items, ...demo.day.ready.items, ...demo.day.handedOver.items]
+      entries.forEach(entry => { entry.hasTrackedWork = !params.has('free') || params.has('tracked') })
+      const entry = entries.find(item => item.id === recordMatch?.[1])
+      const record = entry ? {
+        id: entry.id, status: demo.day.inProgress.items.includes(entry) ? 2 : demo.day.ready.items.includes(entry) ? 3 : 1,
+        type: 1, date: today, vehicleId: entry.id, plannedDate: today,
+        plannedStartTime: entry.startTime, plannedEndTime: entry.endTime,
+        location: entry.location, performer: entry.performer,
+        grossAmount: entry.services.length * 2000,
+        discountAmount: 0, paidAmount: 1000, debtAmount: entry.services.length * 2000 - 1000,
+        paymentStatus: 'partial', materialCostAmount: 0, laborCostAmount: 0, profitAmount: 0,
+        canEditServices: true, canManagePayments: true, version: 1,
+        buyerClientId: 'demo-client', buyerName: 'Демонстрационный клиент',
+        intakeRecordedAt: today, comment: 'Проверить покрытие при дневном свете перед выдачей.',
+        photoIds: [], linkedDefects: [],
+        maintenanceDetails: entry.services.map((name, index) => ({ detailId: 'line-' + index, name, quantity: index === 0 ? 2 : 1, price: 2000 }))
+      } : null
+      const services = [
+        { detailId: 'line-0', name: 'Детейлинг-мойка', quantity: 1, price: 1500, employeeName: 'Алексей', vatRateCode: 'without_vat' },
+        { detailId: 'line-1', name: 'Полировка кузова', quantity: 1, price: 12000, employeeName: 'Алексей', vatRateCode: 'without_vat' },
+        { detailId: 'line-2', name: 'Керамическое покрытие', quantity: 1, price: 6000, employeeName: 'Алексей', vatRateCode: 'without_vat' },
+        { detailId: 'line-3', name: 'Уборка салона', quantity: 1, price: 4500, employeeName: 'Мария', vatRateCode: 'without_vat' }
+      ]
+      if (params.has('commerce')) services.splice(0, services.length, ...catalogServices.slice(0, 4).map((item, index) => ({
+        detailId: 'line-' + index, name: item.name, quantity: 1, price: item.unitPrice, employeeName: 'Алексей', vatRateCode: 'without_vat'
+      })))
+      if (record && record.id === '1') Object.assign(record, {
+        maintenanceDetails: services, grossAmount: 24000, paidAmount: 10000, debtAmount: 14000,
+        plannedStartTime: '10:00', plannedEndTime: '18:00', performer: 'Алексей', location: 'Пост 2'
+      })
+      if (record?.id === '1' && params.has('free')) Object.assign(record, {
+        status: 3, readyForHandoverAt: today, handedOverAt: today
+      })
+      if (record?.id === '1' && params.has('free') && !params.has('tracked')) {
+        record.performer = ''
+        record.maintenanceDetails.forEach(detail => { detail.employeeName = null })
+      }
+      if (record?.id === '1' && createdRecord) Object.assign(record, createdRecord, {
+        maintenanceDetails: createdRecord.details, status: 1, readyForHandoverAt: null, handedOverAt: null
+      })
+      if (record?.id === '1' && params.has('commerce')) {
+        const paidAmount = payments.filter(item => !item.cancelledAt).reduce((sum, item) => sum + item.amount, 0)
+        Object.assign(record, { grossAmount: 25000, paidAmount, debtAmount: 25000 - paidAmount, buyerName: 'Александр Иванов' })
+        if (savedDetails) record.maintenanceDetails = savedDetails
+      }
+      if (record?.id === '1' && savedIntake) Object.assign(record, savedIntake)
+      if (record?.id === '1') record.version = intakeDamagesVersion
+      const vehicleMatch = url.pathname.match(/^\/api\/v1\/vehicles\/([^/]+)$/)
+      const works = services.map((detail, index) => ({
+        detailId: detail.detailId, name: detail.name, employeeName: detail.employeeName,
+        status: index < 2 ? 4 : index === 2 ? 2 : 1, version: 1, activeTime: index < 2 ? '01:30:00' : index === 2 ? '00:45:00' : '00:00:00'
+      }))
+      if (params.has('free') && !params.has('tracked')) {
+        works.forEach(work => Object.assign(work, { status: 1, version: 0, hasAssignedEmployee: false }))
+      }
+      const payload = url.pathname.endsWith('/context') ? context
+        : url.pathname.endsWith('/scenario-catalog') ? { workPosts: demo.catalog, services: catalogServices, serviceBundles: catalogBundles }
+        : url.pathname.endsWith('/visualization') || url.pathname.endsWith('/workday') ? demo.day
+        : vehicleMatch ? { id: vehicleMatch[1], kind: 1, mileageUnit: 1, brandName: 'BMW', modelName: 'X3', brandLogoKey: 'bmw', registrationPlate: 'А001АА 154', yearIssue: 2021, organizationId, isManualEntry: false, isArchived: false, maintenanceCount: 1 }
+        : url.pathname.endsWith('/progress') ? works
+        : url.pathname.endsWith('/occupied-slots') ? []
+        : url.pathname.endsWith('/reports') ? params.has('extra') ? [pendingExtraReport] : []
+        : url.pathname.endsWith('/production-report') ? { totalOperations: 4, completedOperations: 2, activeTime: '03:45:00', timeAdjustmentsCount: 0, materials: [] }
+        : url.pathname.endsWith('/employees') || url.pathname === '/api/v1/vehicles' ? { items: [] }
+        : url.pathname.endsWith('/payments') ? (params.has('history-error') ? null : payments)
+        : url.pathname.endsWith('/clients/options') ? [{ id: 'demo-client', name: 'Александр Иванов' }, { id: 'company-client', name: 'ООО «Автосфера»' }]
+        : url.pathname.endsWith('/options') ? []
+        : recordMatch ? record
+        : url.pathname.match(/^\/api\/v1\/media\/maintenance\/[^/]+\/photos$/) ? [{ photoId: 'before', stage: 1, createdAt: today, url: demoPhoto }, { photoId: 'after', stage: 2, createdAt: today, url: demoPhoto }]
+        : url.pathname.endsWith('/notifications') ? [] : null
+      return payload ? Response.json(payload) : new Response(null, { status: 404 })
+    }
+    if (!location.hash) location.hash = '#maintenance/1'
+    await import('../Scenarios/detailing-client/src/main.ts')
+    const theme = params.get('theme')
+    if (theme === 'light' || theme === 'dark') {
+      const { syncWorkspaceThemeFromDocument } = await import('../packages/ui/src/workspaceTheme.ts')
+      document.documentElement.dataset.crmTheme = theme
+      syncWorkspaceThemeFromDocument()
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+.support-attachments { display: grid; gap: 8px; min-width: 0; }
+.support-attachments__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.support-attachments input.support-attachments__input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; border: 0; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+.support-attachments .support-attachments__add { display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 7px 10px; border: 1px solid var(--crm-line, #dce2e8); border-radius: 8px; background: var(--crm-surface, #fff); color: var(--crm-text, #182537); font-size: 13px; font-weight: 500; line-height: 20px; cursor: pointer; }
+.support-attachments__add .fa { font-size: 16px; }
+.support-attachments .support-attachments__add:hover { background: var(--crm-surface-soft, #f5f7fa); }
+.support-attachments__input:focus-visible + .support-attachments__add, .support-attachments__remove:focus-visible { outline: 2px solid var(--crm-accent, #bf4b06); outline-offset: 2px; }
+.support-attachments #support-attachments-help { color: var(--crm-text-muted, #697783); font-size: 12px; line-height: 18px; }
+.support-attachments ul { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.support-attachments li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 8px 5px 10px; border-radius: 8px; background: var(--crm-surface-soft, #f5f7fa); color: var(--crm-text, #182537); }
+.support-attachments__icon { flex-shrink: 0; width: 16px; color: var(--crm-text-muted, #697783); text-align: center; }
+.support-attachments__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.support-attachments__size { flex-shrink: 0; color: var(--crm-text-muted, #697783); font-size: 12px; white-space: nowrap; }
+.support-attachments .support-attachments__remove { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 30px; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--crm-text-muted, #697783); font-size: 21px; line-height: 1; cursor: pointer; }
+.support-attachments .support-attachments__remove:hover { background: var(--crm-surface, #fff); color: var(--crm-text, #182537); }
+.support-attachments .support-attachments__error { margin: 0; color: var(--crm-danger, #b42318); font-size: 13px; line-height: 18px; }
+.support-attachments ul:empty, .support-attachments__error:empty { display: none; }

@@ -1,0 +1,30 @@
+{
+  "version": "sedan-v1",
+  "width": 1619,
+  "height": 971,
+  "generation": {
+    "sourceFile": "scripts/assets/intake-body-projections.png",
+    "sourceSha256": "1B4B73C27A642F4DD33B37D2DEFDBB03F0F6C158361FA0C76EDD270954AD0D79",
+    "scale": 2,
+    "sampler": "nearest-neighbor",
+    "clearedTopRowsForSideViews": 20
+  },
+  "views": {
+    "front": {
+      "file": "front.png",
+      "sha256": "19890012EF39414DA1A5D20B2DC7AAE16A808A3E27C96937918B236F55032627"
+    },
+    "rear": {
+      "file": "rear.png",
+      "sha256": "A0AEC36DF2F7510D320273D7A0DDBEE68C0CFD882AE05C0F63E9964BA9D1B499"
+    },
+    "left": {
+      "file": "left.png",
+      "sha256": "583C3C35119AB0380FC4D8306F10DB2E64D4511A21BDF70341BF878F7091B5B9"
+    },
+    "right": {
+      "file": "right.png",
+      "sha256": "E988B5C39D75E6DC41867C0B41D6206F8E7E44D9180C85EB5A173D2DB07E5E34"
+    }
+  }
+}

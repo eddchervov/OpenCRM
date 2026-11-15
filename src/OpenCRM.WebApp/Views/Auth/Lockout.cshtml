@@ -1,0 +1,98 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    ViewData["Title"] = "Аккаунт временно заблокирован";
+    var lockoutTimeSpan = TimeSpan.Parse(Configuration["IdentitySettings:Lockout:DefaultLockoutTimeSpan"]);
+    var totalMinutes = (int)lockoutTimeSpan.TotalMinutes;
+    var totalSeconds = (int)lockoutTimeSpan.TotalSeconds;
+}
+
+<div class="auth-page">
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-container extra-narrow-form">
+                <div class="auth-form-wrapper text-center">
+                    <!-- SVG иконка блокировки -->
+                    <div class="auth-lock-icon mb-4">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 15V17M6 21H18C19.1046 21 20 20.1046 20 19V13C20 11.8954 19.1046 11 18 11H6C4.89543 11 4 11.8954 4 13V19C4 20.1046 4.89543 21 6 21Z" stroke="#DC3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11" stroke="#DC3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M12 15H12.01" stroke="#DC3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+
+                    <h1 class="auth-title text-danger">Доступ временно ограничен</h1>
+
+                    <div class="alert alert-danger auth-alert-message" role="alert">
+                        <p class="mb-2">Возможные причины блокировки:</p>
+                        <ul class="text-start ps-4">
+                            <li>Слишком много неудачных попыток входа</li>
+                            <li>Подозрительная активность в аккаунте</li>
+                            <li>Технические работы на сервере</li>
+                            <li>Нарушение правил использования сервиса</li>
+                        </ul>
+                    </div>
+
+                    <div class="auth-lock-details mt-4 mb-4">
+                        <p class="text-muted small">Автоматическая разблокировка через:</p>
+                        <div class="auth-timer h4 text-danger" data-seconds="@totalSeconds">
+                            @($"{totalMinutes:00} минут")
+                        </div>
+                        <p class="text-muted small mt-2">Если блокировка сохраняется дольше, пожалуйста, обратитесь в поддержку</p>
+                    </div>
+
+                    <div class="auth-actions d-grid gap-2">
+                        <a href="~/personal/support" class="btn btn-dark">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                                <path d="M18.364 5.636L16.95 7.05C15.8043 5.90432 14.2841 5.20854 12.667 5.07686C11.0498 4.94518 9.43862 5.38591 8.11193 6.32538C6.78524 7.26485 5.82053 8.64357 5.38231 10.2259C4.94409 11.8083 5.05714 13.4924 5.703 14.997L3 17.7V21H6.3L9.003 18.297C10.5076 18.9429 12.1917 19.0559 13.7741 18.6177C15.3564 18.1795 16.7352 17.2148 17.6746 15.8881C18.6141 14.5614 19.0548 12.9502 18.9231 11.333C18.7915 9.71586 18.0957 8.19566 16.95 7.05L18.364 5.636C19.7913 7.06331 20.6566 9.00888 20.7789 11.0799C20.9013 13.1509 20.2713 15.195 19 16.828L21 18.828L18.828 21L16.828 19C15.195 20.2713 13.1509 20.9013 11.0799 20.7789C9.00888 20.6566 7.06331 19.7913 5.636 18.364C4.20869 16.9367 3.34344 14.9911 3.22111 12.9201C3.09877 10.8491 3.72872 8.80499 5 7.172L3 5.172L5.172 3L7.172 5C8.80499 3.72872 10.8491 3.09877 12.9201 3.22111C14.9911 3.34344 16.9367 4.20869 18.364 5.636Z" fill="currentColor" />
+                            </svg>
+                            Связаться с поддержкой
+                        </a>
+                        <a href="~/" class="btn btn-outline-dark">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                                <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9.55228 21 10 20.5523 10 20V16C10 15.4477 10.4477 15 11 15H13C13.5523 15 14 15.4477 14 16V20C14 20.5523 14.4477 21 15 21M9 21H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            На главную страницу
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+
+<style>
+    /* Анимация иконки */
+    .auth-lock-icon {
+        animation: pulse 2s infinite;
+    }
+
+    /* Стили для таймера */
+    .auth-timer {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+
+    /* Список причин */
+    .auth-alert-message ul {
+        margin-bottom: 0;
+    }
+
+    /* Анимация пульсации */
+    @@keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+

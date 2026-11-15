@@ -1,0 +1,298 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             xmlns:api="using:OpenCRM.Admin.Api.Models"
+             x:Class="OpenCRM.Admin.App.Views.OrganizationsView"
+             x:DataType="vm:OrganizationsViewModel">
+  <UserControl.Styles>
+    <Style Selector="TextBox"><Setter Property="MinHeight" Value="38" /></Style>
+    <Style Selector="Button.sort-header">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="0,8" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="TextBlock.section-title">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.metric-value">
+      <Setter Property="FontSize" Value="26" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.organization-summary TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+  </UserControl.Styles>
+  <UserControl.Resources>
+    <ControlTheme x:Key="OrganizationRowTheme" TargetType="ListBoxItem">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#F1F1F1" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover"><Setter Property="Background" Value="#1D252E" /></Style>
+      <Style Selector="^:selected"><Setter Property="Background" Value="#23384A" /></Style>
+    </ControlTheme>
+  </UserControl.Resources>
+  <Grid>
+    <Grid IsVisible="{Binding IsListOpen}" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="12">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Text="Организации" Classes="heading" AutomationProperties.AutomationId="OrganizationsHeading" />
+        <TextBlock Grid.Column="1" Text="{Binding TotalLabel}" Classes="caption" VerticalAlignment="Center" Margin="12,0" />
+        <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" />
+      </Grid>
+      <Border Grid.Row="1" Background="#191D22" BorderBrush="#414B58" BorderThickness="1" CornerRadius="8" Padding="12">
+        <WrapPanel>
+          <TextBox Text="{Binding Search}" PlaceholderText="Поиск по организации" Width="260" Margin="0,0,8,8"
+                   KeyDown="OnFilterKeyDown" AutomationProperties.AutomationId="OrganizationsSearch" />
+          <TextBox Text="{Binding User}" PlaceholderText="Пользователь: id, email или телефон" Width="300" Margin="0,0,8,8"
+                   KeyDown="OnFilterKeyDown" AutomationProperties.AutomationId="OrganizationsUserFilter" />
+          <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,8" />
+          <Button Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,8,8" />
+        </WrapPanel>
+      </Border>
+      <StackPanel Grid.Row="2" Spacing="6">
+        <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <ProgressBar IsVisible="{Binding IsLoadingList}" IsIndeterminate="True" Height="3" />
+      </StackPanel>
+      <WrapPanel Grid.Row="3">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,20,0">
+          <TextBlock Text="На странице" Classes="caption" VerticalAlignment="Center" />
+          <ComboBox ItemsSource="{Binding AvailablePageSizes}" SelectedItem="{Binding PageSize}" IsEnabled="{Binding !IsLoading}" Width="74" />
+        </StackPanel>
+        <views:ListPagination PageLabel="{Binding PageLabel}" PreviousCommand="{Binding PreviousPageCommand}" NextCommand="{Binding NextPageCommand}" />
+        <Button Content="Открыть организацию" Command="{Binding OpenCardCommand}" CommandParameter="{Binding SelectedOrganization}"
+                Margin="12,0,0,0" AutomationProperties.AutomationId="OpenOrganizationCard" />
+      </WrapPanel>
+      <Border Grid.Row="4" Classes="card" Padding="0" ClipToBounds="True" AutomationProperties.AutomationId="OrganizationsTable">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <Grid MinWidth="{Binding TableMinWidth}" Width="{Binding $parent[ScrollViewer].Viewport.Width}" RowDefinitions="Auto,*">
+            <Grid Margin="12,8" Background="#161A20">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240*" />
+                <ColumnDefinition Width="180*" />
+                <ColumnDefinition Width="110*" />
+                <ColumnDefinition Width="90*" />
+                <ColumnDefinition Width="{Binding CommercialColumnWidth}" />
+                <ColumnDefinition Width="90*" />
+                <ColumnDefinition Width="80*" />
+                <ColumnDefinition Width="80*" />
+                <ColumnDefinition Width="80*" />
+                <ColumnDefinition Width="104*" />
+              </Grid.ColumnDefinitions>
+              <Button Content="{Binding NameHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="name" AutomationProperties.AutomationId="OrganizationsSortName" />
+              <Button Grid.Column="1" Content="{Binding OwnerHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="owner" />
+              <Button Grid.Column="2" Content="{Binding ScenarioHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="scenario" />
+              <Button Grid.Column="3" Content="{Binding StatusHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="status" />
+              <Button Grid.Column="4" IsVisible="{Binding CanViewCommercial}" Content="{Binding SubscriptionHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="subscription" />
+              <Button Grid.Column="5" Content="{Binding MembersHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="members" />
+              <Button Grid.Column="6" Content="{Binding ClientsHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="clients" />
+              <Button Grid.Column="7" Content="{Binding VehiclesHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="vehicles" />
+              <Button Grid.Column="8" Content="{Binding OrdersHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="orders" />
+              <Button Grid.Column="9" Content="{Binding CreatedHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="created" />
+            </Grid>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedOrganization}"
+                     ItemContainerTheme="{StaticResource OrganizationRowTheme}" Background="Transparent" BorderThickness="0" Padding="0"
+                     DoubleTapped="OnOrganizationDoubleTapped" KeyDown="OnListKeyDown"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.AutomationId="OrganizationsList">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:AdminOrganizationRow">
+                  <Border BorderBrush="#292929" BorderThickness="0,1,0,0" Padding="12,10"
+                          Width="{Binding $parent[ListBox].Bounds.Width}" HorizontalAlignment="Left">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240*" />
+                        <ColumnDefinition Width="180*" />
+                        <ColumnDefinition Width="110*" />
+                        <ColumnDefinition Width="90*" />
+                        <ColumnDefinition Width="{Binding CommercialColumnWidth}" />
+                        <ColumnDefinition Width="90*" />
+                        <ColumnDefinition Width="80*" />
+                        <ColumnDefinition Width="80*" />
+                        <ColumnDefinition Width="80*" />
+                        <ColumnDefinition Width="104*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                      <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center" Margin="0,0,12,0" ClipToBounds="True">
+                        <TextBlock Text="{Binding Owner}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Owner}" />
+                        <TextBlock Text="{Binding OwnerContacts}" Classes="caption" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OwnerContacts}" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding Scenario}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="3" Text="{Binding Status}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" />
+                      <StackPanel Grid.Column="4" IsVisible="{Binding IsCommercialVisible}" Spacing="3" VerticalAlignment="Center" Margin="0,0,12,0" ClipToBounds="True">
+                        <TextBlock Text="{Binding Plan}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Plan}" />
+                        <TextBlock Text="{Binding PlanEnd}" Classes="caption" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="5" Text="{Binding MembersCount}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="6" Text="{Binding ClientsCount}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="7" Text="{Binding VehiclesCount}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="8" Text="{Binding OrdersCount}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="9" Text="{Binding CreatedAt}" Classes="caption" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="Организации не найдены" Classes="muted" Margin="20,32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <ScrollViewer IsVisible="{Binding IsCardOpen}" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Button Content="← К списку" Command="{Binding BackToListCommand}" AutomationProperties.AutomationId="OrganizationCardBack" />
+          <TextBlock Grid.Column="1" Text="{Binding Organization.Name}" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Organization.Name}" />
+          <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCardCommand}" />
+        </Grid>
+        <ProgressBar IsVisible="{Binding IsLoadingCard}" IsIndeterminate="True" Height="3" />
+        <TextBlock IsVisible="{Binding HasCardError}" Text="{Binding CardErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding StatusChangeMessage}" TextWrapping="Wrap"
+                   IsVisible="{Binding StatusChangeMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <Border Classes="card" Padding="16" IsVisible="{Binding CanManageOrganizations}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Управление организацией" Classes="section-title" />
+            <WrapPanel Orientation="Horizontal">
+              <Button Content="Принудительно архивировать" Command="{Binding RequestArchiveCommand}" Margin="0,0,8,0"
+                      AutomationProperties.AutomationId="OrganizationArchive" />
+              <Button Content="Восстановить из архива" Command="{Binding RequestRestoreCommand}"
+                      AutomationProperties.AutomationId="OrganizationRestore" />
+            </WrapPanel>
+            <StackPanel Spacing="8" IsVisible="{Binding HasPendingStatusChange}">
+              <TextBlock Text="{Binding Organization.Name, StringFormat='Организация: {0}'}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Organization.Owner, StringFormat='Владелец: {0}'}" />
+              <SelectableTextBlock Text="{Binding Organization.Id}" />
+              <TextBlock Text="{Binding StatusChangeWarning}" TextWrapping="Wrap" Foreground="#F4CACA" />
+              <TextBox Text="{Binding StatusChangeReason}" PlaceholderText="Обязательная причина для аудита" MaxLength="2000"
+                       IsEnabled="{Binding !IsChangingStatus}" AutomationProperties.AutomationId="OrganizationStatusReason" />
+              <CheckBox Content="Подтверждаю действие для указанной организации" IsChecked="{Binding IsStatusChangeConfirmed}"
+                        IsEnabled="{Binding !IsChangingStatus}" AutomationProperties.AutomationId="OrganizationStatusConfirmed" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Выполнить" Command="{Binding ConfirmStatusChangeCommand}" Classes="primary"
+                        AutomationProperties.AutomationId="OrganizationStatusConfirm" />
+                <Button Content="Отмена" Command="{Binding CancelStatusChangeCommand}" />
+              </StackPanel>
+            </StackPanel>
+            <ProgressBar IsVisible="{Binding IsChangingStatus}" IsIndeterminate="True" Height="3" />
+          </StackPanel>
+        </Border>
+        <StackPanel IsVisible="{Binding Organization, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
+          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12" AutomationProperties.AutomationId="OrganizationSummary">
+            <Border Classes="card organization-summary" Padding="20">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Организация" Classes="section-title" />
+                <TextBlock Text="{Binding Organization.Name}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Organization.Description}" Classes="caption" IsVisible="{Binding Organization.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <TextBlock Text="{Binding Organization.ScenarioName}" />
+                  <TextBlock Text="{Binding Organization.StatusName}" />
+                </StackPanel>
+                <TextBlock Text="{Binding CreatedAtLabel, StringFormat='Создана: {0}'}" Classes="caption" />
+                <TextBlock Text="{Binding UpdatedAtLabel, StringFormat='Изменена: {0}'}" Classes="caption" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card organization-summary" Padding="20">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Владелец и контакты" Classes="section-title" />
+                <TextBlock Text="{Binding Organization.Owner}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Organization.OwnerEmail}" IsVisible="{Binding Organization.OwnerEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <TextBlock Text="{Binding Organization.OwnerPhone}" IsVisible="{Binding Organization.OwnerPhone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <TextBlock Text="{Binding Organization.LegalName}" Classes="caption" IsVisible="{Binding Organization.LegalName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <TextBlock Text="{Binding Organization.Inn, StringFormat='ИНН: {0}'}" Classes="caption" IsVisible="{Binding Organization.Inn, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <TextBlock Text="{Binding Organization.Phone}" Classes="caption" IsVisible="{Binding Organization.Phone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <TextBlock Text="{Binding Organization.Email}" Classes="caption" IsVisible="{Binding Organization.Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="card organization-summary" Padding="20">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Подписка" Classes="section-title" IsVisible="{Binding CanViewCommercial}" />
+                <TextBlock Text="{Binding ActiveSubscriptionLabel}" FontSize="18" FontWeight="SemiBold" IsVisible="{Binding CanViewCommercial}" />
+                <TextBlock Text="{Binding SubscriptionEndLabel, StringFormat='Действует до: {0}'}" Classes="caption" IsVisible="{Binding CanViewCommercial}" />
+                <TextBlock Text="Последняя активность" Classes="caption" Margin="0,8,0,0" />
+                <TextBlock Text="{Binding Organization.LastAuditTitle}" />
+                <TextBlock Text="{Binding Organization.LastAuditAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" Classes="caption" />
+              </StackPanel>
+            </Border>
+          </Grid>
+          <StackPanel Spacing="12">
+            <TextBlock Text="Статистика за всё время" Classes="section-title" Margin="4,8,0,0" />
+            <UniformGrid Columns="4" AutomationProperties.AutomationId="OrganizationMetrics">
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Участники" Classes="caption" /><TextBlock Text="{Binding Organization.MembersCount}" Classes="metric-value" /><TextBlock Text="{Binding Organization.AdminsCount, StringFormat='Администраторов: {0}'}" Classes="caption" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Клиенты" Classes="caption" /><TextBlock Text="{Binding Organization.ClientsCount}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Техника" Classes="caption" /><TextBlock Text="{Binding Organization.VehiclesCount}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Заказы" Classes="caption" /><TextBlock Text="{Binding Organization.WorkOrdersCount}" Classes="metric-value" /><TextBlock Text="{Binding Organization.CompletedWorkOrdersCount, StringFormat='Завершено: {0}'}" Classes="caption" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Заказы после скидок" Classes="caption" /><TextBlock Text="{Binding WorkOrdersTotalLabel}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Оплачено по заказам" Classes="caption" /><TextBlock Text="{Binding PaymentsTotalLabel}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Стоимость запасов" Classes="caption" /><TextBlock Text="{Binding InventoryValueLabel}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Приглашения" Classes="caption" /><TextBlock Text="{Binding Organization.PendingInvitationsCount}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Обслуживания" Classes="caption" /><TextBlock Text="{Binding Organization.MaintenancesCount}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Открытые дефекты" Classes="caption" /><TextBlock Text="{Binding Organization.OpenDefectsCount}" Classes="metric-value" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Задачи планировщика" Classes="caption" /><TextBlock Text="{Binding Organization.SchedulerTasksCount}" Classes="metric-value" /><TextBlock Text="{Binding Organization.OverdueTasksCount, StringFormat='Просрочено: {0}'}" Classes="caption" /></StackPanel></Border>
+              <Border Classes="card" Padding="18" Margin="0,0,8,8"><StackPanel Spacing="6"><TextBlock Text="Позиции склада" Classes="caption" /><TextBlock Text="{Binding Organization.StockItemsCount}" Classes="metric-value" /><TextBlock Text="{Binding Organization.LowStockItemsCount, StringFormat='Низкий запас: {0}'}" Classes="caption" /></StackPanel></Border>
+            </UniformGrid>
+          </StackPanel>
+          <Border Classes="card" Padding="16" IsVisible="{Binding Organization.Members.Count}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Участники" Classes="section-title" />
+              <ItemsControl ItemsSource="{Binding Organization.Members}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="api:AdminOrganizationMember">
+                    <Grid ColumnDefinitions="2*,2*,1.5*,110,110" Margin="0,4">
+                      <StackPanel Spacing="4" Margin="0,0,12,0"><TextBlock Text="{Binding User}" TextTrimming="CharacterEllipsis" /><SelectableTextBlock Text="{Binding UserId}" Classes="caption" TextWrapping="Wrap" /></StackPanel>
+                      <TextBlock Grid.Column="1" Text="{Binding Email}" Classes="caption" />
+                      <TextBlock Grid.Column="2" Text="{Binding Phone}" Classes="caption" /><TextBlock Grid.Column="3" Text="{Binding RoleCode}" Classes="caption" Margin="12,0" />
+                      <TextBlock Grid.Column="4" Text="{Binding JoinedAt, StringFormat='{}{0:dd.MM.yyyy}'}" Classes="caption" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Border Classes="card" Padding="16" IsVisible="{Binding Organization.PendingInvitations.Count}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Ожидающие приглашения" Classes="section-title" />
+              <ItemsControl ItemsSource="{Binding Organization.PendingInvitations}">
+                <ItemsControl.ItemTemplate><DataTemplate x:DataType="api:AdminOrganizationInvitation">
+                  <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,4"><TextBlock Text="{Binding Email}" /><TextBlock Grid.Column="1" Text="{Binding RoleCode}" Classes="caption" Margin="12,0" /><TextBlock Grid.Column="2" Text="{Binding InvitedBy}" Classes="caption" Margin="12,0" /><TextBlock Grid.Column="3" Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" Classes="caption" /></Grid>
+                </DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Border Classes="card" Padding="16" IsVisible="{Binding Organization.RecentAudit.Count}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Последние события" Classes="section-title" />
+              <ItemsControl ItemsSource="{Binding Organization.RecentAudit}">
+                <ItemsControl.ItemTemplate><DataTemplate x:DataType="api:AdminOrganizationAudit">
+                  <StackPanel Margin="0,8" Spacing="4" ToolTip.Tip="{Binding EventType}"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" /><TextBlock Text="{Binding Description}" Classes="caption" TextWrapping="Wrap" /><TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" Classes="caption" /></StackPanel>
+                </DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Expander Header="Служебные сведения" HorizontalAlignment="Stretch">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="24" Margin="16">
+              <StackPanel Spacing="6">
+                <TextBlock Text="ID пользователя" Classes="caption" /><SelectableTextBlock Text="{Binding Organization.OwnerUserId}" />
+                <TextBlock Text="{Binding Organization.PrimaryScenarioCode, StringFormat='Код сценария: {0}'}" Classes="caption" />
+                <TextBlock Text="{Binding Organization.DocumentStyleCode, StringFormat='Стиль документов: {0}'}" Classes="caption" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="6">
+                <TextBlock Text="{Binding ArchiveDateLabel, StringFormat='Архивирована: {0}'}" Classes="caption" />
+                <TextBlock Text="{Binding DeletionDateLabel, StringFormat='Удалена: {0}'}" Classes="caption" />
+              </StackPanel>
+            </Grid>
+          </Expander>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

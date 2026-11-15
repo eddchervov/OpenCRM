@@ -1,0 +1,44 @@
+@model OpenCRM.WebApp.Models.Emails.UnsubscribeViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/platform-pages.css" asp-append-version="true" />
+}
+
+<div class="platform-page">
+    <div class="container platform-page-shell">
+        <nav aria-label="breadcrumb" class="platform-page-breadcrumbs">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="~/" class="text-decoration-none">Главная</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Отписка от рассылки</li>
+            </ol>
+        </nav>
+
+        <div class="platform-page-hero">
+            <div class="platform-page-kicker">
+                <i class="fa @(Model.Succeeded ? "fa-check" : "fa-exclamation-triangle")"></i>
+                Email-уведомления
+            </div>
+            <h1 class="platform-page-title">@Model.Title</h1>
+            <p class="platform-page-subtitle">@Model.Message</p>
+        </div>
+
+        <div class="platform-page-panel">
+            @if (!string.IsNullOrWhiteSpace(Model.Email))
+            {
+                <p class="mb-4">
+                    Адрес: <strong>@Model.Email</strong>
+                </p>
+            }
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="~/" class="btn btn-primary">На главную</a>
+                <a href="~/personal/support" class="btn btn-outline-secondary">Связаться с поддержкой</a>
+            </div>
+        </div>
+    </div>
+</div>

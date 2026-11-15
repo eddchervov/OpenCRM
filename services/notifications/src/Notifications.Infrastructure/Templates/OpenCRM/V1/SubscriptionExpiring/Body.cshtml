@@ -1,0 +1,13 @@
+@model SubscriptionExpiringModel
+@{
+    Layout = "/Templates/OpenCRM/V1/_Layout.cshtml";
+    var endDate = Model.EndDate.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"));
+}
+<h1 style="margin:0 0 24px;font-size:26px;">Срок подписки подходит к концу</h1>
+<p style="line-height:1.6;">Здравствуйте, @Model.Name!</p>
+<p style="line-height:1.6;">Ваша подписка «@Model.SubscriptionName» действует до @endDate.</p>
+<p style="line-height:1.6;">Продлить подписку можно в личном кабинете.</p>
+<p style="margin:28px 0;">
+    <a href="@Model.RenewalUrl" style="display:inline-block;padding:14px 20px;background:#1f6feb;color:#fff;text-decoration:none;border-radius:6px;">Перейти к подписке</a>
+</p>
+<p style="font-size:14px;line-height:1.6;">Если вы уже продлили подписку, дополнительных действий не требуется.</p>

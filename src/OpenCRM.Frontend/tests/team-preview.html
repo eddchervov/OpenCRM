@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — команда</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const readonly = params.has('readonly')
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: { id: organizationId, name: 'Демо-студия · тестовые данные', primaryScenarioCode: scenario },
+      workspaceAccess: { isReadOnly: readonly, isBaseWorkspace: false, hasActiveSubscription: true, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'employees', title: 'Команда', isVisible: true, groupTitle: 'Настройки', urlTemplate: '#employees' },
+          { code: 'members', title: 'Права и доступ', isVisible: true, groupTitle: 'Настройки', urlTemplate: '#members' }
+        ], quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', api: {} }
+    }
+    const employees = [
+      { id: 'alexey', name: 'Алексей Смирнов', phone: '+7 000 000-00-00', memberId: 'member-alexey', isActive: true, version: 1 },
+      { id: 'dmitry', name: 'Дмитрий Козлов', phone: '+7 000 000-00-00', memberId: null, isActive: true, version: 1 },
+      { id: 'anna', name: 'Анна Соколова', phone: '', memberId: null, isActive: true, version: 1 },
+      { id: 'archive', name: 'Сергей Петров', phone: '', memberId: null, isActive: false, version: 1 },
+      { id: 'maria', name: 'Мария Иванова', phone: '+7 000 000-00-00', memberId: 'member-elena', isActive: false, version: 1 }
+    ]
+    const roleOptions = [{ code: 'performer', name: 'Исполнитель' }, { code: 'employee', name: 'Сотрудник' }, { code: 'administrator', name: 'Администратор' }]
+    const members = [
+      { id: 'member-alexey', userId: 'user-alexey', email: 'contact@example.invalid', roleCode: 'performer', roleName: 'Исполнитель', isOwner: false },
+      { id: 'member-elena', userId: 'user-elena', email: 'contact@example.invalid', roleCode: 'administrator', roleName: 'Администратор', isOwner: false },
+      { id: 'owner', userId: 'owner', email: 'contact@example.invalid', roleCode: 'owner', roleName: 'Владелец', isOwner: true }
+    ]
+    for (const member of members) member.joinedAt = '2026-09-01T09:00:00Z'
+    const invitations = [{ id: 'invitation-anna', employeeId: 'anna', email: 'contact@example.invalid', roleCode: 'performer', roleName: 'Исполнитель', createdAt: '2026-10-17T12:00:00Z', statusCode: 'pending', statusName: 'Ожидает принятия' }]
+    const permissionDefinitions = [
+      { code: 'workspace.view', name: 'Вход в рабочее пространство', groupName: 'Рабочее пространство', description: 'Доступ к CRM выбранной организации.' },
+      { code: 'maintenance.view', name: 'Просмотр работ', groupName: 'Работы и записи', description: 'Просмотр заказов и истории обслуживания.' },
+      { code: 'maintenance.manage', name: 'Управление работами', groupName: 'Работы и записи', description: 'Создание записей, изменение состава работ и статуса.' },
+      { code: 'shifts.view', name: 'Просмотр смен', groupName: 'Смены', description: 'Расписание и состав рабочих смен.' },
+      { code: 'shifts.manage', name: 'Управление сменами', groupName: 'Смены', description: 'Изменение расписания и назначение сотрудников.' },
+      { code: 'finance.view', name: 'Просмотр финансов', groupName: 'Финансы', description: 'Суммы заказов и история платежей.' },
+      { code: 'finance.manage', name: 'Управление финансами', groupName: 'Финансы', description: 'Учёт и отмена платежей.' },
+      { code: 'members.manage', name: 'Управление командой', groupName: 'Команда', description: 'Приглашение участников и настройка доступа.' }
+    ]
+    const rolePermissionMatrix = [{ code: 'owner', name: 'Владелец' }, ...roleOptions].map(role => ({
+      roleCode: role.code, roleName: role.name, canEdit: role.code !== 'owner',
+      permissions: permissionDefinitions.map((permission, index) => ({ ...permission, isWritePermission: permission.code.endsWith('.manage'), isEnabled: role.code === 'owner' || role.code === 'administrator' || index < 2 }))
+    }))
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      const method = (init?.method || 'GET').toUpperCase()
+      if (method !== 'GET') {
+        if (readonly) return new Response(null, { status: 403 })
+        if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка: изменения не сохранены.' }, { status: 400 })
+        const body = init?.body ? JSON.parse(init.body) : null
+        const route = url.pathname.split('/organizations/' + organizationId)[1]
+        const roleName = code => roleOptions.find(role => role.code === code)?.name || code
+        if (route === '/employees' || route === '/employees/with-invitation' || route === '/employees/for-member') {
+          const employee = { ...body, id: crypto.randomUUID(), memberId: body.memberId || null, isActive: body.isActive ?? true, version: 1 }
+          employees.push(employee)
+          if (route.endsWith('/with-invitation')) invitations.push({ ...body, id: crypto.randomUUID(), employeeId: employee.id, roleName: roleName(body.roleCode), statusName: 'Ожидает принятия', createdAt: new Date().toISOString(), statusCode: 'pending' })
+          return Response.json({ id: employee.id, employeeId: employee.id })
+        }
+        const employee = employees.find(item => route === '/employees/' + item.id || route === '/employees/' + item.id + '/member')
+        if (employee && method === 'PUT') { Object.assign(employee, body, { version: employee.version + 1 }); return Response.json({}) }
+        if (route === '/workspace/members/invitations' && method === 'POST') {
+          invitations.push({ ...body, id: crypto.randomUUID(), roleName: roleName(body.roleCode), statusCode: 'pending' })
+          return Response.json({ message: 'Приглашение создано в тестовых данных' })
+        }
+        const permissionRole = rolePermissionMatrix.find(role => route === '/workspace/members/permissions/' + role.roleCode)
+        if (permissionRole && method === 'PUT' && permissionRole.canEdit) {
+          for (const permission of permissionRole.permissions) permission.isEnabled = body.enabledPermissionCodes.includes(permission.code)
+          return Response.json({ message: 'Права сохранены в тестовых данных' })
+        }
+        const member = members.find(item => route === '/workspace/members/' + item.id + '/role')
+        if (member && method === 'PUT' && !member.isOwner) { Object.assign(member, body, { roleName: roleName(body.roleCode) }); return Response.json({}) }
+        const removedMemberIndex = members.findIndex(item => route === '/workspace/members/' + item.id)
+        if (removedMemberIndex >= 0 && method === 'DELETE' && !members[removedMemberIndex].isOwner) {
+          const id = members[removedMemberIndex].id
+          members.splice(removedMemberIndex, 1)
+          for (const employee of employees) if (employee.memberId === id) { employee.memberId = null; employee.version++ }
+          return Response.json({})
+        }
+        const newOwner = members.find(item => route === '/workspace/members/' + item.id + '/transfer-ownership')
+        if (newOwner && method === 'POST') {
+          for (const member of members) { member.isOwner = member === newOwner; if (member.isOwner) { member.roleCode = 'owner'; member.roleName = 'Владелец' } }
+          return Response.json({})
+        }
+        const invitationIndex = invitations.findIndex(item => route === '/workspace/members/invitations/' + item.id)
+        if (invitationIndex >= 0 && method === 'DELETE') { invitations.splice(invitationIndex, 1); return Response.json({}) }
+        return new Response(null, { status: 403 })
+      }
+      if (url.pathname.endsWith('/context')) return Response.json(context)
+      if (url.pathname.endsWith('/employees')) return Response.json({ items: employees, members, canManage: !readonly, canLinkMembers: !readonly })
+      if (url.pathname.endsWith('/workspace/members')) return Response.json({ organization: { ...context.organization, currentUserRoleCode: 'owner', currentUserRoleName: 'Владелец', membersCount: members.length, members, pendingInvitations: invitations, invitations }, canManageMembers: !readonly, canInviteMembers: !readonly, canManageRoles: !readonly, canRemoveMembers: !readonly, roleOptions, rolePermissionMatrix })
+      return Response.json([])
+    }
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: '/api/v1/autoservice/organizations/' + organizationId + '/workspace/context' }
+    window.opencrmFleetClient = { organizationId, contextUrl: '/api/v1/fleet/organizations/' + organizationId + '/workspace/context' }
+    if (!location.hash) location.hash = '#employees'
+    if (scenario === 'autoservice') await import('../Scenarios/autoservice-client/src/main.ts')
+    else if (scenario === 'fleet') await import('../Scenarios/fleet-client/src/main.ts')
+    else await import('../Scenarios/detailing-client/src/main.ts')
+  </script>
+</body>
+</html>

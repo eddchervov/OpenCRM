@@ -1,0 +1,9 @@
+{
+  "Brand": {
+    "DisplayName": "OpenCRM",
+    "TelegramUrl": "",
+    "VkUrl": "",
+    "InstagramUrl": "",
+    "PublicBaseUrl": "https://localhost:7142"
+  }
+}

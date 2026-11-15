@@ -1,0 +1,11 @@
+@model SupportMessageModel
+@{ Layout = "/Templates/OpenCRM/V1/_Layout.cshtml"; }
+<h1>Новое обращение через сайт</h1>
+<p><strong>Тип:</strong> @Model.TypeName</p>
+<p><strong>Имя:</strong> @Model.Name</p>
+<p><strong>Email:</strong> @Model.Email</p>
+<p><strong>Телефон:</strong> @Model.Phone</p>
+<p><strong>Тема:</strong> @Model.Topic</p>
+<p><strong>Текст:</strong></p>
+<p style="white-space:pre-wrap;">@Model.Text</p>
+<p>Откройте админку: /Admin/SupportMessages</p>

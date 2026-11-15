@@ -1,0 +1,132 @@
+#vehicle-edit-page .breadcrumb {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0.85rem 1rem;
+    border-radius: 999px;
+    background: var(--v2-color-surface-alt);
+}
+
+#vehicle-edit-page .vehicle-edit-container {
+    width: 100%;
+    max-width: 980px;
+}
+
+#vehicle-edit-page.organizations-page .vehicle-edit-container {
+    max-width: none;
+}
+
+#vehicle-edit-page .vehicle-edit-container-personal {
+    margin: 0 auto;
+}
+
+#vehicle-edit-page .vehicle-edit-card {
+    border: 1px solid var(--v2-color-border);
+    border-radius: 8px;
+    box-shadow: var(--v2-shadow-md);
+    overflow: hidden;
+}
+
+#vehicle-edit-page .vehicle-edit-card .card-header,
+#vehicle-edit-page .vehicle-edit-card .card-footer {
+    background: #fff;
+    border-color: rgba(18, 18, 18, 0.08);
+}
+
+#vehicle-edit-page .vehicle-edit-card .card-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+#vehicle-edit-page .vehicle-edit-card .card-footer {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+#vehicle-edit-page .vehicle-edit-card .card-body {
+    padding: 1.25rem;
+}
+
+#vehicle-edit-page .vehicle-edit-section + .vehicle-edit-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(18, 18, 18, 0.08);
+}
+
+#vehicle-edit-page .vehicle-edit-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--v2-color-ink);
+}
+
+#vehicle-edit-page .vehicle-edit-inline-field {
+    display: grid;
+    grid-template-columns: minmax(220px, max-content) minmax(260px, 320px);
+    align-items: center;
+    gap: 0.85rem 1rem;
+}
+
+#vehicle-edit-page .vehicle-edit-inline-field .form-label {
+    line-height: 1.2;
+}
+
+#vehicle-edit-page .vehicle-edit-inline-field-control {
+    min-width: 0;
+}
+
+#vehicle-edit-page .vehicle-edit-inline-field-date .vehicle-edit-inline-field-control {
+    width: min(320px, 100%);
+}
+
+#vehicle-edit-page .vehicle-edit-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+
+#vehicle-edit-page .vehicle-edit-date-picker,
+#vehicle-edit-page .vehicle-edit-date-picker .vue-ctk-date-time-picker {
+    display: block;
+    width: 100%;
+}
+
+#vehicle-edit-page .vehicle-edit-date-picker .field,
+#vehicle-edit-page .vehicle-edit-date-picker .field-input,
+#vehicle-edit-page .vehicle-edit-date-picker input,
+#vehicle-edit-page .vehicle-edit-date-picker .vue-ctk-date-time-picker-input {
+    width: 100%;
+    min-height: 46px;
+}
+
+#vehicle-edit-page .vehicle-edit-date-picker label,
+#vehicle-edit-page .vehicle-edit-date-picker .label,
+#vehicle-edit-page .vehicle-edit-date-picker .hint {
+    display: none !important;
+}
+
+@media (max-width: 767.98px) {
+    #vehicle-edit-page .breadcrumb {
+        width: 100%;
+        border-radius: 8px;
+        padding: 0.65rem 0.8rem;
+    }
+
+    #vehicle-edit-page .vehicle-edit-card .card-body {
+        padding: 0.95rem;
+    }
+
+    #vehicle-edit-page .vehicle-edit-inline-field {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    #vehicle-edit-page .vehicle-edit-footer {
+        flex-direction: column-reverse;
+    }
+
+    #vehicle-edit-page .vehicle-edit-footer .btn {
+        width: 100%;
+    }
+}

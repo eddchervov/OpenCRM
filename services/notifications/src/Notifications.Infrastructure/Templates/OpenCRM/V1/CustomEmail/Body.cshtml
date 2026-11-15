@@ -1,0 +1,5 @@
+@model CustomEmailModel
+@{ Layout = "/Templates/OpenCRM/V1/_Layout.cshtml"; }
+<h1 style="margin:0 0 22px;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:36px;font-weight:800;color:#111827;">@Model.Subject</h1>
+@* Разметка поступает из редактора уполномоченного приложения; Razor-выражения внутри строки не исполняются. *@
+@Html.Raw(Model.HtmlBody)

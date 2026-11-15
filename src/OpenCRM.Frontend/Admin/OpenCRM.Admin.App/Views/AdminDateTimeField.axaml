@@ -1,0 +1,196 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="OpenCRM.Admin.App.Views.AdminDateTimeField"
+             x:Name="Root"
+             xml:lang="ru-RU"
+             MinWidth="260">
+  <UserControl.Resources>
+    <ControlTheme x:Key="AdminCalendarDayTheme" TargetType="CalendarDayButton">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#D8DDE2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:inactive"><Setter Property="Foreground" Value="#626D78" /></Style>
+      <Style Selector="^:today"><Setter Property="BorderBrush" Value="#49647A" /></Style>
+      <Style Selector="^:pointerover"><Setter Property="Background" Value="#293B4B" /><Setter Property="Foreground" Value="#FFFFFF" /></Style>
+      <Style Selector="^:selected"><Setter Property="Background" Value="#345C7D" /><Setter Property="Foreground" Value="#FFFFFF" /></Style>
+      <Style Selector="^:selected:pointerover"><Setter Property="Background" Value="#426F94" /><Setter Property="Foreground" Value="#FFFFFF" /></Style>
+      <Style Selector="^:disabled"><Setter Property="Opacity" Value="0.4" /></Style>
+      <Style Selector="^:focus-visible"><Setter Property="BorderBrush" Value="#8BB6D6" /></Style>
+    </ControlTheme>
+  </UserControl.Resources>
+  <UserControl.Styles>
+    <Style Selector="CalendarDayButton"><Setter Property="Theme" Value="{StaticResource AdminCalendarDayTheme}" /></Style>
+    <Style Selector="Calendar">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#D8DDE2" />
+    </Style>
+    <Style Selector="CalendarDayButton">
+      <Setter Property="Width" Value="34" />
+      <Setter Property="Height" Value="34" />
+      <Setter Property="MinWidth" Value="34" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="1" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#D8DDE2" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="7" />
+    </Style>
+    <Style Selector="CalendarDayButton:inactive">
+      <Setter Property="Foreground" Value="#707A84" />
+    </Style>
+    <Style Selector="CalendarDayButton:today">
+      <Setter Property="BorderBrush" Value="#536879" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground" Value="#EAF3F9" />
+    </Style>
+    <Style Selector="CalendarDayButton:selected">
+      <Setter Property="Background" Value="#35516A" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="CalendarDayButton:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#29343E" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="CalendarDayButton:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="#3A5368" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="CalendarDayButton:selected:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#49677F" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="CalendarItem /template/ Button#PART_HeaderButton">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#E6E9EC" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Padding" Value="8,4" />
+    </Style>
+    <Style Selector="CalendarItem /template/ Button#PART_PreviousButton">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="Foreground" Value="#C5CDD4" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Width" Value="32" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="MinWidth" Value="32" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="RenderTransform" Value="rotate(270deg)" />
+    </Style>
+    <Style Selector="CalendarItem /template/ Button#PART_NextButton">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="Foreground" Value="#C5CDD4" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Width" Value="32" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="MinWidth" Value="32" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="RenderTransform" Value="rotate(270deg)" />
+    </Style>
+    <Style Selector="CalendarItem /template/ Button#PART_PreviousButton:pointerover">
+      <Setter Property="Background" Value="#2B343C" />
+    </Style>
+    <Style Selector="CalendarItem /template/ Button#PART_NextButton:pointerover">
+      <Setter Property="Background" Value="#2B343C" />
+    </Style>
+    <Style Selector="TimePickerPresenter">
+      <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="TimePickerPresenter /template/ TextBlock#PART_HourTextBlock">
+      <Setter Property="Text" Value="ЧАС" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#98A4AE" />
+    </Style>
+    <Style Selector="TimePickerPresenter /template/ TextBlock#PART_MinuteTextBlock">
+      <Setter Property="Text" Value="МИНУТЫ" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#98A4AE" />
+    </Style>
+  </UserControl.Styles>
+  <Grid>
+    <Border Background="#181818" BorderBrush="#383838" BorderThickness="1" CornerRadius="8"
+            MinHeight="46">
+      <Grid ColumnDefinitions="*,Auto" Margin="12,0">
+        <Button Name="OpenButton" Classes="date-time-trigger" Click="OnOpenClick"
+                Background="Transparent" BorderThickness="0" Padding="0"
+                HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"
+                AutomationProperties.AutomationId="AdminDateTimeFieldOpen">
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+            <PathIcon Data="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"
+                      Width="16" Height="16" Foreground="#AAB8C5" />
+            <TextBlock x:Name="DisplayLabel" Grid.Column="1" VerticalAlignment="Center" FontSize="14" />
+          </Grid>
+        </Button>
+        <Button x:Name="ClearButton" Grid.Column="1" Content="×" Click="OnClearClick"
+                Background="Transparent" BorderThickness="0" Padding="8,0"
+                MinWidth="28" MinHeight="32" FontSize="18" Foreground="#AAB8C5"
+                ToolTip.Tip="Очистить дату и время"
+                AutomationProperties.AutomationId="AdminDateTimeFieldClear" />
+      </Grid>
+    </Border>
+    <Popup IsOpen="{Binding IsPickerOpen, ElementName=Root, Mode=TwoWay}" Placement="Bottom" IsLightDismissEnabled="True">
+      <Border Background="#17191C" BorderBrush="#3A424B" BorderThickness="1" CornerRadius="12"
+              Padding="16" BoxShadow="0 12 36 0 #99000000" Width="352">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Дата и время" FontSize="16" FontWeight="SemiBold" Foreground="#F3F5F7" />
+              <TextBlock Text="Выберите дату, затем время" FontSize="12" Foreground="#AAB4BE" />
+            </StackPanel>
+            <Border Grid.Column="1" Background="#222A31" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
+              <TextBlock Text="24 ч" FontSize="11" Foreground="#C5D7E6" />
+            </Border>
+          </Grid>
+          <Border Background="#111315" BorderBrush="#2C3339" BorderThickness="1" CornerRadius="9" Padding="8">
+            <Calendar x:Name="CalendarControl" SelectionMode="SingleDate" DisplayMode="Month"
+                      FirstDayOfWeek="Monday" IsTodayHighlighted="True"
+                      AutomationProperties.AutomationId="AdminDateTimeCalendar" />
+          </Border>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <StackPanel Spacing="5">
+              <TextBlock Text="ВРЕМЯ" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Foreground="#98A4AE" />
+              <TimePicker x:Name="TimeControl" ClockIdentifier="24HourClock" MinuteIncrement="1" Width="180" MinWidth="0" HorizontalAlignment="Left"
+                          UseSeconds="False"
+                          AutomationProperties.AutomationId="AdminDateTimeTime" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Сегодня" Click="OnTodayClick" VerticalAlignment="Bottom"
+                    Background="#222A31" BorderBrush="#3B4D5C" BorderThickness="1"
+                    Foreground="#D3E3F0" Padding="12,8"
+                    AutomationProperties.AutomationId="AdminDateTimeToday" />
+          </Grid>
+          <Border Height="1" Background="#2C3339" />
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <Button Content="Очистить" Click="OnClearDraftClick" HorizontalAlignment="Left"
+                    Background="Transparent" Foreground="#BAC4CD" Padding="8,6"
+                    AutomationProperties.AutomationId="AdminDateTimeClearDraft" />
+            <Button Grid.Column="1" Content="Отмена" Click="OnCancelClick"
+                    Background="#222629" Foreground="#D2D7DC" Padding="14,8"
+                    AutomationProperties.AutomationId="AdminDateTimeCancel" />
+            <Button Grid.Column="2" Content="Готово" Click="OnDoneClick" Classes="primary"
+                    Background="#344554" BorderBrush="#59758C" BorderThickness="1"
+                    Foreground="#F4F8FB" Padding="16,8"
+                    AutomationProperties.AutomationId="AdminDateTimeDone" />
+          </Grid>
+        </StackPanel>
+      </Border>
+    </Popup>
+  </Grid>
+</UserControl>

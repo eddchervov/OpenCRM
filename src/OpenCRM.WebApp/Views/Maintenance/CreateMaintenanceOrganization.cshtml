@@ -1,0 +1,269 @@
+﻿@model OpenCRM.Modules.Vehicles.Contracts.Dtos.GetVehicleDto
+@using System.Text.Json
+@using OpenCRM.Services.Interfaces.Organizations.Dtos
+@using OpenCRM.WebApp.Presentation
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Добавить обслуживание";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = "maintenance-create-page-body";
+    ViewData["BreadcrumbTitle"] = "Добавить обслуживание";
+    ViewData["PageTitle"] = "Добавить обслуживание";
+    ViewData["SubtitlePrefix"] = "Заполните информацию об обслуживании или ремонте ";
+    ViewData["FormId"] = "maintenanceCreateForm";
+    ViewData["SaveAction"] = "save_createMaintenance";
+    ViewData["SaveButtonText"] = "Сохранить обслуживание";
+    ViewData["HideMaintenanceBreadcrumb"] = true;
+    var organizationId = ViewData["MaintenanceOrganizationId"] as string ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(organizationId))
+    {
+        organizationId = Context.Request.Query["organizationId"].ToString();
+    }
+    var organizationName = ViewData["MaintenanceOrganizationName"] as string ?? string.Empty;
+    var workspaceShell = ViewData["MaintenanceWorkspaceShell"] as OrganizationWorkspaceShellDto;
+    var maintenanceFormProfile = ViewData["MaintenanceFormProfile"] as OrganizationWorkspaceMaintenanceFormProfileDto;
+    var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
+        ? "Моя техника"
+        : !string.IsNullOrWhiteSpace(organizationName)
+            ? organizationName
+            : "Организация";
+    var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
+        ? $"/vehicle/{Model.Id}"
+        : $"/vehicle/{Model.Id}?organizationId={organizationId}";
+    var workspaceSidebar = new OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
+    {
+        OrganizationId = string.IsNullOrWhiteSpace(organizationId) ? Guid.Empty : Guid.Parse(organizationId),
+        OrganizationName = organizationName,
+        CurrentSection = "maintenance",
+        HasVehiclesModule = ViewData["MaintenanceHasVehiclesModule"] is bool vehiclesModule && vehiclesModule,
+        HasClientsModule = ViewData["MaintenanceHasClientsModule"] is bool clientsModule && clientsModule,
+        HasDefectsModule = ViewData["MaintenanceHasDefectsModule"] is bool defectsModule && defectsModule,
+        HasCountersModule = ViewData["MaintenanceHasCountersModule"] is bool countersModule && countersModule,
+        HasSchedulerModule = ViewData["MaintenanceHasSchedulerModule"] is bool schedulerModule && schedulerModule,
+        CanManageSettings = ViewData["MaintenanceCanManageSettings"] is bool canManageSettings && canManageSettings,
+        MembersCount = ViewData["MaintenanceOrganizationMembersCount"] is int membersCount ? membersCount : 0,
+        WorkspaceShell = workspaceShell
+    };
+    var scenarioCatalog = ViewData["MaintenanceScenarioCatalog"] as OpenCRM.Modules.Catalog.Contracts.Dtos.OrganizationScenarioCatalogDto;
+    var scenarioUx = ViewData["MaintenanceScenarioUxProfile"] as OrganizationScenarioUxProfile
+        ?? OrganizationScenarioPresentationHelper.ResolveUxProfile(scenarioCatalog?.ScenarioCode);
+    ViewData["Title"] = scenarioUx.CreateTitle;
+    ViewData["BreadcrumbTitle"] = scenarioUx.CreateTitle;
+    ViewData["PageTitle"] = scenarioUx.CreateTitle;
+    ViewData["SubtitlePrefix"] = scenarioUx.SubtitlePrefix;
+    ViewData["SaveButtonText"] = scenarioUx.SaveButtonText;
+    var scenarioWorkTypesJson = JsonSerializer.Serialize(scenarioCatalog?.WorkTypes.Where(x => x.IsActive).Select(x => new { id = x.Id, name = x.Name, code = x.Code }) ?? []);
+    var scenarioMaterialsJson = JsonSerializer.Serialize(scenarioCatalog?.Materials.Where(x => x.IsActive).Select(x => new { id = x.Id, name = x.Name, code = x.Code }) ?? []);
+    var maintenanceFormProfileJson = JsonSerializer.Serialize(
+        maintenanceFormProfile ?? new OrganizationWorkspaceMaintenanceFormProfileDto(),
+        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    var showPhotos = maintenanceFormProfile?.ShowPhotos ?? scenarioUx.ShowPhotosByDefault;
+    var maintenanceTermGenitive = string.Equals(workspaceShell?.Scenario?.Code, OpenCRM.Domain.OrganizationTypeCodes.Detailing, StringComparison.OrdinalIgnoreCase)
+        ? "услуги"
+        : "обслуживания";
+}
+
+<div id="create-maintenance-form">
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+    <div v-cloak>
+        <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organizations-page")">
+            <div class="@(string.IsNullOrWhiteSpace(organizationId) ? "container" : "container-fluid px-4 px-xxl-5 organization-workspace-shell organization-workspace-shell-wide")">
+                <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organization-workspace-flow")">
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
+                            <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">Техника</a></li>
+                            <li class="breadcrumb-item">
+                                <a href="@vehicleUrl" class="text-decoration-none">
+                                    @Helpers.VehicleDisplayName.Format(Model.BrandName, Model.ModelName, Model.RegistrationPlate)
+                                    @if (Model.YearIssue != null && Model.YearIssue != 0)
+                                    {
+                                        @Model.YearIssue <text>г.</text>
+                                    }
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">@scenarioUx.CreateTitle</li>
+                        </ol>
+                    </nav>
+
+                    <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organization-workspace-layout")">
+                    @if (!string.IsNullOrWhiteSpace(organizationId))
+                    {
+                        <aside class="organization-workspace-sidebar">
+                            <partial name="/Views/Organizations/_WorkspaceSidebar.cshtml" model="workspaceSidebar" />
+                        </aside>
+                    }
+                        <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organization-workspace-content")">
+            <partial name="_MaintenancePageIntro" model="Model" view-data="ViewData" />
+            <form id="maintenanceCreateFormElement">
+                <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
+                    <i class="fa fa-spinner fa-spin"></i>
+                    <span>@scenarioUx.LoadingText</span>
+                </div>
+                <partial name="_MaintenanceOrganizationMainFields" view-data="ViewData" />
+
+                @if (showPhotos)
+                {
+                <div class="card create-maintenance-card maintenance-org-section-card mt-4" id="maintenance-photo-section">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fa fa-camera me-2"></i>
+                            Фотографии
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">Если выбрать фотографии сейчас, они загрузятся вместе с сохранением @maintenanceTermGenitive. Если загрузка не пройдет, ниже появится кнопка повтора.</p>
+                        <div v-if="saveSuccessMessage" class="alert alert-success">
+                            {{ saveSuccessMessage }}
+                        </div>
+                        <div v-if="photoUploadErrorMessage" class="alert alert-warning">
+                            {{ photoUploadErrorMessage }}
+                        </div>
+                        <div v-if="photos.length > 0">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5>Выбранные фотографии ({{ photos.length }})</h5>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @@click="clearPhotoPreviews">
+                                        <i class="fa fa-trash me-1"></i>Очистить все
+                                    </button>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-4 mb-3" v-for="(photo, index) in photos" :key="index">
+                                        <div class="card h-100">
+                                            <img :src="photo.preview"
+                                                 class="card-img-top"
+                                                 style="height: 150px; object-fit: cover;"
+                                                 :alt="photo.name">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted d-block text-truncate">{{ photo.name }}</small>
+                                                <small class="text-muted">{{ photo.size }}</small>
+                                            </div>
+                                            <div class="card-footer p-2">
+                                                <button type="button" class="btn btn-sm btn-danger w-100" @@click="removePhoto(index)">
+                                                    <i class="fa fa-trash me-1"></i>Удалить
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else>
+                                <div class="text-center py-4">
+                                    <i class="fa fa-image fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Фотографии не выбраны</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Добавить фотографии</label>
+                                <input type="file"
+                                       class="form-control create-maintenance-input"
+                                       id="photos"
+                                       multiple
+                                       accept="image/*"
+                                       @@change="changeFile($event)">
+                                <div class="form-text">
+                                    Можно загрузить до 10 фотографий (JPG, PNG).
+                                    <strong>Максимальный общий размер всех файлов: 100 МБ</strong>
+                                </div>
+                            </div>
+
+                        <div v-if="isUploading" class="mt-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Загрузка...</span>
+                                <span>{{ uploadProgress }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" :style="{width: uploadProgress + '%'}"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4" v-if="createdMaintenanceId && photos.length > 0 && photoUploadErrorMessage">
+                            <button type="button" class="btn btn-outline-dark" @@click="redirectToCar" :disabled="isUploading">
+                                Завершить позже
+                            </button>
+                            <button type="button" class="btn btn-dark" @@click="uploadPhotos" :disabled="isUploading">
+                                <template v-if="!isUploading">
+                                    <i class="fa fa-upload me-2"></i>Повторить загрузку фотографий
+                                </template>
+                                <template v-else>
+                                    <i class="fa fa-spinner fa-spin fa-fw"></i> Загрузка...
+                                </template>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <div class="maintenance-org-actions">
+                    <a href="javascript:void(0)"
+                       class="btn btn-outline-dark"
+                       @@click="redirectToCar">
+                        Отмена
+                    </a>
+                    <button type="button" class="btn btn-dark" :disabled="saveModal || isUploading" @@click="save_createMaintenance">
+                        <template v-if="!saveModal">
+                            <i class="fa fa-save me-2"></i>@scenarioUx.SaveButtonText
+                        </template>
+                        <template v-else>
+                            <i class="fa fa-spinner fa-spin fa-fw"></i> {{ selectedFiles.length > 0 ? 'Сохраняем и загружаем фото...' : 'Сохраняем...' }}
+                        </template>
+                    </button>
+                </div>
+            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <partial name="_MaintenanceErrorModal" />
+    </div>
+</div>
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/organizations.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/maintenance.organization.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/organizations.min.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/maintenance.organization.css" asp-append-version="true" />
+    </environment>
+}
+
+@section Scripts {
+    <script>
+        const vehicleId = '@Model.Id';
+        const vehicleMileageUnit = @((int)Model.MileageUnit);
+        const vehicleCurrentMileage = @(Model.CurrentMileage?.ToString() ?? "null");
+        const maintenanceOrganizationId = '@(ViewData["MaintenanceOrganizationId"] ?? string.Empty)';
+        const maintenanceReturnUrl = '@(ViewData["MaintenanceReturnUrl"] ?? string.Empty)';
+        const maintenancePrefillTitle = '@(ViewData["MaintenancePrefillTitle"] ?? string.Empty)';
+        const maintenancePrefillComment = '@(ViewData["MaintenancePrefillComment"] ?? string.Empty)';
+        const maintenancePrefillPlannedDate = '@(ViewData["MaintenancePrefillPlannedDate"] ?? string.Empty)';
+        const maintenancePrefillPlannedStartTime = '@(ViewData["MaintenancePrefillPlannedStartTime"] ?? string.Empty)';
+        const maintenancePrefillPlannedEndTime = '@(ViewData["MaintenancePrefillPlannedEndTime"] ?? string.Empty)';
+        const maintenanceSchedulerSourceCode = '@(ViewData["MaintenanceSchedulerSourceCode"] ?? string.Empty)';
+        const maintenanceSchedulerSourceEntityId = '@(ViewData["MaintenanceSchedulerSourceEntityId"] ?? string.Empty)';
+        const maintenanceSchedulerTriggerKey = '@(ViewData["MaintenanceSchedulerTriggerKey"] ?? string.Empty)';
+        const maintenanceScenarioWorkTypes = @Html.Raw(scenarioWorkTypesJson);
+        const maintenanceScenarioMaterials = @Html.Raw(scenarioMaterialsJson);
+        const maintenanceFormProfile = @Html.Raw(maintenanceFormProfileJson);
+    </script>
+    <environment include="Development">
+        <script src="~/app/create-maintenance.organization.page.js" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/app/create-maintenance.organization.page.js" asp-append-version="true"></script>
+    </environment>
+}
+
+
+

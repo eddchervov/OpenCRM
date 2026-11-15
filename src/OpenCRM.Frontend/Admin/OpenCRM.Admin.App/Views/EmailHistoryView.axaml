@@ -1,0 +1,141 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.EmailHistoryView"
+             x:DataType="vm:EmailHistoryViewModel">
+  <UserControl.Styles>
+    <Style Selector="TabItem">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Padding" Value="12,8" />
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="История email" Classes="heading" AutomationProperties.AutomationId="EmailHistoryHeading" />
+      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" IsVisible="{Binding !IsDetailOpen}" />
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <Grid Grid.Row="2" IsVisible="{Binding !IsDetailOpen}" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+      <Border Classes="card" Padding="12">
+        <WrapPanel>
+          <TextBox Text="{Binding Search}" PlaceholderText="Получатель, тема или ID" Width="290" Margin="0,0,8,6" KeyDown="OnSearchKeyDown" AutomationProperties.AutomationId="EmailHistorySearch" />
+          <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="200" Margin="0,0,8,6" IsEnabled="{Binding !IsBusy}" />
+          <ComboBox ItemsSource="{Binding PageSizes}" SelectedItem="{Binding PageSize}" Width="85" Margin="0,0,8,6" IsEnabled="{Binding !IsBusy}" />
+          <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,6" />
+          <Button Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,8,6" />
+        </WrapPanel>
+      </Border>
+      <views:ListPagination Grid.Row="1" PageLabel="{Binding PageLabel}"
+                            PreviousCommand="{Binding PreviousPageCommand}" NextCommand="{Binding NextPageCommand}" />
+      <Border Grid.Row="2" Classes="card" Padding="0">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <Grid RowDefinitions="Auto,*" MinWidth="1000">
+            <Grid ColumnDefinitions="65,2*,2*,150,150,170,100" Margin="12,10">
+              <TextBlock Text="ID" Classes="caption" />
+              <TextBlock Grid.Column="1" Text="Получатель" Classes="caption" />
+              <TextBlock Grid.Column="2" Text="Тема" Classes="caption" />
+              <TextBlock Grid.Column="3" Text="Создано" Classes="caption" />
+              <TextBlock Grid.Column="4" Text="Отправлено" Classes="caption" />
+              <TextBlock Grid.Column="5" Text="Статус" Classes="caption" />
+              <TextBlock Grid.Column="6" Text="Действия" Classes="caption" />
+            </Grid>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" ItemContainerTheme="{StaticResource AdminListRowTheme}" Background="Transparent" BorderThickness="0"
+                     DoubleTapped="OnRowDoubleTapped" KeyDown="OnRowsKeyDown" AutomationProperties.AutomationId="EmailHistoryList">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:EmailHistoryRow">
+                  <Border BorderBrush="#292929" BorderThickness="0,1,0,0" Padding="12,10">
+                    <Grid ColumnDefinitions="65,2*,2*,150,150,170,100">
+                      <TextBlock Text="{Binding Id}" Classes="caption" />
+                      <TextBlock Grid.Column="1" Text="{Binding Recipient}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Recipient}" Margin="0,0,8,0" />
+                      <StackPanel Grid.Column="2" Spacing="4" Margin="0,0,8,0">
+                        <TextBlock Text="{Binding Subject}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Activity}" Classes="caption" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="3" Text="{Binding CreatedAt}" Classes="caption" />
+                      <TextBlock Grid.Column="4" Text="{Binding SentAt}" Classes="caption" />
+                      <StackPanel Grid.Column="5" Spacing="4">
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="#F4CACA" />
+                      </StackPanel>
+                      <Button Grid.Column="6" Content="Открыть" Padding="10,6" VerticalAlignment="Center" Margin="12,0,0,0" Click="OnOpenRowClick" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="Письма не найдены." HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+          </Grid>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <Grid Grid.Row="2" IsVisible="{Binding IsDetailOpen}" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+      <Button Content="← К истории email" Command="{Binding CloseDetailCommand}" HorizontalAlignment="Left" />
+      <Border Grid.Row="1" Classes="card" Padding="18,14">
+        <ScrollViewer MaxHeight="180">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding Detail.Subject}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Detail.ToEmail}" />
+            <WrapPanel>
+              <TextBlock Text="{Binding DetailSummary.Status}" Margin="0,0,16,0" />
+              <TextBlock Text="Создано: " Classes="caption" />
+              <TextBlock Text="{Binding DetailSummary.CreatedAt}" Classes="caption" Margin="0,0,16,0" />
+              <TextBlock Text="Отправлено: " Classes="caption" />
+              <TextBlock Text="{Binding DetailSummary.SentAt}" Classes="caption" />
+            </WrapPanel>
+            <TextBlock Text="{Binding Detail.ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+      <TabControl Grid.Row="2" AutomationProperties.AutomationId="EmailBodyTabs">
+        <TabItem Header="Письмо">
+          <Grid Margin="0,8,0,0">
+            <Border Background="White" CornerRadius="8" />
+            <views:EmailHtmlPreview x:Name="LetterPreview" DocumentHtml="{Binding PreviewHtml}"
+                                    IsVisible="{Binding !HasError, ElementName=LetterPreview}"
+                                    AutomationProperties.AutomationId="EmailHtmlPreview" />
+            <ScrollViewer IsVisible="{Binding HasError, ElementName=LetterPreview}" Margin="20">
+              <StackPanel Spacing="12">
+                <TextBlock Text="HTML-просмотр недоступен. Текст письма:" Foreground="#333333" />
+                <SelectableTextBlock Text="{Binding BodyText}" TextWrapping="Wrap" Foreground="#171717" />
+              </StackPanel>
+            </ScrollViewer>
+          </Grid>
+        </TabItem>
+        <TabItem Header="Текст">
+          <ScrollViewer Margin="0,8,0,0">
+            <Border Classes="card">
+              <SelectableTextBlock Text="{Binding BodyText}" TextWrapping="Wrap" />
+            </Border>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Доставка">
+          <ScrollViewer Margin="0,8,0,0">
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding DetailSummary.Activity}" Classes="caption" />
+                <TextBlock Text="{Binding Detail.Provider}" Classes="caption" />
+                <TextBlock Text="{Binding Detail.ProviderMessageId}" Classes="caption" />
+                <TextBlock Text="События доставки" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding Events}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EmailHistoryEventRow">
+                      <StackPanel Spacing="4" Margin="0,0,0,12">
+                        <TextBlock Text="{Binding Event}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Date}" Classes="caption" />
+                        <TextBlock Text="{Binding Info}" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
+    </Grid>
+  </Grid>
+</UserControl>

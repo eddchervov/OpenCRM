@@ -1,0 +1,26 @@
+.opencrm-update-notice {
+  position: fixed;
+  inset: auto 16px 16px;
+  z-index: 10000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #1e293b;
+  box-shadow: 0 4px 20px #0003;
+}
+
+.opencrm-update-notice button {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}

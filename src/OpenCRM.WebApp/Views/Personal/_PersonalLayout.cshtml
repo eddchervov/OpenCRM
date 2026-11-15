@@ -1,0 +1,69 @@
+﻿@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    var isVehiclePage = ViewData["PersonalVehiclePage"] is true;
+    ViewData["BodyClass"] = "organizations-entry personal-page" + (isVehiclePage ? " personal-vehicles" : string.Empty);
+    ViewData["WorkspaceEntry"] = true;
+    var hideNavigation = ViewData["HidePersonalNavigation"] is true;
+}
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/organizations-entry.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/personal.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/organizations-entry.min.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/personal.min.css" asp-append-version="true" />
+    </environment>
+    @RenderSection("Styles", required: false)
+    @if (isVehiclePage)
+    {
+        <link rel="stylesheet" href="~/css/personal-vehicles.css" asp-append-version="true" />
+    }
+}
+
+<div class="personal-shell @(hideNavigation ? "personal-shell--single" : string.Empty)">
+    @if (!hideNavigation)
+    {
+        <aside class="personal-sidebar">
+            <div class="personal-nav-label">Мой аккаунт</div>
+            <partial name="/Views/Personal/_ManageNav.cshtml" />
+            <a class="personal-workspace-link" href="/organizations"><i class="fa fa-building-o" aria-hidden="true"></i> Организации</a>
+        </aside>
+    }
+    <div class="personal-content">
+        <header class="personal-heading">
+            @if (IsSectionDefined("Breadcrumbs"))
+            {
+                @RenderSection("Breadcrumbs")
+            }
+            else
+            {
+            <nav aria-label="Хлебные крошки">
+                <ol>
+                    @if (ViewData["BreadcrumbLinks"] is (string Url, string Title)[] breadcrumbLinks)
+                    {
+                        foreach (var link in breadcrumbLinks)
+                        {
+                            <li><a href="@link.Url">@link.Title</a></li>
+                        }
+                    }
+                    else if (!hideNavigation && !string.Equals(ViewData["ActivePage"] as string, "Index", StringComparison.Ordinal))
+                    {
+                        <li><a href="/personal">Профиль</a></li>
+                    }
+                    <li><h1 aria-current="page">@ViewData["Title"]</h1></li>
+                </ol>
+            </nav>
+            }
+        </header>
+        <div class="personal-body">
+            @RenderBody()
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

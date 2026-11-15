@@ -1,0 +1,104 @@
+﻿@model OpenCRM.WebApp.Models.Organizations.OrganizationCreateViewModel
+@using OpenCRM.WebApp.Presentation
+
+@{
+    ViewData["Title"] = "Новая организация";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = "organizations-entry";
+    ViewData["WorkspaceEntry"] = true;
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<section class="entry-page">
+    <div class="entry-shell entry-shell-create">
+        <header class="entry-heading">
+            <nav aria-label="Хлебные крошки">
+                <ol class="entry-breadcrumbs">
+                    <li><a href="/organizations">Организации</a></li>
+                    <li aria-current="page"><h1>Новая организация</h1></li>
+                </ol>
+            </nav>
+        </header>
+        @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+        {
+            <div class="alert alert-success" role="status">@Model.StatusMessage</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+        }
+
+        <div class="entry-create-panel">
+            @if (!Model.CanCreateOrganization)
+            {
+                <div class="alert alert-warning" role="status">
+                    @(Model.CreateOrganizationMessage ?? "Создание организации этого типа уже недоступно.")
+                    @if (Model.OrganizationTypeOptions.Any(option => option.HasArchivedOrganization))
+                    {
+                        <a href="/organizations">Откройте архив, чтобы восстановить организацию.</a>
+                    }
+                </div>
+            }
+            <form asp-controller="Organizations" asp-action="CreateOrganization" method="post"
+                  class="entry-create-form" data-disable-submit-loader data-analytics-goal="organization_submit">
+                @Html.AntiForgeryToken()
+                <fieldset class="entry-scenario-field">
+                    <legend>Чем вы занимаетесь?</legend>
+                    <div class="entry-scenario-grid">
+                        @foreach (var organizationType in Model.OrganizationTypeOptions)
+                        {
+                            var preset = OrganizationScenarioPresentationHelper.Resolve(organizationType.Code, organizationType.Name);
+                            var inputId = $"organization-type-{organizationType.Code}";
+                            var statusId = $"organization-type-status-{organizationType.Code}";
+                            <label class="entry-scenario" for="@inputId" aria-disabled="@(!organizationType.IsAvailable)">
+                                <input asp-for="CreateOrganization.PrimaryScenarioCode" type="radio" id="@inputId" value="@organizationType.Code" required disabled="@(!organizationType.IsAvailable)" aria-describedby="organization-type-error @(!organizationType.IsAvailable ? statusId : null)" />
+                                <span class="entry-scenario-body">
+                                    <span class="entry-scenario-title">@preset.Title</span>
+                                    <span class="entry-scenario-summary">@preset.Summary</span>
+                                    <span class="entry-scenario-modules">
+                                        @foreach (var module in preset.Modules.Take(3))
+                                        {
+                                            <span>@module</span>
+                                        }
+                                    </span>
+                                    @if (!organizationType.IsAvailable)
+                                    {
+                                        <span id="@statusId" class="entry-scenario-unavailable" role="note">@organizationType.UnavailableMessage</span>
+                                    }
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <span id="organization-type-error" class="text-danger" asp-validation-for="CreateOrganization.PrimaryScenarioCode"></span>
+                </fieldset>
+                <div class="entry-name-field">
+                    <label class="form-label" asp-for="CreateOrganization.Name">Название организации <span aria-hidden="true">*</span></label>
+                    <input class="form-control" asp-for="CreateOrganization.Name" placeholder="Например, студия «Блеск»" maxlength="160" autocomplete="organization" required aria-describedby="organization-name-error" />
+                    <span id="organization-name-error" class="text-danger" asp-validation-for="CreateOrganization.Name"></span>
+                </div>
+                <div class="entry-description">
+                    <label class="form-label" asp-for="CreateOrganization.Description">Описание <span class="entry-muted">необязательно</span></label>
+                    <textarea class="form-control" asp-for="CreateOrganization.Description" rows="2" maxlength="600" aria-describedby="organization-description-error"></textarea>
+                    <span id="organization-description-error" class="text-danger" asp-validation-for="CreateOrganization.Description"></span>
+                </div>
+                <div class="entry-form-actions">
+                    <button type="submit" class="btn entry-primary" disabled="@(!Model.CanCreateOrganization)">Создать организацию <span aria-hidden="true">→</span></button>
+                    <a class="btn entry-secondary" href="/organizations">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/organizations-entry.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/organizations-entry.min.css" asp-append-version="true" />
+    </environment>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

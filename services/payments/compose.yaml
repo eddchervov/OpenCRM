@@ -1,0 +1,68 @@
+name: payments-service
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: payments
+      POSTGRES_USER: payments
+      POSTGRES_PASSWORD: ${PAYMENTS_POSTGRES_PASSWORD:?Set PAYMENTS_POSTGRES_PASSWORD}
+    ports: ["127.0.0.1:5434:5432"]
+    volumes: [payments-postgres:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U payments -d payments"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: payments
+      RABBITMQ_DEFAULT_PASS: ${PAYMENTS_RABBITMQ_PASSWORD:?Set PAYMENTS_RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: payments
+    ports: ["127.0.0.1:5674:5672", "127.0.0.1:15674:15672"]
+    volumes: [payments-rabbitmq:/var/lib/rabbitmq]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    image: opencrm-payments-local
+    build:
+      context: ../..
+      dockerfile: services/payments/src/Payments.Service/Dockerfile
+    command: ["--migrate"]
+    environment:
+      ConnectionStrings__PaymentsDb: "Host=postgres;Database=payments;Username=payments;Password=${PAYMENTS_POSTGRES_PASSWORD:?Set PAYMENTS_POSTGRES_PASSWORD}"
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+  payments:
+    image: opencrm-payments-local
+    build:
+      context: ../..
+      dockerfile: services/payments/src/Payments.Service/Dockerfile
+    ports: ["127.0.0.1:5087:8080"]
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__PaymentsDb: "Host=postgres;Database=payments;Username=payments;Password=${PAYMENTS_POSTGRES_PASSWORD:?Set PAYMENTS_POSTGRES_PASSWORD}"
+      Payments__Mode: ${PAYMENTS_MODE:-Disabled}
+      Payments__ServiceKey: ${PAYMENTS_SERVICE_KEY:?Set PAYMENTS_SERVICE_KEY}
+      Payments__MerchantAccountId: ${PAYMENTS_SHOP_ID:-disabled}
+      Payments__SecretKey: ${PAYMENTS_TEST_SECRET_KEY:-}
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: 5672
+      RabbitMq__VirtualHost: payments
+      RabbitMq__Username: payments
+      RabbitMq__Password: ${PAYMENTS_RABBITMQ_PASSWORD:?Set PAYMENTS_RABBITMQ_PASSWORD}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      rabbitmq: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  payments-postgres:
+  payments-rabbitmq:

@@ -1,0 +1,194 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+    <RunBundleMinify>false</RunBundleMinify>
+    <BuildScenarioClientsOnBuild>true</BuildScenarioClientsOnBuild>
+    <BuildScenarioClientsOnPublish>true</BuildScenarioClientsOnPublish>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="wwwroot\img\cars\**" />
+    <Content Remove="wwwroot\img\cars\**" />
+    <EmbeddedResource Remove="wwwroot\img\cars\**" />
+    <None Remove="wwwroot\img\cars\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="QuestPDF" Version="2025.7.4" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.4" />
+    <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Helpers\Helpers.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Auth\OpenCRM.Infrastructure.Auth.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Admin\OpenCRM.Infrastructure.Admin.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Documents\OpenCRM.Modules.Documents.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Common\OpenCRM.Infrastructure.Common.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Data\OpenCRM.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.FileStorage\OpenCRM.Infrastructure.FileStorage.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Migrations\OpenCRM.Infrastructure.Migrations.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Payments\OpenCRM.Infrastructure.Payments.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="web.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\integrations\1c\bp30\OpenCRMAccountingImport.epf"
+             Condition="Exists('..\..\integrations\1c\bp30\OpenCRMAccountingImport.epf')"
+             Link="wwwroot\downloads\1c\OpenCRMAccountingImport.epf"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\app\components\" />
+  </ItemGroup>
+
+  <Target Name="BundleMinifyBeforeStaticWebAssets" BeforeTargets="AssignTargetPaths" Condition="Exists('$(MSBuildProjectDirectory)\bundleconfig.json')">
+    <BundlerMinifier.BundlerBuildTask FileName="$(MSBuildProjectDirectory)\bundleconfig.json" />
+  </Target>
+
+  <Target Name="BundleMinifyCleanCustom" AfterTargets="CoreClean" Condition="Exists('$(MSBuildProjectDirectory)\bundleconfig.json')">
+    <BundlerMinifier.BundlerCleanTask FileName="$(MSBuildProjectDirectory)\bundleconfig.json" />
+  </Target>
+
+  <ItemGroup>
+    <AdminClient Include="..\OpenCRM.Frontend\Admin\admin-client" WorkspaceName="@opencrm/admin-client" />
+    <ScenarioClient Include="..\OpenCRM.Frontend\Scenarios\detailing-client" WorkspaceName="@opencrm/detailing-client" />
+    <ScenarioClient Include="..\OpenCRM.Frontend\Scenarios\autoservice-client" WorkspaceName="@opencrm/autoservice-client" />
+    <ScenarioClient Include="..\OpenCRM.Frontend\Scenarios\fleet-client" WorkspaceName="@opencrm/fleet-client" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BuildScenarioClientsOnBuild)' == 'true'">
+    <FrontendBuildInput Include="..\OpenCRM.Frontend\package*.json;..\OpenCRM.Frontend\Admin\admin-client\**\*;..\OpenCRM.Frontend\Scenarios\**\*;..\OpenCRM.Frontend\packages\**\*"
+                        Exclude="..\OpenCRM.Frontend\**\node_modules\**;..\OpenCRM.Frontend\**\dist\**;..\OpenCRM.Frontend\**\*.tsbuildinfo" />
+    <FrontendBuildOutput Include="wwwroot\admin-panel\index.html;wwwroot\admin-panel\manifest.json;wwwroot\clients\detailing\index.html;wwwroot\clients\detailing\manifest.json;wwwroot\clients\autoservice\index.html;wwwroot\clients\autoservice\manifest.json;wwwroot\clients\fleet\index.html;wwwroot\clients\fleet\manifest.json;wwwroot\app\date-time-fields.bundle.js;wwwroot\app\date-time-fields.css" />
+    <UpToDateCheckInput Include="@(FrontendBuildInput)" Set="ScenarioClients" />
+    <UpToDateCheckOutput Include="@(FrontendBuildOutput)" Set="ScenarioClients" />
+  </ItemGroup>
+
+  <Target Name="BuildScenarioClientsBeforeBuild"
+          BeforeTargets="ResolveProjectStaticWebAssets;AssignTargetPaths"
+          Condition="'$(BuildScenarioClientsOnBuild)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <Content Remove="wwwroot\clients\**;wwwroot\admin-panel\**;wwwroot\app\vehicle-registration-plate.bundle.js;wwwroot\app\date-time-fields.bundle.js;wwwroot\app\date-time-fields.css" />
+    </ItemGroup>
+    <Message Importance="high" Text="Building Vue scenario clients before WebApp build..." />
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" Condition="!Exists('$(MSBuildProjectDirectory)\..\OpenCRM.Frontend\node_modules') and Exists('$(MSBuildProjectDirectory)\..\OpenCRM.Frontend\package-lock.json')" />
+    <Exec Command="npm install --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" Condition="!Exists('$(MSBuildProjectDirectory)\..\OpenCRM.Frontend\node_modules') and !Exists('$(MSBuildProjectDirectory)\..\OpenCRM.Frontend\package-lock.json')" />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" />
+    <ItemGroup>
+      <Content Include="wwwroot\clients\**;wwwroot\admin-panel\**;wwwroot\app\vehicle-registration-plate.bundle.js;wwwroot\app\date-time-fields.bundle.js;wwwroot\app\date-time-fields.css" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildScenarioClientsBeforePublish"
+          BeforeTargets="ComputeFilesToPublish"
+          Condition="'$(BuildScenarioClientsOnPublish)' == 'true'">
+    <Message Importance="high" Text="Building Vue scenario clients before publish..." />
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" Condition="Exists('$(MSBuildProjectDirectory)\..\OpenCRM.Frontend\package-lock.json')" />
+    <Exec Command="npm install --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" Condition="!Exists('$(MSBuildProjectDirectory)\..\OpenCRM.Frontend\package-lock.json')" />
+    <Exec Command="npm run build --workspace %(ScenarioClient.WorkspaceName)" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" />
+    <Exec Command="npm run build --workspace %(AdminClient.WorkspaceName)" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" />
+    <Exec Command="npm run build --workspace @opencrm/workspace" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" />
+    <Exec Command="npm run build --workspace @opencrm/ui" WorkingDirectory="$(MSBuildProjectDirectory)\..\OpenCRM.Frontend" />
+    <ItemGroup>
+      <Content Remove="wwwroot\app\date-time-fields.bundle.js;wwwroot\app\date-time-fields.css" />
+      <Content Include="wwwroot\app\date-time-fields.bundle.js;wwwroot\app\date-time-fields.css" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="ValidateFrontendAssetsBeforePublish"
+          BeforeTargets="ComputeFilesToPublish"
+          DependsOnTargets="BuildScenarioClientsBeforePublish">
+    <ItemGroup>
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/admin-panel/index.html" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/app/vehicle-registration-plate.bundle.js" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/app/date-time-fields.bundle.js" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/app/date-time-fields.css" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/admin-panel/manifest.json" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/clients/detailing/index.html" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/clients/detailing/manifest.json" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/clients/autoservice/index.html" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/clients/autoservice/manifest.json" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/clients/fleet/index.html" />
+      <RequiredFrontendAsset Include="$(MSBuildProjectDirectory)/wwwroot/clients/fleet/manifest.json" />
+    </ItemGroup>
+    <Error Condition="!Exists('%(RequiredFrontendAsset.Identity)')"
+           Text="Не собран клиент: %(RequiredFrontendAsset.Identity). Выполните npm run build в src/OpenCRM.Frontend перед публикацией." />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Vehicles\OpenCRM.Modules.Vehicles.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Inventory\OpenCRM.Modules.Inventory.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Maintenance\OpenCRM.Modules.Maintenance.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Maintenance.Contracts\OpenCRM.Modules.Maintenance.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Clients.Contracts\OpenCRM.Modules.Clients.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Clients\OpenCRM.Modules.Clients.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Communications.Contracts\OpenCRM.Modules.Communications.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Communications\OpenCRM.Modules.Communications.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Organizations.Contracts\OpenCRM.Modules.Organizations.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Organizations\OpenCRM.Modules.Organizations.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Catalog\OpenCRM.Modules.Catalog.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Planning.Contracts\OpenCRM.Modules.Planning.Contracts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Planning\OpenCRM.Modules.Planning.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Billing\OpenCRM.Modules.Billing.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Billing.Contracts\OpenCRM.Modules.Billing.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Workspace\OpenCRM.Modules.Workspace.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Imports\OpenCRM.Modules.Imports.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Accounts\OpenCRM.Modules.Accounts.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Notifications\OpenCRM.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\OpenCRM.Modules.Support\OpenCRM.Modules.Support.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Modules.Promotions\OpenCRM.Modules.Promotions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../configuration/brand.json" Link="brand.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="wwwroot/robots.txt" />
+  </ItemGroup>
+</Project>

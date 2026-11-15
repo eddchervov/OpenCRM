@@ -1,0 +1,15 @@
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.Extensions.Options
+@using OpenCRM.WebApp.Infrastructure.UserActivity
+@inject IOptionsMonitor<UserActivityOptions> UserActivitySettings
+@inject IAntiforgery ActivityAntiforgery
+@if (User.Identity?.IsAuthenticated == true && UserActivitySettings.CurrentValue.Enabled
+    && !Context.Request.Cookies.ContainsKey("ImpersonatorId")
+    && !Context.Request.Path.StartsWithSegments("/admin-panel")
+    && !Context.Request.Path.StartsWithSegments("/auth"))
+{
+    <script src="~/js/user-activity.js" asp-append-version="true" defer
+            data-opencrm-activity
+            data-organization-id="@ViewData["OrganizationId"]"
+            data-request-token="@ActivityAntiforgery.GetAndStoreTokens(Context).RequestToken"></script>
+}

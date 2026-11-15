@@ -1,0 +1,589 @@
+﻿#maintenance-details-form,
+#create-maintenance-form,
+#update-maintenance-form {
+    background: #fff;
+    min-height: calc(100vh - 120px);
+}
+
+#create-maintenance-form,
+#update-maintenance-form {
+    padding: 2rem 0 3rem;
+}
+
+body.maintenance-details-page-body header,
+body.maintenance-create-page-body header,
+body.maintenance-update-page-body header {
+    margin-bottom: 0;
+}
+
+#maintenance-details-form .maintenance-details-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.organizations-page #maintenance-details-form .maintenance-details-container {
+    max-width: none;
+    width: 100%;
+}
+
+#create-maintenance-form .container,
+#update-maintenance-form .container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.organizations-page #create-maintenance-form .container,
+.organizations-page #update-maintenance-form .container {
+    max-width: none;
+    width: 100%;
+}
+
+#maintenance-details-form .breadcrumb,
+#create-maintenance-form .breadcrumb,
+#update-maintenance-form .breadcrumb {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0.85rem 1rem;
+    border-radius: 999px;
+    background: var(--v2-color-surface-alt);
+}
+
+#maintenance-details-form .breadcrumb-item a,
+#create-maintenance-form .breadcrumb-item a,
+#update-maintenance-form .breadcrumb-item a {
+    color: var(--v2-color-brand-strong);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+#maintenance-details-form .breadcrumb-item a:hover,
+#create-maintenance-form .breadcrumb-item a:hover,
+#update-maintenance-form .breadcrumb-item a:hover {
+    color: var(--v2-color-brand);
+}
+
+#maintenance-details-form .breadcrumb-item.active,
+#create-maintenance-form .breadcrumb-item.active,
+#update-maintenance-form .breadcrumb-item.active {
+    color: #6c757d;
+}
+
+#create-maintenance-form .page-title,
+#update-maintenance-form .page-title {
+    font-size: 1.95rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--v2-color-ink);
+    margin-bottom: 0.45rem;
+}
+
+#create-maintenance-form .page-subtitle,
+#update-maintenance-form .page-subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+#maintenance-details-form .maintenance-details-card,
+#create-maintenance-form .create-maintenance-card,
+#update-maintenance-form .create-maintenance-card {
+    border-radius: var(--v2-radius-lg);
+    border: 1px solid var(--v2-color-border);
+    box-shadow: var(--v2-shadow-md);
+    overflow: visible;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+#maintenance-details-form .card-header,
+#create-maintenance-form .card-header,
+#update-maintenance-form .card-header {
+    background: #121212 !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1rem 1.25rem;
+}
+
+#maintenance-details-form .card-title,
+#create-maintenance-form .card-title,
+#update-maintenance-form .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0;
+    color: #ffffff !important;
+}
+
+#maintenance-details-form .maintenance-info-item,
+#create-maintenance-form .create-maintenance-service-item,
+#update-maintenance-form .create-maintenance-service-item,
+#create-maintenance-form .create-maintenance-review-section,
+#update-maintenance-form .create-maintenance-review-section {
+    border-radius: var(--v2-radius-md);
+}
+
+#maintenance-details-form .maintenance-info-item {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(18, 18, 18, 0.05);
+    padding: 1rem;
+}
+
+#maintenance-details-form .maintenance-info-label,
+#create-maintenance-form .form-label,
+#update-maintenance-form .form-label {
+    font-weight: 600;
+}
+
+#maintenance-details-form .maintenance-info-value,
+#create-maintenance-form .card-body,
+#update-maintenance-form .card-body {
+    font-weight: 400;
+}
+
+#maintenance-details-form .maintenance-info-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+#maintenance-details-form .maintenance-services-table thead th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #5f6873;
+    padding: 0.95rem 1rem;
+}
+
+#maintenance-details-form .maintenance-services-table tbody td,
+#maintenance-details-form .maintenance-services-table tfoot td {
+    padding: 0.95rem 1rem;
+    vertical-align: middle;
+}
+
+#maintenance-details-form .service-name {
+    font-weight: 600;
+}
+
+#maintenance-details-form .service-price,
+#maintenance-details-form .maintenance-photo-navigation .fw-bold {
+    font-weight: 700;
+}
+
+#maintenance-details-form .maintenance-comment-content,
+#maintenance-details-form .maintenance-actions-container {
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(18, 18, 18, 0.06);
+    border-radius: var(--v2-radius-md);
+    box-shadow: var(--v2-shadow-sm);
+}
+
+#maintenance-details-form .maintenance-comment-content {
+    padding: 1.1rem 1.15rem;
+}
+
+#maintenance-details-form .maintenance-actions-container {
+    padding: 1rem;
+}
+
+#maintenance-details-form .maintenance-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+#maintenance-details-form .maintenance-photo-item,
+#maintenance-details-form .maintenance-photo-item.bg-light {
+    min-height: 180px;
+}
+
+#maintenance-details-form .maintenance-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#maintenance-details-form .maintenance-photo-overlay {
+    background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 18, 0.38) 100%);
+}
+
+#maintenance-details-form .bg-gradient-primary,
+#maintenance-details-form .bg-gradient-info,
+#maintenance-details-form .bg-gradient-secondary,
+#maintenance-details-form .bg-gradient-warning,
+#maintenance-details-form .bg-gradient-danger {
+    background: #121212 !important;
+    color: #ffffff !important;
+}
+
+#maintenance-details-form .bg-gradient-warning .badge,
+#maintenance-details-form .bg-gradient-info .badge,
+#maintenance-details-form .bg-gradient-primary .badge {
+    background: rgba(230, 115, 55, 0.16) !important;
+    color: var(--v2-color-accent) !important;
+    border: 1px solid rgba(230, 115, 55, 0.28);
+}
+
+#maintenance-details-form .badge.bg-white {
+    box-shadow: none;
+}
+
+#maintenance-details-form .card-header .badge.bg-white {
+    background: #ffffff !important;
+    color: #121212 !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+#maintenance-details-form .dropdown-menu {
+    border-radius: 1rem;
+    border: 1px solid rgba(18, 18, 18, 0.08);
+    box-shadow: 0 22px 42px rgba(15, 23, 42, 0.12);
+    padding: 0.5rem;
+    z-index: 1085;
+}
+
+#maintenance-details-form .maintenance-header-actions-btn {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+#maintenance-details-form .maintenance-header-actions-btn:hover,
+#maintenance-details-form .maintenance-header-actions-btn:focus,
+#maintenance-details-form .maintenance-header-actions-btn.show {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #121212;
+}
+
+#maintenance-details-form .dropdown-item {
+    color: #212529;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+#maintenance-details-form .dropdown-item.maintenance-dropdown-edit,
+#maintenance-details-form .dropdown-item.maintenance-dropdown-edit i {
+    background: transparent !important;
+    color: #212529 !important;
+}
+
+#maintenance-details-form .dropdown-item:hover,
+#maintenance-details-form .dropdown-item:focus {
+    background: rgba(230, 115, 55, 0.12);
+    color: #121212;
+}
+
+#maintenance-details-form .dropdown-item.maintenance-dropdown-edit:hover,
+#maintenance-details-form .dropdown-item.maintenance-dropdown-edit:focus,
+#maintenance-details-form .dropdown-item.maintenance-dropdown-edit:hover i,
+#maintenance-details-form .dropdown-item.maintenance-dropdown-edit:focus i {
+    background: rgba(230, 115, 55, 0.12) !important;
+    color: #121212 !important;
+}
+
+#maintenance-details-form .dropdown-item.text-danger {
+    color: #dc3545 !important;
+}
+
+#maintenance-details-form .dropdown-item.text-danger:hover,
+#maintenance-details-form .dropdown-item.text-danger:focus {
+    background: rgba(220, 53, 69, 0.1);
+    color: #b02a37 !important;
+}
+
+#maintenance-details-form .maintenance-details-card-primary {
+    position: relative;
+    z-index: 30;
+}
+
+#maintenance-details-form .dropdown-item {
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+}
+
+#maintenance-details-form .dropdown-header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#maintenance-details-form .maintenance-services-table .table-light,
+#maintenance-details-form .table-light > tr > th,
+#maintenance-details-form .table-light > tr > td {
+    background-color: rgba(248, 249, 250, 0.9) !important;
+}
+
+#maintenance-details-form .table > :not(caption) > * > * {
+    border-bottom-color: rgba(18, 18, 18, 0.08);
+}
+
+#maintenance-details-form .btn,
+#create-maintenance-form .btn,
+#update-maintenance-form .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    vertical-align: middle;
+}
+
+#maintenance-details-form .maintenance-actions-container .btn,
+#create-maintenance-form .btn,
+#update-maintenance-form .btn {
+    min-height: 46px;
+    font-weight: 600;
+    border-radius: 0.9rem;
+}
+
+#maintenance-details-form .btn-sm,
+#create-maintenance-form .btn-sm,
+#update-maintenance-form .btn-sm {
+    min-height: 36px;
+    font-size: 0.875rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
+#create-maintenance-form .create-maintenance-step-content,
+#update-maintenance-form .create-maintenance-step-content {
+    animation: maintenanceV2Fade 0.18s ease;
+}
+
+#create-maintenance-form .create-maintenance-progress,
+#update-maintenance-form .create-maintenance-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
+#create-maintenance-form .create-maintenance-progress::before,
+#update-maintenance-form .create-maintenance-progress::before {
+    content: "";
+    position: absolute;
+    top: 25px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(18, 18, 18, 0.08);
+    z-index: 1;
+}
+
+#create-maintenance-form .create-maintenance-progress-step,
+#update-maintenance-form .create-maintenance-progress-step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    border-radius: 999px;
+}
+
+#create-maintenance-form .create-maintenance-step-number,
+#update-maintenance-form .create-maintenance-step-number {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #eef0f2;
+    border: 3px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #4b5563;
+    margin-bottom: 0.55rem;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+#create-maintenance-form .create-maintenance-step-label,
+#update-maintenance-form .create-maintenance-step-label {
+    font-size: 0.85rem;
+    text-align: center;
+    line-height: 1.35;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+#create-maintenance-form .create-maintenance-progress-step.active .create-maintenance-step-number,
+#update-maintenance-form .create-maintenance-progress-step.active .create-maintenance-step-number {
+    background: #121212;
+    color: #fff;
+    border-color: rgba(230, 115, 55, 0.35);
+    transform: scale(1.03);
+    box-shadow: none;
+}
+
+#create-maintenance-form .create-maintenance-date-picker .field-input,
+#update-maintenance-form .create-maintenance-date-picker .field-input,
+#create-maintenance-form .create-maintenance-date-picker input,
+#update-maintenance-form .create-maintenance-date-picker input {
+    min-height: 46px;
+    line-height: 1.2;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+#create-maintenance-form .create-maintenance-date-picker,
+#update-maintenance-form .create-maintenance-date-picker,
+#create-maintenance-form .create-maintenance-date-picker .vue-ctk-date-time-picker,
+#update-maintenance-form .create-maintenance-date-picker .vue-ctk-date-time-picker {
+    position: relative;
+    z-index: 20;
+}
+
+#create-maintenance-form .create-maintenance-date-picker .datetimepicker,
+#update-maintenance-form .create-maintenance-date-picker .datetimepicker {
+    z-index: 1100;
+}
+
+#maintenance-details-form .maintenance-workflow-modal {
+    border: 0;
+    border-radius: var(--v2-radius-lg);
+    box-shadow: 0 26px 70px rgba(15, 23, 42, 0.24);
+    overflow: visible;
+}
+
+#deleteMaintenanceModal,
+#photoModal,
+#loadingModal,
+#errorModal {
+    z-index: 7000;
+}
+
+#maintenance-details-form .maintenance-workflow-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--v2-radius-lg) var(--v2-radius-lg) 0 0;
+}
+
+#maintenance-details-form .maintenance-workflow-modal .modal-body {
+    padding: 1.25rem;
+}
+
+#maintenance-details-form .maintenance-workflow-modal .form-control,
+#maintenance-details-form .maintenance-workflow-modal .field-input {
+    min-height: 46px;
+    border-radius: 0.85rem;
+}
+
+#maintenance-details-form .maintenance-workflow-date-picker,
+#maintenance-details-form .maintenance-workflow-date-picker .vue-ctk-date-time-picker {
+    position: relative;
+    z-index: 7100;
+}
+
+#maintenance-details-form .maintenance-workflow-date-picker .datetimepicker {
+    z-index: 7105 !important;
+}
+
+#create-maintenance-form .create-maintenance-progress-step.active .create-maintenance-step-label,
+#update-maintenance-form .create-maintenance-progress-step.active .create-maintenance-step-label {
+    color: var(--v2-color-ink);
+    font-weight: 600;
+}
+
+#create-maintenance-form .create-maintenance-input,
+#update-maintenance-form .create-maintenance-input {
+    border-radius: 0.85rem;
+}
+
+#create-maintenance-form .create-maintenance-review-section,
+#update-maintenance-form .create-maintenance-review-section,
+#create-maintenance-form .create-maintenance-service-item,
+#update-maintenance-form .create-maintenance-service-item {
+    background: rgba(255, 255, 255, 0.74);
+    border: 1px solid rgba(18, 18, 18, 0.06);
+    padding: 1rem;
+}
+
+#create-maintenance-form .create-maintenance-select .vs__dropdown-toggle,
+#update-maintenance-form .create-maintenance-select .vs__dropdown-toggle {
+    min-height: 46px;
+    border-radius: 0.85rem;
+    border-color: #ced4da;
+}
+
+#create-maintenance-form .create-maintenance-input:focus,
+#update-maintenance-form .create-maintenance-input:focus,
+#create-maintenance-form .create-maintenance-select .vs__dropdown-toggle:focus-within,
+#update-maintenance-form .create-maintenance-select .vs__dropdown-toggle:focus-within {
+    border-color: rgba(230, 115, 55, 0.65);
+    box-shadow: 0 0 0 0.2rem rgba(230, 115, 55, 0.14);
+}
+
+#maintenance-details-form .maintenance-photo-item,
+#create-maintenance-form .card.h-100,
+#update-maintenance-form .card.h-100 {
+    border-radius: var(--v2-radius-md);
+    overflow: hidden;
+}
+
+#create-maintenance-form .create-maintenance-remove-service,
+#update-maintenance-form .create-maintenance-remove-service {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+#create-maintenance-form .create-maintenance-review-section,
+#update-maintenance-form .create-maintenance-review-section {
+    line-height: 1.55;
+}
+
+#create-maintenance-form .form-text,
+#update-maintenance-form .form-text {
+    color: #6b7280;
+}
+
+#create-maintenance-form .progress,
+#update-maintenance-form .progress {
+    height: 0.8rem;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+@keyframes maintenanceV2Fade {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 767.98px) {
+    #create-maintenance-form,
+    #update-maintenance-form {
+        padding-top: 1.5rem;
+    }
+
+    #maintenance-details-form .breadcrumb,
+    #create-maintenance-form .breadcrumb,
+    #update-maintenance-form .breadcrumb {
+        width: 100%;
+        border-radius: var(--v2-radius-md);
+    }
+
+    #create-maintenance-form .create-maintenance-progress,
+    #update-maintenance-form .create-maintenance-progress {
+        gap: 0.35rem;
+    }
+
+    #create-maintenance-form .create-maintenance-step-label,
+    #update-maintenance-form .create-maintenance-step-label {
+        font-size: 0.76rem;
+    }
+}
+
+

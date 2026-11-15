@@ -1,0 +1,30 @@
+{
+  "Vehicle": {
+    "BrandName": "Мастерская",
+    "ModelName": "Грузовик",
+    "RegistrationPlate": "А123АА154",
+    "MileageUnit": 2,
+    "YearIssue": 2020,
+    "Name": "Бортовой",
+    "Description": "Автомобиль клиента",
+    "PhotoData": null
+  },
+  "MaintenanceReference": "22222222-2222-2222-2222-222222222222",
+  "RecordedDate": "03.02.2025 08:30 UTC",
+  "OrganizationName": "СТО Кириллица",
+  "ClientName": "Клиент",
+  "Performer": "Мастер СТО",
+  "Mileage": 654321,
+  "Completeness": "Осмотрена",
+  "VisibleDamage": "Скол на стекле",
+  "Damages": [],
+  "DiagramVersion": "sedan-v1",
+  "Notes": "Приёмка: царапина",
+  "BeforePhotos": [
+    {
+      "Caption": "До обслуживания",
+      "PhotoId": "55555555-5555-5555-5555-555555555555",
+      "ImageData": "AQID"
+    }
+  ]
+}

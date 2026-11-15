@@ -1,0 +1,6 @@
+{
+  "name": "Иван",
+  "subscriptionName": "Пример подписки",
+  "endDate": "2026-09-16",
+  "renewalUrl": "https://example.com/subscriptions"
+}

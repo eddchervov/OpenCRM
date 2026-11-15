@@ -1,0 +1,35 @@
+.git
+.vs
+.codex
+.agents
+.codex-*
+.tmpbuild
+.tmp
+.presentation-build
+_tmp
+_buildcheck
+tmp
+artifacts
+output
+outputs
+**/*.log
+**/bin
+**/obj
+**/node_modules
+src/OpenCRM.WebApp/wwwroot/clients
+src/OpenCRM.WebApp/wwwroot/admin-panel
+**/TestResults
+**/*.user
+**/secrets.json
+.env
+.env.*
+
+# Локальные секреты не включаются в контекст сборки.
+**/appsettings.*.Local.json
+# Общий бренд входит в контекст сборки: образы копируют configuration/brand.json.
+**/configuration/*
+!**/configuration/brand.json
+
+**/appsettings.Local.json
+**/.env
+**/.env.*

@@ -1,0 +1,250 @@
+.crm-maintenance-calendar.fc {
+  --fc-small-font-size: 12px;
+  --fc-now-indicator-color: #e87532;
+  font-family: inherit;
+}
+
+.crm-maintenance-calendar.fc .fc-toolbar {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.crm-maintenance-calendar.fc .fc-toolbar-title {
+  color: var(--crm-text, #202833);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.crm-maintenance-calendar.fc .fc-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--crm-line, #dce2e9);
+  border-radius: 6px;
+  background: var(--crm-surface, #fff);
+  color: var(--crm-text, #202833);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  box-shadow: none;
+}
+
+.crm-maintenance-calendar.fc .fc-toolbar-chunk:last-child .fc-button-group {
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--crm-line, #dce2e9);
+  border-radius: 9px;
+  background: var(--crm-surface-soft, #f1f3f6);
+}
+
+.crm-maintenance-calendar.fc .fc-toolbar-chunk:last-child .fc-button {
+  margin: 0;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--crm-text-muted, #667085);
+}
+
+.crm-maintenance-calendar.fc .fc-button:hover:not(:disabled) {
+  background: var(--crm-surface-soft, #f1f3f6);
+  color: var(--crm-text, #202833);
+}
+
+.crm-maintenance-calendar.fc .fc-button-primary:not(:disabled).fc-button-active,
+.crm-maintenance-calendar.fc .fc-button-primary:not(:disabled):active {
+  border-color: transparent;
+  background: var(--crm-text, #202833);
+  color: var(--crm-surface, #fff);
+}
+
+.crm-maintenance-calendar.fc .fc-button:focus-visible,
+.crm-maintenance-calendar.fc a:focus-visible {
+  outline: 2px solid #e87532;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.crm-maintenance-calendar.fc .fc-timegrid-slot {
+  height: 36px;
+}
+
+.crm-maintenance-calendar.fc .fc-timegrid-slot-label,
+.crm-maintenance-calendar.fc .fc-timegrid-axis {
+  color: var(--crm-text-muted, #667085);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-maintenance-calendar.fc .fc-col-header-cell-cushion {
+  padding: 10px 4px;
+  color: var(--crm-text, #202833);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.crm-maintenance-calendar.fc .fc-scrollgrid,
+.crm-maintenance-calendar.fc .fc-list {
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.crm-maintenance-calendar.fc .fc-timegrid-event {
+  border: 1px solid var(--crm-line, #dce2e9);
+  border-left-width: 3px;
+  border-radius: 7px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.crm-maintenance-calendar.fc .fc-timegrid-event .fc-event-main {
+  padding: 0;
+  color: var(--crm-text, #202833);
+}
+
+.crm-maintenance-calendar.fc .crm-calendar-status--planned { --calendar-status: #6597ce; }
+.crm-maintenance-calendar.fc .crm-calendar-status--progress { --calendar-status: #e87532; }
+.crm-maintenance-calendar.fc .crm-calendar-status--done { --calendar-status: #38a58c; }
+.crm-maintenance-calendar.fc .crm-calendar-status--cancelled { --calendar-status: #8b95a5; }
+
+.crm-maintenance-calendar.fc .fc-timegrid-event[class*="crm-calendar-status--"] {
+  border-left-color: var(--calendar-status) !important;
+  background: color-mix(in srgb, var(--calendar-status) 10%, var(--crm-surface, #fff)) !important;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 7px;
+  color: var(--crm-text, #202833);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry__time {
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry__vehicle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry__vehicle img {
+  flex: 0 0 23px;
+  width: 23px;
+  height: 23px;
+  padding: 2px;
+  border-radius: 50%;
+  background: #fff;
+  object-fit: contain;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry__name {
+  display: grid;
+  min-width: 0;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry__title,
+.crm-maintenance-calendar .crm-calendar-entry__plate,
+.crm-maintenance-calendar .crm-calendar-entry__services,
+.crm-maintenance-calendar .crm-calendar-entry__assignment {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-maintenance-calendar .crm-calendar-entry__title { font-weight: 700; }
+.crm-maintenance-calendar .crm-calendar-entry__plate,
+.crm-maintenance-calendar .crm-calendar-entry__assignment { color: var(--crm-text-muted, #667085); font-size: 10px; }
+.crm-maintenance-calendar .crm-calendar-entry__footer { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+.crm-maintenance-calendar .crm-calendar-entry__status {
+  max-width: 100%;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--calendar-status, #6597ce) 65%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry { padding: 5px; gap: 4px; font-size: 10px; }
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__vehicle { gap: 3px; }
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__vehicle img { flex-basis: 16px; width: 16px; height: 16px; padding: 1px; }
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__time,
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__plate,
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__assignment,
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__status { font-size: 9px; }
+.crm-maintenance-calendar.fc .fc-timeGridWeek-view .crm-calendar-entry__status { padding: 2px 4px; }
+
+.crm-maintenance-calendar.fc .crm-calendar-entry--compact {
+  gap: 2px;
+  padding: 5px;
+}
+.crm-maintenance-calendar.fc .crm-calendar-entry--compact .crm-calendar-entry__time,
+.crm-maintenance-calendar.fc .crm-calendar-entry--compact .crm-calendar-entry__time-end {
+  white-space: nowrap;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.crm-maintenance-calendar.fc .crm-calendar-entry--compact .crm-calendar-entry__time-end { color: var(--crm-text-muted, #667085); }
+.crm-maintenance-calendar.fc .crm-calendar-entry--compact .crm-calendar-entry__title { font-size: 11px; }
+
+.crm-maintenance-calendar.fc .fc-list-day-cushion {
+  padding: 11px 14px;
+  background: var(--crm-surface-soft, #f1f3f6);
+  color: var(--crm-text, #202833);
+  font-size: 12px;
+  font-weight: 600;
+}
+.crm-maintenance-calendar.fc .fc-list-day-cushion a { color: inherit; text-decoration: none; }
+.crm-maintenance-calendar.fc .fc-list-event-graphic { display: none; }
+.crm-maintenance-calendar.fc .fc-list-event-time {
+  width: 115px;
+  padding: 16px 12px;
+  color: var(--crm-text, #202833);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.crm-maintenance-calendar.fc .fc-list-event-title { padding: 0; font-weight: 400; }
+.crm-maintenance-calendar.fc .fc-list-event-title > a { display: block; color: inherit; text-decoration: none; }
+.crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(140px, 1fr) minmax(120px, .8fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--calendar-status, #6597ce);
+  font-size: 12px;
+}
+.crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__services,
+.crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__assignment { white-space: normal; }
+.crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__footer { justify-content: flex-end; }
+
+@media (max-width: 900px) {
+  .crm-maintenance-calendar.fc .fc-toolbar-chunk { display: flex; justify-content: center; align-items: center; gap: 8px; }
+  .crm-maintenance-calendar.fc .fc-toolbar-chunk:last-child { width: 100%; }
+  .crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry { grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; }
+  .crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__services,
+  .crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__assignment { grid-column: 1; }
+  .crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__footer { grid-column: 2; grid-row: 1 / span 3; }
+}
+
+@media (max-width: 600px) {
+  .crm-maintenance-calendar.fc .fc-toolbar { justify-content: center; }
+  .crm-maintenance-calendar.fc .fc-toolbar-chunk { width: 100%; }
+  .crm-maintenance-calendar.fc .fc-toolbar-chunk:last-child .fc-button-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .crm-maintenance-calendar.fc .fc-timegrid { overflow-x: auto; }
+  .crm-maintenance-calendar.fc .fc-timeGridWeek-view .fc-scrollgrid { min-width: 760px; }
+  .crm-maintenance-calendar.fc .fc-list-event-time { width: 65px; padding: 12px 6px; font-size: 11px; white-space: normal; }
+  .crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry { display: flex; align-items: stretch; padding: 10px; gap: 6px; }
+  .crm-maintenance-calendar.fc .fc-list-event .crm-calendar-entry__footer { justify-content: flex-start; }
+}

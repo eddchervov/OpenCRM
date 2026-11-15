@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — настройки организации</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const readonly = params.has('readonly')
+    const free = params.has('free')
+    if (params.has('compact-hours')) {
+      const style = document.createElement('style')
+      style.textContent = '.hours-panel { max-width: 360px; box-sizing: border-box; }'
+      document.head.appendChild(style)
+    }
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: { id: organizationId, name: 'Демо-студия · тестовые данные', primaryScenarioCode: scenario },
+      workspaceAccess: { isReadOnly: readonly, isFreePlan: free, isBaseWorkspace: free, hasActiveSubscription: !free, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'settings', title: 'Настройки организации', isVisible: true, groupTitle: 'Настройки', urlTemplate: '#settings' }
+        ], quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', api: {} }
+    }
+    const organization = {
+      ...context.organization, primaryScenarioCode: scenario === 'autoservice' ? 'service-station' : scenario,
+      primaryScenarioName: scenario === 'detailing' ? 'Детейлинг' : scenario === 'autoservice' ? 'СТО' : 'Автопарк',
+      currentUserRoleCode: params.has('employee') ? 'employee' : 'owner', currentUserRoleName: 'Владелец',
+      name: 'Детейлинг-студия «Моторист»', description: 'Уход за автомобилем: детейлинг, полировка и защитные покрытия.',
+      legalName: 'ООО «Моторист»', inn: '5400000000', kpp: '540001001', ogrn: '1000000000000',
+      phone: '+7 000 000-00-00', email: 'contact@example.invalid', legalAddress: 'г. Новосибирск, ул. Примерная, 10', actualAddress: 'г. Новосибирск, ул. Примерная, 10',
+      signatoryPosition: 'Директор', signatoryName: 'Александр Иванов', signatoryBasis: 'Устав',
+      documentStyleCode: 'classic', maintenanceWorkflowMode: 'staged', allowWorkSelfAssignment: true
+    }
+    Object.assign(context.organization, organization)
+    const catalog = { organizationId, scenarioCode: scenario, services: [], serviceBundles: [], workPosts: [], materials: [], workTypes: [], documents: [], planningRules: [] }
+    const settings = { organization, workspaceFeatures: [], canManageProfile: !readonly && !params.has('employee'), canManageRequisites: !readonly && !params.has('employee'), canArchive: !params.has('employee'), scenarioCatalog: catalog }
+    const channels = {
+      telegram: { botUsername: 'opencrm_studio_bot', isConfigured: true, isEnabled: true, isAvailable: !params.has('unavailable'), notifyBooking: true, notifyReady: true, webhookUrl: '' },
+      max: { botUsername: '', isConfigured: false, isEnabled: false, notifyBooking: true, notifyReady: true, webhookUrl: '' }
+    }
+    const setup = { shouldAutoOpen: false, step: 3, revision: 1, completedAt: '2026-10-17T09:00:00Z', canManage: !readonly, workdayStart: '09:00', workdayEnd: '18:00', workingDays: [1,2,3,4,5,6], weeklySchedule: [] }
+    let exportPhase = params.has('export-ready') || params.has('export-download-error') ? 'ready' : 'idle'
+    let exportPolls = 0
+    const exportId = params.has('export-download-error') ? '00000000-0000-0000-0000-000000000002' : '00000000-0000-0000-0000-000000000001'
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      if (url.pathname.includes('/data-export')) {
+        if (init?.method === 'POST') {
+          if (params.has('export-error')) return Response.json({ message: 'Очередь выгрузок занята. Повторите запрос позже.' }, { status: 429 })
+          if (exportPhase !== 'ready') { exportPhase = 'queued'; exportPolls = 0 }
+        } else if (exportPhase === 'queued' || exportPhase === 'running') {
+          exportPhase = ++exportPolls < 2 ? 'running' : 'ready'
+        }
+        return Response.json({ id: exportPhase === 'idle' ? null : exportId, state: exportPhase })
+      }
+      const method = (init?.method || 'GET').toUpperCase()
+      if (method !== 'GET') {
+        if (readonly) return new Response(null, { status: 403 })
+        if (params.has('save-error')) return Response.json({ message: 'Тестовая ошибка сохранения. Введённые данные остаются в форме.' }, { status: 400 })
+        const body = init?.body ? JSON.parse(init.body) : {}
+        if (url.pathname.endsWith('/settings/profile') || url.pathname.endsWith('/settings/requisites')) { Object.assign(organization, body); Object.assign(context.organization, body); return Response.json({ message: 'Настройки сохранены в тестовых данных' }) }
+        const channel = url.pathname.endsWith('/telegram-bot') ? 'telegram' : url.pathname.endsWith('/max-bot') ? 'max' : null
+        if (channel && method === 'PUT') {
+          channels[channel] = { ...channels[channel], isConfigured: true, botUsername: channels[channel].botUsername || 'opencrm_demo_bot', isEnabled: body.isEnabled, notifyBooking: body.notifyBooking, notifyReady: body.notifyReady }
+          return Response.json(channels[channel])
+        }
+        if (url.pathname.endsWith('/setup/open')) return Response.json({ shouldOpen: true })
+        if (url.pathname.endsWith('/setup') && method === 'PUT') { Object.assign(setup, body, { revision: setup.revision + 1 }); return Response.json(setup) }
+        if (url.pathname.endsWith('/settings/archive')) return Response.json({ message: 'Архивирование в предпросмотре не выполняется' })
+        return new Response(null, { status: 403 })
+      }
+      if (url.pathname.endsWith('/context')) return Response.json(context)
+      if (url.pathname.endsWith('/settings')) return Response.json(settings)
+      if (url.pathname.endsWith('/scenario-catalog')) return Response.json(catalog)
+      if (url.pathname.endsWith('/setup')) return Response.json(setup)
+      if (url.pathname.endsWith('/telegram-bot') || url.pathname.endsWith('/max-bot')) {
+        if (params.has('load-error')) return Response.json({ message: 'Тестовая ошибка загрузки канала.' }, { status: 500 })
+        return Response.json(channels[url.pathname.endsWith('/telegram-bot') ? 'telegram' : 'max'])
+      }
+      if (url.pathname.endsWith('/imports/access')) return Response.json({ canImport: !free && !readonly && !params.has('no-import') })
+      if (url.pathname.endsWith('/imports') || url.pathname.endsWith('/imports/profiles')) return Response.json([])
+      return Response.json([])
+    }
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: '/api/v1/autoservice/organizations/' + organizationId + '/workspace/context' }
+    window.opencrmFleetClient = { organizationId, contextUrl: '/api/v1/fleet/organizations/' + organizationId + '/workspace/context' }
+    if (!location.hash) location.hash = '#settings'
+    if (scenario === 'autoservice') await import('../Scenarios/autoservice-client/src/main.ts')
+    else if (scenario === 'fleet') await import('../Scenarios/fleet-client/src/main.ts')
+    else await import('../Scenarios/detailing-client/src/main.ts')
+    const theme = params.get('theme')
+    if (theme === 'light' || theme === 'dark') {
+      const { syncWorkspaceThemeFromDocument } = await import('../packages/ui/src/workspaceTheme.ts')
+      document.documentElement.dataset.crmTheme = theme
+      syncWorkspaceThemeFromDocument()
+    }
+  </script>
+</body>
+</html>

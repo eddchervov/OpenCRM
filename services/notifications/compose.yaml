@@ -1,0 +1,84 @@
+name: notification-service
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: notifications
+      POSTGRES_USER: notifications
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: [notification-postgres:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U notifications -d notifications"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: notifications
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
+    ports: ["127.0.0.1:5672:5672", "127.0.0.1:15672:15672"]
+    volumes: [notification-rabbitmq:/var/lib/rabbitmq]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  worker:
+    build:
+      context: ../..
+      dockerfile: services/notifications/src/Notifications.Worker/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__NotificationsDb: Host=postgres;Port=5432;Database=notifications;Username=notifications;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      RabbitMq__Applications__0: opencrm
+      RabbitMq__Port: ${RABBITMQ_PORT:-5672}
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: notifications
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
+      Database__MigrateOnStartup: "true"
+      Delivery__LogOnly: ${DELIVERY_LOG_ONLY:-true}
+      Email__Enabled: ${EMAIL_ENABLED:-true}
+      Email__Provider: ${EMAIL_PROVIDER:-smtp}
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Port: ${SMTP_PORT:-587}
+      Smtp__UseSsl: ${SMTP_USE_SSL:-false}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-}
+      Smtp__FromName: ${SMTP_FROM_NAME:-}
+      Sms__Enabled: ${SMS_ENABLED:-true}
+      Sms__Provider: ${SMS_PROVIDER:-smsru}
+      SmsRu__BaseUrl: ${SMSRU_BASE_URL:-https://sms.ru}
+      SmsRu__RequestTimeoutSeconds: ${SMSRU_REQUEST_TIMEOUT_SECONDS:-15}
+      SmsRu__ApiKey: ${SMSRU_API_KEY:-}
+      SmsRu__From: ${SMSRU_FROM:-}
+      Telegram__Enabled: ${TELEGRAM_ENABLED:-false}
+      Telegram__Provider: ${TELEGRAM_PROVIDER:-telegram}
+      Telegram__RequestTimeoutSeconds: ${TELEGRAM_REQUEST_TIMEOUT_SECONDS:-15}
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
+      Telegram__OwnerChatId: ${TELEGRAM_OWNER_CHAT_ID:-}
+      Telegram__RelayUrl: ${TELEGRAM_RELAY_URL:-}
+      Telegram__RelayKey: ${TELEGRAM_RELAY_KEY:-}
+      TelegramClient__Enabled: ${TELEGRAM_CLIENT_ENABLED:-false}
+      TelegramClient__Provider: ${TELEGRAM_CLIENT_PROVIDER:-telegram}
+      TelegramClient__RequestTimeoutSeconds: ${TELEGRAM_CLIENT_REQUEST_TIMEOUT_SECONDS:-15}
+      TelegramClient__CredentialBaseUrl: ${TELEGRAM_CLIENT_CREDENTIAL_BASE_URL:-}
+      TelegramClient__CredentialKey: ${TELEGRAM_CLIENT_CREDENTIAL_KEY:-}
+      TelegramClient__RelayUrl: ${TELEGRAM_CLIENT_RELAY_URL:-}
+      TelegramClient__RelayKey: ${TELEGRAM_CLIENT_RELAY_KEY:-}
+      Max__Enabled: ${MAX_ENABLED:-false}
+      Max__Provider: ${MAX_PROVIDER:-max}
+      Max__RequestTimeoutSeconds: ${MAX_REQUEST_TIMEOUT_SECONDS:-15}
+      Max__CredentialBaseUrl: ${MAX_CREDENTIAL_BASE_URL:-}
+      Max__CredentialKey: ${MAX_CREDENTIAL_KEY:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    restart: unless-stopped
+volumes:
+  notification-postgres:
+  notification-rabbitmq:

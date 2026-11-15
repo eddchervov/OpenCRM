@@ -1,0 +1,118 @@
+.subscription-catalog .tariff-heading {
+    margin-bottom: 1.5rem;
+}
+
+.subscription-catalog .tariff-heading p,
+.subscription-catalog .tariff-period,
+.subscription-catalog .tariff-note,
+.subscription-catalog .tariff-payment {
+    color: #666;
+}
+
+.subscription-catalog .tariff-heading p {
+    margin: 0.5rem 0 0;
+}
+
+.subscription-catalog .tariff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+.opencrm-public #subscription-page .tariff-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 1.5rem;
+    margin: 0;
+    background: #fff;
+    border: 1px solid #d5d5d0;
+    border-top: 3px solid #e67337;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(18, 18, 18, 0.06);
+}
+
+.subscription-catalog .tariff-card h2 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+}
+
+.subscription-catalog .tariff-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.subscription-catalog .tariff-price s {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #777;
+}
+
+.subscription-catalog .tariff-period {
+    margin: 0.25rem 0 1.25rem;
+    font-size: 0.9rem;
+}
+
+.subscription-catalog .tariff-features {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0 0 0 1.1rem;
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.subscription-catalog .tariff-plan-features {
+    padding: 0;
+    list-style: none;
+}
+
+.subscription-catalog .tariff-plan-features .fw-semibold {
+    font-weight: 400 !important;
+}
+
+.subscription-catalog .tariff-includes {
+    margin: 0 0 1rem;
+    font-weight: 600;
+}
+
+.subscription-catalog .tariff-action {
+    margin-top: auto;
+    width: 100%;
+    white-space: normal;
+}
+
+.subscription-catalog .tariff-note,
+.subscription-catalog .tariff-payment {
+    margin: 1.25rem 0 0;
+    font-size: 0.85rem;
+}
+
+.subscription-catalog .tariff-limits {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0 0 1.25rem;
+    font-size: 0.9rem;
+}
+
+.subscription-catalog .tariff-limits > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.subscription-catalog .tariff-limits dt {
+    font-weight: 400;
+}
+
+.subscription-catalog .tariff-limits dd {
+    margin: 0;
+    text-align: right;
+}

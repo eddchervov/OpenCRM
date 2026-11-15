@@ -1,0 +1,212 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.UserCardView"
+             x:DataType="vm:UserCardViewModel">
+  <UserControl.Styles>
+    <Style Selector="Border.status">
+      <Setter Property="Background" Value="#1B2B25" />
+      <Setter Property="BorderBrush" Value="#365044" />
+    </Style>
+    <Style Selector="TextBlock.status">
+      <Setter Property="Foreground" Value="#B8D8C7" />
+    </Style>
+    <Style Selector="Border.status.warning">
+      <Setter Property="Background" Value="#352323" />
+      <Setter Property="BorderBrush" Value="#765050" />
+    </Style>
+    <Style Selector="TextBlock.status.warning">
+      <Setter Property="Foreground" Value="#EEB6B6" />
+    </Style>
+  </UserControl.Styles>
+  <UserControl.Resources>
+    <ControlTheme x:Key="CardTabTheme" TargetType="TabItem">
+      <Setter Property="Background" Value="#171B20" />
+      <Setter Property="Foreground" Value="#C7CED6" />
+      <Setter Property="BorderBrush" Value="#303841" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="Margin" Value="0,0,8,8" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="#242D36" />
+      </Style>
+      <Style Selector="^:selected">
+        <Setter Property="Background" Value="#23384A" />
+        <Setter Property="BorderBrush" Value="#527DA0" />
+        <Setter Property="Foreground" Value="#F5F9FD" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </Style>
+      <Style Selector="^:selected:pointerover">
+        <Setter Property="Background" Value="#2B4358" />
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="BorderBrush" Value="#86B5DC" />
+      </Style>
+    </ControlTheme>
+    <DataTemplate x:Key="CardItemTemplate" x:DataType="vm:UserCardItem">
+      <Border Classes="card" Padding="16" Margin="0,0,0,2" Background="#111519" BorderBrush="#2D353E">
+        <StackPanel Spacing="10">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock IsVisible="{Binding HasSubtitle}" Text="{Binding Subtitle}" Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding Fields}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DashboardMetric">
+                <Border BorderBrush="#242C34" BorderThickness="0,0,0,1" Padding="0,8">
+                  <Grid ColumnDefinitions="150,*">
+                    <TextBlock Text="{Binding Title}" Classes="caption" TextWrapping="Wrap" Margin="0,0,12,0" />
+                    <StackPanel Grid.Column="1" Spacing="3">
+                      <SelectableTextBlock Text="{Binding Value}" TextWrapping="Wrap" />
+                      <TextBlock IsVisible="{Binding HasDetail}" Text="{Binding Detail}" Classes="caption" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="CardListItemTemplate" x:DataType="vm:UserCardItem">
+      <Border BorderBrush="#2D353E" BorderThickness="0,0,0,1" Padding="16,14">
+        <Grid ColumnDefinitions="320,*" ColumnSpacing="16">
+          <StackPanel Spacing="5" Margin="0,4,0,0">
+            <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock IsVisible="{Binding HasSubtitle}" Text="{Binding Subtitle}" Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+          <ItemsControl Grid.Column="1" ItemsSource="{Binding Fields}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DashboardMetric">
+                <StackPanel Width="200" Spacing="4" Margin="0,4,12,8">
+                  <TextBlock Text="{Binding Title}" Classes="caption" TextWrapping="Wrap" />
+                  <SelectableTextBlock Text="{Binding Value}" TextWrapping="Wrap" />
+                  <TextBlock IsVisible="{Binding HasDetail}" Text="{Binding Detail}" Classes="caption" TextWrapping="Wrap" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="SupportListItemTemplate" x:DataType="vm:UserCardItem">
+      <Border BorderBrush="#2D353E" BorderThickness="0,0,0,1" Padding="16,14">
+        <StackPanel Spacing="10">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock IsVisible="{Binding HasSubtitle}" Text="{Binding Subtitle}" Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding Fields}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DashboardMetric">
+                <Grid ColumnDefinitions="120,*" Margin="0,4">
+                  <TextBlock Text="{Binding Title}" Classes="caption" TextWrapping="Wrap" Margin="0,0,12,0" />
+                  <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+  <StackPanel Spacing="14">
+    <Border Classes="card" Padding="16" Background="#111519" BorderBrush="#2D353E">
+      <views:DashboardAnalyticsPanel>
+          <StackPanel Spacing="8" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap"
+                       AutomationProperties.AutomationId="UserCardTitle" />
+            <SelectableTextBlock Text="{Binding Subtitle}" Classes="caption" TextWrapping="Wrap" />
+            <Border Classes="status" Classes.warning="{Binding HasStatusWarning}" BorderThickness="1" CornerRadius="5" Padding="8,4" HorizontalAlignment="Left">
+              <TextBlock Classes="status" Classes.warning="{Binding HasStatusWarning}" Text="{Binding StatusLabel}" FontSize="12" />
+            </Border>
+          </StackPanel>
+        <ItemsControl ItemsSource="{Binding HeaderMetrics}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:DashboardMetric">
+              <StackPanel Margin="0,4,24,8" Spacing="5">
+                <TextBlock Text="{Binding Title}" Classes="caption" />
+                <TextBlock Text="{Binding Value}" FontSize="16" FontWeight="SemiBold" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </views:DashboardAnalyticsPanel>
+    </Border>
+    <TabControl ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" ItemContainerTheme="{StaticResource CardTabTheme}"
+                AutomationProperties.AutomationId="UserCardTabs">
+      <TabControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></TabControl.ItemsPanel>
+      <TabControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:UserCardTab">
+          <TextBlock Text="{Binding DisplayTitle}" FontSize="14" />
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+      <TabControl.ContentTemplate>
+        <DataTemplate x:DataType="vm:UserCardTab">
+          <StackPanel Spacing="10" Margin="0,4,0,0">
+            <StackPanel IsVisible="{Binding IsManagement}">
+              <views:UserManagementView DataContext="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).Management}" />
+            </StackPanel>
+            <StackPanel Spacing="10" IsVisible="{Binding !IsManagement}">
+              <StackPanel IsVisible="{Binding IsOrganizations}" Orientation="Horizontal" Spacing="12" Margin="0,0,0,4">
+                <TextBlock Text="Показать" Classes="caption" VerticalAlignment="Center" />
+                <ComboBox Width="190"
+                          ItemsSource="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).OrganizationStatuses}"
+                          SelectedItem="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).OrganizationStatus}"
+                          AutomationProperties.AutomationId="UserOrganizationsStatus" />
+              </StackPanel>
+              <StackPanel IsVisible="{Binding IsSubscriptions}" Orientation="Horizontal" Spacing="12" Margin="0,0,0,4">
+                <TextBlock Text="Показать" Classes="caption" VerticalAlignment="Center" />
+                <ComboBox Width="190"
+                          ItemsSource="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).SubscriptionStatuses}"
+                          SelectedItem="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).SubscriptionStatus}"
+                          AutomationProperties.AutomationId="UserSubscriptionsStatus" />
+              </StackPanel>
+              <TextBlock IsVisible="{Binding HasLimitNote}" Text="{Binding LimitNote}" Classes="caption" TextWrapping="Wrap" />
+              <TextBlock IsVisible="{Binding !HasItems}" Text="{Binding EmptyMessage}" Classes="muted" Margin="14,20" />
+              <ItemsControl IsVisible="{Binding IsOverview}" ItemsSource="{Binding Items}" ItemTemplate="{StaticResource CardItemTemplate}" AutomationProperties.AutomationId="UserCardSections">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><views:DashboardAnalyticsPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+              <Border IsVisible="{Binding IsRecordList}" Classes="card" Padding="0" ClipToBounds="True" Background="#111519" BorderBrush="#2D353E">
+                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource CardListItemTemplate}" AutomationProperties.AutomationId="UserCardList">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                </ItemsControl>
+              </Border>
+              <Border IsVisible="{Binding IsSupport}" Classes="card" Padding="0" ClipToBounds="True" Background="#111519" BorderBrush="#2D353E">
+                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource SupportListItemTemplate}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                </ItemsControl>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </DataTemplate>
+      </TabControl.ContentTemplate>
+    </TabControl>
+    <Expander Header="Последняя активность" IsVisible="{Binding HasTimeline}" HorizontalAlignment="Stretch">
+      <ItemsControl ItemsSource="{Binding Timeline}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:UserCardItem">
+            <Border BorderBrush="#292929" BorderThickness="0,0,0,1" Padding="12,8">
+              <StackPanel Spacing="3">
+                <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                <TextBlock IsVisible="{Binding HasSubtitle}" Text="{Binding Subtitle}" Classes="caption" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Expander>
+  </StackPanel>
+</UserControl>

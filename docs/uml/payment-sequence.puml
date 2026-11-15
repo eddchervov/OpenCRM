@@ -1,0 +1,44 @@
+@startuml payment_sequence
+title opencrm.example.invalid — оплата и активация подписки
+
+autonumber
+actor "Пользователь" as User
+boundary "OpenCRM.WebApp" as App
+control "YooKassaService" as PaymentService
+entity "YooKassa API" as YooKassa
+control "YooKassaWebhookController" as Webhook
+control "Subscription Service" as Subscription
+database "PostgreSQL" as Db
+
+User -> App : выбрать тариф
+App -> Db : создать local payment
+App -> PaymentService : CreatePayment
+PaymentService -> YooKassa : POST payment + idempotency key
+YooKassa --> PaymentService : confirmation URL
+PaymentService --> App : payment response
+App --> User : redirect на оплату
+
+YooKassa -> Webhook : payment.waiting_for_capture
+Webhook -> PaymentService : VerifyNotification
+PaymentService -> YooKassa : GET payment
+YooKassa --> PaymentService : каноническое состояние
+PaymentService --> Webhook : valid
+Webhook -> PaymentService : CapturePayment
+PaymentService -> YooKassa : capture
+
+YooKassa -> Webhook : payment.succeeded
+Webhook -> PaymentService : повторная проверка
+PaymentService -> YooKassa : GET payment
+YooKassa --> PaymentService : succeeded
+Webhook -> Db : найти local payment
+
+alt Уже processing или completed
+  Webhook --> YooKassa : 200 OK
+else Новый успешный платеж
+  Webhook -> Subscription : активировать подписку
+  Subscription -> Db : transaction:\nsubscription + payment + history/audit
+  Db --> Subscription : commit
+  Webhook --> YooKassa : 200 OK
+end
+
+@enduml

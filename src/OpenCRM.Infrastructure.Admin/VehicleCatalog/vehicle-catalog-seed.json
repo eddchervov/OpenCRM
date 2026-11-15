@@ -1,0 +1,1789 @@
+[
+  {
+    "kind": "Truck",
+    "brands": [
+      {
+        "name": "Volvo",
+        "logoKey": "volvo",
+        "models": [
+          "FH",
+          "FH16",
+          "FM",
+          "FMX",
+          "FE",
+          "FL",
+          "VNL",
+          "VNR",
+          "VNX",
+          "VAH"
+        ]
+      },
+      {
+        "name": "Scania",
+        "models": [
+          "P-Series",
+          "G-Series",
+          "R-Series",
+          "S-Series",
+          "L-Series",
+          "XT"
+        ]
+      },
+      {
+        "name": "MAN",
+        "models": [
+          "TGX",
+          "TGS",
+          "TGM",
+          "TGL",
+          "eTGX",
+          "eTGS"
+        ]
+      },
+      {
+        "name": "Mercedes-Benz",
+        "logoKey": "mercedes",
+        "models": [
+          "Actros",
+          "Arocs",
+          "Atego",
+          "Axor",
+          "Econic",
+          "Unimog"
+        ]
+      },
+      {
+        "name": "DAF",
+        "models": [
+          "XF",
+          "XG",
+          "XG+",
+          "CF",
+          "LF",
+          "XD",
+          "XB"
+        ]
+      },
+      {
+        "name": "Iveco",
+        "models": [
+          "S-Way",
+          "X-Way",
+          "T-Way",
+          "Eurocargo",
+          "Daily",
+          "Stralis",
+          "Trakker"
+        ]
+      },
+      {
+        "name": "Renault Trucks",
+        "models": [
+          "T",
+          "T High",
+          "C",
+          "K",
+          "D",
+          "D Wide",
+          "Midlum",
+          "Premium"
+        ]
+      },
+      {
+        "name": "Freightliner",
+        "models": [
+          "Cascadia",
+          "eCascadia",
+          "M2 106",
+          "M2 112",
+          "114SD",
+          "122SD",
+          "EconicSD"
+        ]
+      },
+      {
+        "name": "Kenworth",
+        "models": [
+          "T680",
+          "T680E",
+          "T880",
+          "W990",
+          "T370",
+          "T280",
+          "T480"
+        ]
+      },
+      {
+        "name": "Peterbilt",
+        "models": [
+          "579",
+          "567",
+          "389",
+          "589",
+          "548",
+          "537",
+          "536"
+        ]
+      },
+      {
+        "name": "Mack",
+        "models": [
+          "Anthem",
+          "Pioneer",
+          "Granite",
+          "LR",
+          "MD",
+          "TerraPro",
+          "Pinnacle"
+        ]
+      },
+      {
+        "name": "International",
+        "models": [
+          "LT",
+          "RH",
+          "HX",
+          "MV",
+          "CV",
+          "eMV",
+          "TranStar",
+          "ProStar"
+        ]
+      },
+      {
+        "name": "Hino",
+        "models": [
+          "155",
+          "195",
+          "258",
+          "268",
+          "338",
+          "XL7",
+          "XL8",
+          "700 Series"
+        ]
+      },
+      {
+        "name": "Isuzu",
+        "models": [
+          "NPR",
+          "NQR",
+          "NRR",
+          "FTR",
+          "FTS",
+          "CYZ",
+          "GIGA"
+        ]
+      },
+      {
+        "name": "Foton",
+        "models": [
+          "Auman",
+          "Aumark",
+          "Ollin",
+          "Tunland G7",
+          "View",
+          "Toano"
+        ]
+      },
+      {
+        "name": "Sinotruk",
+        "models": [
+          "HOWO",
+          "HOWO T7H",
+          "SITRAK C7H",
+          "SITRAK C9H",
+          "HOWO MAX"
+        ]
+      },
+      {
+        "name": "Shacman",
+        "models": [
+          "X3000",
+          "F3000",
+          "L3000",
+          "M3000",
+          "X6000"
+        ]
+      },
+      {
+        "name": "КамАЗ",
+        "models": [
+          "5490",
+          "54901",
+          "6520",
+          "65115",
+          "43118",
+          "65117",
+          "65201",
+          "6350"
+        ]
+      },
+      {
+        "name": "МАЗ",
+        "models": [
+          "5440",
+          "6430",
+          "6501",
+          "6312",
+          "4371",
+          "5550",
+          "6516"
+        ]
+      },
+      {
+        "name": "Урал",
+        "models": [
+          "4320",
+          "5557",
+          "6370",
+          "NEXT",
+          "44202",
+          "3255"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "Motorcycle",
+    "brands": [
+      {
+        "name": "Honda",
+        "logoKey": "honda",
+        "models": [
+          "CBR600RR",
+          "CBR1000RR-R Fireblade",
+          "CB650R",
+          "CB500F",
+          "Africa Twin",
+          "NC750X",
+          "Gold Wing",
+          "Rebel 500",
+          "CRF300L",
+          "CRF1100L"
+        ]
+      },
+      {
+        "name": "Yamaha",
+        "models": [
+          "YZF-R1",
+          "YZF-R6",
+          "R7",
+          "MT-07",
+          "MT-09",
+          "MT-10",
+          "Tracer 9",
+          "Tenere 700",
+          "XSR700",
+          "Bolt"
+        ]
+      },
+      {
+        "name": "Kawasaki",
+        "models": [
+          "Ninja 400",
+          "Ninja 650",
+          "Ninja ZX-6R",
+          "Ninja ZX-10R",
+          "Z650",
+          "Z900",
+          "Versys 650",
+          "Versys 1000",
+          "Vulcan S",
+          "KLR650"
+        ]
+      },
+      {
+        "name": "Suzuki",
+        "models": [
+          "GSX-R600",
+          "GSX-R750",
+          "GSX-R1000R",
+          "GSX-8S",
+          "SV650",
+          "V-Strom 650",
+          "V-Strom 800DE",
+          "Hayabusa",
+          "Katana",
+          "Boulevard M109R"
+        ]
+      },
+      {
+        "name": "BMW Motorrad",
+        "models": [
+          "S 1000 RR",
+          "M 1000 RR",
+          "R 1250 GS",
+          "R 1300 GS",
+          "F 900 R",
+          "F 900 GS",
+          "R 18",
+          "K 1600 GT",
+          "CE 04",
+          "G 310 R"
+        ]
+      },
+      {
+        "name": "Ducati",
+        "models": [
+          "Panigale V2",
+          "Panigale V4",
+          "Streetfighter V4",
+          "Monster",
+          "Multistrada V4",
+          "Diavel V4",
+          "Hypermotard 950",
+          "Scrambler Icon",
+          "DesertX"
+        ]
+      },
+      {
+        "name": "KTM",
+        "models": [
+          "390 Duke",
+          "790 Duke",
+          "890 Duke R",
+          "1290 Super Duke R",
+          "390 Adventure",
+          "790 Adventure",
+          "890 Adventure",
+          "1290 Super Adventure S",
+          "RC 390",
+          "450 EXC-F"
+        ]
+      },
+      {
+        "name": "Husqvarna",
+        "models": [
+          "Svartpilen 401",
+          "Vitpilen 401",
+          "701 Supermoto",
+          "701 Enduro",
+          "TE 300",
+          "FE 350",
+          "Norden 901"
+        ]
+      },
+      {
+        "name": "Aprilia",
+        "models": [
+          "RS 660",
+          "Tuono 660",
+          "RSV4",
+          "Tuareg 660",
+          "Tuono V4",
+          "Shiver 900",
+          "Dorsoduro 900"
+        ]
+      },
+      {
+        "name": "Moto Guzzi",
+        "models": [
+          "V7 Stone",
+          "V7 Special",
+          "V85 TT",
+          "V100 Mandello",
+          "California Touring",
+          "Audace"
+        ]
+      },
+      {
+        "name": "Harley-Davidson",
+        "models": [
+          "Sportster S",
+          "Nightster",
+          "Street Bob",
+          "Fat Bob",
+          "Low Rider S",
+          "Breakout",
+          "Road Glide",
+          "Street Glide",
+          "Pan America 1250",
+          "Heritage Classic"
+        ]
+      },
+      {
+        "name": "Indian",
+        "models": [
+          "Scout",
+          "Scout Bobber",
+          "Chief",
+          "Chief Bobber",
+          "Challenger",
+          "Pursuit",
+          "FTR",
+          "Roadmaster",
+          "Springfield"
+        ]
+      },
+      {
+        "name": "Triumph",
+        "models": [
+          "Street Triple 765",
+          "Speed Triple 1200 RS",
+          "Trident 660",
+          "Tiger 900",
+          "Tiger 1200",
+          "Bonneville T120",
+          "Scrambler 1200",
+          "Rocket 3",
+          "Daytona 660"
+        ]
+      },
+      {
+        "name": "Bajaj",
+        "models": [
+          "Pulsar NS200",
+          "Pulsar RS200",
+          "Dominar 400",
+          "Avenger Cruise 220",
+          "CT 125X",
+          "Pulsar N250"
+        ]
+      },
+      {
+        "name": "Royal Enfield",
+        "models": [
+          "Classic 350",
+          "Meteor 350",
+          "Hunter 350",
+          "Bullet 350",
+          "Himalayan",
+          "Himalayan 450",
+          "Interceptor 650",
+          "Continental GT 650",
+          "Super Meteor 650"
+        ]
+      },
+      {
+        "name": "CFMOTO",
+        "models": [
+          "300NK",
+          "450NK",
+          "650NK",
+          "700CL-X",
+          "800MT",
+          "650MT",
+          "450SR",
+          "675SR-R",
+          "250SR"
+        ]
+      },
+      {
+        "name": "Benelli",
+        "models": [
+          "TNT 300",
+          "302S",
+          "TRK 502",
+          "TRK 702",
+          "Leoncino 500",
+          "752S",
+          "Imperiale 400"
+        ]
+      },
+      {
+        "name": "MV Agusta",
+        "models": [
+          "Brutale 800",
+          "Brutale 1000 RR",
+          "Dragster RR",
+          "F3 800",
+          "Superveloce 800",
+          "Turismo Veloce"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "ATV",
+    "brands": [
+      {
+        "name": "Polaris",
+        "models": [
+          "Sportsman 570",
+          "Sportsman 850",
+          "Sportsman XP 1000",
+          "Scrambler 850",
+          "Scrambler XP 1000",
+          "Sportsman Touring 570",
+          "Sportsman 6x6 570"
+        ]
+      },
+      {
+        "name": "Can-Am",
+        "models": [
+          "Outlander 500",
+          "Outlander 700",
+          "Outlander 850",
+          "Outlander 1000R",
+          "Renegade 570",
+          "Renegade 850",
+          "Renegade 1000R",
+          "DS 250"
+        ]
+      },
+      {
+        "name": "Yamaha",
+        "models": [
+          "Grizzly 700",
+          "Kodiak 450",
+          "Kodiak 700",
+          "Raptor 700R",
+          "YFZ450R"
+        ]
+      },
+      {
+        "name": "Honda",
+        "logoKey": "honda",
+        "models": [
+          "FourTrax Rancher",
+          "FourTrax Foreman",
+          "FourTrax Rubicon",
+          "TRX250X",
+          "TRX90X"
+        ]
+      },
+      {
+        "name": "Suzuki",
+        "models": [
+          "KingQuad 400",
+          "KingQuad 500",
+          "KingQuad 750",
+          "QuadSport Z90",
+          "QuadSport Z50"
+        ]
+      },
+      {
+        "name": "Kawasaki",
+        "models": [
+          "Brute Force 300",
+          "Brute Force 750",
+          "KFX90",
+          "KFX50"
+        ]
+      },
+      {
+        "name": "CFMOTO",
+        "models": [
+          "CFORCE 400",
+          "CFORCE 520",
+          "CFORCE 625",
+          "CFORCE 850",
+          "CFORCE 1000"
+        ]
+      },
+      {
+        "name": "Kymco",
+        "models": [
+          "MXU 300",
+          "MXU 550",
+          "MXU 700",
+          "Maxxer 90",
+          "Maxxer 450i"
+        ]
+      },
+      {
+        "name": "Arctic Cat",
+        "models": [
+          "Alterra 300",
+          "Alterra 600",
+          "Alterra 700",
+          "Alterra 90"
+        ]
+      },
+      {
+        "name": "Segway Powersports",
+        "models": [
+          "Snarler AT5",
+          "Snarler AT6",
+          "Snarler AT10"
+        ]
+      },
+      {
+        "name": "Hisun",
+        "models": [
+          "Tactic 250",
+          "Forge 450",
+          "Forge 550",
+          "Forge 750",
+          "Axis 110"
+        ]
+      },
+      {
+        "name": "Linhai",
+        "models": [
+          "M150",
+          "M210",
+          "M300",
+          "M550L",
+          "M565Li",
+          "T-Boss 550"
+        ]
+      },
+      {
+        "name": "Stels",
+        "models": [
+          "ATV 300",
+          "ATV 500 GT",
+          "Guepard 650",
+          "Guepard 800",
+          "Leopard 600"
+        ]
+      },
+      {
+        "name": "Русская Механика",
+        "models": [
+          "РМ 500",
+          "РМ 650-2",
+          "РМ 800 DUO"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "UTV",
+    "brands": [
+      {
+        "name": "Polaris",
+        "models": [
+          "RZR Trail",
+          "RZR XP",
+          "RZR Pro XP",
+          "RZR Turbo R",
+          "General XP 1000",
+          "Ranger 570",
+          "Ranger XP 1000",
+          "Ranger Crew XP 1000"
+        ]
+      },
+      {
+        "name": "Can-Am",
+        "models": [
+          "Maverick Sport",
+          "Maverick Trail",
+          "Maverick X3",
+          "Commander",
+          "Defender",
+          "Defender MAX",
+          "Traxter"
+        ]
+      },
+      {
+        "name": "Yamaha",
+        "models": [
+          "Wolverine X2",
+          "Wolverine X4",
+          "Wolverine RMAX2",
+          "Wolverine RMAX4",
+          "Viking",
+          "Viking VI",
+          "YXZ1000R"
+        ]
+      },
+      {
+        "name": "Kawasaki",
+        "models": [
+          "Teryx",
+          "Teryx4",
+          "KRX 1000",
+          "Mule SX",
+          "Mule Pro-FX",
+          "Mule Pro-FXT"
+        ]
+      },
+      {
+        "name": "Honda",
+        "logoKey": "honda",
+        "models": [
+          "Pioneer 520",
+          "Pioneer 700",
+          "Pioneer 1000",
+          "Pioneer 1000-5",
+          "Talon 1000X",
+          "Talon 1000R"
+        ]
+      },
+      {
+        "name": "CFMOTO",
+        "models": [
+          "ZFORCE 500",
+          "ZFORCE 800",
+          "ZFORCE 950",
+          "UFORCE 600",
+          "UFORCE 1000",
+          "UFORCE 1000 XL"
+        ]
+      },
+      {
+        "name": "Arctic Cat",
+        "models": [
+          "Prowler Pro",
+          "Prowler 500",
+          "Wildcat XX",
+          "Wildcat Trail"
+        ]
+      },
+      {
+        "name": "Segway Powersports",
+        "models": [
+          "Villain SX10",
+          "Villain SX10 X",
+          "Fugleman UT10",
+          "Fugleman UT10 Crew"
+        ]
+      },
+      {
+        "name": "Hisun",
+        "models": [
+          "Sector 550",
+          "Sector 750",
+          "Sector 1000",
+          "Strike 550",
+          "Strike 1000",
+          "HS 400"
+        ]
+      },
+      {
+        "name": "Linhai",
+        "models": [
+          "T-Boss 550",
+          "T-Boss 570",
+          "T-Boss 650",
+          "U-Boss 550",
+          "U-Boss 800"
+        ]
+      },
+      {
+        "name": "Kubota",
+        "models": [
+          "RTV-X900",
+          "RTV-X1100C",
+          "RTV-X1140",
+          "Sidekick"
+        ]
+      },
+      {
+        "name": "John Deere",
+        "models": [
+          "Gator XUV590M",
+          "Gator XUV835M",
+          "Gator XUV865R",
+          "Gator HPX615E"
+        ]
+      },
+      {
+        "name": "Tracker",
+        "models": [
+          "800SX",
+          "EV iS",
+          "Off Road 600"
+        ]
+      },
+      {
+        "name": "Mahindra",
+        "models": [
+          "ROXOR",
+          "Retriever 750",
+          "mPact XTV 750S"
+        ]
+      },
+      {
+        "name": "Massimo",
+        "models": [
+          "T-Boss 410",
+          "T-Boss 550",
+          "Buck 450",
+          "Buck 250"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "Snowmobile",
+    "brands": [
+      {
+        "name": "Ski-Doo",
+        "models": [
+          "MXZ",
+          "Renegade",
+          "Summit",
+          "Backcountry",
+          "Expedition",
+          "Skandic",
+          "Tundra",
+          "Grand Touring"
+        ]
+      },
+      {
+        "name": "Lynx",
+        "models": [
+          "Rave",
+          "Boondocker",
+          "Shredder",
+          "Commander",
+          "49 Ranger",
+          "Adventure",
+          "Xterrain"
+        ]
+      },
+      {
+        "name": "Polaris",
+        "models": [
+          "INDY",
+          "Switchback",
+          "Voyageur",
+          "RMK Khaos",
+          "PRO RMK",
+          "Titan"
+        ]
+      },
+      {
+        "name": "Yamaha",
+        "models": [
+          "Sidewinder",
+          "Mountain Max",
+          "Transporter",
+          "VK540",
+          "SnoScoot"
+        ]
+      },
+      {
+        "name": "Arctic Cat",
+        "models": [
+          "ZR",
+          "Riot",
+          "Blast",
+          "M",
+          "Norseman",
+          "Pantera"
+        ]
+      },
+      {
+        "name": "Буран",
+        "models": [
+          "А",
+          "АД",
+          "4Т",
+          "Лидер"
+        ]
+      },
+      {
+        "name": "Тайга",
+        "models": [
+          "Varyag 550",
+          "Patrul 800 SWT",
+          "Барс 850",
+          "Атака 551 II",
+          "Лидер 500"
+        ]
+      },
+      {
+        "name": "Stels",
+        "models": [
+          "Ермак 600",
+          "Витязь SA800",
+          "Капитан S150"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "JetSki",
+    "brands": [
+      {
+        "name": "Sea-Doo",
+        "models": [
+          "Spark",
+          "Spark Trixx",
+          "GTI 90",
+          "GTI SE 130",
+          "GTR 230",
+          "RXP-X 325",
+          "RXT-X 325",
+          "FishPro Scout",
+          "FishPro Trophy",
+          "Explorer Pro 170"
+        ]
+      },
+      {
+        "name": "Yamaha",
+        "models": [
+          "JetBlaster",
+          "EX",
+          "EX Deluxe",
+          "VX Cruiser",
+          "VX Limited",
+          "GP SVHO",
+          "FX Cruiser HO",
+          "FX SVHO",
+          "SuperJet"
+        ]
+      },
+      {
+        "name": "Kawasaki",
+        "models": [
+          "Jet Ski SX-R 160",
+          "Jet Ski STX 160",
+          "Jet Ski STX 160X",
+          "Jet Ski Ultra 160LX-S",
+          "Jet Ski Ultra 310LX",
+          "Jet Ski Ultra 310X"
+        ]
+      },
+      {
+        "name": "Taiga",
+        "models": [
+          "Orca Carbon",
+          "Orca Performance"
+        ]
+      },
+      {
+        "name": "Narke",
+        "models": [
+          "The Electrojet",
+          "GT95"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "Boat",
+    "brands": [
+      {
+        "name": "Yamaha Boats",
+        "models": [
+          "195S",
+          "222S",
+          "252SE",
+          "255XD",
+          "255XE",
+          "AR190",
+          "AR220",
+          "SX195"
+        ]
+      },
+      {
+        "name": "Sea Ray",
+        "models": [
+          "SPX 190",
+          "SPX 210",
+          "SPX 230",
+          "SDX 250",
+          "SLX 260",
+          "SLX 280",
+          "Sundancer 320"
+        ]
+      },
+      {
+        "name": "Bayliner",
+        "models": [
+          "M15",
+          "M17",
+          "M19",
+          "Element E16",
+          "Element E18",
+          "VR4",
+          "VR5",
+          "VR6",
+          "DX2000"
+        ]
+      },
+      {
+        "name": "Boston Whaler",
+        "models": [
+          "130 Super Sport",
+          "170 Montauk",
+          "190 Montauk",
+          "210 Montauk",
+          "240 Vantage",
+          "280 Dauntless",
+          "330 Outrage"
+        ]
+      },
+      {
+        "name": "Tracker Boats",
+        "models": [
+          "Pro Team 175",
+          "Pro Team 190 TX",
+          "Targa V-19 WT",
+          "Tundra 18 WT",
+          "Grizzly 1860",
+          "BASS BUGGY 18 DLX"
+        ]
+      },
+      {
+        "name": "Lund",
+        "models": [
+          "1650 Angler",
+          "1875 Impact XS",
+          "1775 Adventure Sport",
+          "1875 Crossover XS",
+          "2075 Tyee",
+          "1875 Pro Guide"
+        ]
+      },
+      {
+        "name": "Alumacraft",
+        "models": [
+          "Classic 165",
+          "Trophy 185",
+          "Competitor 205",
+          "Escape 165",
+          "Voyageur 175",
+          "V16"
+        ]
+      },
+      {
+        "name": "Ranger Boats",
+        "models": [
+          "Z185",
+          "Z520R",
+          "621FS Pro",
+          "620FS Pro",
+          "VS1682 WT",
+          "RB190"
+        ]
+      },
+      {
+        "name": "Nitro",
+        "models": [
+          "Z17",
+          "Z18",
+          "Z19",
+          "Z20 XL Pro",
+          "ZV19 Sport",
+          "ZV21"
+        ]
+      },
+      {
+        "name": "Malibu",
+        "models": [
+          "Wakesetter 21 LX",
+          "Wakesetter 23 LSV",
+          "Wakesetter 24 MXZ",
+          "M220",
+          "M240",
+          "Response TXi"
+        ]
+      },
+      {
+        "name": "MasterCraft",
+        "models": [
+          "NXT20",
+          "NXT22",
+          "XT22",
+          "XT23",
+          "X24",
+          "X26",
+          "ProStar"
+        ]
+      },
+      {
+        "name": "Chaparral",
+        "models": [
+          "21 SSI",
+          "23 SSI",
+          "267 SSX",
+          "307 SSX",
+          "280 OSX"
+        ]
+      },
+      {
+        "name": "Crownline",
+        "models": [
+          "E205 XS",
+          "E235 XS",
+          "260 XSS",
+          "290 SS",
+          "264 CR"
+        ]
+      },
+      {
+        "name": "Four Winns",
+        "models": [
+          "H1",
+          "H2",
+          "H4",
+          "HD3",
+          "TH36",
+          "Vista 255 OB"
+        ]
+      },
+      {
+        "name": "Jeanneau",
+        "models": [
+          "Cap Camarat 7.5 WA",
+          "Cap Camarat 9.0 CC",
+          "Merry Fisher 795",
+          "Merry Fisher 895",
+          "Leader 9.0 WA"
+        ]
+      },
+      {
+        "name": "Beneteau",
+        "models": [
+          "Antares 8",
+          "Antares 9",
+          "Flyer 8 SUNdeck",
+          "Flyer 9 SPACEdeck",
+          "Gran Turismo 36",
+          "Swift Trawler 35"
+        ]
+      },
+      {
+        "name": "Azimut",
+        "models": [
+          "Atlantis 45",
+          "Fly 53",
+          "Magellano 60",
+          "S6",
+          "Grande 26M"
+        ]
+      },
+      {
+        "name": "Sunseeker",
+        "models": [
+          "Superhawk 55",
+          "Predator 60",
+          "Manhattan 55",
+          "65 Sport Yacht",
+          "Ocean 182"
+        ]
+      },
+      {
+        "name": "Princess",
+        "models": [
+          "V40",
+          "V50",
+          "F45",
+          "F55",
+          "Y72",
+          "S72"
+        ]
+      },
+      {
+        "name": "Quicksilver",
+        "models": [
+          "Activ 455 Open",
+          "Activ 605 Open",
+          "Activ 675 Bowrider",
+          "805 Pilothouse",
+          "905 Weekend"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "SpecialEquipment",
+    "brands": [
+      {
+        "name": "Caterpillar",
+        "models": [
+          "320",
+          "323",
+          "330",
+          "336",
+          "950 GC",
+          "966 GC",
+          "428",
+          "420 XE",
+          "D6",
+          "938M"
+        ]
+      },
+      {
+        "name": "Komatsu",
+        "models": [
+          "PC200",
+          "PC210",
+          "PC300",
+          "WA380",
+          "WA470",
+          "D65",
+          "D85",
+          "HM400",
+          "WB93R"
+        ]
+      },
+      {
+        "name": "Hitachi",
+        "models": [
+          "ZX200",
+          "ZX210LC",
+          "ZX300LC",
+          "ZX350LC",
+          "ZW180",
+          "ZW220",
+          "EH3500AC-3"
+        ]
+      },
+      {
+        "name": "Volvo CE",
+        "models": [
+          "EC220",
+          "EC250",
+          "EC380",
+          "L90H",
+          "L120H",
+          "A25G",
+          "A40G",
+          "ECR145"
+        ]
+      },
+      {
+        "name": "JCB",
+        "models": [
+          "3CX",
+          "4CX",
+          "JS130",
+          "JS220",
+          "535-95",
+          "540-140",
+          "457",
+          "86C-2"
+        ]
+      },
+      {
+        "name": "Liebherr",
+        "models": [
+          "R 920",
+          "R 930",
+          "R 945",
+          "L 538",
+          "L 566",
+          "PR 736",
+          "LR 1300"
+        ]
+      },
+      {
+        "name": "Doosan",
+        "models": [
+          "DX140LC",
+          "DX225LC",
+          "DX300LC",
+          "DL250",
+          "DL420",
+          "DA30",
+          "B20T-7"
+        ]
+      },
+      {
+        "name": "Hyundai Construction",
+        "models": [
+          "HX140A",
+          "HX220A",
+          "HX300A",
+          "HL960A",
+          "HL975A",
+          "R25Z-9AK"
+        ]
+      },
+      {
+        "name": "XCMG",
+        "models": [
+          "XE215C",
+          "XE370CA",
+          "LW300FN",
+          "LW500FN",
+          "GR180",
+          "XS123",
+          "XCA60"
+        ]
+      },
+      {
+        "name": "SANY",
+        "models": [
+          "SY215C",
+          "SY335C",
+          "SY500H",
+          "SW405",
+          "STC250T5",
+          "SSR120C-10"
+        ]
+      },
+      {
+        "name": "Zoomlion",
+        "models": [
+          "ZE215E",
+          "ZE360E",
+          "ZD220-3",
+          "ZL50GN",
+          "QUY100"
+        ]
+      },
+      {
+        "name": "Terex",
+        "models": [
+          "TL80",
+          "TR60",
+          "RT555",
+          "AC 100-4L",
+          "Finlay 883+"
+        ]
+      },
+      {
+        "name": "John Deere",
+        "models": [
+          "210G LC",
+          "350G LC",
+          "524 P-Tier",
+          "644 P-Tier",
+          "700L",
+          "310L EP"
+        ]
+      },
+      {
+        "name": "CASE",
+        "models": [
+          "580SV",
+          "695SV",
+          "CX210E",
+          "CX260E",
+          "721G",
+          "1021G",
+          "1150M"
+        ]
+      },
+      {
+        "name": "New Holland",
+        "models": [
+          "B80B",
+          "B95C",
+          "E215C",
+          "W130D",
+          "D180C"
+        ]
+      },
+      {
+        "name": "Bobcat",
+        "models": [
+          "S450",
+          "S590",
+          "S650",
+          "T450",
+          "T66",
+          "E35",
+          "E50",
+          "L85"
+        ]
+      },
+      {
+        "name": "Wirtgen",
+        "models": [
+          "W 100 Fi",
+          "W 150 Fi",
+          "SP 61",
+          "WR 240i"
+        ]
+      },
+      {
+        "name": "Hamm",
+        "models": [
+          "H 13i",
+          "H 25i",
+          "HD 90i",
+          "HX 70i"
+        ]
+      },
+      {
+        "name": "Dynapac",
+        "models": [
+          "CA1500D",
+          "CA3500D",
+          "CC2200",
+          "SD2500CS"
+        ]
+      },
+      {
+        "name": "Амкодор",
+        "models": [
+          "352",
+          "371",
+          "342В",
+          "211",
+          "702ЕА",
+          "732"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "Trailer",
+    "brands": [
+      {
+        "name": "Schmitz Cargobull",
+        "models": [
+          "S.KO COOL",
+          "S.BO EXPRESS",
+          "S.CS",
+          "S.KI",
+          "S.PR BAU",
+          "M.KO"
+        ]
+      },
+      {
+        "name": "Krone",
+        "models": [
+          "Cool Liner",
+          "Dry Liner",
+          "Box Liner",
+          "Profiliner",
+          "Mega Liner",
+          "Paper Liner"
+        ]
+      },
+      {
+        "name": "Kögel",
+        "models": [
+          "Cargo",
+          "Mega",
+          "Cool",
+          "Box",
+          "Tipper",
+          "Port 45 Triplex"
+        ]
+      },
+      {
+        "name": "Wielton",
+        "models": [
+          "NS 3 K",
+          "NW 3",
+          "Curtain Master",
+          "Dry Master",
+          "Container Master"
+        ]
+      },
+      {
+        "name": "Schwarzmüller",
+        "models": [
+          "Curtainsider",
+          "Tipper",
+          "Low Loader",
+          "Timber Trailer",
+          "Container Chassis"
+        ]
+      },
+      {
+        "name": "Humbaur",
+        "models": [
+          "HA",
+          "HK",
+          "HTK",
+          "Senko",
+          "Xanthos"
+        ]
+      },
+      {
+        "name": "Böckmann",
+        "models": [
+          "KT",
+          "TL-AL",
+          "Champion",
+          "Portax",
+          "Big Master"
+        ]
+      },
+      {
+        "name": "Ifor Williams",
+        "models": [
+          "LM",
+          "TT",
+          "CT",
+          "HBX",
+          "BV",
+          "DP"
+        ]
+      },
+      {
+        "name": "Al-Ko",
+        "models": [
+          "Car Trailer",
+          "Boat Trailer",
+          "Cargo Trailer",
+          "Utility Trailer"
+        ]
+      },
+      {
+        "name": "Тонар",
+        "models": [
+          "9523",
+          "97461",
+          "9988",
+          "8579",
+          "L4",
+          "B3-13/K"
+        ]
+      },
+      {
+        "name": "НЕФАЗ",
+        "models": [
+          "9334",
+          "8332",
+          "8560",
+          "96931"
+        ]
+      },
+      {
+        "name": "МАЗ",
+        "models": [
+          "9758",
+          "93866",
+          "83781",
+          "8561"
+        ]
+      },
+      {
+        "name": "СЗАП",
+        "models": [
+          "83053",
+          "8357",
+          "93271",
+          "8543"
+        ]
+      },
+      {
+        "name": "Grunwald",
+        "models": [
+          "3 Axle Curtainsider",
+          "Tipper Steel",
+          "Container Chassis",
+          "Lowbed"
+        ]
+      },
+      {
+        "name": "Meusburger",
+        "models": [
+          "Новтрак Jumbo",
+          "SP-345PR",
+          "SW-454",
+          "MPA"
+        ]
+      },
+      {
+        "name": "Kässbohrer",
+        "models": [
+          "K.SCS",
+          "K.SKI",
+          "K.SLA",
+          "K.SHG",
+          "K.SOK"
+        ]
+      },
+      {
+        "name": "Fliegl",
+        "models": [
+          "SDS 350",
+          "ASW 271",
+          "TPS 118",
+          "DTS 300"
+        ]
+      },
+      {
+        "name": "Faymonville",
+        "models": [
+          "MAX Trailer",
+          "MultiMAX",
+          "MegaMAX",
+          "CombiMAX",
+          "PrefaMAX"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "Other",
+    "brands": [
+      {
+        "name": "Segway",
+        "models": [
+          "Ninebot S",
+          "Ninebot Gokart Pro",
+          "KickScooter P100S",
+          "KickScooter GT2",
+          "eScooter E125S"
+        ]
+      },
+      {
+        "name": "Ninebot",
+        "models": [
+          "KickScooter MAX G2",
+          "F2 Pro",
+          "E2 Plus",
+          "G30",
+          "P65"
+        ]
+      },
+      {
+        "name": "Xiaomi",
+        "models": [
+          "Mi Electric Scooter 3",
+          "Electric Scooter 4",
+          "Electric Scooter 4 Pro",
+          "Electric Scooter 4 Ultra",
+          "MiJia 1S"
+        ]
+      },
+      {
+        "name": "Razor",
+        "models": [
+          "E100",
+          "E200",
+          "E300",
+          "EcoSmart Metro",
+          "Pocket Mod"
+        ]
+      },
+      {
+        "name": "Kugoo",
+        "models": [
+          "Kirin M4",
+          "Kirin G2 Pro",
+          "Kirin G3",
+          "M5 Pro",
+          "S1 Pro"
+        ]
+      },
+      {
+        "name": "Dualtron",
+        "models": [
+          "Mini",
+          "Popular",
+          "Victor",
+          "Thunder 2",
+          "Achilleus",
+          "Ultra 2"
+        ]
+      },
+      {
+        "name": "Inokim",
+        "models": [
+          "Light 2",
+          "Quick 4",
+          "OX",
+          "OXO",
+          "Mini 2"
+        ]
+      },
+      {
+        "name": "Gotway",
+        "models": [
+          "MCM5",
+          "MSX",
+          "Monster",
+          "Tesla V3",
+          "EXN"
+        ]
+      },
+      {
+        "name": "KingSong",
+        "models": [
+          "KS-14D",
+          "KS-16S",
+          "KS-18XL",
+          "S18",
+          "S22 Pro"
+        ]
+      },
+      {
+        "name": "Eltreco",
+        "models": [
+          "XT 600",
+          "Ultra Trek",
+          "Wave",
+          "Patrol Cardan",
+          "Good 250W"
+        ]
+      },
+      {
+        "name": "Volteco",
+        "models": [
+          "Bigcat Dual",
+          "Cyber",
+          "Trike New",
+          "Bad Dual",
+          "Shrinker"
+        ]
+      },
+      {
+        "name": "Greenworks",
+        "models": [
+          "GC82",
+          "GD60",
+          "Optimow 15",
+          "UB700",
+          "CRT426"
+        ]
+      },
+      {
+        "name": "Husqvarna",
+        "models": [
+          "Automower 305",
+          "Automower 430X",
+          "TS 114",
+          "R 214C",
+          "K 770"
+        ]
+      },
+      {
+        "name": "Stihl",
+        "models": [
+          "MS 180",
+          "MS 261",
+          "FS 55",
+          "RMA 443",
+          "RT 4097 SX"
+        ]
+      },
+      {
+        "name": "Makita",
+        "models": [
+          "DLM382",
+          "DCS553",
+          "UH6580",
+          "EK6101",
+          "XML11"
+        ]
+      },
+      {
+        "name": "Bosch",
+        "models": [
+          "UniversalRotak 37",
+          "AHS 50-20 LI",
+          "EasyGrassCut 26",
+          "UniversalChain 35",
+          "Fontus"
+        ]
+      },
+      {
+        "name": "Karcher",
+        "models": [
+          "K5",
+          "K7",
+          "HD 6/15",
+          "BD 50/50",
+          "KM 70/20"
+        ]
+      },
+      {
+        "name": "Generac",
+        "models": [
+          "GP3300",
+          "GP6500",
+          "Guardian 22kW",
+          "XC8000E",
+          "iQ3500"
+        ]
+      },
+      {
+        "name": "Honda Power Equipment",
+        "models": [
+          "EU22i",
+          "EU70is",
+          "EM5500",
+          "HRX537",
+          "FG205"
+        ]
+      }
+    ]
+  }
+]

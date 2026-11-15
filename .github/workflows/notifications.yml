@@ -1,0 +1,268 @@
+name: OpenCRM CI
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "services/notifications/**"
+      - "src/**"
+      - "integrations/**"
+      - "tests/**"
+      - "scripts/assert-*-coverage.ps1"
+      - "scripts/assert-backend-boundaries.ps1"
+      - "Directory.Build.*"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "*.sln"
+      - "*.slnx"
+      - "[Nn]u[Gg]et.[Cc]onfig"
+      - "package*.json"
+      - "tsconfig*.json"
+      - "vite.config.*"
+      - ".npmrc"
+      - ".nvmrc"
+      - ".node-version"
+      - ".dockerignore"
+      - ".gitignore"
+      - ".github/workflows/notifications.yml"
+  pull_request:
+    paths:
+      - "services/notifications/**"
+      - "src/**"
+      - "integrations/**"
+      - "tests/**"
+      - "scripts/assert-*-coverage.ps1"
+      - "scripts/assert-backend-boundaries.ps1"
+      - "Directory.Build.*"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "*.sln"
+      - "*.slnx"
+      - "[Nn]u[Gg]et.[Cc]onfig"
+      - "package*.json"
+      - "tsconfig*.json"
+      - "vite.config.*"
+      - ".npmrc"
+      - ".nvmrc"
+      - ".node-version"
+      - ".dockerignore"
+      - ".gitignore"
+      - ".github/workflows/notifications.yml"
+jobs:
+  backend-boundaries:
+    name: Backend project boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: pwsh
+        run: ./scripts/assert-backend-boundaries.ps1
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/notifications
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet restore NotificationService.slnx
+      - run: dotnet build NotificationService.slnx --configuration Release --no-restore
+      - run: dotnet test NotificationService.slnx --configuration Release --no-build
+  frontend-build:
+    name: Frontend (${{ matrix.client }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        client: [admin, autoservice, detailing, fleet]
+    defaults:
+      run:
+        working-directory: src/OpenCRM.Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/OpenCRM.Frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:${{ matrix.client }}
+  opencrm-integration:
+    name: Backend tests (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [OpenCRM.Infrastructure.Tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test tests/${{ matrix.project }}/${{ matrix.project }}.csproj --configuration Release -m:1 -p:BuildScenarioClientsOnBuild=false --settings tests/Backend.runsettings --logger trx --results-directory TestResults/${{ matrix.project }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-tests-${{ matrix.project }}
+          path: TestResults/${{ matrix.project }}
+          if-no-files-found: warn
+  documents-coverage:
+    name: Documents tests and coverage report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Test Documents with PostgreSQL and measure coverage
+        shell: pwsh
+        run: |
+          dotnet test tests/OpenCRM.Modules.Documents.Tests/OpenCRM.Modules.Documents.Tests.csproj -m:1 -p:BuildScenarioClientsOnBuild=false --settings tests/Documents.runsettings --collect 'XPlat Code Coverage' --results-directory "$env:RUNNER_TEMP/documents-coverage"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-ChildItem "$env:RUNNER_TEMP/documents-coverage" -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+          if ($null -eq $report) { throw 'Отчёт покрытия Documents не создан.' }
+          ./scripts/assert-documents-coverage.ps1 -ReportPath $report.FullName
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documents-coverage
+          path: ${{ runner.temp }}/documents-coverage
+  modules-coverage:
+    name: ${{ matrix.module }} tests and coverage report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [Vehicles, Inventory, Maintenance, Clients, Organizations, Catalog, Planning, Billing, Workspace, Accounts, Notifications, Support, Promotions]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Test module with PostgreSQL and measure coverage
+        shell: pwsh
+        run: |
+          $module = '${{ matrix.module }}'
+          $results = "$env:RUNNER_TEMP/$module-coverage"
+          dotnet test "tests/OpenCRM.Modules.$module.Tests/OpenCRM.Modules.$module.Tests.csproj" -m:1 -p:BuildScenarioClientsOnBuild=false --settings "tests/$module.runsettings" --collect 'XPlat Code Coverage' --logger trx --results-directory $results
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-ChildItem $results -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+          if ($null -eq $report) { throw "Отчёт покрытия $module не создан." }
+          ./scripts/assert-module-coverage.ps1 -ReportPath $report.FullName -ModuleName $module
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.module }}-coverage
+          path: ${{ runner.temp }}/${{ matrix.module }}-coverage
+  docker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/notifications
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker build -f src/Notifications.Worker/Dockerfile ../..
+  opencrm-docker:
+    name: OpenCRM Docker build and readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: opencrm_ci
+          POSTGRES_USER: opencrm_ci
+          POSTGRES_PASSWORD: opencrm_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U opencrm_ci -d opencrm_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      rabbitmq:
+        image: rabbitmq:4-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: opencrm_ci
+          RABBITMQ_DEFAULT_PASS: opencrm_ci
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s --health-timeout 10s --health-retries 20
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__OpenCRMConnection: Host=127.0.0.1;Port=5432;Database=opencrm_ci;Username=opencrm_ci;Password=opencrm_ci;Timeout=5;Command Timeout=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: docker build --file src/Dockerfile --tag opencrm:ci .
+      - name: Apply migrations to the temporary database
+        run: |
+          dotnet tool install dotnet-ef --version 10.0.7 --tool-path "$RUNNER_TEMP/ef-tools"
+          "$RUNNER_TEMP/ef-tools/dotnet-ef" database update --project src/OpenCRM.Infrastructure.Migrations --configuration Release
+      - name: Start OpenCRM
+        run: |
+          docker run --detach --name opencrm-ci --network host \
+            --env ASPNETCORE_ENVIRONMENT \
+            --env ConnectionStrings__OpenCRMConnection \
+            --env ReverseProxy__KnownProxy=127.0.0.1 \
+            --env RabbitMq__Host=127.0.0.1 \
+            --env RabbitMq__Username=opencrm_ci \
+            --env RabbitMq__Password=opencrm_ci \
+            --env RabbitMq__ApplicationId=opencrm-ci \
+            --env Hangfire__PrepareSchemaIfNecessary=true \
+            --env DataProtection__KeysDirectory=/tmp/opencrm-keys \
+            --env Serilog__WriteTo__0__Args__path=/tmp/opencrm-logs/log-.txt \
+            --env Serilog__WriteTo__1__Args__serverUrl=http://127.0.0.1:5341 \
+            opencrm:ci
+      - name: Check container liveness and readiness
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          for endpoint in live ready; do
+            healthy=false
+            for attempt in {1..60}; do
+              if [ "$(docker inspect --format '{{.State.Running}}' opencrm-ci)" != true ]; then
+                echo "OpenCRM exited before becoming healthy."
+                exit 1
+              fi
+              status=$(curl --silent --show-error --connect-timeout 2 --max-time 12 \
+                --header 'X-Forwarded-Proto: https' \
+                --output "$RUNNER_TEMP/opencrm-health.txt" --write-out '%{http_code}' \
+                "http://127.0.0.1:6555/api/health/$endpoint" || true)
+              if [ "$status" = 200 ] && [ "$(cat "$RUNNER_TEMP/opencrm-health.txt")" = Healthy ]; then
+                healthy=true
+                break
+              fi
+              sleep 2
+            done
+            if [ "$healthy" != true ]; then
+              echo "OpenCRM $endpoint did not return HTTP 200 / Healthy."
+              cat "$RUNNER_TEMP/opencrm-health.txt" || true
+              exit 1
+            fi
+          done
+      - name: Show container diagnostics on failure
+        if: failure()
+        run: |
+          docker logs opencrm-ci || true
+          docker inspect --format '{{json .State}}' opencrm-ci || true
+          docker cp opencrm-ci:/tmp/opencrm-logs "$RUNNER_TEMP/opencrm-logs" || true
+          cat "$RUNNER_TEMP"/opencrm-logs/*.txt || true
+      - name: Remove OpenCRM container
+        if: always()
+        run: docker rm --force opencrm-ci || true

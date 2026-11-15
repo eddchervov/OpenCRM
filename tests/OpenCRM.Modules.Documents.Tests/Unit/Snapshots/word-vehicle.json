@@ -1,0 +1,34 @@
+{
+  "Vehicle": {
+    "BrandName": "Мастерская",
+    "ModelName": "Грузовик",
+    "RegistrationPlate": "А123АА154",
+    "MileageUnit": 2,
+    "YearIssue": 2020,
+    "Name": "Бортовой",
+    "Description": "Автомобиль клиента",
+    "PhotoData": "AQID"
+  },
+  "MaintenanceHistory": [
+    {
+      "Type": 2,
+      "Date": "03.02.2025",
+      "Location": "Сервис",
+      "Performer": "Мастер",
+      "Mileage": 12345,
+      "Comment": "Работа выполнена",
+      "Price": 1500.25,
+      "MaintenanceDetails": [
+        {
+          "Quantity": 1,
+          "Name": "Историческая работа",
+          "Description": "Историческая строка",
+          "Price": 1500.25
+        }
+      ],
+      "Photos": []
+    }
+  ],
+  "TotalMaintenanceCount": 1,
+  "TotalSpent": 1500.25
+}

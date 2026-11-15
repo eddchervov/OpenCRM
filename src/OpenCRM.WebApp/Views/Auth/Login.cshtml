@@ -1,0 +1,88 @@
+﻿@model LoginModel
+@using OpenCRM.WebApp.Infrastructure.Security
+@inject IConfiguration Configuration
+
+@{
+    ViewData["Title"] = $"Войти в аккаунт {Brand.DisplayNameLower}";
+    var isEmailDeliveryAvailable = EmailDeliveryPolicy.IsAvailable(Configuration);
+}
+
+<div class="auth-page login-page">
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-container">
+                <!-- Блок формы входа -->
+                <div class="auth-form-wrapper">
+                    <div class="auth-form-kicker">@Brand.DisplayName</div>
+                    <h1 class="auth-title">Войти в аккаунт</h1>
+                    <p class="auth-subtitle">Доступ к вашему рабочему пространству.</p>
+
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger auth-alert-message">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+
+                    @if (isEmailDeliveryAvailable)
+                    {
+                        <div class="mb-4">
+                            <a asp-action="EmailCodeLogin"
+                           asp-controller="Auth"
+                           asp-route-returnUrl="@Model.ReturnUrl"
+                           class="w-100 btn btn-lg rounded-4 btn-light auth-email-code-link"
+                           title="Войти без пароля по коду из email">
+                                <i class="fa fa-envelope-o me-3" aria-hidden="true"></i>
+                                Войти по коду из email
+                            </a>
+                        </div>
+                    }
+
+                    @if (isEmailDeliveryAvailable)
+                    {
+                        <div class="auth-divider">
+                            <span>или через email/пароль</span>
+                        </div>
+                    }
+
+                    <form method="post" asp-route-returnUrl="@Model.ReturnUrl" class="auth-form">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-floating mb-3">
+                            <input type="email" asp-for="Email" class="form-control" placeholder="Введите email адрес">
+                            <label asp-for="Email">Email</label>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="password" asp-for="Password" class="form-control" placeholder="Пароль">
+                            <label asp-for="Password">Пароль</label>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Войти</button>
+
+                        <div class="auth-links text-center">
+                            @if (isEmailDeliveryAvailable)
+                            {
+                                <div class="mb-2">
+                                    <a href="~/auth/forgotPassword" id="forgot-password">Забыли пароль?</a>
+                                </div>
+                            }
+                            <div>
+                                Нет аккаунта? <a asp-controller="Auth" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Зарегистрируйтесь</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <partial name="_AuthVisual" />
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

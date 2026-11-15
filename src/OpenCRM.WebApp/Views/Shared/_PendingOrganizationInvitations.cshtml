@@ -1,0 +1,67 @@
+@using OpenCRM.Modules.Organizations.Contracts.Dtos
+@using OpenCRM.Domain
+@model IReadOnlyList<PendingOrganizationInvitationDto>
+
+@if (Model.Any())
+{
+    <section class="pending-org-invitations mb-4">
+        <div class="pending-org-invitations-card">
+            <div class="pending-org-invitations-head">
+                <div>
+                    <div class="pending-org-invitations-kicker">Приглашения</div>
+                    <h2>Приглашения в организации</h2>
+                </div>
+            </div>
+
+            <div class="pending-org-invitations-list">
+                @foreach (var invitation in Model)
+                {
+                    <article class="pending-org-invitation-item">
+                        <div class="pending-org-invitation-main">
+                            <div class="pending-org-invitation-badges">
+                                <span>@invitation.OrganizationScenarioName</span>
+                                <span>Роль: @invitation.RoleName</span>
+                                <span>Статус: @invitation.StatusName</span>
+                                @if (!string.IsNullOrWhiteSpace(invitation.EmployeeName))
+                                {
+                                    <span>Карточка мастера: @invitation.EmployeeName</span>
+                                }
+                            </div>
+                            <h3>@invitation.OrganizationName</h3>
+                            <div class="pending-org-invitation-meta">
+                                Приглашение отправлено @invitation.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                            </div>
+                        </div>
+
+                        @if (invitation.StatusCode == OrganizationInvitationStatusCodes.Pending)
+                        {
+                            <div class="pending-org-invitation-actions">
+                                @if (invitation.CanAccept)
+                                {
+                                    <form asp-controller="Personal" asp-action="AcceptOrganizationInvitation" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="invitationId" value="@invitation.InvitationId" />
+                                        <button type="submit" class="btn btn-dark">Принять</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <p class="mb-0 small">Чтобы принять приглашение, подтвердите email. Письмо можно повторно отправить в <a href="/personal">профиле</a>.</p>
+                                }
+
+                                @if (invitation.CanAccept)
+                                {
+                                    <form asp-controller="Personal" asp-action="DeclineOrganizationInvitation" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="invitationId" value="@invitation.InvitationId" />
+                                        <button type="submit" class="btn btn-outline-secondary">Отклонить</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+}

@@ -1,0 +1,412 @@
+﻿<script setup lang="ts">
+import { loadWorkspaceSetup, type WorkspaceSetup } from '@opencrm/workspace/api/setup'
+import { SchedulerClosedDay, SchedulerSlots, SchedulerDayCalendar, SchedulerBookingDialog, SchedulerList, SchedulerToolbar, WorkspaceAccessNotice, useSchedulerViewState, getClosedSchedulerPosts } from '@opencrm/workspace'
+import { computed, onMounted, ref, watch } from 'vue'
+import { UiButton, UiCard, UiLoader, formatDateOnly } from '@opencrm/ui'
+import { WorkspacePageHelpButton } from '@opencrm/workspace'
+import {
+  loadScenarioCatalog,
+  loadMaintenanceCalendar,
+  type DetailingCatalogItem,
+  type DetailingMaintenanceCalendarItem,
+  type DetailingMaintenanceMove,
+  type DetailingWorkspaceContext
+} from '@/api/detailingBff'
+import MaintenanceCalendar from './MaintenanceCalendar.vue'
+import QuickBookingSection from './QuickBookingSection.vue'
+import { hasWorkingSchedule, workingIntervals, isSimpleMaintenanceWorkflow } from '@opencrm/workspace'
+import MaintenanceMoveDialog from './MaintenanceMoveDialog.vue'
+
+const props = defineProps<{
+  context: DetailingWorkspaceContext
+}>()
+
+const emit = defineEmits<{
+  changed: []
+}>()
+
+const schedule = ref<WorkspaceSetup | null>(null)
+const workdayStart = ref('08:00')
+const workdayEnd = ref('22:00')
+const items = ref<DetailingMaintenanceCalendarItem[]>([])
+const nextDayItems = ref<DetailingMaintenanceCalendarItem[]>([])
+const workPosts = ref<DetailingCatalogItem[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+const bookingSuccessMessage = ref('')
+const itemsLimitWarning = ref('')
+const scheduleError = ref('')
+const calendar = ref<InstanceType<typeof MaintenanceCalendar> | null>(null)
+const move = ref<DetailingMaintenanceMove | null>(null)
+
+const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly !== true)
+const readOnlyMessage = computed(() => props.context.workspaceAccess?.readOnlyMessage ?? '')
+const billingHref = computed(() => '#billing')
+const schedulerSettingsKey = computed(() => `opencrm-detailing-scheduler:${props.context.organization.id}`)
+const viewModeStorageKey = computed(() => `opencrm-detailing-scheduler:${props.context.organization.id}:${props.context.user.id}:view-mode`)
+const navigationStorageKey = computed(() => `opencrm-workspace:${props.context.user.id}:${props.context.organization.id}:scheduler:view-state:v1`)
+const { selectedDate, listDays, viewMode, slotDuration, postFilter, daySearch } = useSchedulerViewState(
+  navigationStorageKey,
+  formatDateOnly(undefined, props.context.organization.timeZoneId || 'UTC'),
+  viewModeStorageKey)
+const arePostsLoaded = ref(false)
+const sortedItems = computed(() =>
+  [...items.value].sort((left, right) =>
+    `${left.date.slice(0, 10)}${left.plannedStartTime ?? '99:99'}${left.vehicleDisplayName}`.localeCompare(
+      `${right.date.slice(0, 10)}${right.plannedStartTime ?? '99:99'}${right.vehicleDisplayName}`
+    )
+  )
+)
+const noTimeItems = computed(() => sortedItems.value.filter(item => !item.plannedStartTime))
+const closedPosts = computed(() => getClosedSchedulerPosts(workPosts.value))
+const postColumns = computed(() => {
+  const configuredPosts = workPosts.value
+    .filter(post => post.isActive)
+    .map(post => normalizeLocation(post.name))
+  const usedLocations = sortedItems.value.filter(item => item.plannedStartTime).map(item => normalizeLocation(item.location))
+  const unique = Array.from(new Set([...configuredPosts, ...usedLocations]))
+  return unique.length ? unique : ['Без поста']
+})
+const selectedWorkingDay = computed(() => {
+  const date = new Date(selectedDate.value + 'T12:00:00')
+  return schedule.value?.weeklySchedule?.find(day => day.dayOfWeek === date.getDay())
+})
+watch(selectedWorkingDay, day => {
+  if (!day?.isWorking || !day.startTime || !day.endTime) return
+  workdayStart.value = day.startTime.slice(0, 5)
+  workdayEnd.value = day.endTime.slice(0, 5)
+})
+const workingHoursText = computed(() => {
+  const day = selectedWorkingDay.value
+  if (!day || !schedule.value?.weeklySchedule?.some(value => value.isWorking)) return ''
+  if (!day.isWorking) return ''
+  return 'Рабочие часы: ' + workingIntervals(day).map(interval => interval.startTime + '–' + interval.endTime).join(', ')
+})
+const isScheduleMissing = computed(() => schedule.value !== null && !hasWorkingSchedule(schedule.value.weeklySchedule ?? []))
+const isClosedDay = computed(() => !isScheduleMissing.value && selectedWorkingDay.value?.isWorking === false)
+const slotIntervals = computed(() => {
+  if (selectedWorkingDay.value) {
+    return workingIntervals(selectedWorkingDay.value)
+  }
+  return [{ startTime: workdayStart.value, endTime: workdayEnd.value }]
+})
+
+function canMoveItem(item: DetailingMaintenanceCalendarItem) {
+  return canWrite.value && item.canReschedule && (item.status === 1 || item.status === 2)
+}
+
+function requestMove(item: DetailingMaintenanceCalendarItem) {
+  if (!canMoveItem(item)) return
+  move.value = {
+    item, date: item.date.slice(0, 10), endDate: (item.plannedEndDate || item.date).slice(0, 10),
+    start: formatTime(item.plannedStartTime), end: formatTime(item.plannedEndTime), location: item.location || ''
+  }
+}
+
+async function finishMove() {
+  move.value = null
+  calendar.value?.refresh()
+  await loadItems()
+  emit('changed')
+}
+
+function normalizeLocation(value?: string | null) {
+  const text = value?.trim()
+  return text || 'Без поста'
+}
+
+function formatTime(value?: string | null) {
+  return value ? value.slice(0, 5) : ''
+}
+
+function parseTimeToMinutes(value?: string | null) {
+  const time = formatTime(value)
+  const match = time.match(/^(\d{2}):(\d{2})$/)
+  if (!match) {
+    return null
+  }
+
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
+function loadSchedulerSettings() {
+  try {
+    const raw = window.localStorage?.getItem(schedulerSettingsKey.value)
+    if (!raw) {
+      return
+    }
+
+    const settings = JSON.parse(raw) as { workdayStart?: string, workdayEnd?: string }
+    const start = formatTime(settings.workdayStart)
+    const end = formatTime(settings.workdayEnd)
+
+    if (parseTimeToMinutes(start) !== null) {
+      workdayStart.value = start
+    }
+
+    if (parseTimeToMinutes(end) !== null) {
+      workdayEnd.value = end
+    }
+  } catch {
+    workdayStart.value = '08:00'
+    workdayEnd.value = '22:00'
+  }
+}
+
+function saveSchedulerSettings() {
+  try {
+    window.localStorage?.setItem(schedulerSettingsKey.value, JSON.stringify({
+      workdayStart: workdayStart.value,
+      workdayEnd: workdayEnd.value
+    }))
+  } catch {
+    // Local display settings are optional.
+  }
+}
+
+function openCalendarDay(date: string) {
+  selectedDate.value = date
+  setViewMode('day')
+}
+
+function setViewMode(mode: 'day' | 'slots' | 'list' | 'calendar') {
+  viewMode.value = mode
+
+  try {
+    window.localStorage?.setItem(viewModeStorageKey.value, mode)
+  } catch {
+    // View preference is optional.
+  }
+}
+
+function getSlotEndTime(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  const date = new Date()
+  date.setHours(hours + 1, minutes, 0, 0)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+function getMaintenanceStatusName(status: number) {
+  const names: Record<number, string> = {
+    1: 'Запланировано',
+    2: 'В работе',
+    3: 'Выполнено',
+    4: 'Отменено'
+  }
+
+  return names[status] ?? 'Неизвестно'
+}
+
+function applyMaintenanceStatus(item: Pick<DetailingMaintenanceCalendarItem, 'status' | 'statusName'>, status: number) {
+  item.status = status
+  item.statusName = getMaintenanceStatusName(status)
+  void loadItems()
+  emit('changed')
+}
+
+function buildBookingHref(time?: string, location?: string) {
+  const params = new URLSearchParams()
+  params.set('date', selectedDate.value)
+
+  if (time) {
+    params.set('start', time)
+    params.set('end', getSlotEndTime(time))
+  }
+
+  if (location && location !== 'Без поста') {
+    params.set('location', location)
+  }
+
+  return `#maintenance/new?${params.toString()}`
+}
+
+type BookingSlot = { date: string; start?: string; end?: string; endDate?: string; location?: string }
+const booking = ref<BookingSlot | null>(null)
+const bookingBusy = ref(false)
+const bookingDirty = ref(false)
+const bookingDialog = ref<InstanceType<typeof SchedulerBookingDialog> | null>(null)
+
+function createFromCalendar(slot: BookingSlot) {
+  if (!canWrite.value) return
+  booking.value = { ...slot, location: slot.location === 'Без поста' ? undefined : slot.location }
+}
+
+function openBooking(event: MouseEvent, time?: string, location?: string) {
+  if (!canWrite.value || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return
+  event.preventDefault()
+  createFromCalendar({ date: selectedDate.value, start: time, end: time ? getSlotEndTime(time) : undefined, location })
+}
+
+async function bookingSaved(_id: string, successMessage?: string) {
+  booking.value = null
+  bookingBusy.value = false
+  bookingSuccessMessage.value = successMessage ?? ''
+  calendar.value?.refresh()
+  await loadItems()
+  emit('changed')
+}
+
+let itemsRequest = 0
+
+async function loadItems() {
+  const request = ++itemsRequest
+  const date = selectedDate.value
+  const nextDate = new Date(date + 'T00:00:00Z')
+  nextDate.setUTCDate(nextDate.getUTCDate() + (viewMode.value === 'list' ? listDays.value - 1 : 1))
+  const dateTo = nextDate.toISOString().slice(0, 10)
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const loaded = await loadMaintenanceCalendar(props.context.links.api.calendar, date, dateTo, { includeAllStatuses: true })
+    if (request !== itemsRequest) return
+    itemsLimitWarning.value = loaded.length >= 500 ? 'Достигнут лимит 500 записей. Сократите период для просмотра остальных.' : ''
+    items.value = viewMode.value === 'list' ? loaded : loaded.filter(item => item.date.slice(0, 10) <= date)
+    nextDayItems.value = loaded.filter(item => item.date.slice(0, 10) > date)
+  } catch (error) {
+    if (request !== itemsRequest) return
+    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить записи.'
+  } finally {
+    if (request === itemsRequest) isLoading.value = false
+  }
+}
+
+async function loadWorkPosts() {
+  try {
+    const catalog = await loadScenarioCatalog(props.context.organization.id)
+    workPosts.value = catalog.workPosts ?? []
+  } catch {
+    workPosts.value = []
+    postFilter.value = ''
+  } finally {
+    arePostsLoaded.value = true
+  }
+}
+
+async function loadOrganizationSchedule() {
+  try {
+    schedule.value = await loadWorkspaceSetup(props.context.organization.id)
+  } catch {
+    scheduleError.value = 'Не удалось загрузить рабочие часы организации.'
+  }
+}
+
+onMounted(() => {
+  loadSchedulerSettings()
+  void loadOrganizationSchedule()
+  void loadWorkPosts()
+  void loadItems()
+})
+watch([selectedDate, listDays, viewMode], loadItems)
+watch([workdayStart, workdayEnd], saveSchedulerSettings)
+</script>
+
+<template>
+  <UiCard page title="Записи">
+    <template #actions>
+      <UiButton class="scheduler-create" :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" :href="canWrite ? buildBookingHref() : billingHref" :variant="canWrite ? 'primary' : 'secondary'" @click="openBooking($event)">
+        <span aria-hidden="true">＋</span> Новая запись
+      </UiButton>
+      <WorkspacePageHelpButton section-code="scheduler" title="Записи" />
+    </template>
+    <SchedulerToolbar :time-zone-id="context.organization.timeZoneId"
+      v-model:date="selectedDate"
+      v-model:start="workdayStart"
+      v-model:end="workdayEnd"
+      v-model:range-days="listDays"
+      :view-mode="viewMode"
+      @update:view-mode="setViewMode"
+    />
+    <p v-if="bookingSuccessMessage" class="scheduler-success" role="status" aria-live="polite">{{ bookingSuccessMessage }}</p>
+    <p v-if="workingHoursText" class="scheduler-hours">{{ workingHoursText }}</p>
+    <p v-if="itemsLimitWarning && viewMode !== 'calendar'" class="scheduler-hours" role="status">{{ itemsLimitWarning }}</p>
+    <p v-if="scheduleError" class="scheduler-hours" role="status">{{ scheduleError }}</p>
+    <WorkspaceAccessNotice :can-manage-billing="context.organization.canManageBilling === true" v-if="readOnlyMessage" :message="readOnlyMessage" :href="billingHref" />
+
+    <MaintenanceCalendar :time-zone-id="context.organization.timeZoneId"
+      @day="openCalendarDay"
+      @navigate="selectedDate = $event"
+      @create="createFromCalendar"
+      v-if="viewMode === 'calendar'"
+      ref="calendar"
+      :can-move="canWrite && !move"
+      @move="proposal => move = proposal"
+      :calendar-url="context.links.api.calendar"
+      :organization-id="context.organization.id"
+      :storage-key="`opencrm-detailing-calendar:${context.organization.id}:scheduler`"
+      :include-all-statuses="true"
+      :can-create="canWrite"
+      :initial-date="selectedDate"
+      :weekly-schedule="schedule?.weeklySchedule"
+      :working-days="schedule?.workingDays"
+      :workday-start="schedule?.workdayStart"
+      :workday-end="schedule?.workdayEnd"
+      empty-text="Нет записей на выбранный период"
+    />
+
+    <div v-else-if="isLoading" class="scheduler-loading-card">
+      <UiLoader text="Загружаем записи..." />
+      <div class="scheduler-loading-board" aria-hidden="true">
+        <span v-for="index in 12" :key="index"></span>
+      </div>
+    </div>
+    <div v-else-if="errorMessage" class="detailing-state detailing-state-error" role="alert">
+      {{ errorMessage }} <UiButton variant="secondary" @click="loadItems">Повторить</UiButton>
+    </div>
+
+    <template v-else-if="(isScheduleMissing || isClosedDay) && (viewMode === 'day' || viewMode === 'slots')">
+      <SchedulerClosedDay :time-zone-id="context.organization.timeZoneId" :date="selectedDate" :schedule="schedule?.weeklySchedule ?? []" :can-manage="schedule?.canManage === true"
+        @select-date="selectedDate = $event" />
+      <template v-if="sortedItems.length">
+        <h3 class="scheduler-without-time">{{ isScheduleMissing ? 'Записи на выбранную дату' : 'Записи на выходной день' }} · {{ sortedItems.length }}</h3>
+        <SchedulerList :items="sortedItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
+          @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
+      </template>
+    </template>
+
+    <template v-else-if="viewMode === 'day'">
+      <SchedulerDayCalendar v-model:post-filter="postFilter" v-model:search="daySearch" :posts-loaded="arePostsLoaded" :items="[...items, ...nextDayItems]" :date="selectedDate" :posts="postColumns" :closed-posts="closedPosts"
+        :start="workdayStart" :end="workdayEnd" :can-create="canWrite"
+        :can-move="canWrite && !move" @reschedule="item => { const original = items.find(entry => entry.id === item.id); if (original) requestMove(original) }"
+        @create="createFromCalendar" />
+      <template v-if="noTimeItems.length">
+        <h3 class="scheduler-without-time">Без времени · {{ noTimeItems.length }}</h3>
+        <SchedulerList :items="noTimeItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
+          @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
+      </template>
+    </template>
+
+    <template v-else-if="viewMode === 'slots'">
+      <SchedulerSlots v-model:duration="slotDuration" v-model:post-filter="postFilter" :posts-loaded="arePostsLoaded" :items="[...items, ...nextDayItems]" :date="selectedDate" :posts="postColumns" :closed-posts="closedPosts"
+        :intervals="slotIntervals" :can-create="canWrite" @create="createFromCalendar" />
+      <template v-if="noTimeItems.length">
+        <h3 class="scheduler-without-time">Без времени · {{ noTimeItems.length }}</h3>
+        <SchedulerList :items="noTimeItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
+          @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
+      </template>
+    </template>
+
+    <SchedulerList v-else-if="sortedItems.length" :items="sortedItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
+      @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
+    <div v-else class="detailing-empty">
+      На выбранную дату записей пока нет. Можно добавить новую запись или выбрать другой день.
+    </div>
+  </UiCard>
+  <SchedulerBookingDialog ref="bookingDialog" :open="!!booking" :busy="bookingBusy" :dirty="bookingDirty" @close="booking = null; bookingDirty = false">
+    <QuickBookingSection v-if="booking" :key="context.organization.id" modal planned-booking :context="context"
+      :initial-date="booking.date" :initial-start-time="booking.start" :initial-end-time="booking.end"
+      :initial-location="booking.location" @saved="bookingSaved" @cancel="bookingDialog?.close()" @update:busy="bookingBusy = $event" @update:dirty="bookingDirty = $event" />
+  </SchedulerBookingDialog>
+  <MaintenanceMoveDialog v-if="move" :move="move" :organization-id="context.organization.id"
+    :posts="workPosts" :can-write="canWrite" @close="move = null" @saved="finishMove" />
+</template>
+
+<style scoped>
+.scheduler-without-time { margin: 22px 0 12px; font-size: 14px; color: var(--crm-text-muted, #667085); }
+.scheduler-success { margin: 12px 0; color: var(--crm-success-text, #247564); font-size: 13px; }
+.scheduler-hours { color: var(--crm-text-muted, #667085); font-size: 13px; margin: 8px 0; }
+.scheduler-hours-label { display: block; color: var(--crm-text-muted, #667085); font-size: 10px; padding: 2px 6px; }
+.scheduler-slot--outside { background: var(--crm-surface-soft, #f4f6f8); }
+.scheduler-slot--drop { outline: 2px solid var(--crm-accent, #c4510e); outline-offset: -2px; }
+.scheduler-slot-card[draggable="true"] { cursor: grab; }
+</style>

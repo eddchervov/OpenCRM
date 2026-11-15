@@ -1,0 +1,257 @@
+﻿/* Личная техника использует палитру и навигацию личного кабинета. */
+.personal-vehicles { --v2-color-ink: var(--crm-text); --v2-color-muted: var(--crm-text-muted); --v2-color-border: var(--crm-line); --v2-color-surface: var(--crm-surface); --v2-color-surface-alt: var(--crm-surface-soft); --v2-shadow-md: none; }
+.personal-vehicles .personal-shell { max-width: 1840px; }
+.personal-vehicles .personal-content { max-width: none; }
+.personal-vehicles .personal-heading { margin-bottom: 20px !important; }
+.personal-vehicles .personal-heading .breadcrumb { background: transparent; padding: 0; margin: 0; gap: 8px 12px; }
+.personal-vehicles .personal-heading nav { margin: 0 !important; }
+.personal-vehicles .personal-heading .breadcrumb-item { padding: 0; font-size: 13px; }
+.personal-vehicles .personal-heading .breadcrumb-item::before { padding: 0; float: none; }
+.personal-vehicles #vehicles-form, .personal-vehicles #vehicle-form, .personal-vehicles #vehicle-edit-page { background: transparent; min-height: 0; padding: 0; color: var(--crm-text); }
+.personal-vehicles #vehicles-form > .container, .personal-vehicles #vehicle-edit-page > .container, .personal-vehicles #vehicle-form .container, .personal-vehicles #vehicle-form .vehicle-details-container { width: 100%; max-width: none; padding: 0 !important; margin: 0; }
+.personal-vehicles .personal-body > div { min-width: 0; }
+.personal-vehicles .personal-fleet-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; font-size: 13px; }
+.personal-vehicles .personal-fleet-limit { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 16px; margin-bottom: 20px; border: 1px solid var(--crm-line); border-radius: 8px; background: var(--crm-surface-soft); font-size: 13px; }
+.personal-vehicles .personal-fleet-limit a { color: var(--entry-accent); }
+.personal-vehicles #vehicles-form .nav-tabs-container { padding: 0; border: 0; background: transparent; box-shadow: none; margin-bottom: 16px !important; }
+.personal-vehicles #vehicles-form .nav-tabs { border-bottom: 1px solid var(--crm-line); gap: 20px; }
+.personal-vehicles #vehicles-form .nav-tabs .nav-link { background: transparent; color: var(--crm-text-muted); border: 0; border-radius: 0; border-bottom: 2px solid transparent; padding: 12px 2px; font-size: 14px; box-shadow: none; }
+.personal-vehicles #vehicles-form .nav-tabs .nav-link.active { border-bottom-color: var(--entry-accent); color: var(--crm-text); }
+.personal-vehicles #vehicles-form .nav-tabs .badge { color: var(--crm-text-muted) !important; background: var(--crm-surface-soft) !important; font-size: 11px; }
+.personal-vehicles #vehicles-form .filters-container { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px; border: 1px solid var(--crm-line); border-radius: 10px; background: var(--crm-surface); box-shadow: none; margin-bottom: 16px !important; }
+.personal-vehicles #vehicles-form .brand-filter { flex: 0 1 220px; min-width: 0; }
+.personal-vehicles #vehicles-form .search-input-wrapper { min-width: 180px; }
+.personal-vehicles #vehicles-form .vehicles-view-toolbar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px !important; }
+.personal-vehicles #vehicles-form .vehicles-view-title { font-size: 12px; color: var(--crm-text-muted); }
+.personal-vehicles #vehicles-form .vehicles-view-toggle { display: flex; padding: 3px; border: 1px solid var(--crm-line); border-radius: 8px; background: var(--crm-surface-soft); gap: 3px; }
+.personal-vehicles #vehicles-form .vehicles-view-button { padding: 7px 12px; border: 0; border-radius: 5px; background: transparent; color: var(--crm-text-muted); font-size: 12px; }
+.personal-vehicles #vehicles-form .vehicles-view-button.active { background: var(--crm-surface); color: var(--crm-text); box-shadow: 0 1px 3px #0002; }
+.personal-vehicles #vehicles-form .vehicles-view-button:last-child { order: -1; }
+.personal-vehicles #vehicles-form .vehicle-list { display: grid; gap: 8px; }
+.personal-vehicles #vehicles-form .vehicle-list-item { display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 16px; border: 1px solid var(--crm-line); border-radius: 10px; background: var(--crm-surface); box-shadow: none; transform: none; }
+.personal-vehicles #vehicles-form .vehicle-list-item:hover { border-color: var(--entry-accent); }
+.personal-vehicles #vehicles-form .vehicle-list-photo { width: 80px; height: 68px; min-height: 0; border-radius: 6px; background: var(--crm-surface-soft); color: var(--crm-text-muted); }
+.personal-vehicles #vehicles-form .vehicle-list-main { min-width: 0; }
+.personal-vehicles #vehicles-form .vehicle-list-actions { min-width: 0; }
+.personal-vehicles #vehicles-form .vehicle-title, .personal-vehicles #vehicles-form .vehicle-title a { color: var(--crm-text); font-size: 15px; line-height: 1.5; font-weight: 650; overflow-wrap: anywhere; }
+.personal-vehicles #vehicles-form .vehicle-name, .personal-vehicles #vehicles-form .vehicle-description { color: var(--crm-text-muted); font-size: 12px; line-height: 1.5; }
+.personal-vehicles #vehicles-form .vehicle-list-badges { gap: 8px; margin: 6px 0; }
+.personal-vehicles #vehicles-form .vehicle-list-badges .badge, .personal-vehicles #vehicles-form .maintenance-list-badge { background: var(--crm-surface-soft) !important; color: var(--crm-text-muted) !important; border-color: var(--crm-line) !important; font-weight: 400; font-size: 11px; }
+.personal-vehicles #vehicles-form .vehicle-card { background: var(--crm-surface); border: 1px solid var(--crm-line); border-radius: 10px; box-shadow: none; transform: none; overflow: hidden; }
+.personal-vehicles #vehicles-form .vehicle-image-container { height: 180px; background: var(--crm-surface-soft); }
+.personal-vehicles #vehicles-form .vehicle-image-placeholder { color: var(--crm-text-muted); background: var(--crm-surface-soft); }
+.personal-vehicles #vehicles-form .pagination-section { background: transparent; padding: 0; border: 0; box-shadow: none; font-size: 12px; }
+.personal-vehicles #vehicles-form .page-link { color: var(--crm-text-muted); background: var(--crm-surface); border-color: var(--crm-line); }
+.personal-vehicles #vehicles-form .page-item.active .page-link { color: var(--crm-text); background: var(--crm-surface-soft); }
+.personal-vehicles #vehicles-form .empty-state { background: var(--crm-surface); border: 1px dashed var(--crm-line); border-radius: 10px; color: var(--crm-text); }
+.personal-vehicles #vehicle-form .vehicle-details-card, .personal-vehicles #vehicle-form .maintenance-history-card, .personal-vehicles #vehicle-edit-page .vehicle-edit-card { background: var(--crm-surface); border: 1px solid var(--crm-line); border-radius: 12px; box-shadow: none; overflow: visible; }
+.personal-vehicles #vehicle-form .card-header, .personal-vehicles #vehicle-edit-page .card-header, .personal-vehicles #vehicle-edit-page .card-footer { background: transparent; border-color: var(--crm-line); padding: 18px 22px; color: var(--crm-text); }
+.personal-vehicles #vehicle-form .card-title, .personal-vehicles #vehicle-edit-page h1 { font-size: 16px; color: var(--crm-text); margin: 0; }
+.personal-vehicles #vehicle-form .card-body { padding: 22px; }
+.personal-vehicles #vehicle-form .personal-vehicle-summary > .card-header { display: none; }
+.personal-vehicles #vehicle-form .vehicle-details-image-container, .personal-vehicles #vehicle-form .vehicle-details-placeholder { background: var(--crm-surface-soft); border: 1px solid var(--crm-line); border-radius: 8px; box-shadow: none; }
+.personal-vehicles #vehicle-form .vehicle-details-image, .personal-vehicles #vehicle-form .vehicle-details-placeholder { height: 220px; min-height: 0; object-fit: cover; }
+.personal-vehicles #vehicle-form .vehicle-details-placeholder { color: var(--crm-text-muted); }
+.personal-vehicles #vehicle-form .vehicle-overview-grid { gap: 18px 24px; }
+.personal-vehicles #vehicle-form .vehicle-info-item, .personal-vehicles #vehicle-form .vehicle-identity-block { background: transparent; border: 0; padding: 0; box-shadow: none; }
+.personal-vehicles #vehicle-form .vehicle-details-label, .personal-vehicles #vehicle-form .vehicle-identity-row dt { color: var(--crm-text-muted); font-size: 12px; margin-bottom: 5px; }
+.personal-vehicles #vehicle-form .vehicle-details-value, .personal-vehicles #vehicle-form .vehicle-identity-row dd { color: var(--crm-text); font-size: 14px; }
+.personal-vehicles #vehicle-form .vehicle-identity-title { font-size: 14px; color: var(--crm-text); }
+.personal-vehicles #vehicle-form .vehicle-identity-block { border-top: 1px solid var(--crm-line); padding-top: 18px; }
+.personal-vehicles #vehicle-form .vehicle-actions-container { background: transparent; border-top: 1px solid var(--crm-line); border-radius: 0; padding: 18px 0 0; }
+.personal-vehicles #vehicle-form .vehicle-next-actions-section { margin-top: 20px; border-top: 1px solid var(--crm-line); padding-top: 20px; }
+.personal-vehicles #vehicle-form .maintenance-item, .personal-vehicles #vehicle-form .vehicle-journal-item, .personal-vehicles #vehicle-form .analytics-panel, .personal-vehicles #vehicle-form .vehicle-photo-tile, .personal-vehicles #vehicle-form .vehicle-album-card { background: var(--crm-surface); border: 1px solid var(--crm-line); border-radius: 8px; box-shadow: none; color: var(--crm-text); transform: none; }
+.personal-vehicles #vehicle-form .maintenance-details { background: var(--crm-surface-soft); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .maintenance-details :is(.maintenance-services, .maintenance-comment, .maintenance-photos, .maintenance-actions) { background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .maintenance-details :is(strong, p, .service-list, .service-price) { color: var(--crm-text); }
+.personal-vehicles #vehicle-form .maintenance-details .service-list li { border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .maintenance-details :is(.photo-thumbnail.bg-light, .badge.text-bg-light) { background: var(--crm-surface-soft) !important; color: var(--crm-text-muted) !important; border-color: var(--crm-line) !important; }
+.personal-vehicles #vehicle-form .maintenance-history-controls, .personal-vehicles #vehicle-form .maintenance-analytics-summary { background: var(--crm-surface-soft); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .vehicle-journal-icon, .personal-vehicles #vehicle-form .vehicle-export-panel { background: var(--crm-surface-soft); color: var(--crm-text-muted); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .maintenance-date, .personal-vehicles #vehicle-form .maintenance-history-heading, .personal-vehicles #vehicle-form .vehicle-journal-head, .personal-vehicles #vehicle-form .vehicle-journal-description { color: var(--crm-text); }
+.personal-vehicles #vehicle-form .maintenance-mileage, .personal-vehicles #vehicle-form .maintenance-location, .personal-vehicles #vehicle-form .vehicle-journal-meta, .personal-vehicles #vehicle-form .analytics-summary-label { color: var(--crm-text-muted); }
+.personal-vehicles #vehicle-form .analytics-line-chart { max-height: 200px; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-container { max-width: none; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-card > .card-header { display: none; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-card > .card-body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px 32px; padding: 24px; align-items: start; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-section { min-width: 0; padding: 0; margin: 0; border: 0; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-section:first-child { grid-row: span 2; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-section-title { color: var(--crm-text); font-size: 14px; margin-bottom: 18px; }
+.personal-vehicles #vehicle-edit-page details { padding: 16px !important; background: var(--crm-surface-soft); border: 1px solid var(--crm-line) !important; border-radius: 8px; }
+.personal-vehicles #vehicle-edit-page details summary { cursor: pointer; margin: 0; }
+.personal-vehicles #vehicle-edit-page details[open] summary { margin-bottom: 18px; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-inline-field { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-footer { justify-content: flex-start; flex-direction: row-reverse; flex-wrap: wrap; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-footer .btn:first-child { margin-right: auto; }
+.personal-vehicles .form-label { font-size: 13px; color: var(--crm-text); font-weight: 600; }
+.personal-vehicles .form-select, .personal-vehicles .vs__dropdown-toggle { background-color: var(--crm-surface); border: 1px solid var(--crm-line); color: var(--crm-text); border-radius: 7px; min-height: 40px; box-shadow: none; }
+.personal-vehicles .vs__selected, .personal-vehicles .vs__search, .personal-vehicles .vs__dropdown-option { color: var(--crm-text); }
+.personal-vehicles .vs__open-indicator, .personal-vehicles .vs__clear { fill: var(--crm-text-muted); }
+.personal-vehicles .vs__dropdown-menu { background: var(--crm-surface); border-color: var(--crm-line); color: var(--crm-text); }
+.personal-vehicles .vs__dropdown-option--highlight { background: var(--crm-surface-soft); color: var(--crm-text); }
+.personal-vehicles .form-control::placeholder { color: var(--crm-text-muted); opacity: .7; }
+.personal-vehicles .modal-content, .personal-vehicles .dropdown-menu { background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles .modal-header, .personal-vehicles .modal-footer { border-color: var(--crm-line); }
+.personal-vehicles .dropdown-item { color: var(--crm-text); }
+.personal-vehicles .dropdown-item:hover { background: var(--crm-surface-soft); }
+.personal-vehicles .btn { font-size: 13px; border-radius: 7px; }
+.personal-vehicles #vehicles-form .btn-dark, .personal-vehicles #vehicle-form .btn-dark, .personal-vehicles #vehicle-edit-page .btn-dark { background: #bc4d0e; border-color: #bc4d0e; color: #fff; box-shadow: none; }
+.personal-vehicles #vehicles-form .btn-outline-dark, .personal-vehicles #vehicle-form .btn-outline-dark, .personal-vehicles #vehicle-form .btn-edit-vehicle { background: var(--crm-surface); color: var(--crm-text); border: 1px solid var(--crm-line); box-shadow: none; }
+.personal-vehicles .btn:focus-visible, .personal-vehicles summary:focus-visible { outline: 2px solid var(--entry-accent); outline-offset: 3px; }
+@media (max-width: 1100px) {
+    .personal-vehicles #vehicle-edit-page .vehicle-edit-card > .card-body { grid-template-columns: minmax(0, 1fr); }
+    .personal-vehicles #vehicle-edit-page .vehicle-edit-section:first-child { grid-row: auto; }
+}
+@media (max-width: 700px) {
+    .personal-vehicles .personal-fleet-heading { align-items: flex-start; flex-direction: column; }
+    .personal-vehicles #vehicles-form .brand-filter { flex: 1 1 100%; }
+    .personal-vehicles #vehicles-form .search-input-wrapper { flex-basis: 100%; min-width: 0; }
+    .personal-vehicles #vehicles-form .vehicle-list-item { grid-template-columns: 56px minmax(0, 1fr); padding: 12px; gap: 12px; }
+    .personal-vehicles #vehicles-form .vehicle-list-photo { width: 56px; height: 56px; }
+    .personal-vehicles #vehicles-form .vehicle-list-actions { grid-column: 2; }
+    .personal-vehicles #vehicle-form .card-body, .personal-vehicles #vehicle-edit-page .vehicle-edit-card > .card-body { padding: 16px; }
+    .personal-vehicles #vehicle-form .vehicle-actions-container .d-flex { flex-wrap: wrap; }
+    .personal-vehicles #vehicle-form .vehicle-details-image, .personal-vehicles #vehicle-form .vehicle-details-placeholder { height: 180px; }
+    .personal-vehicles #vehicle-edit-page .vehicle-edit-footer .btn { width: auto; }
+}
+
+.personal-vehicles #vehicles-form .brand-filter, .personal-vehicles #vehicles-form .search-input-wrapper { background: var(--crm-surface-soft); border: 1px solid var(--crm-line); border-radius: 7px; box-shadow: none; }
+.personal-vehicles #vehicles-form .brand-filter .vs__dropdown-toggle { min-height: 40px; padding: 2px 6px !important; }
+.personal-vehicles #vehicles-form .brand-filter .vs__selected, .personal-vehicles #vehicles-form .brand-filter .vs__search, .personal-vehicles #vehicles-form .search-input-wrapper input { color: var(--crm-text); font-size: 13px; min-height: 40px; }
+.personal-vehicles #vehicles-form .search-input-wrapper input::placeholder { color: var(--crm-text-muted); }
+.personal-vehicles #vehicles-form .brand-filter .vs__dropdown-menu { background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles #vehicles-form .nav-tabs .nav-link.active .badge { background: var(--crm-surface-soft) !important; color: var(--crm-text) !important; }
+.personal-vehicles #vehicle-form .vehicle-next-action { background: var(--crm-surface-soft); color: var(--crm-text); border-color: var(--crm-line); box-shadow: none; }
+.personal-vehicles #vehicle-form .vehicle-next-action-icon { background: transparent; color: var(--entry-accent); }
+.personal-vehicles #vehicle-form .vehicle-next-action-body small { color: var(--crm-text-muted); }
+
+.personal-vehicles #vehicle-edit-page .vehicle-edit-card > .card-body { grid-template-rows: min-content 1fr; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-section:last-child { grid-column: 2; grid-row: 1; }
+.personal-vehicles #vehicle-edit-page .vehicle-edit-identifiers { grid-column: 2; grid-row: 2; }
+.personal-vehicles #vehicles-form .nav-tabs .nav-link.active { color: var(--crm-text) !important; }
+.personal-vehicles #vehicles-form .btn-outline-dark { color: var(--crm-text) !important; border-color: var(--crm-line) !important; background: var(--crm-surface) !important; }
+.personal-vehicles #vehicles-form .btn-outline-dark:hover { background: var(--crm-surface-soft) !important; }
+@media (max-width: 1100px) {
+    .personal-vehicles #vehicle-edit-page .vehicle-edit-card > .card-body { grid-template-rows: auto; }
+    .personal-vehicles #vehicle-edit-page .vehicle-edit-section:last-child, .personal-vehicles #vehicle-edit-page .vehicle-edit-identifiers { grid-column: auto; grid-row: auto; }
+}
+
+.personal-vehicles #vehicle-form .card, .personal-vehicles #vehicle-form .maintenance-analytics-card { background: var(--crm-surface); border-color: var(--crm-line); border-radius: 10px; box-shadow: none; }
+.personal-vehicles #vehicle-form .card > .card-header { background: var(--crm-section-header-bg) !important; color: var(--crm-text) !important; border-bottom: 1px solid var(--crm-section-header-border); }
+.personal-vehicles #vehicle-form .card-header .card-title { color: var(--crm-text) !important; font-size: 15px; }
+.personal-vehicles #vehicle-form .empty-state { color: var(--crm-text); background: var(--crm-surface-soft); border: 1px dashed var(--crm-line); border-radius: 8px; padding: 20px !important; }
+.personal-vehicles #vehicle-form .empty-state h5, .personal-vehicles #vehicle-form .empty-state p { color: var(--crm-text); }
+.personal-vehicles #vehicle-form .empty-state .fa-3x { font-size: 24px; margin-bottom: 10px !important; }
+.personal-vehicles #vehicle-form .vehicle-identity-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
+.personal-vehicles #vehicle-form .vehicle-identity-row { display: block; margin: 0; padding: 0; min-height: 0; border: 0; }
+.personal-vehicles #vehicle-form .vehicle-identity-row dd { margin: 0; overflow-wrap: anywhere; }
+.personal-vehicles #vehicle-form .vehicle-actions-container > .d-flex { display: flex !important; flex-wrap: wrap; flex-direction: row !important; }
+.personal-vehicles #vehicle-form .vehicle-actions-container .btn { flex: 0 1 auto !important; min-height: 36px !important; font-size: 12px; }
+.personal-vehicles #vehicle-form .vehicle-details-image-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.personal-vehicles #vehicle-form .vehicle-albums-preview-empty, .personal-vehicles #vehicle-form .vehicle-counter-modal-summary { background: var(--crm-surface-soft); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .vehicle-albums-preview-empty p, .personal-vehicles #vehicle-form .vehicle-albums-preview-empty h5, .personal-vehicles #vehicle-form .maintenance-history-controls label, .personal-vehicles #vehicle-form .form-check-label { color: var(--crm-text-muted); }
+.personal-vehicles #vehicle-edit-page .btn-outline-dark, .personal-vehicles #vehicle-edit-page .btn-outline-secondary, .personal-vehicles #vehicle-form .btn-outline-dark { background: var(--crm-surface) !important; border-color: var(--crm-line) !important; color: var(--crm-text) !important; }
+.personal-vehicles #vehicle-edit-page .btn-outline-dark:hover, .personal-vehicles #vehicle-edit-page .btn-outline-secondary:hover, .personal-vehicles #vehicle-form .btn-outline-dark:hover { background: var(--crm-surface-soft) !important; }
+@media (max-width: 700px) {
+    .personal-vehicles #vehicle-form .vehicle-identity-list { grid-template-columns: minmax(0, 1fr); }
+}
+.personal-vehicles #vehicle-form .vehicle-details-card > .card-header { background: var(--crm-section-header-bg) !important; color: var(--crm-text) !important; border-bottom: 1px solid var(--crm-section-header-border); }
+.personal-vehicles #vehicle-form .vehicle-photo-empty { color: var(--crm-text-muted); background: var(--crm-surface-soft); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .btn-outline-danger { color: var(--entry-danger) !important; background: transparent !important; border-color: var(--entry-danger) !important; }
+.personal-vehicles #vehicle-form .card-body > .alert { margin-bottom: 16px; }
+
+/* Элементы управления остаются внутри личного клиента, включая его модальные окна. */
+.personal-vehicles .form-select { padding-right: 36px; background-position: right 12px center; }
+.personal-vehicles .vs__dropdown-toggle { align-items: center; }
+.personal-vehicles .vs__selected-options { min-width: 0; align-items: center; }
+.personal-vehicles .vs__actions { align-self: center; align-items: center; padding-top: 0; }
+.personal-vehicles .vs__open-indicator { display: block; flex-shrink: 0; }
+.personal-vehicles .dropdown-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.personal-vehicles .dropdown-toggle::after { flex-shrink: 0; align-self: center; margin-left: 4px; vertical-align: middle; }
+.personal-vehicles #vehicles-form .brand-filter .vs__selected,
+.personal-vehicles #vehicles-form .brand-filter .vs__search { min-height: 0; margin-top: 0; margin-bottom: 0; line-height: 24px; }
+.personal-vehicles #vehicle-form .vehicle-counter-date-picker .field-input,
+.personal-vehicles #vehicle-edit-page .vehicle-edit-date-picker .field-input,
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form, #maintenance-details-form) .field-input {
+    background: var(--crm-surface); color: var(--crm-text); border: 1px solid var(--crm-line); border-radius: 7px; min-height: 40px; box-shadow: none; font-size: 14px;
+}
+.personal-vehicles .date-time-picker .field { background: transparent; }
+.personal-vehicles .date-time-picker .field-label { color: var(--crm-text-muted); }
+.personal-vehicles .date-time-picker .field-clear-button { color: var(--crm-text-muted); }
+.personal-vehicles .date-time-picker .datepicker-container { background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles .date-time-picker .datepicker-day-text,
+.personal-vehicles .date-time-picker .datepicker-month,
+.personal-vehicles .date-time-picker .datepicker-year { color: var(--crm-text); }
+.personal-vehicles #vehicle-form .vehicle-photo-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 16px; }
+.personal-vehicles #vehicle-form .vehicle-photo-tile { aspect-ratio: auto; overflow: hidden; }
+.personal-vehicles #vehicle-form .vehicle-photo-tile-primary::after { display: none; }
+.personal-vehicles #vehicle-form .vehicle-photo-open { display: block; position: relative; width: 100%; aspect-ratio: 4 / 3; padding: 0; border: 0; background: var(--crm-surface-soft); cursor: zoom-in; overflow: hidden; }
+.personal-vehicles #vehicle-form .vehicle-photo-open img { height: 100%; width: 100%; object-fit: cover; }
+.personal-vehicles #vehicle-form .vehicle-photo-open:focus-visible { outline: 3px solid var(--entry-accent); outline-offset: -3px; }
+.personal-vehicles #vehicle-form .vehicle-photo-actions { position: static; padding: 10px; justify-content: space-between; align-items: center; border-top: 1px solid var(--crm-line); background: var(--crm-surface); }
+.personal-vehicles #vehicle-form .vehicle-photo-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: auto; min-height: 36px; padding: 6px 10px; font-size: 12px; }
+.personal-vehicles #vehicle-form .vehicle-photo-actions .btn-light { background: var(--crm-surface); color: var(--crm-text-muted); border-color: var(--crm-line); }
+.personal-vehicles #vehicle-form .vehicle-photo-badge { background: var(--crm-surface); color: var(--crm-text); border: 1px solid var(--crm-line); font-size: 11px; pointer-events: none; }
+
+/* Карточка и мастер обслуживания используют те же поверхности, что и личная техника. */
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) { background: transparent; color: var(--crm-text); min-height: 0; padding: 0; }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) :is(.container, .maintenance-details-container) { width: 100%; max-width: none; margin: 0; padding: 0; }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .card { background: var(--crm-surface); color: var(--crm-text); border: 1px solid var(--crm-line); border-radius: 10px; box-shadow: none; overflow: visible; }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .card-header { background: var(--crm-section-header-bg) !important; color: var(--crm-text) !important; padding: 16px 20px; border-bottom: 1px solid var(--crm-line); border-radius: 10px 10px 0 0; }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .card-title { color: var(--crm-text); font-size: 15px; line-height: 1.5; margin: 0; }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .card-body { padding: 20px; color: var(--crm-text); }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .btn { box-shadow: none; transform: none; }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .btn-light,
+.personal-vehicles #maintenance-details-form .maintenance-header-actions-btn { background: var(--crm-surface); border: 1px solid var(--crm-line); color: var(--crm-text); }
+.personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) .form-label { color: var(--crm-text); }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .vs__dropdown-toggle { min-height: 40px; background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .form-control { background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); min-height: 40px; }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; padding: 0; margin: 0 0 8px; background: transparent; box-shadow: none; }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress-step { flex: 0 1 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--crm-line); border-radius: 7px; background: var(--crm-surface); }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress-step::after,
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress::before { display: none; }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress-step.active { background: var(--entry-selected); border-color: var(--entry-accent); }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-step-number { width: 22px; height: 22px; margin: 0; background: var(--crm-surface-soft); color: var(--crm-text-muted); border: 0; font-size: 12px; box-shadow: none; }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .active > .create-maintenance-step-number { background: var(--entry-accent); color: var(--crm-surface); }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-step-label { color: var(--crm-text-muted); font-size: 12px; }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .active > .create-maintenance-step-label { color: var(--crm-text); }
+.personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) :is(.create-maintenance-service-item, .create-maintenance-review-section) { background: var(--crm-surface-soft); color: var(--crm-text); border: 1px solid var(--crm-line); border-radius: 8px; }
+.personal-vehicles #maintenance-details-form .maintenance-info-grid { gap: 18px; }
+.personal-vehicles #maintenance-details-form .maintenance-info-item { background: transparent; padding: 0; border: 0; }
+.personal-vehicles #maintenance-details-form .maintenance-info-label { font-size: 12px; color: var(--crm-text-muted); }
+.personal-vehicles #maintenance-details-form .maintenance-info-value { font-size: 14px; color: var(--crm-text); }
+.personal-vehicles #maintenance-details-form :is(.maintenance-comment-content, .maintenance-actions-container) { background: var(--crm-surface-soft); color: var(--crm-text); border-color: var(--crm-line); border-radius: 8px; padding: 14px; }
+.personal-vehicles #maintenance-details-form .table { --bs-table-bg: var(--crm-surface); --bs-table-color: var(--crm-text); --bs-table-hover-bg: var(--crm-surface-soft); --bs-table-hover-color: var(--crm-text); border-color: var(--crm-line); }
+.personal-vehicles #maintenance-details-form .table thead th { background: var(--crm-surface-soft); color: var(--crm-text-muted); }
+.personal-vehicles #maintenance-details-form .table :is(td, th) { padding: 12px 16px; border-color: var(--crm-line); font-size: 13px; }
+.personal-vehicles #maintenance-details-form :is(.service-name, .service-price, .list-group-item) { color: var(--crm-text); background: transparent; }
+.personal-vehicles #maintenance-details-form .maintenance-photos-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); }
+.personal-vehicles #maintenance-details-form .maintenance-photo-img { height: 180px; object-fit: cover; }
+.personal-vehicles #maintenance-details-form .maintenance-workflow-modal .modal-header { background: var(--crm-surface); color: var(--crm-text); }
+@media (max-width: 700px) {
+    .personal-vehicles :is(#maintenance-details-form, #create-maintenance-form, #update-maintenance-form) :is(.card-header, .card-body) { padding: 16px; }
+    .personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress { gap: 6px; }
+    .personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-progress-step { padding: 8px; }
+    .personal-vehicles :is(#create-maintenance-form, #update-maintenance-form) .create-maintenance-step-label { font-size: 11px; }
+}
+
+.personal-vehicles #maintenance-details-form .maintenance-info-item { display: grid; gap: 5px; }
+.personal-vehicles #maintenance-details-form .personal-maintenance-count { background: var(--crm-surface-soft); color: var(--crm-text-muted); border: 1px solid var(--crm-line); }
+.personal-vehicles #maintenance-details-form .maintenance-services-table thead { --bs-table-bg: var(--crm-surface-soft); }
+.personal-vehicles #maintenance-details-form .maintenance-services-table tfoot { border-top-color: var(--crm-line); }
+.personal-vehicles #maintenance-details-form .dropdown-menu { background: var(--crm-surface); border-color: var(--crm-line); border-radius: 8px; }
+.personal-vehicles #maintenance-details-form .dropdown-item { color: var(--crm-text); }
+.personal-vehicles #maintenance-details-form .dropdown-item:hover { background: var(--crm-surface-soft); }
+.personal-vehicles #maintenance-details-form .maintenance-actions-container { padding: 0; border: 0; background: transparent; }
+.personal-vehicles #maintenance-details-form .maintenance-actions-container .btn { width: auto; }
+
+:root[data-crm-theme="dark"] .personal-vehicles .form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23b6bfce' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E"); }
+.personal-vehicles #maintenance-details-form .card-header .btn { background: var(--crm-surface) !important; color: var(--crm-text) !important; border-color: var(--crm-line) !important; }
+
+.personal-vehicles #vehicle-edit-page .vehicle-edit-section-title {
+  padding: 10px 12px;
+  border: 1px solid var(--crm-section-header-border);
+  border-radius: 6px;
+  background: var(--crm-section-header-bg);
+  overflow-wrap: anywhere;
+}

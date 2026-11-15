@@ -1,0 +1,69 @@
+@model SubscriptionNoticeModel
+@{
+    Layout = "/Templates/OpenCRM/V1/_Layout.cshtml";
+    var date = Model.EndDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    var actionTitle = Model.HasFreeWorkspace ? "Открыть тарифы"
+        : Model.Kind == "demo-available" ? "Активировать демо"
+        : Model.Kind == "demo-expired" ? "Выбрать тариф" : "Продлить тариф";
+}
+@switch (Model.Kind)
+{
+    case "paid-expired":
+        @if (Model.HasFreeWorkspace)
+        {
+            <p>Доступ PRO по тарифу «@Model.PlanName» для организации «@Model.OrganizationName» завершился @date.</p>
+            <p><strong>Бесплатный тариф Free доступен без ограничения срока.</strong> Данные сохранены, владелец может продолжать базовую работу, включая склад, в пределах лимитов бесплатного тарифа.</p>
+            <p>Приёмка, управление командой, ИИ-помощник и боты Telegram и MAX доступны с PRO.</p>
+        }
+        else
+        {
+            <p>Оплаченный период тарифа «@Model.PlanName» для организации «@Model.OrganizationName» закончился @date.</p>
+            <p><strong>Включён базовый режим:</strong> данные сохранены и доступны только для чтения.</p>
+        }
+        break;
+    case "demo-expired":
+        @if (Model.HasFreeWorkspace)
+        {
+            <p>Доступ PRO по тарифу «@Model.PlanName» для организации «@Model.OrganizationName» завершился @date.</p>
+            <p><strong>Бесплатный тариф Free доступен без ограничения срока.</strong> Данные сохранены, владелец может продолжать базовую работу, включая склад, в пределах лимитов бесплатного тарифа.</p>
+            <p>Приёмка, управление командой, ИИ-помощник и боты Telegram и MAX доступны с PRO.</p>
+        }
+        else
+        {
+            <p>Демо-период организации «@Model.OrganizationName» завершился @date.</p>
+            <p><strong>Включён базовый режим:</strong> данные сохранены и доступны только для чтения.</p>
+        }
+        break;
+    case "demo-available":
+        <p>Для организации «@Model.OrganizationName» доступен тариф «@Model.PlanName»@(Model.DurationDays > 0 ? $" на {Model.DurationDays} {DaysWord(Model.DurationDays)}" : "").</p>
+        break;
+    default:
+        @if (!string.IsNullOrWhiteSpace(Model.OrganizationName))
+        {
+            <p>В организации «@Model.OrganizationName» @(Model.HasFreeWorkspace ? "доступ PRO по тарифу" : "оплаченный период тарифа") «@Model.PlanName» действует до @date.</p>
+        }
+        else
+        {
+            <p>@(Model.HasFreeWorkspace ? "Доступ PRO по тарифу" : "Оплаченный период тарифа") «@Model.PlanName» действует до @date.</p>
+        }
+        <p><strong>@(DaysWord(Model.DaysRemaining) == "день" ? "Остался" : "Осталось") @Model.DaysRemaining @DaysWord(Model.DaysRemaining).</strong> Автопродление не подключено.</p>
+        @if (Model.HasFreeWorkspace)
+        {
+            <p>После окончания PRO бесплатный тариф Free останется доступен без ограничения срока. Базовую работу, включая склад, можно продолжать бесплатно; данные сохранятся. До указанной даты текущие возможности сохраняются.</p>
+        }
+        break;
+}
+<p style="margin:24px 0;">
+    <a href="@Model.ActionUrl" style="display:inline-block;padding:12px 18px;background:#202428;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">@actionTitle</a>
+</p>
+@functions {
+    private static string DaysWord(int days)
+    {
+        if (days % 100 is >= 11 and <= 14)
+        {
+            return "дней";
+        }
+
+        return (days % 10) switch { 1 => "день", >= 2 and <= 4 => "дня", _ => "дней" };
+    }
+}

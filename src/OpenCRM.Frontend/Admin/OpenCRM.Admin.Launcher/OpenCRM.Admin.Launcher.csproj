@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>OpenCRM.Admin.Launcher</RootNamespace>
+    <AssemblyName>OpenCRM.Admin.Launcher</AssemblyName>
+    <ApplicationIcon>Assets\OpenCRM.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../../Helpers/ProjectBrand.cs" Link="Shared/ProjectBrand.cs" />
+    <None Include="../../../../configuration/brand.json" Link="brand.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\OpenCRM.ico" />
+  </ItemGroup>
+
+</Project>

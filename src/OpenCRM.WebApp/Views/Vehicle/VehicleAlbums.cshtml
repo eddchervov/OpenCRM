@@ -1,0 +1,139 @@
+@{
+    Layout = "/Views/Personal/_PersonalLayout.cshtml";
+    ViewData["PersonalVehiclePage"] = true;
+    var vehicleId = ViewData["VehicleId"] as string ?? string.Empty;
+    var organizationId = ViewData["VehicleOrganizationId"] as string ?? string.Empty;
+    var organizationName = ViewData["VehicleOrganizationName"] as string ?? string.Empty;
+    var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
+    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? "Карточка техники";
+    var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
+        ? $"/vehicle/{vehicleId}"
+        : $"/vehicle/{vehicleId}?organizationId={organizationId}";
+    var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
+        ? vehicleScenario.BreadcrumbTitle
+        : !string.IsNullOrWhiteSpace(organizationName)
+            ? organizationName
+            : "Организация";
+    var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
+    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? vehicleScenario.BreadcrumbTitle : "Техника";
+    ViewData["Title"] = "Альбомы техники";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = string.IsNullOrWhiteSpace(organizationId)
+        ? "vehicle-card-page-body"
+        : "vehicle-card-page-body organizations-page";
+}
+
+<style>
+    [v-cloak] { display: none; }
+</style>
+
+<div id="vehicle-form" class="vehicle-photo-manager-page">
+    <div id="vehicle-album-manager" class="vehicle-details-container vehicle-media-manager-container" v-cloak>
+
+
+        <div class="vehicle-details-card vehicle-details-card-primary mb-4">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fa fa-folder-open"></i>
+                    Альбомы
+                </h3>
+                @if (!string.IsNullOrWhiteSpace(organizationName))
+                {
+                    <div class="text-muted small mt-2">Рабочее пространство: @organizationName</div>
+                }
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column flex-lg-row gap-2 align-items-lg-end mb-4">
+                    <div class="flex-grow-1">
+                        <label class="form-label">Новый альбом</label>
+                        <input type="text" class="form-control" maxlength="120" v-model.trim="newAlbumTitle" :disabled="!canCreateAlbum" placeholder="Например: До ремонта">
+                        <div class="form-text" v-if="albumLimit && albumLimit.isLimitedByPlan">
+                            На бесплатном тарифе и в демо доступен 1 альбом.
+                        </div>
+                    </div>
+                    <button class="btn btn-dark" @@click="createAlbum" :disabled="!canSubmitAlbumTitle || albumSaving">
+                        <i class="fa fa-plus me-2"></i>
+                        Создать альбом
+                    </button>
+                </div>
+
+                <div class="text-muted small mb-3" v-if="albumLimit">
+                    Альбомов: {{ albumLimit.currentCount }} / {{ albumLimit.maxCount }}
+                </div>
+
+                <div v-if="albumsLoading" class="text-muted">
+                    <i class="fa fa-spinner fa-spin me-2"></i>Загружаем альбомы...
+                </div>
+                <div v-else-if="albums.length === 0" class="vehicle-photo-empty">
+                    <i class="fa fa-folder-o"></i>
+                    <div>Альбомов пока нет</div>
+                </div>
+                <div v-else class="vehicle-album-overview-grid">
+                    <a class="vehicle-album-overview-tile"
+                       v-for="album in albums"
+                       :key="album.albumId"
+                       :href="getAlbumUrl(album)">
+                        <div class="vehicle-album-overview-cover">
+                            <img v-if="getAlbumCover(album)" :src="getAlbumCover(album)" :alt="album.title">
+                            <i v-else class="fa fa-folder-open"></i>
+                        </div>
+                        <div class="vehicle-album-overview-caption">
+                            <div class="vehicle-album-overview-title">{{ album.title }}</div>
+                            <div class="vehicle-album-overview-meta">{{ album.photoCount }} фото</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="photoManagerErrorModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Ошибка</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">{{ errorMessage }}</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    @if (string.IsNullOrWhiteSpace(organizationId))
+    {
+        <link rel="stylesheet" href="~/css/vehicle-card.personal.css" asp-append-version="true" />
+    }
+    else
+    {
+        <link rel="stylesheet" href="~/css/vehicle-card.organization.css" asp-append-version="true" />
+    }
+    <link rel="stylesheet" href="~/css/vehicle-photos.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        const vehicleId = '@vehicleId';
+        const vehicleOrganizationId = '@organizationId';
+    </script>
+    <script src="~/app/vehicle-albums.js" asp-append-version="true"></script>
+}
+
+@section Breadcrumbs {
+    <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
+                @if (!string.IsNullOrWhiteSpace(organizationId))
+                {
+                    <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@vehiclesBreadcrumbText</a></li>
+                }
+                <li class="breadcrumb-item"><a href="@vehicleUrl" class="text-decoration-none">@vehicleDisplayName</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>Альбомы</h1></li>
+            </ol>
+        </nav>
+}

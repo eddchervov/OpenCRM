@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="Unit\Snapshots\*.json" CopyToOutputDirectory="PreserveNewest" TargetPath="Snapshots\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.7" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\OpenCRM.Modules.Documents\OpenCRM.Modules.Documents.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Infrastructure.Common\OpenCRM.Infrastructure.Common.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.WebApp\OpenCRM.WebApp.csproj" />
+    <ProjectReference Include="..\..\src\OpenCRM.Infrastructure.Migrations\OpenCRM.Infrastructure.Migrations.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Testing\OpenCRM.Testing.csproj" />
+  </ItemGroup>
+</Project>

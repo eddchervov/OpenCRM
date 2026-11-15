@@ -1,0 +1,46 @@
+{
+  "name": "@opencrm/workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "vite build --config vite.vehicle-plate.config.ts"
+  },
+  "exports": {
+    "./components/WorkspaceAssistantSection": "./src/components/WorkspaceAssistantSection.vue",
+    "./components/WorkspaceVisualizationSection": "./src/components/WorkspaceVisualizationSection.vue",
+    ".": "./src/index.ts",
+    "./components/WorkspaceTariffExpiryNotice": "./src/components/WorkspaceTariffExpiryNotice.vue",
+    "./components/ClientCardSection": "./src/components/ClientCardSection.vue",
+    "./components/ClientsSection": "./src/components/ClientsSection.vue",
+    "./components/MaintenanceCardSection": "./src/components/MaintenanceCardSection.vue",
+    "./components/IntakeDamageMap": "./src/components/IntakeDamageMap.vue",
+    "./components/MaintenanceFormSection": "./src/components/MaintenanceFormSection.vue",
+    "./components/VehicleCardSection": "./src/components/VehicleCardSection.vue",
+    "./components/VehicleFormSection": "./src/components/VehicleFormSection.vue",
+    "./components/VehicleMediaSection": "./src/components/VehicleMediaSection.vue",
+    "./components/VehiclesSection": "./src/components/VehiclesSection.vue",
+    "./components/WorkspaceCommonSection": "./src/components/WorkspaceCommonSection.vue",
+    "./api/maintenance": "./src/api/maintenance.ts",
+    "./api/intakeDamages": "./src/api/intakeDamages.ts",
+    "./api/setup": "./src/api/setup.ts",
+    "./quick-booking.css": "./src/components/QuickBookingForm.css",
+    "./styles.css": "./src/styles.css",
+    "./components/MessagesSection": "./src/components/MessagesSection.vue",
+    "./components/InquiriesSection": "./src/components/InquiriesSection.vue"
+  },
+  "dependencies": {
+    "@opencrm/ui": "0.1.0",
+    "maska": "^3.2.2",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^7.3.3"
+  },
+  "peerDependencies": {
+    "chart.js": "^4.5.0",
+    "vue": "^3.5.0"
+  }
+}

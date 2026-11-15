@@ -1,0 +1,36 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="project-brand" content="@Brand.DisplayName" />
+    <meta name="project-github" content="@Helpers.ProjectBrand.GitHubUrl" />
+    <meta name="color-scheme" content="light" />
+    <meta name="description" content="@Brand.DisplayName — базовая CRM для вашей команды." />
+    <title>@Brand.DisplayName</title>
+    <link rel="stylesheet" href="~/css/platform-home.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="home-header">
+        <a class="home-wordmark" href="@Url.Content("~/")" aria-label="@Brand.DisplayName — главная">@Brand.DisplayName</a>
+        <span class="home-label">CRM · Открытая основа</span>
+    </header>
+    <main class="home-main" id="main">
+        <div class="home-content">
+            <p class="home-eyebrow">Ваше рабочее пространство</p>
+            <h1>@Brand.DisplayName</h1>
+            <p class="home-description">Клиенты, записи и заказы.<br />В одном рабочем пространстве.</p>
+            <nav class="home-actions" aria-label="Доступ к системе">
+                <a class="home-button home-button-primary" href="@Url.Content("~/auth/login")">Войти</a>
+                <a class="home-button" href="@Url.Content("~/auth/register")">Регистрация</a>
+            </nav>
+            <p class="home-note">Базовая CRM. Настройте её под свою команду.</p>
+        </div>
+        <div class="home-graphic" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    </main>
+    <footer class="home-footer"><span>@Brand.DisplayName</span><partial name="_ProjectAttribution" /></footer>
+</body>
+</html>

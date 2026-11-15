@@ -1,0 +1,174 @@
+@model OpenCRM.WebApp.Models.Organizations.OrganizationIndexViewModel
+@using OpenCRM.WebApp.Navigation
+
+@{
+    ViewData["Title"] = "Организации";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = "organizations-entry";
+    ViewData["WorkspaceEntry"] = true;
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<section class="entry-page">
+    <div class="entry-shell">
+        <header class="entry-heading">
+            <div>
+                <h1>Организации</h1>
+                <p>Выберите, где будете работать сегодня.</p>
+            </div>
+            <div class="entry-heading-actions">
+                @if (Model.CanCreateOrganization)
+                {
+                    <a class="btn entry-primary" href="/organizations/create"><span aria-hidden="true">+</span> Создать организацию</a>
+                }
+            </div>
+        </header>
+        @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+        {
+            <div class="alert alert-success" role="status">@Model.StatusMessage</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+        }
+
+        @if (!Model.CanCreateOrganization && !string.IsNullOrWhiteSpace(Model.CreateOrganizationMessage))
+        {
+            <div class="alert alert-warning" role="status">
+                @Model.CreateOrganizationMessage
+                @if (Model.Overview.HasArchivedOrganizations)
+                {
+                    <a href="#organization-archive-tab">Откройте архив, чтобы восстановить организацию.</a>
+                }
+            </div>
+        }
+
+        <partial name="_PendingOrganizationInvitations" model="Model.Invitations" />
+
+        <div class="entry-tabs" role="tablist" aria-label="Список организаций">
+            <button class="active" id="organization-active-tab" data-bs-toggle="tab" data-bs-target="#organization-active-list" type="button" role="tab" aria-controls="organization-active-list" aria-selected="true">
+                Активные <span>@Model.Overview.Organizations.Count</span>
+            </button>
+            <button id="organization-archive-tab" data-bs-toggle="tab" data-bs-target="#organization-archive-list" type="button" role="tab" aria-controls="organization-archive-list" aria-selected="false">
+                Архив <span>@Model.Overview.ArchivedOrganizations.Count</span>
+            </button>
+        </div>
+        <div class="tab-content">
+            <div class="tab-pane show active" id="organization-active-list" role="tabpanel" aria-labelledby="organization-active-tab" tabindex="0">
+                @if (!Model.Overview.HasOrganizations)
+                {
+                    <div class="entry-empty">
+                        <i class="fa fa-building-o" aria-hidden="true"></i>
+                        <h2>Ваше рабочее пространство</h2>
+                        <p>Создайте организацию, чтобы вести клиентов, автомобили и работу команды.</p>
+                        @if (Model.CanCreateOrganization)
+                        {
+                            <a class="btn entry-primary" href="/organizations/create">Создать организацию</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="entry-organization-grid">
+                        @foreach (var organization in Model.Overview.Organizations)
+                        {
+                            Model.WorkspaceAccessByOrganizationId.TryGetValue(organization.Id, out var workspaceAccess);
+                            var hasDedicatedWorkspace = OrganizationWorkspaceUrlHelper.HasDedicatedWorkspace(organization.PrimaryScenarioCode);
+
+                            <article class="entry-organization">
+                                <div class="entry-organization-type"><i class="fa fa-building-o" aria-hidden="true"></i> @organization.PrimaryScenarioName</div>
+                                <h2>
+                                    @if (hasDedicatedWorkspace)
+                                    {
+                                        <a href="@OrganizationWorkspaceUrlHelper.Resolve(organization)">@organization.Name</a>
+                                    }
+                                    else
+                                    {
+                                        @organization.Name
+                                    }
+                                </h2>
+                                @if (!string.IsNullOrWhiteSpace(organization.Description))
+                                {
+                                    <p class="entry-organization-description">@organization.Description</p>
+                                }
+                                <div class="entry-organization-meta">
+                                    <span>@organization.CurrentUserRoleName</span>
+                                    <span><i class="fa fa-users" aria-hidden="true"></i> Участников: @organization.MembersCount</span>
+                                </div>
+                                @if (workspaceAccess?.IsReadOnly == true)
+                                {
+                                    <div class="entry-access-note"><i class="fa fa-lock" aria-hidden="true"></i> Режим просмотра</div>
+                                }
+                                <div class="entry-organization-actions">
+                                    @if (hasDedicatedWorkspace)
+                                    {
+                                        <a class="btn entry-primary" href="@OrganizationWorkspaceUrlHelper.Resolve(organization)">Открыть <span aria-hidden="true">→</span></a>
+                                    }
+                                    else
+                                    {
+                                        <span class="entry-muted">Рабочее пространство пока недоступно</span>
+                                    }
+                                    @if (organization.CanManageSettings && hasDedicatedWorkspace)
+                                    {
+                                        <a class="btn entry-secondary" href='@OrganizationWorkspaceUrlHelper.Resolve(organization, "settings")'>Настройки</a>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="tab-pane" id="organization-archive-list" role="tabpanel" aria-labelledby="organization-archive-tab" tabindex="0">
+                @if (!Model.Overview.HasArchivedOrganizations)
+                {
+                    <div class="entry-empty">
+                        <i class="fa fa-archive" aria-hidden="true"></i>
+                        <h2>Архив пуст</h2>
+                        <p>Здесь будут организации, которые вы перенесли в архив.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">Организации хранятся в архиве 30 дней. До окончания этого срока их можно восстановить.</div>
+                    <div class="entry-organization-grid">
+                        @foreach (var organization in Model.Overview.ArchivedOrganizations)
+                        {
+                            <article class="entry-organization">
+                                <div class="entry-organization-type"><i class="fa fa-archive" aria-hidden="true"></i> В архиве</div>
+                                <h2>@organization.Name</h2>
+                                <p class="entry-muted">Архивирована: @(organization.ArchiveDate?.ToLocalTime().ToString("dd.MM.yyyy") ?? "не указано")</p>
+                                <div class="entry-access-note">
+                                    @(organization.DaysLeft switch
+                                    {
+                                        null => "Срок удаления уточняется",
+                                        <= 0 => "Будет удалена сегодня",
+                                        1 => "Удаление через 1 день",
+                                        _ => $"Удаление через {organization.DaysLeft} дней"
+                                    })
+                                </div>
+                                <div class="entry-organization-actions">
+                                    @if (organization.CanRestore)
+                                    {
+                                        <form asp-controller="Organizations" asp-action="Restore" asp-route-organizationId="@organization.Id" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn entry-secondary">Восстановить</button>
+                                        </form>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/organizations-entry.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/organizations-entry.min.css" asp-append-version="true" />
+    </environment>
+}

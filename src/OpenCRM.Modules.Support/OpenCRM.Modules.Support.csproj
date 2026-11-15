@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenCRM.Modules.Support.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCRM.Domain\OpenCRM.Domain.csproj" />
+    <ProjectReference Include="..\OpenCRM.Infrastructure.Data\OpenCRM.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\OpenCRM.Services.Interfaces\OpenCRM.Services.Interfaces.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Helpers/Helpers.csproj" />
+  </ItemGroup>
+</Project>

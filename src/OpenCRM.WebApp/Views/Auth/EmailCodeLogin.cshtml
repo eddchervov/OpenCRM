@@ -1,0 +1,97 @@
+@model EmailCodeLoginModel
+
+@{
+    ViewData["Title"] = $"Войти по коду из email {Brand.DisplayNameLower}";
+    const string PersonalDataConsentRequiredMessage = "Необходимо дать согласие на обработку персональных данных.";
+}
+
+<div class="auth-page email-code-login-page">
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-container narrow-form">
+                <div class="auth-form-wrapper">
+                    <h1 class="auth-title">Войти по коду из email</h1>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+                    {
+                        <div class="alert alert-info auth-alert-message">
+                            @Model.StatusMessage
+                        </div>
+                    }
+
+                    <form method="post" asp-action="SendEmailLoginCode" class="auth-form email-code-form">
+                        <input type="hidden" asp-for="ReturnUrl" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-floating mb-3">
+                            <input type="email" asp-for="Email" class="form-control" placeholder="Введите email адрес">
+                            <label asp-for="Email">Email</label>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        @if (Model.RequiresRegistrationConsent)
+                        {
+                            <div class="auth-form-note mb-3">
+                                Аккаунт с таким email еще не найден. Мы можем создать его после подтверждения кода.
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input asp-for="PersonalDataProcessingConsent"
+                                       class="form-check-input"
+                                       type="checkbox"
+                                       required
+                                       data-val="true"
+                                       data-val-required="@PersonalDataConsentRequiredMessage"
+                                       data-msg-required="@PersonalDataConsentRequiredMessage"
+                                       oninvalid="this.setCustomValidity('@PersonalDataConsentRequiredMessage')"
+                                       oninput="this.setCustomValidity('')"
+                                       onchange="this.setCustomValidity('')" />
+                                <label class="form-check-label small" asp-for="PersonalDataProcessingConsent">
+                                    Я даю согласие на обработку персональных данных.
+                                    @* Страницы правовых документов размещает владелец установки. *@
+                                </label>
+                                <span asp-validation-for="PersonalDataProcessingConsent" class="text-danger d-block"></span>
+                            </div>
+                        }
+
+                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Отправить код</button>
+                    </form>
+
+                    @if (Model.CodeSent)
+                    {
+                        <div class="auth-divider">
+                            <span>код действует 1 час</span>
+                        </div>
+
+                        <form method="post" asp-action="VerifyEmailLoginCode" class="auth-form email-code-form">
+                            <input type="hidden" asp-for="Email" />
+                            <input type="hidden" asp-for="ReturnUrl" />
+
+                            <div class="form-floating mb-3">
+                                <input type="text"
+                                       asp-for="Code"
+                                       class="form-control email-code-form__code"
+                                       placeholder="12345678"
+                                       inputmode="numeric"
+                                       autocomplete="one-time-code"
+                                       maxlength="8">
+                                <label asp-for="Code">8-значный код</label>
+                                <span asp-validation-for="Code" class="text-danger"></span>
+                            </div>
+
+                            <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Войти</button>
+                        </form>
+                    }
+
+                    <div class="auth-links text-center">
+                        <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Войти с паролем</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

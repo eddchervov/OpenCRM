@@ -1,0 +1,26 @@
+﻿@model AccountProfileViewModel
+@{
+    ViewData["Title"] = "Рабочие пространства";
+    ViewData["ActivePage"] = ManageNavPages.AccountProfile;
+    Layout = "_PersonalLayout.cshtml";
+}
+
+<partial name="_StatusMessage" for="StatusMessage" />
+<partial name="_PendingOrganizationInvitations" model="Model.OrganizationInvitations" />
+<div class="personal-grid">
+    <section class="profile-card personal-workspace-card">
+        <i class="fa fa-building-o personal-section-icon" aria-hidden="true"></i>
+        <h2>Организации</h2>
+        <p class="personal-muted">Клиенты, автомобили и работа команды — в отдельном пространстве каждой организации.</p>
+        <div class="personal-form-actions">
+            <a class="btn entry-primary" href="/organizations">Мои организации</a>
+            <a class="btn entry-secondary" href="/organizations/create">Создать организацию</a>
+        </div>
+    </section>
+    <section class="profile-card personal-workspace-card">
+        <i class="fa fa-car personal-section-icon" aria-hidden="true"></i>
+        <h2>Личная техника</h2>
+        <p class="personal-muted">Ваши автомобили, обслуживание и расходы вне рабочих организаций.</p>
+        <div class="personal-form-actions"><a class="btn entry-secondary" href="/vehicles">Открыть личную технику</a></div>
+    </section>
+</div>

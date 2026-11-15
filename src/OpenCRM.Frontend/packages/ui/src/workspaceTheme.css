@@ -1,0 +1,72 @@
+:root[data-crm-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-crm-theme] select option,
+:root[data-crm-theme] select optgroup {
+  background: var(--crm-surface, #fff);
+  color: var(--crm-text, #202733);
+}
+
+:root[data-crm-theme="dark"] {
+  color-scheme: dark;
+  --crm-canvas: #12161d;
+  --crm-form-header-bg: #302922;
+  --crm-form-header-border: #67503d;
+  --crm-section-header-bg: #2b3543;
+  --crm-section-header-border: #455265;
+  --crm-header-accent: #f19859;
+  --crm-action-accent: #ffb17e;
+  --crm-action-info: #93c5fd;
+  --crm-action-warning: #facc15;
+  --crm-surface: #1b2029;
+  --crm-surface-soft: #242b36;
+  --crm-surface-overlay: rgba(27, 32, 41, 0.96);
+  --crm-control-background: #343e4c;
+  --crm-text: #e7ecf4;
+  --crm-text-muted: #b6bfce;
+  --crm-line: #374151;
+  --crm-danger-text: #ffb4ab;
+  --crm-danger-border: #965a56;
+  --crm-danger-surface: #332528;
+  --crm-shadow: rgba(0, 0, 0, 0.24);
+  --crm-backdrop: rgba(0, 0, 0, 0.6);
+  --opencrm-ink: #e7ecf4;
+  --opencrm-ink-soft: #b6bfce;
+  --opencrm-surface: #1b2029;
+  --opencrm-surface-alt: #242b36;
+  --opencrm-border: #374151;
+  --opencrm-shadow: rgba(0, 0, 0, 0.24);
+}
+
+:root[data-crm-theme="dark"] .ui-button--primary {
+  background: #343e4c;
+  border-color: #4c5a6c;
+}
+
+:root[data-crm-theme="dark"] .ui-button--primary:hover {
+  background: #a94b16;
+  border-color: #c95a20;
+}
+
+:root[data-crm-theme="dark"] :is(.crm-navigation a[aria-current], .crm-dropdown__panel a[aria-current]) {
+  background: #3c2b22;
+  color: #ffb17e;
+}
+
+:root[data-crm-theme="dark"] :is(.ui-select, .ui-select-options) {
+  --ms-bg: var(--crm-surface);
+  --ms-bg-disabled: var(--crm-surface-soft);
+  --ms-border-color: var(--crm-line);
+  --ms-placeholder-color: var(--crm-text-muted);
+  --ms-caret-color: var(--crm-text-muted);
+  --ms-dropdown-bg: var(--crm-surface);
+  --ms-dropdown-border-color: var(--crm-line);
+  --ms-option-bg-pointed: var(--crm-surface-soft);
+  --ms-option-color-pointed: var(--crm-text);
+  --ms-option-bg-selected: #3c2b22;
+  --ms-option-color-selected: #ffb17e;
+  --ms-option-bg-selected-pointed: #513526;
+  --ms-option-color-selected-pointed: #ffb17e;
+  --ms-empty-color: var(--crm-text-muted);
+}

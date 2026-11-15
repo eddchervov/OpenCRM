@@ -1,0 +1,163 @@
+﻿.personal-page {
+  --crm-form-header-bg: #fff7f0;
+  --crm-form-header-border: #ecd9ca;
+  --crm-section-header-bg: #f2f4f7;
+  --crm-section-header-border: #dde3eb;
+  --crm-header-accent: #e67337;
+}
+
+:root[data-crm-theme="dark"] .personal-page {
+  --crm-form-header-bg: #302922;
+  --crm-form-header-border: #67503d;
+  --crm-section-header-bg: #2b3543;
+  --crm-section-header-border: #455265;
+  --crm-header-accent: #f19859;
+}
+
+/* Личный кабинет продолжает оформление рабочей области CRM. */
+.personal-page .personal-shell { max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; padding: 28px 32px 48px; align-items: start; }
+.personal-page .personal-shell--single { grid-template-columns: minmax(0, 1fr); max-width: 860px; margin: 0 auto; }
+.personal-page .personal-sidebar { position: sticky; top: 24px; padding: 12px 0; }
+.personal-page .personal-nav-label { padding: 0 12px 14px; color: var(--crm-text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.personal-page .personal-nav { display: grid; gap: 4px; }
+.personal-page .personal-nav a, .personal-page .personal-workspace-link { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 7px; color: var(--crm-text-muted); text-decoration: none; font-size: 13px; font-weight: 600; }
+.personal-page .personal-nav i, .personal-page .personal-workspace-link i { width: 16px; text-align: center; }
+.personal-page .personal-nav a:hover, .personal-page .personal-workspace-link:hover { color: var(--crm-text); background: var(--crm-surface-soft); }
+.personal-page .personal-nav a.active { background: var(--entry-selected); color: var(--entry-accent); }
+.personal-page .personal-workspace-link { margin-top: 20px; border-top: 1px solid var(--crm-line); border-radius: 0; }
+.personal-page .personal-content { min-width: 0; width: 100%; max-width: 1280px; }
+.personal-page .personal-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; min-height: 40px; }
+.personal-page .personal-heading nav { min-width: 0; }
+.personal-page .personal-heading ol { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; list-style: none; margin: 0; padding: 0; }
+.personal-page .personal-heading li { display: flex; align-items: baseline; gap: 12px; min-width: 0; overflow-wrap: anywhere; }
+.personal-page .personal-heading li + li::before { content: '/'; color: var(--crm-text-muted); }
+.personal-page .personal-heading a { color: var(--crm-text-muted); text-decoration: none; }
+.personal-page .personal-heading h1 { color: var(--crm-text); font-size: 20px; font-weight: 750; margin: 0; line-height: 1.4; }
+.personal-page .personal-body { display: grid; gap: 20px; min-width: 0; }
+.personal-page .personal-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+.personal-page .profile-card { background: var(--crm-surface); border: 1px solid var(--crm-line); border-radius: 12px; padding: 24px; min-width: 0; box-shadow: none; }
+.personal-page .profile-card h2 { margin: 0 0 20px; color: var(--crm-text); font-size: 15px; line-height: 1.5; font-weight: 700; }
+.personal-page .profile-header { margin-bottom: 16px; }
+.personal-page .personal-card-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.personal-page .personal-card-heading h2 { margin: 0; }
+.personal-page .personal-card-heading a, .personal-page .personal-text-link { color: var(--entry-accent); font-size: 13px; text-decoration: none; }
+.personal-page .personal-card-heading a:hover, .personal-page .personal-text-link:hover { text-decoration: underline; }
+.personal-page .personal-text-link { display: inline-flex; gap: 10px; margin-top: 20px; }
+.personal-page .personal-details { margin: 0; display: grid; gap: 22px; }
+.personal-page .personal-details > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.personal-page .personal-details dt { color: var(--crm-text-muted); font-size: 13px; font-weight: 400; }
+.personal-page .personal-details dd { margin: 0; color: var(--crm-text); font-size: 14px; overflow-wrap: anywhere; }
+.personal-page .personal-contact, .personal-page .personal-providers { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.personal-page .personal-badge { display: inline-flex; padding: 4px 8px; border: 1px solid var(--crm-line); border-radius: 5px; color: var(--crm-text-muted); background: var(--crm-surface-soft); font-size: 11px; font-weight: 600; line-height: 1.4; }
+.personal-page .personal-inline-form { margin-top: 14px; }
+.personal-page .personal-divider { height: 1px; background: var(--crm-line); margin: 24px 0; }
+.personal-page .personal-muted, .personal-page .text-muted { color: var(--crm-text-muted) !important; line-height: 1.65; }
+.personal-page .personal-muted { margin-bottom: 16px; }
+.personal-page .personal-counters { display: flex; gap: 40px; flex-wrap: wrap; margin: 0; }
+.personal-page .personal-counters dd { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
+.personal-page .personal-counters dt { color: var(--crm-text-muted); font-size: 12px; font-weight: 400; }
+.personal-page .personal-danger-link { color: var(--entry-danger); font-size: 13px; font-weight: 600; text-underline-offset: 3px; }
+.personal-page .personal-form { max-width: 540px; display: grid; gap: 20px; }
+.personal-page .personal-field { display: grid; gap: 7px; min-width: 0; }
+.personal-page .personal-field label { font-size: 13px; font-weight: 650; margin: 0; }
+.personal-page .form-control { background: var(--crm-surface); color: var(--crm-text); border: 1px solid var(--crm-line); min-height: 40px; border-radius: 7px; padding: 9px 12px; font-size: 14px; box-shadow: none; }
+.personal-page .form-control:focus { border-color: var(--entry-accent); outline: 2px solid var(--entry-selected); }
+.personal-page .input-validation-error { border-color: var(--entry-danger); }
+.personal-page .personal-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 4px; }
+.personal-page .personal-form .personal-form-actions { margin-top: 4px; border-top: 1px solid var(--crm-line); padding-top: 20px; }
+.personal-page .personal-workspace-card { align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; }
+.personal-page .personal-workspace-card .personal-form-actions { margin-top: auto; }
+.personal-page .personal-section-icon { color: var(--entry-accent); font-size: 20px; margin-bottom: 18px; }
+.personal-page .text-danger { color: var(--entry-danger) !important; }
+.personal-page .field-validation-error, .personal-page .validation-summary-errors { font-size: 13px; font-weight: 500; line-height: 1.5; }
+.personal-page .validation-summary-errors { padding: 12px; border: 1px solid var(--entry-danger); border-radius: 7px; }
+.personal-page .validation-summary-errors ul { margin: 0; padding-left: 18px; }
+.personal-page .validation-summary-valid, .personal-page .field-validation-valid { display: none; }
+.personal-page .personal-body > .alert { margin: 0; }
+.personal-page .alert { background: var(--crm-surface-soft); color: var(--crm-text); border-color: var(--crm-line); padding: 14px 16px; font-size: 13px; border-radius: 8px; }
+.personal-page .alert-danger { color: var(--entry-danger); }
+.personal-page .alert-dismissible { padding-right: 42px; }
+.personal-page .alert-dismissible .btn-close { padding: 17px; }
+:root[data-crm-theme="dark"] .personal-page .btn-close { filter: invert(1); }
+.personal-page .personal-body .btn-dark { background: #bc4d0e; color: #fff; border-color: #bc4d0e; }
+.personal-page .personal-body .btn-outline-dark, .personal-page .personal-body .btn-outline-secondary { color: var(--crm-text); background: var(--crm-surface); border-color: var(--crm-line); }
+.personal-page .personal-body .btn-outline-dark:hover, .personal-page .personal-body .btn-outline-secondary:hover { background: var(--crm-surface-soft); }
+.personal-page .personal-body .btn-outline-danger { color: var(--entry-danger); border-color: var(--entry-danger); }
+.personal-page .profile-card .h5 { font-size: 15px; color: var(--crm-text); }
+.personal-page .profile-card .badge { white-space: normal; text-align: left; font-size: 11px; line-height: 1.5; }
+.personal-page .text-success { color: #238466 !important; }
+.personal-page .text-warning { color: var(--entry-warning) !important; }
+:root[data-crm-theme="dark"] .personal-page .text-success { color: #83d8ba !important; }
+.personal-page .pending-org-invitations-card { background: var(--crm-surface); border: 1px solid var(--crm-line); box-shadow: none; border-radius: 12px; padding: 24px; }
+.personal-page .pending-org-invitations-card h2, .personal-page .pending-org-invitations-card h3 { color: var(--crm-text); font-size: 15px; }
+.personal-page .pending-org-invitations-card p, .personal-page .pending-org-invitation-meta { color: var(--crm-text-muted); }
+.personal-page .pending-org-invitation-item { background: var(--crm-surface-soft); border-color: var(--crm-line); }
+.personal-page .personal-warning { color: var(--entry-danger); border: 1px solid var(--entry-danger); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+.personal-page .personal-warning p:last-child { margin-bottom: 0; }
+.personal-page .personal-check { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 13px; }
+.personal-page .personal-check input { margin-top: 4px; width: 16px; height: 16px; accent-color: #bc4d0e; }
+
+.personal-page .personal-profile-grid > .profile-card { padding: 28px; }
+.personal-page .personal-profile-grid .personal-details > div { grid-template-columns: 120px minmax(0, 1fr); }
+.personal-page .personal-profile-grid .personal-divider { margin: 28px 0 24px; }
+.personal-page .personal-account-footer { display: flex; flex-wrap: wrap; gap: 12px; padding: 4px 0; color: var(--crm-text-muted); font-size: 12px; }
+.personal-page .personal-account-footer .personal-danger-link { color: var(--crm-text-muted); font-size: 12px; font-weight: 400; }
+.personal-page .personal-account-footer .personal-danger-link:hover { color: var(--entry-danger); }
+@media (max-width: 1100px) {
+    .personal-page .personal-shell { grid-template-columns: 190px minmax(0, 1fr); padding: 24px; gap: 20px; }
+    .personal-page .personal-shell--single { grid-template-columns: minmax(0, 1fr); }
+    .personal-page .personal-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+    .personal-page .personal-shell { display: block; padding: 16px; }
+    .personal-page .personal-sidebar { position: static; padding: 0; margin-bottom: 24px; }
+    .personal-page .personal-nav-label { display: none; }
+    .personal-page .personal-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .personal-page .personal-nav a { padding: 10px; font-size: 12px; border: 1px solid var(--crm-line); background: var(--crm-surface); }
+    .personal-page .personal-workspace-link { margin-top: 8px; padding: 10px; border: 0; }
+    .personal-page .personal-heading h1 { font-size: 18px; }
+    .personal-page .profile-card, .personal-page .personal-profile-grid > .profile-card { padding: 18px; }
+    .personal-page .personal-profile-grid .personal-details > div, .personal-page .personal-details > div { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .personal-page .personal-form { max-width: none; }
+    .personal-page .personal-form-actions .btn { flex: 1 1 auto; }
+}
+
+.personal-page .personal-heading,
+.personal-page .modal-header {
+  box-sizing: border-box;
+  padding: 14px 18px;
+  border: 1px solid var(--crm-form-header-border);
+  border-inline-start: 3px solid var(--crm-header-accent);
+  border-radius: 10px;
+  background: var(--crm-form-header-bg);
+  color: var(--crm-text);
+}
+
+.personal-page .personal-heading {
+  flex-wrap: wrap;
+}
+
+.personal-page .personal-heading h1 {
+  font-size: 24px;
+}
+
+.personal-page .profile-card > h2,
+.personal-page .personal-card-heading,
+.personal-page .support-heading {
+  padding: 10px 12px;
+  border: 1px solid var(--crm-section-header-border);
+  border-radius: 6px;
+  background: var(--crm-section-header-bg);
+  color: var(--crm-text);
+  overflow-wrap: anywhere;
+}
+
+.personal-page .personal-card-heading h2,
+.personal-page .support-heading h2 {
+  margin: 0;
+  color: inherit;
+}
+
+.personal-page .modal-header {
+  border-radius: 10px 10px 0 0;
+}

@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.PurchasesView"
+             x:DataType="vm:PurchasesViewModel">
+  <Grid RowDefinitions="Auto,*" RowSpacing="12">
+    <StackPanel Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding SuccessMessage}" IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#A7DCA7" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <Grid Grid.Row="1" IsVisible="{Binding !IsDetailOpen}" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+      <Border Classes="card" Padding="12">
+        <WrapPanel>
+          <TextBox Text="{Binding Search}" PlaceholderText="Покупатель, ИНН, email, тариф или ID" Width="300" Margin="0,0,8,8" KeyDown="OnSearchKeyDown" />
+          <ComboBox ItemsSource="{Binding BuyerOptions}" SelectedItem="{Binding SelectedBuyer}" Width="190" Margin="0,0,8,8" IsEnabled="{Binding !IsBusy}" />
+          <ComboBox ItemsSource="{Binding ReceiptOptions}" SelectedItem="{Binding SelectedReceipt}" Width="170" Margin="0,0,8,8" IsEnabled="{Binding !IsBusy}" />
+          <ComboBox ItemsSource="{Binding QueueOptions}" SelectedItem="{Binding SelectedQueue}" Width="210" Margin="0,0,8,8" IsEnabled="{Binding !IsBusy}" />
+          <ComboBox ItemsSource="{Binding PeriodOptions}" SelectedItem="{Binding SelectedPeriod}" Width="160" Margin="0,0,8,8" IsEnabled="{Binding !IsBusy}" />
+          <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,8" />
+          <Button Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,8,8" />
+          <Button Content="Обновить" Command="{Binding RefreshCommand}" Margin="0,0,8,8" />
+        </WrapPanel>
+      </Border>
+      <StackPanel Grid.Row="1" Spacing="6">
+        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Classes="caption" />
+        <TextBlock Text="Чеки без отметки показаны первыми. 24 часа — внутренний ориентир контроля." TextWrapping="Wrap" Classes="caption" />
+      </StackPanel>
+      <views:ListPagination Grid.Row="2" PageLabel="{Binding PageLabel}"
+                            PreviousCommand="{Binding PreviousPageCommand}" NextCommand="{Binding NextPageCommand}" />
+      <Border Grid.Row="3" Classes="card" Padding="0">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <Grid RowDefinitions="Auto,*" MinWidth="1040" Width="{Binding $parent[ScrollViewer].Viewport.Width}">
+            <Grid ColumnDefinitions="60,2*,1.4*,2*,1.5*,100" Margin="12,10">
+              <TextBlock Text="ID" Classes="caption" />
+              <TextBlock Grid.Column="1" Text="Покупатель" Classes="caption" />
+              <TextBlock Grid.Column="2" Text="Тариф / оплата" Classes="caption" />
+              <TextBlock Grid.Column="3" Text="Сумма и возвраты" Classes="caption" />
+              <TextBlock Grid.Column="4" Text="Чек / доставка" Classes="caption" />
+              <TextBlock Grid.Column="5" Text="Действия" Classes="caption" />
+            </Grid>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" ItemContainerTheme="{StaticResource AdminListRowTheme}" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     DoubleTapped="OnRowDoubleTapped" KeyDown="OnRowsKeyDown" AutomationProperties.AutomationId="PurchasesList">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:PurchasesRow">
+                  <Border BorderBrush="#292929" BorderThickness="0,1,0,0" Padding="12,12">
+                    <Grid ColumnDefinitions="60,2*,1.4*,2*,1.5*,100">
+                      <TextBlock Text="{Binding Id}" Classes="caption" />
+                      <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding Buyer}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding BuyerType}" Classes="caption" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Spacing="4" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding Plan}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding PaidAt}" Classes="caption" />
+                        <TextBlock Text="{Binding PaymentStatus}" Classes="caption" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="3" Text="{Binding Amount}" TextWrapping="Wrap" Margin="0,0,12,0" />
+                      <StackPanel Grid.Column="4" Spacing="4">
+                        <TextBlock Text="{Binding Receipt}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Delivery}" TextWrapping="Wrap" Classes="caption" />
+                      </StackPanel>
+                      <Button Grid.Column="5" Content="Открыть" Padding="10,6" VerticalAlignment="Center" Margin="12,0,0,0" Click="OnOpenRowClick" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="Покупки по выбранным фильтрам не найдены." HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+          </Grid>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <Grid Grid.Row="1" IsVisible="{Binding IsDetailOpen}" RowDefinitions="Auto,*" RowSpacing="12">
+      <Button Content="← К покупкам" Command="{Binding CloseDetailCommand}" HorizontalAlignment="Left" />
+      <ScrollViewer Grid.Row="1">
+        <StackPanel Spacing="12">
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Покупка и чек НПД" FontSize="20" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Detail.Buyer}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Detail.BuyerType}" />
+              <TextBlock Text="{Binding Detail.Plan}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Detail.PaidAt}" />
+              <TextBlock Text="{Binding Detail.Amount}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Detail.PaymentStatus}" />
+              <TextBlock Text="{Binding Detail.Receipt}" />
+              <TextBlock Text="{Binding Detail.Delivery}" />
+              <SelectableTextBlock Text="{Binding Detail.ReceiptHistory}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Ссылка ФНС и комментарий" FontWeight="SemiBold" />
+              <TextBox Text="{Binding ReceiptUrl}" PlaceholderText="https://…nalog.ru/…" IsReadOnly="{Binding !CanManage}" IsEnabled="{Binding !IsBusy}" />
+              <TextBox Text="{Binding ReceiptComment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" MaxLength="1000" PlaceholderText="Комментарий к чеку" IsReadOnly="{Binding !CanManage}" IsEnabled="{Binding !IsBusy}" />
+              <Button Content="Сохранить ссылку и комментарий" Command="{Binding SaveDetailsCommand}" IsVisible="{Binding CanManage}" />
+              <TextBlock Text="{Binding Detail.Purchase.NpdReceiptFileName}" TextWrapping="Wrap" />
+              <WrapPanel>
+                <Button Content="Скачать файл" Click="OnDownloadFile" IsEnabled="{Binding CanDownload}" Margin="0,0,8,8" />
+                <Button Content="Вложить PDF / PNG / JPG" Click="OnUploadFile" IsEnabled="{Binding CanUpload}" IsVisible="{Binding CanManage}" Margin="0,0,8,8" />
+                <Button Content="Открепить файл" Command="{Binding RequestDeleteFileCommand}" IsVisible="{Binding CanManage}" Margin="0,0,8,8" />
+              </WrapPanel>
+              <TextBlock Text="Один файл до 5 МБ. Скачивание доступно только авторизованному администратору." TextWrapping="Wrap" Classes="caption" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card" IsVisible="{Binding CanManage}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Выдача и отправка чека" FontWeight="SemiBold" />
+              <TextBlock Text="Сначала создайте чек в «Моём налоге» и передайте покупателю. Отметка ниже только фиксирует выдачу, она не создаёт и не отправляет чек." TextWrapping="Wrap" Classes="caption" />
+              <TextBox Text="{Binding ChangeReason}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" PlaceholderText="Причина отметки или снятия отметки (обязательно)" IsEnabled="{Binding !IsBusy}" />
+              <WrapPanel>
+                <Button Content="Изменить отметку о выдаче" Command="{Binding RequestToggleIssuedCommand}" Margin="0,0,8,8" />
+                <Button Content="Отправить чек покупателю" Command="{Binding RequestSendCommand}" Margin="0,0,8,8" />
+              </WrapPanel>
+              <TextBlock Text="Отправка использует сохранённые файл или ссылку и email пользователя. Для отправки новой версии обновите файл или ссылку." TextWrapping="Wrap" Classes="caption" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card" IsVisible="{Binding IsConfirmationOpen}" BorderBrush="#A38540">
+            <StackPanel Spacing="10">
+              <TextBlock Text="{Binding ConfirmationMessage}" TextWrapping="Wrap" />
+              <WrapPanel>
+                <Button Content="Подтвердить" Command="{Binding ConfirmCommand}" Classes="primary" Margin="0,0,8,8" />
+                <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" Margin="0,0,8,8" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

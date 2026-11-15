@@ -1,0 +1,1198 @@
+﻿:root {
+  /* Префикс оформления проекта — --opencrm-*: внешние переопределения используют его.
+     Ниже отдельный слой форм и разделов (--crm-*): он не связан с названием бренда. */
+  --opencrm-accent: #e67337;
+  --crm-form-header-bg: #fff7f0;
+  --crm-form-header-border: #ecd9ca;
+  --crm-section-header-bg: #f2f4f7;
+  --crm-section-header-border: #dde3eb;
+  --crm-header-accent: #e67337;
+  --crm-action-accent: #b94a20;
+  --crm-action-info: #1d4ed8;
+  --crm-action-warning: #9a6700;
+  --opencrm-ink: #121212;
+  --opencrm-ink-soft: #3a3f45;
+  --opencrm-surface: #ffffff;
+  --opencrm-surface-alt: #f6f7f8;
+  --opencrm-border: rgba(18, 18, 18, 0.1);
+  --opencrm-shadow: rgba(15, 23, 42, 0.08);
+}
+
+.opencrm-app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.opencrm-app-shell__main {
+  flex: 1 0 auto;
+}
+
+.opencrm-container {
+  width: 100%;
+  max-width: 1140px;
+  padding-right: 12px;
+  padding-left: 12px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.opencrm-header {
+  background: var(--crm-surface, #fff);
+  border-bottom: 1px solid var(--opencrm-border);
+}
+
+.opencrm-header__nav {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.opencrm-header__brand {
+  color: var(--opencrm-ink);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.opencrm-header__menu {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.opencrm-header__link {
+  color: var(--opencrm-ink);
+  padding: 4px 4px;
+  margin-right: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.opencrm-header__link:hover,
+.opencrm-header__link:focus {
+  color: var(--opencrm-accent);
+}
+
+.opencrm-icon-button {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid var(--crm-line, #212529);
+  border-radius: 6px;
+  color: #fff;
+  background: var(--crm-control-background, #212529);
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.opencrm-icon-button:hover,
+.opencrm-icon-button:focus {
+  border-color: var(--opencrm-accent);
+  background: var(--opencrm-accent);
+}
+
+.opencrm-icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.opencrm-profile {
+  position: relative;
+  margin-left: auto;
+}
+
+.opencrm-profile::after {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: 10px;
+  content: "";
+}
+
+.opencrm-profile__button {
+  display: flex;
+  gap: 6px;
+  min-width: 48px;
+  height: 38px;
+  padding-right: 10px;
+  padding-left: 11px;
+}
+
+.opencrm-profile__chevron {
+  width: 14px;
+  height: 14px;
+}
+
+.opencrm-profile__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: max-content;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 8px 0;
+  border: 1px solid var(--opencrm-border);
+  border-radius: 8px;
+  background: var(--crm-surface, #fff);
+  box-shadow: 0 16px 38px var(--crm-shadow, rgba(15, 23, 42, 0.14));
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.opencrm-profile:hover .opencrm-profile__menu,
+.opencrm-profile:focus-within .opencrm-profile__menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.opencrm-profile__name {
+  padding: 8px 14px;
+  color: var(--crm-text-muted, #6c757d);
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--opencrm-border);
+  overflow-wrap: anywhere;
+}
+
+.opencrm-profile__menu form {
+  margin: 0;
+}
+
+.opencrm-profile__menu a,
+.opencrm-profile__menu form button {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  color: var(--opencrm-ink);
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.opencrm-profile__divider {
+  margin: 6px 0;
+  border: 0;
+  border-top: 1px solid var(--opencrm-border);
+}
+
+.opencrm-profile__menu a:hover,
+.opencrm-profile__menu a:focus,
+.opencrm-profile__menu form button:hover,
+.opencrm-profile__menu form button:focus {
+  color: var(--opencrm-accent);
+  background: var(--crm-surface-soft, #f8f9fa);
+}
+
+.opencrm-footer {
+  flex: 0 0 auto;
+  padding: 24px 0;
+  color: #fff;
+  background: var(--crm-control-background, #212529);
+}
+
+.opencrm-footer__grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.opencrm-footer__section {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 180px;
+}
+
+.opencrm-footer h2 {
+  margin: 0 0 14px;
+  color: var(--opencrm-accent);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.opencrm-footer__links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opencrm-footer a {
+  display: block;
+  margin: 0;
+  padding: 4px 0;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.opencrm-footer a:hover,
+.opencrm-footer a:focus {
+  color: var(--opencrm-accent);
+}
+
+.opencrm-footer__copy {
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 14px;
+  text-align: center;
+}
+
+.ui-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.ui-button:hover,
+.ui-button:focus,
+.ui-button:active {
+  text-decoration: none;
+}
+
+.ui-button:disabled,
+.ui-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.ui-button--primary {
+  color: #fff;
+  background: var(--opencrm-ink);
+  border-color: var(--opencrm-ink);
+}
+
+.ui-button--primary:hover,
+.ui-button--primary:focus {
+  background: var(--opencrm-accent);
+  border-color: var(--opencrm-accent);
+}
+
+.ui-button--secondary {
+  color: var(--opencrm-ink);
+  background: var(--crm-surface, #fff);
+  border-color: var(--crm-line, #d9dee3);
+}
+
+.ui-button--secondary:hover,
+.ui-button--secondary:focus {
+  color: var(--opencrm-accent);
+  border-color: var(--opencrm-accent);
+}
+
+.ui-button--ghost {
+  color: var(--opencrm-ink);
+  background: transparent;
+  border-color: transparent;
+}
+
+.ui-card {
+  border: 1px solid var(--opencrm-border);
+  border-radius: 8px;
+  background: var(--crm-surface, #fff);
+  box-shadow: 0 10px 30px var(--opencrm-shadow);
+  overflow: visible;
+}
+
+.ui-card__header {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--crm-section-header-border);
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  background: var(--crm-section-header-bg);
+}
+
+.ui-card__title {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ui-card__title h2 {
+  margin: 0;
+  color: var(--crm-text, #26303d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.ui-card__title p {
+  margin: 0;
+  color: var(--crm-text-muted, #667085);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ui-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ui-card__body {
+  padding: 18px;
+}
+
+.ui-card__header .ui-button {
+  min-height: 34px;
+  border-color: var(--crm-line, #fff);
+  color: var(--crm-text, #212529);
+  background: var(--crm-surface, #fff);
+}
+
+.ui-card__header .ui-button:hover,
+.ui-card__header .ui-button:focus {
+  border-color: var(--opencrm-accent);
+  color: #fff;
+  background: var(--opencrm-accent);
+}
+
+.ui-form-header {
+  box-sizing: border-box;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--crm-form-header-border);
+  border-inline-start: 3px solid var(--crm-header-accent);
+  background: var(--crm-form-header-bg);
+  color: var(--crm-text, #26303d);
+}
+
+.ui-section-header {
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--crm-section-header-border);
+  border-radius: 6px;
+  background: var(--crm-section-header-bg);
+  color: var(--crm-text, #26303d);
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.ui-section-header :is(h2, h3, h4, p) {
+  margin: 0;
+}
+
+.ui-card > .ui-card__header {
+  margin: 0;
+  border-top: 0;
+  border-inline-end: 0;
+  border-inline-start: 0;
+  border-radius: 7px 7px 0 0;
+}
+
+.ui-card--page > .ui-card__header {
+  border-inline-start: 3px solid var(--crm-header-accent);
+  border-bottom-color: var(--crm-form-header-border);
+  background: var(--crm-form-header-bg);
+}
+
+.ui-card--page > .ui-card__header h2 {
+  font-size: 22px;
+}
+
+.ui-form-header :is(h1, h2, h3),
+.ui-section-header :is(h2, h3, h4) {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .ui-card__header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ui-card__actions {
+    max-width: 100%;
+  }
+
+  .ui-card--page > .ui-card__header h2 {
+    font-size: 20px;
+  }
+}
+
+.ui-field {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  color: var(--opencrm-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ui-field__required {
+  margin-left: 3px;
+  color: #dc2626;
+  font-style: normal;
+}
+
+.ui-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: 100%;
+}
+
+.ui-field-label__text {
+  min-width: 0;
+}
+
+.ui-field-label__help {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--crm-line, #cbd5e1);
+  border-radius: 50%;
+  color: var(--crm-text, #475569);
+  background: var(--crm-surface, #fff);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: help;
+}
+
+.ui-field-label__help:hover,
+.ui-field-label__help:focus {
+  border-color: var(--opencrm-accent);
+  color: var(--opencrm-accent);
+  outline: 2px solid rgba(230, 115, 55, 0.14);
+  outline-offset: 1px;
+}
+
+.ui-field input,
+.ui-field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--crm-line, #d9dee3);
+  border-radius: 8px;
+  color: var(--opencrm-ink);
+  background: var(--crm-surface, #fff);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.ui-field input {
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.ui-field textarea {
+  min-height: 96px;
+  padding: 10px 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.ui-field input:focus,
+.ui-field textarea:focus {
+  border-color: var(--opencrm-accent);
+  outline: 3px solid rgba(230, 115, 55, 0.16);
+}
+
+.ui-search-input {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-search-input__icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  color: var(--crm-text-muted, #667085);
+  font-size: 18px;
+  line-height: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ui-search-input .ui-field {
+  font-size: 0;
+}
+
+.ui-search-input input {
+  padding-left: 36px;
+}
+
+.ui-select,
+.ui-select-options {
+  --ms-font-size: 14px;
+  --ms-line-height: 1.2;
+  --ms-bg: #fff;
+  --ms-bg-disabled: #f3f4f6;
+  --ms-border-color: #d9dee3;
+  --ms-border-width: 1px;
+  --ms-border-color-active: var(--opencrm-accent);
+  --ms-radius: 8px;
+  --ms-py: 0;
+  --ms-px: 12px;
+  --ms-ring-width: 3px;
+  --ms-ring-color: rgba(230, 115, 55, 0.16);
+  --ms-placeholder-color: #667085;
+  --ms-caret-color: #667085;
+  --ms-dropdown-border-color: #d9dee3;
+  --ms-dropdown-radius: 8px;
+  --ms-max-height: 260px;
+  --ms-option-bg-pointed: #ffe4d1;
+  --ms-option-color-pointed: #121212;
+  --ms-option-bg-selected: #fff1e7;
+  --ms-option-color-selected: #121212;
+  --ms-option-bg-selected-pointed: #ffd7bd;
+  --ms-option-color-selected-pointed: #121212;
+}
+
+.ui-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0;
+}
+
+.ui-select-field {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-select.is-open,
+.ui-select.is-active {
+  z-index: 3000;
+}
+
+.ui-select .multiselect-dropdown {
+  z-index: 3000;
+}
+
+.multiselect-dropdown {
+  z-index: 3000;
+  box-shadow: 0 16px 38px var(--crm-shadow, rgba(15, 23, 42, 0.16));
+}
+
+:is(.ui-select, .ui-select-options) .multiselect-option.is-selected {
+  font-weight: 800;
+}
+
+:is(.ui-select, .ui-select-options) .multiselect-option.is-pointed {
+  font-weight: 800;
+}
+
+.ui-select .multiselect-wrapper {
+  min-width: 0;
+  min-height: 36px;
+}
+
+.ui-select .multiselect-search {
+  min-width: 0;
+  min-height: 36px;
+}
+
+.ui-select .multiselect-single-label,
+.ui-select .multiselect-placeholder {
+  padding-right: 28px;
+}
+
+.ui-date-picker .vc-container,
+.ui-phone-input .iti {
+  width: 100%;
+}
+
+.ui-date-picker__input,
+.ui-phone-input input {
+  width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--crm-line, #d9dee3);
+  border-radius: 8px;
+  color: var(--opencrm-ink);
+  background: var(--crm-surface, #fff);
+  font-size: 14px;
+}
+
+.ui-date-picker__input {
+  padding: 0 40px 0 12px;
+}
+
+.ui-date-picker .vc-container {
+  border: 1px solid var(--crm-line, #d9dee3);
+  border-radius: 8px;
+  color: var(--opencrm-ink);
+  font-family: inherit;
+  box-shadow: 0 16px 38px var(--crm-shadow, rgba(15, 23, 42, 0.12));
+}
+
+.ui-date-picker .vc-title,
+.ui-date-picker .vc-weekday,
+.ui-date-picker .vc-nav-title,
+.ui-date-picker .vc-nav-item,
+.ui-date-picker .vc-time-picker,
+.ui-date-picker .vc-base-select {
+  font-family: inherit;
+}
+
+.ui-time-picker .vc-time-picker {
+  min-width: 220px;
+  padding: 14px 12px;
+}
+
+.ui-time-picker .vc-time-select-group {
+  gap: 8px;
+}
+
+.ui-time-picker .vc-base-select {
+  border-radius: 8px;
+}
+
+.ui-time-picker {
+  position: relative;
+}
+
+.ui-time-picker__control {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.ui-time-picker__input {
+  padding-right: 38px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-time-picker__button {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  color: var(--crm-text, #475569);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-time-picker__button span {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  position: relative;
+}
+
+.ui-time-picker__button span::before,
+.ui-time-picker__button span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: 50% 100%;
+}
+
+.ui-time-picker__button span::before {
+  height: 5px;
+  transform: translate(-50%, -100%);
+}
+
+.ui-time-picker__button span::after {
+  height: 4px;
+  transform: translate(-50%, -100%) rotate(90deg);
+}
+
+.ui-time-picker__button:hover,
+.ui-time-picker__button:focus {
+  color: var(--opencrm-accent);
+  background: var(--crm-surface, #fff7ed);
+  outline: none;
+}
+
+.ui-time-picker__popover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(220px, 92vw);
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--crm-line, #d9dee3);
+  border-radius: 8px;
+  background: var(--crm-surface, #fff);
+  box-shadow: 0 16px 38px var(--crm-shadow, rgba(15, 23, 42, 0.14));
+}
+
+.ui-time-picker__wheel-value {
+  text-align: center;
+  color: var(--crm-text, #111827);
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.ui-time-picker__columns {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.ui-time-picker__column {
+  height: 126px;
+  display: grid;
+  grid-auto-rows: 28px;
+  gap: 3px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+  scroll-snap-type: y proximity;
+  scrollbar-width: none;
+}
+
+.ui-time-picker__column::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.ui-time-picker__separator {
+  align-self: center;
+  color: var(--crm-text-muted, #9ca3af);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ui-time-picker__option {
+  min-height: 28px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--crm-text, #1f2937);
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  cursor: pointer;
+}
+
+.ui-time-picker__option:hover,
+.ui-time-picker__option:focus {
+  color: var(--opencrm-accent);
+  background: var(--crm-surface-overlay, rgba(255, 247, 237, 0.72));
+  outline: none;
+}
+
+.ui-time-picker__option.active {
+  border-color: #fed7aa;
+  color: var(--opencrm-accent);
+  background: var(--crm-surface, #fff7ed);
+  font-size: 16px;
+}
+
+.ui-time-picker__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--crm-line, #edf2f7);
+}
+
+.ui-time-picker__action {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--crm-line, #e2e8f0);
+  border-radius: 7px;
+  color: var(--crm-text, #475569);
+  background: var(--crm-surface, #fff);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ui-time-picker__action:hover,
+.ui-time-picker__action:focus {
+  border-color: var(--opencrm-accent);
+  color: var(--opencrm-accent);
+  outline: none;
+}
+
+
+
+.ui-time-picker__action--primary {
+  border-color: var(--opencrm-accent);
+  color: #fff;
+  background: var(--opencrm-accent);
+}
+
+.ui-time-picker__action--primary:hover,
+.ui-time-picker__action--primary:focus {
+  border-color: #c94c19;
+  color: #fff;
+  background: #c94c19;
+  outline: none;
+}
+
+.ui-phone-input input {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.ui-date-picker__input:focus,
+.ui-phone-input input:focus {
+  border-color: var(--opencrm-accent);
+  outline: 3px solid rgba(230, 115, 55, 0.16);
+}
+
+.ui-date-picker .vc-orange {
+  --vc-accent-50: #fff7ed;
+  --vc-accent-100: #ffedd5;
+  --vc-accent-200: #fed7aa;
+  --vc-accent-300: #fdba74;
+  --vc-accent-400: #fb923c;
+  --vc-accent-500: #f97316;
+  --vc-accent-600: #e67337;
+  --vc-accent-700: #c85620;
+  --vc-accent-800: #9a431a;
+  --vc-accent-900: #7c3617;
+}
+
+.ui-pagination {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ui-pagination__list {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-pagination__button {
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid var(--crm-line, #dee2e6);
+  border-radius: 6px;
+  color: var(--crm-text, #212529);
+  background: var(--crm-surface, #fff);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ui-pagination__button:hover,
+.ui-pagination__button:focus,
+.ui-pagination__button--active {
+  border-color: var(--opencrm-accent);
+  color: #fff;
+  background: var(--opencrm-accent);
+}
+
+.ui-pagination__button--disabled,
+.ui-pagination__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ui-tooltip-anchor {
+  display: inline-flex;
+}
+
+.ui-tooltip {
+  z-index: 1100;
+  max-width: 260px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: #fff;
+  background: var(--crm-control-background, #212529);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 12px 28px var(--crm-shadow, rgba(15, 23, 42, 0.2));
+}
+
+.ui-loader {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--crm-line, #cbd5cc);
+  border-radius: 8px;
+  color: var(--crm-text-muted, #667085);
+  background: var(--crm-surface-soft, #fbfcfa);
+  font-size: 14px;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+.ui-loader--compact {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-style: solid;
+  background: var(--crm-surface, #fff);
+  box-shadow: 0 10px 24px var(--crm-shadow, rgba(15, 23, 42, 0.08));
+}
+
+.ui-loader__spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 2px solid var(--crm-line, rgba(102, 112, 133, 0.28));
+  border-top-color: var(--opencrm-accent);
+  border-radius: 50%;
+  animation: ui-loader-spin 0.8s linear infinite;
+}
+
+@keyframes ui-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ui-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.ui-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: var(--crm-backdrop, rgba(18, 18, 18, 0.56));
+}
+
+.ui-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  border-radius: 8px;
+  background: var(--crm-surface, #fff);
+  box-shadow: 0 22px 58px var(--crm-shadow, rgba(15, 23, 42, 0.26));
+  overflow: hidden;
+}
+
+.ui-modal__header,
+.ui-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--opencrm-border);
+}
+
+.ui-modal__footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--opencrm-border);
+  border-bottom: 0;
+}
+
+.ui-modal__header {
+  border-bottom-color: var(--crm-form-header-border);
+}
+
+.ui-modal__header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.ui-modal__close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--crm-surface-soft, #f1f3f5);
+  color: var(--opencrm-ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ui-modal__body {
+  padding: 18px;
+  color: var(--opencrm-ink-soft);
+}
+
+.ui-confirm-dialog__message {
+  margin: 0;
+  color: var(--opencrm-ink-soft);
+  line-height: 1.5;
+}
+
+.ui-alert-dialog__message {
+  margin: 0;
+  color: var(--opencrm-ink-soft);
+  line-height: 1.5;
+}
+
+.ui-alert-dialog__message--danger {
+  color: var(--crm-danger-text, #a12b24);
+  font-weight: 500;
+}
+
+.ui-alert-dialog__danger.ui-button {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.ui-alert-dialog__danger.ui-button:hover,
+.ui-alert-dialog__danger.ui-button:focus {
+  border-color: #b91c1c;
+  background: #b91c1c;
+  color: #fff;
+}
+
+.ui-confirm-dialog__danger.ui-button {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.ui-confirm-dialog__danger.ui-button:hover,
+.ui-confirm-dialog__danger.ui-button:focus {
+  border-color: #b91c1c;
+  background: #b91c1c;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .opencrm-header__nav {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 14px 0;
+  }
+
+  .opencrm-header__menu {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .opencrm-footer__grid {
+    display: block;
+  }
+
+  .opencrm-footer__section {
+    width: 100%;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .opencrm-footer h2 {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--crm-line, rgba(255, 255, 255, 0.1));
+  }
+}
+
+@media (max-width: 560px) {
+  .opencrm-container {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .opencrm-header__link {
+    padding-left: 0;
+  }
+}
+
+.ui-field__error {
+  color: var(--crm-danger-text, #a12b24);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.ui-field input[aria-invalid="true"],
+.ui-field textarea[aria-invalid="true"],
+.ui-field select[aria-invalid="true"],
+.ui-date-picker__input[aria-invalid="true"] {
+  border-color: var(--crm-danger-text, #a12b24);
+}
+
+.ui-field input[aria-invalid="true"]:focus,
+.ui-field textarea[aria-invalid="true"]:focus,
+.ui-field select[aria-invalid="true"]:focus,
+.ui-date-picker__input[aria-invalid="true"]:focus {
+  outline: 2px solid var(--crm-danger-text, #a12b24);
+  outline-offset: 2px;
+}

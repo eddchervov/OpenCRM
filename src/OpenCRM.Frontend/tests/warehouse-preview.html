@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — проверка склада</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    const params = new URLSearchParams(location.search)
+    const scenario = params.get('scenario') === 'autoservice' ? 'autoservice' : 'detailing'
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const readonly = params.has('readonly')
+    const free = params.has('free')
+    const today = new Date().toISOString()
+    const materials = [
+      { id: 'catalog-1', kindCode: 'material', code: 'POLISH-PRO', name: 'Абразивная полировальная паста профессиональная, финишная, для тёмных лаков', description: 'Демонстрационная позиция склада', sortOrder: 1, isSystem: false, isUsed: true, isActive: true },
+      { id: 'catalog-2', kindCode: 'material', code: 'CLEAN-20L', name: 'Щелочной состав для глубокой очистки и предварительной мойки кузова', description: '', sortOrder: 2, isSystem: false, isUsed: true, isActive: true },
+      { id: 'catalog-3', kindCode: 'material', code: 'FILTER-KIT', name: 'Комплект фильтров и уплотнителей для планового обслуживания поста', description: '', sortOrder: 3, isSystem: false, isUsed: true, isActive: true }
+    ]
+    const stocks = [
+      { id: 'stock-1', catalogItemId: 'catalog-1', name: materials[0].name, unit: 'кг', packageQuantity: 1, quantityOnHand: 124.75, reservedQuantity: 18.5, availableQuantity: 106.25, minQuantity: 24, averageUnitCost: 18450.75, inventoryValue: 2298881.06, updatedAt: today, isLowStock: false, isOutOfStock: false },
+      { id: 'stock-2', catalogItemId: 'catalog-2', name: materials[1].name, unit: 'л', packageQuantity: 20, quantityOnHand: 37.5, reservedQuantity: 8, availableQuantity: 29.5, minQuantity: 40, averageUnitCost: 625.4, inventoryValue: 23452.5, updatedAt: today, isLowStock: true, isOutOfStock: false },
+      { id: 'stock-3', catalogItemId: 'catalog-3', name: materials[2].name, unit: 'упак.', packageQuantity: 1, quantityOnHand: 0, reservedQuantity: 0, availableQuantity: 0, minQuantity: 2, averageUnitCost: 128900, inventoryValue: 0, updatedAt: today, isLowStock: false, isOutOfStock: true }
+    ]
+    if (params.has('small-unit-cost')) {
+      stocks.push({ id: 'stock-small', catalogItemId: null, name: 'QA Дробная стоимость', unit: 'мл', packageQuantity: null, quantityOnHand: 400, reservedQuantity: 0, availableQuantity: 400, minQuantity: 0, averageUnitCost: 0.0199, inventoryValue: 7.96, updatedAt: today, isLowStock: false, isOutOfStock: false })
+    }
+    if (params.has('many')) {
+      for (let index = 4; index <= 37; index++) {
+        stocks.push({ ...stocks[0], id: `stock-${index}`, catalogItemId: null, name: `Материал ${String(index).padStart(2, '0')}`, quantityOnHand: index, reservedQuantity: 0, availableQuantity: index, minQuantity: 0, inventoryValue: index * stocks[0].averageUnitCost })
+      }
+    }
+    const movements = [
+      { id: 'movement-1', stockId: 'stock-1', catalogItemId: 'catalog-1', materialName: stocks[0].name, typeCode: 'receipt', quantity: 25, balanceAfter: 124.75, unitCost: 18450.75, totalCost: 461268.75, costBalanceAfter: 2298881.06, sourceEntityType: 'manual', sourceTitle: 'Приёмка поставки № 1048', createdByDisplayName: 'Мария Иванова', unit: 'кг', comment: 'Тестовая запись для просмотра склада', createdAt: today },
+      { id: 'movement-2', stockId: 'stock-2', catalogItemId: 'catalog-2', materialName: stocks[1].name, typeCode: 'maintenance_issue', quantity: -2.5, balanceAfter: 37.5, unitCost: 625.4, totalCost: 1563.5, costBalanceAfter: 23452.5, maintenanceId: 'maintenance-demo', sourceEntityType: 'maintenance', sourceTitle: 'Заказ-наряд № 5821', sourceUrl: '#maintenance/maintenance-demo', createdByDisplayName: 'Алексей Смирнов', unit: 'л', comment: 'Расход на выполнение работ', createdAt: today },
+      { id: 'movement-3', stockId: 'stock-3', catalogItemId: 'catalog-3', materialName: stocks[2].name, typeCode: 'issue', quantity: -1, balanceAfter: 0, unitCost: 128900, totalCost: 128900, costBalanceAfter: 0, sourceEntityType: 'manual', createdByDisplayName: 'Иван Петров', unit: 'упак.', comment: 'Последний комплект выдан в работу', createdAt: today }
+    ]
+    const context = {
+      user: { id: 'preview', displayName: 'Демо-пользователь', email: '' },
+      organization: {
+        id: organizationId,
+        name: `${scenario === 'detailing' ? 'QA Детейлинг' : 'QA Автосервис'} · Склад${free ? ' · Free' : ''}`,
+        primaryScenarioCode: scenario,
+        canManageBilling: false
+      },
+      workspaceAccess: { isReadOnly: readonly, isFreePlan: free, isBaseWorkspace: free, hasActiveSubscription: !free, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario },
+        menu: [
+          { code: 'workspace', title: 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'materials', title: 'Склад', isVisible: true, groupTitle: 'Работы', urlTemplate: '#materials' }
+        ],
+        quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', api: {} }
+    }
+    const inventory = () => ({
+      stocks: [...stocks],
+      recentMovements: [...movements].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+      stocksTotalCount: stocks.length,
+      allStocksCount: stocks.length,
+      movementsTotalCount: movements.length,
+      stocksPage: 1,
+      stocksPageSize: 20,
+      movementsPage: 1,
+      movementsPageSize: 20,
+      lowStockCount: stocks.filter(stock => stock.isLowStock).length,
+      outOfStockCount: stocks.filter(stock => stock.isOutOfStock).length,
+      totalQuantityOnHand: stocks.reduce((sum, stock) => sum + stock.quantityOnHand, 0),
+      totalInventoryValue: stocks.reduce((sum, stock) => sum + stock.inventoryValue, 0),
+      snapshotAt: null,
+      snapshotStocks: [],
+      snapshotTotalInventoryValue: 0
+    })
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.origin)
+      if (!url.pathname.startsWith('/api/')) return originalFetch(input, init)
+      const method = (init?.method || 'GET').toUpperCase()
+      const apiRoot = `/api/v1/organizations/${organizationId}`
+      if (url.pathname.endsWith('/workspace/context')) return Response.json(context)
+      if (url.pathname === `${apiRoot}/scenario-catalog` && method === 'GET') {
+        return Response.json({ organizationId, scenarioCode: scenario, materials, services: [], workPosts: [], workTypes: [], documents: [], planningRules: [] })
+      }
+      if (url.pathname === `${apiRoot}/materials` && method === 'GET') {
+        const query = (url.searchParams.get('searchQuery') || '').trim().toLocaleLowerCase('ru')
+        const filter = url.searchParams.get('stockFilter')
+        const stockId = url.searchParams.get('stockId')
+        const filteredStocks = stocks.filter(stock => (!query || stock.name.toLocaleLowerCase('ru').includes(query))
+          && (!filter || (filter === 'out' ? stock.isOutOfStock : filter === 'low' ? stock.isLowStock : filter === 'ok' ? !stock.isLowStock && !stock.isOutOfStock : true)))
+        const payload = inventory()
+        payload.stocksPage = Math.max(1, Number(url.searchParams.get('stocksPage') || 1))
+        payload.stocksPageSize = Number(url.searchParams.get('stocksPageSize') || 20)
+        payload.stocks = filteredStocks.slice((payload.stocksPage - 1) * payload.stocksPageSize, payload.stocksPage * payload.stocksPageSize)
+        payload.stocksTotalCount = filteredStocks.length
+        if (stockId) payload.recentMovements = payload.recentMovements.filter(movement => movement.stockId === stockId)
+        if (url.searchParams.has('snapshotAt')) {
+          payload.snapshotAt = url.searchParams.get('snapshotAt')
+          payload.snapshotStocks = stocks.map(stock => ({ stockId: stock.id, catalogItemId: stock.catalogItemId, name: stock.name, unit: stock.unit, quantityOnHand: stock.quantityOnHand, averageUnitCost: stock.averageUnitCost, inventoryValue: stock.inventoryValue }))
+          payload.snapshotTotalInventoryValue = payload.snapshotStocks.reduce((sum, stock) => sum + stock.inventoryValue, 0)
+        }
+        return Response.json(payload)
+      }
+      if (readonly) return new Response(null, { status: 403 })
+      if (url.pathname === `${apiRoot}/materials/receipt` && method === 'POST') {
+        const body = JSON.parse(init.body)
+        let stock = stocks.find(item => item.catalogItemId === body.catalogItemId)
+        if (!stock) {
+          stock = { id: `stock-${stocks.length + 1}`, catalogItemId: body.catalogItemId || null, name: body.name, unit: body.unit, packageQuantity: body.packageQuantity ?? null, quantityOnHand: 0, reservedQuantity: 0, availableQuantity: 0, minQuantity: 0, averageUnitCost: body.unitCost || 0, inventoryValue: 0, updatedAt: today, isLowStock: false, isOutOfStock: true }
+          stocks.push(stock)
+        }
+        const previousValue = stock.quantityOnHand * stock.averageUnitCost
+        stock.quantityOnHand += body.quantity
+        stock.availableQuantity = stock.quantityOnHand - stock.reservedQuantity
+        stock.averageUnitCost = stock.quantityOnHand ? (previousValue + body.quantity * (body.unitCost || stock.averageUnitCost)) / stock.quantityOnHand : 0
+        stock.inventoryValue = stock.quantityOnHand * stock.averageUnitCost
+        stock.updatedAt = new Date().toISOString()
+        stock.isOutOfStock = stock.quantityOnHand <= 0
+        stock.isLowStock = !stock.isOutOfStock && stock.quantityOnHand <= stock.minQuantity
+        movements.unshift({ id: crypto.randomUUID(), stockId: stock.id, catalogItemId: stock.catalogItemId, materialName: stock.name, typeCode: 'receipt', quantity: body.quantity, balanceAfter: stock.quantityOnHand, unitCost: body.unitCost || stock.averageUnitCost, totalCost: body.quantity * (body.unitCost || stock.averageUnitCost), costBalanceAfter: stock.inventoryValue, sourceEntityType: 'manual', createdByDisplayName: 'Демо-пользователь', unit: stock.unit, comment: body.comment || '', createdAt: stock.updatedAt })
+        return Response.json(stock)
+      }
+      if (url.pathname === `${apiRoot}/materials/issue` && method === 'POST') {
+        const body = JSON.parse(init.body)
+        const stock = stocks.find(item => item.id === body.stockId)
+        if (!stock || body.quantity > stock.quantityOnHand) return Response.json({ message: 'Недостаточный остаток в тестовом API.' }, { status: 400 })
+        stock.quantityOnHand -= body.quantity
+        stock.availableQuantity = stock.quantityOnHand - stock.reservedQuantity
+        stock.inventoryValue = stock.quantityOnHand * stock.averageUnitCost
+        stock.updatedAt = new Date().toISOString()
+        stock.isOutOfStock = stock.quantityOnHand <= 0
+        stock.isLowStock = !stock.isOutOfStock && stock.quantityOnHand <= stock.minQuantity
+        movements.unshift({ id: crypto.randomUUID(), stockId: stock.id, catalogItemId: stock.catalogItemId, materialName: stock.name, typeCode: 'issue', quantity: -body.quantity, balanceAfter: stock.quantityOnHand, unitCost: stock.averageUnitCost, totalCost: body.quantity * stock.averageUnitCost, costBalanceAfter: stock.inventoryValue, sourceEntityType: 'manual', createdByDisplayName: 'Демо-пользователь', unit: stock.unit, comment: body.comment || '', createdAt: stock.updatedAt })
+        return Response.json(stock)
+      }
+      const adjustmentMatch = url.pathname.match(new RegExp(`^${apiRoot}/materials/([^/]+)$`))
+      if (adjustmentMatch && method === 'PUT') {
+        const body = JSON.parse(init.body)
+        const stock = stocks.find(item => item.id === adjustmentMatch[1])
+        if (!stock) return new Response(null, { status: 404 })
+        const difference = body.quantityOnHand - stock.quantityOnHand
+        stock.quantityOnHand = body.quantityOnHand
+        stock.availableQuantity = stock.quantityOnHand - stock.reservedQuantity
+        stock.averageUnitCost = body.averageUnitCost == null ? stock.averageUnitCost : Number(body.averageUnitCost)
+        stock.inventoryValue = stock.quantityOnHand * stock.averageUnitCost
+        stock.updatedAt = new Date().toISOString()
+        stock.isOutOfStock = stock.quantityOnHand <= 0
+        stock.isLowStock = !stock.isOutOfStock && stock.quantityOnHand <= stock.minQuantity
+        movements.unshift({ id: crypto.randomUUID(), stockId: stock.id, catalogItemId: stock.catalogItemId, materialName: stock.name, typeCode: 'adjustment', quantity: difference, balanceAfter: stock.quantityOnHand, unitCost: stock.averageUnitCost, totalCost: Math.abs(difference) * stock.averageUnitCost, costBalanceAfter: stock.inventoryValue, sourceEntityType: 'manual', createdByDisplayName: 'Демо-пользователь', unit: stock.unit, comment: body.comment, createdAt: stock.updatedAt })
+        return Response.json(stock)
+      }
+      return new Response(null, { status: 404 })
+    }
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: `/api/v1/autoservice/organizations/${organizationId}/workspace/context` }
+    if (!location.hash) location.hash = '#materials'
+    if (scenario === 'autoservice') await import('../Scenarios/autoservice-client/src/main.ts')
+    else await import('../Scenarios/detailing-client/src/main.ts')
+  </script>
+</body>
+</html>

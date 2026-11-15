@@ -1,0 +1,58 @@
+@{
+    Layout = "/Views/Personal/_PersonalLayout.cshtml";
+    ViewData["PersonalVehiclePage"] = true;
+    var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
+    var vehicleIdForLink = ViewData["VehicleId"] as string ?? string.Empty;
+    var returnUrl = ViewData["VehicleEditReturnUrl"] as string ?? $"/vehicle/{vehicleIdForLink}";
+    ViewData["Title"] = "Техника";
+    ViewData["SeoRobots"] = "noindex,nofollow";
+    ViewData["BodyClass"] = "vehicle-card-page-body";
+}
+
+<style>
+    [v-cloak] {
+        display: none;
+    }
+</style>
+
+<div id="vehicle-edit-page" v-cloak>
+    <div class="container py-4">
+
+
+        <div class="vehicle-edit-container vehicle-edit-container-personal">
+            <partial name="/Views/Vehicle/_VehicleEditForm.cshtml" />
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <environment include="Development">
+        <link rel="stylesheet" href="~/css/vehicle-edit.css" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/css/vehicle-edit.css" asp-append-version="true" />
+    </environment>
+}
+
+@section Scripts {
+    <script>
+        window.vehicleEditPage = {
+            mode: 'edit',
+            vehicleId: '@vehicleIdForLink',
+            organizationId: '',
+            returnUrl: '@returnUrl'
+        };
+    </script>
+    <script src="~/app/vehicle-registration-plate.bundle.js" asp-append-version="true"></script>
+    <script src="~/app/vehicle-edit.js" asp-append-version="true"></script>
+}
+
+@section Breadcrumbs {
+    <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/vehicles" class="text-decoration-none">@vehicleScenario.BreadcrumbTitle</a></li>
+                <li class="breadcrumb-item"><a href="@returnUrl" class="text-decoration-none">@(ViewData["VehicleDisplayName"] as string ?? vehicleScenario.DetailsTitle)</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>Редактирование</h1></li>
+            </ol>
+        </nav>
+}

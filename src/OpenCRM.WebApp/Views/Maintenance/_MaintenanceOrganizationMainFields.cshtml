@@ -1,0 +1,278 @@
+@using OpenCRM.WebApp.Presentation
+@using OpenCRM.Services.Interfaces.Organizations.Dtos
+@{
+    var scenarioUx = ViewData["MaintenanceScenarioUxProfile"] as OrganizationScenarioUxProfile
+        ?? OrganizationScenarioPresentationHelper.ResolveUxProfile(ViewData["MaintenanceScenarioCode"] as string);
+    var maintenanceFormProfile = ViewData["MaintenanceFormProfile"] as OrganizationWorkspaceMaintenanceFormProfileDto;
+    var showMileage = maintenanceFormProfile?.ShowMileage ?? scenarioUx.ShowMileageByDefault;
+    var showMaterials = maintenanceFormProfile?.ShowMaterials ?? scenarioUx.ShowMaterialsByDefault;
+    var showLocation = maintenanceFormProfile?.ShowLocation ?? true;
+    var showPerformer = maintenanceFormProfile?.ShowPerformer ?? true;
+    var workspaceShell = ViewData["MaintenanceWorkspaceShell"] as OrganizationWorkspaceShellDto;
+    var isDetailing = string.Equals(workspaceShell?.Scenario?.Code, OpenCRM.Domain.OrganizationTypeCodes.Detailing, StringComparison.OrdinalIgnoreCase);
+    var materialsLabel = isDetailing ? "Материал" : "Материал / запчасть";
+}
+<div class="maintenance-org-form-stack">
+    <div class="card create-maintenance-card maintenance-org-section-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa fa-info-circle me-2"></i>
+                Основная информация
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <label class="form-label">@scenarioUx.StatusLabel <span class="text-danger">*</span></label>
+                    <v-select :options="statuses"
+                              :reduce="status => status.id"
+                              label="name"
+                              :clearable="false"
+                              v-model="selectedMaintenance.status"
+                              @@input="changeStatus"
+                              class="create-maintenance-select">
+                        <template slot="no-options">
+                            Не найдено
+                        </template>
+                    </v-select>
+                </div>
+
+                <div class="col-lg-6">
+                    <label class="form-label">@scenarioUx.TypeLabel <span class="text-danger">*</span></label>
+                    <v-select :options="types"
+                              :reduce="item => item.id"
+                              label="name"
+                              :clearable="false"
+                              v-model="selectedMaintenance.type"
+                              class="create-maintenance-select">
+                        <template slot="no-options">
+                            Не найдено
+                        </template>
+                    </v-select>
+                </div>
+
+                <div class="col-lg-4">
+                    <label class="form-label">
+                        @scenarioUx.PlannedDateLabel
+                        <span class="text-danger" v-if="plannedDateRequired">*</span>
+                    </label>
+                    <vue-ctk-date-time-picker class="create-maintenance-date-picker"
+                                              v-model="plannedDatePicker"
+                                              :range="false"
+                                              only-date="true"
+                                              format="DD.MM.YYYY"
+                                              formatted="DD.MM.YYYY"
+                                              output-format="DD.MM.YYYY"
+                                              locale="ru"
+                                              :first-day-of-week="1"
+                                              no-clear-button="true"
+                                              label=""
+                                              @@click.native.stop>
+                    </vue-ctk-date-time-picker>
+                    <div class="form-text" v-if="selectedMaintenance.status === maintenanceStatuses.completed">
+                        Можно оставить пустой, если запись не была заранее запланирована.
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <label class="form-label">Плановая дата окончания</label>
+                    <input type="date" class="form-control create-maintenance-input" v-model="selectedMaintenance.plannedEndDate" :min="selectedMaintenance.plannedDate">
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label">@scenarioUx.PlannedStartTimeLabel</label>
+                    <input type="time"
+                           class="form-control create-maintenance-input"
+                           v-model="selectedMaintenance.plannedStartTime">
+                </div>
+
+                <div class="col-lg-4">
+                    <label class="form-label">@scenarioUx.PlannedEndTimeLabel</label>
+                    <input type="time"
+                           class="form-control create-maintenance-input"
+                           v-model="selectedMaintenance.plannedEndTime">
+                </div>
+
+                <div class="col-lg-4" v-if="showsCompletedDate">
+                    <label class="form-label">@scenarioUx.CompletedDateLabel <span class="text-danger">*</span></label>
+                    <vue-ctk-date-time-picker class="create-maintenance-date-picker"
+                                              v-model="completedDatePicker"
+                                              :range="false"
+                                              only-date="true"
+                                              format="DD.MM.YYYY"
+                                              :max-date="moment().format('YYYY-MM-DD')"
+                                              formatted="DD.MM.YYYY"
+                                              output-format="DD.MM.YYYY"
+                                              locale="ru"
+                                              :first-day-of-week="1"
+                                              no-clear-button="true"
+                                              label=""
+                                              @@click.native.stop>
+                    </vue-ctk-date-time-picker>
+                </div>
+
+                @if (showMileage)
+                {
+                <div class="col-lg-4">
+                    <label class="form-label">@scenarioUx.MileageLabel</label>
+                    <input type="number"
+                           class="form-control create-maintenance-input"
+                           v-model.number="selectedMaintenance.mileage"
+                           @@input="changeMileage"
+                           :placeholder="mileageInputPlaceholder">
+                    <div class="form-text">{{ mileageInputLabel }}</div>
+                </div>
+                }
+
+                @if (showLocation)
+                {
+                <div class="col-lg-6">
+                    <label class="form-label">@scenarioUx.LocationLabel</label>
+                    <input type="text"
+                           class="form-control create-maintenance-input"
+                           v-model.trim="selectedMaintenance.location"
+                           placeholder="@scenarioUx.LocationPlaceholder">
+                </div>
+                }
+
+                @if (showPerformer)
+                {
+                <div class="col-lg-6">
+                    <label class="form-label">@scenarioUx.PerformerLabel</label>
+                    <input type="text"
+                           class="form-control create-maintenance-input"
+                           v-model.trim="selectedMaintenance.performer"
+                           placeholder="@scenarioUx.PerformerPlaceholder">
+                    <div class="form-text">@scenarioUx.PerformerHelpText</div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card create-maintenance-card maintenance-org-section-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h3 class="card-title mb-0">
+                <i class="fa fa-wrench me-2"></i>
+                @scenarioUx.WorksTitle
+            </h3>
+            <div class="text-muted small">
+                Итого: <strong>{{ maintenanceDetailsTotalText }}</strong>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="maintenance-org-services-stack">
+                <div class="create-maintenance-service-item card" v-for="(detail, index) in selectedMaintenance.maintenanceDetails" :key="index">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Позиция {{ index + 1 }}</h6>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger create-maintenance-remove-service"
+                                    v-if="selectedMaintenance.maintenanceDetails.length > 1"
+                                    @@click="removeService(index)">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <label class="form-label">@scenarioUx.DetailNameLabel <span class="text-danger">*</span></label>
+                                <v-select v-if="scenarioWorkTypes.length"
+                                          :options="scenarioWorkTypes"
+                                          label="name"
+                                          v-model="detail.catalogItem"
+                                          @@input="selectWorkType(detail)"
+                                          class="create-maintenance-select">
+                                    <template slot="no-options">
+                                        Не найдено
+                                    </template>
+                                </v-select>
+                                <input v-else
+                                       type="text"
+                                       class="form-control create-maintenance-input"
+                                       v-model.trim="detail.name"
+                                       placeholder="@scenarioUx.DetailNamePlaceholder">
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label">Стоимость, руб</label>
+                                <input type="number"
+                                       class="form-control create-maintenance-input"
+                                       v-model.number="detail.price"
+                                       @@input="normalizeDetailPrice(detail)"
+                                       placeholder="0.00"
+                                       step="0.01"
+                                       min="0">
+                            </div>
+                            <div class="col-lg-3 d-flex align-items-end">
+                                <div class="w-100 small text-muted text-lg-end">
+                                    <span v-if="detail.price !== null && detail.price !== undefined">
+                                        {{ formatPrice(detail.price) }}
+                                    </span>
+                                    <span v-else>Стоимость не указана</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Описание</label>
+                                <textarea class="form-control create-maintenance-input"
+                                          v-model.trim="detail.description"
+                                          rows="2"
+                                          placeholder="@scenarioUx.DetailDescriptionPlaceholder"></textarea>
+                            </div>
+                            @if (showMaterials)
+                            {
+                            <div class="col-lg-5" v-if="scenarioMaterials.length">
+                                <label class="form-label">@materialsLabel</label>
+                                <v-select :options="scenarioMaterials"
+                                          label="name"
+                                          v-model="detail.materialCatalogItem"
+                                          @@input="selectMaterial(detail)"
+                                          class="create-maintenance-select">
+                                    <template slot="no-options">
+                                        Не найдено
+                                    </template>
+                                </v-select>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <label class="form-label">Количество</label>
+                                <input type="number"
+                                       class="form-control create-maintenance-input"
+                                       v-model.number="detail.materialQuantity"
+                                       min="0"
+                                       step="0.01">
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <label class="form-label">Ед.</label>
+                                <input type="text"
+                                       class="form-control create-maintenance-input"
+                                       v-model.trim="detail.materialUnit"
+                                       placeholder="шт, л, м">
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-dark mt-3" @@click="click_addMaintenanceDetail">
+                <i class="fa fa-plus me-2"></i>@scenarioUx.AddDetailText
+            </button>
+        </div>
+    </div>
+
+    <div class="card create-maintenance-card maintenance-org-section-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa fa-comment me-2"></i>
+                Комментарий
+            </h3>
+        </div>
+        <div class="card-body">
+            <label class="form-label">Примечание</label>
+            <textarea class="form-control create-maintenance-input"
+                      v-model.trim="selectedMaintenance.comment"
+                      rows="4"
+                      placeholder="@scenarioUx.CommentPlaceholder"></textarea>
+        </div>
+    </div>
+</div>
+
+

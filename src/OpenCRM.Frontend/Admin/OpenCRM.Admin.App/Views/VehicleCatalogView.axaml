@@ -1,0 +1,157 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:api="using:OpenCRM.Admin.Api.Models"
+             x:Class="OpenCRM.Admin.App.Views.VehicleCatalogView"
+             x:DataType="vm:VehicleCatalogViewModel">
+  <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="14">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+      <StackPanel Spacing="4">
+        <TextBlock Text="Каталог техники" Classes="heading" />
+        <TextBlock Text="Марки и модели, доступные в приложении." Classes="caption" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <Button Content="Дополнить каталог" Command="{Binding RequestSeedCommand}" />
+        <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Message}" IsVisible="{Binding HasMessage}" Foreground="#9CDABB" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+
+    <Border Grid.Row="2" Classes="configurationSection" Padding="14" IsVisible="{Binding HasNoSelectedBrand}">
+      <WrapPanel>
+        <TextBox Width="300" Text="{Binding Search}" PlaceholderText="Поиск по названию марки" Margin="0,0,8,8" />
+        <ComboBox Width="220" ItemsSource="{Binding KindOptions}" SelectedItem="{Binding SelectedKind}" Margin="0,0,8,8" />
+        <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Margin="0,0,8,8" />
+        <Button Content="Новая марка" Classes="configurationPrimary" Command="{Binding CreateBrandCommand}" Margin="0,0,0,8" />
+      </WrapPanel>
+    </Border>
+
+    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="14">
+        <Border Classes="configurationSection" Padding="0" IsVisible="{Binding HasNoSelectedBrand}">
+          <StackPanel>
+            <Grid ColumnDefinitions="*,Auto" Margin="18,16,18,12">
+              <StackPanel Spacing="3">
+                <TextBlock Text="Марки" Classes="configurationHeading" />
+                <TextBlock Text="Откройте марку, чтобы управлять её моделями." Classes="caption" />
+              </StackPanel>
+              <Border Grid.Column="1" Classes="configurationBadge" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Brands.Count, StringFormat='Всего: {0:N0}'}" />
+              </Border>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Brands}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="api:AdminCatalogBrand">
+                  <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="18,12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                      <StackPanel Spacing="5" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <TextBlock Text="{Binding KindText}" Classes="caption" />
+                          <TextBlock Text="·" Classes="caption" />
+                          <TextBlock Text="{Binding ModelsCount, StringFormat='{}{0} моделей'}" Classes="caption" />
+                        </StackPanel>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                        <Button Content="Модели" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).SelectBrandCommand}"
+                                CommandParameter="{Binding}" Classes="configurationPrimary" />
+                        <Button Content="Изменить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).EditBrandCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="Удалить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).RequestDeleteBrandCommand}"
+                                CommandParameter="{Binding}" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border IsVisible="{Binding IsEmpty}" Padding="18,24">
+              <TextBlock Text="Марки не найдены. Измените фильтр или добавьте новую марку." Classes="caption" TextWrapping="Wrap" />
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="configurationSection" Padding="0" IsVisible="{Binding HasSelectedBrand}">
+          <StackPanel>
+            <Grid ColumnDefinitions="*,Auto" Margin="18,16,18,12" ColumnSpacing="12">
+              <StackPanel Spacing="3">
+                <TextBlock Text="{Binding SelectedBrand.Name, FallbackValue='Модели'}" Classes="configurationHeading" TextWrapping="Wrap" />
+                <TextBlock Text="Модели выбранной марки" Classes="caption" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button Content="← К маркам" Command="{Binding CloseModelsCommand}" />
+                <Button Content="Новая модель" Classes="configurationPrimary" Command="{Binding CreateModelCommand}" />
+              </StackPanel>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Models}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="api:AdminCatalogModel">
+                  <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="18,12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                      <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding VehiclesCount, StringFormat='{}{0} единиц техники'}" Classes="caption" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                        <Button Content="Изменить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).EditModelCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="Удалить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).RequestDeleteModelCommand}"
+                                CommandParameter="{Binding}" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="У этой марки пока нет моделей. Добавьте первую модель кнопкой выше." IsVisible="{Binding HasNoModels}"
+                       Classes="caption" Margin="18,16" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <Border Grid.RowSpan="4" IsVisible="{Binding IsEditorOpen}" Background="#B8000000" ZIndex="5" Padding="20">
+      <Border Classes="configurationSection" MaxWidth="660" HorizontalAlignment="Stretch" VerticalAlignment="Center" Padding="24">
+        <StackPanel Spacing="18">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <StackPanel Spacing="4">
+              <TextBlock Text="{Binding EditorTitle}" Classes="configurationHeading" />
+              <TextBlock Text="Изменения сразу появятся в каталоге." Classes="caption" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Отмена" Command="{Binding CancelEditCommand}" VerticalAlignment="Center" />
+          </Grid>
+          <StackPanel Spacing="7">
+            <TextBlock Text="Название" Classes="caption" />
+            <TextBox Text="{Binding Name}" PlaceholderText="Введите название" />
+          </StackPanel>
+          <StackPanel Spacing="7" IsVisible="{Binding IsBrandEditor}">
+            <TextBlock Text="Вид техники" Classes="caption" />
+            <ComboBox ItemsSource="{Binding KindOptions}" SelectedItem="{Binding SelectedEditKind}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Сохранить" Classes="configurationPrimary" Command="{Binding SaveCommand}" />
+            <Button Content="Отмена" Command="{Binding CancelEditCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
+
+    <Border Grid.RowSpan="4" IsVisible="{Binding IsConfirmationOpen}" Background="#CC000000" ZIndex="10" Padding="20">
+      <Border Classes="configurationSection" MaxWidth="480" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="22">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Подтверждение" Classes="configurationHeading" />
+          <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Продолжить" Classes="configurationPrimary" Command="{Binding ConfirmCommand}" />
+            <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>

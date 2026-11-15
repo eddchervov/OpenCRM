@@ -1,0 +1,43 @@
+OpenCRM Attribution License 1.0
+
+Copyright (c) 2026 eddchervov (https://github.com/eddchervov)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+1. Preservation of notices. The above copyright notice, this permission
+notice, and the conditions of this license shall be included in all copies
+or substantial portions of the Software.
+
+2. Visible attribution. If the Software or a derivative work is used to
+provide a user-facing website or web application, including as a hosted
+service, that interface shall display a legible attribution notice on its
+main page or in a common footer. The notice shall identify OpenCRM and its
+author eddchervov and include a clickable link to
+https://github.com/eddchervov. The following notice satisfies this condition:
+
+    Based on OpenCRM - author eddchervov
+
+The Russian notice "На базе OpenCRM · автор eddchervov" or an accurate
+translation preserving the project name, author identifier, and link is also
+permitted. Attribution shall not be hidden from ordinary users or replaced
+solely by a notice in source code, legal files, or an inaccessible page.
+Changing the product name, branding, or functionality does not remove this
+condition. Modifications may remain private, provided that these conditions
+are met.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This is a project-specific license based on the MIT permission grant, with
+an additional visible-attribution condition. It is not the standard MIT
+License. Third-party components retain their respective licenses.

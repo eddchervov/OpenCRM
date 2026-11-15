@@ -1,0 +1,102 @@
+.site-notification-bell .dropdown-menu {
+    width: min(24rem, calc(100vw - 2rem));
+    max-height: min(32rem, 75vh);
+    overflow-y: auto;
+}
+
+.site-notification-bell .site-notification-count {
+    position: absolute;
+    top: -.4rem;
+    right: -.4rem;
+    min-width: 1.2rem;
+    border-radius: 999px;
+    padding: .08rem .25rem;
+    color: #fff;
+    background: #d65334;
+    font-size: .7rem;
+    line-height: 1.2;
+}
+
+.site-notification-item {
+    border: 1px solid #e5e7eb;
+    border-radius: .75rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.site-notification-item + .site-notification-item {
+    margin-top: .75rem;
+}
+
+.site-notification-item-body {
+    white-space: pre-line;
+}
+
+.site-notification-item-closed {
+    opacity: .7;
+}
+
+.site-notification-home {
+    margin-bottom: 1.5rem;
+}
+
+header .entry-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #dce2ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #667085;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) {
+    background: #12161d;
+    color: #e7ecf4;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header,
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .navbar {
+    background: #1b2029 !important;
+    border-color: #374151 !important;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .navbar-brand,
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .text-dark {
+    color: #e7ecf4 !important;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .dropdown-menu {
+    background: #1b2029;
+    border-color: #374151;
+    color: #e7ecf4;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .dropdown-item {
+    color: #e7ecf4;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .dropdown-item:hover {
+    background: #242b36;
+}
+
+:root[data-crm-theme="dark"] body.layout-v2:not(.organizations-entry) > header .btn-dark,
+:root[data-crm-theme="dark"] header .entry-theme-toggle {
+    background: #242b36;
+    border-color: #374151;
+    color: #e7ecf4;
+}
+
+:root[data-crm-theme="dark"] .site-notification-item {
+    background: #1b2029;
+    border-color: #374151;
+    color: #e7ecf4;
+}
+
+:root[data-crm-theme="dark"] .site-notification-item .text-muted,
+:root[data-crm-theme="dark"] .site-notifications-page .text-muted {
+    color: #b6bfce !important;
+}

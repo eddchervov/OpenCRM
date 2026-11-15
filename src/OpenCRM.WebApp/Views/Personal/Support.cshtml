@@ -1,0 +1,106 @@
+@model OpenCRM.WebApp.Models.Personal.SupportViewModel
+@using OpenCRM.Domain
+@{
+    ViewData["Title"] = "Обращения";
+    ViewData["ActivePage"] = "Support";
+    Layout = "_PersonalLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/personal-support.css" asp-append-version="true" />
+}
+
+@if (Model.Error != null)
+{
+    <p class="support-error" role="alert">@Model.Error</p>
+}
+
+<div class="support-actions">
+    <a class="btn entry-primary" href="/personal/support/create">Новое обращение</a>
+</div>
+
+<div class="support-layout">
+    <section class="profile-card support-list" aria-label="Список обращений">
+        <div class="support-heading">
+            <h2>Мои обращения</h2>
+            <a class="btn entry-secondary" href="/personal/support">Обновить</a>
+        </div>
+        @if (Model.Conversations.Count == 0)
+        {
+            <p class="personal-muted">Пока обращений нет.</p>
+        }
+        @foreach (var conversation in Model.Conversations)
+        {
+            <a class="support-list-item @(Model.Selected?.Id == conversation.Id ? "support-list-item--active" : "")" href="/personal/support?id=@conversation.Id">
+                <strong>@conversation.Topic</strong>
+                <span>@(conversation.OrganizationName ?? "Общий вопрос") · @conversation.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                <small>@(conversation.StatusCode switch { SupportMessageStatusCodes.New => "Новое", SupportMessageStatusCodes.InProgress => "В работе", SupportMessageStatusCodes.Closed => "Закрыто", _ => "Спам" })</small>
+            </a>
+        }
+    </section>
+
+    <div class="support-main">
+        @if (Model.Selected != null)
+        {
+            <section class="profile-card support-thread">
+                <div class="support-heading">
+                    <div><h2>@Model.Selected.Topic</h2><span>@(Model.Selected.OrganizationName ?? "Общий вопрос")</span></div>
+                    <strong>@(Model.Selected.StatusCode switch { SupportMessageStatusCodes.New => "Новое", SupportMessageStatusCodes.InProgress => "В работе", SupportMessageStatusCodes.Closed => "Закрыто", _ => "Спам" })</strong>
+                </div>
+                <div class="support-entries" aria-label="Переписка">
+                    @foreach (var entry in Model.Selected.Entries)
+                    {
+                        <article class="support-entry @(entry.Kind == "status" ? "support-entry--status" : entry.IsStaff ? "support-entry--staff" : "support-entry--user")">
+                            @if (entry.Kind != "status")
+                            {
+                                <strong>@(entry.IsStaff ? "Поддержка" : "Вы")</strong>
+                            }
+                            <p>@entry.Text</p>
+                            @if (entry.Attachments.Count > 0)
+                            {
+                                <ul class="support-entry-attachments" aria-label="Вложения">
+                                    @foreach (var attachment in entry.Attachments)
+                                    {
+                                        <li><a href="/personal/support/attachments/@attachment.Id">@attachment.FileName</a></li>
+                                    }
+                                </ul>
+                            }
+                            <time>@entry.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</time>
+                        </article>
+                    }
+                </div>
+                @if (Model.Selected.StatusCode != SupportMessageStatusCodes.Spam)
+                {
+                    <form action="/personal/support/reply" method="post" enctype="multipart/form-data" class="support-form support-reply">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" value="@Model.Selected.Id">
+                        <label>Ответить <textarea name="Text" maxlength="4000" rows="3" required></textarea></label>
+                        <partial name="_SupportAttachments" />
+                        <button class="btn entry-primary" type="submit">Отправить</button>
+                    </form>
+                }
+            </section>
+        }
+        else
+        {
+            <section class="profile-card">
+                <p class="personal-muted mb-0">Выберите обращение из списка или нажмите «Новое обращение», чтобы написать в поддержку.</p>
+            </section>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            let isEditing = false;
+            document.querySelectorAll('.support-form input, .support-form select, .support-form textarea').forEach(element => {
+                element.addEventListener('input', () => { isEditing = true; });
+                element.addEventListener('change', () => { isEditing = true; });
+            });
+            setInterval(() => {
+                if (!isEditing && document.visibilityState === 'visible') location.reload();
+            }, 30000);
+        })();
+    </script>
+}

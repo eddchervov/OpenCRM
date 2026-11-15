@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:api="using:OpenCRM.Admin.Api.Models"
+             xmlns:views="using:OpenCRM.Admin.App.Views"
+             x:Class="OpenCRM.Admin.App.Views.EmailComposeView"
+             x:DataType="vm:EmailComposeViewModel">
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="Новое письмо" Classes="heading" />
+      <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
+        <Button Content="{Binding ScheduleButtonLabel}" Classes="configurationPrimary" Command="{Binding ScheduleCommand}" Margin="0,0,8,0" />
+        <Button Content="К рассылкам" Command="{Binding CloseCommand}" />
+      </WrapPanel>
+    </Grid>
+    <StackPanel Grid.Row="1" Spacing="6">
+      <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ScheduledCount, StringFormat='Письмо поставлено в очередь: {0} адресатов.'}" IsVisible="{Binding IsScheduled}" Foreground="#A7DCA7" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ScheduleWarning}" IsVisible="{Binding ScheduleWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F1D09B" TextWrapping="Wrap" />
+      <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
+    </StackPanel>
+    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="16" MaxWidth="1120" HorizontalAlignment="Stretch">
+        <Border Classes="configurationSection">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Адресаты" Classes="configurationHeading" />
+            <ComboBox ItemsSource="{Binding TargetModeOptions}" SelectedItem="{Binding TargetMode}" Width="300" HorizontalAlignment="Left">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="14" IsVisible="{Binding IsEmailTarget}">
+              <StackPanel Spacing="6"><TextBlock Text="Email" Classes="caption" /><TextBox Text="{Binding Email}" PlaceholderText="contact@example.invalid" MaxLength="320" /></StackPanel>
+            </Grid>
+            <AutoCompleteBox x:Name="ComposeUserPicker" IsVisible="{Binding IsUserTarget}"
+                             ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+                             AsyncPopulator="{Binding PopulateUsers}" ValueMemberBinding="{ReflectionBinding Email}"
+                             MinimumPrefixLength="0" MinimumPopulateDelay="0:0:0.25" FilterMode="None"
+                             IsTextCompletionEnabled="False" PlaceholderText="Email, имя или телефон пользователя"
+                             HorizontalAlignment="Stretch" MinHeight="44" Background="#181818" Foreground="#F1F1F1"
+                             BorderBrush="#393939" CornerRadius="7" Padding="12,8" AutomationProperties.AutomationId="ComposeUserPicker">
+              <AutoCompleteBox.InnerRightContent>
+                <Button Content="⌄" Click="OnOpenUserPicker" Background="Transparent" BorderThickness="0" Padding="10,4" MinHeight="32" />
+              </AutoCompleteBox.InnerRightContent>
+              <AutoCompleteBox.ItemTemplate>
+                <DataTemplate x:DataType="api:AdminEmailUser">
+                  <StackPanel Spacing="4" Margin="4,6">
+                    <TextBlock Text="{Binding Email}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding DisplayName}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Phone}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </DataTemplate>
+              </AutoCompleteBox.ItemTemplate>
+            </AutoCompleteBox>
+            <Grid ColumnDefinitions="*" IsVisible="{Binding IsOrganizationTypeTarget}">
+              <ComboBox ItemsSource="{Binding OrganizationTypes}" SelectedItem="{Binding SelectedOrganizationType}" PlaceholderText="Выберите тип организации">
+                <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+              </ComboBox>
+            </Grid>
+            <WrapPanel IsVisible="{Binding ShowTargetFilters}">
+              <CheckBox Content="Только подтверждённые email" IsChecked="{Binding OnlyConfirmedEmail}" Margin="0,0,18,0" />
+              <CheckBox Content="Есть согласие на рассылку" IsChecked="{Binding OnlyAdvertisingConsent}" />
+            </WrapPanel>
+            <WrapPanel>
+              <Button Content="Проверить адресатов" Classes="configurationPrimary" Command="{Binding PreviewRecipientsCommand}" Margin="0,0,10,8" />
+              <TextBlock Text="{Binding RecipientCountLabel}" VerticalAlignment="Center" Classes="muted" />
+            </WrapPanel>
+            <ItemsControl ItemsSource="{Binding Recipients.Items}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate><DataTemplate x:DataType="api:AdminEmailRecipientPreviewItem"><Border Classes="configurationBadge" Margin="0,0,8,8"><TextBlock Text="{Binding Email}" /></Border></DataTemplate></ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+        <Border Classes="configurationSection">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Содержание" Classes="configurationHeading" />
+            <TextBox Text="{Binding Subject}" PlaceholderText="Тема письма" MaxLength="300" />
+            <ComboBox ItemsSource="{Binding BodyFormats}" SelectedItem="{Binding BodyFormat}" Width="240" HorizontalAlignment="Left">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBox Text="{Binding Body}" AcceptsReturn="True" TextWrapping="Wrap" Height="220" Padding="14,12" FontSize="15"
+                     VerticalContentAlignment="Top" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Auto" PlaceholderText="Текст письма" AutomationProperties.AutomationId="ComposeBody" />
+            <StackPanel Spacing="10" IsVisible="{Binding HasBody}" HorizontalAlignment="Stretch">
+              <TextBlock Text="Предпросмотр письма" FontWeight="SemiBold" />
+              <Border Background="#FAFBFC" BorderBrush="#D9DFE6" BorderThickness="1" CornerRadius="8"
+                      HorizontalAlignment="Stretch" IsVisible="{Binding IsPlainText}" Padding="24">
+                <ScrollViewer MaxHeight="320" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                  <StackPanel Spacing="16">
+                    <TextBlock Text="{Binding Subject}" FontSize="20" FontWeight="SemiBold" Foreground="#182534" TextWrapping="Wrap" />
+                    <SelectableTextBlock Text="{Binding Body}" FontSize="15" Foreground="#263445" TextWrapping="Wrap"
+                                         HorizontalAlignment="Stretch" AutomationProperties.AutomationId="ComposeTextPreview" />
+                  </StackPanel>
+                </ScrollViewer>
+              </Border>
+              <Border IsVisible="{Binding !IsPlainText}" HorizontalAlignment="Stretch" CornerRadius="8" ClipToBounds="True">
+                <Grid Height="360" HorizontalAlignment="Stretch">
+                  <views:EmailHtmlPreview x:Name="ComposePreview" DocumentHtml="{Binding PreviewHtml}" HorizontalAlignment="Stretch" />
+                  <Border Background="#FAFBFC" IsVisible="{Binding HasError, ElementName=ComposePreview}" Padding="24">
+                    <TextBlock Text="HTML-просмотр недоступен. Исходный текст письма остаётся в редакторе выше." Foreground="#394655" TextWrapping="Wrap" />
+                  </Border>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+        <Border Classes="configurationSection">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Параметры отправки" Classes="configurationHeading" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+              <StackPanel Spacing="6" IsVisible="{Binding !IsSingleRecipient}">
+                <TextBlock Text="Интервал между письмами, секунд" Classes="caption" />
+                <NumericUpDown Value="{Binding IntervalSeconds}" Minimum="5" Maximum="86400" ShowButtonSpinner="False" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="6">
+                <TextBlock Text="Запустить через, минут" Classes="caption" />
+                <NumericUpDown Value="{Binding StartDelayMinutes}" Minimum="0" Maximum="1440" ShowButtonSpinner="False" />
+              </StackPanel>
+            </Grid>
+            <TextBlock Text="Для массовой рассылки перед запуском обязательно проверьте адресатов. Письмо будет поставлено в очередь сразу или после выбранной задержки." Classes="caption" TextWrapping="Wrap" />
+
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

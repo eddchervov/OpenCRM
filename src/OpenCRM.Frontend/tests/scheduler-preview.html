@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCRM — демонстрация календаря записей</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import detailingPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/detailing.webp'
+    import fleetPhoto from '../../OpenCRM.WebApp/wwwroot/img/home/landing/fleet.webp'
+    import fullCalendarUrl from '../../OpenCRM.WebApp/wwwroot/lib/fullcalendar/index.global.min.js?url'
+
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = fullCalendarUrl
+      script.onload = resolve
+      script.onerror = reject
+      document.head.append(script)
+    })
+
+    const params = new URLSearchParams(location.search)
+    const scenario = ['detailing', 'autoservice', 'fleet'].includes(params.get('scenario')) ? params.get('scenario') : 'detailing'
+    const isEmpty = params.has('empty')
+    const organizationId = '00000000-0000-0000-0000-000000000001'
+    const vehicleId = '1'
+    const today = new Date()
+    const dateString = (offset = 0) => {
+      const date = new Date(today)
+      date.setDate(date.getDate() + offset)
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    }
+    const weeklySchedule = Array.from({ length: 7 }, (_, dayOfWeek) => ({
+      dayOfWeek,
+      isWorking: !(params.has('work-hours') && dayOfWeek === 6) && !params.has('all-days-off') && !params.has('no-schedule') && (!params.has('day-off') || dayOfWeek !== today.getDay()),
+      startTime: params.has('no-schedule') ? null : '09:00', endTime: params.has('no-schedule') ? null : '18:00', breaks: params.has('work-hours') ? [{ startTime: '16:00', endTime: '16:15' }] : []
+    }))
+
+    const sectionName = scenario === 'detailing' ? 'Автомобили' : scenario === 'fleet' ? 'Техника' : 'Автомобили'
+    const maintenanceName = scenario === 'detailing' ? 'Услуги' : scenario === 'fleet' ? 'Обслуживание' : 'Заказ-наряды'
+    const clientName = scenario === 'fleet' ? 'Транспортный отдел' : 'Александр Петров'
+    const context = {
+      user: { id: 'preview', displayName: 'Просмотр', email: '' },
+      organization: {
+        id: organizationId,
+        name: scenario === 'detailing' ? 'Демо-студия · тестовые данные' : scenario === 'fleet' ? 'Демо-автопарк · тестовые данные' : 'Демо-СТО · тестовые данные',
+        primaryScenarioCode: scenario
+      },
+      workspaceAccess: { isReadOnly: params.has('readonly'), isBaseWorkspace: false, hasActiveSubscription: true, roleCode: 'owner', exportsEnabled: false },
+      shell: {
+        scenario: { code: scenario, terms: scenario === 'fleet' ? { clients: 'Подразделения' } : undefined },
+        menu: [
+          { code: 'workspace', title: scenario === 'fleet' ? 'Состояние парка' : 'Рабочий день', isVisible: true, groupTitle: 'Основное', urlTemplate: '#workspace' },
+          { code: 'scheduler', title: scenario === 'fleet' ? 'План ТО' : 'Записи', isVisible: true, groupTitle: 'Основное', urlTemplate: '#scheduler' },
+          { code: 'clients', title: scenario === 'fleet' ? 'Подразделения' : 'Клиенты', isVisible: true, groupTitle: 'Основное', urlTemplate: '#clients' },
+          { code: 'vehicles', title: sectionName, isVisible: true, groupTitle: 'Основное', urlTemplate: '#vehicles' },
+          { code: 'maintenance', title: maintenanceName, isVisible: true, groupTitle: 'Работы', urlTemplate: '#maintenance' },
+          { code: 'maintenance-journal', title: scenario === 'detailing' ? 'Журнал услуг' : 'История работ', isVisible: true, groupTitle: 'Работы', urlTemplate: '#work-journal' }
+        ],
+        quickActions: []
+      },
+      links: { workspaceUrl: '#workspace', schedulerUrl: '#workspace', quickBookingUrl: '#workspace', api: { calendar: `/api/v1/organizations/${organizationId}/workspace/maintenance-calendar` } }
+    }
+
+
+    if (params.has('free')) {
+      context.organization.name = 'QA · Приём звонков · Free'
+      context.organization.canManageBilling = true
+      Object.assign(context.workspaceAccess, { isFreePlan: true, isBaseWorkspace: true, hasActiveSubscription: false, exportsEnabled: true })
+      context.shell.scenario.modules = { photos: false, intake: false, members: false, materials: true, assistant: false, messaging: false, analytics: false }
+    }
+
+    if (params.has('navigation') && scenario !== 'fleet') {
+      const daily = 'Ежедневная работа'
+      const menu = [
+        ['workspace', 'Рабочий день', daily],
+        ['scheduler', 'Записи', daily],
+        ...(scenario === 'autoservice' ? [['maintenance', 'Заказ-наряды', daily]] : []),
+        ['work-journal', scenario === 'detailing' ? 'Журнал услуг' : 'История работ', daily],
+        ['visualization', 'Визуализация', daily],
+        ['clients', 'Клиенты', 'Клиенты'],
+        ['vehicles', 'Автомобили', 'Клиенты'],
+        ['materials', scenario === 'detailing' ? 'Склад' : 'Склад СТО', 'Ресурсы'],
+        ['employees', 'Команда', 'Ресурсы'],
+        ['shifts', 'Смены', 'Ресурсы'],
+        ['catalog', 'Справочники', 'Ресурсы'],
+        ['finance', 'Финансы', 'Отчёты'],
+        ['statistics', 'Статистика', 'Отчёты'],
+        ['wiki', 'Вики', 'Справка и доступ'],
+        ['billing', 'Тарифы', 'Справка и доступ'],
+        ['settings', 'Организация', 'Справка и доступ']
+      ]
+      context.shell.menu = menu.map(([code, title, groupTitle]) => ({
+        code, title, groupTitle, urlTemplate: '#' + code,
+        isVisible: !params.has('restricted') || ['scheduler', 'clients', 'vehicles', 'wiki'].includes(code)
+      }))
+    }
+
+    const posts = Array.from({ length: Math.min(100, Math.max(1, Number(params.get('posts')) || 4)) }, (_, index) => index + 1).map(i => ({ id: 'post-'+i, name: 'Пост '+i, isActive: true, kindCode: 'work_post' }))
+    if (params.has('closed-post')) posts[0].isActive = false
+    const services = [{ id:'service-1', name:'Детейлинг-мойка', unitPrice:2500, durationMinutes:60, isActive:true, kindCode:'service' },{ id:'service-2', name:'Полировка кузова', unitPrice:15000, durationMinutes:120, isActive:true, kindCode:'service' }]
+    if (params.has('unknown-duration')) services[1].durationMinutes = null
+    if (params.has('many-services')) for (let index = 3; index <= 25; index++) services.push({ ...services[0], id: 'service-' + index, name: 'Расширенная комплексная обработка кузова и салона · этап ' + index })
+    const vehicle = { id:'vehicle-1', kind:1, brandId:1, brandName:'BMW', brandLogoKey:'bmw', modelId:1, modelName:'X3', registrationPlate:'А001АА 154', organizationClientId:'client-1', organizationClientName:'Александр Петров', yearIssue:2021 }
+    if (params.has('unlinked')) { vehicle.organizationClientId = null; vehicle.organizationClientName = null }
+    const clients = [{ id:'client-1', name:'Александр Петров', phone:'+7 000 000-00-00' }, { id:'client-2', name:'Александр Петров', phone:'+7 000 000-00-00' }]
+    const searchVehicles = params.has('eight-vehicles') ? [
+      vehicle,
+      { ...vehicle, id:'vehicle-2', brandName:'Mercedes-Benz', modelName:'E-Класс', registrationPlate:'М777ММ 154', yearIssue:2020 },
+      { ...vehicle, id:'vehicle-3', brandName:'Audi', modelName:'Q5', registrationPlate:'К055КК 154', yearIssue:2022 },
+      { ...vehicle, id:'vehicle-4', brandName:'Toyota', modelName:'Land Cruiser', registrationPlate:'Т700ТТ 154', yearIssue:2019 },
+      { ...vehicle, id:'vehicle-5', brandName:'Porsche', modelName:'Cayenne', registrationPlate:'Р911РР 154', yearIssue:2023 },
+      { ...vehicle, id:'vehicle-6', brandName:'Kia', modelName:'Sportage', registrationPlate:'О080ОО 154', yearIssue:2021 },
+      { ...vehicle, id:'vehicle-7', brandName:'BMW', modelName:'X5', registrationPlate:'В555ВВ 154', yearIssue:2024 },
+      { ...vehicle, id:'vehicle-8', brandName:'Lexus', modelName:'RX 350', registrationPlate:'Е350ЕЕ 154', yearIssue:2022 }
+    ] : [vehicle]
+    const entries = [
+      ['1','BMW X3','bmw','А001АА 154','09:00','11:00',2,'В работе','Пост 1',['Детейлинг-мойка','Полировка кузова']],
+      ['2','Mercedes-Benz E-Класс','mercedes','М777ММ 154','11:30','13:30',1,'Запланировано','Пост 1',['Полировка кузова']],
+      ['3','Audi Q5','audi','К055КК 154','09:30','12:00',2,'В работе','Пост 2',['Химчистка салона']],
+      ['4','Toyota Land Cruiser','toyota','Т700ТТ 154','13:00','15:00',1,'Запланировано','Пост 2',['Защитное покрытие']],
+      ['5','Porsche Cayenne','porsche','Р911РР 154','10:00','12:00',3,'Готов к выдаче','Пост 3',['Керамическое покрытие']],
+      ['6','Kia Sportage','kia','О080ОО 154','14:00','16:30',1,'Запланировано','Пост 3',['Полировка кузова']],
+      ['7','BMW X5','bmw','В555ВВ 154','10:30','12:30',1,'Запланировано','Пост 4',['Мойка и уход за кожей']]
+    ].map(([id,vehicleDisplayName,brandLogoKey,registrationPlate,plannedStartTime,plannedEndTime,status,statusName,location,serviceNames])=>({id,vehicleId:id,version:1,canReschedule:status===1||status===2,vehicleDisplayName,brandLogoKey,registrationPlate,plannedStartTime,plannedEndTime,status,statusName,location,serviceNames,employeeNames:['Алексей Смирнов'],date:dateString(),plannedEndDate:dateString(),readyForHandoverAt:status===3?dateString():null,detailUrl:'#maintenance/'+id}))
+    if(params.has('week-entries')) entries.push(...entries.slice(0,2).map((item,index)=>({...item,id:'next-'+index,detailUrl:'#maintenance/next-'+index,date:dateString(1),plannedEndDate:dateString(1),status:1,statusName:'Запланировано'})))
+    if(params.has('calendar-edge-cases')) entries.push(
+      {...entries[0],id:'short',detailUrl:'#maintenance/short',vehicleDisplayName:'Короткая работа',plannedStartTime:'16:00',plannedEndTime:'16:30'},
+      {...entries[0],id:'overnight',detailUrl:'#maintenance/overnight',vehicleDisplayName:'Работа через полночь',plannedStartTime:'23:30',plannedEndDate:dateString(1),plannedEndTime:'01:00'}
+    )
+    if(params.has('empty')) entries.length=0
+    if(params.has('overlap')) entries.push({...entries[0],id:'overlap',vehicleDisplayName:'Пересечение записей',plannedStartTime:'09:30',plannedEndTime:'10:00'})
+    const originalFetch=window.fetch.bind(window)
+    window.fetch=async(input,init)=>{
+      const url=new URL(typeof input==='string'?input:input.url,location.origin)
+      if(!url.pathname.startsWith('/api/')) return originalFetch(input,init)
+      if(url.pathname.endsWith('/registration-plate-formats')) return originalFetch(input,init)
+      if (url.pathname.endsWith('/brands/options')) {
+        if (params.has('slow-catalog') && url.searchParams.get('kind') === '2') await new Promise(resolve=>setTimeout(resolve,1500))
+        return Response.json(url.searchParams.get('kind') === '3' ? [{id:3,name:'Yamaha'}] : [{id:1,name:'BMW'},{id:2,name:'Audi'}])
+      }
+      if (url.pathname.endsWith('/models/options')) {
+        const brandId=url.searchParams.get('brandId')
+        if (params.has('slow-catalog') && brandId === '1') await new Promise(resolve=>setTimeout(resolve,1500))
+        return Response.json(brandId === '2' ? [{id:2,name:'Q5'}] : brandId === '3' ? [{id:3,name:'MT-07'}] : [{id:1,name:'X3'}])
+      }
+      if(init?.method && init.method!=='GET'){
+        if(url.pathname.endsWith('/bookings/quick') || url.pathname.endsWith('/orders/quick')){
+          if(params.has('saveerror')) return Response.json({message:'Тестовая ошибка сохранения. Поля сохранены.'},{status:409})
+          const data=JSON.parse(init.body)
+          if (params.has('review')) {
+            let output = document.getElementById('preview-save-result')
+            if (!output) {
+              const details = document.createElement('details')
+              details.style.cssText = 'padding:12px;overflow-wrap:anywhere;max-width:100%'
+              const summary = document.createElement('summary')
+              summary.textContent = 'Данные тестового сохранения'
+              output = document.createElement('pre'); output.id = 'preview-save-result'; output.style.cssText = 'white-space:pre-wrap;font-size:11px'
+              details.append(summary, output); document.body.append(details)
+            }
+            output.textContent = JSON.stringify(data)
+          }
+          const createdId='created-'+(entries.length+1)
+          const selectedVehicle=searchVehicles.find(item=>item.id===data.vehicleId)
+          const digits = value => (value || '').replace(/\D/g, '').replace(/^8(?=\d{10}$)/, '7')
+          let clientId = data.organizationClientId || selectedVehicle?.organizationClientId || null
+          let clientCreated = false
+          if (!clientId && (data.clientName?.trim() || data.clientPhone?.trim())) {
+            const existing = data.clientPhone ? clients.filter(item => digits(item.phone) === digits(data.clientPhone)) : []
+            if (existing.length > 1) return Response.json({message:'Найдено несколько клиентов с этим телефоном. Выберите клиента из списка.'},{status:400})
+            clientId = existing[0]?.id || 'client-' + crypto.randomUUID()
+            if (!existing.length) {
+              clients.push({ id:clientId, name:data.clientName?.trim() || 'Клиент '+data.clientPhone.trim(), phone:data.clientPhone?.trim() || null })
+              clientCreated = true
+            }
+          }
+          const savedVehicleId = selectedVehicle?.id || 'new-'+createdId
+          if (!selectedVehicle) searchVehicles.push({
+            id:savedVehicleId, kind:data.kind, registrationPlate:data.registrationPlate,
+            brandName:data.manualBrandName || '', modelName:data.manualModelName || '',
+            organizationClientId:clientId, organizationClientName:clients.find(item=>item.id===clientId)?.name || null
+          })
+          else if (!selectedVehicle.organizationClientId && clientId) {
+            selectedVehicle.organizationClientId = clientId
+            selectedVehicle.organizationClientName = clients.find(item=>item.id===clientId)?.name || null
+          }
+          entries.push({id:createdId,vehicleId:data.vehicleId || 'new-'+createdId,version:1,canReschedule:true,vehicleDisplayName:selectedVehicle ? selectedVehicle.brandName+' '+selectedVehicle.modelName : data.registrationPlate,brandLogoKey:selectedVehicle?.brandLogoKey,registrationPlate:data.registrationPlate,date:data.plannedDate,plannedEndDate:data.plannedEndDate,plannedStartTime:data.plannedStartTime,plannedEndTime:data.plannedEndTime,location:data.location,status:1,statusName:'Запланировано',serviceNames:data.services.map(x=>x.name),employeeNames:[]})
+          return Response.json({maintenanceId:createdId,vehicleId:savedVehicleId,organizationClientId:clientId,clientCreated,vehicleCreated:!selectedVehicle})
+        }
+        return new Response(null,{status:403})
+      }
+      if(url.pathname.endsWith('/maintenance-calendar')){
+        if(params.has('error'))return Response.json({message:'Тестовая ошибка загрузки календаря'},{status:503})
+        return Response.json(entries.filter(x=>x.date>=url.searchParams.get('dateFrom')&&x.date<=url.searchParams.get('dateTo')))
+      }
+      if(url.pathname==='/api/v1/vehicles'){
+        const query=(url.searchParams.get('searchQuery')??'').trim().toLocaleLowerCase('ru')
+        const clientId=url.searchParams.get('organizationClientId')
+        const kind=url.searchParams.get('kind')
+        const items=searchVehicles.filter(item=>
+          (!query || [item.registrationPlate,item.brandName,item.modelName].some(value=>value.toLocaleLowerCase('ru').includes(query)))
+          && (!clientId || item.organizationClientId===clientId)
+          && (!kind || String(item.kind)===kind))
+        return Response.json({items,totalCount:items.length,page:1,pageSize:8})
+      }
+      if (url.pathname.endsWith('/clients/lookup')) {
+        const query=(url.searchParams.get('searchQuery') || '').trim().toLocaleLowerCase('ru')
+        const digits=query.replace(/\D/g,'').replace(/^8(?=\d{10}$)/,'7')
+        const items=query.length < 2 ? [] : clients.filter(item => item.name.toLocaleLowerCase('ru').includes(query) || (digits && (item.phone || '').replace(/\D/g,'').includes(digits)))
+        const page=Math.max(1,Number(url.searchParams.get('page')) || 1)
+        return Response.json({items:items.slice((page-1)*8,page*8),totalCount:items.length})
+      }
+      const clientsPage = url.pathname.match(/\/clients\/(\d+)\/(\d+)$/)
+      if (clientsPage) {
+        const query=(url.searchParams.get('searchQuery') || '').trim().toLocaleLowerCase('ru')
+        const items=clients.filter(item => url.searchParams.get('isArchived') !== 'true' && (!query || [item.name,item.phone || ''].some(value=>value.toLocaleLowerCase('ru').includes(query))))
+          .map(item=>({...item,organizationId,partyTypeCode:'person',statusCode:'active',statusName:'Активный',tags:[],vehiclesCount:searchVehicles.filter(vehicle=>vehicle.organizationClientId===item.id).length,maintenanceCount:entries.filter(entry=>searchVehicles.some(vehicle=>vehicle.id===entry.vehicleId && vehicle.organizationClientId===item.id)).length}))
+        const page=Math.max(1,Number(clientsPage[1]) || 1)
+        const pageSize=Math.max(1,Number(clientsPage[2]) || 20)
+        return Response.json({items:items.slice((page-1)*pageSize,page*pageSize),totalCount:items.length,allCount:clients.length,page,pageSize,tags:[],segments:[],totalVehiclesCount:searchVehicles.length,totalMaintenanceCount:entries.length})
+      }
+      const payload=url.pathname.endsWith('/context')?context
+        :url.pathname.endsWith('/setup')?{shouldAutoOpen:false,canManage:!params.has('readonly'),step:0,revision:1,completedAt:dateString(),workdayStart:'09:00',workdayEnd:'18:00',workingDays:weeklySchedule.filter(day=>day.isWorking).map(day=>day.dayOfWeek),weeklySchedule}
+        :url.pathname.endsWith('/scenario-catalog')?{services,workPosts:posts,serviceBundles:params.has('bundles')?[{id:'bundle-1',name:'Комплексный уход',kindCode:'service_bundle',serviceIds:['service-1','service-2'],durationMinutes:180,isActive:true}]:[]}
+        :url.pathname.endsWith('/clients/options')?clients
+        :url.pathname.endsWith('/employees')?{items:[{id:'employee-1',name:'Алексей Смирнов',isActive:true}]}
+        :url.pathname.endsWith('/occupied-slots')?params.has('conflict')?[{id:'busy',startMinute:0,endMinute:1440,vehicle:'Пост занят (проверка)'}]:[]
+        :url.pathname.endsWith('/vehicle-1')?vehicle
+        :url.pathname.endsWith('/notifications')?[]:null
+      return payload?Response.json(payload):new Response(null,{status:404})
+    }
+    window.opencrmDetailingClient = { organizationId }
+    window.opencrmAutoServiceClient = { organizationId, contextUrl: '/api/v1/autoservice/organizations/'+organizationId+'/workspace/context' }
+    window.opencrmFleetClient = { organizationId, contextUrl: '/api/v1/fleet/organizations/'+organizationId+'/workspace/context' }
+    if(!location.hash)location.hash='#scheduler'
+    if(scenario==='detailing')await import('../Scenarios/detailing-client/src/main.ts')
+    else if(scenario==='autoservice')await import('../Scenarios/autoservice-client/src/main.ts')
+    else await import('../Scenarios/fleet-client/src/main.ts')
+    const theme = params.get('theme')
+    if (theme === 'light' || theme === 'dark') {
+      const { syncWorkspaceThemeFromDocument } = await import('../packages/ui/src/workspaceTheme.ts')
+      document.documentElement.dataset.crmTheme = theme
+      syncWorkspaceThemeFromDocument()
+    }
+  </script>
+</body>
+</html>

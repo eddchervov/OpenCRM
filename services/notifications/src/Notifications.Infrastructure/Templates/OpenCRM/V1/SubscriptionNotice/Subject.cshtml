@@ -1,0 +1,31 @@
+@model SubscriptionNoticeModel
+@switch (Model.Kind)
+{
+    case "paid-expired":
+        @if (Model.HasFreeWorkspace)
+        {
+            @:PRO завершён — продолжайте работу бесплатно
+        }
+        else
+        {
+            @:Платный тариф организации закончился
+        }
+        break;
+    case "demo-expired":
+        @if (Model.HasFreeWorkspace)
+        {
+            @:PRO завершён — продолжайте работу бесплатно
+        }
+        else
+        {
+            @:Демо-период организации закончился
+        }
+        break;
+    case "demo-available":
+        @:Для организации доступен демо-тариф
+        break;
+    default:
+        @(Model.HasFreeWorkspace ? "Срок PRO скоро закончится — Free останется доступен"
+            : string.IsNullOrWhiteSpace(Model.OrganizationName) ? "Срок тарифа скоро закончится" : "Срок тарифа организации скоро закончится")
+        break;
+}
