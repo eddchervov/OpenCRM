@@ -5,30 +5,25 @@
     <BuildScenarioClientsOnPublish Condition="'$(BuildScenarioClientsOnPublish)' == ''">true</BuildScenarioClientsOnPublish>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="wwwroot\clients\**;wwwroot\admin-panel\**;wwwroot\app\*.bundle.js;wwwroot\app\date-time-fields.css" />
     <ProjectReference Include="$(OpenCRMRoot)/src/OpenCRM.Hosting/OpenCRM.Hosting.csproj" />
     <Content Include="$(OpenCRMRoot)/src/OpenCRM.WebApp/appsettings.json" Link="opencrm.defaults.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <Content Include="$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/**/*"
              Exclude="$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/img/cars/**;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/clients/**;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/admin-panel/**;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/app/*.bundle.js;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/app/date-time-fields.css"
              Link="wwwroot/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
-  <Target Name="BuildOpenCRMClientsBeforeBuild" BeforeTargets="AssignTargetPaths"
-          Condition="'$(BuildScenarioClientsOnBuild)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+  <Target Name="BuildOpenCRMClientsBeforeBuild"
+          Condition="('$(BuildScenarioClientsOnBuild)' == 'true' or ('$(_IsPublishing)' == 'true' and '$(BuildScenarioClientsOnPublish)' == 'true')) and '$(DesignTimeBuild)' != 'true' and '$(NoBuild)' != 'true'">
     <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(OpenCRMRoot)/src/OpenCRM.Frontend" Condition="!Exists('$(OpenCRMRoot)/src/OpenCRM.Frontend/node_modules')" />
     <Exec Command="npm run build" WorkingDirectory="$(OpenCRMRoot)/src/OpenCRM.Frontend" EnvironmentVariables="OPENCRM_FRONTEND_OUTPUT_ROOT=$(MSBuildProjectDirectory)/wwwroot" />
   </Target>
-  <Target Name="CollectOpenCRMClientContent" BeforeTargets="AssignTargetPaths" DependsOnTargets="BuildOpenCRMClientsBeforeBuild">
+  <Target Name="CollectOpenCRMClientContent" BeforeTargets="ResolveProjectStaticWebAssets;AssignTargetPaths" DependsOnTargets="BuildOpenCRMClientsBeforeBuild">
     <ItemGroup>
-      <Content Remove="wwwroot\clients\**;wwwroot\admin-panel\**;wwwroot\app\*.bundle.js;wwwroot\app\date-time-fields.css" />
       <Content Include="wwwroot/clients/**;wwwroot/admin-panel/**;wwwroot/app/*.bundle.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
       <Content Include="wwwroot\app\date-time-fields.css" Condition="Exists('wwwroot/app/date-time-fields.css')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
-  <Target Name="BuildOpenCRMClientsBeforePublish" BeforeTargets="ComputeFilesToPublish"
-          Condition="'$(BuildScenarioClientsOnPublish)' == 'true'">
-    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(OpenCRMRoot)/src/OpenCRM.Frontend" Condition="!Exists('$(OpenCRMRoot)/src/OpenCRM.Frontend/node_modules')" />
-    <Exec Command="npm run build" WorkingDirectory="$(OpenCRMRoot)/src/OpenCRM.Frontend" EnvironmentVariables="OPENCRM_FRONTEND_OUTPUT_ROOT=$(MSBuildProjectDirectory)/wwwroot" />
-  </Target>
-  <Target Name="ValidateOpenCRMClientContent" BeforeTargets="ComputeFilesToPublish" DependsOnTargets="BuildOpenCRMClientsBeforePublish">
+  <Target Name="ValidateOpenCRMClientContent" BeforeTargets="ComputeFilesToPublish">
     <ItemGroup>
       <_RequiredOpenCRMAsset Include="wwwroot/clients/detailing/manifest.json;wwwroot/clients/autoservice/manifest.json;wwwroot/clients/fleet/manifest.json;wwwroot/admin-panel/index.html;wwwroot/admin-panel/manifest.json;wwwroot/app/vehicle-registration-plate.bundle.js;wwwroot/app/date-time-fields.bundle.js;wwwroot/app/date-time-fields.css" />
     </ItemGroup>

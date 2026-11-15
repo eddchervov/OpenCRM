@@ -23,7 +23,7 @@ The reusable [OpenCRM.Hosting](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj) Ra
 
 ## A product host and one source tree
 
-A product application references the [shared hosting library](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj), not the neutral executable. The [product-host MSBuild import](../build/OpenCRM.ProductHost.targets) accepts one `OpenCRMRoot`, adds the shared project and static resources, and builds all CRM clients from that source tree. The consumer supplies its own `brand.json`, `appsettings.json`, and entry point.
+A product application references the [shared hosting library](../src/OpenCRM.Hosting/OpenCRM.Hosting.csproj), not the neutral executable. The [product-host MSBuild import](../build/OpenCRM.ProductHost.targets) accepts one `OpenCRMRoot`, adds the shared project and static resources, and builds all CRM clients from that source tree. The consumer supplies its own `brand.json`, `appsettings.json`, and entry point. Client files are rebuilt before the .NET SDK discovers static assets. `dotnet publish --no-build` uses the previously built assets and does not rebuild frontend; build the product first after frontend changes.
 
 The import copies core defaults as `opencrm.defaults.json`. Load that file before the product's settings, then reapply environment variables and command-line arguments. Register product services after the common builder configuration; apply the common pipeline to the built application. The neutral application remains independently runnable.
 
