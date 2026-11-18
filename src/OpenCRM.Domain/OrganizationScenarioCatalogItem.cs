@@ -5,6 +5,8 @@
 /// </summary>
 public class OrganizationScenarioCatalogItem
 {
+    /// <summary>Код валюты цены элемента каталога.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     /// <summary>Идентификатор элемента справочника.</summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 

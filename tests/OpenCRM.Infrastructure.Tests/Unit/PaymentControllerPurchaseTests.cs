@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Globalization;
+using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,14 +13,26 @@ using OpenCRM.WebApp.Models.Payments;
 
 namespace OpenCRM.Infrastructure.Tests.Unit;
 
-public sealed class PaymentControllerPurchaseTests
+public sealed class PaymentControllerPurchaseTests : IDisposable
 {
+    private readonly CultureInfo _originalUiCulture = CultureInfo.CurrentUICulture;
+
+    public PaymentControllerPurchaseTests()
+    {
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("ru-RU");
+    }
+
+    public void Dispose()
+    {
+        CultureInfo.CurrentUICulture = this._originalUiCulture;
+    }
+
     [Theory]
     [InlineData(PaymentCreationStatus.InProgress, true, "Оплата получена", false, true)]
     [InlineData(PaymentCreationStatus.PaymentRequired, true, "Оплата ожидает подтверждения", false, true)]
     [InlineData(PaymentCreationStatus.Completed, true, "Оплата подтверждена", true, false)]
-    [InlineData(PaymentCreationStatus.ManualReview, true, "Платеж требует проверки", false, false)]
-    [InlineData(PaymentCreationStatus.Refunded, true, "Платеж возвращён", false, false)]
+    [InlineData(PaymentCreationStatus.ManualReview, true, "Платёж требует проверки", false, false)]
+    [InlineData(PaymentCreationStatus.Refunded, true, "Платёж возвращён", false, false)]
     public async Task ExactPurchaseStateNeverFallsBackToAnotherSuccessfulPayment(
         PaymentCreationStatus status, bool isPaid, string title, bool confirmed, bool shouldPoll)
     {
@@ -82,6 +96,37 @@ public sealed class PaymentControllerPurchaseTests
         var content = controller.MobileComplete(purchaseId).Content;
         Assert.Contains("opencrm://payment/complete?purchaseId=" + purchaseId.ToString("D"), content);
         Assert.Contains("noindex,nofollow", content);
+    }
+
+    [Theory]
+    [InlineData("en-US", "Payment confirmed", "Returning to the app")]
+    [InlineData("zh-Hans", "付款已确认", "正在返回应用")]
+    public async Task PaymentPagesUseReaderLanguageAndPreservePurchaseState(
+        string cultureName,
+        string expectedTitle,
+        string expectedMobileTitle)
+    {
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
+        var purchaseId = Guid.NewGuid();
+        var query = new Mock<IPaymentPurchaseQueryService>(MockBehavior.Strict);
+        query.Setup(service => service.GetAsync("payer", purchaseId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaymentPurchaseState(
+                new(PaymentCreationStatus.Completed, PurchaseId: purchaseId), true, "/detailing/org#billing"));
+        using var manager = PaymentControllerPurchaseTests.CreateManager();
+        var controller = PaymentControllerPurchaseTests.CreateController(manager, query.Object, "?purchaseId=" + purchaseId);
+
+        var model = Assert.IsType<PaymentCompleteViewModel>(Assert.IsType<ViewResult>(await controller.Complete(purchaseId)).Model);
+        var mobile = WebUtility.HtmlDecode(controller.MobileComplete(purchaseId).Content);
+
+        Assert.Equal(expectedTitle, model.Title);
+        Assert.True(model.IsConfirmed);
+        Assert.False(model.ShouldPollPurchase);
+        Assert.Equal(purchaseId, model.PurchaseId);
+        Assert.Equal("/detailing/org#billing", model.PrimaryActionUrl);
+        Assert.Contains($"<html lang=\"{cultureName}\">", mobile);
+        Assert.Contains(expectedMobileTitle, mobile);
+        Assert.Contains("opencrm://payment/complete?purchaseId=" + purchaseId.ToString("D"), mobile);
+        query.VerifyAll();
     }
 
     private static UserManager<ApplicationUser> CreateManager()

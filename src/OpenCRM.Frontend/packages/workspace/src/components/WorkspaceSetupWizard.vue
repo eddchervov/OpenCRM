@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../setupMessages'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import OrganizationWorkingHoursEditor from './OrganizationWorkingHoursEditor.vue'
@@ -6,6 +10,8 @@ import { workingScheduleFromSetup, workingScheduleError, schedulePayload } from 
 import type { WorkspaceWorkingDay } from '../api/setup'
 import { loadScenarioCatalog } from '../api/scenarioCatalog'
 import { loadWorkspaceSetup, openWorkspaceSetup, saveWorkspaceSetup, type WorkspaceSetup, type WorkspaceSetupItem } from '../api/setup'
+
+const workspaceCurrency = useWorkspaceCurrency()
 
 const props = defineProps<{ organizationId: string, canWrite: boolean, canCreate: boolean, placement?: 'workday' | 'settings', scenarioCode?: string | null }>()
 const state = ref<WorkspaceSetup | null>(null)
@@ -22,7 +28,7 @@ const open = ref(false)
 let isMounted = true
 const key = computed(() => `opencrm.setup:${props.organizationId}`)
 const isAutoService = computed(() => props.scenarioCode === 'service-station')
-const titles = ['Рабочие посты', 'Услуги и цены', 'Рабочее время', 'Можно начинать']
+const titles = computed(() => [t('setup.posts'), t('setup.services'), t('setup.hours'), t('setup.ready')])
 const rows = computed(() => step.value === 0 ? posts.value : services.value)
 
 async function refreshState() {
@@ -33,7 +39,7 @@ async function refreshState() {
       await show(true)
     }
   }
-  catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось загрузить настройку.' }
+  catch (reason) { error.value = reason instanceof Error ? reason.message : t('setup.loadError') }
 }
 
 function storeDraft() {
@@ -93,7 +99,7 @@ async function show(automatic = false) {
       }
     } catch { /* Повреждённый черновик не мешает открыть серверные настройки. */ }
     loaded.value = true
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось открыть настройку.' }
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : t('setup.openError') }
   finally { busy.value = false }
 }
 
@@ -142,7 +148,7 @@ async function save(skip = false, create = false) {
     storeDraft()
     await nextTick()
     form.value?.querySelector<HTMLElement>('input, button')?.focus()
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось сохранить настройку.' }
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : t('setup.saveError') }
   finally { busy.value = false }
 }
 
@@ -153,43 +159,43 @@ onBeforeUnmount(() => { isMounted = false })
 
 <template>
   <div v-if="canWrite && (state?.canManage || error) && (placement === 'settings' || !state?.completedAt)" :class="placement === 'settings' ? 'setup-launcher' : 'setup-entry'">
-    <div v-if="placement !== 'settings'"><strong>{{ isAutoService ? 'Подготовим автосервис к первой записи' : 'Подготовим студию к первой записи' }}</strong><span>Посты, услуги и рабочее время</span></div>
-    <UiButton variant="secondary" :disabled="busy" @click="show()">{{ placement === 'settings' ? 'Настройка рабочего места' : state?.shouldAutoOpen ? (isAutoService ? 'Настроить автосервис' : 'Настроить студию') : 'Продолжить настройку' }}</UiButton>
+    <div v-if="placement !== 'settings'"><strong>{{ isAutoService ? t('setup.prepareAuto') : t('setup.prepareDetailing') }}</strong><span>{{ t('setup.overview') }}</span></div>
+    <UiButton variant="secondary" :disabled="busy" @click="show()">{{ placement === 'settings' ? t('setup.setupWorkspace') : state?.shouldAutoOpen ? (isAutoService ? t('setup.setupAuto') : t('setup.setupDetailing')) : t('setup.continue') }}</UiButton>
   </div>
   <dialog v-if="open" ref="dialog" class="setup-dialog" aria-labelledby="setup-title" @cancel.prevent="close">
-    <header class="ui-form-header"><div><span class="setup-eyebrow">{{ isAutoService ? 'НАСТРОЙКА АВТОСЕРВИСА' : 'НАСТРОЙКА ДЕТЕЙЛИНГА' }}</span><h2 id="setup-title">{{ titles[step] }}</h2></div><button type="button" class="setup-close" aria-label="Закрыть настройку" :disabled="busy" @click="close">×</button></header>
-    <nav v-if="step < 3" aria-label="Шаги настройки"><button v-for="(title, index) in titles.slice(0, 3)" :key="title" type="button" :aria-current="index === step ? 'step' : undefined" :disabled="busy || index > step" @click="step = index"><span>{{ index + 1 }}</span>{{ title }}</button></nav>
+    <header class="ui-form-header"><div><span class="setup-eyebrow">{{ isAutoService ? t('setup.autoHeading') : t('setup.detailingHeading') }}</span><h2 id="setup-title">{{ titles[step] }}</h2></div><button type="button" class="setup-close" :aria-label="t('setup.close')" :disabled="busy" @click="close">×</button></header>
+    <nav v-if="step < 3" :aria-label="t('setup.steps')"><button v-for="(title, index) in titles.slice(0, 3)" :key="title" type="button" :aria-current="index === step ? 'step' : undefined" :disabled="busy || index > step" @click="step = index"><span>{{ index + 1 }}</span>{{ title }}</button></nav>
     <form ref="form" class="setup-body" @submit.prevent="save()">
-      <p v-if="busy && !loaded" role="status">Загружаем настройки…</p>
+      <p v-if="busy && !loaded" role="status">{{ t('setup.loading') }}</p>
       <template v-if="loaded">
         <template v-if="step < 2">
-          <p class="setup-hint">{{ step === 0 ? 'Оставьте нужные посты и задайте понятные названия.' : (isAutoService ? 'Отметьте услуги вашего автосервиса. Цену можно уточнить при записи.' : 'Отметьте услуги вашей студии. Цену можно уточнить при записи.') }}</p>
-          <div class="setup-labels"><span>Использовать</span><span>Название</span><span v-if="step === 1">Цена, ₽</span><span v-if="step === 1">Время, мин</span></div>
+          <p class="setup-hint">{{ step === 0 ? t('setup.postsHint') : (isAutoService ? t('setup.autoServicesHint') : t('setup.detailingServicesHint')) }}</p>
+          <div class="setup-labels"><span>{{ t('setup.use') }}</span><span>{{ t('setup.name') }}</span><span v-if="step === 1">{{ t('setup.price', { currency: workspaceCurrency }) }}</span><span v-if="step === 1">{{ t('setup.minutes') }}</span></div>
           <div v-for="(item, index) in rows" :key="item.id" class="setup-row" :class="{ 'setup-row--service': step === 1, 'setup-row--inactive': !item.isActive }">
-            <input v-model="item.isActive" type="checkbox" :disabled="busy || (step === 0 && item.isUsed)" :title="step === 0 && item.isUsed ? 'Изменяйте доступность в справочнике «Посты / боксы»' : undefined" :aria-label="`Использовать ${item.name || 'позицию ' + (index + 1)}`" />
-            <input v-model="item.name" type="text" :aria-label="`${step === 0 ? 'Пост' : 'Услуга'} ${index + 1}`" :required="item.isActive" :disabled="!item.isActive || busy || (step === 0 && item.isUsed)" maxlength="160" :placeholder="step === 0 ? (isAutoService ? 'Например, Пост 1' : 'Например, Полировка') : 'Название услуги'" />
-            <span v-if="step === 0 && item.isUsed" class="setup-used-hint" title="Используемые посты нельзя отключить в мастере настройки."><a href="#catalog?catalog=work_post">Управлять в справочнике «Посты / боксы»</a></span>
-            <label v-if="step === 1" class="setup-price"><span>Цена, ₽</span><input :value="item.unitPrice ?? ''" type="number" min="0" max="999999999" step="0.01" :disabled="!item.isActive || busy" :aria-label="`Цена услуги ${index + 1}`" placeholder="Не задана" @input="item.unitPrice = ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value)" /></label>
-            <label v-if="step === 1" class="setup-price"><span>Время, мин</span><input :value="item.durationMinutes ?? ''" type="number" min="1" max="525600" step="1" :disabled="!item.isActive || busy" :aria-label="`Длительность услуги ${index + 1}, мин`" placeholder="Не задано" @input="item.durationMinutes = ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value)" /></label>
+            <input v-model="item.isActive" type="checkbox" :disabled="busy || (step === 0 && item.isUsed)" :title="step === 0 && item.isUsed ? t('setup.postAvailability') : undefined" :aria-label="t('setup.useItem', { name: item.name || t('setup.item', { index: index + 1 }) })" />
+            <input v-model="item.name" type="text" :aria-label="t(step === 0 ? 'setup.postLabel' : 'setup.serviceLabel', { index: index + 1 })" :required="item.isActive" :disabled="!item.isActive || busy || (step === 0 && item.isUsed)" maxlength="160" :placeholder="step === 0 ? (isAutoService ? t('setup.postExample') : t('setup.detailingPostExample')) : t('setup.serviceName')" />
+            <span v-if="step === 0 && item.isUsed" class="setup-used-hint" :title="t('setup.usedPostHint')"><a href="#catalog?catalog=work_post">{{ t('setup.managePosts') }}</a></span>
+            <label v-if="step === 1" class="setup-price"><span>{{ t('setup.price', { currency: workspaceCurrency }) }}</span><input :value="item.unitPrice ?? ''" type="number" min="0" max="999999999" step="0.01" :disabled="!item.isActive || busy" :aria-label="t('setup.priceLabel', { index: index + 1 })" :placeholder="t('setup.priceNotSet')" @input="item.unitPrice = ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value)" /></label>
+            <label v-if="step === 1" class="setup-price"><span>{{ t('setup.minutes') }}</span><input :value="item.durationMinutes ?? ''" type="number" min="1" max="525600" step="1" :disabled="!item.isActive || busy" :aria-label="t('setup.durationLabel', { index: index + 1 })" :placeholder="t('setup.durationNotSet')" @input="item.durationMinutes = ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value)" /></label>
           </div>
-          <UiButton variant="ghost" :disabled="busy || rows.length >= 100" @click="addRow">＋ {{ step === 0 ? 'Добавить пост' : 'Добавить услугу' }}</UiButton>
+          <UiButton variant="ghost" :disabled="busy || rows.length >= 100" @click="addRow">＋ {{ step === 0 ? t('setup.addPost') : t('setup.addService') }}</UiButton>
         </template>
         <template v-else-if="step === 2">
-          <p class="setup-hint">График задаёт рабочие часы в расписании. Записи вне графика остаются доступны.</p>
+          <p class="setup-hint">{{ t('setup.scheduleHint') }}</p>
           <OrganizationWorkingHoursEditor v-model="weeklySchedule" :disabled="busy" />
         </template>
         <template v-else>
-          <h3>Рабочее место подготовлено</h3>
-          <p class="setup-hint">Создайте первую запись: выберите автомобиль, услуги и время.</p>
-          <div class="setup-summary"><span><strong>{{ posts.filter(item => item.isActive).length }}</strong> постов</span><span><strong>{{ services.filter(item => item.isActive).length }}</strong> услуг</span></div>
+          <h3>{{ t('setup.workspaceReady') }}</h3>
+          <p class="setup-hint">{{ t('setup.firstHint') }}</p>
+          <div class="setup-summary"><span>{{ t('setup.postCount', { count: posts.filter(item => item.isActive).length }) }}</span><span>{{ t('setup.serviceCount', { count: services.filter(item => item.isActive).length }) }}</span></div>
         </template>
       </template>
       <p v-if="error" class="setup-error" role="alert">{{ error }}</p>
     </form>
     <footer>
-      <UiButton variant="ghost" :disabled="busy" @click="close">Позже</UiButton>
-      <div v-if="loaded"><UiButton v-if="step < 3" variant="secondary" :disabled="busy" @click="save(true)">Пропустить</UiButton><UiButton v-if="step < 3" :disabled="busy" @click="save()">{{ busy ? 'Сохраняем…' : 'Сохранить и далее' }}</UiButton><template v-else><UiButton variant="secondary" :disabled="busy" @click="save()">Готово</UiButton><UiButton v-if="canCreate" :disabled="busy" @click="save(false, true)">Создать первую запись</UiButton></template></div>
-      <UiButton v-else-if="!busy" variant="secondary" :disabled="busy" @click="show()">Повторить</UiButton>
+      <UiButton variant="ghost" :disabled="busy" @click="close">{{ t('setup.later') }}</UiButton>
+      <div v-if="loaded"><UiButton v-if="step < 3" variant="secondary" :disabled="busy" @click="save(true)">{{ t('setup.skip') }}</UiButton><UiButton v-if="step < 3" :disabled="busy" @click="save()">{{ busy ? t('setup.saving') : t('setup.saveNext') }}</UiButton><template v-else><UiButton variant="secondary" :disabled="busy" @click="save()">{{ t('setup.done') }}</UiButton><UiButton v-if="canCreate" :disabled="busy" @click="save(false, true)">{{ t('setup.createFirst') }}</UiButton></template></div>
+      <UiButton v-else-if="!busy" variant="secondary" :disabled="busy" @click="show()">{{ t('setup.retry') }}</UiButton>
     </footer>
   </dialog>
 </template>

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -15,6 +16,8 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
     private bool _requiresRefresh;
     private int _requestVersion;
     private int _featureVersion;
+    private string? _errorTranslationKey;
+    private bool _isSettingLocalizedError;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
@@ -166,6 +169,18 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
 
     public bool HasFeatures => this.Features.Count > 0;
 
+    public void RefreshLocalizedValues()
+    {
+        this.RefreshLocalizedError();
+        this.Editor.RefreshLocalizedValues();
+        foreach (var row in this.BusinessRows.Concat(this.PersonalRows).Concat(this.OtherRows))
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        this.OnPropertyChanged((string?)null);
+    }
+
     public bool IsBusinessPlanSelected => this.IsCreating || this.SelectedPlan is { PlanTypeCode: "business" };
 
     public bool CanSaveFeatures => this._isActive && !this.IsLoading && !this.IsSaving && !this._requiresRefresh
@@ -277,7 +292,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         {
             if (!cancellationToken.IsCancellationRequested && this.IsCurrent(requestVersion, cancellationToken))
             {
-                this.ErrorMessage = "Загрузка тарифов заняла слишком много времени. Повторите попытку.";
+                this.SetLocalizedError("native.plans.zagruzka.tarifov.zanyala.slishkom.mnogo.vremeni.povtorite.popytk");
             }
         }
         catch (ApiException exception)
@@ -286,7 +301,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         }
         catch (HttpRequestException)
         {
-            this.ErrorMessage = "Нет связи с сервером. Не удалось загрузить тарифы.";
+            this.SetLocalizedError("native.plans.net.svyazi.s.serverom.ne.udalos.zagruzit.tarify");
         }
         finally
         {
@@ -356,7 +371,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             this.IsCreating = false;
             this.Editor = new SubscriptionPlanEditor();
             this.Editor.Load(saved);
-            this.Message = isCreating ? "Тариф создан." : "Тариф сохранён.";
+            this.Message = isCreating ? AdminLocalization.Instance["native.plans.tarif.sozdan"] : AdminLocalization.Instance["native.plans.tarif.sokhranyon"];
             this._requiresRefresh = true;
             await this.RefreshKeepingMessageAsync(saved.Id, cancellationToken);
         }
@@ -365,7 +380,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             if (!cancellationToken.IsCancellationRequested)
             {
                 this._requiresRefresh = true;
-                this.ErrorMessage = "Сохранение тарифа заняло слишком много времени. Обновите список перед повтором.";
+                this.SetLocalizedError("native.plans.sokhranenie.tarifa.zanyalo.slishkom.mnogo.vremeni.obnovite.spiso");
             }
         }
         catch (ApiException exception)
@@ -375,7 +390,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         catch (HttpRequestException)
         {
             this._requiresRefresh = true;
-            this.ErrorMessage = "Нет связи с сервером. Сохранение не подтверждено; обновите список перед повтором.";
+            this.SetLocalizedError("native.plans.net.svyazi.s.serverom.sokhranenie.ne.podtverzhdeno.obnovite.spis");
         }
         finally
         {
@@ -399,7 +414,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         {
             var result = await this._sessionClient.SavePlanFeaturesAsync(selected.Id, features, cancellationToken);
             this.Message = string.IsNullOrWhiteSpace(result.Message)
-                ? "Возможности тарифа сохранены для всех сроков оплаты."
+                ? AdminLocalization.Instance["native.plans.vozmozhnosti.tarifa.sokhraneny.dlya.vsekh.srokov.oplaty"]
                 : result.Message;
             this._requiresRefresh = true;
             await this.RefreshKeepingMessageAsync(selected.Id, cancellationToken);
@@ -409,7 +424,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             if (!cancellationToken.IsCancellationRequested)
             {
                 this._requiresRefresh = true;
-                this.ErrorMessage = "Сохранение возможностей заняло слишком много времени. Обновите тариф перед повтором.";
+                this.SetLocalizedError("native.plans.sokhranenie.vozmozhnostey.zanyalo.slishkom.mnogo.vremeni.obnovit");
             }
         }
         catch (ApiException exception)
@@ -419,7 +434,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         catch (HttpRequestException)
         {
             this._requiresRefresh = true;
-            this.ErrorMessage = "Нет связи с сервером. Сохранение не подтверждено; обновите тариф перед повтором.";
+            this.SetLocalizedError("native.plans.net.svyazi.s.serverom.sokhranenie.ne.podtverzhdeno.obnovite.tari");
         }
         finally
         {
@@ -449,7 +464,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             if (!cancellationToken.IsCancellationRequested)
             {
                 this._requiresRefresh = true;
-                this.ErrorMessage = "Изменение статуса заняло слишком много времени. Обновите список перед повтором.";
+                this.SetLocalizedError("native.plans.izmenenie.statusa.zanyalo.slishkom.mnogo.vremeni.obnovite.spisok");
             }
         }
         catch (ApiException exception)
@@ -459,7 +474,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         catch (HttpRequestException)
         {
             this._requiresRefresh = true;
-            this.ErrorMessage = "Нет связи с сервером. Изменение статуса не подтверждено; обновите список перед повтором.";
+            this.SetLocalizedError("native.plans.net.svyazi.s.serverom.izmenenie.statusa.ne.podtverzhdeno.obnovit");
         }
         finally
         {
@@ -491,7 +506,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             this.SelectedPlan = null;
             this.Features = [];
             this.IsDeleteConfirmationOpen = false;
-            this.Message = string.IsNullOrWhiteSpace(result.Message) ? "Тариф удалён." : result.Message;
+            this.Message = string.IsNullOrWhiteSpace(result.Message) ? AdminLocalization.Instance["native.plans.tarif.udalyon"] : result.Message;
             this._requiresRefresh = true;
             await this.RefreshKeepingMessageAsync(null, cancellationToken);
         }
@@ -500,7 +515,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             if (!cancellationToken.IsCancellationRequested)
             {
                 this._requiresRefresh = true;
-                this.ErrorMessage = "Удаление заняло слишком много времени. Обновите список перед повтором.";
+                this.SetLocalizedError("native.plans.udalenie.zanyalo.slishkom.mnogo.vremeni.obnovite.spisok.pered.po");
             }
         }
         catch (ApiException exception)
@@ -510,7 +525,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         catch (HttpRequestException)
         {
             this._requiresRefresh = true;
-            this.ErrorMessage = "Нет связи с сервером. Удаление не подтверждено; обновите список перед повтором.";
+            this.SetLocalizedError("native.plans.net.svyazi.s.serverom.udalenie.ne.podtverzhdeno.obnovite.spisok.");
         }
         finally
         {
@@ -557,7 +572,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         {
             if (!cancellationToken.IsCancellationRequested && featureVersion == this._featureVersion)
             {
-                this.ErrorMessage = "Загрузка возможностей тарифа заняла слишком много времени.";
+                this.SetLocalizedError("native.plans.zagruzka.vozmozhnostey.tarifa.zanyala.slishkom.mnogo.vremeni");
             }
         }
         catch (ApiException exception)
@@ -566,7 +581,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         }
         catch (HttpRequestException)
         {
-            this.ErrorMessage = "Нет связи с сервером. Не удалось загрузить возможности тарифа.";
+            this.SetLocalizedError("native.plans.net.svyazi.s.serverom.ne.udalos.zagruzit.vozmozhnosti.tarifa");
         }
     }
 
@@ -588,7 +603,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         await this.HandleErrorAsync(exception);
         if (isUnconfirmed && this._isActive)
         {
-            this.ErrorMessage = "Результат операции не подтверждён сервером. Обновите список перед повтором.";
+            this.SetLocalizedError("native.plans.rezultat.operatsii.ne.podtverzhdyon.serverom.obnovite.spisok.per");
         }
     }
 
@@ -611,6 +626,12 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             return;
         }
 
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportErrorKey)
+        {
+            this.SetLocalizedError(transportErrorKey);
+            return;
+        }
+
         this.ErrorMessage = exception.Message;
     }
 
@@ -622,12 +643,12 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         var lastTwoDigits = count % 100;
         var lastDigit = count % 10;
         var suffix = lastTwoDigits is >= 11 and <= 14
-            ? "тарифов"
+            ? AdminLocalization.Instance["native.plans.tarifov"]
             : lastDigit switch
             {
-                1 => "тариф",
-                >= 2 and <= 4 => "тарифа",
-                _ => "тарифов"
+                1 => AdminLocalization.Instance["native.plans.fallbackName"],
+                >= 2 and <= 4 => AdminLocalization.Instance["native.plans.tarifa"],
+                _ => AdminLocalization.Instance["native.plans.tarifov"]
             };
 
         return $"{count} {suffix}";
@@ -693,7 +714,7 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
             && this.Editor.IsDefaultPlanLocked && this.Editor.IsDemoPlan)
         {
             this.Editor.IsDemoPlan = false;
-            this.ErrorMessage = "Сначала назначьте другой тариф по умолчанию.";
+            this.SetLocalizedError("native.plans.snachala.naznachte.drugoy.tarif.po.umolchaniyu");
             return;
         }
 
@@ -719,6 +740,34 @@ public partial class SubscriptionPlansViewModel(AdminSessionClient sessionClient
         this.SavePlanCommand.NotifyCanExecuteChanged();
         this.SaveFeaturesCommand.NotifyCanExecuteChanged();
         this.ConfirmDeleteCommand.NotifyCanExecuteChanged();
+    }
+
+    private void SetLocalizedError(string key)
+    {
+        this._errorTranslationKey = key;
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedError = false;
+    }
+
+    private void RefreshLocalizedError()
+    {
+        if (this._errorTranslationKey == null)
+        {
+            return;
+        }
+
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[this._errorTranslationKey];
+        this._isSettingLocalizedError = false;
+    }
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedError)
+        {
+            this._errorTranslationKey = null;
+        }
     }
 
     private void ClearMessages()

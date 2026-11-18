@@ -39,6 +39,9 @@ public sealed class AdminUserOverviewMaintenance
     /// <summary> Оплаченная сумма. </summary>
     public decimal PaidAmount { get; init; }
 
+    /// <summary> Код валюты сумм записи обслуживания. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Стоимость материалов. </summary>
     public decimal MaterialCostAmount { get; init; }
 

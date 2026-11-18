@@ -17,7 +17,7 @@ internal sealed class CatalogDefaultsService(OpenCRMContext context)
     {
         var organization = await this._context.Organizations
             .Where(value => value.Id == organizationId)
-            .Select(value => new { value.Id, value.PrimaryScenarioCode })
+            .Select(value => new { value.Id, value.PrimaryScenarioCode, value.CurrencyCode })
             .FirstOrDefaultAsync();
 
         if (organization == null)
@@ -68,6 +68,7 @@ internal sealed class CatalogDefaultsService(OpenCRMContext context)
             }
 
             item.OrganizationId = organizationId;
+            item.CurrencyCode = organization.CurrencyCode;
             item.ScenarioCode = process.Code;
             this._context.OrganizationScenarioCatalogItems.Add(item);
         }

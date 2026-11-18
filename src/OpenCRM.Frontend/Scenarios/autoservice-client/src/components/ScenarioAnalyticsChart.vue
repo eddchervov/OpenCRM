@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '@opencrm/workspace'
+
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Chart from 'chart.js/auto'
 import { workspaceChartColors, workspaceTheme } from '@opencrm/ui'
+
+const workspaceCurrency = useWorkspaceCurrency()
 
 type ChartPoint = {
   label: string
@@ -28,12 +33,12 @@ const labels = computed(() => props.datasets[0]?.points.map(point => point.label
 
 function formatValue(value: number) {
   if (!props.money) {
-    return new Intl.NumberFormat('ru-RU').format(value)
+    return new Intl.NumberFormat(formattingCulture.value).format(value)
   }
 
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat(formattingCulture.value, {
     style: 'currency',
-    currency: 'RUB',
+    currency: workspaceCurrency.value,
     maximumFractionDigits: 0
   }).format(value)
 }

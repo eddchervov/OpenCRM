@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminBillingMessages'
 import PaymentServiceActions from './PaymentServiceActions.vue'
 import type { AdminBillingPayment } from '@/models/AdminBillingPayment'
 import {
@@ -19,6 +21,7 @@ const props = defineProps<{
   canManage: boolean
   actorId: string
 }>()
+const { t } = useLocalization()
 
 const emit = defineEmits<{
   refresh: []
@@ -28,7 +31,13 @@ const emit = defineEmits<{
 
 const showAllEvents = ref(false)
 const money = computed(() => getPaymentMoneySummary(props.payment))
-const notice = computed(() => getPaymentNotice(props.payment))
+function translatePayment(key: string, params?: Record<string, string | number>): string {
+  return t(key as Parameters<typeof t>[0], params ?? {})
+}
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code', maximumFractionDigits: 2 }).format(amount)
+}
+const notice = computed(() => getPaymentNotice(props.payment, translatePayment, formatMoney))
 const allEvents = computed(() => getVisiblePaymentEvents(props.payment.providerEvents, 20))
 const visibleEvents = computed(() => showAllEvents.value ? allEvents.value : allEvents.value.slice(0, 5))
 const hasTechnicalIssue = computed(() => props.payment.applicationStatus === 'needs_attention' &&
@@ -36,26 +45,23 @@ const hasTechnicalIssue = computed(() => props.payment.applicationStatus === 'ne
 const hasMoneyDetails = computed(() => Number.isFinite(props.payment.amount) &&
   typeof props.payment.refundedAmount === 'number' && Number.isFinite(props.payment.refundedAmount))
 
-function formatMoney(amount: number): string {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(amount)
-}
 </script>
 
 <template>
   <section class="payment-service" aria-labelledby="payment-service-title">
     <header class="payment-service__header">
       <div class="payment-service__heading">
-        <div class="payment-service__eyebrow">Детали платежа</div>
-        <h2 id="payment-service-title">Платёж №{{ payment.id }}</h2>
+        <div class="payment-service__eyebrow">{{ t('adminBilling.details.eyebrow') }}</div>
+        <h2 id="payment-service-title">{{ t('adminBilling.details.paymentNumber', { id: payment.id }) }}</h2>
         <p>{{ payment.user }}<span v-if="payment.userEmail && payment.userEmail !== payment.user"> · {{ payment.userEmail }}</span></p>
       </div>
-      <span v-if="payment.isTest" class="payment-service__test-badge">Тестовый платёж</span>
+      <span v-if="payment.isTest" class="payment-service__test-badge">{{ t('adminBilling.details.testPayment') }}</span>
     </header>
 
-    <div v-if="loading" class="payment-service__state" role="status">Обновляем сведения о платеже…</div>
+    <div v-if="loading" class="payment-service__state" role="status">{{ t('adminBilling.details.loading') }}</div>
     <div v-else-if="loadError || !hasMoneyDetails" class="payment-service__state payment-service__state--error" role="alert">
-      <span>{{ loadError || 'Данные платежа неполные. Обновите карточку или обратитесь к специалисту.' }}</span>
-      <button type="button" class="payment-service__button" @click="emit('refresh')">Повторить загрузку</button>
+      <span>{{ loadError || t('adminBilling.details.incomplete') }}</span>
+      <button type="button" class="payment-service__button" @click="emit('refresh')">{{ t('adminBilling.details.retryLoad') }}</button>
     </div>
 
     <template v-else>
@@ -65,26 +71,26 @@ function formatMoney(amount: number): string {
           <h3>{{ notice.title }}</h3>
           <p>{{ notice.message }}</p>
           <p v-if="notice.followUp" class="payment-service__follow-up">{{ notice.followUp }}</p>
-          <p v-if="hasTechnicalIssue" class="payment-service__technical-note">Обработка платежа также требует технической проверки. Передайте ID платежа специалисту.</p>
+          <p v-if="hasTechnicalIssue" class="payment-service__technical-note">{{ t('adminBilling.details.technicalIssue') }}</p>
         </div>
       </div>
 
-      <section class="payment-service__section" aria-label="Суммы платежа">
+        <section class="payment-service__section" :aria-label="t('adminBilling.details.paymentAmounts')">
         <div class="payment-service__money-grid">
           <article class="payment-service__metric">
-            <span>Сумма покупки</span>
+            <span>{{ t('adminBilling.details.purchaseAmount') }}</span>
             <strong>{{ formatMoney(money.amount) }}</strong>
           </article>
           <article class="payment-service__metric">
-            <span>{{ money.confirmed ? 'Оплата подтверждена' : 'Подтверждено' }}</span>
-            <strong>{{ money.confirmed ? formatMoney(money.amount) : 'Пока нет' }}</strong>
+            <span>{{ money.confirmed ? t('adminBilling.details.confirmedPayment') : t('adminBilling.details.confirmed') }}</span>
+            <strong>{{ money.confirmed ? formatMoney(money.amount) : t('adminBilling.details.notYet') }}</strong>
           </article>
           <article class="payment-service__metric">
-            <span>Возвращено</span>
+            <span>{{ t('adminBilling.details.refunded') }}</span>
             <strong>{{ formatMoney(money.refunded) }}</strong>
           </article>
           <article class="payment-service__metric" :class="{ 'payment-service__metric--muted': money.remaining === null }">
-            <span>Осталось после возвратов</span>
+            <span>{{ t('adminBilling.details.remaining') }}</span>
             <strong>{{ money.remaining === null ? '—' : formatMoney(money.remaining) }}</strong>
           </article>
         </div>
@@ -92,77 +98,77 @@ function formatMoney(amount: number): string {
 
       <div class="payment-service__columns">
         <section class="payment-service__section">
-          <h3>Покупка</h3>
+          <h3>{{ t('adminBilling.details.purchase') }}</h3>
           <dl class="payment-service__facts">
-            <div><dt>Тариф</dt><dd>{{ payment.planName || '—' }}</dd></div>
-            <div v-if="payment.organizationName"><dt>Организация</dt><dd>{{ payment.organizationName }}</dd></div>
-            <div><dt>Состояние денег</dt><dd>{{ getPaymentMoneyStatus(payment) }}</dd></div>
-            <div><dt>Способ оплаты</dt><dd>{{ payment.paymentMethodName || '—' }}</dd></div>
-            <div><dt>Создан</dt><dd>{{ formatPaymentDate(payment.createdAt) }}</dd></div>
-            <div v-if="payment.paidAt"><dt>Оплачен</dt><dd>{{ formatPaymentDate(payment.paidAt) }}</dd></div>
-            <div v-if="payment.externalPaymentId"><dt>ID платежа ЮKassa</dt><dd class="payment-service__id">{{ payment.externalPaymentId }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.plan') }}</dt><dd>{{ payment.planName || '—' }}</dd></div>
+            <div v-if="payment.organizationName"><dt>{{ t('adminBilling.details.organization') }}</dt><dd>{{ payment.organizationName }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.moneyState') }}</dt><dd>{{ getPaymentMoneyStatus(payment, translatePayment) }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.paymentMethod') }}</dt><dd>{{ payment.paymentMethodName || '—' }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.created') }}</dt><dd>{{ formatPaymentDate(payment.createdAt) }}</dd></div>
+            <div v-if="payment.paidAt"><dt>{{ t('adminBilling.details.paid') }}</dt><dd>{{ formatPaymentDate(payment.paidAt) }}</dd></div>
+            <div v-if="payment.externalPaymentId"><dt>{{ t('adminBilling.details.yookassaPaymentId') }}</dt><dd class="payment-service__id">{{ payment.externalPaymentId }}</dd></div>
           </dl>
         </section>
 
         <section class="payment-service__section">
-          <h3>Доступ по этой покупке</h3>
+          <h3>{{ t('adminBilling.details.access') }}</h3>
           <dl class="payment-service__facts">
-            <div><dt>Результат</dt><dd>{{ getPaymentAccessStatus(payment) }}</dd></div>
-            <div v-if="payment.grantedFrom || payment.grantedUntil"><dt>Выданный период</dt><dd>{{ formatPaymentDate(payment.grantedFrom) }} — {{ formatPaymentDate(payment.grantedUntil) }}</dd></div>
-            <div v-if="payment.appliedAt"><dt>Выдан</dt><dd>{{ formatPaymentDate(payment.appliedAt) }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.result') }}</dt><dd>{{ getPaymentAccessStatus(payment, translatePayment) }}</dd></div>
+            <div v-if="payment.grantedFrom || payment.grantedUntil"><dt>{{ t('adminBilling.details.grantedPeriod') }}</dt><dd>{{ formatPaymentDate(payment.grantedFrom) }} — {{ formatPaymentDate(payment.grantedUntil) }}</dd></div>
+            <div v-if="payment.appliedAt"><dt>{{ t('adminBilling.details.issued') }}</dt><dd>{{ formatPaymentDate(payment.appliedAt) }}</dd></div>
           </dl>
-          <p v-if="payment.grantedFrom || payment.grantedUntil || payment.appliedAt" class="payment-service__access-note">Период этой покупки не показывает, действует ли доступ сейчас. Текущий статус смотрите в подписках.</p>
-          <p v-else class="payment-service__access-note">Текущий статус доступа можно проверить в подписках.</p>
-          <button type="button" class="payment-service__button payment-service__button--primary" title="Открывает текущие подписки получателя. Здесь можно продлить или остановить доступ с указанием причины." @click="emit('subscriptions')">Открыть подписки</button>
+          <p v-if="payment.grantedFrom || payment.grantedUntil || payment.appliedAt" class="payment-service__access-note">{{ t('adminBilling.details.accessPeriodNote') }}</p>
+          <p v-else class="payment-service__access-note">{{ t('adminBilling.details.currentAccessNote') }}</p>
+          <button type="button" class="payment-service__button payment-service__button--primary" :title="t('adminBilling.details.openSubscriptionsTitle')" @click="emit('subscriptions')">{{ t('adminBilling.details.openSubscriptions') }}</button>
         </section>
       </div>
 
       <PaymentServiceActions :key="payment.id" :payment-id="payment.id" :can-manage="canManage" :actor-id="actorId" @updated="emit('updated')" />
 
       <details class="payment-service__journal">
-        <summary>Технический журнал <span>{{ allEvents.length }}</span></summary>
-        <p class="payment-service__journal-caption">Последние технические события: до 20 записей. Повторные служебные проверки скрыты.</p>
+        <summary>{{ t('adminBilling.details.technicalJournal') }} <span>{{ allEvents.length }}</span></summary>
+        <p class="payment-service__journal-caption">{{ t('adminBilling.details.lastTechnicalEvents') }}</p>
         <details class="payment-service__journal-ids">
-          <summary>Идентификаторы и коды</summary>
+          <summary>{{ t('adminBilling.details.identifiersAndCodes') }}</summary>
           <dl>
-            <div><dt>ID платежа ЮKassa</dt><dd>{{ payment.externalPaymentId || '—' }}</dd></div>
-            <div><dt>ID покупки</dt><dd>{{ payment.purchaseId || '—' }}</dd></div>
-            <div><dt>Код провайдера</dt><dd>{{ payment.paymentProviderCode || '—' }}</dd></div>
-            <div><dt>Состояние провайдера</dt><dd>{{ payment.providerStatus || '—' }}</dd></div>
-            <div><dt>Последний код ошибки</dt><dd>{{ payment.lastErrorCode || '—' }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.yookassaPaymentIdLabel') }}</dt><dd>{{ payment.externalPaymentId || '—' }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.purchaseId') }}</dt><dd>{{ payment.purchaseId || '—' }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.providerCode') }}</dt><dd>{{ payment.paymentProviderCode || '—' }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.providerState') }}</dt><dd>{{ payment.providerStatus || '—' }}</dd></div>
+            <div><dt>{{ t('adminBilling.details.lastErrorCode') }}</dt><dd>{{ payment.lastErrorCode || '—' }}</dd></div>
           </dl>
         </details>
         <ol v-if="visibleEvents.length" class="payment-service__events">
           <li v-for="event in visibleEvents" :key="event.id">
             <div>
-              <strong>{{ formatPaymentEvent(event)?.title }}</strong>
-              <span v-if="formatPaymentEvent(event)?.detail">{{ formatPaymentEvent(event)?.detail }}</span>
+              <strong>{{ formatPaymentEvent(event, translatePayment)?.title }}</strong>
+              <span v-if="formatPaymentEvent(event, translatePayment)?.detail">{{ formatPaymentEvent(event, translatePayment)?.detail }}</span>
             </div>
             <time :datetime="event.createdAt">{{ formatPaymentDate(event.createdAt) }}</time>
             <details class="payment-service__event-ids">
-              <summary>Коды и ID события</summary>
+              <summary>{{ t('adminBilling.details.eventCodes') }}</summary>
               <dl>
-                <div><dt>Этап</dt><dd>{{ event.stage }}</dd></div>
-                <div><dt>Код события</dt><dd>{{ event.code }}</dd></div>
-                <div><dt>ID события</dt><dd>{{ event.id }}</dd></div>
-                <div v-if="event.providerOrderId"><dt>Внутренний ID платёжного сервиса</dt><dd>{{ event.providerOrderId }}</dd></div>
-                <div v-if="event.messageId"><dt>ID сообщения</dt><dd>{{ event.messageId }}</dd></div>
-                <div v-if="event.commandId"><dt>ID команды</dt><dd>{{ event.commandId }}</dd></div>
-                <div v-if="event.purchaseId"><dt>ID покупки</dt><dd>{{ event.purchaseId }}</dd></div>
-                <div v-if="event.providerVersion != null"><dt>Версия провайдера</dt><dd>{{ event.providerVersion }}</dd></div>
+                <div><dt>{{ t('adminBilling.details.stage') }}</dt><dd>{{ event.stage }}</dd></div>
+                <div><dt>{{ t('adminBilling.details.eventCode') }}</dt><dd>{{ event.code }}</dd></div>
+                <div><dt>{{ t('adminBilling.details.eventId') }}</dt><dd>{{ event.id }}</dd></div>
+                <div v-if="event.providerOrderId"><dt>{{ t('adminBilling.details.internalPaymentServiceId') }}</dt><dd>{{ event.providerOrderId }}</dd></div>
+                <div v-if="event.messageId"><dt>{{ t('adminBilling.details.messageId') }}</dt><dd>{{ event.messageId }}</dd></div>
+                <div v-if="event.commandId"><dt>{{ t('adminBilling.details.commandId') }}</dt><dd>{{ event.commandId }}</dd></div>
+                <div v-if="event.purchaseId"><dt>{{ t('adminBilling.details.purchaseId') }}</dt><dd>{{ event.purchaseId }}</dd></div>
+                <div v-if="event.providerVersion != null"><dt>{{ t('adminBilling.details.providerVersion') }}</dt><dd>{{ event.providerVersion }}</dd></div>
               </dl>
             </details>
           </li>
         </ol>
-        <p v-else class="payment-service__journal-empty">Событий для отображения пока нет.</p>
+        <p v-else class="payment-service__journal-empty">{{ t('adminBilling.details.noEvents') }}</p>
         <button v-if="allEvents.length > 5" type="button" class="payment-service__journal-more" @click="showAllEvents = !showAllEvents">
-          {{ showAllEvents ? 'Свернуть' : `Показать ещё ${allEvents.length - 5}` }}
+          {{ showAllEvents ? t('adminBilling.details.collapse') : t('adminBilling.details.showMore', { count: allEvents.length - 5 }) }}
         </button>
       </details>
 
       <footer class="payment-service__footer">
-        <span v-if="payment.statusUpdatedAt">Последнее обновление: {{ formatPaymentDate(payment.statusUpdatedAt) }}</span>
-        <button type="button" class="payment-service__button" :disabled="loading" title="Перечитывает сохранённые данные. Для новой сверки с провайдером используйте «Проверить платёж»." @click="emit('refresh')">{{ loading ? 'Обновляем…' : 'Обновить данные' }}</button>
+        <span v-if="payment.statusUpdatedAt">{{ t('adminBilling.details.lastUpdated', { date: formatPaymentDate(payment.statusUpdatedAt) }) }}</span>
+        <button type="button" class="payment-service__button" :disabled="loading" :title="t('adminBilling.details.refreshStored')" @click="emit('refresh')">{{ loading ? t('adminBilling.details.refreshing') : t('adminBilling.details.refreshData') }}</button>
       </footer>
     </template>
   </section>

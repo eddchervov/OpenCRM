@@ -1,3 +1,4 @@
+using OpenCRM.Admin.App.Localization;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
@@ -54,7 +55,7 @@ public sealed class ProtectedAdminSessionStore : IAdminSessionStore
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            throw new ApiException("Не удалось прочитать сохранённую сессию.", innerException: exception);
+            throw new ApiException(AdminLocalization.Instance["core.session.readFailed"], innerException: exception);
         }
         finally
         {
@@ -89,7 +90,7 @@ public sealed class ProtectedAdminSessionStore : IAdminSessionStore
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or CryptographicException)
         {
-            throw new ApiException("Не удалось защитить и сохранить сессию. Проверьте доступ к папке данных приложения.", innerException: exception);
+            throw new ApiException(AdminLocalization.Instance["core.session.saveFailed"], innerException: exception);
         }
         finally
         {
@@ -110,7 +111,7 @@ public sealed class ProtectedAdminSessionStore : IAdminSessionStore
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            throw new ApiException("Не удалось удалить сохранённую сессию. Проверьте доступ к папке данных приложения.", innerException: exception);
+            throw new ApiException(AdminLocalization.Instance["core.session.deleteFailed"], innerException: exception);
         }
     }
 }

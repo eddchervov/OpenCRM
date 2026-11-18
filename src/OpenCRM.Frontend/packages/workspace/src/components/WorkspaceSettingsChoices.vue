@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui'
+import '../notificationMessages'
+
 defineProps<{
   title: string
   groups: { title?: string, items: { code: string, title: string, description: string, symbol: string, detail?: string }[] }[]
@@ -6,13 +9,14 @@ defineProps<{
 }>()
 
 defineEmits<{ select: [code: string] }>()
+const { t } = useLocalization()
 </script>
 
 <template>
   <section class="settings-choices" :aria-label="title">
     <header class="settings-choices__header ui-section-header">
       <h3>{{ title }}</h3>
-      <p>Выберите, что хотите настроить.</p>
+      <p>{{ t('notificationSettings.chooseSetting') }}</p>
     </header>
     <section v-for="(group, index) in groups" :key="index" class="settings-choices__group">
       <h4 v-if="group.title">{{ group.title }}</h4>

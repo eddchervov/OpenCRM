@@ -51,6 +51,10 @@ public sealed class OrganizationWorkspaceAnalyticsQueryService(
         bool hasMaterialsModule,
         DateTime today)
     {
+        var currencyCode = await opencrmContext.Organizations.AsNoTracking()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
         var from = today.Date.AddDays(-13);
         var toExclusive = today.Date.AddDays(1);
         var dates = OrganizationFinanceMapper.EachDay(from, today.Date).ToList();
@@ -103,14 +107,19 @@ public sealed class OrganizationWorkspaceAnalyticsQueryService(
             .GroupBy(x => x.DateTimeCreation.Date)
             .Select(x => new DailyPoint(x.Key, x.Count()))
             .ToDictionaryAsync(x => x.Date, x => x.Count);
-        var completedDays = await maintenanceQuery
+        var completedCounts = await maintenanceQuery
             .Where(x => x.Status == MaintenanceStatus.Completed &&
+                (x.CompletedDate ?? x.Date) >= from && (x.CompletedDate ?? x.Date) < toExclusive)
+            .GroupBy(x => (x.CompletedDate ?? x.Date).Date)
+            .Select(day => new DailyPoint(day.Key, day.Count()))
+            .ToListAsync();
+        var completedDays = await maintenanceQuery
+            .Where(x => x.CurrencyCode == currencyCode && x.Status == MaintenanceStatus.Completed &&
                 (x.CompletedDate ?? x.Date) >= from && (x.CompletedDate ?? x.Date) < toExclusive)
             .GroupBy(x => (x.CompletedDate ?? x.Date).Date)
             .Select(day => new
             {
                 Date = day.Key,
-                Count = day.Count(),
                 Revenue = day.Sum(x => x.PaidAmount > 0
                     ? x.PaidAmount
                     : Math.Max(0m, opencrmContext.MaintenanceFinancialTotals
@@ -120,8 +129,8 @@ public sealed class OrganizationWorkspaceAnalyticsQueryService(
             })
             .ToListAsync();
 
-        var completedWorks14Days = completedDays.Sum(day => day.Count);
-        var completedPoints = completedDays.ToDictionary(day => day.Date, day => day.Count);
+        var completedWorks14Days = completedCounts.Sum(day => day.Count);
+        var completedPoints = completedCounts.ToDictionary(day => day.Date, day => day.Count);
         var revenuePoints = completedDays.ToDictionary(day => day.Date, day => day.Revenue);
 
         var statusCounts = new[]
@@ -134,6 +143,7 @@ public sealed class OrganizationWorkspaceAnalyticsQueryService(
 
         return new OrganizationWorkspaceAnalytics
         {
+            CurrencyCode = currencyCode,
             Kpis = new OrganizationWorkspaceAnalyticsKpis
             {
                 ActiveVehicles = activeVehicles,

@@ -2,6 +2,7 @@ import { createApp, h, reactive } from 'vue'
 import UiDatePicker from './components/UiDatePicker.vue'
 import UiTimePicker from './components/UiTimePicker.vue'
 import { initializeWorkspaceTheme, syncWorkspaceThemeFromDocument } from './workspaceTheme'
+import { initializeLocalization } from './i18n'
 import './styles.css'
 
 initializeWorkspaceTheme()
@@ -22,7 +23,7 @@ document.querySelectorAll<HTMLElement>('[data-ui-date-picker], [data-ui-time-pic
     state.value = field.value
     state.disabled = field.disabled
   })
-  createApp({
+  const app = createApp({
     render: () => h(component, {
       label: host.dataset.label || '',
       id: host.dataset.inputId,
@@ -34,5 +35,6 @@ document.querySelectorAll<HTMLElement>('[data-ui-date-picker], [data-ui-time-pic
         field.dispatchEvent(new Event('change', { bubbles: true }))
       }
     })
-  }).mount(mount)
+  })
+  void initializeLocalization(app).then(() => app.mount(mount))
 })

@@ -1,6 +1,6 @@
 ﻿@model DeleteAccountConfirmationModel
 @{
-    ViewData["Title"] = Model.WasDeleted ? "Аккаунт удалён" : "Не удалось удалить аккаунт";
+    ViewData["Title"] = Model.WasDeleted ? Text["auth.accountDeleted"].Value : Text["auth.deleteFailed"].Value;
 }
 
 <div class="auth-page">
@@ -16,15 +16,15 @@
                     }
                     <div class="auth-links text-center mt-3">
                         <div class="mb-2">
-                            <a href="@Url.Content("~/")" class="btn btn-dark auth-btn">На главную</a>
+                            <a href="@Url.Content("~/")" class="btn btn-dark auth-btn">@Text["auth.homePage"]</a>
                         </div>
                         @if (Model.WasDeleted)
                         {
-                            <a href="~/auth/register" class="auth-link">Зарегистрироваться снова</a>
+                            <a href="~/auth/register" class="auth-link">@Text["auth.registerAgain"]</a>
                         }
                         else
                         {
-                            <a href="~/auth/login" class="auth-link">Войти в аккаунт</a>
+                            <a href="~/auth/login" class="auth-link">@Text["auth.signInToAccount"]</a>
                         }
                     </div>
                 </div>

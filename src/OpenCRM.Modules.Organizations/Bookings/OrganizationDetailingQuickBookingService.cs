@@ -69,12 +69,21 @@ public sealed class OrganizationDetailingQuickBookingService(
         OpenCRM.Modules.Organizations.Contracts.Dtos.OrganizationDto organization,
         CreateOrganizationDetailingQuickBookingDto dto)
     {
+        var registrationCountryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(dto.RegistrationCountryCode);
+        var hasForeignCountry = registrationCountryCode is not null and not "RU";
+        var foreignPlate = hasForeignCountry ? InternationalRegistrationPlateRules.NormalizePlate(dto.RegistrationPlate) : null;
+        if (!Enum.IsDefined(dto.Kind))
+        {
+            throw new InvalidOperationException("Выберите поддерживаемый тип техники.");
+        }
+
         var services = QuickBookingSupport.CreateServices(dto.Services, dto.ServiceId, dto.Price);
         await this._quickBookingSupport.PrepareServicesAsync(userId, organizationId, services);
 
-        var otherFormat = dto.AllowOtherRegistrationPlateFormat || registrationPlates is not null &&
+        var otherFormat = hasForeignCountry || dto.AllowOtherRegistrationPlateFormat || registrationPlates is not null &&
             !registrationPlates.GetFormats().Formats.Any(format => format.Kinds.Contains((int)dto.Kind));
-        var plate = otherFormat ? dto.RegistrationPlate.Trim() : QuickBookingSupport.NormalizeDisplay(dto.RegistrationPlate);
+        var plate = hasForeignCountry ? foreignPlate ?? string.Empty
+            : otherFormat ? dto.RegistrationPlate.Trim() : QuickBookingSupport.NormalizeDisplay(dto.RegistrationPlate);
         var normalizedPlate = vehicleLookup.NormalizePlateForSearch(plate);
         if (string.IsNullOrWhiteSpace(normalizedPlate))
         {
@@ -87,9 +96,15 @@ public sealed class OrganizationDetailingQuickBookingService(
         {
             vehicle = await vehicleLookup.GetSelectedAsync(userId, organizationId, dto.VehicleId.Value)
                 ?? throw new InvalidOperationException("Выбранный автомобиль не найден в организации.");
-            var plateMatches = otherFormat
-                ? string.Equals(plate, vehicle.RegistrationPlate?.Trim(), StringComparison.Ordinal)
+            var plateMatches = otherFormat || vehicle.RegistrationCountryCode is not null and not "RU"
+                ? string.Equals(dto.RegistrationPlate.Trim(), vehicle.RegistrationPlate?.Trim(), StringComparison.Ordinal)
                 : normalizedPlate == vehicleLookup.NormalizePlateForSearch(vehicle.RegistrationPlate);
+            if (!string.IsNullOrEmpty(registrationCountryCode)
+                && registrationCountryCode != (vehicle.RegistrationCountryCode ?? "RU"))
+            {
+                throw new InvalidOperationException("Страна регистрации выбранного автомобиля изменилась. Выберите автомобиль заново.");
+            }
+
             if (vehicle.Kind != dto.Kind || !plateMatches)
             {
                 throw new InvalidOperationException("Выбранный автомобиль не соответствует госномеру или типу техники. Выберите автомобиль заново.");
@@ -97,9 +112,19 @@ public sealed class OrganizationDetailingQuickBookingService(
         }
         else
         {
-            vehicle = otherFormat
-                ? await vehicleLookup.FindByPlateAsync(userId, organizationId, plate, null, dto.Kind, allowOtherFormat: true)
-                : await vehicleLookup.FindByPlateAsync(userId, organizationId, plate, null, dto.Kind);
+            if (!string.IsNullOrEmpty(registrationCountryCode))
+            {
+                vehicle = await vehicleLookup.FindByPlateAsync(
+                    userId, organizationId, plate, null, dto.Kind, otherFormat, registrationCountryCode);
+            }
+            else if (otherFormat)
+            {
+                vehicle = await vehicleLookup.FindByPlateAsync(userId, organizationId, plate, null, dto.Kind, allowOtherFormat: true);
+            }
+            else
+            {
+                vehicle = await vehicleLookup.FindByPlateAsync(userId, organizationId, plate, null, dto.Kind);
+            }
         }
 
         var vehicleCreated = false;
@@ -136,7 +161,10 @@ public sealed class OrganizationDetailingQuickBookingService(
 
         if (vehicle == null)
         {
-            registrationPlates?.Validate(plate, dto.Kind, dto.AllowOtherRegistrationPlateFormat);
+            if (!hasForeignCountry)
+            {
+                registrationPlates?.Validate(plate, dto.Kind, dto.AllowOtherRegistrationPlateFormat);
+            }
             var clientResult = await this._quickBookingSupport.ResolveClientIdAsync(
                 userId,
                 organizationId,
@@ -156,6 +184,7 @@ public sealed class OrganizationDetailingQuickBookingService(
                 ManualModelName = modelId.HasValue ? null : QuickBookingSupport.NormalizeNullable(dto.ManualModelName),
                 Name = QuickBookingSupport.NormalizeNullable(dto.VehicleText),
                 RegistrationPlate = plate,
+                RegistrationCountryCode = registrationCountryCode,
                 AllowOtherRegistrationPlateFormat = dto.AllowOtherRegistrationPlateFormat,
                 OrganizationId = organizationId,
                 OrganizationClientId = clientId

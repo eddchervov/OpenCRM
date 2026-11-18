@@ -41,6 +41,7 @@ internal static class ClientMaintenanceMapper
                     .ToArray()
                 : [],
             GrossAmount = grossAmount,
+            CurrencyCode = maintenance.CurrencyCode,
             NetAmount = canViewFinance && maintenance.Status == MaintenanceStatus.Cancelled
                 ? 0m
                 : grossAmount.HasValue

@@ -31,7 +31,7 @@ internal sealed class MaintenanceOrderDocxRenderer(string projectName)
             WordDocumentComponents.AddSectionHeading(body, preset.PlannedWorksTitle);
             if (model.Works.Any())
             {
-                WordTableComponents.AddServicesTable(body, model.Works, showTotal: false);
+                WordTableComponents.AddServicesTable(body, model.Works, showTotal: false, currencyCode: model.CurrencyCode);
             }
             else
             {
@@ -120,7 +120,7 @@ internal sealed class MaintenanceOrderDocxRenderer(string projectName)
             WordDocumentComponents.AddSectionHeading(body, preset.CompletedWorksTitle);
             if (model.Works.Any())
             {
-                WordTableComponents.AddServicesTable(body, model.Works, showTotal: false);
+                WordTableComponents.AddServicesTable(body, model.Works, showTotal: false, currencyCode: model.CurrencyCode);
             }
             else
             {
@@ -232,17 +232,17 @@ internal sealed class MaintenanceOrderDocxRenderer(string projectName)
     {
         var grossAmount = model.Works.Sum(work => work.Price ?? 0);
         var table = WordTableComponents.CreateInfoTable();
-        WordTableComponents.AddInfoRow(table, "Работы и материалы", WordDocumentComponents.FormatMoney(grossAmount));
+        WordTableComponents.AddInfoRow(table, "Работы и материалы", WordDocumentComponents.FormatMoney(grossAmount, model.CurrencyCode));
 
         if (model.DiscountAmount > 0)
         {
-            WordTableComponents.AddInfoRow(table, "Скидка", $"-{WordDocumentComponents.FormatMoney(model.DiscountAmount)}");
+            WordTableComponents.AddInfoRow(table, "Скидка", $"-{WordDocumentComponents.FormatMoney(model.DiscountAmount, model.CurrencyCode)}");
         }
 
         WordTableComponents.AddInfoRow(
             table,
             totalLabel,
-            WordDocumentComponents.FormatMoney(Math.Max(0, grossAmount - model.DiscountAmount)));
+            WordDocumentComponents.FormatMoney(Math.Max(0, grossAmount - model.DiscountAmount), model.CurrencyCode));
         body.AppendChild(table);
         WordDocumentComponents.AddSpacer(body, 160);
     }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OpenCRM.Domain;
 using OpenCRM.Infrastructure.Data;
+using OpenCRM.Modules.Organizations.Shifts;
 using OpenCRM.Services.Interfaces.Organizations;
 using OpenCRM.Services.Interfaces.Organizations.Dtos;
 
@@ -59,7 +60,8 @@ internal sealed class OrganizationTimeZoneService(
         return new OrganizationTimeZoneDto
         {
             TimeZoneId = organization.ShiftTimeZoneId,
-            CanManage = canManage
+            CanManage = canManage,
+            CanChange = !await OrganizationShiftCommandService.HasTimedSchedulingDataAsync(context, organizationId)
         };
     }
 
@@ -77,22 +79,23 @@ internal sealed class OrganizationTimeZoneService(
         var normalizedTimeZoneId = NormalizeTimeZoneId(dto.TimeZoneId);
         await transaction.ExecuteAuditedAsync(async eventId =>
         {
-            var organizationQuery = context.Organizations
-                .Where(organization => organization.Id == organizationId
-                    && organization.IsActive
-                    && !organization.IsArchived
-                    && !organization.IsDeleted);
-            organizationQuery = dto.ExpectedTimeZoneId == null
-                ? organizationQuery.Where(organization => organization.ShiftTimeZoneId == null)
-                : organizationQuery.Where(organization => organization.ShiftTimeZoneId == dto.ExpectedTimeZoneId);
-
-            var updatedCount = await organizationQuery.ExecuteUpdateAsync(setters => setters
-                .SetProperty(organization => organization.ShiftTimeZoneId, normalizedTimeZoneId)
-                .SetProperty(organization => organization.UpdatedAt, DateTime.UtcNow));
-            if (updatedCount != 1)
+            await transaction.LockOrganizationAsync(organizationId);
+            var organization = await context.Organizations.SingleOrDefaultAsync(item =>
+                item.Id == organizationId && item.IsActive && !item.IsArchived && !item.IsDeleted)
+                ?? throw new KeyNotFoundException("Организация не найдена.");
+            if (!string.Equals(organization.ShiftTimeZoneId, dto.ExpectedTimeZoneId, StringComparison.Ordinal))
             {
                 throw new DbUpdateConcurrencyException("Часовой пояс уже изменён. Обновите настройки и повторите попытку.");
             }
+
+            if (!AreEquivalentTimeZoneIds(organization.ShiftTimeZoneId, normalizedTimeZoneId)
+                && await OrganizationShiftCommandService.HasTimedSchedulingDataAsync(context, organizationId))
+            {
+                throw new InvalidOperationException("Часовой пояс нельзя изменить после создания расписания с заданным временем.");
+            }
+
+            organization.ShiftTimeZoneId = normalizedTimeZoneId;
+            organization.UpdatedAt = DateTime.UtcNow;
 
             await auditService.AddAsync(new OrganizationAuditEventCreateDto
             {
@@ -111,11 +114,25 @@ internal sealed class OrganizationTimeZoneService(
         return new OrganizationTimeZoneDto
         {
             TimeZoneId = normalizedTimeZoneId,
-            CanManage = true
+            CanManage = true,
+            CanChange = !await OrganizationShiftCommandService.HasTimedSchedulingDataAsync(context, organizationId)
         };
     }
 
-    private static string NormalizeTimeZoneId(string? timeZoneId)
+    private static bool AreEquivalentTimeZoneIds(string? currentTimeZoneId, string normalizedTimeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(currentTimeZoneId))
+        {
+            return false;
+        }
+
+        return string.Equals(
+            NormalizeTimeZoneId(currentTimeZoneId),
+            normalizedTimeZoneId,
+            StringComparison.Ordinal);
+    }
+
+    internal static string NormalizeTimeZoneId(string? timeZoneId)
     {
         var normalizedTimeZoneId = timeZoneId?.Trim() ?? string.Empty;
         if (string.Equals(normalizedTimeZoneId, "UTC", StringComparison.OrdinalIgnoreCase))

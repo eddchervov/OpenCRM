@@ -4,7 +4,7 @@
 }
 @{
     Layout = "/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = $"Сведения об обслуживании";
+    ViewData["Title"] = Text["maintenance.legacy.page.detailsTitle"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "maintenance-details-page-body";
     var organizationId = ViewData["MaintenanceOrganizationId"] as string ?? string.Empty;
@@ -14,7 +14,7 @@
     }
     var organizationName = ViewData["MaintenanceOrganizationName"] as string ?? string.Empty;
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
-    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? "Моя техника" : "Техника организации";
+    var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? Text["maintenance.legacy.page.vehiclePersonal"].Value : Text["maintenance.legacy.page.vehicleOrganization"].Value;
     var workspaceSidebar = new OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
     {
         OrganizationId = string.IsNullOrWhiteSpace(organizationId) ? Guid.Empty : Guid.Parse(organizationId),
@@ -55,14 +55,14 @@
                         <a :href="getVehicleUrl()" class="text-decoration-none">
                             <template v-if="vehicle.id">
                                 {{ vehicle.displayName }}
-                                <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} @Text["maintenance.legacy.form.yearSuffix"]</span>
                             </template>
                             <template v-else>
-                                Техника
+                                @Text["maintenance.legacy.page.vehicle"]
                             </template>
                         </a>
                     </li>
-                    <li class="breadcrumb-item active" aria-current="page">Сведения об обслуживании</li>
+                    <li class="breadcrumb-item active" aria-current="page">@Text["maintenance.legacy.page.detailsTitle"]</li>
                 </ol>
             </nav>
 
@@ -71,26 +71,26 @@
                 <div class="card-header bg-gradient-primary text-white">
                     <h3 class="card-title mb-0">
                         <i class="fa fa-info-circle me-2"></i>
-                        Сведения об обслуживании
+                        @Text["maintenance.legacy.page.detailsTitle"]
                     </h3>
                 </div>
                 <div class="card-body">
                     <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
                         <i class="fa fa-spinner fa-spin"></i>
-                        <span>Загружаем данные обслуживания...</span>
+                        <span>@Text["maintenance.legacy.page.loadingData"]</span>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="maintenance-info-grid">
                                 <div class="maintenance-info-item">
-                                    <label class="maintenance-info-label">Тип обслуживания</label>
+                                    <label class="maintenance-info-label">@Text["maintenance.legacy.page.type"]</label>
                                     <span class="maintenance-info-value">
                                         {{ getMaintenanceTypeText(maintenance.type) }}
                                     </span>
                                 </div>
 
                                 <div class="maintenance-info-item">
-                                    <label class="maintenance-info-label">Дата обслуживания</label>
+                                    <label class="maintenance-info-label">@Text["maintenance.legacy.page.date"]</label>
                                     <span class="maintenance-info-value">
                                         <i class="fa fa-calendar me-1 text-muted"></i>
                                         {{ formatPlannedDateTime() }}
@@ -110,7 +110,7 @@
                         <div class="col-md-6">
                             <div class="maintenance-info-grid">
                                 <div class="maintenance-info-item" v-if="maintenance.location">
-                                    <label class="maintenance-info-label">Место проведения</label>
+                                    <label class="maintenance-info-label">@Text["maintenance.legacy.page.location"]</label>
                                     <span class="maintenance-info-value">
                                         <i class="fa fa-map-marker me-1 text-muted"></i>
                                         {{ maintenance.location }}
@@ -118,7 +118,7 @@
                                 </div>
 
                                 <div class="maintenance-info-item" v-if="maintenance.price">
-                                    <label class="maintenance-info-label">Общая стоимость</label>
+                                    <label class="maintenance-info-label">@Text["maintenance.legacy.page.totalCost"]</label>
                                     <span class="maintenance-info-value text-success fw-bold">
                                         <i class="fa fa-rub me-1"></i>
                                         {{ formatPrice(maintenance.price) }}
@@ -126,40 +126,40 @@
                                 </div>
 
                                 <div class="maintenance-info-item">
-                                    <label class="maintenance-info-label">Скачать отчет</label>
+                                    <label class="maintenance-info-label">@Text["maintenance.legacy.page.report"]</label>
                                     <div class="maintenance-info-value">
                                         <div v-if="!exportAccess.loaded" class="text-muted small mb-2">
-                                            Проверяем доступные форматы...
+                                            @Text["maintenance.legacy.page.formatLoading"]
                                         </div>
                                         <div v-else-if="!hasAnyExportAccess" class="alert alert-warning py-2 px-3 mb-2">
-                                            Экспорт отчетов недоступен для вашего аккаунта.
+                                            @Text["maintenance.legacy.page.exportUnavailable"]
                                         </div>
                                         <div class="dropdown" v-else>
                                             <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" :disabled="!!documentActionKey">
                                                 <span v-if="documentActionKey" class="spinner-border spinner-border-sm me-2"></span>
                                                 <i v-else class="fa fa-download me-2"></i>
-                                                {{ documentActionKey ? 'Готовим файл...' : 'Выбрать формат' }}
+                                                {{ documentActionKey ? localizedText.pagePrepareFile : localizedText.pageChooseFormat }}
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li class="dropdown-header" v-if="exportAccess.pdf || exportAccess.pdfWithPhotos || exportAccess.word || exportAccess.wordWithPhotos">@(commercialEnabled ? "Входит в тариф" : "Доступные форматы")</li>
+                                                <li class="dropdown-header" v-if="exportAccess.pdf || exportAccess.pdfWithPhotos || exportAccess.word || exportAccess.wordWithPhotos">@(commercialEnabled ? Text["maintenance.legacy.page.includedPlan"] : Text["maintenance.legacy.page.availableFormats"])</li>
                                                 <li v-if="exportAccess.pdfWithPhotos">
                                                     <button class="dropdown-item" @@click="generatePDF(true)" :disabled="!!documentActionKey">
-                                                        <i class="fa fa-file-pdf-o text-danger me-2"></i>PDF с фото
+                                                        <i class="fa fa-file-pdf-o text-danger me-2"></i>@Text["maintenance.legacy.page.pdfPhotos"]
                                                     </button>
                                                 </li>
                                                 <li v-if="exportAccess.pdf">
                                                     <button class="dropdown-item" @@click="generatePDF(false)" :disabled="!!documentActionKey">
-                                                        <i class="fa fa-file-pdf-o text-danger me-2"></i>PDF без фото
+                                                        <i class="fa fa-file-pdf-o text-danger me-2"></i>@Text["maintenance.legacy.page.pdfNoPhotos"]
                                                     </button>
                                                 </li>
                                                 <li v-if="exportAccess.wordWithPhotos">
                                                     <button class="dropdown-item" @@click="generateWord(true)" :disabled="!!documentActionKey">
-                                                        <i class="fa fa-file-word-o text-primary me-2"></i>Word с фото
+                                                        <i class="fa fa-file-word-o text-primary me-2"></i>@Text["maintenance.legacy.page.wordPhotos"]
                                                     </button>
                                                 </li>
                                                 <li v-if="exportAccess.word">
                                                     <button class="dropdown-item" @@click="generateWord(false)" :disabled="!!documentActionKey">
-                                                        <i class="fa fa-file-word-o text-primary me-2"></i>Word без фото
+                                                        <i class="fa fa-file-word-o text-primary me-2"></i>@Text["maintenance.legacy.page.wordNoPhotos"]
                                                     </button>
                                                 </li>
 
@@ -167,25 +167,25 @@
                                                     <hr class="dropdown-divider">
                                                 </li>
 
-                                                <li class="dropdown-header text-muted" v-if="!exportAccess.pdf || !exportAccess.pdfWithPhotos || !exportAccess.word || !exportAccess.wordWithPhotos">@(commercialEnabled ? "Не входит в тариф" : "Недоступные форматы")</li>
+                                                <li class="dropdown-header text-muted" v-if="!exportAccess.pdf || !exportAccess.pdfWithPhotos || !exportAccess.word || !exportAccess.wordWithPhotos">@(commercialEnabled ? Text["maintenance.legacy.page.notIncludedPlan"] : Text["maintenance.legacy.page.unavailableFormats"])</li>
                                                 <li v-if="!exportAccess.pdfWithPhotos">
                                                     <button class="dropdown-item disabled" disabled>
-                                                        <i class="fa fa-file-pdf-o me-2"></i>PDF с фото
+                                                        <i class="fa fa-file-pdf-o me-2"></i>@Text["maintenance.legacy.page.pdfPhotos"]
                                                     </button>
                                                 </li>
                                                 <li v-if="!exportAccess.pdf">
                                                     <button class="dropdown-item disabled" disabled>
-                                                        <i class="fa fa-file-pdf-o me-2"></i>PDF без фото
+                                                        <i class="fa fa-file-pdf-o me-2"></i>@Text["maintenance.legacy.page.pdfNoPhotos"]
                                                     </button>
                                                 </li>
                                                 <li v-if="!exportAccess.wordWithPhotos">
                                                     <button class="dropdown-item disabled" disabled>
-                                                        <i class="fa fa-file-word-o me-2"></i>Word с фото
+                                                        <i class="fa fa-file-word-o me-2"></i>@Text["maintenance.legacy.page.wordPhotos"]
                                                     </button>
                                                 </li>
                                                 <li v-if="!exportAccess.word">
                                                     <button class="dropdown-item disabled" disabled>
-                                                        <i class="fa fa-file-word-o me-2"></i>Word без фото
+                                                        <i class="fa fa-file-word-o me-2"></i>@Text["maintenance.legacy.page.wordNoPhotos"]
                                                     </button>
                                                 </li>
                                             </ul>
@@ -203,7 +203,7 @@
                 <div class="card-header bg-gradient-info text-white">
                     <h3 class="card-title mb-0">
                         <i class="fa fa-wrench me-2"></i>
-                        Выполненные работы и услуги
+                        @Text["maintenance.legacy.page.work"]
                         <span class="badge bg-white text-info ms-2">{{ maintenance.maintenanceDetails.length }}</span>
                     </h3>
                 </div>
@@ -212,9 +212,9 @@
                         <table class="table table-hover maintenance-services-table mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 40%">Услуга/Запчасть</th>
-                                    <th style="width: 40%">Описание</th>
-                                    <th style="width: 20%" class="text-end">Стоимость</th>
+                                    <th style="width: 40%">@Text["maintenance.legacy.page.servicePart"]</th>
+                                    <th style="width: 40%">@Text["maintenance.legacy.page.description"]</th>
+                                    <th style="width: 20%" class="text-end">@Text["maintenance.legacy.page.cost"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -241,7 +241,7 @@
                             </tbody>
                             <tfoot class="table-group-divider" v-if="calculateServicesTotal() > 0">
                                 <tr>
-                                    <td colspan="2" class="text-end fw-bold">Итого работ/услуг:</td>
+                                    <td colspan="2" class="text-end fw-bold">@Text["maintenance.legacy.page.totalWork"]</td>
                                     <td class="text-end fw-bold text-success">{{ formatPrice(calculateServicesTotal()) }}</td>
                                 </tr>
                             </tfoot>
@@ -255,7 +255,7 @@
                 <div class="card-header bg-gradient-secondary text-white">
                     <h3 class="card-title mb-0">
                         <i class="fa fa-comment me-2"></i>
-                        Комментарий
+                        @Text["maintenance.legacy.page.workflowComment"]
                     </h3>
                 </div>
                 <div class="card-body">
@@ -270,7 +270,7 @@
                 <div class="card-header bg-gradient-warning text-dark">
                     <h3 class="card-title mb-0">
                         <i class="fa fa-camera me-2"></i>
-                        Фотографии
+                        @Text["maintenance.legacy.page.photos"]
                         <span class="badge bg-white text-warning ms-2">{{ photoUrls.length + failedPhotoCount }}</span>
                     </h3>
                 </div>
@@ -280,7 +280,7 @@
                             <img :src="photoUrl"
                                  class="maintenance-photo-img"
                                  @@click="openPhotoGallery(index)"
-                                 :alt="'Фото ' + (index + 1)">
+                                 :alt="localizedText.photosPhotoLabel.replace('{0}', index + 1)">
                             <div class="maintenance-photo-overlay">
                                 <button class="btn btn-sm btn-light maintenance-photo-view-btn"
                                         @@click="openPhotoGallery(index)">
@@ -293,7 +293,7 @@
                              v-for="index in failedPhotoCount"
                              :key="'failed-' + index">
                             <i class="fa fa-image text-muted mb-2" style="font-size: 2rem;"></i>
-                            <div class="small text-muted">Не удалось загрузить фото</div>
+                            <div class="small text-muted">@Text["maintenance.legacy.page.photoError"]</div>
                         </div>
                     </div>
                 </div>
@@ -305,28 +305,28 @@
                     <div class="col-md-6">
                         <a :href="getVehicleUrl()" class="btn btn-outline-dark w-100">
                             <i class="fa fa-arrow-left me-2"></i>
-                            К карточке техники
+                            @Text["maintenance.legacy.page.vehicleCard"]
                         </a>
                     </div>
                     <div class="col-md-6">
                         <div class="dropdown">
                             <button class="btn btn-dark w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                 <i class="fa fa-cog me-2"></i>
-                                Действия
+                                @Text["maintenance.legacy.page.action"]
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end w-100">
                                 <li>
                                     <a :href="getMaintenanceUpdateUrl()"
                                        class="dropdown-item">
                                         <i class="fa fa-edit me-2"></i>
-                                        Редактировать
+                                        @Text["maintenance.legacy.page.edit"]
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <button class="dropdown-item text-danger" @@click="deleteMaintenance">
                                         <i class="fa fa-trash me-2"></i>
-                                        Удалить обслуживание
+                                        @Text["maintenance.legacy.page.deleteMaintenance"]
                                     </button>
                                 </li>
                             </ul>
@@ -343,30 +343,30 @@
                     <div class="modal-header bg-gradient-danger text-white">
                         <h5 class="modal-title">
                             <i class="fa fa-exclamation-triangle me-2"></i>
-                            Подтверждение удаления
+                            @Text["maintenance.legacy.page.confirmDelete"]
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="text-center">
                             <i class="fa fa-trash fa-3x text-danger mb-3"></i>
-                            <h5>Вы уверены, что хотите удалить это обслуживание?</h5>
+                            <h5>@Text["maintenance.legacy.page.deleteQuestion"]</h5>
                             <p class="text-muted">
-                                Дата: <strong>{{ formatDate(maintenance.date) }}</strong><br>
-                                Тип: <strong>{{ getMaintenanceTypeText(maintenance.type) }}</strong>
+                                @Text["maintenance.legacy.page.dateLabel"] <strong>{{ formatDate(maintenance.date) }}</strong><br>
+                                @Text["maintenance.legacy.page.typeLabel"] <strong>{{ getMaintenanceTypeText(maintenance.type) }}</strong>
                             </p>
                             <p class="text-danger">
                                 <i class="fa fa-warning me-1"></i>
-                                Это действие нельзя будет отменить!
+                                @Text["maintenance.legacy.page.deleteWarning"]
                             </p>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@Text["maintenance.legacy.form.deletePhoto.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="confirmDelete" :disabled="deleteSaving">
                             <span v-if="deleteSaving" class="spinner-border spinner-border-sm me-1"></span>
                             <i v-else class="fa fa-trash me-1"></i>
-                            {{ deleteSaving ? 'Удаляем...' : 'Удалить' }}
+                            {{ deleteSaving ? localizedText.pageDeleting : localizedText.photosRemove }}
                         </button>
                     </div>
                 </div>
@@ -380,7 +380,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-image me-2"></i>
-                            Просмотр фотографии
+                            @Text["maintenance.legacy.page.gallery"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -388,7 +388,7 @@
                         <div v-if="photoUrls.length > 0">
                             <img :src="photoUrls[currentPhotoIndex]"
                                  class="img-fluid rounded maintenance-photo-large"
-                                 :alt="'Фото ' + (currentPhotoIndex + 1)">
+                                 :alt="localizedText.photosPhotoLabel.replace('{0}', currentPhotoIndex + 1)">
 
                             <div class="maintenance-photo-navigation mt-3">
                                 <button class="btn btn-outline-primary"
@@ -419,7 +419,7 @@
                 <div class="modal-content">
                     <div class="modal-body text-center py-4">
                         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="visually-hidden">Загрузка...</span>
+                            <span class="visually-hidden">@Text["maintenance.legacy.page.loadingIndicator"]</span>
                         </div>
                         <h5>{{ loadingTitle }}</h5>
                         <p class="text-muted">{{ loadingMessage }}</p>

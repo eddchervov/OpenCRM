@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using OpenCRM.Domain;
+using OpenCRM.Domain.Enums;
 using OpenCRM.Domain.Identity;
 using OpenCRM.Modules.Organizations;
 using OpenCRM.Services.Interfaces.Organizations;
@@ -64,6 +65,7 @@ public sealed class OrganizationTimeZoneTests(OrganizationsDatabaseFixture fixtu
 
         Assert.Null(result.TimeZoneId);
         Assert.False(result.CanManage);
+        Assert.True(result.CanChange);
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAsync(outsider.Id, organization.Id));
         subscriptions.Verify(value => value.EnsureWorkspaceCanReadAsync(
             reader.Id,
@@ -115,7 +117,13 @@ public sealed class OrganizationTimeZoneTests(OrganizationsDatabaseFixture fixtu
         });
 
         Assert.Equal("Asia/Novosibirsk", result.TimeZoneId);
+        var legacyService = new OrganizationShiftService(
+            context, subscriptions.Object, permissions.Object, new OrganizationAuditService(context));
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => legacyService.SetTimeZoneAsync(
+            owner.Id, organization.Id, "Europe/Moscow", null));
+        await legacyService.SetTimeZoneAsync(owner.Id, organization.Id, "Asia/Novosibirsk");
         Assert.True(result.CanManage);
+        Assert.True(result.CanChange);
         subscriptions.Verify(value => value.EnsureWorkspaceCanWriteAsync(
             owner.Id,
             organization.Id,
@@ -126,6 +134,95 @@ public sealed class OrganizationTimeZoneTests(OrganizationsDatabaseFixture fixtu
             .SingleAsync());
         Assert.Contains(await context.OrganizationAuditEvents.AsNoTracking().ToListAsync(), item =>
             item.OrganizationId == organization.Id && item.EventType == "organization.timezone.changed");
+    }
+
+    [Fact]
+    public async Task TimedMaintenancePreventsChangingOrganizationTimeZoneEvenWhenArchivedOrDeleted()
+    {
+        await using var context = fixture.CreateContext();
+        var owner = new ApplicationUser { Email = "timezone-scheduled-owner@example.test" };
+        var organization = new Organization
+        {
+            Name = "Организация с расписанием",
+            OwnerUser = owner,
+            ShiftTimeZoneId = "Asia/Novosibirsk",
+            Members = [new OrganizationMember { User = owner, RoleCode = OrganizationRoleCodes.Owner }]
+        };
+        var vehicle = new Vehicle
+        {
+            User = owner,
+            Organization = organization,
+            Name = "Техника с расписанием",
+            DateTimeCreation = DateTime.UtcNow,
+            IsArchived = true,
+            ArchiveDate = DateTime.UtcNow
+        };
+        var maintenance = new OpenCRM.Domain.Maintenance
+        {
+            User = owner,
+            Vehicle = vehicle,
+            Status = MaintenanceStatus.Planned,
+            Date = new DateTime(2026, 11, 16, 0, 0, 0, DateTimeKind.Utc),
+            PlannedDate = new DateTime(2026, 11, 16, 0, 0, 0, DateTimeKind.Utc),
+            PlannedStartTime = TimeSpan.FromHours(9),
+            PlannedEndTime = TimeSpan.FromHours(10),
+            DateTimeCreation = DateTime.UtcNow,
+            IsDeleted = true
+        };
+        context.Organizations.Add(organization);
+        context.Maintenance.Add(maintenance);
+        await context.SaveChangesAsync();
+
+        var subscriptions = new Mock<IOrganizationSubscriptionService>();
+        subscriptions.Setup(service => service.EnsureWorkspaceCanReadAsync(
+                owner.Id,
+                organization.Id,
+                OrganizationPermissionCodes.WorkspaceView))
+            .Returns(Task.CompletedTask);
+        subscriptions.Setup(service => service.EnsureWorkspaceCanWriteAsync(
+                owner.Id,
+                organization.Id,
+                OrganizationPermissionCodes.WorkspaceProfileEdit))
+            .Returns(Task.CompletedTask);
+        var permissions = new Mock<IOrganizationPermissionService>();
+        permissions.Setup(service => service.HasPermissionAsync(
+                owner.Id,
+                organization.Id,
+                OrganizationPermissionCodes.WorkspaceProfileEdit))
+            .ReturnsAsync(true);
+        var service = new OrganizationTimeZoneService(
+            context,
+            subscriptions.Object,
+            permissions.Object,
+            new OrganizationAuditService(context),
+            new OrganizationTransaction(context));
+
+        var settings = await service.GetAsync(owner.Id, organization.Id);
+
+        Assert.False(settings.CanChange);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateAsync(owner.Id, organization.Id,
+            new UpdateOrganizationTimeZoneDto
+            {
+                TimeZoneId = "Europe/Moscow",
+                ExpectedTimeZoneId = "Asia/Novosibirsk"
+            }));
+        var legacyShiftService = new OrganizationShiftService(
+            context,
+            subscriptions.Object,
+            permissions.Object,
+            new OrganizationAuditService(context));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => legacyShiftService.SetTimeZoneAsync(
+            owner.Id,
+            organization.Id,
+            "Europe/Moscow"));
+        var unchanged = await service.UpdateAsync(owner.Id, organization.Id, new UpdateOrganizationTimeZoneDto
+        {
+            TimeZoneId = "Asia/Novosibirsk",
+            ExpectedTimeZoneId = "Asia/Novosibirsk"
+        });
+
+        Assert.Equal("Asia/Novosibirsk", unchanged.TimeZoneId);
+        Assert.False(unchanged.CanChange);
     }
 
     [Fact]

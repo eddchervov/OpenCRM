@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using OpenCRM.Domain;
 
 namespace OpenCRM.Modules.Organizations.Contracts.Dtos;
 
@@ -13,6 +14,16 @@ public class CreateOrganizationDto
     /// <summary> Описание организации. </summary>
     [MaxLength(600)]
     public string? Description { get; set; }
+
+    /// <summary> Валюта учёта новой организации. </summary>
+    [Required]
+    [MaxLength(3)]
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
+
+    /// <summary> Часовой пояс организации в формате IANA. </summary>
+    [Required]
+    [MaxLength(100)]
+    public string TimeZoneId { get; set; } = "Etc/UTC";
 
     /// <summary> Код основного сценария организации. </summary>
     [Required]

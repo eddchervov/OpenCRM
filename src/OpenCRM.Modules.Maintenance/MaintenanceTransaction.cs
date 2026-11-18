@@ -16,6 +16,9 @@ internal sealed class MaintenanceTransaction(OpenCRMContext context)
         }
     }
 
+    internal Task LockUserAsync(string userId) => context.Database.ExecuteSqlInterpolatedAsync(
+        $"""SELECT 1 FROM identity."AspNetUsers" WHERE "Id" = {userId} FOR NO KEY UPDATE""");
+
     /// <summary> Выполняет действие с проверкой успешности. </summary>
     internal Task ExecuteAsync(Func<Task> action, Func<Task<bool>> verifySucceeded) =>
         this.ExecuteAsync(async () =>

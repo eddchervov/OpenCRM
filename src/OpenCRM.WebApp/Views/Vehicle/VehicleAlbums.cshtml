@@ -5,19 +5,19 @@
     var organizationId = ViewData["VehicleOrganizationId"] as string ?? string.Empty;
     var organizationName = ViewData["VehicleOrganizationName"] as string ?? string.Empty;
     var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
-    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? "Карточка техники";
+    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? Text["vehicle.card.detailsTitle"].Value;
     var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
         ? $"/vehicle/{vehicleId}"
         : $"/vehicle/{vehicleId}?organizationId={organizationId}";
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? vehicleScenario.BreadcrumbTitle
+        ? Text["vehicle.list.title"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
+            : Text["vehicle.journal.organization"].Value;
     var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
-    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? vehicleScenario.BreadcrumbTitle : "Техника";
-    ViewData["Title"] = "Альбомы техники";
+    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? Text["vehicle.list.title"].Value : Text["vehicle.journal.vehicle"].Value;
+    ViewData["Title"] = Text["vehicle.media.albums.photoTitle"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = string.IsNullOrWhiteSpace(organizationId)
         ? "vehicle-card-page-body"
@@ -29,45 +29,48 @@
 </style>
 
 <div id="vehicle-form" class="vehicle-photo-manager-page">
-    <div id="vehicle-album-manager" class="vehicle-details-container vehicle-media-manager-container" v-cloak>
+    <div id="vehicle-album-manager" class="vehicle-details-container vehicle-media-manager-container" v-cloak
+         data-error-load="@Text["vehicle.media.albums.error.load"]"
+         data-error-create="@Text["vehicle.media.albums.error.create"]"
+         data-error-free-limit="@Text["vehicle.media.albums.error.freeLimit"]">
 
 
         <div class="vehicle-details-card vehicle-details-card-primary mb-4">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="fa fa-folder-open"></i>
-                    Альбомы
+                    @Text["vehicle.media.albums.title"]
                 </h3>
                 @if (!string.IsNullOrWhiteSpace(organizationName))
                 {
-                    <div class="text-muted small mt-2">Рабочее пространство: @organizationName</div>
+                    <div class="text-muted small mt-2">@Text["vehicle.media.albums.workspace"] @organizationName</div>
                 }
             </div>
             <div class="card-body">
                 <div class="d-flex flex-column flex-lg-row gap-2 align-items-lg-end mb-4">
                     <div class="flex-grow-1">
-                        <label class="form-label">Новый альбом</label>
-                        <input type="text" class="form-control" maxlength="120" v-model.trim="newAlbumTitle" :disabled="!canCreateAlbum" placeholder="Например: До ремонта">
+                        <label class="form-label">@Text["vehicle.media.albums.newTitle"]</label>
+                        <input type="text" class="form-control" maxlength="120" v-model.trim="newAlbumTitle" :disabled="!canCreateAlbum" placeholder="@Text["vehicle.media.albums.titlePlaceholder"]">
                         <div class="form-text" v-if="albumLimit && albumLimit.isLimitedByPlan">
-                            На бесплатном тарифе и в демо доступен 1 альбом.
+                            @Text["vehicle.media.albums.freeLimit"]
                         </div>
                     </div>
                     <button class="btn btn-dark" @@click="createAlbum" :disabled="!canSubmitAlbumTitle || albumSaving">
                         <i class="fa fa-plus me-2"></i>
-                        Создать альбом
+                        @Text["vehicle.media.albums.create"]
                     </button>
                 </div>
 
                 <div class="text-muted small mb-3" v-if="albumLimit">
-                    Альбомов: {{ albumLimit.currentCount }} / {{ albumLimit.maxCount }}
+                    @(Text["vehicle.media.albums.count"].Value.Replace("{0}", "{{ albumLimit.currentCount }}").Replace("{1}", "{{ albumLimit.maxCount }}"))
                 </div>
 
                 <div v-if="albumsLoading" class="text-muted">
-                    <i class="fa fa-spinner fa-spin me-2"></i>Загружаем альбомы...
+                    <i class="fa fa-spinner fa-spin me-2"></i>@Text["vehicle.media.albums.loading"]
                 </div>
                 <div v-else-if="albums.length === 0" class="vehicle-photo-empty">
                     <i class="fa fa-folder-o"></i>
-                    <div>Альбомов пока нет</div>
+                    <div>@Text["vehicle.media.albums.empty"]</div>
                 </div>
                 <div v-else class="vehicle-album-overview-grid">
                     <a class="vehicle-album-overview-tile"
@@ -80,7 +83,7 @@
                         </div>
                         <div class="vehicle-album-overview-caption">
                             <div class="vehicle-album-overview-title">{{ album.title }}</div>
-                            <div class="vehicle-album-overview-meta">{{ album.photoCount }} фото</div>
+                            <div class="vehicle-album-overview-meta">{{ album.photoCount }} @Text["vehicle.media.albums.photoCount"]</div>
                         </div>
                     </a>
                 </div>
@@ -91,12 +94,12 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">Ошибка</h5>
+                        <h5 class="modal-title">@Text["vehicle.media.albums.error.title"]</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">{{ errorMessage }}</div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.media.button.close"]</button>
                     </div>
                 </div>
             </div>
@@ -133,7 +136,7 @@
                     <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@vehiclesBreadcrumbText</a></li>
                 }
                 <li class="breadcrumb-item"><a href="@vehicleUrl" class="text-decoration-none">@vehicleDisplayName</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><h1>Альбомы</h1></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>@Text["vehicle.media.albums.title"]</h1></li>
             </ol>
         </nav>
 }

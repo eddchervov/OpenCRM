@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -40,7 +41,7 @@ public partial class EmailHistoryViewModel(AdminSessionClient sessionClient) : C
     private bool _isDetailOpen;
 
     [ObservableProperty]
-    private CommunicationOption _selectedStatus = new("", "Все статусы");
+    private CommunicationOption _selectedStatus = CommunicationOption.Localized("", "native.promoCodes.vse.statusy");
 
     public IReadOnlyList<int> PageSizes { get; } = [25, 50, 100];
 
@@ -50,13 +51,30 @@ public partial class EmailHistoryViewModel(AdminSessionClient sessionClient) : C
 
     public IReadOnlyList<CommunicationOption> StatusOptions { get; } =
     [
-        new("", "Все статусы"), new("pending", "Ожидает отправки"), new("queued", "В очереди"),
-        new("retrying", "Повторная отправка"), new("sent", "Отправлено"),
-        new("delivered", "Доставлено"), new("opened", "Открыто"), new("clicked", "Переход по ссылке"),
-        new("failed", "Ошибка"), new("hard_bounced", "Адрес недоступен"), new("soft_bounced", "Временная ошибка"),
-        new("spam", "Спам"), new("spam_block", "Блокировка спама"), new("unsubscribed", "Отписка"),
-        new("simulated", "Отправка отключена")
+        CommunicationOption.Localized("", "native.promoCodes.vse.statusy"), CommunicationOption.Localized("pending", "native.email.ozhidaet.otpravki"), CommunicationOption.Localized("queued", "native.billing.v.ocheredi"),
+        CommunicationOption.Localized("retrying", "native.email.povtornaya.otpravka"), CommunicationOption.Localized("sent", "native.email.sentStatus"),
+        CommunicationOption.Localized("delivered", "native.email.dostavleno"), CommunicationOption.Localized("opened", "native.email.otkryto"), CommunicationOption.Localized("clicked", "native.email.perekhod.po.ssylke"),
+        CommunicationOption.Localized("failed", "native.billing.oshibka"), CommunicationOption.Localized("hard_bounced", "native.email.adres.nedostupen"), CommunicationOption.Localized("soft_bounced", "native.email.vremennaya.oshibka"),
+        CommunicationOption.Localized("spam", "native.support.spam"), CommunicationOption.Localized("spam_block", "native.email.blokirovka.spama"), CommunicationOption.Localized("unsubscribed", "native.email.otpiska"),
+        CommunicationOption.Localized("simulated", "native.email.otpravka.otklyuchena")
     ];
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        CommunicationsViewModel.RefreshLocalizedOptions(this.StatusOptions);
+        foreach (var row in this.Rows)
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        foreach (var row in this.Events)
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        this.DetailSummary?.RefreshLocalizedValues();
+    }
 
     protected override async Task LoadPageAsync(CancellationToken cancellationToken)
     {

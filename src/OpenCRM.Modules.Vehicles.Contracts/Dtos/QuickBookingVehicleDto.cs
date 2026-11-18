@@ -16,4 +16,7 @@ public sealed class QuickBookingVehicleDto
 
     /// <summary> Регистрационный номер техники. </summary>
     public string? RegistrationPlate { get; set; }
+
+    /// <summary> Страна регистрации для сопоставления номера без российской нормализации. </summary>
+    public string? RegistrationCountryCode { get; set; }
 }

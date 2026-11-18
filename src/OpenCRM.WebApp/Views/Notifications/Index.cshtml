@@ -1,11 +1,11 @@
 @{
-    ViewData["Title"] = "Уведомления";
+    ViewData["Title"] = Text["entry.notifications"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "organizations-entry";
 }
 
 <div class="container py-4 py-lg-5 site-notifications-page">
-    <h1 class="h3 mb-4">Уведомления</h1>
+    <h1 class="h3 mb-4">@Text["entry.notifications"]</h1>
     <div data-site-notification-history aria-live="polite"></div>
 </div>
 

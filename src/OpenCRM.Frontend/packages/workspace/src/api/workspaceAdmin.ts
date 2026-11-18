@@ -1,5 +1,7 @@
 ﻿import type { WorkspaceScenarioCatalog } from './scenarioCatalog'
 
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
 import type { WorkspaceAnalytics } from '../types'
 
 export type WorkspaceOrganizationMember = {
@@ -27,6 +29,7 @@ export type WorkspaceOrganizationInvitation = {
 }
 
 export type WorkspaceOrganization = {
+  currencyCode?: string
   id: string
   name: string
   timeZoneId?: string | null
@@ -246,11 +249,11 @@ export type WorkspacePaymentBuyer = {
 }
 
 export function loadWorkspaceOverview(organizationId: string): Promise<WorkspaceOverviewData> {
-  return getJson(`/api/v1/organizations/${organizationId}/workspace/overview`, 'Не удалось загрузить организацию.')
+  return getJson(`/api/v1/organizations/${organizationId}/workspace/overview`, translate('workspaceApi.loadOrganization'))
 }
 
 export function loadWorkspaceMembers(organizationId: string): Promise<WorkspaceMembersData> {
-  return getJson(`/api/v1/organizations/${organizationId}/workspace/members`, 'Не удалось загрузить участников.')
+  return getJson(`/api/v1/organizations/${organizationId}/workspace/members`, translate('workspaceApi.loadMembers'))
 }
 
 export function loadWorkspaceWiki(
@@ -267,33 +270,33 @@ export function loadWorkspaceWiki(
     url.searchParams.set('q', options.searchQuery)
   }
 
-  return getJson(url, 'Не удалось загрузить вики.')
+  return getJson(url, translate('workspaceApi.loadWiki'))
 }
 
 export function loadWorkspaceWikiArticle(organizationId: string, slug: string): Promise<WorkspaceWikiArticle> {
   return getJson(
     `/api/v1/organizations/${organizationId}/workspace/wiki/articles/${encodeURIComponent(slug)}`,
-    'Не удалось загрузить статью.'
+    translate('workspaceApi.loadWikiArticle')
   )
 }
 
 export function loadWorkspaceSettings(organizationId: string): Promise<WorkspaceSettingsData> {
-  return getJson(`/api/v1/organizations/${organizationId}/workspace/settings`, 'Не удалось загрузить настройки.')
+  return getJson(`/api/v1/organizations/${organizationId}/workspace/settings`, translate('workspaceApi.loadSettings'))
 }
 
 export function loadWorkspaceBilling(organizationId: string): Promise<WorkspaceBillingData> {
-  return getJson(`/api/v1/organizations/${organizationId}/workspace/billing`, 'Не удалось загрузить тарифы.')
+  return getJson(`/api/v1/organizations/${organizationId}/workspace/billing`, translate('workspaceApi.loadBilling'))
 }
 
 export function loadWorkspaceStatistics(organizationId: string): Promise<WorkspaceStatisticsData> {
-  return getJson(`/api/v1/organizations/${organizationId}/workspace/statistics`, 'Не удалось загрузить статистику.')
+  return getJson(`/api/v1/organizations/${organizationId}/workspace/statistics`, translate('workspaceApi.loadStatistics'))
 }
 
 export function updateWorkspaceProfile(
   organizationId: string,
   payload: WorkspaceProfileSaveRequest
 ): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/settings/profile`, 'PUT', payload, 'Не удалось сохранить настройки.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/settings/profile`, 'PUT', payload, translate('workspaceApi.saveSettings'))
 }
 
 export function updateWorkspaceRequisites(
@@ -303,28 +306,28 @@ export function updateWorkspaceRequisites(
   const normalizedPayload = Object.fromEntries(Object.entries(payload).map(([field, value]) => [field, value?.trim() || null]))
   if (normalizedPayload.kpp) normalizedPayload.kpp = normalizedPayload.kpp.toUpperCase()
   const errors: Record<string, string[]> = {}
-  for (const [field, pattern, message] of [
-    ['inn', /^(?:[0-9]{10}|[0-9]{12})$/, 'ИНН должен содержать 10 или 12 цифр.'],
-    ['kpp', /^[0-9]{4}[0-9A-Z]{2}[0-9]{3}$/, 'КПП должен содержать 9 знаков: цифры, в 5–6-й позиции допустимы латинские буквы.'],
-    ['ogrn', /^(?:[0-9]{13}|[0-9]{15})$/, 'ОГРН / ОГРНИП должен содержать 13 или 15 цифр.']
+  for (const [field, pattern, messageKey] of [
+    ['inn', /^(?:[0-9]{10}|[0-9]{12})$/, 'workspaceApi.invalidInn'],
+    ['kpp', /^[0-9]{4}[0-9A-Z]{2}[0-9]{3}$/, 'workspaceApi.invalidKpp'],
+    ['ogrn', /^(?:[0-9]{13}|[0-9]{15})$/, 'workspaceApi.invalidOgrn']
   ] as const) {
     const value = normalizedPayload[field]
-    if (value && !pattern.test(value)) errors[field] = [message]
+    if (value && !pattern.test(value)) errors[field] = [translate(messageKey)]
   }
-  if (Object.keys(errors).length) return Promise.reject(new WorkspaceActionError('Проверьте данные формы.', undefined, errors))
+  if (Object.keys(errors).length) return Promise.reject(new WorkspaceActionError(translate('workspaceApi.checkForm'), undefined, errors))
 
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/settings/requisites`, 'PUT', normalizedPayload, 'Не удалось сохранить реквизиты.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/settings/requisites`, 'PUT', normalizedPayload, translate('workspaceApi.saveRequisites'))
 }
 
 export function archiveWorkspaceOrganization(organizationId: string): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/settings/archive`, 'POST', null, 'Не удалось архивировать организацию.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/settings/archive`, 'POST', null, translate('workspaceApi.archiveOrganization'))
 }
 
 export function inviteWorkspaceMember(
   organizationId: string,
   payload: { email: string, roleCode: string, employeeId?: string | null }
 ): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/invitations`, 'POST', payload, 'Не удалось добавить участника.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/invitations`, 'POST', payload, translate('workspaceApi.inviteMember'))
 }
 
 export function updateWorkspaceMemberRole(
@@ -332,19 +335,19 @@ export function updateWorkspaceMemberRole(
   memberId: string,
   payload: { roleCode: string }
 ): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/${memberId}/role`, 'PUT', payload, 'Не удалось изменить роль.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/${memberId}/role`, 'PUT', payload, translate('workspaceApi.changeRole'))
 }
 
 export function removeWorkspaceMember(organizationId: string, memberId: string): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/${memberId}`, 'DELETE', null, 'Не удалось удалить участника.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/${memberId}`, 'DELETE', null, translate('workspaceApi.removeMember'))
 }
 
 export function transferWorkspaceOwnership(organizationId: string, memberId: string): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/${memberId}/transfer-ownership`, 'POST', null, 'Не удалось передать владение.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/${memberId}/transfer-ownership`, 'POST', null, translate('workspaceApi.transferOwnership'))
 }
 
 export function revokeWorkspaceInvitation(organizationId: string, invitationId: string): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/invitations/${invitationId}`, 'DELETE', null, 'Не удалось отозвать приглашение.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/invitations/${invitationId}`, 'DELETE', null, translate('workspaceApi.revokeInvitation'))
 }
 
 export function updateWorkspaceRolePermissions(
@@ -352,7 +355,7 @@ export function updateWorkspaceRolePermissions(
   roleCode: string,
   payload: { enabledPermissionCodes: string[] }
 ): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/permissions/${roleCode}`, 'PUT', payload, 'Не удалось сохранить права.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/members/permissions/${roleCode}`, 'PUT', payload, translate('workspaceApi.savePermissions'))
 }
 
 export function purchaseWorkspaceBusinessPlan(
@@ -361,11 +364,11 @@ export function purchaseWorkspaceBusinessPlan(
   buyer?: WorkspacePaymentBuyer,
   operationId?: string
 ): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/billing/plans/${planId}/purchase`, 'POST', buyer ?? null, 'Не удалось подключить тариф.', operationId ? { 'Idempotency-Key': operationId } : {})
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/billing/plans/${planId}/purchase`, 'POST', buyer ?? null, translate('workspaceApi.purchasePlan'), operationId ? { 'Idempotency-Key': operationId } : {})
 }
 
 export function activateWorkspaceDemoPlan(organizationId: string, planId: number): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/billing/plans/${planId}/activate-demo`, 'POST', null, 'Не удалось подключить демо.')
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/billing/plans/${planId}/activate-demo`, 'POST', null, translate('workspaceApi.activateDemoPlan'))
 }
 
 export function extendWorkspaceBusinessPlan(
@@ -373,11 +376,11 @@ export function extendWorkspaceBusinessPlan(
   buyer?: WorkspacePaymentBuyer,
   operationId?: string
 ): Promise<WorkspaceActionResult> {
-  return sendJson(`/api/v1/organizations/${organizationId}/workspace/billing/extend`, 'POST', buyer ?? null, 'Не удалось продлить тариф.', operationId ? { 'Idempotency-Key': operationId } : {})
+  return sendJson(`/api/v1/organizations/${organizationId}/workspace/billing/extend`, 'POST', buyer ?? null, translate('workspaceApi.extendPlan'), operationId ? { 'Idempotency-Key': operationId } : {})
 }
 
 export function loadPaymentPurchase(purchaseId: string, signal?: AbortSignal): Promise<WorkspaceActionResult> {
-  return getJson(`/api/v1/payments/purchases/${encodeURIComponent(purchaseId)}`, 'Не удалось проверить состояние оплаты.', signal)
+  return getJson(`/api/v1/payments/purchases/${encodeURIComponent(purchaseId)}`, translate('workspaceApi.checkPayment'), signal)
 }
 
 function getRequestVerificationToken() {
@@ -434,7 +437,7 @@ export async function sendJson<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new WorkspaceActionError(error?.errors ? 'Проверьте данные формы.' : error?.message ?? errorMessage, error?.code ?? error?.errorCode, error?.errors)
+    throw new WorkspaceActionError(error?.errors ? translate('workspaceApi.checkForm') : error?.message ?? errorMessage, error?.code ?? error?.errorCode, error?.errors)
   }
 
   return response.json().catch(() => ({} as T))

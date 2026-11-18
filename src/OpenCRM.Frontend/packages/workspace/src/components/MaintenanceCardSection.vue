@@ -1,4 +1,7 @@
 ﻿<script setup lang="ts">
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { provideWorkspaceCurrency, useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 import type { WorkProgress } from '../api/work'
 import { getWorkdayProgress } from '../utils/workdayCard'
@@ -24,7 +27,8 @@ import RepeatVisitRecommendations from './RepeatVisitRecommendations.vue'
 import { loadMaxMaintenanceNotifications, type MaxNotificationRecord } from '../api/maxNotifications'
 import { loadTelegramMaintenanceNotifications, type TelegramNotificationRecord } from '../api/telegramNotifications'
 import { computed, inject, onMounted, provide, ref, watch } from 'vue'
-import { pageBreadcrumbsKey, UiButton, UiCard, UiImagePreview, UiConfirmDialog, UiLoader, UiSelect, parseDateOnly } from '@opencrm/ui'
+import { pageBreadcrumbsKey, UiButton, UiCard, UiImagePreview, UiConfirmDialog, UiLoader, UiSelect, parseDateOnly, useLocalization } from '@opencrm/ui'
+import '../maintenanceCardMessages'
 import {
   deleteMaintenancePhoto,
   loadMaintenance,
@@ -41,6 +45,9 @@ import {
 import { loadVehicle, type WorkspaceVehicle } from '../api/vehicles'
 import type { WorkspaceContext } from '../types'
 
+const inheritedCurrency = useWorkspaceCurrency()
+const { t } = useLocalization()
+
 const props = defineProps<{
   context: WorkspaceContext
   maintenanceId: string
@@ -51,6 +58,19 @@ const emit = defineEmits<{
 }>()
 
 const maintenance = ref<WorkspaceMaintenance | null>(null)
+const workspaceCurrency = provideWorkspaceCurrency(computed(() => maintenance.value?.currencyCode ?? inheritedCurrency.value))
+const historicalCurrencyReadOnly = computed(() => {
+  const orderCurrency = maintenance.value?.currencyCode
+  const organizationCurrency = props.context.organization.currencyCode
+  const currenciesDiffer = Boolean(orderCurrency && organizationCurrency
+    && orderCurrency.toUpperCase() !== organizationCurrency.toUpperCase())
+
+  return maintenance.value?.canChangeFinancialData === false || currenciesDiffer
+})
+const historicalCurrencyReadOnlyMessage = computed(() => t('maintenanceCard.historicalCurrencyReadOnly', {
+  orderCurrency: maintenance.value?.currencyCode ?? inheritedCurrency.value,
+  workspaceCurrency: props.context.organization.currencyCode ?? inheritedCurrency.value
+}))
 const netAmount = computed(() => maintenance.value?.status === 4
   ? 0
   : Math.max(0, (maintenance.value?.grossAmount ?? maintenance.value?.price ?? 0) - (maintenance.value?.discountAmount ?? 0)))
@@ -63,7 +83,7 @@ const parentBreadcrumbs = inject(pageBreadcrumbsKey, undefined)
 const navigationSuffix = computed(() => props.fromVehicle ? '?from=vehicle' : '')
 provide(pageBreadcrumbsKey, computed(() => {
   if (!props.fromVehicle) return parentBreadcrumbs?.value ?? []
-  const items = [{ title: props.context.shell.menu?.find(item => item.code === 'vehicles')?.title ?? 'Техника', href: '#vehicles' }]
+  const items = [{ title: props.context.shell.menu?.find(item => item.code === 'vehicles')?.title ?? t('maintenanceCard.equipment'), href: '#vehicles' }]
   if (vehicle.value) {
     items.push({ title: getVehicleDisplayName(vehicle.value, true), href: `#vehicles/${vehicle.value.id}` })
   }
@@ -110,10 +130,10 @@ const showWorkProgress = computed(() => !simpleWorkflow.value && serviceDetails.
   return work && (work.hasAssignedEmployee || work.version > 0 || work.status >= 2)
 }))
 const recordStages = computed(() => [
-  { title: 'Запланировано', color: 'planned' },
-  { title: 'В работе', color: 'active' },
-  { title: maintenance.value?.status === 3 && !maintenance.value.readyForHandoverAt && !maintenance.value.handedOverAt ? 'Выполнено' : 'Готово', color: 'ready' },
-  { title: 'Выдано', color: 'issued' }
+  { title: t('maintenanceCard.planned'), color: 'planned' },
+  { title: t('maintenanceCard.inProgress'), color: 'active' },
+  { title: maintenance.value?.status === 3 && !maintenance.value.readyForHandoverAt && !maintenance.value.handedOverAt ? t('maintenanceCard.completed') : t('maintenanceCard.ready'), color: 'ready' },
+  { title: t('maintenanceCard.handedOver'), color: 'issued' }
 ])
 const currentStage = computed(() => {
   if (maintenance.value?.status === 4) return -1
@@ -122,16 +142,16 @@ const currentStage = computed(() => {
   return maintenance.value?.status === 2 ? 1 : 0
 })
 function workStatusName(detail: WorkspaceMaintenanceDetail) {
-  if (workProgress.value === null) return 'Нет данных'
+  if (workProgress.value === null) return t('maintenanceCard.noData')
   const work = detail.detailId ? workByDetail.value.get(detail.detailId) : undefined
   const status = work?.status
-  if (status === 1 && work?.hasAssignedEmployee === false) return 'Не назначена'
-  return status === 4 ? 'Выполнена' : status === 3 ? 'На паузе' : status === 2 ? 'В работе' : status === 1 ? 'Назначена' : 'Не назначена'
+  if (status === 1 && work?.hasAssignedEmployee === false) return t('maintenanceCard.notAssigned')
+  return status === 4 ? t('maintenanceCard.completedFeminine') : status === 3 ? t('maintenanceCard.paused') : status === 2 ? t('maintenanceCard.inProgress') : status === 1 ? t('maintenanceCard.assigned') : t('maintenanceCard.notAssigned')
 }
-const intakeMileageLabel = computed(() => vehicle.value?.mileageUnit === 2 ? 'Наработка при приёмке, м/ч' : 'Пробег при приёмке, км')
-const intakeMileageUnit = computed(() => vehicle.value?.mileageUnit === 2 ? 'м/ч' : 'км')
+const intakeMileageLabel = computed(() => vehicle.value?.mileageUnit === 2 ? t('maintenanceCard.intakeEngineHours') : t('maintenanceCard.intakeMileage'))
+const intakeMileageUnit = computed(() => vehicle.value?.mileageUnit === 2 ? t('maintenanceCard.mileageUnitHours') : t('maintenanceCard.mileageUnitKilometers'))
 const photoStages: { stage: MaintenancePhotoStage; title: string }[] = [
-  { stage: 1, title: 'До работы' }, { stage: 2, title: 'После работы' }, { stage: 0, title: 'Без категории' }
+  { stage: 1, title: t('maintenanceCard.beforeWork') }, { stage: 2, title: t('maintenanceCard.afterWork') }, { stage: 0, title: t('maintenanceCard.uncategorized') }
 ]
 const photoGroups = computed(() => photoStages
   .filter(group => group.stage !== 0 || photos.value.some(photo => photo.stage === 0))
@@ -176,7 +196,7 @@ async function saveEmployeeAssignment() {
     emit('changed')
   } catch (e) {
     if (props.context.organization.id === organizationId && props.maintenanceId === maintenanceId) {
-      employeeError.value = e instanceof Error ? e.message : 'Не удалось назначить сотрудника.'
+      employeeError.value = e instanceof Error ? e.message : t('maintenanceCard.assignEmployeeError')
     }
   }
   finally { assigningEmployee.value = false }
@@ -188,7 +208,7 @@ const vatDraft = ref<{ lineIndex: number; name: string; vatRateCode: string }[]>
 const vatDialog = ref<HTMLDialogElement | null>(null)
 const commonVatRate = ref('')
 const vatRateOptions = [
-  { value: 'without_vat', label: 'Без НДС' },
+  { value: 'without_vat', label: t('maintenanceCard.withoutVat') },
   ...['0', '5', '7', '10', '20', '22'].map(value => ({ value, label: `${value} %` }))
 ]
 let vatDraftVersion: number | undefined
@@ -199,6 +219,7 @@ const serviceEditor = ref<InstanceType<typeof MaintenanceServicesEditor> | null>
 const canEditServices = computed(() => canWrite.value && maintenance.value?.canEditServices === true && !maintenance.value.handedOverAt && maintenance.value.status !== 4)
 const canManageVat = computed(() => canWrite.value && maintenance.value?.canManagePayments === true)
 function editServices() {
+  if (!canEditServices.value) return
   vatDialog.value?.close()
   editingVat.value = false
   serviceDraft.value = serviceDetails.value.map(item => ({ ...item }))
@@ -213,7 +234,7 @@ function closeServices() {
   editingServices.value = false
 }
 function editVat() {
-  if (!maintenance.value) return
+  if (!canManageVat.value || !maintenance.value) return
   servicesDialog.value?.close()
   editingServices.value = false
   vatDraftVersion = maintenance.value.version
@@ -237,8 +258,8 @@ function closeVat() {
   editingVat.value = false
 }
 async function saveVat() {
-  if (!maintenance.value || savingVat.value) return
-  if (vatDraft.value.some(line => !validVatRate(line.vatRateCode))) { vatError.value = 'Укажите общую ставку или заполните ставки по позициям.'; return }
+  if (!canManageVat.value || !maintenance.value || savingVat.value) return
+  if (vatDraft.value.some(line => !validVatRate(line.vatRateCode))) { vatError.value = t('maintenanceCard.vatRequired') ; return }
   const organizationId = props.context.organization.id
   const maintenanceId = props.maintenanceId
   cardRequestId++
@@ -257,16 +278,16 @@ async function saveVat() {
     emit('changed')
   } catch (error) {
     if (props.context.organization.id === organizationId && props.maintenanceId === maintenanceId) {
-      vatError.value = error instanceof Error ? error.message : 'Не удалось сохранить ставки НДС.'
+      vatError.value = error instanceof Error ? error.message : t('maintenanceCard.saveVatError')
     }
   } finally {
     savingVat.value = false
   }
 }
 async function saveServices() {
-  if (!maintenance.value || savingServices.value) return
+  if (!canEditServices.value || !maintenance.value || savingServices.value) return
   const serviceValidationError = serviceEditor.value?.validate()
-  if (serviceValidationError === undefined) { serviceError.value = 'Не удалось проверить строки работ.'; return }
+  if (serviceValidationError === undefined) { serviceError.value = t('maintenanceCard.validateServicesError'); return }
   if (serviceValidationError) { serviceError.value = serviceValidationError; return }
   const organizationId = props.context.organization.id
   const maintenanceId = props.maintenanceId
@@ -285,7 +306,7 @@ async function saveServices() {
     emit('changed')
   } catch (e) {
     if (props.context.organization.id === organizationId && props.maintenanceId === maintenanceId) {
-      serviceError.value = e instanceof Error ? e.message : 'Не удалось сохранить услуги.'
+      serviceError.value = e instanceof Error ? e.message : t('maintenanceCard.saveServicesError')
     }
   }
   finally { savingServices.value = false }
@@ -300,7 +321,7 @@ const maxMaintenancePhotoFiles = 10
 const maxMaintenancePhotoBatchSize = 100 * 1024 * 1024
 
 const isDetailingScenario = computed(() => props.context.shell.scenario?.code === 'detailing')
-const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly !== true)
+const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly !== true && !historicalCurrencyReadOnly.value)
 const canEditIntake = computed(() => canWrite.value && props.context.shell.scenario?.modules?.intake !== false)
 const canEditPhotos = computed(() => canWrite.value && props.context.shell.scenario?.modules?.photos !== false)
 const hasLockedIntake = computed(() => props.context.shell.scenario?.modules?.intake === false
@@ -327,23 +348,25 @@ watch(hasLockedIntake, locked => {
 const canUseTeam = computed(() => canWrite.value && props.context.shell.scenario?.modules?.members !== false)
 const title = computed(() => {
   if (!maintenance.value) {
-    return isDetailingScenario.value ? 'Карточка записи' : 'Карточка обслуживания'
+    return isDetailingScenario.value ? t('maintenanceCard.appointmentCard') : t('maintenanceCard.maintenanceCard')
   }
 
   const date = formatDate(maintenance.value.plannedDate ?? maintenance.value.date)
   return isDetailingScenario.value
-    ? `Запись на ${date}`
-    : `Обслуживание от ${date}`
+    ? t('maintenanceCard.appointmentOn', { date })
+    : t('maintenanceCard.maintenanceOn', { date })
 })
 const vehicleTitle = computed(() => {
   if (!vehicle.value) {
-    return 'Автомобиль'
+    return t('maintenanceCard.car')
   }
 
   return [getVehicleDisplayName(vehicle.value, true), vehicle.value.yearIssue].filter(Boolean).join(' · ')
 })
 const readOnlyMessage = computed(() =>
-  props.context.workspaceAccess?.readOnlyMessage ?? 'Рабочее пространство сейчас доступно только для просмотра.'
+  historicalCurrencyReadOnly.value
+    ? historicalCurrencyReadOnlyMessage.value
+    : props.context.workspaceAccess?.readOnlyMessage ?? t('maintenanceCard.readOnly')
 )
 const billingHref = computed(() => '#billing')
 const documentLinks = computed(() => {
@@ -355,22 +378,22 @@ const documentLinks = computed(() => {
   const maintenanceId = maintenance.value.id
   const links = [
     {
-      title: 'Заказ-наряд PDF',
+      title: t('maintenanceCard.workOrderPdf'),
       href: `/api/v1/documents/pdf/maintenance/${maintenanceId}/work-order?organizationId=${organizationId}`,
       key: 'work-order-pdf'
     },
     {
-      title: 'Заказ-наряд Word',
+      title: t('maintenanceCard.workOrderWord'),
       href: `/api/v1/documents/word/maintenance/${maintenanceId}/work-order?organizationId=${organizationId}`,
       key: 'work-order-word'
     },
     {
-      title: 'Отчет PDF',
+      title: t('maintenanceCard.reportPdf'),
       href: `/api/v1/documents/pdf/maintenance/${maintenanceId}?organizationId=${organizationId}`,
       key: 'report-pdf'
     },
     {
-      title: 'Отчет с фото PDF',
+      title: t('maintenanceCard.reportWithPhotosPdf'),
       href: `/api/v1/documents/pdf/maintenance/${maintenanceId}?organizationId=${organizationId}&includePhotos=true`,
       key: 'report-pdf-photos'
     }
@@ -379,12 +402,12 @@ const documentLinks = computed(() => {
   if (maintenance.value.status === 3) {
     links.unshift(
       {
-        title: 'Акт PDF',
+        title: t('maintenanceCard.workActPdf'),
         href: `/api/v1/documents/pdf/maintenance/${maintenanceId}/work-act?organizationId=${organizationId}`,
         key: 'work-act-pdf'
       },
       {
-        title: 'Акт Word',
+        title: t('maintenanceCard.workActWord'),
         href: `/api/v1/documents/word/maintenance/${maintenanceId}/work-act?organizationId=${organizationId}`,
         key: 'work-act-word'
       }
@@ -408,12 +431,12 @@ function validVatRate(code?: string | null) {
 }
 
 function formatVatRate(code?: string | null) {
-  if (code === 'without_vat') return 'Без НДС'
-  return validVatRate(code) ? `НДС ${code} %` : 'НДС не указан'
+  if (code === 'without_vat') return t('maintenanceCard.withoutVat')
+  return validVatRate(code) ? t('maintenanceCard.russianVatRate', { rate: code }) : t('maintenanceCard.vatNotSpecified')
 }
 
 function formatHandoverTime(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
     timeZone: props.context.organization.timeZoneId || 'UTC'
   }).format(new Date(value))
@@ -421,50 +444,45 @@ function formatHandoverTime(value: string) {
 
 function getStatusName(status: number) {
   return status === 1
-    ? 'Запланировано'
+    ? t('maintenanceCard.planned')
     : status === 2
-      ? 'В работе'
+      ? t('maintenanceCard.inProgress')
       : status === 3
-        ? maintenance.value?.handedOverAt ? 'Выдан' : maintenance.value?.readyForHandoverAt ? 'Готов к выдаче' : 'Выполнено'
+        ? maintenance.value?.handedOverAt ? t('maintenanceCard.issued') : maintenance.value?.readyForHandoverAt ? t('maintenanceCard.readyForHandover') : t('maintenanceCard.completed')
         : status === 4
-          ? 'Отменено'
-          : 'Статус не указан'
+          ? t('maintenanceCard.cancelled')
+          : t('maintenanceCard.statusNotSpecified')
 }
 
 function getPaymentStatusName(status?: string | null) {
   switch (status) {
     case 'overpaid':
-      return 'Переплата'
+      return t('maintenanceCard.overpaid')
     case 'no_payment_required':
-      return 'Оплата не требуется'
+      return t('maintenanceCard.noPaymentRequired')
     case 'paid':
-      return 'Оплачено'
+      return t('maintenanceCard.paid')
     case 'partial':
-      return 'Частично'
+      return t('maintenanceCard.partiallyPaid')
     case 'unpaid':
-      return 'Долг'
+      return t('maintenanceCard.balanceDue')
     default:
-      return 'Не указано'
+      return t('maintenanceCard.notSpecified')
   }
 }
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'нет'
+    return t('maintenanceCard.none')
   }
 
-  const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (dateOnlyMatch) {
-    return `${dateOnlyMatch[3]}.${dateOnlyMatch[2]}.${dateOnlyMatch[1]}`
-  }
-
-  return parseDateOnly(value.slice(0, 10))?.toLocaleDateString('ru-RU') ?? ''
+  return parseDateOnly(value.slice(0, 10))?.toLocaleDateString(formattingCulture.value, { year: 'numeric', month: '2-digit', day: '2-digit' }) ?? ''
 }
 
 function formatInstantDate(value?: string | null) {
   if (!value) return ''
 
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     dateStyle: 'medium', timeStyle: 'short', timeZone: props.context.organization.timeZoneId || 'UTC'
   }).format(new Date(value))
 }
@@ -479,10 +497,10 @@ function formatTime(value?: string | null) {
 
 function formatMoney(value?: number | null) {
   if (value === null || value === undefined) {
-    return 'не указана'
+    return t('maintenanceCard.amountNotSpecified')
   }
 
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: workspaceCurrency.value, maximumFractionDigits: 2 }).format(value)
 }
 
 function hasMaterial(detail: WorkspaceMaintenanceDetail) {
@@ -540,7 +558,7 @@ async function downloadDocument(link: { href: string, title: string, key: string
     })
 
     if (!response.ok) {
-      throw new Error(await getDocumentErrorMessage(response, 'Не удалось скачать документ.'))
+      throw new Error(await getDocumentErrorMessage(response, t('maintenanceCard.documentDownloadError')))
     }
 
     const blob = await response.blob()
@@ -553,7 +571,7 @@ async function downloadDocument(link: { href: string, title: string, key: string
     anchor.remove()
     window.setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 1000)
   } catch (error) {
-    documentMessage.value = error instanceof Error ? error.message : 'Не удалось скачать документ.'
+    documentMessage.value = error instanceof Error ? error.message : t('maintenanceCard.documentDownloadError')
   } finally {
     documentActionKey.value = ''
   }
@@ -568,12 +586,12 @@ function collectFiles(event: Event) {
 
 function validatePhotoFiles(files: File[]) {
   if (files.length > maxMaintenancePhotoFiles) {
-    return 'За одну загрузку можно добавить не более 10 фото.'
+    return t('maintenanceCard.photoCountLimit', { count: maxMaintenancePhotoFiles })
   }
 
   const totalSize = files.reduce((sum, file) => sum + file.size, 0)
   if (totalSize > maxMaintenancePhotoBatchSize) {
-    return 'Фото услуги: максимум 100 МБ за одну загрузку.'
+    return t('maintenanceCard.photoSizeLimit', { size: maxMaintenancePhotoBatchSize / 1024 / 1024 })
   }
 
   return ''
@@ -608,7 +626,7 @@ async function toggleIntakeHistory() {
     showIntakeHistory.value = true
   } catch {
     if (props.context.organization.id === organizationId && props.maintenanceId === maintenanceId) {
-      intakeHistoryError.value = 'Не удалось открыть историю.'
+      intakeHistoryError.value = t('maintenanceCard.intakeHistoryError')
     }
   } finally {
     intakeHistoryLoading.value = false
@@ -657,7 +675,7 @@ async function uploadPhotos(event: Event, stage: MaintenancePhotoStage = 0) {
     await uploadMaintenancePhotos(props.context.organization.id, props.maintenanceId, files, stage)
     await reloadPhotos()
   } catch (error) {
-    photoMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить фото услуги.'
+    photoMessage.value = error instanceof Error ? error.message : t('maintenanceCard.uploadPhotosError')
   } finally {
     isSavingPhotos.value = false
   }
@@ -690,7 +708,7 @@ async function confirmRemovePhoto() {
     await deleteMaintenancePhoto(props.context.organization.id, props.maintenanceId, photo.photoId)
     await reloadPhotos()
   } catch (error) {
-    photoMessage.value = error instanceof Error ? error.message : 'Не удалось удалить фото услуги.'
+    photoMessage.value = error instanceof Error ? error.message : t('maintenanceCard.deletePhotoError')
   } finally {
     isSavingPhotos.value = false
     photoDeleteConfirm.value = null
@@ -725,8 +743,8 @@ function validateIntakeMileage() {
   const isEngineHours = vehicle.value?.mileageUnit === 2
   if (!/^\d+$/.test(mileageText)) {
     intakeMileageError.value = isEngineHours
-      ? 'Наработка должна быть целым числом моточасов и не меньше 0.'
-      : 'Пробег должен быть целым числом километров и не меньше 0.'
+      ? t('maintenanceCard.engineHoursInvalid')
+      : t('maintenanceCard.mileageInvalid')
 
     return false
   }
@@ -734,8 +752,8 @@ function validateIntakeMileage() {
   const mileage = Number(mileageText)
   if (!Number.isSafeInteger(mileage) || mileage > (isEngineHours ? 2147483647 : 9999999)) {
     intakeMileageError.value = isEngineHours
-      ? 'Слишком большая наработка.'
-      : 'Пробег не может превышать 9 999 999 км.'
+      ? t('maintenanceCard.engineHoursTooHigh')
+      : t('maintenanceCard.mileageTooHigh', { limit: '9 999 999' })
 
     return false
   }
@@ -753,7 +771,7 @@ async function saveIntake() {
   const mileageText = intakeMileage.value.trim()
   const mileage = mileageText ? Number(mileageText) : null
   if (mileage === null && !intakeCompleteness.value.trim() && !intakeVisibleDamage.value.trim() && !intakeNotes.value.trim()) {
-    intakeMessage.value = 'Заполните хотя бы одно поле акта.'
+    intakeMessage.value = t('maintenanceCard.intakeRequired')
     return
   }
   const organizationId = props.context.organization.id
@@ -773,12 +791,12 @@ async function saveIntake() {
     if (props.context.organization.id !== organizationId || props.maintenanceId !== maintenanceId) return
     intakeEditing.value = false
     intakeSuccessMessage.value = props.context.workspaceAccess?.exportsEnabled
-      ? 'Приёмка сохранена. Акт можно открыть по ссылке выше.'
-      : 'Приёмка сохранена.'
+      ? t('maintenanceCard.intakeSavedWithDocument')
+      : t('maintenanceCard.intakeSaved')
     emit('changed')
   } catch (error) {
     if (props.context.organization.id === organizationId && props.maintenanceId === maintenanceId) {
-      intakeMessage.value = error instanceof Error ? error.message : 'Не удалось сохранить приёмку.'
+      intakeMessage.value = error instanceof Error ? error.message : t('maintenanceCard.saveIntakeError')
     }
   } finally {
     intakeBusy.value = false
@@ -796,7 +814,7 @@ async function changePhotoStage(photo: WorkspaceMaintenancePhoto, event: Event) 
     photo.stage = stage
   } catch (error) {
     select.value = String(photo.stage)
-    photoMessage.value = error instanceof Error ? error.message : 'Не удалось изменить этап фотографии.'
+    photoMessage.value = error instanceof Error ? error.message : t('maintenanceCard.photoStageError')
   } finally {
     isSavingPhotos.value = false
   }
@@ -891,7 +909,7 @@ async function loadCard(silent = false) {
     if (currentRequestId === cardRequestId
       && props.context.organization.id === organizationId
       && props.maintenanceId === maintenanceId) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить карточку записи.'
+      errorMessage.value = error instanceof Error ? error.message : t('maintenanceCard.loadCardError')
     }
   } finally {
     if (currentRequestId === cardRequestId
@@ -915,8 +933,8 @@ async function loadNotificationHistory() {
   if (current !== notificationRequestId || props.context.organization.id !== organizationId || props.maintenanceId !== maintenanceId) return
   if (max.status === 'fulfilled') maxNotifications.value = max.value
   if (telegram.status === 'fulfilled') telegramNotifications.value = telegram.value
-  maxNotificationError.value = max.status === 'rejected' ? 'Не удалось обновить историю MAX.' : ''
-  telegramNotificationError.value = telegram.status === 'rejected' ? 'Не удалось обновить историю Telegram.' : ''
+  maxNotificationError.value = max.status === 'rejected' ? t('maintenanceCard.maxHistoryError') : ''
+  telegramNotificationError.value = telegram.status === 'rejected' ? t('maintenanceCard.telegramHistoryError') : ''
   notificationsLoading.value = false
 }
 
@@ -949,10 +967,10 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
 
 <template>
   <UiCard page :title="title" class="record-page">
-    <UiLoader v-if="isLoading" text="Загружаем карточку записи…" />
+    <UiLoader v-if="isLoading" :text="t('maintenanceCard.loadingCard')" />
     <div v-else-if="errorMessage && !maintenance" class="record-empty" role="alert">
       <p>{{ errorMessage }}</p>
-      <UiButton variant="secondary" @click="loadCard()">Повторить</UiButton>
+      <UiButton variant="secondary" @click="loadCard()">{{ t('maintenanceCard.retry') }}</UiButton>
     </div>
     <template v-else-if="maintenance">
       <MaintenanceHistoryDialog v-if="historyOpen" :key="context.organization.id + maintenance.id" :organization-id="context.organization.id" :maintenance-id="maintenance.id" :title="title" @close="historyOpen = false" />
@@ -963,8 +981,8 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
         :href="billingHref"
       />
       <div v-if="errorMessage" class="record-error" role="alert">{{ errorMessage }}</div>
-      <div class="record-toolbar" role="group" aria-label="Действия с записью">
-        <UiButton variant="secondary" @click="historyOpen = true">История обслуживания</UiButton>
+      <div class="record-toolbar" role="group" :aria-label="t('maintenanceCard.recordActions')">
+        <UiButton variant="secondary" @click="historyOpen = true">{{ t('maintenanceCard.serviceHistory') }}</UiButton>
         <div class="record-toolbar__actions">
           <RepeatVisitRecommendations compact
             v-if="maintenance.handedOverAt && ['detailing', 'service-station', 'autoservice'].includes(context.organization.primaryScenarioCode || context.shell.scenario?.code || '')
@@ -983,21 +1001,21 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
             variant="secondary"
             :href="canWrite ? `#maintenance/${maintenance.id}/edit${navigationSuffix}` : billingHref"
           >
-            Редактировать
+            {{ t('maintenanceCard.edit') }}
           </UiButton>
         </div>
       </div>
       <div class="record-overview">
         <div class="record-identity">
           <div class="record-vehicle">
-            <span class="record-label">{{ isDetailingScenario ? 'Автомобиль' : 'Техника' }}</span>
-            <a :href="`#vehicles/${maintenance.vehicleId}`"><img v-if="brandLogo" :src="brandLogo.src" :alt="`Логотип ${brandLogo.name}`" class="record-brand">{{ vehicleTitle }}</a>
+            <span class="record-label">{{ isDetailingScenario ? t('maintenanceCard.vehicle') : t('maintenanceCard.equipment') }}</span>
+            <a :href="`#vehicles/${maintenance.vehicleId}`"><img v-if="brandLogo" :src="brandLogo.src" :alt="t('maintenanceCard.logo', { name: brandLogo.name })" class="record-brand">{{ vehicleTitle }}</a>
           </div>
           <div v-if="simpleWorkflow || currentStage < 0" class="record-status-row">
-            <div class="record-status" :data-status="maintenance.status"><span>Статус</span><strong>{{ getStatusName(maintenance.status) }}</strong></div>
+            <div class="record-status" :data-status="maintenance.status"><span>{{ t('maintenanceCard.status') }}</span><strong>{{ getStatusName(maintenance.status) }}</strong></div>
           </div>
         </div>
-        <ol v-if="!simpleWorkflow && currentStage >= 0" class="record-stages" aria-label="Этапы обслуживания">
+        <ol v-if="!simpleWorkflow && currentStage >= 0" class="record-stages" :aria-label="t('maintenanceCard.stages')">
           <li v-for="(stage, index) in recordStages" :key="stage.color" :data-stage="stage.color"
             :class="{ 'record-stages__current': currentStage === index, 'record-stages__done': currentStage > index }"
             :aria-current="currentStage === index ? 'step' : undefined">
@@ -1008,87 +1026,87 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
         <div class="record-summary">
           <dl class="record-appointment">
             <div>
-              <dt>Время</dt>
+              <dt>{{ t('maintenanceCard.time') }}</dt>
               <dd>
-                {{ formatTime(maintenance.plannedStartTime) || 'Не указано' }}
+                {{ formatTime(maintenance.plannedStartTime) || t('maintenanceCard.unspecified') }}
                 <template v-if="maintenance.plannedEndTime"> — <template v-if="maintenance.plannedEndDate && maintenance.plannedEndDate.slice(0, 10) !== (maintenance.plannedDate ?? maintenance.date).slice(0, 10)">{{ formatDate(maintenance.plannedEndDate) + ', ' }}</template>{{ formatTime(maintenance.plannedEndTime) }}</template>
               </dd>
             </div>
             <div>
-              <dt>Пост / место</dt>
-              <dd>{{ maintenance.location || 'Не указан' }}</dd>
+              <dt>{{ t('maintenanceCard.location') }}</dt>
+              <dd>{{ maintenance.location || t('maintenanceCard.notSpecified') }}</dd>
             </div>
             <div>
-              <dt>Сотрудник</dt>
-              <dd><button v-if="canWrite && maintenance.canEditServices && !editingServices" type="button" class="record-employee" :disabled="!canUseTeam" :title="canUseTeam ? 'Изменить сотрудника' : 'Доступно в PRO'" @click="editEmployee">{{ maintenance.performer || 'Назначить сотрудника' }}</button><template v-else>{{ maintenance.performer || 'Не назначен' }}</template></dd>
+              <dt>{{ t('maintenanceCard.employee') }}</dt>
+              <dd><button v-if="canWrite && maintenance.canEditServices && !editingServices" type="button" class="record-employee" :disabled="!canUseTeam" :title="canUseTeam ? t('maintenanceCard.editEmployee') : t('maintenanceCard.availableInPro')" @click="editEmployee">{{ maintenance.performer || t('maintenanceCard.assignEmployee') }}</button><template v-else>{{ maintenance.performer || t('maintenanceCard.unassigned') }}</template></dd>
             </div>
             <div v-if="!isDetailingScenario">
-              <dt>Пробег</dt>
-              <dd>{{ maintenance.mileage ?? 'Не указан' }}</dd>
+              <dt>{{ t('maintenanceCard.mileage') }}</dt>
+              <dd>{{ maintenance.mileage ?? t('maintenanceCard.notSpecified') }}</dd>
             </div>
           </dl>
         </div>
 
         <dl v-if="maintenance.completedDate || maintenance.readyForHandoverAt || maintenance.handedOverAt" class="record-milestones">
-          <div v-if="maintenance.completedDate"><dt>Дата выполнения</dt><dd>{{ formatDate(maintenance.completedDate) }}</dd></div>
-          <div v-if="maintenance.readyForHandoverAt && !simpleWorkflow"><dt>Готовность к выдаче</dt><dd>{{ formatHandoverTime(maintenance.readyForHandoverAt) }}</dd></div>
-          <div v-if="maintenance.handedOverAt"><dt>Передано клиенту</dt><dd>{{ formatHandoverTime(maintenance.handedOverAt) }}</dd></div>
+          <div v-if="maintenance.completedDate"><dt>{{ t('maintenanceCard.completedDate') }}</dt><dd>{{ formatDate(maintenance.completedDate) }}</dd></div>
+          <div v-if="maintenance.readyForHandoverAt && !simpleWorkflow"><dt>{{ t('maintenanceCard.readyTime') }}</dt><dd>{{ formatHandoverTime(maintenance.readyForHandoverAt) }}</dd></div>
+          <div v-if="maintenance.handedOverAt"><dt>{{ t('maintenanceCard.handedOverTime') }}</dt><dd>{{ formatHandoverTime(maintenance.handedOverAt) }}</dd></div>
         </dl>
         <div v-if="showWorkProgress" class="record-progress">
           <template v-if="workProgress !== null">
-            <progress :value="progress.completed" :max="progress.total" :class="{ 'record-progress__complete': progress.isComplete }" :aria-label="`Выполнено ${progress.completed} из ${progress.total} работ`" />
-            <span>Выполнено {{ progress.completed }} из {{ progress.total }} работ</span>
+            <progress :value="progress.completed" :max="progress.total" :class="{ 'record-progress__complete': progress.isComplete }" :aria-label="t('maintenanceCard.progressLabel', { completed: progress.completed, total: progress.total })" />
+            <span>{{ t('maintenanceCard.progressLabel', { completed: progress.completed, total: progress.total }) }}</span>
           </template>
-          <span v-else>Состояние работ загружается или недоступно</span>
+          <span v-else>{{ t('maintenanceCard.progressUnavailable') }}</span>
         </div>
       </div>
-      <nav class="record-tabs" aria-label="Разделы обслуживания">
-        <button id="record-services-tab" type="button" :aria-current="activePanel === 'work' ? 'page' : undefined" @click="activePanel = 'work'">Услуги <span>{{ serviceDetails.length }}</span></button>
-        <button type="button" :aria-current="activePanel === 'intake' ? 'page' : undefined" @click="activePanel = 'intake'">Приёмка и фото <span :class="{ 'record-tabs__pending': !maintenance.intakeRecordedAt }">{{ maintenance.intakeRecordedAt ? 'Акт готов' : 'Акт не оформлен' }}</span></button>
-        <button v-if="maintenance.buyerClientId && context.shell.menu?.some(item => item.code === 'messages' && item.isVisible)" type="button" :aria-current="activePanel === 'messages' ? 'page' : undefined" @click="activePanel = 'messages'">Переписка</button>
-        <button type="button" :aria-current="activePanel === 'notifications' ? 'page' : undefined" @click="activePanel = 'notifications'">Уведомления</button>
-        <button type="button" class="record-finance-shortcut" @click="showSettlement">Расчёт</button>
+      <nav class="record-tabs" :aria-label="t('maintenanceCard.sections')">
+        <button id="record-services-tab" type="button" :aria-current="activePanel === 'work' ? 'page' : undefined" @click="activePanel = 'work'">{{ t('maintenanceCard.services') }} <span>{{ serviceDetails.length }}</span></button>
+        <button type="button" :aria-current="activePanel === 'intake' ? 'page' : undefined" @click="activePanel = 'intake'">{{ t('maintenanceCard.intakeAndPhotos') }} <span :class="{ 'record-tabs__pending': !maintenance.intakeRecordedAt }">{{ maintenance.intakeRecordedAt ? t('maintenanceCard.actReady') : t('maintenanceCard.actMissing') }}</span></button>
+        <button v-if="maintenance.buyerClientId && context.shell.menu?.some(item => item.code === 'messages' && item.isVisible)" type="button" :aria-current="activePanel === 'messages' ? 'page' : undefined" @click="activePanel = 'messages'">{{ t('maintenanceCard.conversations') }}</button>
+        <button type="button" :aria-current="activePanel === 'notifications' ? 'page' : undefined" @click="activePanel = 'notifications'">{{ t('maintenanceCard.notifications') }}</button>
+        <button type="button" class="record-finance-shortcut" @click="showSettlement">{{ t('maintenanceCard.settlement') }}</button>
       </nav>
       <dialog ref="employeeDialog" class="record-employee-dialog" aria-labelledby="record-employee-title" @cancel="assigningEmployee && $event.preventDefault()">
         <form @submit.prevent="saveEmployeeAssignment">
-          <h3 id="record-employee-title" class="ui-form-header">Сотрудник на запись</h3>
+          <h3 id="record-employee-title" class="ui-form-header">{{ t('maintenanceCard.employeeForAppointment') }}</h3>
           <EmployeePicker v-model="employeeDraft" :current-name="maintenance.performer" :organization-id="context.organization.id" :planned-start-local="plannedStartLocal" :planned-end-local="plannedEndLocal" :disabled="assigningEmployee" />
-          <p class="record-employee-hint">Для отдельных услуг можно выбрать другого сотрудника.</p>
+          <p class="record-employee-hint">{{ t('maintenanceCard.employeeHint') }}</p>
           <p v-if="employeeError" class="record-error" role="alert">{{ employeeError }}</p>
-          <footer><UiButton variant="secondary" :disabled="assigningEmployee" @click="employeeDialog?.close()">Отмена</UiButton><UiButton type="submit" :disabled="assigningEmployee">{{ assigningEmployee ? 'Сохраняем…' : 'Сохранить' }}</UiButton></footer>
+          <footer><UiButton variant="secondary" :disabled="assigningEmployee" @click="employeeDialog?.close()">{{ t('maintenanceCard.cancel') }}</UiButton><UiButton type="submit" :disabled="assigningEmployee">{{ assigningEmployee ? t('maintenanceCard.saving') : t('maintenanceCard.save') }}</UiButton></footer>
         </form>
       </dialog>
       <dialog id="record-vat-dialog" ref="vatDialog" class="record-vat-dialog" aria-labelledby="record-vat-title" @cancel="savingVat && $event.preventDefault()" @close="editingVat = false">
         <form @submit.prevent="saveVat">
-          <header class="record-vat-header ui-form-header"><h3 id="record-vat-title">НДС обслуживания</h3><button type="button" aria-label="Закрыть НДС" :disabled="savingVat" @click="closeVat">×</button></header>
+          <header class="record-vat-header ui-form-header"><h3 id="record-vat-title">{{ t('maintenanceCard.vatTitle') }}</h3><button type="button" :aria-label="t('maintenanceCard.closeVat')" :disabled="savingVat" @click="closeVat">×</button></header>
           <div class="record-vat-body">
-            <p class="record-vat-hint">Выберите одну ставку для всех позиций или укажите разные ставки ниже.</p>
+            <p class="record-vat-hint">{{ t('maintenanceCard.vatHint') }}</p>
             <div class="record-vat-common">
-              <UiSelect v-model="commonVatRate" label="Общая ставка" :options="vatRateOptions" :searchable="false" :disabled="savingVat" append-to="#record-vat-dialog" />
-              <UiButton variant="secondary" :disabled="savingVat || !commonVatRate" @click="applyCommonVatRate">Применить ко всем</UiButton>
+              <UiSelect v-model="commonVatRate" :label="t('maintenanceCard.commonRate')" :options="vatRateOptions" :searchable="false" :disabled="savingVat" append-to="#record-vat-dialog" />
+              <UiButton variant="secondary" :disabled="savingVat || !commonVatRate" @click="applyCommonVatRate">{{ t('maintenanceCard.applyAll') }}</UiButton>
             </div>
             <details class="record-vat-lines" open>
-              <summary>Ставки по позициям · {{ vatDraft.length }}</summary>
+              <summary>{{ t('maintenanceCard.ratesByLine', { count: vatDraft.length }) }}</summary>
               <div v-for="line in vatDraft" :key="line.lineIndex" class="record-vat-row">
                 <span>{{ line.name }}</span>
-                <UiSelect v-model="line.vatRateCode" :aria-label="`НДС: ${line.name}, позиция ${line.lineIndex + 1}`" placeholder="Ставка НДС" :options="vatRateOptions" :searchable="false" :disabled="savingVat" append-to="#record-vat-dialog" required />
+                <UiSelect v-model="line.vatRateCode" :aria-label="t('maintenanceCard.vatLineLabel', { name: line.name, index: line.lineIndex + 1 })" :placeholder="t('maintenanceCard.vatPlaceholder')" :options="vatRateOptions" :searchable="false" :disabled="savingVat" append-to="#record-vat-dialog" required />
               </div>
             </details>
             <p v-if="vatError" class="record-error" role="alert">{{ vatError }}</p>
           </div>
-          <footer class="record-vat-footer"><UiButton variant="secondary" :disabled="savingVat" @click="closeVat">Отмена</UiButton><UiButton type="submit" :disabled="savingVat">{{ savingVat ? 'Сохраняем…' : 'Сохранить НДС' }}</UiButton></footer>
+          <footer class="record-vat-footer"><UiButton variant="secondary" :disabled="savingVat" @click="closeVat">{{ t('maintenanceCard.cancel') }}</UiButton><UiButton type="submit" :disabled="savingVat">{{ savingVat ? t('maintenanceCard.saving') : t('maintenanceCard.saveVat') }}</UiButton></footer>
         </form>
       </dialog>
       <dialog id="record-services-dialog" ref="servicesDialog" class="record-services-dialog" aria-labelledby="record-services-dialog-title" @cancel.prevent="closeServices" @close="editingServices = false">
         <div class="record-services-form">
-          <header class="record-services-header ui-form-header"><h3 id="record-services-dialog-title">Услуги обслуживания</h3><button type="button" aria-label="Закрыть редактирование услуг" :disabled="savingServices" @click="closeServices">×</button></header>
+          <header class="record-services-header ui-form-header"><h3 id="record-services-dialog-title">{{ t('maintenanceCard.servicesTitle') }}</h3><button type="button" :aria-label="t('maintenanceCard.closeServices')" :disabled="savingServices" @click="closeServices">×</button></header>
           <div class="record-services-body">
             <MaintenanceServicesEditor :can-assign-employees="context.shell.scenario?.modules?.members !== false" v-if="editingServices" ref="serviceEditor" v-model="serviceDraft" :can-open-catalog="context.shell.menu?.some(item => item.code === 'catalog' && item.isVisible)" :organization-id="context.organization.id" :planned-start-local="plannedStartLocal" :planned-end-local="plannedEndLocal" append-to="#record-services-dialog" :disabled="savingServices" />
             <p v-if="serviceError" class="record-error" role="alert">{{ serviceError }}</p>
           </div>
           <footer class="record-services-footer">
-            <p class="record-service-total">Сумма услуг: <strong>{{ formatMoney(serviceDraft.reduce((sum, item) => sum + (item.price ?? 0), 0)) }}</strong></p>
-            <div class="record-service-actions"><UiButton variant="secondary" :disabled="savingServices" @click="closeServices">Отмена</UiButton><UiButton :disabled="savingServices" @click="saveServices">{{ savingServices ? 'Сохраняем…' : 'Сохранить услуги' }}</UiButton></div>
+            <p class="record-service-total">{{ t('maintenanceCard.servicesTotal') }} <strong>{{ formatMoney(serviceDraft.reduce((sum, item) => sum + (item.price ?? 0), 0)) }}</strong></p>
+            <div class="record-service-actions"><UiButton variant="secondary" :disabled="savingServices" @click="closeServices">{{ t('maintenanceCard.cancel') }}</UiButton><UiButton :disabled="savingServices" @click="saveServices">{{ savingServices ? t('maintenanceCard.saving') : t('maintenanceCard.saveServices') }}</UiButton></div>
           </footer>
         </div>
       </dialog>
@@ -1096,14 +1114,14 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
         <div class="record-content">
           <ClientConversationPanel v-if="activePanel === 'messages' && maintenance.buyerClientId" :key="context.organization.id + ':' + maintenance.id" :context="context" :client-id="maintenance.buyerClientId" :maintenance-id="maintenance.id" />
           <section v-show="activePanel === 'work'" class="record-section" aria-labelledby="record-services-tab">
-            <div v-if="!serviceDetails.length" class="record-empty">Услуги пока не добавлены.</div>
+            <div v-if="!serviceDetails.length" class="record-empty">{{ t('maintenanceCard.servicesEmpty') }}</div>
             <table v-else class="record-table record-services">
-              <caption class="record-sr-only">Услуги по записи</caption>
+              <caption class="record-sr-only">{{ t('maintenanceCard.servicesByRecord') }}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Наименование</th>
-                  <th v-if="showWorkProgress" scope="col">Статус</th>
-                  <th scope="col">Сумма</th>
+                  <th scope="col">{{ t('maintenanceCard.name') }}</th>
+                  <th v-if="showWorkProgress" scope="col">{{ t('maintenanceCard.status') }}</th>
+                  <th scope="col">{{ t('maintenanceCard.amount') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1111,18 +1129,18 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
                   <td>
                     <strong>{{ detail.name }}</strong>
                     <p v-if="detail.description">{{ detail.description }}</p>
-                    <p v-if="detail.employeeName || maintenance.performer">{{ detail.employeeName || maintenance.performer }}<template v-if="!detail.employeeId && !detail.employeeName"> · как в записи</template></p>
-                    <p>Кол-во: {{ detail.quantity ?? 1 }} · {{ formatVatRate(detail.vatRateCode) }}</p>
+                    <p v-if="detail.employeeName || maintenance.performer">{{ detail.employeeName || maintenance.performer }}<template v-if="!detail.employeeId && !detail.employeeName"> · {{ t('maintenanceCard.asScheduled') }}</template></p>
+                    <p>{{ t('maintenanceCard.quantity') }}: {{ detail.quantity ?? 1 }} · {{ formatVatRate(detail.vatRateCode) }}</p>
                   </td>
-                  <td v-if="showWorkProgress"><span class="record-work-status" :data-status="detail.detailId ? workByDetail.get(detail.detailId)?.status : undefined">{{ workStatusName(detail) }}</span><small v-if="detail.detailId && hasRecordedWorkTime(workByDetail.get(detail.detailId)?.activeTime)" class="record-work-duration">В работе: {{ formatWorkDuration(workByDetail.get(detail.detailId)!.activeTime) }}</small></td>
+                  <td v-if="showWorkProgress"><span class="record-work-status" :data-status="detail.detailId ? workByDetail.get(detail.detailId)?.status : undefined">{{ workStatusName(detail) }}</span><small v-if="detail.detailId && hasRecordedWorkTime(workByDetail.get(detail.detailId)?.activeTime)" class="record-work-duration">{{ t('maintenanceCard.workDuration', { duration: formatWorkDuration(workByDetail.get(detail.detailId)!.activeTime) }) }}</small></td>
                   <td>{{ formatMoney(detail.price) }}</td>
                 </tr>
               </tbody>
-              <tfoot><tr><td :colspan="showWorkProgress ? 2 : 1">Итого</td><td>{{ formatMoney(serviceDetails.reduce((sum, item) => sum + (item.price ?? 0), 0)) }}</td></tr></tfoot>
+              <tfoot><tr><td :colspan="showWorkProgress ? 2 : 1">{{ t('maintenanceCard.total') }}</td><td>{{ formatMoney(serviceDetails.reduce((sum, item) => sum + (item.price ?? 0), 0)) }}</td></tr></tfoot>
             </table>
             <div v-if="canEditServices || canManageVat && serviceDetails.length && !editingVat" class="record-services-actions">
-              <UiButton v-if="canEditServices" variant="secondary" @click="editServices">Изменить услуги</UiButton>
-              <UiButton v-if="canManageVat && !canEditServices && serviceDetails.length && !editingVat" variant="secondary" @click="editVat">Уточнить НДС</UiButton>
+              <UiButton v-if="canEditServices" variant="secondary" @click="editServices">{{ t('maintenanceCard.editServices') }}</UiButton>
+              <UiButton v-if="canManageVat && !canEditServices && serviceDetails.length && !editingVat" variant="secondary" @click="editVat">{{ t('maintenanceCard.clarifyVat') }}</UiButton>
             </div>
           </section>
           <MaintenanceWorkProgress v-if="serviceDetails.length" :key="[context.organization.id, maintenance.id].join(':')" compact @progress="workProgress = $event" v-show="activePanel === 'work'" :organization-id="context.organization.id" :time-zone-id="context.organization.timeZoneId"
@@ -1130,50 +1148,50 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
             :team-available="canUseTeam"
             :can-complete="canEditServices" :can-return="canWrite && maintenance.canEditServices === true" @changed="loadCard(true)" />
           <section v-show="activePanel === 'notifications'" class="record-section">
-            <WorkspaceProLock centered :locked="hasLockedNotifications" message="Уведомления доступны в PRO" feature="notifications">
+            <WorkspaceProLock centered :locked="hasLockedNotifications" :message="t('maintenanceCard.notificationsPro')" feature="notifications">
             <div class="record-section__heading ui-section-header">
-              <h3>Уведомления клиенту</h3>
+              <h3>{{ t('maintenanceCard.customerNotifications') }}</h3>
               <div class="record-notifications-actions">
-                <UiButton v-if="maintenance.buyerClientId && context.shell.menu?.some(item => item.code === 'messages' && item.isVisible)" variant="secondary" aria-label="Написать клиенту" @click="activePanel = 'messages'"><span class="record-notifications-write-full">Написать клиенту</span><span class="record-notifications-write-short">Написать</span></UiButton>
-                <UiButton variant="secondary" :disabled="notificationsLoading" @click="loadNotificationHistory">{{ notificationsLoading ? 'Обновляем…' : 'Обновить' }}</UiButton>
+                <UiButton v-if="maintenance.buyerClientId && context.shell.menu?.some(item => item.code === 'messages' && item.isVisible)" variant="secondary" :aria-label="t('maintenanceCard.writeCustomer')" @click="activePanel = 'messages'"><span class="record-notifications-write-full">{{ t('maintenanceCard.writeCustomer') }}</span><span class="record-notifications-write-short">{{ t('maintenanceCard.write') }}</span></UiButton>
+                <UiButton variant="secondary" :disabled="notificationsLoading" @click="loadNotificationHistory">{{ notificationsLoading ? t('maintenanceCard.refreshing') : t('maintenanceCard.refresh') }}</UiButton>
               </div>
             </div>
             <MaintenanceVisitReminder v-if="activePanel === 'notifications'" :organization-id="context.organization.id" :maintenance-id="maintenance.id" :refresh-key="notificationsRefreshKey" :preview-only="hasLockedNotifications" @changed="loadCard(true)" />
             <div v-if="hasLockedNotifications" class="record-notifications-history">
-              <div class="record-section__heading ui-section-header"><h4>История отправок</h4></div>
-              <p class="record-notifications-empty">Сообщения клиенту и статусы доставки в одном месте.</p>
+              <div class="record-section__heading ui-section-header"><h4>{{ t('maintenanceCard.sentHistory') }}</h4></div>
+              <p class="record-notifications-empty">{{ t('maintenanceCard.deliveryInfo') }}</p>
             </div>
             </WorkspaceProLock>
             <div v-if="hasLockedNotifications" class="record-intake-history">
-              <button type="button" class="record-text-action" @click="toggleNotificationHistory">{{ showNotificationHistory ? 'Закрыть историю' : 'Сохранённая история' }}</button>
+              <button type="button" class="record-text-action" @click="toggleNotificationHistory">{{ showNotificationHistory ? t('maintenanceCard.closeHistory') : t('maintenanceCard.savedHistory') }}</button>
             </div>
             <div v-if="!hasLockedNotifications || showNotificationHistory" class="record-notifications-history">
               <div class="record-section__heading ui-section-header">
-                <h4>История отправок</h4>
-                <UiButton v-if="hasLockedNotifications" variant="secondary" :disabled="notificationsLoading" @click="loadNotificationHistory">Обновить</UiButton>
+                <h4>{{ t('maintenanceCard.sentHistory') }}</h4>
+                <UiButton v-if="hasLockedNotifications" variant="secondary" :disabled="notificationsLoading" @click="loadNotificationHistory">{{ t('maintenanceCard.refresh') }}</UiButton>
               </div>
             <p v-if="maxNotificationError" role="alert">{{ maxNotificationError }}</p>
             <p v-if="telegramNotificationError" role="alert">{{ telegramNotificationError }}</p>
-            <UiLoader v-if="notificationsLoading && !maxNotifications.length && !telegramNotifications.length" text="Загружаем уведомления…" />
+            <UiLoader v-if="notificationsLoading && !maxNotifications.length && !telegramNotifications.length" :text="t('maintenanceCard.loadingNotifications')" />
             <MaintenanceNotificationHistory v-if="maxNotifications.length || telegramNotifications.length" :max="maxNotifications" :telegram="telegramNotifications" :time-zone-id="context.organization.timeZoneId" />
-            <p v-if="!notificationsLoading && !maxNotifications.length && !telegramNotifications.length && !maxNotificationError && !telegramNotificationError" class="record-notifications-empty">Здесь появятся отправленные сообщения и результат доставки.</p>
+            <p v-if="!notificationsLoading && !maxNotifications.length && !telegramNotifications.length && !maxNotificationError && !telegramNotificationError" class="record-notifications-empty">{{ t('maintenanceCard.notificationsEmpty') }}</p>
             </div>
           </section>
           <details v-if="materialDetails.length" v-show="activePanel === 'work'" class="record-section" aria-labelledby="record-materials-title">
-            <summary id="record-materials-title">Материалы · Позиций: {{ materialDetails.length }}</summary>
+            <summary id="record-materials-title">{{ t('maintenanceCard.materialCount', { count: materialDetails.length }) }}</summary>
             <table class="record-table record-materials">
-              <caption class="record-sr-only">Материалы по записи</caption>
+              <caption class="record-sr-only">{{ t('maintenanceCard.materials') }}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Наименование</th>
-                  <th scope="col">Кол-во</th>
-                  <th scope="col">Затраты</th>
+                  <th scope="col">{{ t('maintenanceCard.name') }}</th>
+                  <th scope="col">{{ t('maintenanceCard.quantity') }}</th>
+                  <th scope="col">{{ t('maintenanceCard.costs') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(detail, index) in materialDetails" :key="index">
                   <td>
-                    <strong>{{ detail.materialName || detail.name || 'Материал' }}</strong>
+                    <strong>{{ detail.materialName || detail.name || t('maintenanceCard.material') }}</strong>
                   </td>
                   <td>{{ detail.materialQuantity ?? '—' }} {{ detail.materialUnit }}</td>
                   <td>{{ formatMoney(detail.materialTotalCost) }}</td>
@@ -1182,74 +1200,74 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
             </table>
           </details>
           <section v-if="maintenance.comment" v-show="activePanel === 'work'" class="record-section record-comment">
-            <h3 class="ui-section-header">Комментарий</h3>
+            <h3 class="ui-section-header">{{ t('maintenanceCard.comment') }}</h3>
             <p>{{ maintenance.comment }}</p>
           </section>
           <section v-if="photos.length" v-show="activePanel === 'work'" class="record-section record-photo-strip">
-            <div class="record-section__heading ui-section-header"><h3>Фото до / после</h3><button type="button" @click="activePanel = 'intake'">Все фото · {{ photos.length }}</button></div>
-            <div><button v-for="photo in photos.slice(0, 4)" :key="photo.photoId" type="button" class="photo-preview-button" :aria-label="photoStages.find(group => group.stage === photo.stage)?.title" @click="previewPhoto = photo"><img :src="photo.url" :alt="photoStages.find(group => group.stage === photo.stage)?.title"><span>{{ photo.stage === 1 ? 'До' : photo.stage === 2 ? 'После' : 'Фото' }}</span></button></div>
+            <div class="record-section__heading ui-section-header"><h3>{{ t('maintenanceCard.beforeAfter') }}</h3><button type="button" @click="activePanel = 'intake'">{{ t('maintenanceCard.allPhotos', { count: photos.length }) }}</button></div>
+            <div><button v-for="photo in photos.slice(0, 4)" :key="photo.photoId" type="button" class="photo-preview-button" :aria-label="photoStages.find(group => group.stage === photo.stage)?.title" @click="previewPhoto = photo"><img :src="photo.url" :alt="photoStages.find(group => group.stage === photo.stage)?.title"><span>{{ photo.stage === 1 ? t('maintenanceCard.before') : photo.stage === 2 ? t('maintenanceCard.after') : t('maintenanceCard.photo') }}</span></button></div>
           </section>
           <div v-if="hasLockedIntake" v-show="activePanel === 'intake'" class="record-intake-history">
             <button type="button" class="record-text-action" :disabled="intakeHistoryLoading" @click="toggleIntakeHistory">
-              {{ intakeHistoryLoading ? 'Открываем…' : showIntakeHistory ? 'Закрыть историю' : 'Сохранённая история' }}
+              {{ intakeHistoryLoading ? t('maintenanceCard.opening') : showIntakeHistory ? t('maintenanceCard.closeHistory') : t('maintenanceCard.savedHistory') }}
             </button>
             <span v-if="intakeHistoryError" class="record-error" role="alert">{{ intakeHistoryError }}</span>
           </div>
-          <WorkspaceProLock v-show="activePanel === 'intake'" class="record-intake-lock" :locked="isIntakePreview" message="Приёмка и фото доступны в PRO" feature="intake">
+          <WorkspaceProLock v-show="activePanel === 'intake'" class="record-intake-lock" :locked="isIntakePreview" :message="t('maintenanceCard.intakePro')" feature="intake">
           <section class="record-intake" aria-labelledby="record-intake-title">
             <div class="record-section__heading ui-section-header">
-              <h3 id="record-intake-title">Приёмка</h3>
+              <h3 id="record-intake-title">{{ t('maintenanceCard.intake') }}</h3>
               <span v-if="maintenance.intakeRecordedAt">{{ formatInstantDate(maintenance.intakeRecordedAt) }}</span>
               <a v-if="maintenance.intakeRecordedAt && context.workspaceAccess?.exportsEnabled" class="record-intake__document"
                 :href="'/api/v1/maintenance/' + maintenance.id + '/intake/print?organizationId=' + context.organization.id"
-                target="_blank" rel="noopener">Открыть акт приёмки PDF</a>
-              <UiButton v-if="canWrite" variant="secondary" :disabled="!canEditIntake" :title="!canEditIntake ? 'Доступно в PRO' : undefined" @click="editIntake">
-                {{ maintenance.intakeRecordedAt ? 'Уточнить' : 'Зафиксировать состояние' }}
+                target="_blank" rel="noopener">{{ t('maintenanceCard.openIntakePdf') }}</a>
+              <UiButton v-if="canWrite" variant="secondary" :disabled="!canEditIntake" :title="!canEditIntake ? t('maintenanceCard.availableInPro') : undefined" @click="editIntake">
+                {{ maintenance.intakeRecordedAt ? t('maintenanceCard.updateIntake') : t('maintenanceCard.recordIntake') }}
               </UiButton>
             </div>
-            <SchedulerBookingDialog :open="intakeEditing" :busy="intakeBusy" title="Приёмка" @close="closeIntake">
+            <SchedulerBookingDialog :open="intakeEditing" :busy="intakeBusy" :title="t('maintenanceCard.intake')" @close="closeIntake">
               <form class="record-intake__form" novalidate @submit.prevent="saveIntake">
-                <p class="record-intake__requirement"><span aria-hidden="true">*</span> Заполните хотя бы одно поле для акта приёмки.</p>
+                <p class="record-intake__requirement"><span aria-hidden="true">*</span> {{ t('maintenanceCard.intakeRequirement') }}</p>
                 <label for="intake-mileage">{{ intakeMileageLabel }}</label>
                 <input id="intake-mileage" v-model="intakeMileage" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="10"
                   :aria-invalid="Boolean(intakeMileageError)" :aria-describedby="intakeMileageError ? 'intake-mileage-error' : undefined"
                   :disabled="intakeBusy" @blur="validateIntakeMileage" />
                 <p v-if="intakeMileageError" id="intake-mileage-error" class="record-error" role="alert">{{ intakeMileageError }}</p>
-                <label for="intake-completeness">Комплектность</label>
+                <label for="intake-completeness">{{ t('maintenanceCard.completeness') }}</label>
                 <textarea id="intake-completeness" v-model="intakeCompleteness" rows="2" maxlength="4000"
-                  :disabled="intakeBusy" placeholder="Ключи, документы, колёса, оборудование…" />
-                <label for="intake-damage">Заметные повреждения</label>
+                  :disabled="intakeBusy" :placeholder="t('maintenanceCard.completenessPlaceholder')" />
+                <label for="intake-damage">{{ t('maintenanceCard.visibleDamage') }}</label>
                 <textarea id="intake-damage" v-model="intakeVisibleDamage" rows="2" maxlength="4000"
-                  :disabled="intakeBusy" placeholder="Укажите повреждения или напишите «Без замечаний»" />
-                <label for="intake-notes">Комментарии</label>
+                  :disabled="intakeBusy" :placeholder="t('maintenanceCard.damagePlaceholder')" />
+                <label for="intake-notes">{{ t('maintenanceCard.comments') }}</label>
                 <textarea id="intake-notes" v-model="intakeNotes" rows="3" maxlength="4000" :disabled="intakeBusy"
-                  placeholder="Дополнительные сведения о состоянии автомобиля" />
+                  :placeholder="t('maintenanceCard.notesPlaceholder')" />
                 <div v-if="intakeMessage" class="record-error" role="alert">{{ intakeMessage }}</div>
                 <div class="record-intake__actions">
-                  <UiButton type="submit" :disabled="intakeBusy">{{ intakeBusy ? 'Сохраняем…' : 'Сохранить приёмку' }}</UiButton>
-                  <UiButton type="button" variant="secondary" :disabled="intakeBusy" @click="closeIntake">Отмена</UiButton>
+                  <UiButton type="submit" :disabled="intakeBusy">{{ intakeBusy ? t('maintenanceCard.saving') : t('maintenanceCard.saveIntake') }}</UiButton>
+                  <UiButton type="button" variant="secondary" :disabled="intakeBusy" @click="closeIntake">{{ t('maintenanceCard.cancel') }}</UiButton>
                   <button v-if="!intakeVisibleDamage.trim()" type="button" class="record-text-action" :disabled="intakeBusy"
-                    @click="intakeVisibleDamage = 'Без заметных повреждений.'">Без повреждений</button>
+                    @click="intakeVisibleDamage = t('maintenanceCard.noDamageFull')">{{ t('maintenanceCard.noDamage') }}</button>
                 </div>
               </form>
             </SchedulerBookingDialog>
             <p v-if="intakeSuccessMessage" class="record-intake__success" role="status">{{ intakeSuccessMessage }}</p>
             <dl v-if="maintenance.intakeRecordedAt || isIntakePreview" class="record-intake__details">
               <div v-if="isIntakePreview || maintenance.intakeMileage !== null && maintenance.intakeMileage !== undefined">
-                <dt>{{ vehicle?.mileageUnit === 2 ? 'Наработка' : 'Пробег' }}</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeMileage?.toLocaleString('ru-RU') }} {{ isIntakePreview ? '' : intakeMileageUnit }}</dd>
+                <dt>{{ vehicle?.mileageUnit === 2 ? t('maintenanceCard.engineHours') : t('maintenanceCard.mileage') }}</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeMileage?.toLocaleString(formattingCulture) }} {{ isIntakePreview ? '' : intakeMileageUnit }}</dd>
               </div>
               <div v-if="isIntakePreview || maintenance.intakeCompleteness">
-                <dt>Комплектность</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeCompleteness }}</dd>
+                <dt>{{ t('maintenanceCard.completeness') }}</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeCompleteness }}</dd>
               </div>
               <div v-if="isIntakePreview || maintenance.intakeVisibleDamage">
-                <dt>Заметные повреждения</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeVisibleDamage }}</dd>
+                <dt>{{ t('maintenanceCard.visibleDamage') }}</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeVisibleDamage }}</dd>
               </div>
               <div v-if="isIntakePreview || maintenance.intakeNotes">
-                <dt>Комментарии</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeNotes }}</dd>
+                <dt>{{ t('maintenanceCard.comments') }}</dt><dd>{{ isIntakePreview ? '—' : maintenance.intakeNotes }}</dd>
               </div>
             </dl>
-            <p v-if="maintenance.intakeRecordedAt && !context.workspaceAccess?.exportsEnabled" class="record-intake__empty">Печать PDF недоступна на текущем тарифе.</p>
-            <p v-if="!maintenance.intakeRecordedAt && !isIntakePreview" class="record-intake__empty">Акт приёмки ещё не заполнен.</p>
+            <p v-if="maintenance.intakeRecordedAt && !context.workspaceAccess?.exportsEnabled" class="record-intake__empty">{{ t('maintenanceCard.printUnavailable') }}</p>
+            <p v-if="!maintenance.intakeRecordedAt && !isIntakePreview" class="record-intake__empty">{{ t('maintenanceCard.actNotFilled') }}</p>
           </section>
           <div v-show="activePanel === 'intake'">
             <IntakeDamageMap :organization-id="context.organization.id" :maintenance-id="maintenanceId"
@@ -1258,50 +1276,50 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
           </div>
           <section v-show="activePanel === 'intake'" class="record-section" aria-labelledby="record-photos-title">
             <div class="record-section__heading ui-section-header">
-              <h3 id="record-photos-title">Фото до / после <span class="record-photo-count">{{ photos.length }}</span></h3>
+              <h3 id="record-photos-title">{{ t('maintenanceCard.beforeAfter') }} <span class="record-photo-count">{{ photos.length }}</span></h3>
               <UiButton v-if="canComparePhotos" variant="secondary" @click="comparisonOpen = true">
-                Сравнить до / после
+                {{ t('maintenanceCard.comparePhotos') }}
               </UiButton>
             </div>
             <div v-if="photoMessage" class="record-error" role="alert">{{ photoMessage }}</div>
-            <UiLoader v-if="isSavingPhotos" compact text="Обновляем фото…" />
+            <UiLoader v-if="isSavingPhotos" compact :text="t('maintenanceCard.updatingPhotos')" />
             <div class="record-photo-groups">
               <section v-for="group in photoGroups" :key="group.stage" class="record-photo-group" :aria-label="group.title">
                 <div class="record-photo-group__heading">
                   <h4 class="ui-section-header">{{ group.title }} <span>{{ group.photos.length }}</span></h4>
-                  <label v-if="canWrite" class="record-upload" :class="{ 'record-upload--busy': isSavingPhotos }" :aria-disabled="!canEditPhotos" :title="!canEditPhotos ? 'Доступно в PRO' : undefined">
-                    ＋ Фото
+                  <label v-if="canWrite" class="record-upload" :class="{ 'record-upload--busy': isSavingPhotos }" :aria-disabled="!canEditPhotos" :title="!canEditPhotos ? t('maintenanceCard.availableInPro') : undefined">
+                    ＋ {{ t('maintenanceCard.photo') }}
                     <input type="file" accept="image/*" multiple :disabled="isSavingPhotos || !canEditPhotos"
-                      :aria-label="`Добавить фото: ${group.title}`" @change="uploadPhotos($event, group.stage)">
+                      :aria-label="t('maintenanceCard.addPhoto', { title: group.title })" @change="uploadPhotos($event, group.stage)">
                   </label>
                 </div>
                 <div v-if="group.photos.length" class="record-photos">
                   <article v-for="(photo, index) in group.photos" :key="photo.photoId" class="record-photo">
-                    <button type="button" class="photo-preview-button" :aria-label="`${group.title}: открыть фото ${index + 1}`"
+                    <button type="button" class="photo-preview-button" :aria-label="t('maintenanceCard.openPhoto', { title: group.title, index: index + 1 })"
                       @click="previewPhoto = photo">
                       <img :src="photo.url" :alt="`${group.title} — ${index + 1}`" loading="lazy">
                     </button>
                     <div v-if="canWrite" class="record-photo__actions">
                       <select :value="photo.stage" :disabled="!canEditPhotos || isSavingPhotos || intakeDamagePhotoIds === null || intakeDamagePhotoIds.has(photo.photoId)"
-                        :title="intakeDamagePhotoIds?.has(photo.photoId) ? 'Сначала удалите связь фото с повреждением.' : intakeDamagePhotoIds === null ? 'Сначала загрузите связи фотографий.' : undefined"
-                        :aria-label="`Этап фото ${index + 1}`"
+                        :title="intakeDamagePhotoIds?.has(photo.photoId) ? t('maintenanceCard.removeDamageLinkFirst') : intakeDamagePhotoIds === null ? t('maintenanceCard.loadPhotoLinksFirst') : undefined"
+                        :aria-label="t('maintenanceCard.photoStage', { index: index + 1 })"
                         @change="changePhotoStage(photo, $event)">
                         <option v-for="stage in photoStages" :key="stage.stage" :value="stage.stage">{{ stage.title }}</option>
                       </select>
-                      <span v-if="intakeDamagePhotoIds?.has(photo.photoId)" class="record-photo__linked-damage">Связано с повреждением</span>
-                      <button type="button" class="record-text-action" :disabled="!canEditPhotos || isSavingPhotos" :title="!canEditPhotos ? 'Доступно в PRO' : undefined"
-                        :aria-label="`Удалить фото ${index + 1}`" @click="removePhoto(photo)">Удалить</button>
+                      <span v-if="intakeDamagePhotoIds?.has(photo.photoId)" class="record-photo__linked-damage">{{ t('maintenanceCard.linkedDamage') }}</span>
+                      <button type="button" class="record-text-action" :disabled="!canEditPhotos || isSavingPhotos" :title="!canEditPhotos ? t('maintenanceCard.availableInPro') : undefined"
+                        :aria-label="t('maintenanceCard.removePhoto', { index: index + 1 })" @click="removePhoto(photo)">{{ t('maintenanceCard.delete') }}</button>
                     </div>
                   </article>
                 </div>
-                <div v-else class="record-photo-group__empty">{{ group.stage === 1 ? 'Фото состояния при приёмке' : group.stage === 2 ? 'Фото результата работы' : 'Фото пока нет' }}</div>
+                <div v-else class="record-photo-group__empty">{{ group.stage === 1 ? t('maintenanceCard.intakePhotoEmpty') : group.stage === 2 ? t('maintenanceCard.resultPhotoEmpty') : t('maintenanceCard.photosEmpty') }}</div>
               </section>
             </div>
           </section>
           </WorkspaceProLock>
           <section v-if="!isDetailingScenario && maintenance.linkedDefects.length" v-show="activePanel === 'work'" class="record-section">
             <div class="record-section__heading ui-section-header">
-              <h3>Связанные неисправности</h3>
+              <h3>{{ t('maintenanceCard.relatedDefects') }}</h3>
             </div>
             <div v-for="defect in maintenance.linkedDefects" :key="defect.id" class="record-defect">
               <strong>{{ defect.title }}</strong>
@@ -1309,9 +1327,9 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
             </div>
           </section>
         </div>
-        <aside ref="settlementPanel" tabindex="-1" class="record-sidebar" aria-label="Расчёты и документы">
+        <aside ref="settlementPanel" tabindex="-1" class="record-sidebar" :aria-label="t('maintenanceCard.calculationsAndDocuments')">
           <section v-if="maintenance.buyerClientId || maintenance.buyerName" class="record-section record-buyer">
-            <h3 class="ui-section-header">{{ isDetailingScenario ? 'Клиент' : 'Покупатель' }}</h3>
+            <h3 class="ui-section-header">{{ isDetailingScenario ? t('maintenanceCard.customer') : t('maintenanceCard.buyer') }}</h3>
           <span class="record-client">
             <a
               v-if="maintenance.buyerClientId && context.shell.menu?.some(item => item.code === 'clients' && item.isVisible)"
@@ -1319,26 +1337,26 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
             >
               {{ maintenance.buyerName }}
             </a>
-            <span v-else>{{ maintenance.buyerName || 'Не указан' }}</span>
-            <span v-if="maintenance.buyerClientId && maintenance.buyerPartyTypeCode === 'company' && maintenance.buyerInn"> · ИНН {{ maintenance.buyerInn }}</span>
+            <span v-else>{{ maintenance.buyerName || t('maintenanceCard.notSpecified') }}</span>
+            <span v-if="maintenance.buyerClientId && maintenance.buyerPartyTypeCode === 'company' && maintenance.buyerInn"> · {{ t('maintenanceCard.buyerTaxId') }} {{ maintenance.buyerInn }}</span>
           </span>
           </section>
           <section class="record-finance" aria-labelledby="record-finance-title">
             <div class="record-section__heading ui-section-header">
-              <h3 id="record-finance-title">Расчёт</h3>
+              <h3 id="record-finance-title">{{ t('maintenanceCard.finance') }}</h3>
               <span class="record-payment">{{ getPaymentStatusName(maintenance.paymentStatus) }}</span>
             </div>
             <div class="record-total">
-              <span>Итого</span>
+              <span>{{ t('maintenanceCard.total') }}</span>
               <strong>{{ formatMoney(netAmount) }}</strong>
             </div>
             <dl class="record-finance__payments">
               <div>
-                <dt>Оплачено</dt>
+                <dt>{{ t('maintenanceCard.paidAmount') }}</dt>
                 <dd>{{ formatMoney(maintenance.paidAmount) }}</dd>
               </div>
               <div :class="{ 'record-debt': maintenance.debtAmount > 0 }">
-                <dt>{{ maintenance.paymentStatus === 'overpaid' ? 'Переплата' : 'Осталось оплатить' }}</dt>
+                <dt>{{ maintenance.paymentStatus === 'overpaid' ? t('maintenanceCard.overpaid') : t('maintenanceCard.overpaidOrRemaining') }}</dt>
                 <dd>{{ formatMoney(maintenance.paymentStatus === 'overpaid' ? maintenance.paidAmount - netAmount : maintenance.debtAmount) }}</dd>
               </div>
             </dl>
@@ -1347,22 +1365,22 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
               :organization-id="context.organization.id" :maintenance="maintenance"
               :time-zone-id="context.organization.timeZoneId"
               :disabled="!canWrite || editingServices" @changed="paymentChanged" />
-            <details class="record-costs"><summary>Себестоимость и прибыль</summary>
+            <details class="record-costs"><summary>{{ t('maintenanceCard.costsAndProfit') }}</summary>
             <dl class="record-finance__details">
               <div>
-                <dt>Скидка</dt>
+                <dt>{{ t('maintenanceCard.discount') }}</dt>
                 <dd>{{ formatMoney(maintenance.discountAmount) }}</dd>
               </div>
               <div>
-                <dt>Материалы</dt>
+                <dt>{{ t('maintenanceCard.materials') }}</dt>
                 <dd>{{ formatMoney(maintenance.materialCostAmount) }}</dd>
               </div>
               <div>
-                <dt>Труд</dt>
+                <dt>{{ t('maintenanceCard.labor') }}</dt>
                 <dd>{{ formatMoney(maintenance.laborCostAmount) }}</dd>
               </div>
               <div class="record-profit">
-                <dt>Прибыль</dt>
+                <dt>{{ t('maintenanceCard.profit') }}</dt>
                 <dd>{{ formatMoney(maintenance.profitAmount) }}</dd>
               </div>
             </dl>
@@ -1370,7 +1388,7 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
           </section>
           <section class="record-documents" aria-labelledby="record-documents-title">
             <div class="record-section__heading ui-section-header">
-              <h3 id="record-documents-title">Документы</h3>
+              <h3 id="record-documents-title">{{ t('maintenanceCard.documents') }}</h3>
             </div>
             <div v-if="documentMessage" class="record-error" role="alert">{{ documentMessage }}</div>
             <button
@@ -1378,11 +1396,11 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
               :key="link.key"
               type="button"
               :disabled="Boolean(documentActionKey) || !link.isAvailable"
-              :title="!link.isAvailable ? 'Выгрузки временно недоступны' : undefined"
+              :title="!link.isAvailable ? t('maintenanceCard.exportsUnavailable') : undefined"
               @click="downloadDocument(link)"
             >
-              <span>{{ documentActionKey === link.key ? 'Формируем…' : link.title }}</span>
-              <small v-if="!link.isAvailable">Недоступно</small>
+              <span>{{ documentActionKey === link.key ? t('maintenanceCard.generating') : link.title }}</span>
+              <small v-if="!link.isAvailable">{{ t('maintenanceCard.unavailable') }}</small>
             </button>
           </section>
         </aside>
@@ -1390,9 +1408,9 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
     </template>
     <UiConfirmDialog
       :open="Boolean(photoDeleteConfirm)"
-      title="Удалить фото"
-      message="Фото услуги будет удалено без возможности восстановления."
-      confirm-text="Удалить"
+      :title="t('maintenanceCard.photoDeleteTitle')"
+      :message="t('maintenanceCard.photoDeleteMessage')"
+      :confirm-text="t('maintenanceCard.delete')"
       :busy="isSavingPhotos"
       tone="danger"
       @close="closePhotoDeleteConfirmation"
@@ -1400,7 +1418,7 @@ watch([() => props.context.organization.id, () => props.maintenanceId], () => {
     />
     <MaintenancePhotoComparison v-if="comparisonOpen" :photos="photos" :organization-id="context.organization.id"
       :organization-name="context.organization.name" :maintenance-id="maintenanceId" @close="comparisonOpen = false" />
-    <UiImagePreview :src="previewPhoto?.url" :title="photoStages.find(group => group.stage === previewPhoto?.stage)?.title ?? 'Фото записи'" @close="previewPhoto = null" />
+    <UiImagePreview :src="previewPhoto?.url" :title="photoStages.find(group => group.stage === previewPhoto?.stage)?.title ?? t('maintenanceCard.recordPhotoTitle')" @close="previewPhoto = null" />
   </UiCard>
 
 </template>

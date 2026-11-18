@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { i18n } from '@opencrm/ui/i18n'
+import '../packages/workspace/src/vehicleMediaMessages.ts'
 
 const filename = new URL('../packages/workspace/src/components/VehicleMediaSection.vue', import.meta.url)
 const source = readFileSync(filename, 'utf8')
@@ -28,6 +30,8 @@ function vehicleMedia(mode = 'photos') {
   })
   const resolve = id => {
     if (id === 'vue') return { ...vue, inject: () => undefined, provide() {}, onMounted() {} }
+    if (id === '@opencrm/ui/i18n') return { translate: (key, params) => i18n.global.t(key, params) }
+    if (id === '../vehicleMediaMessages') return {}
     if (id === '@opencrm/ui') return {
       pageBreadcrumbsKey: Symbol('pageBreadcrumbs'), UiButton: {}, UiCard: {}, UiConfirmDialog: {},
       UiImagePreview: {}, UiInput: {}, UiLoader: {}
@@ -104,4 +108,34 @@ test('Альбомы Free не загружаются до явного откр
 
   assert.equal(calls.some(([name]) => name === 'loadVehicleAlbums'), true)
   assert.equal(state.canChangePhotos.value, false)
+})
+
+test('Подтверждение удаления локализовано и сохраняет пользовательское название альбома', () => {
+  const { state, props } = vehicleMedia('albums')
+  props.context.shell.scenario.modules.photos = true
+  props.context.workspaceAccess.isReadOnly = false
+  i18n.global.locale.value = 'en'
+
+  state.removeAlbum({ albumId: 'album-1', title: 'Garage before restoration', photos: [], photoCount: 0 })
+
+  assert.equal(state.confirmDialog.value.title, 'Delete album')
+  assert.equal(state.confirmDialog.value.message, 'Album “Garage before restoration” and its photos will be deleted.')
+
+  i18n.global.locale.value = 'ru'
+})
+
+test('Строки интерфейса и параметры медиа имеют переводы на трёх языках', () => {
+  const keys = [...new Set([...source.matchAll(/\bt\(['"]([^'"]+)['"]\)/g)].map(match => match[1]))]
+  const dynamicKeys = ['vehicleMedia.photoCountOne', 'vehicleMedia.photoCountMany']
+
+  for (const locale of ['ru', 'en', 'zh-Hans']) {
+    i18n.global.locale.value = locale
+    for (const key of [...keys, ...dynamicKeys]) assert.notEqual(i18n.global.t(key), key, `${key} отсутствует для ${locale}`)
+  }
+
+  i18n.global.locale.value = 'en'
+  const { state } = vehicleMedia()
+  assert.equal(state.title.value, 'Manage vehicle photos')
+  assert.equal(state.validateBatch([{ size: 100 * 1024 * 1024 + 1 }]), 'You can upload up to 100 MB of photos at a time.')
+  i18n.global.locale.value = 'ru'
 })

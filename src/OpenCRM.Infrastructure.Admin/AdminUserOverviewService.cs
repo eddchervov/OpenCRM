@@ -247,6 +247,7 @@ internal sealed class AdminUserOverviewService(OpenCRMContext opencrmContext, bo
                 Location = x.Location,
                 Performer = x.Performer,
                 PaidAmount = x.PaidAmount,
+                CurrencyCode = x.CurrencyCode,
                 MaterialCostAmount = x.MaterialCostAmount,
                 LaborCostAmount = x.LaborCostAmount,
                 WorkActNumber = x.WorkActNumber,

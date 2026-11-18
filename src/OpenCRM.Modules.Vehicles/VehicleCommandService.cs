@@ -94,12 +94,19 @@ public sealed class VehicleCommandService : IVehicleCommandService
 
         if (!organizationId.HasValue)
         {
-            if (!await this._vehicleLimits.CanUserAddVehicleAsync(userId, organizationId))
-            {
-                await this.ThrowVehicleLimitExceededAsync(userId, organizationId);
-            }
+            return await this.ExecuteUserTransactionAsync(
+                userId,
+                async () =>
+                {
+                    if (!await this._vehicleLimits.CanUserAddVehicleAsync(userId, organizationId))
+                    {
+                        await this.ThrowVehicleLimitExceededAsync(userId, organizationId);
+                    }
 
-            return await this.CreateCoreAsync(userId, organizationId, dto);
+                    return await this.CreateCoreAsync(userId, organizationId, dto);
+                },
+                vehicleId => this._context.Vehicles.AsNoTracking()
+                    .AnyAsync(vehicle => vehicle.Id == vehicleId && vehicle.UserId == userId && vehicle.OrganizationId == null));
         }
 
         return await this.ExecuteOrganizationTransactionAsync(
@@ -120,7 +127,9 @@ public sealed class VehicleCommandService : IVehicleCommandService
 
         var normalizedName = VehicleCommandService.NormalizeManualValue(dto.Name);
         var normalizedVin = VehicleCommandService.NormalizeManualValue(dto.Vin);
-        var normalizedRegistrationPlate = this.NormalizeAndValidateRegistrationPlate(dto.RegistrationPlate, dto.Kind, dto.AllowOtherRegistrationPlateFormat);
+        var registrationCountryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(dto.RegistrationCountryCode);
+        var normalizedRegistrationPlate = this.NormalizeAndValidateRegistrationPlate(
+            dto.RegistrationPlate, dto.Kind, dto.AllowOtherRegistrationPlateFormat, registrationCountryCode);
         var normalizedBodyNumber = VehicleCommandService.NormalizeManualValue(dto.BodyNumber);
         var normalizedEngineNumber = VehicleCommandService.NormalizeManualValue(dto.EngineNumber);
         var normalizedColor = VehicleCommandService.NormalizeManualValue(dto.Color);
@@ -148,6 +157,7 @@ public sealed class VehicleCommandService : IVehicleCommandService
             Name = normalizedName,
             Vin = normalizedVin,
             RegistrationPlate = normalizedRegistrationPlate,
+            RegistrationCountryCode = registrationCountryCode,
             BodyNumber = normalizedBodyNumber,
             EngineNumber = normalizedEngineNumber,
             Color = normalizedColor,
@@ -216,15 +226,21 @@ public sealed class VehicleCommandService : IVehicleCommandService
         var vehicle = await this._vehicleRepository.Get(userId, organizationId, vehicleId)
             ?? throw new Exception($"Не найдена техника с vehicleId={vehicleId} и userId={userId}");
 
+        var registrationCountryCode = dto.RegistrationCountryCode is null
+            ? vehicle.RegistrationCountryCode
+            : InternationalRegistrationPlateRules.NormalizeCountryCode(dto.RegistrationCountryCode);
+
         var registrationPlateIsUnchanged = dto.Kind == vehicle.Kind &&
+            registrationCountryCode == vehicle.RegistrationCountryCode &&
             this.RegistrationPlatesAreEquivalent(
                 dto.RegistrationPlate,
                 vehicle.RegistrationPlate,
                 dto.Kind,
-                dto.AllowOtherRegistrationPlateFormat);
+                dto.AllowOtherRegistrationPlateFormat || registrationCountryCode is not null and not "RU");
         var normalizedRegistrationPlate = registrationPlateIsUnchanged
             ? vehicle.RegistrationPlate
-            : this.NormalizeAndValidateRegistrationPlate(dto.RegistrationPlate, dto.Kind, dto.AllowOtherRegistrationPlateFormat);
+            : this.NormalizeAndValidateRegistrationPlate(
+                dto.RegistrationPlate, dto.Kind, dto.AllowOtherRegistrationPlateFormat, registrationCountryCode);
 
         var previous = VehicleSnapshot.From(vehicle);
 
@@ -234,6 +250,7 @@ public sealed class VehicleCommandService : IVehicleCommandService
         vehicle.Name = normalizedName;
         vehicle.Vin = normalizedVin;
         vehicle.RegistrationPlate = normalizedRegistrationPlate;
+        vehicle.RegistrationCountryCode = registrationCountryCode;
         vehicle.BodyNumber = normalizedBodyNumber;
         vehicle.EngineNumber = normalizedEngineNumber;
         vehicle.Color = normalizedColor;
@@ -485,6 +502,37 @@ public sealed class VehicleCommandService : IVehicleCommandService
         return resultId;
     }
 
+    private async Task<Guid> ExecuteUserTransactionAsync(
+        string userId,
+        Func<Task<Guid>> action,
+        Func<Guid, Task<bool>> verifySucceeded)
+    {
+        if (this._context.Database.CurrentTransaction is not null)
+        {
+            await this._context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM identity.\"AspNetUsers\" WHERE \"Id\" = {userId} FOR NO KEY UPDATE");
+
+            return await action();
+        }
+
+        var isRetry = false;
+        Guid resultId = Guid.Empty;
+        await this._context.Database.CreateExecutionStrategy().ExecuteInTransactionAsync(async () =>
+        {
+            if (isRetry)
+            {
+                this._context.ChangeTracker.Clear();
+            }
+
+            isRetry = true;
+            await this._context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM identity.\"AspNetUsers\" WHERE \"Id\" = {userId} FOR NO KEY UPDATE");
+            resultId = await action();
+        }, () => verifySucceeded(resultId));
+
+        return resultId;
+    }
+
     /// <summary> Строит список изменений техники по сравнению со снимком. </summary>
     private static List<string> BuildVehicleChanges(VehicleSnapshot previous, Vehicle vehicle)
     {
@@ -498,6 +546,7 @@ public sealed class VehicleCommandService : IVehicleCommandService
         VehicleCommandService.AddChange(changes, "Год выпуска", VehicleCommandService.FormatNullableNumber(previous.YearIssue), VehicleCommandService.FormatNullableNumber(vehicle.YearIssue));
         VehicleCommandService.AddChange(changes, "VIN/серийный номер", previous.Vin, vehicle.Vin);
         VehicleCommandService.AddChange(changes, "Госномер", previous.RegistrationPlate, vehicle.RegistrationPlate);
+        VehicleCommandService.AddChange(changes, "Страна регистрации", previous.RegistrationCountryCode, vehicle.RegistrationCountryCode);
         VehicleCommandService.AddChange(changes, "Номер кузова/рамы", previous.BodyNumber, vehicle.BodyNumber);
         VehicleCommandService.AddChange(changes, "Номер двигателя", previous.EngineNumber, vehicle.EngineNumber);
         VehicleCommandService.AddChange(changes, "Цвет", previous.Color, vehicle.Color);
@@ -579,6 +628,7 @@ public sealed class VehicleCommandService : IVehicleCommandService
         int? YearIssue,
         string? Vin,
         string? RegistrationPlate,
+        string? RegistrationCountryCode,
         string? BodyNumber,
         string? EngineNumber,
         string? Color,
@@ -598,6 +648,7 @@ public sealed class VehicleCommandService : IVehicleCommandService
                 vehicle.YearIssue,
                 vehicle.Vin,
                 vehicle.RegistrationPlate,
+                vehicle.RegistrationCountryCode,
                 vehicle.BodyNumber,
                 vehicle.EngineNumber,
                 vehicle.Color,
@@ -677,8 +728,22 @@ public sealed class VehicleCommandService : IVehicleCommandService
         }
     }
 
-    private string? NormalizeAndValidateRegistrationPlate(string? value, VehicleKind kind, bool allowOtherFormat)
+    private string? NormalizeAndValidateRegistrationPlate(
+        string? value,
+        VehicleKind kind,
+        bool allowOtherFormat,
+        string? registrationCountryCode)
     {
+        if (registrationCountryCode is not null and not "RU")
+        {
+            if (!Enum.IsDefined(kind))
+            {
+                throw new InvalidOperationException("Выберите поддерживаемый тип техники.");
+            }
+
+            return InternationalRegistrationPlateRules.NormalizePlate(value);
+        }
+
         if (this._registrationPlatePolicy is null)
         {
             var normalized = VehicleCommandService.NormalizeManualValue(value);

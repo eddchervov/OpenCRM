@@ -1,3 +1,5 @@
+import { i18n, localeCultures, type UiLocale } from '@opencrm/ui/i18n'
+
 function russianUnit(value: number, forms: [string, string, string]) {
   const remainder = value % 100
   if (remainder >= 11 && remainder <= 14) return forms[2]
@@ -28,7 +30,7 @@ export function hasRecordedWorkTime(value?: string | null) {
   return match.slice(1, 5).some(part => Number(part ?? 0) > 0)
 }
 
-export function formatWorkDuration(value: string) {
+export function formatWorkDuration(value: string, locale: UiLocale = i18n.global.locale.value) {
   const match = value.trim().match(/^(-)?(?:(\d+)\.)?(\d{1,2}):(\d{2}):(\d{2})(?:\.\d+)?$/)
   if (!match) return value
 
@@ -41,14 +43,17 @@ export function formatWorkDuration(value: string) {
 
   const totalMinutes = days * 24 * 60 + hours * 60 + minutes
   const parts: string[] = []
+  const unit = (amount: number, name: Intl.NumberFormatOptions['unit'], forms: [string, string, string]) => locale === 'ru'
+    ? `${amount} ${russianUnit(amount, forms)}`
+    : new Intl.NumberFormat(localeCultures[locale], { style: 'unit', unit: name, unitDisplay: 'long' }).format(amount)
 
-  if (days) parts.push(`${days} ${russianUnit(days, ['день', 'дня', 'дней'])}`)
+  if (days) parts.push(unit(days, 'day', ['день', 'дня', 'дней']))
   const remainingHours = Math.floor(totalMinutes / 60) - days * 24
-  if (remainingHours) parts.push(`${remainingHours} ${russianUnit(remainingHours, ['час', 'часа', 'часов'])}`)
+  if (remainingHours) parts.push(unit(remainingHours, 'hour', ['час', 'часа', 'часов']))
 
   const remainingMinutes = totalMinutes % 60
-  if (remainingMinutes) parts.push(`${remainingMinutes} ${russianUnit(remainingMinutes, ['минута', 'минуты', 'минут'])}`)
+  if (remainingMinutes) parts.push(unit(remainingMinutes, 'minute', ['минута', 'минуты', 'минут']))
   if (parts.length) return `${sign}${parts.join(' ')}`
 
-  return `${sign}${seconds} ${russianUnit(seconds, ['секунда', 'секунды', 'секунд'])}`
+  return `${sign}${unit(seconds, 'second', ['секунда', 'секунды', 'секунд'])}`
 }

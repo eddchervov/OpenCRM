@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../sectionPagesMessages'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader } from '@opencrm/ui'
 import { getAssistantFrameUrl, loadAssistantAvailability } from '../api/assistant'
 import type { WorkspaceContext } from '../types'
 import WorkspaceProLock from './WorkspaceProLock.vue'
 import WorkspaceProFeaturePreview from './WorkspaceProFeaturePreview.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -31,7 +35,7 @@ async function load() {
   error.value = ''
   if (!isVisible.value) {
     loading.value = false
-    error.value = 'ИИ-помощник временно отключён администратором.'
+    error.value = t('sectionPages.assistantDisabled')
     return
   }
   if (previewOnly.value) {
@@ -42,13 +46,13 @@ async function load() {
     const availability = await loadAssistantAvailability(props.context.organization.id)
     if (version !== requestVersion) return
     const url = getAssistantFrameUrl(availability, props.context.organization.id, window.location.origin, window.location.pathname)
-    if (!url) throw new Error('ИИ-помощник сейчас недоступен для этой организации.')
+    if (!url) throw new Error(t('sectionPages.assistantUnavailable'))
     frameUrl.value = url
     await nextTick()
     updateHeight()
   } catch (exception) {
     if (version !== requestVersion) return
-    error.value = exception instanceof Error ? exception.message : 'Не удалось открыть ИИ-помощника.'
+    error.value = exception instanceof Error ? exception.message : t('sectionPages.assistantError')
     loading.value = false
   }
 }
@@ -57,11 +61,11 @@ function loaded() {
   if (!frame.value) return
   try {
     if (!frame.value.contentDocument?.querySelector('[data-ai-pilot]')) {
-      error.value = 'Не удалось открыть ИИ-помощника. Проверьте доступ и повторите попытку.'
+      error.value = t('sectionPages.assistantAccessError')
       frameUrl.value = ''
     }
   } catch {
-    error.value = 'Не удалось открыть ИИ-помощника.'
+    error.value = t('sectionPages.assistantError')
     frameUrl.value = ''
   }
   loading.value = false
@@ -87,14 +91,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UiCard page title="ИИ - Голосовой помощник" class="workspace-assistant">
-    <WorkspaceProLock v-if="previewOnly" locked centered feature="assistant" message="ИИ помощник доступен в PRO" class="workspace-assistant__preview">
+  <UiCard page :title="t('sectionPages.assistantTitle')" class="workspace-assistant">
+    <WorkspaceProLock v-if="previewOnly" locked centered feature="assistant" :message="t('sectionPages.assistantPro')" class="workspace-assistant__preview">
       <WorkspaceProFeaturePreview kind="assistant" />
     </WorkspaceProLock>
-    <UiLoader v-if="loading" text="Открываем помощника…" />
+    <UiLoader v-if="loading" :text="t('sectionPages.openingAssistant')" />
     <div v-if="error" class="workspace-assistant__error" role="alert">
       <p>{{ error }}</p>
-      <UiButton v-if="isVisible" variant="secondary" @click="load">Повторить</UiButton>
+      <UiButton v-if="isVisible" variant="secondary" @click="load">{{ t('sectionPages.retry') }}</UiButton>
     </div>
     <iframe
       v-if="frameUrl"
@@ -102,7 +106,7 @@ onBeforeUnmount(() => {
       :src="frameUrl"
       :style="{ height: `${frameHeight}px` }"
       class="workspace-assistant__frame"
-      title="ИИ - Голосовой помощник"
+      :title="t('sectionPages.assistantTitle')"
       allow="microphone 'self'"
       referrerpolicy="same-origin"
       @load="loaded"

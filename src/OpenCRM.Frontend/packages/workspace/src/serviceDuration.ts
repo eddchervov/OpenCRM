@@ -1,3 +1,5 @@
+import { i18n, localeCultures, translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/bookingTimeMessages'
 import type { WorkspaceScenarioCatalogItem } from './api/scenarioCatalog'
 import type { WorkspaceMaintenanceDetail } from './api/maintenance'
 
@@ -7,13 +9,18 @@ export function formatServiceDuration(minutes: number) {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
 
-  return [hours ? `${hours} ч` : '', rest ? `${rest} мин` : ''].filter(Boolean).join(' ')
+  const locale = i18n.global.locale.value
+  const unit = (amount: number, name: string, suffix: string) => locale === 'ru'
+    ? `${amount} ${suffix}`
+    : new Intl.NumberFormat(localeCultures[locale], { style: 'unit', unit: name, unitDisplay: 'short' }).format(amount)
+
+  return [hours ? unit(hours, 'hour', 'ч') : '', rest ? unit(rest, 'minute', 'мин') : ''].filter(Boolean).join(' ')
 }
 
 export function getUnknownServiceDurationSaveMessage(hasManualEnd: boolean) {
   return hasManualEnd
-    ? 'Сохранено. Длительность части услуг не задана; указанное время окончания сохранено.'
-    : 'Сохранено. Длительность части услуг не задана; автоматический расчёт окончания пропущен.'
+    ? t('bookingTime.savedManual')
+    : t('bookingTime.savedAuto')
 }
 
 export function calculateServiceDuration(

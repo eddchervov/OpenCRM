@@ -1,8 +1,10 @@
+import { translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workingHoursMessages'
 import type { WorkspaceSetup, WorkspaceWorkingDay } from './api/setup'
 
 export const workingWeek = [
-  { id: 1, name: 'Понедельник' }, { id: 2, name: 'Вторник' }, { id: 3, name: 'Среда' },
-  { id: 4, name: 'Четверг' }, { id: 5, name: 'Пятница' }, { id: 6, name: 'Суббота' }, { id: 0, name: 'Воскресенье' }
+  { id: 1, get name() { return t('workingHours.monday') } }, { id: 2, get name() { return t('workingHours.tuesday') } }, { id: 3, get name() { return t('workingHours.wednesday') } },
+  { id: 4, get name() { return t('workingHours.thursday') } }, { id: 5, get name() { return t('workingHours.friday') } }, { id: 6, get name() { return t('workingHours.saturday') } }, { id: 0, get name() { return t('workingHours.sunday') } }
 ]
 
 export function workingScheduleFromSetup(setup: WorkspaceSetup): WorkspaceWorkingDay[] {
@@ -48,14 +50,14 @@ export function scheduleBusinessHours(schedule?: WorkspaceWorkingDay[]) {
 }
 
 export function workingScheduleError(schedule: WorkspaceWorkingDay[]) {
-  if (!schedule.some(day => day.isWorking)) return 'Выберите хотя бы один рабочий день.'
+  if (!schedule.some(day => day.isWorking)) return t('workingHours.oneDayRequired')
   for (const day of schedule.filter(day => day.isWorking)) {
-    const name = workingWeek.find(value => value.id === day.dayOfWeek)?.name ?? 'Рабочий день'
-    if (!day.startTime || !day.endTime || day.startTime.slice(0, 5) >= day.endTime.slice(0, 5)) return name + ': закрытие должно быть позже открытия.'
+    const name = workingWeek.find(value => value.id === day.dayOfWeek)?.name ?? t('workingHours.workday')
+    if (!day.startTime || !day.endTime || day.startTime.slice(0, 5) >= day.endTime.slice(0, 5)) return t('workingHours.endAfter', { day: name })
     let previousEnd = day.startTime.slice(0, 5)
     for (const pause of [...day.breaks].sort((a, b) => a.startTime.localeCompare(b.startTime))) {
       const start = pause.startTime.slice(0, 5), end = pause.endTime.slice(0, 5)
-      if (!start || !end || start >= end || start < previousEnd || end > day.endTime.slice(0, 5)) return name + ': перерывы должны быть внутри рабочего дня и не пересекаться.'
+      if (!start || !end || start >= end || start < previousEnd || end > day.endTime.slice(0, 5)) return t('workingHours.breaksInvalid', { day: name })
       previousEnd = end
     }
   }

@@ -161,6 +161,7 @@ public sealed partial class OrganizationImportService(
             original.Model = Clean(edit.Model);
             original.Vin = Clean(edit.Vin);
             original.Plate = Clean(edit.Plate);
+            original.RegistrationCountryCode = Clean(edit.RegistrationCountryCode);
             original.Year = Clean(edit.Year);
             original.ExistingClientId = edit.ExistingClientId;
             original.CreateSeparateClient = edit.CreateSeparateClient && !edit.ExistingClientId.HasValue;
@@ -236,7 +237,7 @@ public sealed partial class OrganizationImportService(
             dto.Data.Rows = await this.ReadCandidatesAsync(id, cancellationToken);
         }
 
-        var report = new StringBuilder("\uFEFFТаблица;Строка;Тип;Имя;Телефон;Исходный ID;ID клиента;Марка;Модель;VIN;Госномер;Год;Клиент;Действие;Пояснение;ID результата;Применено;Внешний ID авто;Внешний ID заказа;Исходная дата;Статус заказа;Тип заказа;Количество;Цена единицы;Сумма;Скидка;Способ оплаты;Дата отмены;Исходный автор;Тип события;Комментарий клиента;Комментарий заказа;Описание строки;Комментарий события или оплаты;Историческое имя покупателя или плательщика\r\n");
+        var report = new StringBuilder("\uFEFFТаблица;Строка;Тип;Имя;Телефон;Исходный ID;ID клиента;Марка;Модель;VIN;Страна регистрации;Госномер;Год;Клиент;Действие;Пояснение;ID результата;Применено;Внешний ID авто;Внешний ID заказа;Исходная дата;Статус заказа;Тип заказа;Количество;Цена единицы;Сумма;Скидка;Способ оплаты;Дата отмены;Исходный автор;Тип события;Комментарий клиента;Комментарий заказа;Описание строки;Комментарий события или оплаты;Историческое имя покупателя или плательщика\r\n");
         foreach (var row in dto.Data.Rows)
         {
             var status = row.Status switch
@@ -252,7 +253,8 @@ public sealed partial class OrganizationImportService(
             var values = new[]
             {
                 row.TableId, row.SourceRow.ToString(CultureInfo.InvariantCulture), row.Kind,
-                row.Name, row.Phone, row.ExternalId, row.ClientExternalId, row.Brand, row.Model, row.Vin, row.Plate,
+                row.Name, row.Phone, row.ExternalId, row.ClientExternalId, row.Brand, row.Model, row.Vin,
+                row.RegistrationCountryCode, row.Plate,
                 row.Year, row.LinkedClientName, status, row.Message, row.TargetId?.ToString(), row.AppliedAt?.ToString("O", CultureInfo.InvariantCulture),
                 row.VehicleExternalId, row.OrderExternalId, row.OccurredAt, row.OrderStatus, row.OrderType, row.Quantity, row.UnitPrice,
                 row.Amount, row.DiscountAmount, row.PaymentMethod, row.CancelledAt, row.ActorName, row.EventType, row.Comment,
@@ -324,9 +326,10 @@ public sealed partial class OrganizationImportService(
 
         var vehicles = await context.Vehicles.AsNoTracking()
             .Where(vehicle => vehicle.OrganizationId == organizationId && !vehicle.IsDeleted)
-            .Select(vehicle => new { vehicle.Vin, vehicle.RegistrationPlate }).ToListAsync(cancellationToken);
+            .Select(vehicle => new { vehicle.Vin, vehicle.RegistrationPlate, vehicle.RegistrationCountryCode }).ToListAsync(cancellationToken);
 
-        ImportCandidateValidator.Validate(rows, clients, vehicles.Select(vehicle => (vehicle.Vin, vehicle.RegistrationPlate)).ToList());
+        ImportCandidateValidator.ValidateWithCountries(rows, clients, vehicles.Select(vehicle =>
+            (vehicle.Vin, vehicle.RegistrationPlate, vehicle.RegistrationCountryCode)).ToList());
         var newClients = rows.Where(row => row.Kind == "client" && row.Status == "create").ToList();
         if (newClients.Count > 0)
         {
@@ -339,6 +342,14 @@ public sealed partial class OrganizationImportService(
                 {
                     row.Status = "error";
                     row.Message = $"Превышен лимит клиентов: сейчас {clientCount}, новых {newClients.Count}, лимит {clientLimit}.";
+                    row.MessageCode = ImportRowMessageCodes.ClientLimitExceeded;
+                    row.MessageDetails = null;
+                    row.MessageParameters = new Dictionary<string, string>
+                    {
+                        ["current"] = clientCount.ToString(CultureInfo.InvariantCulture),
+                        ["newCount"] = newClients.Count.ToString(CultureInfo.InvariantCulture),
+                        ["limit"] = clientLimit.ToString(CultureInfo.InvariantCulture)
+                    };
                 }
             }
         }
@@ -352,6 +363,14 @@ public sealed partial class OrganizationImportService(
             {
                 row.Status = "error";
                 row.Message = $"Превышен лимит техники: сейчас {limit.CurrentVehicleCount}, новых {newVehicles.Count}, лимит {limit.MaxVehiclesForUser}.";
+                row.MessageCode = ImportRowMessageCodes.VehicleLimitExceeded;
+                row.MessageDetails = null;
+                row.MessageParameters = new Dictionary<string, string>
+                {
+                    ["current"] = limit.CurrentVehicleCount.ToString(CultureInfo.InvariantCulture),
+                    ["newCount"] = newVehicles.Count.ToString(CultureInfo.InvariantCulture),
+                    ["limit"] = limit.MaxVehiclesForUser.ToString(CultureInfo.InvariantCulture)
+                };
             }
         }
     }
@@ -379,6 +398,10 @@ public sealed partial class OrganizationImportService(
             });
 
             context.OrganizationClients.Add(client);
+            row.Message = "Создано.";
+            row.MessageCode = ImportRowMessageCodes.StatusCreated;
+            row.MessageDetails = null;
+            row.MessageParameters = null;
             clientIds.Add(row.Id, client.Id);
             result.ClientIds.Add(client.Id);
         }
@@ -395,6 +418,7 @@ public sealed partial class OrganizationImportService(
                 ManualModelName = row.Model,
                 Vin = row.Vin,
                 RegistrationPlate = row.Plate,
+                RegistrationCountryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(row.RegistrationCountryCode),
                 YearIssue = row.Year == null ? null : int.Parse(row.Year, CultureInfo.InvariantCulture),
                 DateTimeCreation = DateTime.UtcNow
             };
@@ -411,6 +435,10 @@ public sealed partial class OrganizationImportService(
             });
 
             context.Vehicles.Add(vehicle);
+            row.Message = "Создано.";
+            row.MessageCode = ImportRowMessageCodes.StatusCreated;
+            row.MessageDetails = null;
+            row.MessageParameters = null;
             result.VehicleIds.Add(vehicle.Id);
         }
 

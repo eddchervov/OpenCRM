@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="ChromeLaunchFailed" xml:space="preserve"><value>Could not start Google Chrome.</value></data>
+  <data name="LaunchFailed" xml:space="preserve"><value>Could not start the administration panel.
+
+{0}</value></data>
+  <data name="AbsoluteProfilePathRequired" xml:space="preserve"><value>AdminDesktop:ChromeProfileDirectory must be an absolute path.</value></data>
+  <data name="AbsoluteHttpAddressRequired" xml:space="preserve"><value>The administration panel address must be an absolute HTTP or HTTPS URL.</value></data>
+  <data name="ChromeNotInstalled" xml:space="preserve"><value>Google Chrome is not installed.</value></data>
+  <data name="Administration" xml:space="preserve"><value>Administration</value></data>
+</root>

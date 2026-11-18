@@ -10,6 +10,7 @@ public class MaintenancePaymentEntityTypeConfiguration : IEntityTypeConfiguratio
     /// <summary> Настраивает отображение сущности платежа обслуживания. </summary>
     public void Configure(EntityTypeBuilder<MaintenancePayment> builder)
     {
+        builder.Property(payment => payment.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Amount).HasPrecision(18, 2);
         builder.Property(x => x.MethodCode).HasMaxLength(16);

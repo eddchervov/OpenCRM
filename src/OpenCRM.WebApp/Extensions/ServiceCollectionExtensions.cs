@@ -40,6 +40,7 @@ using OpenCRM.WebApp.Infrastructure.Api;
 using OpenCRM.WebApp.Infrastructure.Hangfire;
 using OpenCRM.WebApp.Infrastructure.Security;
 using OpenCRM.WebApp.Infrastructure.UserActivity;
+using OpenCRM.WebApp.Infrastructure.Localization;
 using OpenCRM.WebApp.Infrastructure.Swagger;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
@@ -240,11 +241,18 @@ public static class ServiceCollectionExtensions
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         });
 
+        services.AddLocalization(options => options.ResourcesPath = "Resources");
         services.AddControllersWithViews(options =>
         {
             options.Filters.Add<ApiAntiforgeryAuthorizationFilter>();
             options.Filters.Add<ApiErrorResultFilter>();
-        }).AddApplicationPart(typeof(OpenCRM.Hosting.OpenCRMApplication).Assembly);
+        })
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization(options =>
+            {
+                options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(LocalizationStrings));
+            })
+            .AddApplicationPart(typeof(OpenCRM.Hosting.OpenCRMApplication).Assembly);
         services.AddRazorPages().AddRazorRuntimeCompilation();
         services.AddMemoryCache();
         services.AddSingleton(TimeProvider.System);

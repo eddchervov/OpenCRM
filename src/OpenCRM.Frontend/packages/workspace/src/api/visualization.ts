@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '../visualizationMessages'
+
 import type { WorkspaceWorkday } from './workday'
 
 export async function loadWorkspaceVisualization(organizationId: string, date: string, signal: AbortSignal): Promise<WorkspaceWorkday> {
@@ -10,7 +13,7 @@ export async function loadWorkspaceVisualization(organizationId: string, date: s
 
   if (!response.ok) {
     const failure = await response.json().catch(() => null)
-    throw new Error(failure?.message ?? 'Не удалось загрузить визуализацию.')
+    throw new Error(failure?.message ?? translate('visualization.loadError'))
   }
 
   return response.json()

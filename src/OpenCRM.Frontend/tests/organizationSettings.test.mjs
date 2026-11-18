@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/settingsMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -31,7 +33,7 @@ function setup(hasWorkingHours = false) {
   })
   const events = []
   const module = { exports: {} }
-  new Function('require', 'module', 'exports', code)(id => id === 'vue' ? { ...vue, useSlots: () => ({ setup() {}, imports() {}, ...(hasWorkingHours ? { workingHours() {} } : {}) }) } : id === '../utils/maintenanceWorkflow' ? maintenanceWorkflow : {}, module, module.exports)
+  new Function('require', 'module', 'exports', code)(id => id === 'vue' ? { ...vue, useSlots: () => ({ setup() {}, imports() {}, ...(hasWorkingHours ? { workingHours() {} } : {}) }) } : id === '../utils/maintenanceWorkflow' ? maintenanceWorkflow : regionalTestDependencies[id] ?? {}, module, module.exports)
   const state = module.exports.default.setup(props, { expose() {}, emit: (...args) => events.push(args) })
   return { state, props, events }
 }
@@ -80,7 +82,13 @@ test('Предпросмотр уведомлений Free не монтируе
   const button = vue.defineComponent({ setup: (_, { slots }) => () => vue.h('button', slots.default?.()) })
   new Function('require', 'module', 'exports', notificationCode)(id => {
     if (id === 'vue') return vue
-    if (id === '@opencrm/ui') return { UiButton: button }
+    if (id === '@opencrm/ui') return { UiButton: button, useLocalization: () => ({ t: key => ({
+      'notificationSettings.title': 'Уведомления клиентам',
+      'notificationSettings.visitReminder': 'Напоминание о визите',
+      'notificationChannel.telegram': 'Telegram',
+      'notificationChannel.max': 'MAX'
+    })[key] ?? key }) }
+    if (id === '../notificationMessages') return {}
     if (id === './WorkspaceSettingsChoices.vue') return { default: choices }
     return { default: channelSettings }
   }, module, module.exports)
@@ -235,6 +243,7 @@ test('Free показывает структуру импорта без мон�
     ])
   })
   new Function('require', 'module', 'exports', compiled)(id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return vue
     if (id === '../utils/maintenanceWorkflow') return maintenanceWorkflow
     if (id === '@opencrm/ui') return { UiButton: button, UiInput: placeholder, UiSelect: placeholder, UiTextarea: placeholder, UiPhoneInput: placeholder }

@@ -11,10 +11,10 @@
         ? "/vehicles"
         : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? "Моя техника"
+        ? Text["maintenance.legacy.page.vehiclePersonal"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
+            : Text["maintenance.legacy.page.organization"].Value;
     var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId)
         ? "/vehicles"
         : "/organizations";
@@ -28,13 +28,13 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
-            <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">Техника</a></li>
+            <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@Text["maintenance.legacy.page.vehicle"]</a></li>
             <li class="breadcrumb-item">
                 <a href="@vehicleUrl" class="text-decoration-none">
                     @Helpers.VehicleDisplayName.Format(Model.BrandName, Model.ModelName, Model.RegistrationPlate)
                     @if (Model.YearIssue != null && Model.YearIssue != 0)
                     {
-                        @Model.YearIssue <text>г.</text>
+                        @Model.YearIssue <text>@Text["maintenance.legacy.form.yearSuffix"]</text>
                     }
                 </a>
             </li>
@@ -51,7 +51,7 @@
             @Helpers.VehicleDisplayName.Format(Model.BrandName, Model.ModelName, Model.RegistrationPlate)
             @if (Model.YearIssue != null && Model.YearIssue != 0)
             {
-                @Model.YearIssue <text>г.</text>
+                @Model.YearIssue <text>@Text["maintenance.legacy.form.yearSuffix"]</text>
             }
             @if (!string.IsNullOrEmpty(Model.Name))
             {

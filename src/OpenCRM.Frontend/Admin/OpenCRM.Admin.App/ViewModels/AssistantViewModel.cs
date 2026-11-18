@@ -3,12 +3,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
 /// <summary> Управление настройками, доступом и расходами ИИ-помощника. </summary>
 public partial class AssistantViewModel(AdminSessionClient sessionClient) : CommunicationsViewModel(sessionClient)
 {
+    private string? _successMessageResourceKey;
+    private bool _isSettingLocalizedSuccessMessage;
     private string _organizationSearch = string.Empty;
     private int _organizationPage = 1;
     private bool _hasAppliedUsageFilters;
@@ -144,26 +147,43 @@ public partial class AssistantViewModel(AdminSessionClient sessionClient) : Comm
     public bool HasAudits => this.Overview?.Audits.Count > 0;
     public bool HasUnknownSelectedUsage => this.SelectedUsage?.Status == "unknown";
     public string ProviderLabel => this.Overview == null ? string.Empty
-        : $"RouterAI: {(this.Overview.Provider.RouterConfigured ? "настроен" : "не настроен")}; Telegram: "
-            + (this.Overview.Provider.TelegramConfigured ? "настроен" : "не настроен")
+        : $"RouterAI: {(this.Overview.Provider.RouterConfigured ? AdminLocalization.Instance["native.assistant.nastroen"] : AdminLocalization.Instance["native.assistant.ne.nastroen"])}; Telegram: "
+            + (this.Overview.Provider.TelegramConfigured ? AdminLocalization.Instance["native.assistant.nastroen"] : AdminLocalization.Instance["native.assistant.ne.nastroen"])
             + (string.IsNullOrWhiteSpace(this.Overview.Provider.TelegramBotUsername) ? string.Empty : $" (@{this.Overview.Provider.TelegramBotUsername})");
     public string OrganizationPageLabel => this.Overview == null ? string.Empty
-        : $"Страница {this.Overview.Page} · найдено {this.Overview.TotalCount:N0}";
+        : AdminLocalization.Instance.Format("native.assistant.stranitsa.this.overview.page.naydeno.this.overview.totalcount.n0", this.Overview.Page, this.Overview.TotalCount);
     public string UsagePageLabel => this.Usage == null ? string.Empty
-        : $"Страница {this.Usage.Page} · найдено {this.Usage.TotalCount:N0}";
+        : AdminLocalization.Instance.Format("native.assistant.stranitsa.this.usage.page.naydeno.this.usage.totalcount.n0", this.Usage.Page, this.Usage.TotalCount);
 
     public IReadOnlyList<CommunicationOption> ChannelOptions { get; } =
-    [new("", "Все каналы"), new("web", "Сайт"), new("telegram", "Telegram")];
+    [CommunicationOption.Localized("", "native.assistant.vse.kanaly"), CommunicationOption.Localized("web", "native.assistant.sayt"), new("telegram", "Telegram")];
 
     [ObservableProperty]
-    private CommunicationOption _selectedChannel = new("", "Все каналы");
+    private CommunicationOption _selectedChannel = CommunicationOption.Localized("", "native.assistant.vse.kanaly");
 
     [ObservableProperty]
     private string _modelFilter = string.Empty;
 
     public string BudgetLimitsLabel => this.Overview == null ? string.Empty
-        : $"Максимальный бюджет: {this.Overview.Limits.MaximumBudgetRub:N2} ₽; резерв: {this.Overview.Limits.MaximumReservationRub:N2} ₽; "
-            + $"токены: {this.Overview.Limits.MaximumOutputTokensAllowed:N0}; часовой пояс: {this.Overview.Limits.BudgetTimeZone}.";
+        : AdminLocalization.Instance.Format("native.assistant.maksimalnyy.byudzhet.this.overview.limits.maximumbudgetrub.n2.re", this.Overview.Limits.MaximumBudgetRub, this.Overview.Limits.MaximumReservationRub)
+            + AdminLocalization.Instance.Format("native.assistant.tokeny.this.overview.limits.maximumoutputtokensallowed.n0.chasov", this.Overview.Limits.MaximumOutputTokensAllowed, this.Overview.Limits.BudgetTimeZone);
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        CommunicationsViewModel.RefreshLocalizedOptions(this.ChannelOptions, this.StatusOptions);
+        foreach (var organization in this.Organizations)
+        {
+            organization.RefreshLocalizedValues();
+        }
+
+        if (this._successMessageResourceKey is not null)
+        {
+            this._isSettingLocalizedSuccessMessage = true;
+            this.SuccessMessage = AdminLocalization.Instance[this._successMessageResourceKey];
+            this._isSettingLocalizedSuccessMessage = false;
+        }
+    }
 
     protected override async Task LoadPageAsync(CancellationToken cancellationToken)
     {
@@ -174,7 +194,7 @@ public partial class AssistantViewModel(AdminSessionClient sessionClient) : Comm
 
         if (!this.CanManage && !this.CanViewBilling)
         {
-            this.ErrorMessage = "Нет права на просмотр настроек или расходов ИИ-помощника.";
+            this.SetLocalizedErrorMessage("native.assistant.net.prava.na.prosmotr.nastroek.ili.raskhodov.ii.pomoshchnika");
             return;
         }
 
@@ -263,13 +283,13 @@ public partial class AssistantViewModel(AdminSessionClient sessionClient) : Comm
             }
             catch (ApiException exception) when (exception.StatusCode == HttpStatusCode.Conflict)
             {
-                this.ErrorMessage = "Настройки изменились на сервере. Данные обновлены; проверьте их и сохраните ещё раз.";
+                this.SetLocalizedErrorMessage("native.assistant.nastroyki.izmenilis.na.servere.dannye.obnovleny.proverte.ikh.i.s");
                 await this.LoadOverviewAsync(cancellationToken);
                 return;
             }
 
             await this.LoadOverviewAsync(cancellationToken);
-            this.SuccessMessage = "Настройки помощника сохранены.";
+            this.SetLocalizedSuccessMessage("native.assistant.nastroyki.pomoshchnika.sokhraneny");
         });
     }
 
@@ -305,7 +325,7 @@ public partial class AssistantViewModel(AdminSessionClient sessionClient) : Comm
                 MonthlyBudgetRub = this.OrganizationMonthlyBudgetRub
             }, cancellationToken);
         await this.LoadOverviewAsync(cancellationToken);
-        this.SuccessMessage = "Доступ организации сохранён и записан в аудит.";
+        this.SetLocalizedSuccessMessage("native.assistant.dostup.organizatsii.sokhranyon.i.zapisan.v.audit");
     });
 
     [RelayCommand(CanExecute = nameof(CanFilterUsage))]
@@ -336,7 +356,7 @@ public partial class AssistantViewModel(AdminSessionClient sessionClient) : Comm
             this.SettlementReason.Trim(), cancellationToken);
         this.SettlementReason = string.Empty;
         await this.LoadUsageAsync(cancellationToken);
-        this.SuccessMessage = "Фактическая стоимость сохранена в аудите.";
+        this.SetLocalizedSuccessMessage("native.assistant.fakticheskaya.stoimost.sokhranena.v.audite");
     });
 
     [RelayCommand(CanExecute = nameof(CanFilterUsage))]
@@ -466,10 +486,26 @@ public partial class AssistantViewModel(AdminSessionClient sessionClient) : Comm
     private bool CanFilterUsage() => this.CanLoad() && this.CanViewBilling && DateOnly.FromDateTime(this.UsageFrom)
         <= DateOnly.FromDateTime(this.UsageTo);
 
+    private void SetLocalizedSuccessMessage(string key)
+    {
+        this._successMessageResourceKey = key;
+        this._isSettingLocalizedSuccessMessage = true;
+        this.SuccessMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedSuccessMessage = false;
+    }
+
+    partial void OnSuccessMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedSuccessMessage)
+        {
+            this._successMessageResourceKey = null;
+        }
+    }
+
     [ObservableProperty]
-    private CommunicationOption _selectedStatus = new("", "Все статусы");
+    private CommunicationOption _selectedStatus = CommunicationOption.Localized("", "native.promoCodes.vse.statusy");
 
     public IReadOnlyList<CommunicationOption> StatusOptions { get; } =
-    [new("", "Все статусы"), new("completed", "Завершённые"), new("unknown", "Неизвестная стоимость"),
-        new("failed", "Ошибки"), new("reserved", "Резерв")];
+    [CommunicationOption.Localized("", "native.promoCodes.vse.statusy"), CommunicationOption.Localized("completed", "native.billing.zavershyonnye"), CommunicationOption.Localized("unknown", "native.assistant.neizvestnaya.stoimost"),
+        CommunicationOption.Localized("failed", "native.assistant.oshibki"), CommunicationOption.Localized("reserved", "native.assistant.rezerv")];
 }

@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import { translate } from '@opencrm/ui/i18n'
+import '../packages/workspace/src/maintenanceWorkMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -15,6 +18,8 @@ const code = ts.transpileModule(compileScript(descriptor, { id: 'service-selecti
 function setup(rows = [], disabled = false, defaultVatRateCode) {
   const module = { exports: {} }
   const resolve = id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
+    if (id === '@opencrm/ui') return { useLocalization: () => ({ t: translate }) }
     if (id === 'vue') return { ...vue, useId: () => 'service-selection', onMounted() {}, watch() {} }
     if (id === '../serviceDuration') return { calculateServiceDuration, formatServiceDuration }
     return {}

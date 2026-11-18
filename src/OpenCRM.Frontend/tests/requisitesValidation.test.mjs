@@ -5,10 +5,17 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../packages/workspace/src/api/workspaceAdmin.ts', import.meta.url), 'utf8')
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+const translatedMessages = {
+  'workspaceApi.checkForm': 'Проверьте данные формы.',
+  'workspaceApi.loadMembers': 'Не удалось загрузить участников.'
+}
 function apiFor(response) {
   const calls = []
   const module = { exports: {} }
-  new Function('module', 'exports', 'document', 'fetch', code)(module, module.exports, { querySelector: () => null }, async (url, options) => { calls.push({ url, options }); return response })
+  const requireModule = id => id === '@opencrm/ui/i18n'
+    ? { translate: key => translatedMessages[key] ?? key }
+    : {}
+  new Function('module', 'exports', 'document', 'fetch', 'require', code)(module, module.exports, { querySelector: () => null }, async (url, options) => { calls.push({ url, options }); return response }, requireModule)
   return { api: module.exports, calls }
 }
 
@@ -48,4 +55,18 @@ test('Неверные российские реквизиты не отправ
   assert.equal(calls.length, 3)
   assert.equal(JSON.parse(calls[0].options.body).kpp, '1234AB123')
   assert.deepEqual(JSON.parse(calls.at(-1).options.body), { inn: null, kpp: null, ogrn: null })
+})
+
+test('Fallback API сообщения локализованы, а сообщение сервера сохраняется', async () => {
+  const fallback = apiFor({ ok: false, json: async () => ({}) })
+  await assert.rejects(() => fallback.api.loadWorkspaceMembers('org'), error => {
+    assert.equal(error.message, 'Не удалось загрузить участников.')
+    return true
+  })
+
+  const serverError = apiFor({ ok: false, json: async () => ({ message: 'Server supplied error' }) })
+  await assert.rejects(() => serverError.api.loadWorkspaceMembers('org'), error => {
+    assert.equal(error.message, 'Server supplied error')
+    return true
+  })
 })

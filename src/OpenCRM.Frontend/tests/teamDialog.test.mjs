@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import * as localization from '@opencrm/ui/i18n'
+import '../packages/workspace/src/employeeMessages.ts'
 
 function compileComponent(path, dependencies) {
   const filename = new URL(path, import.meta.url)
@@ -91,6 +93,8 @@ function createTeam() {
   const calls = []
   const Team = compileComponent('../packages/workspace/src/components/WorkspaceEmployeesSection.vue', {
     '@opencrm/ui': { ...ui, UiTooltip },
+    '@opencrm/ui/i18n': localization,
+    '../employeeMessages': {},
     '../api/employees': {
       loadEmployees: async () => ({ items: [employee], members: [member], canManage: true, canLinkMembers: true }),
       linkEmployeeMember: async (...args) => { calls.push(args); employee.memberId = args[2] }

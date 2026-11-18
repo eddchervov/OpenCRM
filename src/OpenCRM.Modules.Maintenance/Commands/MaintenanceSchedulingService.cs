@@ -74,6 +74,19 @@ internal sealed class MaintenanceSchedulingService(
         await this._maintenanceAccess.EnsureCanReadWorkspaceAsync(userId, organizationId);
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.MaintenanceEdit);
 
+        TimeZoneInfo? organizationTimeZone = null;
+        if (organizationId.HasValue)
+        {
+            var timeZoneId = await context.Organizations
+                .Where(organization => organization.Id == organizationId.Value)
+                .Select(organization => organization.ShiftTimeZoneId)
+                .SingleAsync();
+            if (!string.IsNullOrWhiteSpace(timeZoneId))
+            {
+                organizationTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            }
+        }
+
         var maintenance = await maintenanceRepository.GetById(userId, organizationId, maintenanceId)
             ?? throw new KeyNotFoundException($"Не найдено обслуживание с maintenanceId={maintenanceId} и userId={userId}");
 
@@ -103,7 +116,12 @@ internal sealed class MaintenanceSchedulingService(
 
         maintenance.PlannedDate = plannedDate;
         maintenance.Date = plannedDate;
-        MaintenanceDateRules.ApplyPlannedTime(maintenance, plannedStartTime, plannedEndTime, plannedEndDate);
+        MaintenanceDateRules.ApplyPlannedTime(
+            maintenance,
+            plannedStartTime,
+            plannedEndTime,
+            plannedEndDate,
+            organizationTimeZone);
         await this._maintenanceSlotGuard.EnsureCanAssignLocationAsync(
             organizationId,
             maintenance.Location,

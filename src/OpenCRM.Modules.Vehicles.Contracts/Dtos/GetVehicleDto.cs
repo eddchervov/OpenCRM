@@ -80,6 +80,9 @@ public class GetVehicleDto
     /// <summary> Регистрационный номер техники. </summary>
     public string? RegistrationPlate { get; set; }
 
+    /// <summary> Страна регистрации автомобиля. </summary>
+    public string? RegistrationCountryCode { get; set; }
+
     /// <summary> Номер кузова или рамы. </summary>
     public string? BodyNumber { get; set; }
 

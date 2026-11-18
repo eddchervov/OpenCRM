@@ -29,6 +29,16 @@ public interface IQuickBookingVehicleLookupService
         VehicleKind kind,
         bool allowOtherFormat);
 
+    /// <summary> Ищет технику с учётом явно выбранной страны регистрации. </summary>
+    Task<QuickBookingVehicleDto?> FindByPlateAsync(
+        string userId,
+        Guid organizationId,
+        string? plate,
+        Guid? clientId,
+        VehicleKind kind,
+        bool allowOtherFormat,
+        string? registrationCountryCode);
+
     /// <summary>Возвращает выбранную, не удалённую технику указанной организации.</summary>
     Task<QuickBookingVehicleDto?> GetSelectedAsync(string userId, Guid organizationId, Guid vehicleId);
 }

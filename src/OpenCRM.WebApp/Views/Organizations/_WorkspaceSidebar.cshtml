@@ -153,83 +153,83 @@
 
     if (navigationItems.Count == 0)
     {
-        navigationItems.Add((["workspace"], terms.WorkspaceTitle, workspaceUrl, null, false, null, "Основное"));
+        navigationItems.Add((["workspace"], terms.WorkspaceTitle, workspaceUrl, null, false, null, Text["entry.mainGroup"].Value));
 
         if (canViewVehicles)
         {
-            navigationItems.Add((["vehicles", "vehicle", "maintenance"], shellTerms?.Vehicles ?? terms.VehiclesTitle, $"{workspaceUrl}#vehicles", null, false, null, "Работа"));
+            navigationItems.Add((["vehicles", "vehicle", "maintenance"], shellTerms?.Vehicles ?? terms.VehiclesTitle, $"{workspaceUrl}#vehicles", null, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewClients)
         {
-            navigationItems.Add((["clients"], shellTerms?.Clients ?? terms.ClientsTitle, $"{workspaceUrl}#clients", Model.ClientsCount, false, null, "Работа"));
+            navigationItems.Add((["clients"], shellTerms?.Clients ?? terms.ClientsTitle, $"{workspaceUrl}#clients", Model.ClientsCount, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewDefects)
         {
-            navigationItems.Add((["defects"], shellTerms?.Defects ?? terms.DefectsTitle, $"{workspaceUrl}#defects", null, false, null, "Работа"));
+            navigationItems.Add((["defects"], shellTerms?.Defects ?? terms.DefectsTitle, $"{workspaceUrl}#defects", null, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewCounters)
         {
-            navigationItems.Add((["counters"], shellTerms?.Counters ?? terms.CountersTitle, $"{workspaceUrl}#counters", null, false, null, "Работа"));
+            navigationItems.Add((["counters"], shellTerms?.Counters ?? terms.CountersTitle, $"{workspaceUrl}#counters", null, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewScheduler)
         {
-            navigationItems.Add((["scheduler"], shellTerms?.Scheduler ?? terms.SchedulerTitle, $"{workspaceUrl}#scheduler", null, false, null, "Работа"));
+            navigationItems.Add((["scheduler"], shellTerms?.Scheduler ?? terms.SchedulerTitle, $"{workspaceUrl}#scheduler", null, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewMaterials)
         {
-            navigationItems.Add((["materials"], shellTerms?.Materials ?? "Склад", $"{workspaceUrl}#materials", null, false, null, "Работа"));
+            navigationItems.Add((["materials"], shellTerms?.Materials ?? Text["entry.materials"].Value, $"{workspaceUrl}#materials", null, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewMaintenance || canViewDefects)
         {
-            navigationItems.Add((["work-journal"], shellTerms?.WorkJournal ?? terms.WorkJournalTitle, $"{workspaceUrl}#work-journal", null, false, null, "Работа"));
+            navigationItems.Add((["work-journal"], shellTerms?.WorkJournal ?? terms.WorkJournalTitle, $"{workspaceUrl}#work-journal", null, false, null, Text["entry.workGroup"].Value));
         }
 
         if (canViewFinance)
         {
-            navigationItems.Add((["finance"], "Финансы", $"{workspaceUrl}#finance", null, false, null, "Отчеты"));
+            navigationItems.Add((["finance"], Text["entry.finance"].Value, $"{workspaceUrl}#finance", null, false, null, Text["entry.reportsGroup"].Value));
         }
 
         if (canViewAnalytics)
         {
-            navigationItems.Add((["statistics"], "Статистика", $"{workspaceUrl}#statistics", null, false, null, "Отчеты"));
+            navigationItems.Add((["statistics"], Text["entry.statistics"].Value, $"{workspaceUrl}#statistics", null, false, null, Text["entry.reportsGroup"].Value));
         }
     }
 
     bool IsActive(params string[] sections) => sections.Any(section =>
         string.Equals(resolvedCurrentSection, section, StringComparison.OrdinalIgnoreCase));
 
-    navigationItems.Add((["overview"], "Организация", workspaceUrl, null, true, "Справка и доступ", "Управление"));
+    navigationItems.Add((["overview"], Text["entry.organization"].Value, workspaceUrl, null, true, Text["entry.helpAccess"].Value, Text["entry.manageGroup"].Value));
 
     if (canViewBilling && !navigationItems.Any(item => item.Sections.Contains("billing")))
     {
-        navigationItems.Add((["billing"], shellTerms?.Billing ?? "Тарифы", $"{workspaceUrl}#billing", null, false, null, "Управление"));
+        navigationItems.Add((["billing"], shellTerms?.Billing ?? Text["entry.plans"].Value, $"{workspaceUrl}#billing", null, false, null, Text["entry.manageGroup"].Value));
     }
 
     if (canViewWiki)
     {
-        navigationItems.Add((["wiki"], shellTerms?.Wiki ?? "Вики", $"{workspaceUrl}#wiki", null, false, null, "Управление"));
+        navigationItems.Add((["wiki"], shellTerms?.Wiki ?? Text["entry.wiki"].Value, $"{workspaceUrl}#wiki", null, false, null, Text["entry.manageGroup"].Value));
     }
 
     if (canViewMembers)
     {
-        navigationItems.Add((["employees", "members"], "Команда", $"{workspaceUrl}#employees", Model.MembersCount, false, null, "Работа"));
+        navigationItems.Add((["employees", "members"], Text["entry.team"].Value, $"{workspaceUrl}#employees", Model.MembersCount, false, null, Text["entry.workGroup"].Value));
     }
 
     if (canManageSettings)
     {
-        navigationItems.Add((["settings", "requisites", "scenario-catalog", "activity"], "Настройки организации", $"{workspaceUrl}#settings", null, false, null, "Управление"));
+        navigationItems.Add((["settings", "requisites", "scenario-catalog", "activity"], Text["entry.organizationSettings"].Value, $"{workspaceUrl}#settings", null, false, null, Text["entry.manageGroup"].Value));
     }
 
     var activeNavigationItem = navigationItems.FirstOrDefault(item => IsActive(item.Sections));
     var activeNavigationTitle = !string.IsNullOrWhiteSpace(activeNavigationItem.Title)
         ? activeNavigationItem.Title
-        : "Разделы";
+        : Text["entry.sections"].Value;
     var mobileNavId = $"organizationWorkspaceNav-{resolvedOrganizationId:N}";
     var mobileGroups = navigationItems
         .GroupBy(item => item.GroupTitle)
@@ -252,13 +252,13 @@
                 aria-expanded="false"
                 aria-controls="@mobileNavId">
             <span>
-                <span class="organization-workspace-mobile-nav-label">Текущий раздел</span>
+                <span class="organization-workspace-mobile-nav-label">@Text["entry.currentSection"]</span>
                 <strong>@activeNavigationTitle</strong>
             </span>
             <i class="fa fa-chevron-down" aria-hidden="true"></i>
         </button>
         <div class="collapse organization-workspace-mobile-nav-menu" id="@mobileNavId">
-            <nav class="organization-workspace-mobile-nav-groups" aria-label="Мобильная навигация по рабочему пространству">
+            <nav class="organization-workspace-mobile-nav-groups" aria-label="@Text["entry.mobileNav"]">
                 @foreach (var group in mobileGroups)
                 {
                     <section class="organization-workspace-mobile-nav-group">
@@ -303,10 +303,10 @@
 
 <div class="card organization-panel organization-workspace-desktop-nav">
     <div class="card-header">
-        <h2 class="h6 mb-0">Разделы</h2>
+        <h2 class="h6 mb-0">@Text["entry.sections"]</h2>
     </div>
     <div class="card-body position-relative">
-        <nav class="organization-workspace-nav" aria-label="Навигация по рабочему пространству">
+        <nav class="organization-workspace-nav" aria-label="@Text["entry.workspaceNav"]">
             @foreach (var item in navigationItems)
             {
                 if (item.HasDividerBefore)

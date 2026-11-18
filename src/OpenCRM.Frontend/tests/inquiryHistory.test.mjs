@@ -1,9 +1,12 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import './inquiryTestMessages.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { i18n, setFormattingCulture } from '@opencrm/ui/i18n'
 
 function componentCode(name) {
   const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/' + name + '.vue', import.meta.url), 'utf8'))
@@ -14,13 +17,20 @@ function componentCode(name) {
 const dialogCode = componentCode('InquiryHistoryDialog')
 const noteCode = componentCode('InquiryNoteComposer')
 const timelineCode = componentCode('InquiryTimeline')
+const inquiryTime = { exports: {} }
+const timeCode = ts.transpileModule(readFileSync(new URL('../packages/workspace/src/utils/inquiryTime.ts', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS }
+}).outputText
+new Function('require', 'module', 'exports', timeCode)(id => regionalTestDependencies[id] ?? {}, inquiryTime, inquiryTime.exports)
 class InquiryRequestError extends Error {
   constructor(message, status) { super(message); this.status = status }
 }
 function historyComponent(code, { saveFailure, historyFailure } = {}) {
   const module = { exports: {} }, calls = [], events = []
-  const props = vue.reactive({ context: { organization: { id: 'org' } }, inquiry: { id: 'inquiry', version: 7, canManage: true } })
+  const props = vue.reactive({ context: { organization: { id: 'org' } }, inquiry: { id: 'inquiry', version: 7, canManage: true }, timeZoneId: 'Asia/Shanghai' })
   new Function('require', 'module', 'exports', code)(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../utils/inquiryTime') return inquiryTime.exports
     if (id === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} }
     if (id === '../api/inquiries') return {
       InquiryRequestError,
@@ -45,6 +55,31 @@ function historyComponent(code, { saveFailure, historyFailure } = {}) {
   } })
   return { state, props, calls, events }
 }
+
+test('Системные события переводятся, а неизвестные события и заметки сохраняют текст', () => {
+  const originalLocale = i18n.global.locale.value
+  try {
+    const { state } = historyComponent(timelineCode)
+    for (const [locale, expected] of [['en', 'Inquiry created'], ['zh-Hans', '咨询已创建']]) {
+      i18n.global.locale.value = locale
+      assert.equal(state.eventTitle({ eventType: 'created', title: 'Обращение создано' }), expected)
+      assert.equal(state.eventTitle({ eventType: 'custom', title: 'Пользовательское событие' }), 'Пользовательское событие')
+      assert.equal(state.eventDescription({ eventType: 'note', description: '客户希望周五到店' }), '客户希望周五到店')
+    }
+  } finally { i18n.global.locale.value = originalLocale }
+})
+
+test('Перенос действия форматирует дату независимо от языка и сохраняет часовой пояс организации', () => {
+  const originalLocale = i18n.global.locale.value
+  try {
+    i18n.global.locale.value = 'zh-Hans'
+    setFormattingCulture('en-GB')
+    const { state } = historyComponent(timelineCode)
+    const result = state.eventDescription({ eventType: 'action_rescheduled', newValue: '2026-11-16T09:30:00Z' })
+    assert.match(result, /16 Nov/)
+    assert.match(result, /17:30/)
+  } finally { i18n.global.locale.value = originalLocale; setFormattingCulture('ru-RU') }
+})
 
 test('История загружает выбранную страницу и отменяет предыдущий запрос', async () => {
   const { state, calls } = historyComponent(dialogCode)

@@ -2,17 +2,30 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import { legacyClientText } from './legacyClientTestMessages.mjs'
 
 const source = await readFile(new URL("../../OpenCRM.WebApp/wwwroot/js/payment-complete.js", import.meta.url), "utf8");
 const purchaseId = "a2440000-0000-4000-8000-000000000003";
 const statusUrl = "/tenant/api/v1/payments/purchases/" + purchaseId;
 
-function createPoller() {
-    const window = { location: { href: "https://localhost:7144/tenant/payment/complete", origin: "https://localhost:7144" }, setTimeout, clearTimeout };
+function createPoller(locale = 'ru') {
+    const window = { OpenCRMText: legacyClientText(locale), location: { href: "https://localhost:7144/tenant/payment/complete", origin: "https://localhost:7144" }, setTimeout, clearTimeout };
     const sandbox = { window, URL, AbortController, Promise, Error, String, Array };
     vm.runInNewContext(source, sandbox, { filename: "payment-complete.js" });
     return window.OpenCRMPaymentCompletion.pollPaymentCompletion;
 }
+
+test('Chinese payment status preserves purchase identity and confirmation state', async () => {
+    const states = [];
+    const result = await createPoller('zh-Hans')({
+        purchaseId, statusUrl, delaysMs: [1], wait: async () => {},
+        fetchStatus: async () => response(200, { purchaseId, code: 'Completed', isPaid: true }),
+        onStatus: state => states.push(state)
+    });
+    assert.equal(result.status, 'confirmed');
+    assert.equal(states[0].title, '付款已确认');
+    assert.match(states[0].message, /订阅已激活/);
+});
 
 function response(status, body) {
     return { status, ok: status >= 200 && status < 300, json: async () => body };

@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../proPreviewMessages'
 import beforeAfterImage from '../assets/pro/detailing-before-after.png'
+
+const { t } = useLocalization()
 
 defineProps<{ kind: 'albums' | 'messages' | 'assistant' }>()
 </script>
@@ -7,57 +11,57 @@ defineProps<{ kind: 'albums' | 'messages' | 'assistant' }>()
 <template>
   <div class="pro-feature-preview" :class="`pro-feature-preview--${kind}`">
     <template v-if="kind === 'albums'">
-      <header class="pro-feature-preview__header"><strong>Фото и альбомы</strong><span>2 фото</span></header>
-      <div class="pro-feature-preview__album-heading"><span class="pro-feature-preview__album-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2" /><path d="m5 15 4-4 4 4 3-3 4 4" /><circle cx="15.5" cy="9" r="1" /></svg></span><div><strong>Полировка кузова</strong><span>Пример альбома автомобиля</span></div></div>
+      <header class="pro-feature-preview__header"><strong>{{ t('proPreview.photosAlbums') }}</strong><span>{{ t('proPreview.twoPhotos') }}</span></header>
+      <div class="pro-feature-preview__album-heading"><span class="pro-feature-preview__album-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2" /><path d="m5 15 4-4 4 4 3-3 4 4" /><circle cx="15.5" cy="9" r="1" /></svg></span><div><strong>{{ t('proPreview.polishing') }}</strong><span>{{ t('proPreview.albumExample') }}</span></div></div>
       <div class="pro-feature-preview__photos">
-        <figure><div class="pro-feature-preview__photo pro-feature-preview__photo--before"><img :src="beforeAfterImage" alt="Демонстрационный автомобиль до мойки и полировки" loading="lazy" /></div><figcaption><span>До работы</span><small>Состояние при приёмке</small></figcaption></figure>
-        <figure><div class="pro-feature-preview__photo pro-feature-preview__photo--after"><img :src="beforeAfterImage" alt="Демонстрационный автомобиль после мойки и полировки" loading="lazy" /></div><figcaption><span>После работы</span><small>Готовый результат</small></figcaption></figure>
+        <figure><div class="pro-feature-preview__photo pro-feature-preview__photo--before"><img :src="beforeAfterImage" :alt="t('proPreview.beforeAlt')" loading="lazy" /></div><figcaption><span>{{ t('proPreview.beforeWork') }}</span><small>{{ t('proPreview.intakeCondition') }}</small></figcaption></figure>
+        <figure><div class="pro-feature-preview__photo pro-feature-preview__photo--after"><img :src="beforeAfterImage" :alt="t('proPreview.afterAlt')" loading="lazy" /></div><figcaption><span>{{ t('proPreview.afterWork') }}</span><small>{{ t('proPreview.result') }}</small></figcaption></figure>
       </div>
-      <footer class="pro-feature-preview__album-footer"><span>Приёмка</span><span>Результат работы</span><strong>Сравнить до / после ↗</strong></footer>
+      <footer class="pro-feature-preview__album-footer"><span>{{ t('proPreview.intake') }}</span><span>{{ t('proPreview.workResult') }}</span><strong>{{ t('proPreview.compare') }}</strong></footer>
     </template>
 
     <template v-else-if="kind === 'messages'">
       <div class="pro-feature-preview__inbox">
-        <aside class="pro-feature-preview__threads" aria-label="Список чатов — демонстрация">
-          <div class="pro-feature-preview__threads-heading"><strong>Чаты</strong><span>3</span></div>
-          <div class="pro-feature-preview__thread-search">Клиент или сообщение</div>
+        <aside class="pro-feature-preview__threads" :aria-label="t('proPreview.chatList')">
+          <div class="pro-feature-preview__threads-heading"><strong>{{ t('proPreview.chats') }}</strong><span>3</span></div>
+          <div class="pro-feature-preview__thread-search">{{ t('proPreview.search') }}</div>
           <div class="pro-feature-preview__thread pro-feature-preview__thread--selected">
-            <span class="pro-feature-preview__thread-avatar">АС</span>
-            <div><strong>Анна Соколова</strong><small>Toyota Camry · Telegram</small><p>Спасибо! Заберу к 18:00.</p></div>
+            <span class="pro-feature-preview__thread-avatar">{{ t('proPreview.annaInitials') }}</span>
+            <div><strong>{{ t('proPreview.anna') }}</strong><small>Toyota Camry · Telegram</small><p>{{ t('proPreview.thankPickup') }}</p></div>
             <time>17:42</time>
           </div>
           <div class="pro-feature-preview__thread">
-            <span class="pro-feature-preview__thread-avatar">МО</span>
-            <div><strong>Михаил Орлов</strong><small>Kia Sportage · MAX</small><p>Можно завтра на мойку?</p></div>
+            <span class="pro-feature-preview__thread-avatar">{{ t('proPreview.mikhailInitials') }}</span>
+            <div><strong>{{ t('proPreview.mikhail') }}</strong><small>Kia Sportage · MAX</small><p>{{ t('proPreview.tomorrowWash') }}</p></div>
             <span class="pro-feature-preview__thread-meta"><time>17:28</time><b>2</b></span>
           </div>
           <div class="pro-feature-preview__thread">
-            <span class="pro-feature-preview__thread-avatar">ОБ</span>
-            <div><strong>Ольга Белова</strong><small>Hyundai Solaris · Telegram</small><p>Отлично, спасибо!</p></div>
+            <span class="pro-feature-preview__thread-avatar">{{ t('proPreview.olgaInitials') }}</span>
+            <div><strong>{{ t('proPreview.olga') }}</strong><small>Hyundai Solaris · Telegram</small><p>{{ t('proPreview.thanks') }}</p></div>
             <time>16:10</time>
           </div>
         </aside>
-        <div class="pro-feature-preview__conversation" aria-label="Открытый диалог с Анной Соколовой">
-          <header class="pro-feature-preview__header"><div class="pro-feature-preview__contact"><span class="pro-feature-preview__avatar">АС</span><div><strong>Анна Соколова</strong><small>Toyota Camry</small></div></div><span class="pro-feature-preview__channel">Telegram</span></header>
+        <div class="pro-feature-preview__conversation" :aria-label="t('proPreview.openConversation')">
+          <header class="pro-feature-preview__header"><div class="pro-feature-preview__contact"><span class="pro-feature-preview__avatar">{{ t('proPreview.annaInitials') }}</span><div><strong>{{ t('proPreview.anna') }}</strong><small>Toyota Camry</small></div></div><span class="pro-feature-preview__channel">Telegram</span></header>
           <div class="pro-feature-preview__chat">
-            <div class="pro-feature-preview__automation"><span aria-hidden="true">◷</span><div><strong>Напоминание о визите</strong><small>Завтра в 10:00 · Telegram / MAX</small></div><span>Автоматически</span></div>
-            <div class="pro-feature-preview__bubble pro-feature-preview__bubble--outgoing"><p>Анна, полировка завершена! Автомобиль готов к выдаче. Отправляем фото результата.</p><div class="pro-feature-preview__photo pro-feature-preview__photo--after pro-feature-preview__chat-photo"><img :src="beforeAfterImage" alt="Пример фотографии результата в сообщении клиенту" loading="lazy" /></div><small>17:40 · Отправлено</small></div>
-            <div class="pro-feature-preview__bubble pro-feature-preview__bubble--incoming"><p>Спасибо! Заберу к 18:00.</p><small>17:42</small></div>
+            <div class="pro-feature-preview__automation"><span aria-hidden="true">◷</span><div><strong>{{ t('proPreview.reminder') }}</strong><small>{{ t('proPreview.tomorrowChannel') }}</small></div><span>{{ t('proPreview.automatic') }}</span></div>
+            <div class="pro-feature-preview__bubble pro-feature-preview__bubble--outgoing"><p>{{ t('proPreview.readyMessage') }}</p><div class="pro-feature-preview__photo pro-feature-preview__photo--after pro-feature-preview__chat-photo"><img :src="beforeAfterImage" :alt="t('proPreview.messagePhotoAlt')" loading="lazy" /></div><small>{{ t('proPreview.sentTime') }}</small></div>
+            <div class="pro-feature-preview__bubble pro-feature-preview__bubble--incoming"><p>{{ t('proPreview.thankPickup') }}</p><small>17:42</small></div>
           </div>
-          <footer class="pro-feature-preview__composer"><div><span>Автомобиль готов</span><span>Подтвердить запись</span></div><p>Сообщение клиенту… <span aria-hidden="true">➤</span></p></footer>
+          <footer class="pro-feature-preview__composer"><div><span>{{ t('proPreview.vehicleReady') }}</span><span>{{ t('proPreview.confirmBooking') }}</span></div><p>{{ t('proPreview.messagePlaceholder') }} <span aria-hidden="true">➤</span></p></footer>
         </div>
       </div>
     </template>
 
     <template v-else>
-      <header class="pro-feature-preview__header"><strong><span class="pro-feature-preview__spark" aria-hidden="true">✦</span> ИИ-помощник <span class="pro-feature-preview__beta">БЕТА</span></strong><span>Голосом или текстом</span></header>
-      <div class="pro-feature-preview__channels"><span>На сайте</span><span>В служебном Telegram-боте</span></div>
+      <header class="pro-feature-preview__header"><strong><span class="pro-feature-preview__spark" aria-hidden="true">✦</span> {{ t('proPreview.assistant') }} <span class="pro-feature-preview__beta">{{ t('proPreview.beta') }}</span></strong><span>{{ t('proPreview.voiceText') }}</span></header>
+      <div class="pro-feature-preview__channels"><span>{{ t('proPreview.website') }}</span><span>{{ t('proPreview.staffTelegram') }}</span></div>
       <div class="pro-feature-preview__chat">
-        <div class="pro-feature-preview__bubble pro-feature-preview__bubble--outgoing"><p>Запиши Анну на полировку Camry завтра в 10:00.</p><small>Ваша голосовая команда · 0:06</small></div>
-        <div class="pro-feature-preview__bubble pro-feature-preview__bubble--incoming"><p>Подготовил запись. Проверьте данные перед сохранением.</p><small>ИИ-помощник</small><span class="pro-feature-preview__playback"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 4 0 5-4v14l-5-4H4ZM17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14" /></svg>Прослушать ответ · пример</span></div>
-        <div class="pro-feature-preview__draft"><header><strong>Запись на полировку</strong><span>Черновик</span></header><dl><div><dt>Клиент</dt><dd>Анна Соколова</dd></div><div><dt>Автомобиль</dt><dd>Toyota Camry</dd></div><div><dt>Когда</dt><dd>Завтра, 10:00</dd></div><div><dt>Услуга</dt><dd>Полировка кузова</dd></div></dl><div class="pro-feature-preview__confirm">Проверить и подтвердить</div></div>
+        <div class="pro-feature-preview__bubble pro-feature-preview__bubble--outgoing"><p>{{ t('proPreview.voiceExample') }}</p><small>{{ t('proPreview.voiceDuration') }}</small></div>
+        <div class="pro-feature-preview__bubble pro-feature-preview__bubble--incoming"><p>{{ t('proPreview.draftReply') }}</p><small>{{ t('proPreview.assistant') }}</small><span class="pro-feature-preview__playback"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 4 0 5-4v14l-5-4H4ZM17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14" /></svg>{{ t('proPreview.playReply') }}</span></div>
+        <div class="pro-feature-preview__draft"><header><strong>{{ t('proPreview.polishingBooking') }}</strong><span>{{ t('proPreview.draft') }}</span></header><dl><div><dt>{{ t('proPreview.client') }}</dt><dd>{{ t('proPreview.anna') }}</dd></div><div><dt>{{ t('proPreview.vehicle') }}</dt><dd>Toyota Camry</dd></div><div><dt>{{ t('proPreview.when') }}</dt><dd>{{ t('proPreview.tomorrowTime') }}</dd></div><div><dt>{{ t('proPreview.service') }}</dt><dd>{{ t('proPreview.polishing') }}</dd></div></dl><div class="pro-feature-preview__confirm">{{ t('proPreview.reviewConfirm') }}</div></div>
       </div>
-      <footer class="pro-feature-preview__voice"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" /></svg><span>Диктуйте команду или пишите сообщение</span></footer>
+      <footer class="pro-feature-preview__voice"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" /></svg><span>{{ t('proPreview.dictate') }}</span></footer>
     </template>
   </div>
 </template>

@@ -1,3 +1,5 @@
+import '../packages/workspace/src/paymentMessages.ts'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -23,6 +25,8 @@ function setup(api = {}) {
     }
   })
   const resolve = id => {
+    if (id === '../paymentMessages') return {}
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return vue
     if (id === '@opencrm/ui') return {}
     if (id === '../api/maintenance') return {
@@ -153,6 +157,8 @@ test('Отмена учёта сохраняет обязательную при
   await state.submit()
   assert.equal(calls[0][2], 'payments/payment/cancel')
   assert.deepEqual(calls[0][3], { reason: 'Дубль' })
-  assert.match(descriptor.template.content, /деньги клиенту автоматически не возвращаются/)
-  assert.match(descriptor.template.content, /Ранее учтено · дата получения неизвестна/)
+  assert.match(descriptor.template.content, /payments\.cancelNotice/)
+  assert.match(regionalTestDependencies['@opencrm/ui/i18n'].translate('payments.cancelNotice', { amount: '100 RUB' }), /деньги клиенту автоматически не возвращаются/)
+  assert.match(descriptor.template.content, /payments\.openingHistory/)
+  assert.match(regionalTestDependencies['@opencrm/ui/i18n'].translate('payments.openingHistory'), /Ранее учтено · дата получения неизвестна/)
 })

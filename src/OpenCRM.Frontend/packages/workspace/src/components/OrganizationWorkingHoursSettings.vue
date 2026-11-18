@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../workingHoursMessages'
+import { translate as t } from '@opencrm/ui/i18n'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
 import OrganizationWorkingHoursEditor from './OrganizationWorkingHoursEditor.vue'
@@ -26,12 +28,12 @@ async function load() {
   try {
     const setup = await loadWorkspaceSetup(organizationId)
     if (currentRequestId !== requestId || organizationId !== props.organizationId) return
-    if (!setup.canManage) throw new Error('Нет права изменять график организации.')
+    if (!setup.canManage) throw new Error(t('workingHours.forbidden'))
     state.value = setup
     schedule.value = workingScheduleFromSetup(setup)
   } catch (reason) {
     if (currentRequestId === requestId) {
-      error.value = reason instanceof Error ? reason.message : 'Не удалось загрузить график.'
+      error.value = reason instanceof Error ? reason.message : t('workingHours.loadError')
     }
   } finally {
     if (currentRequestId === requestId) loading.value = false
@@ -84,7 +86,7 @@ async function save() {
     emit('saved')
   } catch (reason) {
     if (currentRequestId === requestId) {
-      error.value = reason instanceof Error ? reason.message : 'Не удалось сохранить график.'
+      error.value = reason instanceof Error ? reason.message : t('workingHours.saveError')
     }
   } finally {
     if (currentRequestId === requestId) {
@@ -101,22 +103,22 @@ onBeforeUnmount(reset)
 
 <template>
   <div class="hours-settings" :class="{ 'hours-settings--embedded': embedded }">
-    <UiButton v-if="!embedded" variant="secondary" :disabled="disabled || busy" @click="edit">Рабочие часы и перерывы</UiButton>
+    <UiButton v-if="!embedded" variant="secondary" :disabled="disabled || busy" @click="edit">{{ t('workingHours.title') }}</UiButton>
     <component :is="embedded ? 'section' : 'dialog'" ref="dialog" :class="embedded ? 'hours-panel' : 'hours-dialog'" aria-labelledby="hours-dialog-title" @cancel.prevent="close">
       <form @submit.prevent="save">
         <header class="hours-dialog__header" :class="embedded ? 'ui-section-header' : 'ui-form-header'">
-          <h3 id="hours-dialog-title">Рабочие часы и перерывы</h3>
-          <button v-if="!embedded" type="button" aria-label="Закрыть график организации" :disabled="saving" @click="close">×</button>
+          <h3 id="hours-dialog-title">{{ t('workingHours.title') }}</h3>
+          <button v-if="!embedded" type="button" :aria-label="t('workingHours.close')" :disabled="saving" @click="close">×</button>
         </header>
         <div class="hours-dialog__body" :aria-busy="loading">
-          <UiLoader v-if="loading" compact text="Загружаем график…" />
+          <UiLoader v-if="loading" compact :text="t('workingHours.loading')" />
           <OrganizationWorkingHoursEditor v-else-if="state" v-model="schedule" :disabled="saving" />
           <p v-if="error" class="hours-dialog__error" role="alert">{{ error }}</p>
-          <UiButton v-if="error && !state" variant="secondary" :disabled="busy" @click="load">Повторить</UiButton>
+          <UiButton v-if="error && !state" variant="secondary" :disabled="busy" @click="load">{{ t('workingHours.retry') }}</UiButton>
         </div>
         <footer class="hours-dialog__footer">
-          <UiButton variant="secondary" :disabled="saving" @click="close">Отмена</UiButton>
-          <UiButton type="submit" :disabled="busy || !state || disabled">{{ saving ? 'Сохранение…' : 'Сохранить график' }}</UiButton>
+          <UiButton variant="secondary" :disabled="saving" @click="close">{{ t('workingHours.cancel') }}</UiButton>
+          <UiButton type="submit" :disabled="busy || !state || disabled">{{ saving ? t('workingHours.saving') : t('workingHours.save') }}</UiButton>
         </footer>
       </form>
     </component>

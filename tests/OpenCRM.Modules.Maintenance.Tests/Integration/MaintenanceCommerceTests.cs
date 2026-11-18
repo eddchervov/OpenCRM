@@ -81,8 +81,19 @@ public sealed class MaintenanceCommerceTests(MaintenanceDatabaseFixture fixture)
         var service = MaintenanceCommerceTests.Service(context);
         foreach (var amount in new[] { 0m, -1m, 0.001m, 901m })
         {
-            await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.ExecuteInTransactionAsync(() => service.AddPayment(
+            var error = await Assert.ThrowsAsync<MaintenancePaymentValidationException>(() => transaction.ExecuteInTransactionAsync(() => service.AddPayment(
                 work.UserId, work.Vehicle.OrganizationId!.Value, work.Id, new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = amount })));
+            Assert.Equal(amount == 901m ? "maintenance.payment.overpayment" : "maintenance.payment.amountInvalid", error.MessageKey);
+            if (amount == 901m)
+            {
+                Assert.Equal("Сумма больше остатка к оплате: 900 RUB. Обновите карточку.", error.Message);
+                Assert.Equal("900 RUB", Assert.Single(error.Arguments));
+            }
+            else
+            {
+                Assert.Equal("Укажите сумму оплаты больше нуля, не более двух знаков после запятой.", error.Message);
+                Assert.Empty(error.Arguments);
+            }
         }
         await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.ExecuteInTransactionAsync(() => service.AddPayment(
             work.UserId, Guid.NewGuid(), work.Id, new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = 100 })));
@@ -91,6 +102,54 @@ public sealed class MaintenanceCommerceTests(MaintenanceDatabaseFixture fixture)
             .ThrowsAsync(new InvalidOperationException("Нет доступа"));
         await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.ExecuteInTransactionAsync(() => MaintenanceCommerceTests.Service(context, permissions.Object)
             .AddPayment(work.UserId, work.Vehicle.OrganizationId!.Value, work.Id, new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = 100 })));
+        Assert.False(await context.MaintenancePayments.AnyAsync(item => item.MaintenanceId == work.Id));
+    }
+
+    [Fact]
+    public async Task RejectsFinancialChangesWhenMaintenanceSnapshotUsesAnotherCurrency()
+    {
+        await using var context = fixture.CreateContext();
+        var work = await MaintenanceCommerceTests.Seed(context);
+        var organizationId = work.Vehicle.OrganizationId!.Value;
+        work.Vehicle.Organization!.CurrencyCode = CurrencyCodes.Cny;
+        await context.SaveChangesAsync();
+
+        var service = MaintenanceCommerceTests.Service(context);
+        var transaction = new ApplicationUnitOfWork(context);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.ExecuteInTransactionAsync(() => service.AddPayment(
+            work.UserId,
+            organizationId,
+            work.Id,
+            new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = 100 })));
+
+        var catalogItem = await context.OrganizationScenarioCatalogItems.SingleAsync(item => item.OrganizationId == organizationId);
+        var update = new UpdateMaintenanceServicesDto
+        {
+            Version = work.Version,
+            Details =
+            [
+                new CreateMaintenanceDetailDto
+                {
+                    Name = catalogItem.Name,
+                    CatalogItemId = catalogItem.Id,
+                    Quantity = 1,
+                    Price = 200
+                }
+            ]
+        };
+        await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.ExecuteInTransactionAsync(() => service.UpdateServices(
+            work.UserId,
+            organizationId,
+            work.Id,
+            update)));
+
+        context.ChangeTracker.Clear();
+        var saved = await context.Maintenance
+            .Include(item => item.Details)
+            .SingleAsync(item => item.Id == work.Id);
+        Assert.Equal(CurrencyCodes.Rub, saved.CurrencyCode);
+        Assert.Equal(0, saved.PaidAmount);
+        Assert.Equal(1000, saved.Details.Single(detail => detail.Price.HasValue).Price);
         Assert.False(await context.MaintenancePayments.AnyAsync(item => item.MaintenanceId == work.Id));
     }
 

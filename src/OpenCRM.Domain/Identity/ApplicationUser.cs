@@ -23,6 +23,16 @@ public class ApplicationUser : IdentityUser
     public string? LastAccessIpAddress { get; set; }
     public string? LastAccessUserAgent { get; set; }
     public string? LastAccessLanguage { get; set; }
+
+    /// <summary> Явно выбранный язык интерфейса и фоновых сообщений. </summary>
+    public string? PreferredLanguage { get; set; }
+
+    /// <summary> Региональный формат дат и чисел независимо от языка интерфейса. </summary>
+    public string? PreferredFormattingCulture { get; set; }
+
+    /// <summary> Валюта личного учёта без организации. </summary>
+    public string PersonalCurrencyCode { get; set; } = "RUB";
+
     public string? LastAccessClientBrands { get; set; }
     public string? LastAccessPlatform { get; set; }
     public bool? LastAccessIsMobile { get; set; }

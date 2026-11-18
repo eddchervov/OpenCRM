@@ -1,4 +1,6 @@
-﻿import type { WorkspaceMaintenance } from './maintenance'
+﻿import { translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/vehicleApiMessages'
+import type { WorkspaceMaintenance } from './maintenance'
 
 export type WorkspaceVehicleBrandFilter = {
   id: string
@@ -37,6 +39,7 @@ export type WorkspaceVehicle = {
   name?: string | null
   vin?: string | null
   registrationPlate?: string | null
+  registrationCountryCode?: string | null
   bodyNumber?: string | null
   engineNumber?: string | null
   color?: string | null
@@ -58,7 +61,7 @@ export function getVehicleDisplayName(vehicle: Pick<WorkspaceVehicle, 'brandName
   const identity = [vehicle.brandName || vehicle.manualBrandName, vehicle.modelName || vehicle.manualModelName]
     .map(value => value?.trim()).filter(Boolean).join(' ')
 
-  return [identity || 'Автомобиль', !identity || includeRegistrationPlate ? vehicle.registrationPlate?.trim() : null]
+  return [identity || t('vehicleApi.vehicle'), !identity || includeRegistrationPlate ? vehicle.registrationPlate?.trim() : null]
     .filter(Boolean).join(' · ')
 }
 
@@ -180,6 +183,7 @@ export type WorkspaceVehicleSaveRequest = {
   vin?: string | null
   registrationPlate?: string | null
   allowOtherRegistrationPlateFormat?: boolean
+  registrationCountryCode?: string | null
   bodyNumber?: string | null
   engineNumber?: string | null
   color?: string | null
@@ -207,7 +211,7 @@ export async function loadVehicleBrandOptions(kind?: string | number | null): Pr
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить марки техники.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.brands')))
   }
 
   return response.json()
@@ -234,7 +238,7 @@ export async function loadVehicleModelOptions(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить модели техники.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.models')))
   }
 
   return response.json()
@@ -284,7 +288,7 @@ export async function loadVehiclesPage(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить автомобили.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.vehicles')))
   }
 
   return response.json()
@@ -307,7 +311,7 @@ export async function loadVehicle(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить карточку автомобиля.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.card')))
   }
 
   return response.json()
@@ -359,7 +363,7 @@ export async function loadVehicleMaintenancePage(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить историю обслуживания.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.history')))
   }
 
   return response.json()
@@ -406,7 +410,7 @@ export async function loadVehicleAlbum(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить альбом.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.album')))
   }
 
   return response.json()
@@ -486,7 +490,7 @@ export async function uploadVehiclePhotos(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить фото.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.uploadPhoto')))
   }
 
   return response.json()
@@ -507,7 +511,7 @@ export async function deleteVehiclePhoto(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось удалить фото.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.deletePhoto')))
   }
 }
 
@@ -527,7 +531,7 @@ export async function setPrimaryVehiclePhoto(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось назначить главное фото.')
+    throw new Error(error?.message ?? t('vehicleApi.mainPhoto'))
   }
 }
 
@@ -547,7 +551,7 @@ export async function createVehicleAlbum(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось создать альбом.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.createAlbum')))
   }
 
   return response.json()
@@ -568,7 +572,7 @@ export async function deleteVehicleAlbum(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось удалить альбом.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.deleteAlbum')))
   }
 }
 
@@ -592,7 +596,7 @@ export async function uploadVehicleAlbumPhotos(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить фото в альбом.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.uploadAlbumPhoto')))
   }
 
   return response.json()
@@ -614,7 +618,7 @@ export async function deleteVehicleAlbumPhoto(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось удалить фото из альбома.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.deleteAlbumPhoto')))
   }
 }
 
@@ -635,7 +639,7 @@ export async function setPrimaryVehicleAlbumPhoto(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось назначить главное фото альбома.')
+    throw new Error(error?.message ?? t('vehicleApi.mainAlbumPhoto'))
   }
 }
 
@@ -649,7 +653,7 @@ export async function createVehicle(payload: WorkspaceVehicleSaveRequest): Promi
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось сохранить авто.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.save')))
   }
 
   return response.json()
@@ -671,6 +675,6 @@ export async function updateVehicle(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось сохранить авто.'))
+    throw new Error(await readErrorMessage(response, t('vehicleApi.save')))
   }
 }

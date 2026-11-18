@@ -1,4 +1,6 @@
-﻿export type WorkspaceMaintenanceDetail = {
+﻿import { translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/apiMessages'
+export type WorkspaceMaintenanceDetail = {
   detailId?: string | null
   name: string
   description?: string | null
@@ -27,6 +29,8 @@ export type WorkspaceMaintenanceDefect = {
 }
 
 export type WorkspaceMaintenance = {
+  currencyCode?: string
+  canChangeFinancialData?: boolean
   version?: number
   canManagePayments?: boolean
   canEditServices?: boolean
@@ -178,7 +182,7 @@ export async function loadMaintenanceHistory(organizationId: string, maintenance
     method: 'GET', credentials: 'same-origin', signal,
     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
   })
-  if (!response.ok) throw new Error(await readErrorMessage(response, 'Не удалось загрузить историю обслуживания.'))
+  if (!response.ok) throw new Error(await readErrorMessage(response, t('apiErrors.maintenanceHistory')))
   return response.json()
 }
 
@@ -199,7 +203,7 @@ export async function loadMaintenance(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить карточку записи.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.maintenanceCard')))
   }
 
   return response.json()
@@ -222,7 +226,7 @@ export async function loadMaintenancePhotos(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить фотографии.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.photos')))
   }
 
   return response.json()
@@ -249,7 +253,7 @@ export async function uploadMaintenancePhotos(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось загрузить фото услуги.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.uploadServicePhoto')))
   }
 }
 
@@ -268,7 +272,7 @@ export async function deleteMaintenancePhoto(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось удалить фото услуги.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.deleteServicePhoto')))
   }
 }
 
@@ -288,7 +292,7 @@ export async function createMaintenance(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось сохранить услугу.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.saveService')))
   }
 
   return response.json()
@@ -310,7 +314,7 @@ export async function updateMaintenance(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось сохранить услугу.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.saveService')))
   }
 }
 
@@ -330,7 +334,7 @@ export async function changeMaintenanceWorkflow(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось изменить статус записи.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.changeStatus')))
   }
 }
 
@@ -353,7 +357,7 @@ export async function saveMaintenanceIntake(
     body: JSON.stringify(intake)
   })
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось сохранить приёмку.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.saveIntake')))
   }
 }
 
@@ -365,7 +369,7 @@ export async function setMaintenancePhotoStage(
   url.searchParams.set('stage', String(stage))
   const response = await fetch(url, { method: 'PUT', credentials: 'same-origin', headers: getMutationHeaders() })
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Не удалось изменить этап фотографии.'))
+    throw new Error(await readErrorMessage(response, t('apiErrors.photoStage')))
   }
 }
 
@@ -376,12 +380,13 @@ export async function loadMaintenancePhotoContent(
   url.searchParams.set('organizationId', organizationId)
   const response = await fetch(url, { credentials: 'same-origin', signal })
   if (!response.ok || !response.headers.get('content-type')?.startsWith('image/')) {
-    throw new Error('Не удалось загрузить фотографии. Повторите попытку или обновите карточку записи.')
+    throw new Error(t('apiErrors.photosRetry'))
   }
   return response.blob()
 }
 
 export type WorkspaceMaintenancePayment = {
+  currencyCode?: string
   id: string
   amount: number
   methodCode?: string | null
@@ -400,7 +405,7 @@ export async function loadMaintenancePayments(organizationId: string, maintenanc
   const response = await fetch(`/api/v1/maintenance/${maintenanceId}/payments?organizationId=${organizationId}`, {
     credentials: 'same-origin', headers: getMutationHeaders({ acceptJson: true })
   })
-  if (!response.ok) throw new Error(await readErrorMessage(response, 'Не удалось загрузить оплаты.'))
+  if (!response.ok) throw new Error(await readErrorMessage(response, t('apiErrors.payments')))
   return response.json()
 }
 
@@ -411,5 +416,5 @@ export async function saveMaintenanceCommerce(
     method, credentials: 'same-origin', headers: getMutationHeaders({ contentTypeJson: true, acceptJson: true }),
     body: JSON.stringify(payload)
   })
-  if (!response.ok) throw new Error(await readErrorMessage(response, 'Не удалось сохранить изменения.'))
+  if (!response.ok) throw new Error(await readErrorMessage(response, t('apiErrors.saveChanges')))
 }

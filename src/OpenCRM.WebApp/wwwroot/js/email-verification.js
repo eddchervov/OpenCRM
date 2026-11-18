@@ -8,8 +8,8 @@
         const seconds = Math.max(0, Math.ceil((availableAt - Date.now()) / 1000));
         button.disabled = seconds > 0;
         button.textContent = seconds > 0
-            ? `Отправить повторно через ${seconds} с`
-            : 'Отправить письмо повторно';
+            ? window.OpenCRMText('resendAfter', { seconds: seconds })
+            : window.OpenCRMText('resendEmail');
 
         return seconds;
     };
@@ -27,7 +27,7 @@
         }
 
         button.disabled = true;
-        button.textContent = 'Отправляем…';
+        button.textContent = window.OpenCRMText('sendingEmail');
     });
 
     window.addEventListener('pageshow', event => {

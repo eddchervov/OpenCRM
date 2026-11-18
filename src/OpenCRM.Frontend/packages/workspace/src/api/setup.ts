@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/setupMessages'
+
 import { type WorkspaceScenarioCatalogItem } from './scenarioCatalog'
 
 export type WorkspaceWorkingDayBreak = { startTime: string, endTime: string }
@@ -25,7 +28,7 @@ export type WorkspaceSetupItem = Pick<WorkspaceScenarioCatalogItem, 'id' | 'name
 
 export async function loadWorkspaceSetup(organizationId: string): Promise<WorkspaceSetup> {
   const response = await fetch(`/api/v1/organizations/${organizationId}/setup`, { credentials: 'same-origin' })
-  if (!response.ok) throw new Error('Не удалось загрузить настройку организации.')
+  if (!response.ok) throw new Error(translate('setup.loadApiError'))
   return response.json()
 }
 
@@ -34,7 +37,7 @@ export async function openWorkspaceSetup(organizationId: string): Promise<boolea
   const response = await fetch(`/api/v1/organizations/${organizationId}/setup/open`, {
     method: 'POST', credentials: 'same-origin', headers: { RequestVerificationToken: token }
   })
-  if (!response.ok) throw new Error('Не удалось открыть настройку организации. Попробуйте ещё раз.')
+  if (!response.ok) throw new Error(translate('setup.openApiError'))
   return (await response.json()).shouldOpen === true
 }
 
@@ -50,7 +53,7 @@ export async function saveWorkspaceSetup(organizationId: string, payload: {
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сохранить настройки.')
+    throw new Error(error?.message ?? translate('setup.saveApiError'))
   }
   return response.json()
 }

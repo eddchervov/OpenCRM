@@ -27,9 +27,9 @@
     @if (!hideNavigation)
     {
         <aside class="personal-sidebar">
-            <div class="personal-nav-label">Мой аккаунт</div>
+            <div class="personal-nav-label">@Text["personal.myAccount"]</div>
             <partial name="/Views/Personal/_ManageNav.cshtml" />
-            <a class="personal-workspace-link" href="/organizations"><i class="fa fa-building-o" aria-hidden="true"></i> Организации</a>
+            <a class="personal-workspace-link" href="/organizations"><i class="fa fa-building-o" aria-hidden="true"></i> @Text["personal.organizations"]</a>
         </aside>
     }
     <div class="personal-content">
@@ -40,7 +40,7 @@
             }
             else
             {
-            <nav aria-label="Хлебные крошки">
+            <nav aria-label="@Text["personal.breadcrumbs"]">
                 <ol>
                     @if (ViewData["BreadcrumbLinks"] is (string Url, string Title)[] breadcrumbLinks)
                     {
@@ -51,7 +51,7 @@
                     }
                     else if (!hideNavigation && !string.Equals(ViewData["ActivePage"] as string, "Index", StringComparison.Ordinal))
                     {
-                        <li><a href="/personal">Профиль</a></li>
+                        <li><a href="/personal">@Text["personal.profile"]</a></li>
                     }
                     <li><h1 aria-current="page">@ViewData["Title"]</h1></li>
                 </ol>

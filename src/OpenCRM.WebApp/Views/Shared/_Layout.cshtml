@@ -2,6 +2,7 @@
 @using OpenCRM.Domain.Identity
 @using Microsoft.AspNetCore.Antiforgery
 @using OpenCRM.WebApp.Infrastructure.Security
+@using OpenCRM.WebApp.Infrastructure.Localization
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IAntiforgery Antiforgery
 
@@ -25,13 +26,19 @@
     var isSensitivePage = SensitivePagePolicy.IsSensitive(Context.Request);
     var referrerPolicy = isSensitivePage ? "no-referrer" : "strict-origin-when-cross-origin";
     var seoRobots = "noindex,nofollow";
+    var currentLanguage = SupportedUiLanguages.ResolveLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name);
+    var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
+    <partial name="_ClientLocalization" />
     <meta name="project-brand" content="@Brand.DisplayName" />
     <meta name="project-github" content="@Helpers.ProjectBrand.GitHubUrl" />
+    <meta name="opencrm-formatting-culture" content="@System.Globalization.CultureInfo.CurrentCulture.Name" />
+    <meta name="opencrm-time-zone" content="@ViewData["OrganizationTimeZoneId"]" />
+    <meta name="opencrm-personal-currency" content="@(Context.Items[SupportedUiLanguages.PersonalCurrencyItemKey] as string ?? "RUB")" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -72,6 +79,25 @@
     <meta name="request-verification-token" content="@antiforgeryToken" />
 </head>
 <body class="@bodyClass">
+    <form action="@Url.Action("SetLanguage", "Localization")" method="post" class="container d-flex flex-wrap justify-content-end align-items-center gap-2 py-2">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <label for="ui-language" class="form-label mb-0">@Text["auth.language"]</label>
+        <select id="ui-language" name="locale" class="form-select form-select-sm" style="width: auto">
+            @foreach (var language in SupportedUiLanguages.Languages)
+            {
+                <option value="@language.Code" selected="@(currentLanguage == language.Code)">@language.NativeName</option>
+            }
+        </select>
+        <label for="ui-formatting-culture" class="form-label mb-0">@Text["regional.format"]</label>
+        <select id="ui-formatting-culture" name="formattingCulture" class="form-select form-select-sm" style="width: auto">
+            <option value="ru-RU" selected="@(System.Globalization.CultureInfo.CurrentCulture.Name == "ru-RU")">@Text["regional.formatRu"]</option>
+            <option value="en-US" selected="@(System.Globalization.CultureInfo.CurrentCulture.Name == "en-US")">@Text["regional.formatUs"]</option>
+            <option value="en-GB" selected="@(System.Globalization.CultureInfo.CurrentCulture.Name == "en-GB")">@Text["regional.formatGb"]</option>
+            <option value="zh-CN" selected="@(System.Globalization.CultureInfo.CurrentCulture.Name == "zh-CN")">@Text["regional.formatCn"]</option>
+        </select>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">@Text["auth.apply"]</button>
+    </form>
     <partial name="_Menu" />
 
     <main role="main">
@@ -92,6 +118,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/vue.min.js"></script>
+    <script src="~/app/regional-formatting.js" asp-append-version="true"></script>
     <script src="~/lib/axios.min.js"></script>
     <script src="~/lib/momentjs.min.js"></script>
     <script src="~/lib/vue-ctk-date-time-picker/vue-ctk-date-time-picker.umd.min.js"></script>

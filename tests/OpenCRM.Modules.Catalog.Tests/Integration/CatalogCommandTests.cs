@@ -136,9 +136,9 @@ public sealed class CatalogCommandTests(CatalogDatabaseFixture fixture)
     }
 
     [Theory]
-    [InlineData("-0.01", null, "Укажите цену от 0 до 999999999 рублей, не более двух знаков после запятой.")]
-    [InlineData("1000000000", null, "Укажите цену от 0 до 999999999 рублей, не более двух знаков после запятой.")]
-    [InlineData("1.001", null, "Укажите цену от 0 до 999999999 рублей, не более двух знаков после запятой.")]
+    [InlineData("-0.01", null, "Укажите цену от 0 до 999999999, не более двух знаков после запятой.")]
+    [InlineData("1000000000", null, "Укажите цену от 0 до 999999999, не более двух знаков после запятой.")]
+    [InlineData("1.001", null, "Укажите цену от 0 до 999999999, не более двух знаков после запятой.")]
     [InlineData(null, 0, "Длительность услуги или набора должна быть от 1 до 525600 минут.")]
     [InlineData(null, 525601, "Длительность услуги или набора должна быть от 1 до 525600 минут.")]
     public async Task CreateRejectsInvalidPriceAndDuration(string? priceValue, int? duration, string expectedMessage)

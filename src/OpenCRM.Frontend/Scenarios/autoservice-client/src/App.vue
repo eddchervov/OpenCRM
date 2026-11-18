@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '@opencrm/workspace/scenarioAppMessages'
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import { UiLoader, type ProfileLink } from '@opencrm/ui'
 import {
@@ -10,6 +11,8 @@ import {
   withPathBase,
   type WorkspaceBreadcrumbItem
 } from '@opencrm/workspace'
+import { useLocalization } from '@opencrm/ui'
+import { workspaceLabelKey } from '@opencrm/workspace'
 import {
   loadAutoServiceContext,
   resolveHostConfig,
@@ -51,8 +54,8 @@ const activeAction = ref(initialRoute.action)
 const activeChildId = ref(initialRoute.childId)
 const activeQuery = ref(initialRoute.query)
 
-const organizationName = computed(() => context.value?.organization.name ?? 'СТО / Автосервис')
-const displayName = computed(() => context.value?.user.displayName || context.value?.user.email || 'Профиль')
+const organizationName = computed(() => context.value?.organization.name ?? t('scenarioApp.autoservice'))
+const displayName = computed(() => context.value?.user.displayName || context.value?.user.email || t('scenarioApp.profile'))
 const canOpenAdminPanel = computed(() => context.value?.user.canOpenAdminPanel === true)
 const profileLinks = computed<ProfileLink[]>(() => {
   const links: ProfileLink[] = []
@@ -62,20 +65,21 @@ const profileLinks = computed<ProfileLink[]>(() => {
   }
 
   if (context.value && canOpenAdminPanel.value) {
-    links.push({ label: 'Админ-панель', href: withPathBase(context.value.links.adminUrl ?? '/admin-panel/index.html') })
+    links.push({ label: t('scenarioApp.admin'), href: withPathBase(context.value.links.adminUrl ?? '/admin-panel/index.html') })
   }
 
   links.push(
-    { label: 'Организации', href: withPathBase('/organizations') },
-    { label: 'Профиль', href: withPathBase('/personal') },
-    { label: 'Личная техника', href: withPathBase('/vehicles') },
+    { label: t('scenarioApp.organizations'), href: withPathBase('/organizations') },
+    { label: t('scenarioApp.profile'), href: withPathBase('/personal') },
+    { label: t('scenarioApp.personalVehicles'), href: withPathBase('/vehicles') },
     { label: '', href: '#', kind: 'divider' },
-    { label: 'Выйти', href: `${withPathBase('/auth/logout')}?returnUrl=${encodeURIComponent(withPathBase('/'))}`, kind: 'logout' }
+    { label: t('scenarioApp.logout'), href: `${withPathBase('/auth/logout')}?returnUrl=${encodeURIComponent(withPathBase('/'))}`, kind: 'logout' }
   )
 
   return links
 })
 const sections = computed(() => buildAutoServiceSections(context.value?.shell.menu))
+const { t, te } = useLocalization()
 const currentSection = computed(() =>
   sections.value.find(section => section.code === resolveBreadcrumbSectionCode(activeSection.value)) ?? sections.value[0]
 )
@@ -83,23 +87,25 @@ const breadcrumbs = computed<WorkspaceBreadcrumbItem[]>(() => {
   const items: WorkspaceBreadcrumbItem[] = [
     { title: organizationName.value, href: `#${sections.value[0]?.code ?? 'workspace'}` }
   ]
-  const sectionTitle = activeSection.value === 'assistant' ? 'ИИ - Голосовой помощник' : currentSection.value?.title ?? 'Раздел'
+  const sectionCode = activeSection.value === 'assistant' ? 'assistant' : currentSection.value?.code
+  const sectionKey = sectionCode ? workspaceLabelKey(sectionCode) : ''
+  const sectionTitle = sectionKey && te(sectionKey) ? t(sectionKey) : currentSection.value?.title ?? t('scenarioApp.section')
   if (activeSection.value === 'members' && sections.value.some(section => section.code === 'employees')) {
-    items.push({ title: 'Команда', href: '#employees' })
+    items.push({ title: t('workspaceChrome.labels.members'), code: 'members', href: '#employees' })
   }
 
   if (activeSection.value === 'workspace') {
-    items.push({ title: sectionTitle })
+    items.push({ title: sectionTitle, code: sectionCode })
     return items
   }
 
   if (activeEntityId.value) {
-    items.push({ title: sectionTitle, href: resolveBreadcrumbSectionHref(activeSection.value) })
+    items.push({ title: sectionTitle, code: sectionCode, href: resolveBreadcrumbSectionHref(activeSection.value) })
     items.push({ title: resolveEntityBreadcrumbTitle() })
     return items
   }
 
-  items.push({ title: sectionTitle })
+  items.push({ title: sectionTitle, code: sectionCode })
   return items
 })
 
@@ -177,28 +183,28 @@ async function refreshWorkspaceContext() {
 
 function resolveEntityBreadcrumbTitle() {
   if (activeSection.value === 'finance' && activeEntityId.value === 'export') {
-    return 'Выгрузка для бухгалтерии'
+    return t('scenarioApp.accountingExport')
   }
 
   if (activeEntityId.value === 'new') {
     return activeSection.value === 'maintenance'
-      ? 'Новый заказ-наряд'
-      : 'Создание'
+      ? t('scenarioApp.newWorkOrder')
+      : t('scenarioApp.create')
   }
 
   if (activeAction.value === 'edit') {
-    return 'Редактирование'
+    return t('scenarioApp.edit')
   }
 
   if (activeAction.value === 'photos') {
-    return 'Фото'
+    return t('scenarioApp.photos')
   }
 
   if (activeAction.value === 'albums') {
-    return activeChildId.value ? 'Альбом' : 'Альбомы'
+    return activeChildId.value ? t('scenarioApp.album') : t('scenarioApp.albums')
   }
 
-  return 'Карточка'
+  return t('scenarioApp.profileCard')
 }
 
 onMounted(async () => {
@@ -208,7 +214,7 @@ onMounted(async () => {
     context.value = await loadAutoServiceContext(host.contextUrl)
     ensureVisibleSection()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть клиент автосервиса.'
+    errorMessage.value = error instanceof Error ? error.message : t('scenarioApp.autoserviceError')
   } finally {
     isLoading.value = false
   }
@@ -232,13 +238,13 @@ onUnmounted(() => {
     <WorkspaceTariffExpiryNotice v-if="context" :context="context" />
     <div v-if="bookingSuccessMessage" class="booking-save-notice" role="status" aria-live="polite">
       <span>{{ bookingSuccessMessage }}</span>
-      <button type="button" aria-label="Закрыть сообщение" @click="bookingSuccessMessage = ''">×</button>
+      <button type="button" :aria-label="t('scenarioApp.closeMessage')" @click="bookingSuccessMessage = ''">×</button>
     </div>
 
     <section v-if="isLoading" class="autoservice-layout--loading" aria-busy="true">
       <div class="autoservice-main">
         <section class="autoservice-loading-card">
-          <UiLoader text="Открываем рабочий стол..." />
+          <UiLoader :text="t('scenarioApp.opening')" />
           <div class="autoservice-loading-grid">
             <span></span>
             <span></span>
@@ -357,7 +363,7 @@ onUnmounted(() => {
         <OverviewSection v-else :context="context" />
       </div>
     </section>
-    <section v-else class="crm-page">Нет доступных разделов организации.</section>
+    <section v-else class="crm-page">{{ t('scenarioApp.noSections') }}</section>
   </WorkspaceCrmShell>
 </template>
 

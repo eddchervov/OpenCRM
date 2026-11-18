@@ -1,12 +1,11 @@
 ﻿<script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
-import { UiAlertDialog, UiCard, UiConfirmDialog, UiLoader } from '@opencrm/ui'
+import { UiAlertDialog, UiCard, UiConfirmDialog, UiLoader, useLocalization } from '@opencrm/ui'
+import { formatLocaleDate } from '@opencrm/ui/i18n'
+import '../commonSectionMessages'
 import WorkspaceWorkSection from './WorkspaceWorkSection.vue'
 import WorkspaceShiftsSection from './WorkspaceShiftsSection.vue'
-import {
-  buildWorkspaceCommonSections,
-  type WorkspaceCommonSectionCode
-} from '../commonSections'
+import type { WorkspaceCommonSectionCode } from '../commonSections'
 import {
   createScenarioCatalogItem,
   deleteScenarioCatalogItem,
@@ -69,6 +68,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   changed: []
 }>()
+const { t } = useLocalization()
 
 const isLoading = ref(false)
 const postActivityDialog = ref<HTMLDialogElement | null>(null)
@@ -132,7 +132,7 @@ const confirmDialog = ref({
   open: false,
   title: '',
   message: '',
-  confirmText: 'Подтвердить',
+  confirmText: t('commonSection.confirm'),
   onConfirm: null as null | (() => void)
 })
 const profileForm = reactive({
@@ -174,9 +174,7 @@ const catalogCreateForms = reactive<Record<string, { name: string, description: 
   material: { name: '', description: '', unitPrice: '', durationMinutes: '', serviceIds: [] }
 })
 
-const section = computed(() =>
-  buildWorkspaceCommonSections(props.context).find(item => item.code === props.sectionCode)
-)
+const sectionTitle = computed(() => t(`commonSection.sections.${props.sectionCode}`))
 const organizationName = computed(() =>
   overview.value?.organization.name
   ?? members.value?.organization.name
@@ -185,51 +183,27 @@ const organizationName = computed(() =>
   ?? billing.value?.organization.name
   ?? props.context.organization.name
 )
-const scenarioTitle = computed(() =>
-  props.context.shell.scenario?.title || overview.value?.organization.primaryScenarioName || 'Рабочее пространство'
-)
+const scenarioTitle = computed(() => {
+  const scenarioCode = (props.context.organization.primaryScenarioCode ?? props.context.shell.scenario?.code ?? '').toLowerCase()
+  if (scenarioCode === 'autoservice' || scenarioCode === 'detailing' || scenarioCode === 'fleet') {
+    return t(`commonSection.scenarios.${scenarioCode}`)
+  }
+
+  return props.context.shell.scenario?.title || overview.value?.organization.primaryScenarioName || t('commonSection.workspace')
+})
 const selectedWikiArticle = computed(() => wikiArticle.value ?? wiki.value?.selectedArticle ?? null)
 const isDetailingScenario = computed(() =>
   (props.context.organization.primaryScenarioCode ?? props.context.shell.scenario?.code ?? '').toLowerCase() === 'detailing'
 )
-const settingsTitle = computed(() => isDetailingScenario.value ? 'Настройки детейлинг-центра' : 'Настройки организации')
+const settingsTitle = computed(() => isDetailingScenario.value ? t('commonSection.settings.detailing') : t('commonSection.settings.organization'))
 const canManageCatalog = computed(() => settings.value?.canManageProfile === true)
-const catalogGroups = computed<Array<{
-  kind: WorkspaceScenarioCatalogKindCode
-  title: string
-  emptyText: string
-  nameHelp: string
-  descriptionHelp: string
-}>>(() => [
-  {
-    kind: 'service',
-    title: 'Услуги',
-    emptyText: 'Услуги еще не настроены.',
-    nameHelp: 'Название услуги, которое будет видно в записи обслуживания и расписании. Например: полировка кузова.',
-    descriptionHelp: 'Коротко опишите состав работ, длительность или то, что важно администратору.'
-  },
-  {
-    kind: 'service_bundle',
-    title: 'Наборы услуг',
-    emptyText: 'Наборы ещё не созданы.',
-    nameHelp: 'Название набора услуг.',
-    descriptionHelp: 'Состав и назначение набора.'
-  },
-  {
-    kind: 'work_post',
-    title: 'Посты / боксы',
-    emptyText: 'Посты еще не настроены.',
-    nameHelp: 'Название поста или бокса, где выполняются работы. Например: Бокс 1.',
-    descriptionHelp: 'Укажите назначение зоны: мокрая зона, полировка, выдача или другое рабочее место.'
-  },
-  {
-    kind: 'material',
-    title: 'Материалы',
-    emptyText: 'Материалы еще не настроены.',
-    nameHelp: 'Название материала для учета остатков и движений. Например: керамический состав.',
-    descriptionHelp: 'Укажите единицу, зону применения или внутреннее примечание по материалу.'
-  }
-])
+const catalogGroups = computed(() => (['service', 'service_bundle', 'work_post', 'material'] as const).map(kind => ({
+  kind,
+  title: t(`commonSection.catalog.kind.${kind}.title`),
+  emptyText: t(`commonSection.catalog.kind.${kind}.empty`),
+  nameHelp: t(`commonSection.catalog.kind.${kind}.nameHelp`),
+  descriptionHelp: t(`commonSection.catalog.kind.${kind}.descriptionHelp`)
+})))
 const selectedCatalogGroup = computed(() =>
   catalogGroups.value.find(group => group.kind === selectedCatalogKind.value) ?? catalogGroups.value[0]
 )
@@ -251,6 +225,14 @@ function getWikiSlugFromHash() {
   return new URLSearchParams(query).get('slug')?.trim() ?? ''
 }
 
+function formatPostDate(value: string) {
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value)
+  return formatLocaleDate(isDateOnly ? `${value}T00:00:00Z` : value, {
+    timeZone: isDateOnly ? 'UTC' : props.context.organization.timeZoneId || 'UTC',
+    dateStyle: 'medium'
+  })
+}
+
 async function refreshBillingAfterPromo() {
   const organizationId = props.context.organization.id
   actionErrorMessage.value = ''
@@ -262,7 +244,7 @@ async function refreshBillingAfterPromo() {
       emit('changed')
     }
   } catch {
-    actionErrorMessage.value = 'Промокод применён, но тарифы не удалось обновить. Обновите страницу.'
+    actionErrorMessage.value = t('commonSection.promoRefreshError')
   }
 }
 
@@ -336,7 +318,7 @@ async function loadSection() {
         break
     }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить раздел.'
+    errorMessage.value = error instanceof Error ? error.message : t('commonSection.loadError')
   } finally {
     isLoading.value = false
   }
@@ -414,15 +396,15 @@ async function runAction(
 
     if (result.code === 'InProgress' || result.code === 'ManualReview') {
       paymentBuyerStatus.value = result.isPaid
-        ? 'Оплата получена, активируем подписку.'
+        ? t('commonSection.payment.received')
         : result.code === 'ManualReview'
-          ? 'Оплата требует проверки. Обратитесь в поддержку и не оплачивайте повторно.'
-          : result.message || 'Готовим оплату.'
+          ? t('commonSection.payment.manualReview')
+          : result.message || t('commonSection.payment.preparing')
       return false
     }
 
     if (['Canceled', 'Rejected', 'Refunded', 'Conflict', 'Invalid'].includes(result.code ?? '')) {
-      paymentBuyerError.value = result.message || 'Не удалось завершить оплату.'
+      paymentBuyerError.value = result.message || t('commonSection.payment.completeError')
       return false
     }
 
@@ -431,7 +413,7 @@ async function runAction(
         settings.value.scenarioCatalog = await loadScenarioCatalog(props.context.organization.id)
         syncCatalogDrafts()
       } catch {
-        catalogRefreshErrorMessage.value = 'Изменения сохранены, но список справочника не удалось обновить. Обновите страницу, чтобы увидеть актуальные данные.'
+        catalogRefreshErrorMessage.value = t('commonSection.payment.refreshCatalogError')
       }
 
       isEditingCatalog.value = false
@@ -439,7 +421,7 @@ async function runAction(
       return true
     }
 
-    successMessage.value = result.message || 'Готово.'
+    successMessage.value = result.message || t('commonSection.payment.ready')
     if (options.redirectToOnSuccess) {
       window.location.href = options.redirectToOnSuccess
       return true
@@ -457,7 +439,7 @@ async function runAction(
       return false
     }
 
-    const message = error instanceof Error ? error.message : 'Действие не выполнено.'
+    const message = error instanceof Error ? error.message : t('commonSection.payment.actionError')
     if (options.onValidationError && error instanceof WorkspaceActionError && error.errors) {
       options.onValidationError(error.errors)
     } else if (options.onError) {
@@ -483,7 +465,7 @@ function askConfirmation(options: {
     open: true,
     title: options.title,
     message: options.message,
-    confirmText: options.confirmText ?? 'Подтвердить',
+    confirmText: options.confirmText ?? t('commonSection.confirm'),
     onConfirm: options.onConfirm
   }
 }
@@ -591,9 +573,9 @@ function startRequisitesEdit() {
 function archiveOrganization() {
   if (isSaving.value || !settings.value?.canArchive) return
   askConfirmation({
-    title: 'Архивировать организацию',
-    message: 'Организация исчезнет из рабочих разделов. Ее можно будет восстановить из списка организаций в течение срока хранения архива.',
-    confirmText: 'Архивировать',
+    title: t('commonSection.archiveOrganization.title'),
+    message: t('commonSection.archiveOrganization.message'),
+    confirmText: t('commonSection.archiveOrganization.action'),
     onConfirm: () => void runAction(
       () => archiveWorkspaceOrganization(props.context.organization.id),
       { redirectToOnSuccess: '/organizations' }
@@ -686,22 +668,22 @@ async function submitPaymentBuyer() {
   const inn = paymentBuyerInn.value.trim()
   const buyerType = paymentBuyerType.value
   if (buyerType !== 'individual' && buyerType !== 'business') {
-    paymentBuyerError.value = 'Выберите, кто покупает подписку.'
+    paymentBuyerError.value = t('commonSection.payment.chooseBuyer')
     return
   }
 
   if (buyerType === 'business' && !name) {
-    paymentBuyerError.value = 'Укажите наименование организации или ФИО ИП.'
+    paymentBuyerError.value = t('commonSection.payment.enterBuyerName')
     return
   }
 
   if (buyerType === 'business' && ![10, 12].includes(inn.length)) {
-    paymentBuyerError.value = 'ИНН организации или ИП должен содержать 10 или 12 цифр.'
+    paymentBuyerError.value = t('commonSection.payment.invalidInn')
     return
   }
 
   if (name.length > 200) {
-    paymentBuyerError.value = 'Наименование или ФИО должно содержать не более 200 символов.'
+    paymentBuyerError.value = t('commonSection.payment.buyerNameTooLong')
     return
   }
 
@@ -729,7 +711,7 @@ async function submitPaymentBuyer() {
       signal: pollController.signal
     })
     if (props.context.organization.id !== organizationId || pollController.signal.aborted) {
-      throw new DOMException('Проверка оплаты отменена.', 'AbortError')
+      throw new DOMException(t('commonSection.payment.canceled'), 'AbortError')
     }
 
     if (result.paymentUrl) {
@@ -799,7 +781,7 @@ function selectCatalogMode(mode: 'workspace' | 'templates') {
 function addCatalogItem(kind: WorkspaceScenarioCatalogKindCode) {
   const form = catalogCreateForms[kind]
   if (!form?.name.trim()) {
-    actionErrorMessage.value = 'Укажите название элемента справочника.'
+    actionErrorMessage.value = t('commonSection.catalog.nameRequired')
     return
   }
 
@@ -817,14 +799,14 @@ function addCatalogItem(kind: WorkspaceScenarioCatalogKindCode) {
     form.unitPrice = ''
     form.durationMinutes = ''
     form.serviceIds = []
-    return { message: 'Справочник обновлен.' }
+    return { message: t('commonSection.catalog.refreshed') }
   }, { refreshCatalogOnSuccess: true })
 }
 
 function saveCatalogItem(item: WorkspaceScenarioCatalogItem) {
   const draft = catalogDrafts.value[item.id]
   if (!draft?.name.trim()) {
-    actionErrorMessage.value = 'Название элемента справочника не должно быть пустым.'
+    actionErrorMessage.value = t('commonSection.catalog.emptyName')
     return
   }
 
@@ -838,7 +820,7 @@ function saveCatalogItem(item: WorkspaceScenarioCatalogItem) {
       sortOrder: Number(draft.sortOrder) || item.sortOrder || 10,
       isActive: draft.isActive
     })
-    return { message: 'Справочник обновлен.' }
+    return { message: t('commonSection.catalog.refreshed') }
   }, { refreshCatalogOnSuccess: true })
 }
 
@@ -855,7 +837,7 @@ async function changePostActivity(item: WorkspaceScenarioCatalogItem) {
     if (selectedWorkPost.value?.id === item.id) affectedMaintenances.value = result
   } catch (error) {
     if (selectedWorkPost.value?.id === item.id) {
-      postActivityError.value = error instanceof Error ? error.message : 'Не удалось проверить назначения.'
+      postActivityError.value = error instanceof Error ? error.message : t('commonSection.postActivity.checkAssignmentsError')
     }
   } finally {
     postActivityLoading.value = false
@@ -871,7 +853,7 @@ async function confirmPostActivity() {
       durationMinutes: item.durationMinutes, serviceIds: item.serviceIds ?? [],
       sortOrder: item.sortOrder, isActive: !item.isActive
     })
-    return { message: item.isActive ? 'Пост закрыт.' : 'Пост возвращён в работу.' }
+    return { message: t(item.isActive ? 'commonSection.postActivity.closed' : 'commonSection.postActivity.reopened') }
   }, { refreshCatalogOnSuccess: true, onError: message => { postActivityError.value = message } })
   if (succeeded) {
     postActivityDialog.value?.close()
@@ -882,18 +864,18 @@ async function confirmPostActivity() {
 function removeCatalogItem(item: WorkspaceScenarioCatalogItem) {
   const shouldDisable = item.kindCode === 'service' || item.isSystem || item.isUsed
   askConfirmation({
-    title: item.kindCode === 'service' ? 'Перенести услугу в архив' : shouldDisable ? 'Отключить элемент' : 'Удалить элемент',
+    title: item.kindCode === 'service' ? t('commonSection.catalog.archiveServiceTitle') : shouldDisable ? t('commonSection.catalog.disableTitle') : t('commonSection.catalog.deleteTitle'),
     message: item.kindCode === 'service'
-      ? 'Услуга останется в существующих записях, но будет недоступна для новых. Её можно будет восстановить из архива.'
+      ? t('commonSection.catalog.archiveServiceMessage')
       : item.isUsed
-      ? 'Элемент уже используется в записях или складских движениях. Удалить его нельзя: он будет скрыт из новых форм, а история останется корректной.'
+      ? t('commonSection.catalog.usedMessage')
       : item.isSystem
-        ? 'Системный элемент будет отключен в этом справочнике.'
-        : 'Элемент будет удален из справочника.',
-    confirmText: item.kindCode === 'service' ? 'В архив' : shouldDisable ? 'Отключить' : 'Удалить',
+        ? t('commonSection.catalog.systemMessage')
+        : t('commonSection.catalog.deleteMessage'),
+    confirmText: item.kindCode === 'service' ? t('commonSection.catalog.archiveAction') : shouldDisable ? t('commonSection.catalog.disableAction') : t('commonSection.catalog.deleteAction'),
     onConfirm: () => void runAction(async () => {
       await deleteScenarioCatalogItem(props.context.organization.id, item.id)
-      return { message: 'Справочник обновлен.' }
+      return { message: t('commonSection.catalog.refreshed') }
     }, { refreshCatalogOnSuccess: true })
   })
 }
@@ -913,7 +895,7 @@ function openWikiArticle(slug: string) {
       activeWikiSlug.value = article.slug
     })
     .catch((error) => {
-      wikiArticleErrorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить статью.'
+      wikiArticleErrorMessage.value = error instanceof Error ? error.message : t('commonSection.wikiLoadError')
     })
     .finally(() => {
       isWikiArticleLoading.value = false
@@ -966,25 +948,25 @@ watch(() => props.sectionCode, () => {
 
 <template>
   <section class="workspace-common-section">
-    <UiCard page :title="isPromoHistory ? 'История промокодов' : sectionCode === 'employees' && employeeCount !== null ? `${section?.title} (${employeeCount})` : section?.title">
+    <UiCard page :title="isPromoHistory ? t('commonSection.promoHistory') : sectionCode === 'employees' && employeeCount !== null ? t('commonSection.employeeCount', { title: sectionTitle, count: employeeCount }) : sectionTitle">
       <template #actions>
-        <WorkspacePageHelpButton v-if="sectionCode !== 'shifts'" :section-code="sectionCode" :title="section?.title" />
+        <WorkspacePageHelpButton v-if="sectionCode !== 'shifts'" :section-code="sectionCode" :title="sectionTitle" />
       </template>
       <div v-if="isLoading" class="workspace-common-loading">
-        <UiLoader text="Загружаем раздел..." />
+        <UiLoader :text="t('commonSection.loading')" />
         <div class="workspace-common-skeleton">
           <span v-for="index in 6" :key="index"></span>
         </div>
       </div>
 
       <div v-else-if="errorMessage" class="entity-note entity-note--error">
-        <strong>Ошибка</strong>
+        <strong>{{ t('commonSection.error') }}</strong>
         <p>{{ errorMessage }}</p>
       </div>
 
       <template v-else>
         <div v-if="successMessage" class="entity-note entity-note--success">
-          <strong>Готово</strong>
+          <strong>{{ t('commonSection.done') }}</strong>
           <p>{{ successMessage }}</p>
         </div>
 
@@ -1056,6 +1038,7 @@ watch(() => props.sectionCode, () => {
           @cancel-requisites-edit="cancelRequisitesEdit"
           @archive-organization="archiveOrganization"
           @time-zone-saved="emit('changed')"
+          @currency-saved="emit('changed')"
         >
           <template v-if="settings.canManageProfile && context.workspaceAccess?.isReadOnly === false" #workingHours="{ onClose, onBusyChange }">
             <OrganizationWorkingHoursSettings :key="context.organization.id" :organization-id="context.organization.id" :disabled="isSaving" embedded @saved="onClose" @closed="onClose" @busy-changed="onBusyChange" />
@@ -1066,11 +1049,11 @@ watch(() => props.sectionCode, () => {
         </WorkspaceSettingsSection>
 
         <div v-else-if="sectionCode === 'catalog'" class="workspace-catalog-container">
-          <nav v-if="templateAccess?.canViewWorkspaceCatalog && templateAccess.canUseTemplates" class="workspace-catalog-modes" aria-label="Разделы справочников">
-            <button type="button" :aria-pressed="catalogMode === 'workspace'" @click="selectCatalogMode('workspace')">Услуги и ресурсы</button>
-            <button type="button" :aria-pressed="catalogMode === 'templates'" @click="selectCatalogMode('templates')">Шаблоны сообщений</button>
+          <nav v-if="templateAccess?.canViewWorkspaceCatalog && templateAccess.canUseTemplates" class="workspace-catalog-modes" :aria-label="t('commonSection.catalog.modeNavigation')">
+            <button type="button" :aria-pressed="catalogMode === 'workspace'" @click="selectCatalogMode('workspace')">{{ t('commonSection.catalog.workspaceMode') }}</button>
+            <button type="button" :aria-pressed="catalogMode === 'templates'" @click="selectCatalogMode('templates')">{{ t('commonSection.catalog.templatesMode') }}</button>
           </nav>
-          <WorkspaceProLock v-if="catalogMode === 'templates' && templateAccess?.canUseTemplates" :locked="templatesLocked" message="Шаблоны сообщений доступны в PRO" feature="messageTemplates">
+          <WorkspaceProLock v-if="catalogMode === 'templates' && templateAccess?.canUseTemplates" :locked="templatesLocked" :message="t('commonSection.catalog.templatesPro')" feature="messageTemplates">
             <MessageTemplateCatalog :key="context.organization.id" :organization-id="context.organization.id" :read-only="context.workspaceAccess?.isReadOnly" :preview-only="templatesLocked" />
           </WorkspaceProLock>
           <WorkspaceCatalogSection
@@ -1116,29 +1099,29 @@ watch(() => props.sectionCode, () => {
       @cancel="isSaving && $event.preventDefault()"
     >
       <header class="ui-form-header">
-        <h3 id="workspace-buyer-title">Данные покупателя</h3>
-        <button type="button" aria-label="Закрыть" :disabled="isSaving" @click="closeBuyerDialog">×</button>
+        <h3 id="workspace-buyer-title">{{ t('commonSection.payment.title') }}</h3>
+        <button type="button" :aria-label="t('commonSection.payment.close')" :disabled="isSaving" @click="closeBuyerDialog">×</button>
       </header>
       <form @submit.prevent="submitPaymentBuyer">
-        <p>Укажите, кто оплачивает подписку. Эти данные сохранятся вместе с платежом, чтобы оформить чек НПД с правильными данными покупателя.</p>
+        <p>{{ t('commonSection.payment.description') }}</p>
         <fieldset :disabled="isSaving">
-          <legend>Покупатель</legend>
+          <legend>{{ t('commonSection.payment.buyer') }}</legend>
           <label>
             <input v-model="paymentBuyerType" type="radio" name="payment-buyer-type" value="individual">
-            Физическое лицо
+            {{ t('commonSection.payment.individual') }}
           </label>
           <label>
             <input v-model="paymentBuyerType" type="radio" name="payment-buyer-type" value="business">
-            Организация или ИП
+            {{ t('commonSection.payment.business') }}
           </label>
         </fieldset>
         <template v-if="paymentBuyerType === 'business'">
           <label class="workspace-buyer-dialog__field">
-            Наименование организации или ФИО ИП
+            {{ t('commonSection.payment.businessName') }}
             <input v-model="paymentBuyerName" type="text" maxlength="200" autocomplete="organization" required>
           </label>
           <label class="workspace-buyer-dialog__field">
-            ИНН
+            {{ t('commonSection.payment.inn') }}
             <input
               :value="paymentBuyerInn"
               type="text"
@@ -1150,37 +1133,37 @@ watch(() => props.sectionCode, () => {
               required
               @input="updatePaymentBuyerInn"
             >
-            <small id="workspace-buyer-inn-help">10 цифр для организации или 12 для ИП.</small>
+            <small id="workspace-buyer-inn-help">{{ t('commonSection.payment.innHelp') }}</small>
           </label>
         </template>
         <p v-if="paymentBuyerError" class="workspace-buyer-dialog__error" role="alert">{{ paymentBuyerError }}</p>
         <p v-if="paymentBuyerStatus" class="workspace-buyer-dialog__status" role="status">{{ paymentBuyerStatus }}</p>
         <footer>
-          <button type="button" :disabled="isSaving" @click="closeBuyerDialog">Отмена</button>
-          <button type="submit" :disabled="isSaving">{{ isSaving ? 'Готовим оплату…' : paymentBuyerStatus ? 'Проверить статус' : 'Продолжить к оплате' }}</button>
+          <button type="button" :disabled="isSaving" @click="closeBuyerDialog">{{ t('commonSection.payment.cancel') }}</button>
+          <button type="submit" :disabled="isSaving">{{ isSaving ? t('commonSection.payment.prepare') : paymentBuyerStatus ? t('commonSection.payment.checkStatus') : t('commonSection.payment.continue') }}</button>
         </footer>
       </form>
     </dialog>
     <dialog ref="postActivityDialog" class="workspace-buyer-dialog" aria-labelledby="post-activity-title" @cancel="isSaving && $event.preventDefault()">
       <form v-if="selectedWorkPost" @submit.prevent="confirmPostActivity">
-        <header class="ui-form-header"><h3 id="post-activity-title">{{ selectedWorkPost.isActive ? 'Закрыть пост' : 'Вернуть пост в работу' }} «{{ selectedWorkPost.name }}»?</h3></header>
-        <p v-if="selectedWorkPost.isActive">Пост станет недоступен для новых назначений. История и существующие записи сохранятся. Перенос записей выполняется вручную. Вернуть пост в работу можно здесь же.</p>
-        <p v-else>Пост снова станет доступен для новых назначений.</p>
-        <UiLoader v-if="postActivityLoading" compact text="Проверяем назначения…" />
-        <p v-else-if="affectedMaintenances?.canViewMaintenances === false">У вас нет права просмотра работ. Проверьте текущие и будущие назначения с ответственным сотрудником: при закрытии поста они сохранятся без автоматического переноса.</p>
+        <header class="ui-form-header"><h3 id="post-activity-title">{{ t(selectedWorkPost.isActive ? 'commonSection.postActivity.closeQuestion' : 'commonSection.postActivity.reopenQuestion', { name: selectedWorkPost.name }) }}</h3></header>
+        <p v-if="selectedWorkPost.isActive">{{ t('commonSection.postActivity.closedMessage') }}</p>
+        <p v-else>{{ t('commonSection.postActivity.reopenedMessage') }}</p>
+        <UiLoader v-if="postActivityLoading" compact :text="t('commonSection.postActivity.loading')" />
+        <p v-else-if="affectedMaintenances?.canViewMaintenances === false">{{ t('commonSection.postActivity.noViewPermission') }}</p>
         <template v-else-if="affectedMaintenances">
-          <p>Незавершённых записей на посту: {{ affectedMaintenances.totalCount }}.</p>
+          <p>{{ t('commonSection.postActivity.unfinished', { count: affectedMaintenances.totalCount }) }}</p>
           <ul v-if="affectedMaintenances.items.length">
             <li v-for="record in affectedMaintenances.items" :key="record.maintenanceId">
-              <a :href="`#maintenance/${record.maintenanceId}`" @click="postActivityDialog?.close()">{{ new Date(record.date).toLocaleDateString('ru-RU') }} · {{ record.vehicleName || 'Автомобиль' }} {{ record.registrationPlate }}</a>
+              <a :href="`#maintenance/${record.maintenanceId}`" @click="postActivityDialog?.close()">{{ formatPostDate(record.date) }} · {{ record.vehicleName || t('commonSection.postActivity.vehicleFallback') }} {{ record.registrationPlate }}</a>
             </li>
           </ul>
-          <p v-if="affectedMaintenances.totalCount > affectedMaintenances.items.length">Показаны ближайшие {{ affectedMaintenances.items.length }}. Остальные записи доступны в календаре.</p>
+          <p v-if="affectedMaintenances.totalCount > affectedMaintenances.items.length">{{ t('commonSection.postActivity.shownNearest', { shown: affectedMaintenances.items.length }) }}</p>
         </template>
         <p v-if="postActivityError" class="ui-field__error" role="alert">{{ postActivityError }}</p>
         <footer>
-          <button type="button" :disabled="isSaving" @click="postActivityDialog?.close(); selectedWorkPost = null">Отмена</button>
-          <button type="submit" :disabled="isSaving || postActivityLoading || (selectedWorkPost.isActive && !affectedMaintenances)">{{ isSaving ? 'Сохраняем…' : selectedWorkPost.isActive ? 'Закрыть пост' : 'Вернуть в работу' }}</button>
+          <button type="button" :disabled="isSaving" @click="postActivityDialog?.close(); selectedWorkPost = null">{{ t('commonSection.payment.cancel') }}</button>
+          <button type="submit" :disabled="isSaving || postActivityLoading || (selectedWorkPost.isActive && !affectedMaintenances)">{{ isSaving ? t('commonSection.postActivity.save') : selectedWorkPost.isActive ? t('commonSection.postActivity.closeAction') : t('commonSection.postActivity.reopenAction') }}</button>
         </footer>
       </form>
     </dialog>
@@ -1196,7 +1179,7 @@ watch(() => props.sectionCode, () => {
     />
     <UiAlertDialog
       :open="Boolean(actionErrorMessage || catalogRefreshErrorMessage) && !isCatalogDialogOpen"
-      :title="catalogRefreshErrorMessage ? 'Изменения сохранены' : 'Не удалось выполнить действие'"
+      :title="catalogRefreshErrorMessage ? t('commonSection.catalogRefreshTitle') : t('commonSection.actionErrorTitle')"
       :message="actionErrorMessage || catalogRefreshErrorMessage"
       tone="danger"
       @close="actionErrorMessage = ''; catalogRefreshErrorMessage = ''"

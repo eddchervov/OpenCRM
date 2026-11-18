@@ -155,6 +155,7 @@ internal sealed class MaintenanceWorkReportService(
         DateTime decisionAt
     )
     {
+        await this._transaction.LockOrganizationAsync(organizationId);
         var maintenance = await context.Maintenance
             .SingleOrDefaultAsync(item => item.Id == maintenanceId
                 && item.Vehicle.OrganizationId == organizationId && !item.IsDeleted)
@@ -183,6 +184,11 @@ internal sealed class MaintenanceWorkReportService(
 
         if (decision == "approved")
         {
+            var organizationCurrencyCode = await context.Organizations
+                .Where(organization => organization.Id == organizationId)
+                .Select(organization => organization.CurrencyCode)
+                .SingleAsync();
+            MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
             await maintenancePlanAccess.EnsureCanAssignEmployeeAsync(userId, organizationId, null, report.EmployeeId);
 
             if (!MaintenanceVatRates.IsValid(command.VatRateCode))

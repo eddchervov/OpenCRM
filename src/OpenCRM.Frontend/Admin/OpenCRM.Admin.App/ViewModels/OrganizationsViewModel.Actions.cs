@@ -1,12 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
 public partial class OrganizationsViewModel
 {
     private bool _requiresStatusRefresh;
+    private string? _cardErrorTranslationKey;
+    private bool _settingLocalizedCardError;
 
     [ObservableProperty]
     private bool _isChangingStatus;
@@ -33,8 +36,8 @@ public partial class OrganizationsViewModel
     public bool HasPendingStatusChange => this.PendingStatusAction.Length != 0;
 
     public string StatusChangeWarning => this.PendingStatusAction == "archive"
-        ? "Организация станет недоступна для работы всем участникам. Через 30 дней штатная очистка пометит её удалённой. Архив не освобождает слот создания организации."
-        : "Организация снова станет доступна участникам. Тариф, права и сохранённые данные останутся прежними.";
+        ? AdminLocalization.Instance["organization.status.archiveWarning"]
+        : AdminLocalization.Instance["organization.status.restoreWarning"];
 
     public void RefreshAccess()
     {
@@ -120,7 +123,7 @@ public partial class OrganizationsViewModel
             await this.HandleErrorAsync(exception, true);
             if (exception.StatusCode == null && this._isActive && this._selectedId == id)
             {
-                this.CardErrorMessage = "Ответ сервера не получен. Обновите карточку и проверьте статус перед новым действием.";
+                this.SetCardErrorKey("organization.status.unknownResult");
             }
         }
         catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException)
@@ -128,7 +131,7 @@ public partial class OrganizationsViewModel
             this.ResetStatusChange();
             if (this._isActive && this._selectedId == id)
             {
-                this.CardErrorMessage = "Ответ сервера не получен. Обновите карточку и проверьте статус перед новым действием.";
+                this.SetCardErrorKey("organization.status.unknownResult");
             }
         }
         finally
@@ -143,6 +146,22 @@ public partial class OrganizationsViewModel
         this.StatusChangeReason = string.Empty;
         this.IsStatusChangeConfirmed = false;
         this.NotifyStatusCommands();
+    }
+
+    private void SetCardErrorKey(string key)
+    {
+        this._cardErrorTranslationKey = key;
+        this._settingLocalizedCardError = true;
+        this.CardErrorMessage = AdminLocalization.Instance[key];
+        this._settingLocalizedCardError = false;
+    }
+
+    partial void OnCardErrorMessageChanging(string value)
+    {
+        if (!this._settingLocalizedCardError)
+        {
+            this._cardErrorTranslationKey = null;
+        }
     }
 
     private void NotifyStatusCommands()

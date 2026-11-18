@@ -5,6 +5,8 @@ namespace OpenCRM.Domain;
 /// <summary> Сформированный документ обслуживания. </summary>
 public class MaintenanceDocument
 {
+    /// <summary>Код валюты документа на момент создания.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     /// <summary> Идентификатор документа. </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 

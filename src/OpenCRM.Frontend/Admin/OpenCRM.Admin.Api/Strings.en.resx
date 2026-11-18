@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="error.unauthorized" xml:space="preserve"><value>The email or password is incorrect, or the session has expired.</value></data>
+  <data name="error.forbidden" xml:space="preserve"><value>This account does not have access to the administration panel.</value></data>
+  <data name="error.loginRequired" xml:space="preserve"><value>Sign in to the administration panel.</value></data>
+  <data name="error.network" xml:space="preserve"><value>Could not connect to the server. Check your connection and try again.</value></data>
+  <data name="error.timeout" xml:space="preserve"><value>The server did not respond in time. Try again.</value></data>
+  <data name="error.emptyResponse" xml:space="preserve"><value>The server returned an empty response.</value></data>
+  <data name="error.invalidResponse" xml:space="preserve"><value>The server returned an invalid response.</value></data>
+  <data name="error.sessionExpired" xml:space="preserve"><value>The session has expired. Sign in again.</value></data>
+  <data name="error.sessionChanged" xml:space="preserve"><value>The session changed. Sign in to the administration panel again.</value></data>
+  <data name="error.refreshTimeout" xml:space="preserve"><value>Session refresh timed out. Sign in again.</value></data>
+  <data name="error.emptyAuthResponse" xml:space="preserve"><value>The server returned an empty authentication response.</value></data>
+  <data name="error.invalidAuthResponse" xml:space="preserve"><value>The server returned an invalid authentication response.</value></data>
+  <data name="error.invalidAuthData" xml:space="preserve"><value>The server returned incomplete or invalid authentication data.</value></data>
+  <data name="error.invalidProfile" xml:space="preserve"><value>The server returned an invalid administrator profile.</value></data>
+  <data name="error.inconsistentProfile" xml:space="preserve"><value>The server returned an incomplete or inconsistent administrator profile.</value></data>
+  <data name="error.missingAccess" xml:space="preserve"><value>This account does not have the Admin.Access permission.</value></data>
+  <data name="error.loginFailed" xml:space="preserve"><value>Could not sign in to the administration panel.</value></data>
+  <data name="error.profileLoadFailed" xml:space="preserve"><value>Could not load the administrator profile.</value></data>
+  <data name="error.logoutFailed" xml:space="preserve"><value>Could not end the session on the server.</value></data>
+  <data name="Не удалось загрузить настройки ИИ-помощника." xml:space="preserve"><value>Could not load AI assistant settings.</value></data>
+  <data name="Не удалось сохранить настройки ИИ-помощника." xml:space="preserve"><value>Could not save AI assistant settings.</value></data>
+  <data name="Не удалось сохранить доступ ИИ-помощника для организации." xml:space="preserve"><value>Could not save the organization's AI assistant access.</value></data>
+  <data name="Не удалось загрузить расходы ИИ-помощника." xml:space="preserve"><value>Could not load AI assistant costs.</value></data>
+  <data name="Не удалось сверить расходы ИИ-помощника." xml:space="preserve"><value>Could not reconcile AI assistant costs.</value></data>
+  <data name="Не удалось загрузить марки каталога." xml:space="preserve"><value>Could not load catalog makes.</value></data>
+  <data name="Не удалось загрузить модели марки." xml:space="preserve"><value>Could not load models for this make.</value></data>
+  <data name="Не удалось сохранить марку." xml:space="preserve"><value>Could not save the make.</value></data>
+  <data name="Не удалось удалить марку." xml:space="preserve"><value>Could not delete the make.</value></data>
+  <data name="Не удалось сохранить модель." xml:space="preserve"><value>Could not save the model.</value></data>
+  <data name="Не удалось удалить модель." xml:space="preserve"><value>Could not delete the model.</value></data>
+  <data name="Не удалось дополнить каталог техники." xml:space="preserve"><value>Could not update the vehicle catalog.</value></data>
+  <data name="Не удалось загрузить предложения в каталог." xml:space="preserve"><value>Could not load catalog suggestions.</value></data>
+  <data name="Не удалось обработать предложение." xml:space="preserve"><value>Could not review the suggestion.</value></data>
+  <data name="Не удалось удалить предложение." xml:space="preserve"><value>Could not delete the suggestion.</value></data>
+  <data name="Не удалось загрузить историю email." xml:space="preserve"><value>Could not load email history.</value></data>
+  <data name="Не удалось загрузить письмо." xml:space="preserve"><value>Could not load the email.</value></data>
+  <data name="Не удалось загрузить события письма." xml:space="preserve"><value>Could not load email events.</value></data>
+  <data name="Не удалось загрузить обращения." xml:space="preserve"><value>Could not load support requests.</value></data>
+  <data name="Не удалось загрузить обращение." xml:space="preserve"><value>Could not load the support request.</value></data>
+  <data name="Не удалось сохранить обращение." xml:space="preserve"><value>Could not save the support request.</value></data>
+  <data name="Не удалось отправить ответ." xml:space="preserve"><value>Could not send the reply.</value></data>
+  <data name="Не удалось найти пользователей." xml:space="preserve"><value>Could not find users.</value></data>
+  <data name="Не удалось загрузить организации." xml:space="preserve"><value>Could not load organizations.</value></data>
+  <data name="Выберите файл размером от 1 байта до 10 МБ." xml:space="preserve"><value>Select a file between 1 byte and 10 MB.</value></data>
+  <data name="Не удалось проверить файл импорта." xml:space="preserve"><value>Could not validate the import file.</value></data>
+  <data name="Не удалось обновить предпросмотр." xml:space="preserve"><value>Could not refresh the preview.</value></data>
+  <data name="Не удалось подтвердить импорт." xml:space="preserve"><value>Could not confirm the import.</value></data>
+  <data name="Не удалось скачать отчёт." xml:space="preserve"><value>Could not download the report.</value></data>
+  <data name="Не удалось загрузить сводку административной панели." xml:space="preserve"><value>Could not load the administration dashboard.</value></data>
+  <data name="Не удалось загрузить состояние чеков и активаций." xml:space="preserve"><value>Could not load receipt and activation status.</value></data>
+  <data name="Не удалось загрузить платежи и подписки." xml:space="preserve"><value>Could not load payments and subscriptions.</value></data>
+  <data name="Не удалось загрузить страницу платежей." xml:space="preserve"><value>Could not load the payments page.</value></data>
+  <data name="Не удалось загрузить страницу подписок организаций." xml:space="preserve"><value>Could not load the organization subscriptions page.</value></data>
+  <data name="Не удалось загрузить платеж." xml:space="preserve"><value>Could not load the payment.</value></data>
+  <data name="Не удалось загрузить историю статусов платежа." xml:space="preserve"><value>Could not load payment status history.</value></data>
+  <data name="Не удалось загрузить историю подписки." xml:space="preserve"><value>Could not load subscription history.</value></data>
+  <data name="Не удалось загрузить список пользователей." xml:space="preserve"><value>Could not load the user list.</value></data>
+  <data name="Не удалось загрузить карточку пользователя." xml:space="preserve"><value>Could not load the user card.</value></data>
+  <data name="Не удалось обновить счётчики меню." xml:space="preserve"><value>Could not refresh menu counts.</value></data>
+  <data name="Не удалось сохранить отметку просмотра." xml:space="preserve"><value>Could not save the last viewed marker.</value></data>
+  <data name="Не удалось архивировать организацию." xml:space="preserve"><value>Could not archive the organization.</value></data>
+  <data name="Не удалось восстановить организацию." xml:space="preserve"><value>Could not restore the organization.</value></data>
+  <data name="Не удалось загрузить организацию." xml:space="preserve"><value>Could not load the organization.</value></data>
+  <data name="Не удалось загрузить адресатов." xml:space="preserve"><value>Could not load recipients.</value></data>
+  <data name="Не удалось проверить адресатов." xml:space="preserve"><value>Could not validate recipients.</value></data>
+  <data name="Не удалось запланировать письмо." xml:space="preserve"><value>Could not schedule the email.</value></data>
+  <data name="Не удалось загрузить рассылки." xml:space="preserve"><value>Could not load email campaigns.</value></data>
+  <data name="Не удалось приостановить рассылку." xml:space="preserve"><value>Could not pause the campaign.</value></data>
+  <data name="Не удалось возобновить рассылку." xml:space="preserve"><value>Could not resume the campaign.</value></data>
+  <data name="Не удалось отменить рассылку." xml:space="preserve"><value>Could not cancel the campaign.</value></data>
+  <data name="Не удалось загрузить историю SMS." xml:space="preserve"><value>Could not load SMS history.</value></data>
+  <data name="Не удалось загрузить уведомления сайта." xml:space="preserve"><value>Could not load site notifications.</value></data>
+  <data name="Не удалось загрузить историю уведомлений сайта." xml:space="preserve"><value>Could not load site notification history.</value></data>
+  <data name="Не удалось загрузить шаблоны уведомлений." xml:space="preserve"><value>Could not load notification templates.</value></data>
+  <data name="Не удалось сохранить шаблон." xml:space="preserve"><value>Could not save the template.</value></data>
+  <data name="Не удалось отправить уведомление." xml:space="preserve"><value>Could not send the notification.</value></data>
+  <data name="Не удалось удалить уведомление." xml:space="preserve"><value>Could not delete the notification.</value></data>
+  <data name="Не удалось загрузить список покупок." xml:space="preserve"><value>Could not load purchases.</value></data>
+  <data name="Не удалось синхронизировать платеж с YooKassa." xml:space="preserve"><value>Could not synchronize the payment with YooKassa.</value></data>
+  <data name="Не удалось загрузить действия по платежу." xml:space="preserve"><value>Could not load payment actions.</value></data>
+  <data name="Не удалось выполнить действие по платежу." xml:space="preserve"><value>Could not perform the payment action.</value></data>
+  <data name="Не удалось изменить статус платежа." xml:space="preserve"><value>Could not change payment status.</value></data>
+  <data name="Не удалось изменить отметку о чеке." xml:space="preserve"><value>Could not change receipt status.</value></data>
+  <data name="Не удалось сохранить данные чека." xml:space="preserve"><value>Could not save receipt details.</value></data>
+  <data name="Файл чека не может быть пустым." xml:space="preserve"><value>The receipt file cannot be empty.</value></data>
+  <data name="Не удалось загрузить файл чека." xml:space="preserve"><value>Could not upload the receipt file.</value></data>
+  <data name="Не удалось удалить файл чека." xml:space="preserve"><value>Could not delete the receipt file.</value></data>
+  <data name="Не удалось поставить чек в очередь отправки." xml:space="preserve"><value>Could not queue the receipt for sending.</value></data>
+  <data name="Не удалось скачать файл чека." xml:space="preserve"><value>Could not download the receipt file.</value></data>
+  <data name="чек-нпд" xml:space="preserve"><value>npd-receipt</value></data>
+  <data name="Размер файла должен быть не больше 5 МБ." xml:space="preserve"><value>The file must not exceed 5 MB.</value></data>
+  <data name="Не удалось загрузить промокоды." xml:space="preserve"><value>Could not load promo codes.</value></data>
+  <data name="Не удалось загрузить историю применений промокода." xml:space="preserve"><value>Could not load promo code usage history.</value></data>
+  <data name="Не удалось создать промокод." xml:space="preserve"><value>Could not create the promo code.</value></data>
+  <data name="Не удалось сохранить промокод." xml:space="preserve"><value>Could not save the promo code.</value></data>
+  <data name="Не удалось изменить статус промокода." xml:space="preserve"><value>Could not change promo code status.</value></data>
+  <data name="Не удалось удалить промокод." xml:space="preserve"><value>Could not delete the promo code.</value></data>
+  <data name="Не удалось загрузить роли." xml:space="preserve"><value>Could not load roles.</value></data>
+  <data name="Не удалось загрузить разрешения." xml:space="preserve"><value>Could not load permissions.</value></data>
+  <data name="Не удалось загрузить участников роли." xml:space="preserve"><value>Could not load role members.</value></data>
+  <data name="Не удалось сохранить права роли." xml:space="preserve"><value>Could not save role permissions.</value></data>
+  <data name="Не удалось назначить пользователя в роль." xml:space="preserve"><value>Could not assign the user to the role.</value></data>
+  <data name="Не удалось снять роль с пользователя." xml:space="preserve"><value>Could not remove the user's role.</value></data>
+  <data name="Не удалось загрузить тарифы." xml:space="preserve"><value>Could not load subscription plans.</value></data>
+  <data name="Не удалось создать тариф." xml:space="preserve"><value>Could not create the subscription plan.</value></data>
+  <data name="Не удалось сохранить тариф." xml:space="preserve"><value>Could not save the subscription plan.</value></data>
+  <data name="Не удалось изменить статус тарифа." xml:space="preserve"><value>Could not change subscription plan status.</value></data>
+  <data name="Не удалось удалить тариф." xml:space="preserve"><value>Could not delete the subscription plan.</value></data>
+  <data name="Не удалось загрузить возможности тарифа." xml:space="preserve"><value>Could not load subscription plan features.</value></data>
+  <data name="Не удалось сохранить возможности тарифа." xml:space="preserve"><value>Could not save subscription plan features.</value></data>
+  <data name="Не удалось загрузить технику организации." xml:space="preserve"><value>Could not load the organization's vehicles.</value></data>
+  <data name="Не удалось создать тестовую технику." xml:space="preserve"><value>Could not create test vehicles.</value></data>
+  <data name="Укажите завершённые или запланированные обслуживания." xml:space="preserve"><value>Choose completed or planned maintenance records.</value></data>
+  <data name="Не удалось создать тестовые обслуживания." xml:space="preserve"><value>Could not create test maintenance records.</value></data>
+  <data name="Не удалось создать тестовые дефекты." xml:space="preserve"><value>Could not create test defects.</value></data>
+  <data name="Количество должно быть от 1 до {maximum}." xml:space="preserve"><value>The quantity must be between 1 and {maximum}.</value></data>
+  <data name="Не удалось загрузить журнал активности пользователей." xml:space="preserve"><value>Could not load the user activity log.</value></data>
+  <data name="Не удалось изменить доступ к тестовым подпискам." xml:space="preserve"><value>Could not change test subscription access.</value></data>
+  <data name="Не удалось выдать пользователю демо-доступ." xml:space="preserve"><value>Could not grant demo access to the user.</value></data>
+  <data name="Не удалось отозвать демо-доступ пользователя." xml:space="preserve"><value>Could not revoke the user's demo access.</value></data>
+  <data name="Не удалось выдать организации демо-доступ." xml:space="preserve"><value>Could not grant demo access to the organization.</value></data>
+  <data name="Не удалось отозвать демо-доступ организации." xml:space="preserve"><value>Could not revoke the organization's demo access.</value></data>
+  <data name="Не удалось загрузить доступные тарифы." xml:space="preserve"><value>Could not load available subscription plans.</value></data>
+  <data name="Не удалось назначить тариф." xml:space="preserve"><value>Could not assign the subscription plan.</value></data>
+  <data name="Не удалось продлить подписку." xml:space="preserve"><value>Could not extend the subscription.</value></data>
+  <data name="Не удалось остановить подписку." xml:space="preserve"><value>Could not stop the subscription.</value></data>
+  <data name="Область подписки должна быть users или organizations." xml:space="preserve"><value>The subscription scope must be users or organizations.</value></data>
+</root>

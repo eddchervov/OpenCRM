@@ -1,4 +1,7 @@
-﻿export type FleetDefect = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/defectMessages'
+
+export type FleetDefect = {
   id: string
   organizationId: string
   vehicleId: string
@@ -72,43 +75,43 @@ export async function loadDefects(
   appendParam(url.searchParams, 'statusCode', options.statusCode)
   appendParam(url.searchParams, 'vehicleId', options.vehicleId)
   appendParam(url.searchParams, 'sort', options.sort)
-  return sendJson(url.toString(), 'GET', undefined, 'Не удалось загрузить неисправности.')
+  return sendJson(url.toString(), 'GET', undefined, translate('defects.loadError'))
 }
 
 export async function loadDefect(organizationId: string, defectId: string): Promise<FleetDefect> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}`, 'GET', undefined, 'Не удалось загрузить неисправность.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}`, 'GET', undefined, translate('defects.loadOneError'))
 }
 
 export async function loadDefectHistory(organizationId: string, defectId: string): Promise<FleetDefectHistoryItem[]> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/history`, 'GET', undefined, 'Не удалось загрузить историю неисправности.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/history`, 'GET', undefined, translate('defects.historyError'))
 }
 
 export async function loadDefectMaintenanceOptions(organizationId: string, defectId: string): Promise<FleetDefectMaintenanceOption[]> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/maintenance-options`, 'GET', undefined, 'Не удалось загрузить обслуживания.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/maintenance-options`, 'GET', undefined, translate('defects.maintenanceError'))
 }
 
 export async function createDefect(organizationId: string, payload: FleetDefectSaveRequest): Promise<{ id: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects`, 'POST', payload, 'Не удалось добавить неисправность.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects`, 'POST', payload, translate('defects.createError'))
 }
 
 export async function updateDefect(organizationId: string, defectId: string, payload: FleetDefectSaveRequest): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}`, 'PUT', payload, 'Не удалось сохранить неисправность.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}`, 'PUT', payload, translate('defects.saveError'))
 }
 
 export async function updateDefectStatus(organizationId: string, defectId: string, statusCode: string): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/status`, 'POST', { statusCode }, 'Не удалось изменить статус.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/status`, 'POST', { statusCode }, translate('defects.statusError'))
 }
 
 export async function linkDefectMaintenance(organizationId: string, defectId: string, maintenanceId: string): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/maintenance/${maintenanceId}`, 'POST', {}, 'Не удалось привязать обслуживание.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/maintenance/${maintenanceId}`, 'POST', {}, translate('defects.linkError'))
 }
 
 export async function unlinkDefectMaintenance(organizationId: string, defectId: string, maintenanceId: string): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/maintenance/${maintenanceId}`, 'DELETE', undefined, 'Не удалось удалить связь.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}/maintenance/${maintenanceId}`, 'DELETE', undefined, translate('defects.unlinkError'))
 }
 
 export async function deleteDefect(organizationId: string, defectId: string): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}`, 'DELETE', undefined, 'Не удалось удалить неисправность.')
+  return sendJson(`/api/v1/organizations/${organizationId}/defects/${defectId}`, 'DELETE', undefined, translate('defects.deleteError'))
 }
 
 function appendParam(params: URLSearchParams, name: string, value?: string | null) {

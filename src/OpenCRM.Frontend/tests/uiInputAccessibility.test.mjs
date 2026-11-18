@@ -29,12 +29,14 @@ test('UiDatePicker does not pass an impossible manually entered date to v-calend
   assert.match(source, /name\.replace\(\/\^on\//)
 })
 
-test('UiPhoneInput names its input and initializes country labels in Russian', () => {
+test('UiPhoneInput names its input and localizes country labels independently of the initial country', () => {
   const source = readFileSync(new URL('../packages/ui/src/components/UiPhoneInput.vue', import.meta.url), 'utf8')
 
-  assert.match(source, /import \{ ru \} from 'intl-tel-input\/i18n'/)
-  assert.match(source, /i18n: ru/)
-  assert.match(source, /:aria-label="label \|\| undefined"/)
+  assert.match(source, /import \{ en, ru, zh \} from 'intl-tel-input\/i18n'/)
+  assert.match(source, /Record<UiLocale, SomeOptions\['i18n'\]>/)
+  assert.match(source, /i18n: phoneMessages\[locale\.value\]/)
+  assert.match(source, /:aria-label="label \|\| t\('common\.phone'\)"/)
+  assert.match(source, /initialCountry: initialCountry/)
 })
 
 test('UiModal manages keyboard focus and restores it when closed', () => {

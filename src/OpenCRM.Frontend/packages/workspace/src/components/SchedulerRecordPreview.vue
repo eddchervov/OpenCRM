@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { UiButton } from '@opencrm/ui'
+import { formatLocaleDate, translate as t } from '@opencrm/ui/i18n'
+import '../schedulerMessages'
+import '../schedulerControlMessages'
+import '../schedulerCalendarMessages'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 import type { SchedulerCalendarItem } from '../utils/schedulerDay'
@@ -8,37 +12,51 @@ import type { SchedulerCalendarItem } from '../utils/schedulerDay'
 const props = defineProps<{ item: SchedulerCalendarItem | null }>()
 const emit = defineEmits<{ close: [] }>()
 const logo = computed(() => getVehicleBrandLogo(props.item?.brandLogoKey))
-const status = computed(() => props.item?.status === 4 ? props.item.statusName || 'Отменено'
-  : props.item?.handedOverAt ? 'Выдано' : props.item?.readyForHandoverAt ? 'Готово к выдаче'
-    : props.item?.statusName || ({ 1: 'Запланировано', 2: 'В работе', 3: 'Выполнено', 4: 'Отменено' }[props.item?.status ?? 0] ?? 'Статус не указан'))
+const status = computed(() => {
+  const item = props.item
+  if (!item) return ''
+  if (item.handedOverAt) return t('scheduler.handedOver')
+  if (item.readyForHandoverAt) return t('scheduler.ready')
+
+  const statusKeys: Record<number, string> = {
+    1: 'scheduler.scheduled',
+    2: 'scheduler.inProgress',
+    3: 'scheduler.completed',
+    4: 'scheduler.cancelled'
+  }
+
+  return statusKeys[item.status] ? t(statusKeys[item.status]!) : item.statusName || t('schedulerControl.statusNotSpecified')
+})
 
 function formatDate(date: string) {
-  return date.slice(0, 10).split('-').reverse().join('.')
+  const dateOnly = new Date(`${date.slice(0, 10)}T12:00:00Z`)
+
+  return formatLocaleDate(dateOnly, { dateStyle: 'short', timeZone: 'UTC' })
 }
 </script>
 
 <template>
-  <SchedulerBookingDialog :open="!!item" title="Просмотр записи" @close="emit('close')">
+  <SchedulerBookingDialog :open="!!item" :title="t('schedulerCalendar.previewTitle')" @close="emit('close')">
     <div v-if="item" class="scheduler-record-preview">
       <div class="scheduler-record-preview__vehicle">
-        <img v-if="logo" :src="logo.src" :alt="`Логотип ${logo.name}`">
-        <div><h3>{{ item.vehicleDisplayName || 'Запись' }}</h3><span v-if="item.registrationPlate || item.vehicleSubtitle">{{ item.registrationPlate || item.vehicleSubtitle }}</span></div>
+        <img v-if="logo" :src="logo.src" :alt="t('schedulerControl.logoAlt', { name: logo.name })">
+        <div><h3>{{ item.vehicleDisplayName || t('schedulerCalendar.record') }}</h3><span v-if="item.registrationPlate || item.vehicleSubtitle">{{ item.registrationPlate || item.vehicleSubtitle }}</span></div>
       </div>
       <dl class="scheduler-record-preview__facts">
-        <div><dt>Статус</dt><dd>{{ status }}</dd></div>
-        <div><dt>Начало</dt><dd>{{ formatDate(item.date) }} · {{ item.plannedStartTime?.slice(0, 5) || 'Без времени' }}</dd></div>
-        <div v-if="item.plannedEndTime || item.plannedEndDate && item.plannedEndDate.slice(0, 10) !== item.date.slice(0, 10)"><dt>Окончание</dt><dd>{{ formatDate(item.plannedEndDate || item.date) }}<template v-if="item.plannedEndTime"> · {{ item.plannedEndTime.slice(0, 5) }}</template></dd></div>
-        <div><dt>Пост / место</dt><dd>{{ item.location || 'Не назначен' }}</dd></div>
-        <div><dt>Сотрудники</dt><dd>{{ item.employeeNames?.join(', ') || 'Не назначены' }}</dd></div>
+        <div><dt>{{ t('schedulerCalendar.status') }}</dt><dd>{{ status }}</dd></div>
+        <div><dt>{{ t('schedulerCalendar.start') }}</dt><dd>{{ formatDate(item.date) }} · {{ item.plannedStartTime?.slice(0, 5) || t('schedulerCalendar.noTime') }}</dd></div>
+        <div v-if="item.plannedEndTime || item.plannedEndDate && item.plannedEndDate.slice(0, 10) !== item.date.slice(0, 10)"><dt>{{ t('schedulerCalendar.end') }}</dt><dd>{{ formatDate(item.plannedEndDate || item.date) }}<template v-if="item.plannedEndTime"> · {{ item.plannedEndTime.slice(0, 5) }}</template></dd></div>
+        <div><dt>{{ t('schedulerCalendar.location') }}</dt><dd>{{ item.location || t('schedulerCalendar.unassigned') }}</dd></div>
+        <div><dt>{{ t('schedulerCalendar.employees') }}</dt><dd>{{ item.employeeNames?.join(', ') || t('schedulerCalendar.employeesUnassigned') }}</dd></div>
       </dl>
       <section class="scheduler-record-preview__services">
-        <h4 class="ui-section-header">Услуги</h4>
+        <h4 class="ui-section-header">{{ t('schedulerCalendar.services') }}</h4>
         <ul v-if="item.serviceNames?.length"><li v-for="(service, index) in item.serviceNames" :key="index">{{ service }}</li></ul>
-        <p v-else>Услуги не указаны.</p>
+        <p v-else>{{ t('schedulerCalendar.servicesUnspecified') }}</p>
       </section>
       <footer>
-        <UiButton variant="secondary" @click="emit('close')">Закрыть</UiButton>
-        <UiButton :href="`#maintenance/${item.id}`">Открыть обслуживание</UiButton>
+        <UiButton variant="secondary" @click="emit('close')">{{ t('schedulerCalendar.close') }}</UiButton>
+        <UiButton :href="`#maintenance/${item.id}`">{{ t('schedulerCalendar.openMaintenance') }}</UiButton>
       </footer>
     </div>
   </SchedulerBookingDialog>

@@ -1,5 +1,8 @@
 ﻿import type { WorkspaceContext, WorkspaceMenuItem, WorkspaceQuickAction } from '@opencrm/workspace'
 
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
+
 export type DetailingClientHost = {
   organizationId: string
   contextUrl: string
@@ -33,6 +36,7 @@ export type DetailingMaintenanceCalendarItem = {
   location?: string | null
   comment?: string | null
   price?: number | null
+  currencyCode?: string | null
   detailUrl?: string | null
 }
 
@@ -75,6 +79,7 @@ const contextRequestTimeoutMs = 20000
 export type CreateDetailingQuickBookingRequest = {
   vehicleId?: string | null
   isPlannedBooking?: boolean
+  registrationCountryCode?: string | null
   registrationPlate: string
   allowOtherRegistrationPlateFormat?: boolean
   kind?: number
@@ -118,16 +123,16 @@ export function resolveHostConfig(): DetailingClientHost {
 }
 
 export async function loadDetailingContext(contextUrl: string): Promise<DetailingWorkspaceContext> {
-  const response = await fetchWorkspaceContext(contextUrl, 'рабочее пространство детейлинга')
+  const response = await fetchWorkspaceContext(contextUrl, translate('workspaceApi.detailingScenario'))
 
   if (response.status === 401) {
     window.location.href = `/auth/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`
-    throw new Error('Требуется авторизация.')
+    throw new Error(translate('workspaceApi.authRequired'))
   }
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить рабочее пространство детейлинга.')
+    throw new Error(error?.message ?? translate('workspaceApi.loadScenarioContext', { scenario: translate('workspaceApi.detailingScenario') }))
   }
 
   return response.json()
@@ -149,7 +154,7 @@ async function fetchWorkspaceContext(contextUrl: string, label: string) {
     })
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error(`Не удалось загрузить ${label}: сервер не ответил за 20 секунд.`)
+      throw new Error(translate('workspaceApi.scenarioRequestTimeout', { scenario: label }))
     }
 
     throw error
@@ -182,7 +187,7 @@ export async function loadMaintenanceCalendar(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить записи.')
+    throw new Error(error?.message ?? translate('workspaceApi.loadRecords'))
   }
 
   return response.json()
@@ -200,7 +205,7 @@ export async function loadScenarioCatalog(organizationId: string): Promise<Detai
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить справочники.')
+    throw new Error(error?.message ?? translate('workspaceApi.loadCatalog'))
   }
 
   return response.json()
@@ -254,7 +259,7 @@ export async function createDetailingQuickBooking(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(readErrorMessage(error, 'Не удалось создать запись.'))
+    throw new Error(readErrorMessage(error, translate('workspaceApi.createDetailingBooking')))
   }
 
   return response.json()

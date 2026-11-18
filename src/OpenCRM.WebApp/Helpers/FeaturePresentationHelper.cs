@@ -1,4 +1,6 @@
-﻿using OpenCRM.Services.Interfaces.Features.Dtos;
+﻿using Microsoft.Extensions.Localization;
+using OpenCRM.Services.Interfaces.Features.Dtos;
+using OpenCRM.WebApp.Infrastructure.Localization;
 
 namespace Helpers;
 
@@ -89,35 +91,36 @@ public static class FeaturePresentationHelper
     /// <summary>
     /// Возвращает человекочитаемое название фичи.
     /// </summary>
-    public static string FormatFeature(FeatureValueDto feature)
+    public static string FormatFeature(FeatureValueDto feature, IStringLocalizer<LocalizationStrings> text)
     {
         return feature.Code switch
         {
-            ExportDocumentsPresentationCode => "Экспорт и документы",
-            FeatureCodes.VehiclesModule => "Техника",
-            FeatureCodes.ExportWord => "Экспорт Word",
-            FeatureCodes.ExportWordWithPhotos => "Экспорт Word с фото",
-            FeatureCodes.ExportPdf => "Экспорт PDF",
-            FeatureCodes.ExportPdfWithPhotos => "Экспорт PDF с фото",
-            FeatureCodes.VehiclePhotoAlbums => "Альбомы фото техники",
-            FeatureCodes.VehiclesLimit => $"Лимит техники: {feature.IntValue}",
-            FeatureCodes.WorkspaceVehiclesLimit => $"Лимит техники: {feature.IntValue}",
-            FeatureCodes.WorkspaceMembersLimit => $"Лимит участников: {feature.IntValue}",
-            FeatureCodes.ClientsModule => "Клиенты",
-            FeatureCodes.DefectsModule => "Неисправности",
-            FeatureCodes.CountersModule => "Пробег и наработка",
-            FeatureCodes.MaintenanceModule => "Обслуживание",
-            FeatureCodes.SchedulerModule => "Планирование",
-            FeatureCodes.RemindersModule => "Напоминания",
-            FeatureCodes.DocumentsModule => "Документы",
-            FeatureCodes.MaterialsModule => "Материалы и запчасти",
-            FeatureCodes.WorkJournalModule => "Журнал работ",
-            FeatureCodes.FinanceModule => "Финансы",
-            FeatureCodes.AnalyticsModule => "Статистика",
-            FeatureCodes.WikiModule => "Вики организации",
-            FeatureCodes.MembersModule => "Участники",
-            FeatureCodes.BillingModule => "Тарифы и оплата",
-            FeatureCodes.SettingsModule => "Настройки организации",
+            ExportDocumentsPresentationCode => text["featurePresentation.exports"].Value,
+            FeatureCodes.VehiclesModule => text["featurePresentation.vehicles"].Value,
+            FeatureCodes.ExportWord => text["featurePresentation.word"].Value,
+            FeatureCodes.ExportWordWithPhotos => text["featurePresentation.wordPhotos"].Value,
+            FeatureCodes.ExportPdf => text["featurePresentation.pdf"].Value,
+            FeatureCodes.ExportPdfWithPhotos => text["featurePresentation.pdfPhotos"].Value,
+            FeatureCodes.VehiclePhotoAlbums => text["featurePresentation.albums"].Value,
+            FeatureCodes.VehiclesLimit => text["featurePresentation.vehicleLimit", feature.IntValue!].Value,
+            FeatureCodes.WorkspaceVehiclesLimit => text["featurePresentation.vehicleLimit", feature.IntValue!].Value,
+            FeatureCodes.WorkspaceClientsLimit => text["featurePresentation.clientLimit", feature.IntValue!].Value,
+            FeatureCodes.WorkspaceMembersLimit => text["featurePresentation.memberLimit", feature.IntValue!].Value,
+            FeatureCodes.ClientsModule => text["featurePresentation.clients"].Value,
+            FeatureCodes.DefectsModule => text["featurePresentation.defects"].Value,
+            FeatureCodes.CountersModule => text["featurePresentation.counters"].Value,
+            FeatureCodes.MaintenanceModule => text["featurePresentation.maintenance"].Value,
+            FeatureCodes.SchedulerModule => text["featurePresentation.scheduler"].Value,
+            FeatureCodes.RemindersModule => text["featurePresentation.reminders"].Value,
+            FeatureCodes.DocumentsModule => text["featurePresentation.documents"].Value,
+            FeatureCodes.MaterialsModule => text["featurePresentation.materials"].Value,
+            FeatureCodes.WorkJournalModule => text["featurePresentation.workJournal"].Value,
+            FeatureCodes.FinanceModule => text["featurePresentation.finance"].Value,
+            FeatureCodes.AnalyticsModule => text["featurePresentation.analytics"].Value,
+            FeatureCodes.WikiModule => text["featurePresentation.wiki"].Value,
+            FeatureCodes.MembersModule => text["featurePresentation.members"].Value,
+            FeatureCodes.BillingModule => text["featurePresentation.billing"].Value,
+            FeatureCodes.SettingsModule => text["featurePresentation.settings"].Value,
             _ when feature.IntValue.HasValue => $"{feature.Name}: {feature.IntValue}",
             _ => feature.Name
         };
@@ -126,35 +129,35 @@ public static class FeaturePresentationHelper
     /// <summary>
     /// Возвращает короткое описание фичи для карточек тарифов.
     /// </summary>
-    public static string? GetFeatureDescription(FeatureValueDto feature)
+    public static string? GetFeatureDescription(FeatureValueDto feature, IStringLocalizer<LocalizationStrings> text)
     {
         return feature.Code switch
         {
-            ExportDocumentsPresentationCode => "PDF и Word: отчеты, акты, документы и фотофиксация для клиента или печати.",
-            FeatureCodes.VehiclesModule => "Единая база техники организации с карточками, владельцами и привязками.",
-            FeatureCodes.ExportWord => "Выгрузка отчетов и документов в Word для передачи клиенту или печати.",
-            FeatureCodes.ExportWordWithPhotos => "Word-документы с фотографиями неисправностей, работ и состояния техники.",
-            FeatureCodes.ExportPdf => "PDF-отчеты, акты и документы в удобном формате для клиента.",
-            FeatureCodes.ExportPdfWithPhotos => "PDF-документы с фотофиксацией, чек-листами и результатами работ.",
-            FeatureCodes.VehiclePhotoAlbums => "Галерея техники и альбомы с фото, доступные на всех тарифах.",
-            FeatureCodes.VehiclesLimit => "Сколько единиц техники можно вести в личном журнале.",
-            FeatureCodes.WorkspaceVehiclesLimit => "Сколько единиц техники можно вести внутри организации.",
-            FeatureCodes.WorkspaceMembersLimit => "Сколько сотрудников можно подключить к рабочему пространству.",
-            FeatureCodes.ClientsModule => "CRM-клиенты, история обращений, техника клиента и быстрые действия.",
-            FeatureCodes.DefectsModule => "Фиксация проблем, статусы, фото и связь неисправностей с обслуживанием.",
-            FeatureCodes.CountersModule => "Пробег, моточасы, история показаний и контроль регламентов.",
-            FeatureCodes.MaintenanceModule => "Работы, ТО, ремонты, история обслуживания и расход материалов.",
-            FeatureCodes.SchedulerModule => "График ТО, ремонтов, CRM-задач, переносов и загрузки команды.",
-            FeatureCodes.RemindersModule => "Напоминания по задачам, обслуживанию, срокам и ручным событиям.",
-            FeatureCodes.DocumentsModule => "Акты, заказ-наряды, чек-листы, отчеты и экспорт под сценарий организации.",
-            FeatureCodes.MaterialsModule => "Склад материалов и запчастей: остатки, приход, списание и история движения.",
-            FeatureCodes.WorkJournalModule => "Единый журнал работ, событий обслуживания и изменений по технике.",
-            FeatureCodes.FinanceModule => "Финансовая сводка: выручка, долги, себестоимость, прибыль, графики и заказы за период.",
-            FeatureCodes.AnalyticsModule => "Отдельный раздел с KPI, графиками, отчетами, выручкой и сводными показателями.",
-            FeatureCodes.WikiModule => "Встроенная справка по рабочему пространству и процессам организации.",
-            FeatureCodes.MembersModule => "Команда, роли, права и доступ сотрудников к разделам организации.",
-            FeatureCodes.BillingModule => "Тарифы, подписка, оплата и состояние доступа рабочего пространства.",
-            FeatureCodes.SettingsModule => "Профиль организации, реквизиты, справочники сценариев и история изменений.",
+            ExportDocumentsPresentationCode => text["featurePresentation.exportsHelp"].Value,
+            FeatureCodes.VehiclesModule => text["featurePresentation.vehiclesHelp"].Value,
+            FeatureCodes.ExportWord => text["featurePresentation.wordHelp"].Value,
+            FeatureCodes.ExportWordWithPhotos => text["featurePresentation.wordPhotosHelp"].Value,
+            FeatureCodes.ExportPdf => text["featurePresentation.pdfHelp"].Value,
+            FeatureCodes.ExportPdfWithPhotos => text["featurePresentation.pdfPhotosHelp"].Value,
+            FeatureCodes.VehiclePhotoAlbums => text["featurePresentation.albumsHelp"].Value,
+            FeatureCodes.VehiclesLimit => text["featurePresentation.personalVehicleLimitHelp"].Value,
+            FeatureCodes.WorkspaceVehiclesLimit => text["featurePresentation.vehicleLimitHelp"].Value,
+            FeatureCodes.WorkspaceMembersLimit => text["featurePresentation.memberLimitHelp"].Value,
+            FeatureCodes.ClientsModule => text["featurePresentation.clientsHelp"].Value,
+            FeatureCodes.DefectsModule => text["featurePresentation.defectsHelp"].Value,
+            FeatureCodes.CountersModule => text["featurePresentation.countersHelp"].Value,
+            FeatureCodes.MaintenanceModule => text["featurePresentation.maintenanceHelp"].Value,
+            FeatureCodes.SchedulerModule => text["featurePresentation.schedulerHelp"].Value,
+            FeatureCodes.RemindersModule => text["featurePresentation.remindersHelp"].Value,
+            FeatureCodes.DocumentsModule => text["featurePresentation.documentsHelp"].Value,
+            FeatureCodes.MaterialsModule => text["featurePresentation.materialsHelp"].Value,
+            FeatureCodes.WorkJournalModule => text["featurePresentation.workJournalHelp"].Value,
+            FeatureCodes.FinanceModule => text["featurePresentation.financeHelp"].Value,
+            FeatureCodes.AnalyticsModule => text["featurePresentation.analyticsHelp"].Value,
+            FeatureCodes.WikiModule => text["featurePresentation.wikiHelp"].Value,
+            FeatureCodes.MembersModule => text["featurePresentation.membersHelp"].Value,
+            FeatureCodes.BillingModule => text["featurePresentation.billingHelp"].Value,
+            FeatureCodes.SettingsModule => text["featurePresentation.settingsHelp"].Value,
             _ => null
         };
     }
@@ -162,26 +165,26 @@ public static class FeaturePresentationHelper
     /// <summary>
     /// Возвращает резервные описания возможностей продукта, если тариф пока содержит мало настроенных фич.
     /// </summary>
-    public static IReadOnlyList<(string Title, string Description)> GetProductHighlights(bool business)
+    public static IReadOnlyList<(string Title, string Description)> GetProductHighlights(bool business, IStringLocalizer<LocalizationStrings> text)
     {
         if (!business)
         {
             return
             [
-                ("Журнал техники", "Карточки автомобилей, история обслуживания, пробег и документы."),
-                ("Экспорт", "PDF и Word-отчеты для хранения, печати и передачи."),
-                ("Напоминания", "Контроль сроков, обслуживания и важных событий по технике.")
+                (text["featurePresentation.personalJournal"].Value, text["featurePresentation.personalJournalHelp"].Value),
+                (text["featurePresentation.export"].Value, text["featurePresentation.exportHelp"].Value),
+                (text["featurePresentation.reminders"].Value, text["featurePresentation.personalRemindersHelp"].Value)
             ];
         }
 
         return
         [
-            ("Клиенты", "CRM-карточки, история, техника клиента и быстрый переход к работам."),
-            ("Планирование", "График ТО, ремонтов, CRM-задач, ответственные и сроки."),
-            ("Неисправности", "Регистрация дефектов, статусы, фото и связь с обслуживанием."),
-            ("Документы", "Акты, заказ-наряды, чек-листы, отчеты и экспорт под сценарий организации."),
-            ("Материалы", "Склад, остатки, приход, списание и расход в обслуживании."),
-            ("Команда", "Участники, роли, права и доступность модулей рабочего пространства.")
+            (text["featurePresentation.clients"].Value, text["featurePresentation.businessClientsHelp"].Value),
+            (text["featurePresentation.scheduler"].Value, text["featurePresentation.businessSchedulerHelp"].Value),
+            (text["featurePresentation.defects"].Value, text["featurePresentation.businessDefectsHelp"].Value),
+            (text["featurePresentation.documents"].Value, text["featurePresentation.documentsHelp"].Value),
+            (text["featurePresentation.materialsShort"].Value, text["featurePresentation.businessMaterialsHelp"].Value),
+            (text["featurePresentation.team"].Value, text["featurePresentation.teamHelp"].Value)
         ];
     }
 

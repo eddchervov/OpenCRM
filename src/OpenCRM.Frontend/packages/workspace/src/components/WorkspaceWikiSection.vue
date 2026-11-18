@@ -1,7 +1,11 @@
 ﻿<script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../sectionPagesMessages'
 import { ref, watch } from 'vue'
 import { UiButton, UiImagePreview, UiInput, UiLoader } from '@opencrm/ui'
 import type { WorkspaceWikiArticle, WorkspaceWikiData } from '../api/workspaceAdmin'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   wiki: WorkspaceWikiData
@@ -28,12 +32,12 @@ defineEmits<{
 <template>
   <div class="workspace-common-stack workspace-wiki">
     <form class="workspace-common-toolbar" @submit.prevent="$emit('search')">
-      <UiInput v-model="wikiSearch" placeholder="Поиск по вики" aria-label="Поиск по вики" :disabled="previewOnly" />
-      <UiButton type="submit" variant="secondary" :disabled="previewOnly">Найти</UiButton>
+      <UiInput v-model="wikiSearch" :placeholder="t('sectionPages.wikiSearch')" :aria-label="t('sectionPages.wikiSearch')" :disabled="previewOnly" />
+      <UiButton type="submit" variant="secondary" :disabled="previewOnly">{{ t('sectionPages.find') }}</UiButton>
     </form>
 
     <div v-if="previewOnly" class="workspace-wiki-layout workspace-wiki-preview" aria-hidden="true">
-      <nav class="workspace-wiki-nav" aria-label="Статьи вики">
+      <nav class="workspace-wiki-nav" :aria-label="t('sectionPages.wikiArticles')">
         <div v-for="index in 5" :key="index" class="workspace-wiki-preview-nav-item">
           <span></span><i></i>
         </div>
@@ -48,10 +52,10 @@ defineEmits<{
       </article>
     </div>
     <div v-if="!previewOnly && !wiki.articles.length" class="workspace-common-empty">
-      {{ wiki.searchQuery ? 'По вашему запросу статьи не найдены.' : 'Раздел справки не подключён.' }}
+      {{ wiki.searchQuery ? t('sectionPages.noArticles') : t('sectionPages.wikiUnavailable') }}
     </div>
     <div v-if="!previewOnly" class="workspace-wiki-layout">
-      <nav class="workspace-wiki-nav" aria-label="Статьи вики">
+      <nav class="workspace-wiki-nav" :aria-label="t('sectionPages.wikiArticles')">
         <button
           v-for="article in wiki.articles"
           :key="article.slug"
@@ -67,12 +71,12 @@ defineEmits<{
       </nav>
 
       <article v-if="isArticleLoading" class="workspace-wiki-article workspace-wiki-article--loading">
-        <UiLoader text="Загружаем статью..." />
+        <UiLoader :text="t('sectionPages.loadingArticle')" />
       </article>
 
       <article v-else-if="articleErrorMessage" class="workspace-wiki-article">
         <div class="entity-note entity-note--error">
-          <strong>Ошибка</strong>
+          <strong>{{ t('sectionPages.error') }}</strong>
           <p>{{ articleErrorMessage }}</p>
         </div>
       </article>
@@ -84,13 +88,13 @@ defineEmits<{
           <button
             type="button"
             class="workspace-wiki-screenshot-button"
-            aria-label="Увеличить скриншот"
+            :aria-label="t('sectionPages.enlargeScreenshot')"
             aria-haspopup="dialog"
             @click="previewScreenshot = { src: selectedArticle.screenshotUrl, title: selectedArticle.screenshotAlt || selectedArticle.title }"
           >
             <img :src="selectedArticle.screenshotUrl" :alt="selectedArticle.screenshotAlt || selectedArticle.title" loading="lazy" />
           </button>
-          <figcaption>{{ selectedArticle.screenshotAlt || selectedArticle.title }}. Нажмите, чтобы увеличить.</figcaption>
+          <figcaption>{{ t('sectionPages.screenshotCaption', { title: selectedArticle.screenshotAlt || selectedArticle.title }) }}</figcaption>
         </figure>
         <section v-for="item in selectedArticle.sections" :key="item.title">
           <h4 class="ui-section-header">{{ item.title }}</h4>

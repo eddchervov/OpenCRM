@@ -20,6 +20,9 @@ export interface CrmImportPreviewRow {
   brand?: string | null
   model?: string | null
   vin?: string | null
+  registrationCountryCode?: string | null
+  messageCode?: string | null
+  messageParameters?: Record<string, string> | null
   plate?: string | null
   status: 'create' | 'duplicate' | 'error'
   message: string | null

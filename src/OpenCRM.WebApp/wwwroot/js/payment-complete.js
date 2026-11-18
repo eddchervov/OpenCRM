@@ -2,12 +2,12 @@
     const delays = [1000, 2000, 4000, 8000, 15000];
     const requestTimeoutMs = 5000;
     const messages = {
-        confirmed: { title: "Оплата подтверждена", message: "Платёж успешно обработан. Подписка активна и уже доступна в вашем аккаунте.", icon: "fa-check-circle text-success", tone: "is-success" },
-        canceled: { title: "Оплата не завершена", message: "Платёж не завершён, тариф не изменился. Если вы уже оплатили, не оплачивайте повторно: статус ещё может обновиться; обратитесь в поддержку.", icon: "fa-times-circle text-danger", tone: "is-danger" },
-        refunded: { title: "Платёж возвращён", message: "Платёж возвращён. Если у вас есть вопросы о доступе к подписке, обратитесь в поддержку.", icon: "fa-reply text-secondary", tone: "is-warning" },
-        manual_review: { title: "Платёж требует проверки", message: "Платёж требует проверки. Не оплачивайте повторно; обратитесь в поддержку.", icon: "fa-exclamation-triangle text-warning", tone: "is-warning" },
-        paid_waiting_activation: { title: "Оплата получена", message: "Оплата получена, активируем подписку. Не оплачивайте повторно; если доступ не появится, обратитесь в поддержку.", icon: "fa-clock-o text-primary", tone: "is-warning" },
-        pending: { title: "Оплата ожидает подтверждения", message: "Мы проверяем платёж. Не оплачивайте повторно: статус обновится автоматически.", icon: "fa-clock-o text-primary", tone: "is-warning" }
+        confirmed: { title: window.OpenCRMText('paymentConfirmed'), message: window.OpenCRMText('paymentConfirmedHelp'), icon: "fa-check-circle text-success", tone: "is-success" },
+        canceled: { title: window.OpenCRMText('paymentCanceled'), message: window.OpenCRMText('paymentCanceledHelp'), icon: "fa-times-circle text-danger", tone: "is-danger" },
+        refunded: { title: window.OpenCRMText('paymentRefunded'), message: window.OpenCRMText('paymentRefundedHelp'), icon: "fa-reply text-secondary", tone: "is-warning" },
+        manual_review: { title: window.OpenCRMText('paymentReview'), message: window.OpenCRMText('paymentReviewHelp'), icon: "fa-exclamation-triangle text-warning", tone: "is-warning" },
+        paid_waiting_activation: { title: window.OpenCRMText('paymentReceived'), message: window.OpenCRMText('paymentReceivedHelp'), icon: "fa-clock-o text-primary", tone: "is-warning" },
+        pending: { title: window.OpenCRMText('paymentPending'), message: window.OpenCRMText('paymentPendingHelp'), icon: "fa-clock-o text-primary", tone: "is-warning" }
     };
 
     function isPending(code) {
@@ -101,10 +101,10 @@
         global.addEventListener("pagehide", stop, { once: true });
         pollPaymentCompletion({ purchaseId, statusUrl, fetchStatus: global.fetch.bind(global), signal: controller.signal, onStatus: update })
             .then(result => {
-                if (result.kind === "exhausted") update({ title: "Платёж ещё проверяется", message: "Не оплачивайте повторно. Мы пока не получили окончательный статус; обновите эту страницу позже или обратитесь в поддержку.", icon: "fa-clock-o text-primary", tone: "is-warning" });
-                if (result.kind === "error") update({ title: "Не удалось проверить платёж", message: "Не оплачивайте повторно. Войдите в аккаунт, с которого оформлялась подписка, и проверьте тариф или обратитесь в поддержку.", icon: "fa-exclamation-triangle text-warning", tone: "is-warning" });
+                if (result.kind === "exhausted") update({ title: window.OpenCRMText('paymentChecking'), message: window.OpenCRMText('paymentCheckingHelp'), icon: "fa-clock-o text-primary", tone: "is-warning" });
+                if (result.kind === "error") update({ title: window.OpenCRMText('paymentCheckError'), message: window.OpenCRMText('paymentCheckErrorHelp'), icon: "fa-exclamation-triangle text-warning", tone: "is-warning" });
             })
-            .catch(() => update({ title: "Не удалось проверить платёж", message: "Не оплачивайте повторно. Обратитесь в поддержку, чтобы проверить статус платежа.", icon: "fa-exclamation-triangle text-warning", tone: "is-warning" }))
+            .catch(() => update({ title: window.OpenCRMText('paymentCheckError'), message: window.OpenCRMText('paymentCheckCatchHelp'), icon: "fa-exclamation-triangle text-warning", tone: "is-warning" }))
             .finally(() => global.removeEventListener("pagehide", stop));
     }
 

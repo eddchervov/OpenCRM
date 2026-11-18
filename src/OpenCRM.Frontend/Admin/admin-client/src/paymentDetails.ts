@@ -1,4 +1,5 @@
 import type { AdminBillingPayment, AdminBillingPaymentEvent } from './models/AdminBillingPayment'
+import { formattingCulture } from '@opencrm/ui/i18n'
 
 export type PaymentNoticeTone = 'success' | 'warning' | 'danger' | 'neutral'
 
@@ -16,6 +17,8 @@ export interface PaymentMoneySummary {
   remaining: number | null
   refundKind: 'none' | 'partial' | 'full'
 }
+
+export type PaymentTranslator = (key: string, params?: Record<string, string | number>) => string
 
 const normalize = (value: string | null | undefined): string => (value ?? '').trim().toLowerCase()
 
@@ -38,18 +41,18 @@ export function getPaymentMoneySummary(payment: AdminBillingPayment): PaymentMon
   }
 }
 
-export function getPaymentMoneyStatus(payment: AdminBillingPayment): string {
+export function getPaymentMoneyStatus(payment: AdminBillingPayment, translate: PaymentTranslator): string {
   const money = getPaymentMoneySummary(payment)
-  if (money.refundKind === 'full') return 'Возврат подтверждён полностью'
-  if (money.refundKind === 'partial') return 'Частичный возврат подтверждён'
-  if (money.confirmed) return 'Оплата подтверждена'
+  if (money.refundKind === 'full') return translate('adminBilling.details.moneyStatusFullRefund')
+  if (money.refundKind === 'partial') return translate('adminBilling.details.moneyStatusPartialRefund')
+  if (money.confirmed) return translate('adminBilling.details.moneyStatusPaid')
 
   const status = normalize(payment.providerStatus || payment.paymentStatus)
-  if (['canceled', 'cancelled', 'failed', 'rejected'].includes(status)) return 'Оплата не подтверждена'
-  return 'Ожидается подтверждение оплаты'
+  if (['canceled', 'cancelled', 'failed', 'rejected'].includes(status)) return translate('adminBilling.details.moneyStatusFailed')
+  return translate('adminBilling.details.moneyStatusPending')
 }
 
-export function getPaymentNotice(payment: AdminBillingPayment): PaymentNotice {
+export function getPaymentNotice(payment: AdminBillingPayment, translate: PaymentTranslator, formatMoney: (value: number) => string): PaymentNotice {
   const money = getPaymentMoneySummary(payment)
   const attention = normalize(payment.applicationStatus) === 'needs_attention'
   const applied = Boolean(payment.appliedAt) || normalize(payment.applicationStatus) === 'applied'
@@ -59,26 +62,26 @@ export function getPaymentNotice(payment: AdminBillingPayment): PaymentNotice {
     if (!hasGrantedPeriod && money.refundKind === 'full') {
       return {
         tone: attention ? 'warning' : 'neutral',
-        title: 'Деньги возвращены полностью',
-        message: `По этому платежу возвращено ${money.refunded.toLocaleString('ru-RU')} ₽ из ${money.amount.toLocaleString('ru-RU')} ₽. Доступ по этой покупке не выдавался.`,
-        followUp: 'Сверьте сумму возврата в ЮKassa. Если состояние доступа вызывает вопросы, передайте ID платежа специалисту.',
+        title: translate('adminBilling.details.noticeFullRefundTitle'),
+        message: translate('adminBilling.details.noticeRefundNoAccess', { refunded: formatMoney(money.refunded), amount: formatMoney(money.amount) }),
+        followUp: translate('adminBilling.details.followRefundNoAccess'),
       }
     }
 
     if (!hasGrantedPeriod) {
       return {
         tone: 'warning',
-        title: 'Выполнен частичный возврат',
-        message: `По этому платежу возвращено ${money.refunded.toLocaleString('ru-RU')} ₽ из ${money.amount.toLocaleString('ru-RU')} ₽. Выдача доступа не подтверждена.`,
-        followUp: 'Сверьте сумму возврата в ЮKassa и вручную разберите условия покупки, прежде чем менять доступ.',
+        title: translate('adminBilling.details.noticePartialRefundTitle'),
+        message: translate('adminBilling.details.noticePartialNoAccess', { refunded: formatMoney(money.refunded), amount: formatMoney(money.amount) }),
+        followUp: translate('adminBilling.details.followPartialNoAccess'),
       }
     }
 
     return {
       tone: attention ? 'warning' : 'neutral',
-      title: money.refundKind === 'full' ? 'Деньги возвращены полностью' : 'Выполнен частичный возврат',
-      message: `По этому платежу возвращено ${money.refunded.toLocaleString('ru-RU')} ₽ из ${money.amount.toLocaleString('ru-RU')} ₽. Выданный период доступа автоматически не сокращается.`,
-      followUp: 'Сверьте сумму возврата в ЮKassa и решите, оставить ли доступ или изменить его вручную в разделе подписок.',
+      title: translate(money.refundKind === 'full' ? 'adminBilling.details.noticeFullRefundTitle' : 'adminBilling.details.noticePartialRefundTitle'),
+      message: translate('adminBilling.details.noticeRefundWithAccess', { refunded: formatMoney(money.refunded), amount: formatMoney(money.amount) }),
+      followUp: translate('adminBilling.details.followRefundWithAccess'),
     }
   }
 
@@ -86,34 +89,34 @@ export function getPaymentNotice(payment: AdminBillingPayment): PaymentNotice {
     if (money.confirmed) {
       return {
         tone: 'warning',
-        title: 'Деньги подтверждены, требуется проверка обработки покупки',
-        message: 'ЮKassa подтвердила оплату. Проверяется обработка покупки или выдача доступа.',
-        followUp: 'Проверьте операцию в ЮKassa по ID платежа и передайте ID специалисту, если причина не ясна. Не просите клиента платить повторно и не продлевайте доступ вручную.',
+        title: translate('adminBilling.details.noticeAttentionTitle'),
+        message: translate('adminBilling.details.noticeAttentionPaid'),
+        followUp: translate('adminBilling.details.followAttentionPaid'),
       }
     }
 
     return {
       tone: 'danger',
-      title: 'Платёж требует проверки',
-      message: 'Подтверждение оплаты пока не получено. Запись требует ручной проверки.',
-      followUp: 'Проверьте операцию в ЮKassa по ID платежа. Если причина не ясна, передайте ID специалисту. Не просите клиента платить повторно до проверки.',
+      title: translate('adminBilling.details.noticeAttentionTitle'),
+      message: translate('adminBilling.details.noticeAttentionUnpaid'),
+      followUp: translate('adminBilling.details.followAttentionUnpaid'),
     }
   }
 
   if (money.confirmed && !applied) {
     return {
       tone: 'warning',
-      title: 'Деньги получены, доступ ещё не выдан',
-      message: 'Оплата подтверждена, но выдача доступа по этой покупке не отмечена.',
-      followUp: 'Не создавайте повторную оплату и не продлевайте доступ вручную: это может привести к двойному списанию или продлению. Проверьте покупку и передайте её специалисту.',
+      title: translate('adminBilling.details.noticePaidPendingTitle'),
+      message: translate('adminBilling.details.noticePaidPending'),
+      followUp: translate('adminBilling.details.followPaidPending'),
     }
   }
 
   if (money.confirmed && applied) {
     return {
       tone: 'success',
-      title: 'Оплата подтверждена, период по покупке выдан',
-      message: 'Ниже показан период, который выдала именно эта покупка. Он не подтверждает, что доступ действует сейчас.',
+      title: translate('adminBilling.details.noticePaidIssuedTitle'),
+      message: translate('adminBilling.details.noticePaidIssued'),
       followUp: null,
     }
   }
@@ -122,45 +125,45 @@ export function getPaymentNotice(payment: AdminBillingPayment): PaymentNotice {
   if (['canceled', 'cancelled', 'failed', 'rejected'].includes(status)) {
     return {
       tone: 'neutral',
-      title: 'Оплата не подтверждена',
-      message: 'Платёж отменён или завершился ошибкой. Доступ по этой покупке не выдан.',
-      followUp: 'Если клиент утверждает, что деньги списались, сначала проверьте операцию в ЮKassa по ID платежа.',
+      title: translate('adminBilling.details.noticeFailedTitle'),
+      message: translate('adminBilling.details.noticeFailed'),
+      followUp: translate('adminBilling.details.followFailed'),
     }
   }
 
   return {
     tone: 'neutral',
-    title: 'Ожидается подтверждение оплаты',
-    message: 'Пока нет подтверждения, что ЮKassa получила деньги. Доступ по этой покупке не считается выданным.',
-    followUp: 'Обновите данные позже. Не просите клиента платить повторно, пока не проверили текущую операцию.',
+    title: translate('adminBilling.details.noticeAwaitingTitle'),
+    message: translate('adminBilling.details.noticeAwaiting'),
+    followUp: translate('adminBilling.details.followAwaiting'),
   }
 }
 
-export function getPaymentAccessStatus(payment: AdminBillingPayment): string {
+export function getPaymentAccessStatus(payment: AdminBillingPayment, translate: PaymentTranslator): string {
   const state = normalize(payment.applicationStatus)
-  if (Boolean(payment.appliedAt) || state === 'applied') return 'Период по покупке выдан'
-  if (getPaymentMoneySummary(payment).refundKind === 'full' || state === 'refunded') return 'Не выдан: средства возвращены'
-  if (state === 'needs_attention' || getPaymentMoneySummary(payment).refundKind === 'partial') return 'Выдача требует проверки'
-  if (isPaymentConfirmed(payment)) return 'Ожидает выдачи'
-  return 'Не выдан'
+  if (Boolean(payment.appliedAt) || state === 'applied') return translate('adminBilling.details.accessIssued')
+  if (getPaymentMoneySummary(payment).refundKind === 'full' || state === 'refunded') return translate('adminBilling.details.accessRefunded')
+  if (state === 'needs_attention' || getPaymentMoneySummary(payment).refundKind === 'partial') return translate('adminBilling.details.accessReview')
+  if (isPaymentConfirmed(payment)) return translate('adminBilling.details.accessPending')
+  return translate('adminBilling.details.accessNotIssued')
 }
 
-export function formatPaymentEvent(event: AdminBillingPaymentEvent): { title: string; detail: string } | null {
+export function formatPaymentEvent(event: AdminBillingPaymentEvent, translate: PaymentTranslator): { title: string; detail: string } | null {
   const stage = normalize(event.stage)
   const code = normalize(event.code)
   if (code === 'stale_event_ignored' || code === 'received' || stage === 'received') return null
 
-  let title = 'Обновление платежа'
-  if (code === 'refund_canceled' || code === 'refund_failed') title = 'Возврат не подтверждён'
-  else if (code === 'refund_requires_access_review') title = 'Возврат требует решения по доступу'
-  else if (stage === 'access_application' && code === 'applied') title = 'Подписка выдана'
+  let title = translate('adminBilling.details.eventUpdate')
+  if (code === 'refund_canceled' || code === 'refund_failed') title = translate('adminBilling.details.refundNotConfirmed')
+  else if (code === 'refund_requires_access_review') title = translate('adminBilling.details.refundReview')
+  else if (stage === 'access_application' && code === 'applied') title = translate('adminBilling.details.subscriptionGranted')
   else if (stage === 'state' && code === 'verified_snapshot_applied') {
-    title = (event.refundedAmountMinor ?? 0) > 0 ? 'Зафиксирован возврат' : 'Состояние платежа проверено'
+    title = translate((event.refundedAmountMinor ?? 0) > 0 ? 'adminBilling.details.refundRecorded' : 'adminBilling.details.paymentChecked')
   }
 
   const details = [
-    event.amountMinor != null ? `Сумма покупки: ${formatMinorAmount(event.amountMinor, event.currency)}` : null,
-    event.refundedAmountMinor != null && event.refundedAmountMinor > 0 ? `Возвращено всего: ${formatMinorAmount(event.refundedAmountMinor, event.currency)}` : null,
+    event.amountMinor != null ? translate('adminBilling.details.purchaseAmountDetail', { amount: formatMinorAmount(event.amountMinor, event.currency) }) : null,
+    event.refundedAmountMinor != null && event.refundedAmountMinor > 0 ? translate('adminBilling.details.totalRefundedDetail', { amount: formatMinorAmount(event.refundedAmountMinor, event.currency) }) : null,
   ].filter(Boolean)
   return { title, detail: details.join(' · ') }
 }
@@ -168,18 +171,18 @@ export function formatPaymentEvent(event: AdminBillingPaymentEvent): { title: st
 export function getVisiblePaymentEvents(events: AdminBillingPaymentEvent[] | undefined, limit = 5): AdminBillingPaymentEvent[] {
   return (events ?? [])
     .slice(0, 20)
-    .filter(event => formatPaymentEvent(event) !== null)
+    .filter(event => event.code !== 'stale_event_ignored' && event.code !== 'received' && event.stage !== 'received')
     .slice(0, Math.max(0, limit))
 }
 
 export function formatMinorAmount(amountMinor: number, currency: string): string {
   const currencyCode = currency?.trim().toUpperCase() || 'RUB'
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: currencyCode }).format(amountMinor / 100)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: currencyCode, currencyDisplay: 'code' }).format(amountMinor / 100)
 }
 
 export function formatPaymentDate(value: string | null | undefined): string {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+  return new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }

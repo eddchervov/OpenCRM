@@ -1686,6 +1686,7 @@ public class OrganizationWorkspaceApiController(
             MileageLabel = GetMileageUnitShortLabel(item.MileageUnit),
             Comment = item.Comment,
             Price = item.Price,
+            CurrencyCode = item.CurrencyCode,
             DetailUrl = item.DetailUrl
         };
 

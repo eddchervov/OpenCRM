@@ -24,6 +24,9 @@ public sealed class OrganizationScenarioCatalogItemDto
     /// <summary> Цена за единицу услуги. </summary>
     public decimal? UnitPrice { get; init; }
 
+    /// <summary> Валюта цены элемента каталога. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Длительность услуги в минутах. </summary>
     public int? DurationMinutes { get; init; }
 

@@ -5,6 +5,8 @@
 /// </summary>
 public class OrganizationMaterialStock
 {
+    /// <summary>Код валюты учетной себестоимости остатка.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     /// <summary>Идентификатор складской позиции.</summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 

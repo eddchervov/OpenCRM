@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../proOverviewMessages'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import type { WorkspaceFeature, WorkspacePlan } from '../api/workspaceAdmin'
@@ -8,6 +10,8 @@ import statisticsImage from '../assets/pro/statistics.png'
 import WorkspaceProFeaturePreview from './WorkspaceProFeaturePreview.vue'
 import WorkspaceProFeatureDialog from './WorkspaceProFeatureDialog.vue'
 import type { ProFeatureKey } from '../proFeatureDetails'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   open: boolean
@@ -41,99 +45,99 @@ const screenshotSections = computed<ScreenshotSection[]>(() => {
   if (hasIntake.value) {
     sections.push({
       code: 'intake',
-      title: 'Приёмка: зафиксируйте состояние автомобиля',
-      description: 'Осматривайте автомобиль вместе с клиентом и сохраняйте результат прямо в заказе. К замечаниям можно вернуться перед выдачей.',
-      points: ['Пробег, комплектация и заметки об осмотре.', 'Повреждения на схеме: место, тип и описание.', 'Акт приёма-передачи с данными приёмки.'],
-      outcome: 'Состояние до начала работ зафиксировано и связано с конкретным заказом.',
+      title: t('proOverview.intakeTitle'),
+      description: t('proOverview.intakeDescription'),
+      points: [t('proOverview.intakePoint1'), t('proOverview.intakePoint2'), t('proOverview.intakePoint3')],
+      outcome: t('proOverview.intakeOutcome'),
       image: intakeImage,
       viewBox: '279 323 619 361', imageWidth: 1265, imageHeight: 712,
-      alt: 'Схема автомобиля с отмеченным повреждением при приёмке'
+      alt: t('proOverview.intakeAlt')
     })
   }
   if (hasPhotoAlbums.value) {
     sections.push({
       code: 'albums',
-      title: 'Фотоальбомы: покажите разницу до и после',
-      description: 'Собирайте фотографии в альбомы автомобиля и сохраняйте результат каждой работы. Снимки остаются рядом с историей обслуживания.',
-      points: ['Отдельные фото до начала и после завершения работ.', 'Альбомы для разных работ и этапов ухода.', 'Сравнение до / после в карточке заказа.'],
-      outcome: 'Наглядная история результата, которую удобно показать клиенту.',
+      title: t('proOverview.albumsTitle'),
+      description: t('proOverview.albumsDescription'),
+      points: [t('proOverview.albumsPoint1'), t('proOverview.albumsPoint2'), t('proOverview.albumsPoint3')],
+      outcome: t('proOverview.albumsOutcome'),
       preview: 'albums'
     })
   }
   if (featureCodes.value.has('workspace.client_messaging')) {
     sections.push({
       code: 'messages',
-      title: 'Сообщения клиентам: от записи до выдачи',
-      description: 'Общайтесь через подключённые боты Telegram и MAX из рабочего пространства. Переписка связана с клиентом, а готовые ответы помогают быстрее отвечать на обычные вопросы.',
-      points: ['Переписка и фотографии в диалоге с клиентом.', 'Автоматическое напоминание перед визитом.', 'Шаблоны сообщений для повторяющихся ответов.', 'История отправок и результат передачи сообщений.'],
-      outcome: 'Запись, готовность автомобиля и обсуждение работ — в одном рабочем процессе.',
+      title: t('proOverview.messagesTitle'),
+      description: t('proOverview.messagesDescription'),
+      points: [t('proOverview.messagesPoint1'), t('proOverview.messagesPoint2'), t('proOverview.messagesPoint3'), t('proOverview.messagesPoint4')],
+      outcome: t('proOverview.messagesOutcome'),
       preview: 'messages'
     })
   }
   if (featureCodes.value.has('workspace.assistant')) {
     sections.push({
       code: 'assistant',
-      title: 'ИИ помощник: скажите, что нужно сделать',
-      description: 'Пишите обычными фразами или диктуйте голосом. Помощник уточнит недостающие сведения и подготовит действие с учётом доступных вам прав.',
-      points: ['Записи, клиенты, автомобили и операции по работам.', 'Диалог с уточнениями вместо заполнения всех полей вручную.', 'Проверка черновика и подтверждение перед изменением данных.', 'История разговоров и контроль использования ИИ.'],
-      outcome: 'Использование ИИ учитывается отдельно, в пределах настроенного бюджета.',
+      title: t('proOverview.assistantTitle'),
+      description: t('proOverview.assistantDescription'),
+      points: [t('proOverview.assistantPoint1'), t('proOverview.assistantPoint2'), t('proOverview.assistantPoint3'), t('proOverview.assistantPoint4')],
+      outcome: t('proOverview.assistantOutcome'),
       preview: 'assistant'
     })
   }
   if (featureCodes.value.has('workspace.module.analytics')) {
     sections.push({
       code: 'analytics',
-      title: 'Статистика работы',
-      description: 'Видьте динамику закрытых работ, начисления и статусы заказов. Оценивайте результаты студии на одном экране.',
-      points: ['Созданные и закрытые работы за период.', 'Начисления по завершённым работам.', 'Статусы заказов и складские риски.'],
-      outcome: 'Понятнее, как меняется загрузка и что требует внимания.',
+      title: t('proOverview.analyticsTitle'),
+      description: t('proOverview.analyticsDescription'),
+      points: [t('proOverview.analyticsPoint1'), t('proOverview.analyticsPoint2'), t('proOverview.analyticsPoint3')],
+      outcome: t('proOverview.analyticsOutcome'),
       image: statisticsImage,
       viewBox: '232 66 1033 646', imageWidth: 1265, imageHeight: 712,
-      alt: 'Экран статистики рабочего пространства'
+      alt: t('proOverview.analyticsAlt')
     })
   }
   if (featureCodes.value.has('workspace.module.members')) {
     sections.push({
       code: 'team',
-      title: 'Команда и смены: распределяйте работу',
-      description: 'Подключайте сотрудников к рабочему пространству и назначайте ответственных на работы. Доступ каждого участника определяется его ролью.',
-      points: ['Сотрудники и назначения на заказы.', 'Роли и права доступа к данным организации.', 'Планирование и публикация смен.'],
-      outcome: 'Видно, кто отвечает за работу и что сотруднику доступно в CRM.',
+      title: t('proOverview.teamTitle'),
+      description: t('proOverview.teamDescription'),
+      points: [t('proOverview.teamPoint1'), t('proOverview.teamPoint2'), t('proOverview.teamPoint3')],
+      outcome: t('proOverview.teamOutcome'),
       image: teamImage,
       viewBox: '232 66 1048 590', imageWidth: 1280, imageHeight: 720,
-      alt: 'Сотрудники организации, назначения на работы и доступ к CRM'
+      alt: t('proOverview.teamAlt')
     })
   }
   return sections
 })
 const compactCards = computed<OverviewCard[]>(() => [
-  ...(featureCodes.value.has('workspace.finance.export_1c') ? [{ code: 'workspace.finance.export_1c' as const, title: 'Для 1С:Бухгалтерии 3.0', description: 'Подготавливайте заказы и оплаты для загрузки в 1С. Универсальный JSON для других систем доступен и в Free.' }] : []),
-  ...(featureCodes.value.has('workspace.documents.styling') ? [{ code: 'workspace.documents.styling' as const, title: 'Оформление документов', description: 'Настраивайте оформление печатных форм организации.' }] : []),
-  ...(featureCodes.value.has('workspace.data.import') ? [{ code: 'workspace.data.import' as const, title: 'Импорт данных', description: 'Загружайте данные организации из поддерживаемых файлов.' }] : [])
+  ...(featureCodes.value.has('workspace.finance.export_1c') ? [{ code: 'workspace.finance.export_1c' as const, title: t('proOverview.accountingTitle'), description: t('proOverview.accountingDescription') }] : []),
+  ...(featureCodes.value.has('workspace.documents.styling') ? [{ code: 'workspace.documents.styling' as const, title: t('proOverview.documentsTitle'), description: t('proOverview.documentsDescription') }] : []),
+  ...(featureCodes.value.has('workspace.data.import') ? [{ code: 'workspace.data.import' as const, title: t('proOverview.importTitle'), description: t('proOverview.importDescription') }] : [])
 ])
 const quotaItems = computed(() => {
   if (!props.plan) return []
   const items: Array<{ label: string, value: string }> = []
   const clientsLimit = props.plan.features?.find(feature => feature.code === 'workspace.clients.limit')?.intValue
   const membersLimit = props.plan.features?.find(feature => feature.code === 'workspace.members.limit')?.intValue
-  if (clientsLimit != null) items.push({ label: 'Клиенты', value: formatLimit(clientsLimit) })
-  if (props.plan.vehicleLimit != null) items.push({ label: 'Автомобили', value: formatLimit(props.plan.vehicleLimit) })
-  if (membersLimit != null) items.push({ label: 'Участники', value: formatLimit(membersLimit) })
+  if (clientsLimit != null) items.push({ label: t('proOverview.clients'), value: formatLimit(clientsLimit) })
+  if (props.plan.vehicleLimit != null) items.push({ label: t('proOverview.vehicles'), value: formatLimit(props.plan.vehicleLimit) })
+  if (membersLimit != null) items.push({ label: t('proOverview.members'), value: formatLimit(membersLimit) })
   return items
 })
 const price = computed(() => props.plan?.effectivePrice ?? props.plan?.pricePerMonth ?? props.plan?.price ?? null)
-const formattedPrice = computed(() => price.value == null ? 'Цена уточняется' : price.value === 0 ? 'Бесплатно' : new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(price.value))
-const formattedOriginalPrice = computed(() => props.plan?.originalEffectivePrice == null ? '' : new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(props.plan.originalEffectivePrice))
+const formattedPrice = computed(() => price.value == null ? t('proOverview.pricePending') : price.value === 0 ? t('proOverview.free') : new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(price.value))
+const formattedOriginalPrice = computed(() => props.plan?.originalEffectivePrice == null ? '' : new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(props.plan.originalEffectivePrice))
 const durationText = computed(() => {
   const duration = props.plan?.durationDays
   if (!duration) return ''
-  if (duration >= 365) return 'за год'
-  if (duration >= 28 && duration <= 31) return 'в месяц'
-  return `за ${duration} дн.`
+  if (duration >= 365) return t('proOverview.yearly')
+  if (duration >= 28 && duration <= 31) return t('proOverview.monthly')
+  return t('proOverview.duration', { count: duration })
 })
 
 function formatLimit(value: number): string {
-  return value >= 2147483647 ? 'Без ограничения' : new Intl.NumberFormat('ru-RU').format(value)
+  return value >= 2147483647 ? t('proOverview.unlimited') : new Intl.NumberFormat(formattingCulture.value).format(value)
 }
 
 function syncDialog(isOpen: boolean) {
@@ -196,48 +200,48 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <dialog ref="dialog" class="workspace-pro-overview" aria-labelledby="pro-overview-title" @cancel.prevent="closeDialog" @click="closeFromBackdrop" @close="onDialogClose">
       <header class="workspace-pro-overview__header">
-        <div class="workspace-pro-overview__brand"><span class="workspace-pro-overview__spark" aria-hidden="true">✦</span><span>Тариф PRO</span></div>
-        <button ref="closeButton" class="workspace-pro-overview__close" type="button" aria-label="Закрыть обзор PRO" @click="closeDialog">×</button>
+        <div class="workspace-pro-overview__brand"><span class="workspace-pro-overview__spark" aria-hidden="true">✦</span><span>{{ t('proOverview.plan') }}</span></div>
+        <button ref="closeButton" class="workspace-pro-overview__close" type="button" :aria-label="t('proOverview.closeLabel')" @click="closeDialog">×</button>
       </header>
       <div class="workspace-pro-overview__body">
         <section class="workspace-pro-overview__hero">
           <span class="workspace-pro-overview__eyebrow">{{ plan?.name ?? 'PRO' }}</span>
-          <h2 id="pro-overview-title">Больше контроля над каждой работой</h2>
-          <p>Возможности {{ plan?.name ?? 'PRO' }}, которые помогают вести работу от приёмки автомобиля до выдачи клиенту.</p>
-          <div v-if="quotaItems.length" class="workspace-pro-overview__quotas" aria-label="Лимиты тарифа">
+          <h2 id="pro-overview-title">{{ t('proOverview.heading') }}</h2>
+          <p>{{ t('proOverview.intro', { plan: plan?.name ?? 'PRO' }) }}</p>
+          <div v-if="quotaItems.length" class="workspace-pro-overview__quotas" :aria-label="t('proOverview.limits')">
             <div v-for="quota in quotaItems" :key="quota.label"><strong>{{ quota.value }}</strong><span>{{ quota.label }}</span></div>
           </div>
         </section>
 
-        <nav v-if="screenshotSections.length" class="workspace-pro-overview__navigation" aria-label="Возможности PRO">
-          <button v-for="section in screenshotSections" :key="section.code" type="button" @click="showFeature(section.code)">{{ ({ intake: 'Приёмка', albums: 'Фотоальбомы', messages: 'Сообщения', assistant: 'ИИ помощник', analytics: 'Статистика', team: 'Команда' })[section.code] }}</button>
+        <nav v-if="screenshotSections.length" class="workspace-pro-overview__navigation" :aria-label="t('proOverview.proFeatures')">
+          <button v-for="section in screenshotSections" :key="section.code" type="button" @click="showFeature(section.code)">{{ ({ intake: t('proOverview.intake'), albums: t('proOverview.albums'), messages: t('proOverview.messages'), assistant: t('proOverview.assistant'), analytics: t('proOverview.analytics'), team: t('proOverview.team') })[section.code] }}</button>
         </nav>
-        <section v-if="open && screenshotSections.length" class="workspace-pro-overview__features" aria-label="Возможности тарифа">
+        <section v-if="open && screenshotSections.length" class="workspace-pro-overview__features" :aria-label="t('proOverview.planFeatures')">
           <article v-for="section in screenshotSections" :key="section.code" class="workspace-pro-overview__feature" :data-pro-feature="section.code">
             <div class="workspace-pro-overview__visual">
-              <button class="workspace-pro-overview__enlarge" type="button" :aria-label="`Увеличить пример: ${section.title}`" @click="openVisual(section.code)">
-                <span class="workspace-pro-overview__enlarge-label">Увеличить пример ↗</span>
+              <button class="workspace-pro-overview__enlarge" type="button" :aria-label="t('proOverview.enlargeLabel', { title: section.title })" @click="openVisual(section.code)">
+                <span class="workspace-pro-overview__enlarge-label">{{ t('proOverview.enlarge') }}</span>
                 <WorkspaceProFeaturePreview v-if="section.preview" :kind="section.preview" />
                 <svg v-else :viewBox="section.viewBox" role="img" :aria-label="section.alt" class="workspace-pro-overview__screenshot">
                   <image :href="section.image" :width="section.imageWidth" :height="section.imageHeight" />
                 </svg>
-                <span v-if="section.preview" class="workspace-pro-overview__visual-note">Демонстрационный пример</span>
+                <span v-if="section.preview" class="workspace-pro-overview__visual-note">{{ t('proOverview.demo') }}</span>
               </button>
             </div>
-            <div class="workspace-pro-overview__description"><span class="workspace-pro-overview__feature-label">Возможность PRO</span><h3>{{ section.title }}</h3><p>{{ section.description }}</p><ul><li v-for="point in section.points" :key="point">{{ point }}</li></ul><p class="workspace-pro-overview__outcome">{{ section.outcome }}</p></div>
+            <div class="workspace-pro-overview__description"><span class="workspace-pro-overview__feature-label">{{ t('proOverview.feature') }}</span><h3>{{ section.title }}</h3><p>{{ section.description }}</p><ul><li v-for="point in section.points" :key="point">{{ point }}</li></ul><p class="workspace-pro-overview__outcome">{{ section.outcome }}</p></div>
           </article>
         </section>
-        <p v-if="screenshotSections.length" class="workspace-pro-overview__example-note">Примеры интерфейса и сценариев на демонстрационных данных. Фотографии «до / после» — иллюстрация, а не реальный заказ клиента.</p>
+        <p v-if="screenshotSections.length" class="workspace-pro-overview__example-note">{{ t('proOverview.exampleNote') }}</p>
 
-        <section v-if="compactCards.length" class="workspace-pro-overview__compact" aria-label="Другие возможности тарифа">
+        <section v-if="compactCards.length" class="workspace-pro-overview__compact" :aria-label="t('proOverview.otherFeatures')">
           <article v-for="card in compactCards" :key="card.code"><span aria-hidden="true">✦</span><div><h3>{{ card.title }}</h3><p>{{ card.description }}</p></div></article>
         </section>
-        <p v-if="!screenshotSections.length && !compactCards.length" class="workspace-pro-overview__empty">В этом тарифе не указаны дополнительные возможности. Лимиты и стоимость показаны ниже.</p>
+        <p v-if="!screenshotSections.length && !compactCards.length" class="workspace-pro-overview__empty">{{ t('proOverview.noFeatures') }}</p>
       </div>
 
       <footer class="workspace-pro-overview__footer">
         <div class="workspace-pro-overview__price"><strong>{{ formattedPrice }}</strong><span v-if="durationText">{{ durationText }}</span><s v-if="plan?.hasPromoDiscount && formattedOriginalPrice">{{ formattedOriginalPrice }}</s></div>
-        <div class="workspace-pro-overview__actions"><UiButton variant="secondary" @click="closeDialog">Закрыть</UiButton><UiButton :disabled="!canPurchase || isSaving || !plan" @click="purchasePlan">{{ isSaving ? 'Подождите…' : 'Подключить тариф' }}</UiButton></div>
+        <div class="workspace-pro-overview__actions"><UiButton variant="secondary" @click="closeDialog">{{ t('proOverview.close') }}</UiButton><UiButton :disabled="!canPurchase || isSaving || !plan" @click="purchasePlan">{{ isSaving ? t('proOverview.waiting') : t('proOverview.activate') }}</UiButton></div>
       </footer>
     </dialog>
   </Teleport>

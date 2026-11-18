@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import vm from 'node:vm'
+import { assistantUiMessages } from './assistantUiTestMessages.mjs'
 
 const source = await readFile(new URL('../../OpenCRM.WebApp/wwwroot/js/ai-pilot-dashboard.js', import.meta.url), 'utf8')
 const settled = () => new Promise(resolve => setImmediate(resolve))
@@ -27,7 +28,7 @@ function dashboard(totalConversations, totalMessages) {
     return nodes.get(selector)
   }
   const root = node('root')
-  root.dataset = { apiUrl: '/api/v1/assistant', organizationId: 'org-1' }
+  root.dataset = { apiUrl: '/api/v1/assistant', organizationId: 'org-1', uiMessages: JSON.stringify(assistantUiMessages()) }
   root.querySelector = node
   root.querySelectorAll = selector => selector === '.history-pagination button'
     ? [...nodes.values()].flatMap(value => value.children).filter(value => value.type === 'button')

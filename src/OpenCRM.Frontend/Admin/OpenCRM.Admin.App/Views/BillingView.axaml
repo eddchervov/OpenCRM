@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.BillingView"
@@ -25,21 +26,21 @@
   <Grid RowDefinitions="Auto,*" RowSpacing="12">
     <StackPanel Spacing="12">
       <Grid ColumnDefinitions="*,Auto,Auto">
-        <TextBlock Text="Платежи и подписки" Classes="heading" AutomationProperties.AutomationId="BillingHeading" />
+        <TextBlock Text="{loc:LocalizedText Key=native.billing.platezhi.i.podpiski}" Classes="heading" AutomationProperties.AutomationId="BillingHeading" />
         <TextBlock Grid.Column="1" Text="{Binding TotalLabel}" IsVisible="{Binding !IsPurchasesTab}" Classes="caption" VerticalAlignment="Center" Margin="12,0" />
-        <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" IsVisible="{Binding !IsPurchasesTab}" />
-        <Button Grid.Column="2" Content="Обновить" Command="{Binding Purchases.RefreshCommand}" IsVisible="{Binding IsPurchasesTab}" />
+        <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" IsVisible="{Binding !IsPurchasesTab}" />
+        <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding Purchases.RefreshCommand}" IsVisible="{Binding IsPurchasesTab}" />
       </Grid>
       <WrapPanel Orientation="Horizontal">
-        <Button Content="Платежи" Classes="tab" Classes.active="{Binding IsPaymentTabSelected}" Command="{Binding SetTabCommand}" Margin="0,0,8,6"
+        <Button Content="{loc:LocalizedText Key=native.billing.platezhi}" Classes="tab" Classes.active="{Binding IsPaymentTabSelected}" Command="{Binding SetTabCommand}" Margin="0,0,8,6"
                 AutomationProperties.AutomationId="BillingPaymentsTab">
           <Button.CommandParameter><x:Boolean>True</x:Boolean></Button.CommandParameter>
         </Button>
-        <Button Content="Подписки организаций" Classes="tab" Classes.active="{Binding IsSubscriptionTabSelected}" Command="{Binding SetTabCommand}" Margin="0,0,8,6"
+        <Button Content="{loc:LocalizedText Key=native.billing.podpiski.organizatsiy}" Classes="tab" Classes.active="{Binding IsSubscriptionTabSelected}" Command="{Binding SetTabCommand}" Margin="0,0,8,6"
                 AutomationProperties.AutomationId="BillingSubscriptionsTab">
           <Button.CommandParameter><x:Boolean>False</x:Boolean></Button.CommandParameter>
         </Button>
-        <Button Content="Покупки и чеки НПД" Classes="tab" Classes.active="{Binding IsPurchasesTab}"
+        <Button Content="{loc:LocalizedText Key=native.billing.pokupki.i.cheki.npd}" Classes="tab" Classes.active="{Binding IsPurchasesTab}"
                 Command="{Binding ShowPurchasesCommand}" Margin="0,0,0,6" AutomationProperties.AutomationId="BillingPurchasesTab" />
       </WrapPanel>
       <TextBlock Text="{Binding OperationMessage}" IsVisible="{Binding HasOperationMessage}"
@@ -48,10 +49,10 @@
     <Grid Grid.Row="1" IsVisible="{Binding IsLedgerListVisible}" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
       <Border Grid.Row="0" Background="#191D22" BorderBrush="#414B58" BorderThickness="1" CornerRadius="8" Padding="12">
         <WrapPanel>
-          <TextBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" Text="{Binding Search}" PlaceholderText="Пользователь, организация, тариф или ID" Width="310" Margin="0,0,8,6"
+          <TextBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=native.billing.polzovatel.organizatsiya.tarif.ili.id}" Width="310" Margin="0,0,8,6"
                    KeyDown="OnSearchKeyDown" AutomationProperties.AutomationId="BillingSearch" />
-          <Button Height="44" VerticalAlignment="Center" Content="Найти" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,6" />
-          <Button Height="44" VerticalAlignment="Center" Content="Сбросить" Command="{Binding ResetFiltersCommand}" Margin="0,0,16,6" />
+          <Button Height="44" VerticalAlignment="Center" Content="{loc:LocalizedText Key=native.billing.nayti}" Command="{Binding ApplyFiltersCommand}" Classes="primary" Margin="0,0,8,6" />
+          <Button Height="44" VerticalAlignment="Center" Content="{loc:LocalizedText Key=native.billing.sbrosit}" Command="{Binding ResetFiltersCommand}" Margin="0,0,16,6" />
           <ComboBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="185" Margin="0,0,8,6"
                     IsEnabled="{Binding !IsLoading}" AutomationProperties.AutomationId="BillingStatus" />
           <ComboBox Height="44" VerticalAlignment="Center" VerticalContentAlignment="Center" ItemsSource="{Binding PeriodOptions}" SelectedItem="{Binding SelectedPeriod}" Width="145" Margin="0,0,0,6"
@@ -64,7 +65,7 @@
       </StackPanel>
       <WrapPanel Grid.Row="2">
         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,20,0">
-          <TextBlock Text="На странице" Classes="caption" VerticalAlignment="Center" />
+          <TextBlock Text="{loc:LocalizedText Key=native.billing.na.stranitse}" Classes="caption" VerticalAlignment="Center" />
           <ComboBox ItemsSource="{Binding PageSizeOptions}" SelectedItem="{Binding PageSize}" IsEnabled="{Binding !IsLoading}" Width="74" />
         </StackPanel>
         <views:ListPagination PageLabel="{Binding PageLabel}"
@@ -80,7 +81,7 @@
               <Button Grid.Column="3" Content="{Binding AmountHeader}" Classes="sort-header" Click="OnAmountSort" />
               <Button Grid.Column="4" Content="{Binding DateHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="date" />
               <Button Grid.Column="5" Content="{Binding EndHeader}" IsVisible="{Binding !IsPaymentsTab}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="expires" />
-              <TextBlock Grid.Column="5" Text="Способ оплаты" IsVisible="{Binding IsPaymentsTab}" Classes="caption" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="5" Text="{loc:LocalizedText Key=native.billing.sposob.oplaty}" IsVisible="{Binding IsPaymentsTab}" Classes="caption" VerticalAlignment="Center" />
               <Button Grid.Column="6" Content="{Binding StatusHeader}" Classes="sort-header" Command="{Binding SortCommand}" CommandParameter="status" />
             </Grid>
             <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Background="Transparent" BorderThickness="0"
@@ -103,16 +104,16 @@
                       <TextBlock Grid.Column="5" Text="{Binding Source}" IsVisible="{Binding IsPayment}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
                       <StackPanel Grid.Column="6" VerticalAlignment="Center" Spacing="3" Margin="0,0,8,0">
                         <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
-                        <TextBlock Text="Требует внимания" IsVisible="{Binding HasAttention}" Foreground="#D89C73" FontSize="11" />
+                        <TextBlock Text="{loc:LocalizedText Key=native.billing.trebuet.vnimaniya}" IsVisible="{Binding HasAttention}" Foreground="#D89C73" FontSize="11" />
                       </StackPanel>
-                      <Button Grid.Column="7" Content="Открыть" Padding="10,6" VerticalAlignment="Center"
+                      <Button Grid.Column="7" Content="{loc:LocalizedText Key=native.billing.otkryt}" Padding="10,6" VerticalAlignment="Center"
                               Command="{Binding $parent[views:BillingView].((vm:BillingViewModel)DataContext).OpenDetailCommand}" CommandParameter="{Binding}" />
                     </Grid>
                   </Border>
                 </DataTemplate>
               </ListBox.ItemTemplate>
             </ListBox>
-            <TextBlock Grid.Row="1" IsVisible="{Binding !HasRows}" Text="Записи не найдены" Classes="muted" Margin="20,32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Grid.Row="1" IsVisible="{Binding !HasRows}" Text="{loc:LocalizedText Key=native.billing.zapisi.ne.naydeny}" Classes="muted" Margin="20,32" HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Grid>
         </ScrollViewer>
       </Border>
@@ -120,9 +121,9 @@
     <ScrollViewer Grid.Row="1" IsVisible="{Binding IsLedgerDetailVisible}" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="12">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <Button Content="← К списку" Command="{Binding BackToListCommand}" />
-          <TextBlock Grid.Column="1" Text="Подробности" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0" />
-          <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" />
+          <Button Content="{loc:LocalizedText Key=native.billing.k.spisku}" Command="{Binding BackToListCommand}" />
+          <TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=native.billing.podrobnosti}" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0" />
+          <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
         </Grid>
         <ProgressBar IsVisible="{Binding IsLoadingDetail}" IsIndeterminate="True" Height="3" />
         <TextBlock IsVisible="{Binding HasDetailError}" Text="{Binding DetailErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -144,7 +145,7 @@
           <views:PaymentActionsView DataContext="{Binding $parent[views:BillingView].((vm:BillingViewModel)DataContext).PaymentActions}" />
           <Expander Header="{Binding AuditTitle}" IsExpanded="False">
             <StackPanel Spacing="10">
-              <TextBlock Text="История пуста" IsVisible="{Binding !HasAudits}" Classes="caption" />
+              <TextBlock Text="{loc:LocalizedText Key=native.billing.istoriya.pusta}" IsVisible="{Binding !HasAudits}" Classes="caption" />
               <ItemsControl ItemsSource="{Binding Audits}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:DashboardStatisticGroup">

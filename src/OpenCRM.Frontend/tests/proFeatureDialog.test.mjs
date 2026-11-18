@@ -8,6 +8,8 @@ import { renderToString } from '@vue/server-renderer'
 import { getProjectBrand } from '../packages/ui/src/projectBrand.ts'
 import { proFeatureDetails } from '../packages/workspace/src/proFeatureDetails.ts'
 import { proFeatureLandingContent } from '../packages/workspace/src/proFeatureLandingContent.ts'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/proPreviewMessages.ts'
 
 const filename = new URL('../packages/workspace/src/components/WorkspaceProFeatureDialog.vue', import.meta.url)
 const { descriptor } = parse(readFileSync(filename, 'utf8'))
@@ -20,6 +22,8 @@ const button = vue.defineComponent({
   setup: (props, { slots }) => () => vue.h(props.href ? 'a' : 'button', props.href ? { href: props.href } : {}, slots.default?.())
 })
 const resolve = id => {
+  if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+  if (id === '../proPreviewMessages') return {}
   if (id === 'vue') return vue
   if (id === '@opencrm/ui') return { UiButton: button, getProjectBrand }
   if (id === '@opencrm/ui/projectBrand') return { getProjectBrand }

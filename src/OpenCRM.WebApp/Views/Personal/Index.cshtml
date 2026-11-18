@@ -2,7 +2,7 @@
 @using OpenCRM.WebApp.Infrastructure.Security
 @inject IConfiguration Configuration
 @{
-    ViewData["Title"] = "Профиль";
+    ViewData["Title"] = Text["personal.profile"].Value;
     ViewData["ActivePage"] = ManageNavPages.Index;
     Layout = "_PersonalLayout.cshtml";
     var isEmailDeliveryAvailable = EmailDeliveryPolicy.IsAvailable(Configuration);
@@ -11,36 +11,42 @@
 <partial name="_StatusMessage" for="StatusMessage" />
 <div class="personal-grid personal-profile-grid">
     <section class="profile-card">
-        <h2>Личные данные</h2>
+        <h2>@Text["personal.details"]</h2>
         <dl class="personal-details">
             <div>
                 <dt>Email</dt>
                 <dd>
-                    <div class="personal-contact"><span>@Model.Email</span><span class="personal-badge">@(Model.IsEmailConfirmed ? "Подтверждён" : "Не подтверждён")</span></div>
+                    <div class="personal-contact"><span>@Model.Email</span><span class="personal-badge">@(Model.IsEmailConfirmed ? Text["personal.confirmed"] : Text["personal.unconfirmed"])</span></div>
                     @if (isEmailDeliveryAvailable && !Model.IsEmailConfirmed)
                     {
                         <form asp-controller="Personal" asp-action="SendVerificationEmail" method="post" class="personal-inline-form">
-                            <button type="submit" class="btn entry-secondary">Отправить подтверждение</button>
+                            <button type="submit" class="btn entry-secondary">@Text["personal.sendConfirmation"]</button>
                         </form>
                     }
                 </dd>
             </div>
-            <div><dt>Телефон</dt><dd>@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Не указан" : Model.PhoneNumber)</dd></div>
-            <div><dt>Дата регистрации</dt><dd>@Model.DatetimeCreation.ToString("dd.MM.yyyy")</dd></div>
+            <div><dt>@Text["personal.phone"]</dt><dd>@(string.IsNullOrEmpty(Model.PhoneNumber) ? Text["personal.notSpecified"] : Model.PhoneNumber)</dd></div>
+            <div><dt>@Text["personal.registrationDate"]</dt><dd>@Model.DatetimeCreation.ToString("d", System.Globalization.CultureInfo.CurrentCulture)</dd></div>
         </dl>
         <div class="personal-divider"></div>
-        <div class="personal-card-heading"><h2>Вход в аккаунт</h2><a href="/personal/changePassword">Настроить пароль</a></div>
-        <p class="personal-muted">@(isEmailDeliveryAvailable ? "Входите по паролю или коду из email." : "Входите по паролю.")</p>
+        <div class="personal-card-heading"><h2>@Text["personal.accountAccess"]</h2><a href="/personal/changePassword">@Text["personal.password"]</a></div>
+        <p class="personal-muted">@(isEmailDeliveryAvailable ? Text["personal.passwordAndCode"] : Text["personal.passwordOnly"])</p>
     </section>
     <section class="profile-card">
-        <div class="personal-card-heading"><h2>Личная техника</h2><a href="/vehicles">Открыть</a></div>
+        <div class="personal-card-heading"><h2>@Text["personal.vehicles"]</h2><a href="/vehicles">@Text["personal.open"]</a></div>
         <dl class="personal-counters">
-            <div><dd>@Model.CountVehicles</dd><dt>Единиц техники</dt></div>
-            <div><dd>@Model.CountMaintenance</dd><dt>Обслуживаний</dt></div>
+            <div><dd>@Model.CountVehicles</dd><dt>@Text["personal.vehicleCount"]</dt></div>
+            <div><dd>@Model.CountMaintenance</dd><dt>@Text["personal.maintenanceCount"]</dt></div>
         </dl>
     </section>
 </div>
 <div class="personal-account-footer">
-    <span>Управление аккаунтом</span>
-    <a asp-controller="Auth" asp-action="DeleteAccount" class="personal-danger-link">Удалить аккаунт</a>
+    <span>@Text["personal.accountManagement"]</span>
+    <a asp-controller="Auth" asp-action="DeleteAccount" class="personal-danger-link">@Text["personal.deleteAccount"]</a>
 </div>
+
+<section class="profile-card">
+    <div data-personal-currency-settings></div>
+</section>
+<link rel="stylesheet" href="~/app/personal-currency.css" asp-append-version="true" />
+<script src="~/app/personal-currency.bundle.js" asp-append-version="true" defer></script>

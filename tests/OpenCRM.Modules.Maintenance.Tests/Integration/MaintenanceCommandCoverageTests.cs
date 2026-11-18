@@ -1144,9 +1144,11 @@ public sealed class MaintenanceCommandCoverageTests(MaintenanceDatabaseFixture f
         using var service = MaintenanceCommandCoverageTests.CreateService(context);
         var organizationId = work.Vehicle.OrganizationId!.Value;
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.AddPayment(
+        var invalidMethod = await Assert.ThrowsAsync<MaintenancePaymentValidationException>(() => service.AddPayment(
             work.User.Id, organizationId, work.Id,
             new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = 100, MethodCode = "crypto" }));
+        Assert.Equal("maintenance.payment.methodInvalid", invalidMethod.MessageKey);
+        Assert.Equal("Выберите корректный способ оплаты.", invalidMethod.Message);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.AddPayment(
             work.User.Id, organizationId, work.Id,
             new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = 100, Comment = new string('x', 1001) }));

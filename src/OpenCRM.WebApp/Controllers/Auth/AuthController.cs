@@ -46,6 +46,9 @@ public sealed class AuthController(
     /// <summary> Имя cookie, сохраняющей данные исходной сессии при имперсонации. </summary>
     private const string ImpersonatorCookieName = "ImpersonatorId";
 
+    private static readonly System.Resources.ResourceManager s_authResources =
+        new("OpenCRM.WebApp.Resources.Infrastructure.Localization.LocalizationStrings", typeof(AuthController).Assembly);
+
     /// <summary> Защитник данных для шифрования cookie имперсонации. </summary>
     private readonly IDataProtector _impersonationProtector = dataProtectionProvider.CreateProtector("OpenCRM.Auth.Impersonation.v1");
 
@@ -150,7 +153,7 @@ public sealed class AuthController(
 
         if (string.IsNullOrWhiteSpace(model.Code))
         {
-            ModelState.AddModelError(nameof(EmailCodeLoginModel.Code), "Введите код из письма.");
+            ModelState.AddModelError(nameof(EmailCodeLoginModel.Code), AuthController.Localize("auth.runtime.codeRequired"));
         }
 
         if (!ModelState.IsValid)
@@ -210,20 +213,20 @@ public sealed class AuthController(
             logger.LogError(exception, "Таймаут базы данных при входе пользователя {Email}", model.Email);
             ModelState.AddModelError(
                 string.Empty,
-                "Сервис авторизации временно недоступен. Повторите попытку позже.");
+                AuthController.Localize("auth.runtime.unavailable"));
 
             return View(model);
         }
 
         if (userByEmail != null && userByEmail.IsDeleted)
         {
-            ModelState.AddModelError(string.Empty, "Неверная попытка входа.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.invalidAttempt"));
             return View(model);
         }
 
         if (userByEmail == null)
         {
-            ModelState.AddModelError(string.Empty, "Неверный email или пароль.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.invalidCredentials"));
             return View(model);
         }
 
@@ -248,7 +251,7 @@ public sealed class AuthController(
         var isPasswordCorrect = await userManager.CheckPasswordAsync(userByEmail, model.Password);
         if (!isPasswordCorrect)
         {
-            ModelState.AddModelError(string.Empty, "Неверный email или пароль.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.invalidCredentials"));
             return View(model);
         }
 
@@ -257,7 +260,7 @@ public sealed class AuthController(
             return RedirectToAction(nameof(Lockout));
         }
 
-        ModelState.AddModelError(string.Empty, "Неверная попытка входа.");
+        ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.invalidAttempt"));
         return View(model);
     }
 
@@ -302,7 +305,7 @@ public sealed class AuthController(
         var activeUser = await userManager.FindByEmailAsync(model.Email?.Trim());
         if (activeUser != null && !activeUser.IsDeleted)
         {
-            ModelState.AddModelError(string.Empty, "Этот email уже зарегистрирован.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.emailExists"));
             return View(model);
         }
 
@@ -349,7 +352,7 @@ public sealed class AuthController(
                         protocol: Request.Scheme);
 
                     await confirmationDelivery.TrySendAsync(user!.Id, () => emailNotifications.QueueTemplateAsync(
-                        model.Email, "Подтвердите ваш email", "system/email-confirmation",
+                        model.Email, AuthController.Localize("auth.runtime.confirmSubject"), "system/email-confirmation",
                         new { name = model.Email, confirmationUrl = callbackUrl }));
                 }
                 catch (Exception ex)
@@ -371,13 +374,13 @@ public sealed class AuthController(
             if (confirmationRequired)
             {
                 TempData[confirmationEmailSent ? "Success" : "Error"] = confirmationEmailSent
-                    ? "Аккаунт создан. Письмо для подтверждения email отправлено."
-                    : "Аккаунт создан, но письмо подтверждения не отправлено. Повторите отправку на этой странице.";
+                    ? AuthController.Localize("auth.runtime.createdEmailSent")
+                    : AuthController.Localize("auth.runtime.createdEmailFailed");
 
                 return Redirect(Url.Content($"~{EmailConfirmationMiddleware.ConfirmationPath}"));
             }
 
-            TempData["Success"] = "Аккаунт создан.";
+            TempData["Success"] = AuthController.Localize("auth.runtime.created");
 
             return LocalRedirect(model.ReturnUrl);
         }
@@ -387,7 +390,7 @@ public sealed class AuthController(
 
             ModelState.AddModelError(
                 string.Empty,
-                "Не удалось завершить регистрацию. Попробуйте ещё раз чуть позже.");
+                AuthController.Localize("auth.runtime.registrationError"));
 
             return View(model);
         }
@@ -479,14 +482,15 @@ public sealed class AuthController(
             try
             {
                 await emailNotifications.QueueTemplateAsync(
-                    model.Email, "Сбросить пароль", "system/password-reset",
+                    model.Email, AuthController.Localize("auth.runtime.resetSubject"), "system/password-reset",
                     new { name = model.Email, resetUrl = callbackUrl });
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message, ex);
 
-                model.StatusMessage = $"Произошла ошибка отправки email, попробуйте позже или обратитесь в поддержку.";
+                model.StatusMessage = AuthController.Localize("auth.runtime.emailError");
+                this.ViewData["StatusMessageIsError"] = true;
 
                 return View(model);
             }
@@ -550,7 +554,7 @@ public sealed class AuthController(
         }
         catch
         {
-            model.StatusMessage = "Ссылка для сброса пароля повреждена, устарела или уже была использована.";
+            model.StatusMessage = AuthController.Localize("auth.runtime.resetLinkInvalid");
             return View(model);
         }
 
@@ -562,7 +566,7 @@ public sealed class AuthController(
 
         if (result.Errors.Any())
         {
-            ModelState.AddModelError(string.Empty, "Не удалось сбросить пароль. Запросите новую ссылку и попробуйте еще раз.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.resetError"));
 
             logger.LogError(string.Join(";", result.Errors.Select(x => $"code: {x.Code}: {x.Description}")));
         }
@@ -626,7 +630,7 @@ public sealed class AuthController(
                     protocol: Request.Scheme);
 
                 await confirmationDelivery.TrySendAsync(user.Id, () => emailNotifications.QueueTemplateAsync(
-                    normalizedEmail!, "Подтвердите ваш email", "system/email-confirmation",
+                    normalizedEmail!, AuthController.Localize("auth.runtime.confirmSubject"), "system/email-confirmation",
                     new { name = normalizedEmail!, confirmationUrl = callbackUrl }));
             }
             catch (Exception ex)
@@ -674,7 +678,7 @@ public sealed class AuthController(
             return View(new ConfirmEmailModel
             {
                 Succeeded = false,
-                StatusMessage = "Ссылка подтверждения некорректна."
+                StatusMessage = AuthController.Localize("auth.runtime.confirmationInvalid")
             });
         }
 
@@ -693,7 +697,7 @@ public sealed class AuthController(
             return View(new ConfirmEmailModel
             {
                 Succeeded = false,
-                StatusMessage = "Ссылка подтверждения повреждена или устарела."
+                StatusMessage = AuthController.Localize("auth.runtime.confirmationExpired")
             });
         }
 
@@ -702,7 +706,7 @@ public sealed class AuthController(
         var model = new ConfirmEmailModel
         {
             Succeeded = result.Succeeded,
-            StatusMessage = result.Succeeded ? "Спасибо за подтверждение адреса электронной почты." : "Ошибка подтверждения адреса электронной почты."
+            StatusMessage = result.Succeeded ? AuthController.Localize("auth.runtime.emailConfirmed") : AuthController.Localize("auth.runtime.confirmationError")
         };
 
         return View(model);
@@ -718,7 +722,7 @@ public sealed class AuthController(
         {
             return View(new ConfirmEmailChangeModel
             {
-                StatusMessage = "Ссылка подтверждения изменения email некорректна."
+                StatusMessage = AuthController.Localize("auth.runtime.changeEmailInvalid")
             });
         }
 
@@ -730,7 +734,7 @@ public sealed class AuthController(
 
         var model = new ConfirmEmailChangeModel
         {
-            StatusMessage = "Спасибо за подтверждение изменения адреса электронной почты."
+            StatusMessage = AuthController.Localize("auth.runtime.emailChanged")
         };
 
         try
@@ -739,14 +743,14 @@ public sealed class AuthController(
         }
         catch
         {
-            model.StatusMessage = "Ссылка подтверждения изменения email повреждена или устарела.";
+            model.StatusMessage = AuthController.Localize("auth.runtime.changeEmailExpired");
             return View(model);
         }
 
         var result = await userManager.ChangeEmailAsync(user, email, code);
         if (!result.Succeeded)
         {
-            model.StatusMessage = "Ошибка при изменении адреса электронной почты.";
+            model.StatusMessage = AuthController.Localize("auth.runtime.changeEmailError");
 
             return View(model);
         }
@@ -756,12 +760,14 @@ public sealed class AuthController(
         var setUserNameResult = await userManager.SetUserNameAsync(user, email);
         if (!setUserNameResult.Succeeded)
         {
-            model.StatusMessage = "Ошибка при изменении имени пользователя.";
+            model.StatusMessage = AuthController.Localize("auth.runtime.changeUsernameError");
 
             return View(model);
         }
 
         await signInManager.RefreshSignInAsync(user);
+
+        model.Succeeded = true;
 
         return View(model);
     }
@@ -775,23 +781,23 @@ public sealed class AuthController(
         var currentUser = await userManager.GetUserAsync(User);
         if (currentUser == null)
         {
-            return BadRequest(new { success = false, message = "Текущий пользователь не найден" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.currentUserMissing") });
         }
 
         var targetUser = await userManager.FindByIdAsync(request.UserId);
         if (targetUser == null)
         {
-            return BadRequest(new { success = false, message = "Целевой пользователь не найден" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.targetUserMissing") });
         }
 
         if (targetUser.IsDeleted)
         {
-            return BadRequest(new { success = false, message = "Нельзя войти под удалённым пользователем" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.deletedUser") });
         }
 
         if (targetUser.Id == currentUser.Id)
         {
-            return BadRequest(new { success = false, message = "Вы уже вошли под этим пользователем" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.alreadySignedInAsUser") });
         }
 
         // Сохраняем оригинального пользователя для возможности возврата
@@ -812,7 +818,7 @@ public sealed class AuthController(
             Expires = DateTimeOffset.Now.AddHours(2)
         });
 
-        return Ok(new { success = true, message = "Успешный вход под пользователем" });
+        return Ok(new { success = true, message = AuthController.Localize("auth.runtime.impersonationSuccess") });
     }
 
     /// <summary> Завершает сессию имперсонации и возвращает исходного пользователя. </summary>
@@ -825,7 +831,7 @@ public sealed class AuthController(
         var protectedImpersonatorId = Request.Cookies[ImpersonatorCookieName];
         if (string.IsNullOrEmpty(protectedImpersonatorId))
         {
-            return BadRequest(new { success = false, message = "Нет активной сессии имперсонации" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.noImpersonation") });
         }
 
         string impersonatorId;
@@ -837,7 +843,7 @@ public sealed class AuthController(
         {
             Response.Cookies.Delete(ImpersonatorCookieName);
 
-            return BadRequest(new { success = false, message = "Сессия имперсонации повреждена или устарела" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.impersonationExpired") });
         }
 
         var currentUser = await userManager.GetUserAsync(User);
@@ -845,7 +851,7 @@ public sealed class AuthController(
 
         if (impersonator == null)
         {
-            return BadRequest(new { success = false, message = "Администратор не найден" });
+            return BadRequest(new { success = false, message = AuthController.Localize("auth.runtime.adminMissing") });
         }
 
         await signInManager.SignOutAsync();
@@ -854,7 +860,7 @@ public sealed class AuthController(
 
         Response.Cookies.Delete(ImpersonatorCookieName);
 
-        return Ok(new { success = true, message = "Успешный возврат к админской учетке" });
+        return Ok(new { success = true, message = AuthController.Localize("auth.runtime.returnedToAdmin") });
     }
 
     /// <summary> Отображает страницу удаления аккаунта. </summary>
@@ -885,7 +891,7 @@ public sealed class AuthController(
         var user = await userManager.GetUserAsync(User);
         if (user == null)
         {
-            return NotFound("Не удалось загрузить пользователя.");
+            return NotFound(AuthController.Localize("auth.runtime.userLoadError"));
         }
 
         model.HasPassword = await userManager.HasPasswordAsync(user);
@@ -897,7 +903,7 @@ public sealed class AuthController(
 
         if (!model.ConfirmDeletion)
         {
-            ModelState.AddModelError(string.Empty, "Вы должны подтвердить удаление аккаунта.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.confirmDeletion"));
             return View(model);
         }
 
@@ -906,7 +912,7 @@ public sealed class AuthController(
             var passwordValid = await userManager.CheckPasswordAsync(user, model.Password);
             if (!passwordValid)
             {
-                ModelState.AddModelError(string.Empty, "Неверный пароль.");
+                ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.invalidPassword"));
                 return View(model);
             }
         }
@@ -927,7 +933,7 @@ public sealed class AuthController(
         {
             logger.LogError(ex, "Ошибка при удалении аккаунта пользователя {UserId}", user.Id);
 
-            ModelState.AddModelError(string.Empty, "Произошла ошибка при удалении аккаунта.");
+            ModelState.AddModelError(string.Empty, AuthController.Localize("auth.runtime.deleteError"));
 
             return View(model);
         }
@@ -944,8 +950,8 @@ public sealed class AuthController(
             WasDeleted = wasDeleted,
             OriginalEmail = originalEmail,
             Message = wasDeleted
-                ? "Ваш аккаунт был успешно удален. Вы можете зарегистрироваться снова, но это будет совершенно новый аккаунт."
-                : "Что-то пошло не так. Пожалуйста, попробуйте снова."
+                ? AuthController.Localize("auth.runtime.deleted")
+                : AuthController.Localize("auth.runtime.tryAgain")
         };
 
         return View(model);
@@ -958,7 +964,7 @@ public sealed class AuthController(
         {
             ModelState.AddModelError(
                 nameof(RegisterModel.PersonalDataProcessingConsent),
-                "Для регистрации необходимо согласие на обработку персональных данных.");
+                AuthController.Localize("auth.runtime.consentRequired"));
         }
     }
 
@@ -1001,4 +1007,7 @@ public sealed class AuthController(
 
         return false;
     }
+
+    private static string Localize(string key) =>
+        AuthController.s_authResources.GetString(key, System.Globalization.CultureInfo.CurrentUICulture) ?? key;
 }

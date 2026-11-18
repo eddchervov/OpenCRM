@@ -1,4 +1,7 @@
-﻿export type WorkJournalWorkItem = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workJournalMessages'
+
+export type WorkJournalWorkItem = {
   occurredAt: string
   kind: string
   eventCode: string
@@ -10,6 +13,7 @@
   clientName?: string | null
   resultText?: string | null
   metaText?: string | null
+  currencyCode?: string
   price?: number | null
   detailUrl?: string | null
   vehicleUrl?: string | null
@@ -71,7 +75,7 @@ export async function loadWorkJournal(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить историю работ.')
+    throw new Error(error?.message ?? translate('workJournal.loadError'))
   }
 
   return response.json()

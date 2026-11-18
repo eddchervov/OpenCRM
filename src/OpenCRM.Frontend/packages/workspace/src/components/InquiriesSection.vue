@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader, UiPagination, UiSearchInput, UiSelect } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
@@ -6,6 +9,8 @@ import { inquirySources, inquiryStages, loadInquiries, loadInquiryBoard, type In
 import { formatInquiryTime } from '../utils/inquiryTime'
 import { createMemberSelectOptions } from '../utils/memberSelectOptions'
 import InquiryCardSection from './InquiryCardSection.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext; inquiryId?: string }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -31,7 +36,7 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined
 const activeFilters = computed(() => [responsible.value, source.value, stage.value, due.value].filter(Boolean).length)
 const resultCount = computed(() => listMode.value ? total.value : columns.value.reduce((count, column) => count + column.count, 0))
 const listMode = computed(() => view.value === 'list' || !!stage.value)
-const memberOptions = computed(() => [{ value: '', label: 'Все ответственные' }, { value: props.context.user.id, label: 'Только мои' },
+const memberOptions = computed(() => [{ value: '', label: t('inquiries.allResponsible') }, { value: props.context.user.id, label: t('inquiries.onlyMine') },
   ...createMemberSelectOptions((props.context.organization.members ?? []).filter(member => member.userId !== props.context.user.id).map(member => ({ ...member, value: member.userId })))])
 
 async function load() {
@@ -53,7 +58,7 @@ async function load() {
     if ('columns' in result) columns.value = result.columns
     else { items.value = result.items; total.value = result.totalCount }
   } catch (caught) {
-    if (!activeRequest.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить обращения.'
+    if (!activeRequest.signal.aborted) error.value = caught instanceof Error ? caught.message : t('inquiries.loadError')
   } finally {
     if (request === activeRequest) loading.value = false
   }
@@ -69,33 +74,33 @@ function resetFilters() { source.value = ''; responsible.value = ''; stage.value
 function showBoard() { stage.value = ''; view.value = 'board' }
 function stageName(value: string) { return inquiryStages.find(item => item.value === value)?.label ?? value }
 function sourceName(value: string) { return inquirySources.find(item => item.value === value)?.label ?? value }
-function cardTitle(item: Inquiry) { return item.contactName || item.organizationClientName || 'Обращение' }
+function cardTitle(item: Inquiry) { return item.contactName || item.organizationClientName || t('inquiries.inquiry') }
 function overdue(item: Inquiry) { return !!item.nextActionAt && new Date(item.nextActionAt).getTime() < Date.now() }
 </script>
 
 <template>
   <InquiryCardSection v-if="inquiryId" :key="context.organization.id + ':' + inquiryId" :context="context" :inquiry-id="inquiryId" :can-create="canManage" :can-view-clients="canViewClients" :can-view-vehicles="canViewVehicles" :time-zone-id="timeZone" @changed="emit('changed')" />
-  <UiCard v-else page title="Обращения">
+  <UiCard v-else page :title="t('inquiries.title')">
     <div class="inquiries">
       <div class="inquiries__toolbar">
-        <UiSearchInput v-model="search" placeholder="Поиск по контакту, телефону или запросу" label="Поиск обращений" />
-        <div class="inquiries__views" role="group" aria-label="Представление обращений">
-          <button type="button" :aria-pressed="!listMode" @click="showBoard"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="5" height="12" rx="1"/><rect x="12" y="4" width="5" height="12" rx="1"/></svg>Доска</button>
-          <button type="button" :aria-pressed="listMode" @click="view = 'list'"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10M3 5h.01M3 10h.01M3 15h.01"/></svg>Список</button>
+        <UiSearchInput v-model="search" :placeholder="t('inquiries.searchPlaceholder')" :label="t('inquiries.searchLabel')" />
+        <div class="inquiries__views" role="group" :aria-label="t('inquiries.view')">
+          <button type="button" :aria-pressed="!listMode" @click="showBoard"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="5" height="12" rx="1"/><rect x="12" y="4" width="5" height="12" rx="1"/></svg>{{ t('inquiries.board') }}</button>
+          <button type="button" :aria-pressed="listMode" @click="view = 'list'"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10M3 5h.01M3 10h.01M3 15h.01"/></svg>{{ t('inquiries.list') }}</button>
         </div>
-        <UiButton v-if="canManage" class="inquiries__create" href="#inquiries/new" aria-label="Новое обращение"><span aria-hidden="true">＋</span><span class="inquiries__new-label">Новое обращение</span><span class="inquiries__new-short">Создать</span></UiButton>
+        <UiButton v-if="canManage" class="inquiries__create" href="#inquiries/new" :aria-label="t('inquiries.new')"><span aria-hidden="true">＋</span><span class="inquiries__new-label">{{ t('inquiries.new') }}</span><span class="inquiries__new-short">{{ t('inquiries.create') }}</span></UiButton>
       </div>
       <div class="inquiries__filter-bar">
-        <div class="inquiries__filter-actions"><button type="button" class="inquiries__filter-toggle" :aria-expanded="filtersOpen" aria-controls="inquiry-filters" @click="filtersOpen = !filtersOpen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M5 10h10M8 15h4"/></svg>Фильтры<span v-if="activeFilters" class="inquiries__count">{{ activeFilters }}</span></button><button v-if="activeFilters" type="button" class="inquiries__reset" @click="resetFilters">Сбросить</button><span class="inquiries__scope">{{ stage ? stageName(stage) : 'Открытые обращения' }}</span></div>
-        <span class="inquiries__result" aria-live="polite">{{ loading ? 'Загрузка…' : 'Всего: ' + resultCount }}</span>
+        <div class="inquiries__filter-actions"><button type="button" class="inquiries__filter-toggle" :aria-expanded="filtersOpen" aria-controls="inquiry-filters" @click="filtersOpen = !filtersOpen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M5 10h10M8 15h4"/></svg>{{ t('inquiries.filters') }}<span v-if="activeFilters" class="inquiries__count">{{ activeFilters }}</span></button><button v-if="activeFilters" type="button" class="inquiries__reset" @click="resetFilters">{{ t('inquiries.reset') }}</button><span class="inquiries__scope">{{ stage ? stageName(stage) : t('inquiries.openInquiries') }}</span></div>
+        <span class="inquiries__result" aria-live="polite">{{ loading ? t('inquiries.loading') : t('inquiries.total', { count: resultCount }) }}</span>
       </div>
       <div v-if="filtersOpen" id="inquiry-filters" class="inquiries__filters">
-        <UiSelect v-model="responsible" label="Ответственный" :options="memberOptions" />
-        <UiSelect v-model="source" label="Источник" :options="[{ value: '', label: 'Все источники' }, ...inquirySources]" />
-        <UiSelect v-model="stage" label="Этап" :options="[{ value: '', label: 'Открытые обращения' }, ...inquiryStages]" />
-        <UiSelect v-model="due" label="Следующее действие" :options="[{ value: '', label: 'Любой срок' }, { value: 'overdue', label: 'Просрочено' }, { value: 'today', label: 'Сегодня' }]" />
+        <UiSelect v-model="responsible" :label="t('inquiries.responsible')" :options="memberOptions" />
+        <UiSelect v-model="source" :label="t('inquiries.source')" :options="[{ value: '', label: t('inquiries.allSources') }, ...inquirySources]" />
+        <UiSelect v-model="stage" :label="t('inquiries.stage')" :options="[{ value: '', label: t('inquiries.openInquiries') }, ...inquiryStages]" />
+        <UiSelect v-model="due" :label="t('inquiries.nextAction')" :options="[{ value: '', label: t('inquiries.anyDeadline') }, { value: 'overdue', label: t('inquiries.overdue') }, { value: 'today', label: t('inquiries.today') }]" />
       </div>
-      <p v-if="error" role="alert" class="inquiries__error">{{ error }} <button type="button" @click="load">Повторить</button></p>
+      <p v-if="error" role="alert" class="inquiries__error">{{ error }} <button type="button" @click="load">{{ t('inquiries.retry') }}</button></p>
       <UiLoader v-if="loading" />
       <div v-else-if="!error && !listMode" class="inquiries__board">
         <section v-for="column in columns" :key="column.stageCode" class="inquiries__column" :class="'inquiries__column--' + column.stageCode">
@@ -105,36 +110,36 @@ function overdue(item: Inquiry) { return !!item.nextActionAt && new Date(item.ne
               <strong class="inquiry-tile__title">{{ cardTitle(item) }}</strong>
               <p class="inquiry-tile__request">{{ item.interestText }}</p>
               <div v-if="item.vehicleId || item.vehicleDescription" class="inquiry-vehicle">
-                <span class="inquiry-vehicle__label">{{ item.vehicleId ? 'Автомобиль из базы' : 'Со слов клиента' }}</span>
-                <span class="inquiry-vehicle__name">{{ item.vehicleId ? item.vehicleName || 'Автомобиль без названия' : item.vehicleDescription }}</span>
-                <small v-if="item.vehicleId && item.vehicleDescription" class="inquiry-vehicle__description">Со слов клиента: {{ item.vehicleDescription }}</small>
+                <span class="inquiry-vehicle__label">{{ item.vehicleId ? t('inquiries.vehicleFromDatabase') : t('inquiries.asDescribed') }}</span>
+                <span class="inquiry-vehicle__name">{{ item.vehicleId ? item.vehicleName || t('inquiries.unnamedVehicle') : item.vehicleDescription }}</span>
+                <small v-if="item.vehicleId && item.vehicleDescription" class="inquiry-vehicle__description">{{ t('inquiries.describedVehicle', { description: item.vehicleDescription }) }}</small>
               </div>
-              <div class="inquiry-tile__meta"><span>{{ sourceName(item.sourceCode) }}</span><span :title="item.responsibleUserName || 'Ответственный не назначен'">{{ item.responsibleUserName || 'Не назначен' }}</span></div>
+              <div class="inquiry-tile__meta"><span>{{ sourceName(item.sourceCode) }}</span><span :title="item.responsibleUserName || t('inquiries.noAssignee')">{{ item.responsibleUserName || t('inquiries.unassigned') }}</span></div>
               <div v-if="item.nextActionText" class="inquiry-tile__action"><span>{{ item.nextActionText }}</span><time :datetime="item.nextActionAt || undefined" :class="{ 'inquiry-due--overdue': overdue(item) }">{{ formatInquiryTime(item.nextActionAt, timeZone) }}</time></div>
             </a>
-            <div v-if="!column.items.length" class="inquiries__column-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14v13H5zM8 4h8M9 11h6M9 15h4"/></svg><span>Пока нет обращений</span></div>
-            <button v-if="column.hasMore" type="button" class="inquiries__more" @click="stage = column.stageCode">Показать все · {{ column.count }} →</button>
+            <div v-if="!column.items.length" class="inquiries__column-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14v13H5zM8 4h8M9 11h6M9 15h4"/></svg><span>{{ t('inquiries.empty') }}</span></div>
+            <button v-if="column.hasMore" type="button" class="inquiries__more" @click="stage = column.stageCode">{{ t('inquiries.showAll') }} · {{ column.count }} →</button>
           </div>
         </section>
       </div>
       <div v-else-if="!error" class="inquiries__list">
-        <div v-if="items.length" class="inquiry-row inquiry-row--header" aria-hidden="true"><span>Контакт и запрос</span><span>Этап</span><span>Ответственный</span><span>Следующее действие</span></div>
+        <div v-if="items.length" class="inquiry-row inquiry-row--header" aria-hidden="true"><span>{{ t('inquiries.contactAndRequest') }}</span><span>{{ t('inquiries.stage') }}</span><span>{{ t('inquiries.responsible') }}</span><span>{{ t('inquiries.nextAction') }}</span></div>
         <a v-for="item in items" :key="item.id" :href="'#inquiries/' + item.id" class="inquiry-row">
           <div class="inquiry-row__contact">
             <strong>{{ cardTitle(item) }}</strong>
             <span>{{ item.interestText }}</span>
             <div v-if="item.vehicleId || item.vehicleDescription" class="inquiry-vehicle">
-              <span class="inquiry-vehicle__label">{{ item.vehicleId ? 'Автомобиль из базы' : 'Со слов клиента' }}</span>
-              <span class="inquiry-vehicle__name">{{ item.vehicleId ? item.vehicleName || 'Автомобиль без названия' : item.vehicleDescription }}</span>
-              <small v-if="item.vehicleId && item.vehicleDescription" class="inquiry-vehicle__description">Со слов клиента: {{ item.vehicleDescription }}</small>
+              <span class="inquiry-vehicle__label">{{ item.vehicleId ? t('inquiries.vehicleFromDatabase') : t('inquiries.asDescribed') }}</span>
+              <span class="inquiry-vehicle__name">{{ item.vehicleId ? item.vehicleName || t('inquiries.unnamedVehicle') : item.vehicleDescription }}</span>
+              <small v-if="item.vehicleId && item.vehicleDescription" class="inquiry-vehicle__description">{{ t('inquiries.describedVehicle', { description: item.vehicleDescription }) }}</small>
             </div>
           </div>
           <div><span class="inquiry-row__stage">{{ stageName(item.stageCode) }}</span></div>
-          <span class="inquiry-row__owner">{{ item.responsibleUserName || 'Не назначен' }}</span>
+          <span class="inquiry-row__owner">{{ item.responsibleUserName || t('inquiries.unassigned') }}</span>
           <div class="inquiry-row__action"><span>{{ item.nextActionText || '—' }}</span><time v-if="item.nextActionAt" :datetime="item.nextActionAt" :class="{ 'inquiry-due--overdue': overdue(item) }">{{ formatInquiryTime(item.nextActionAt, timeZone) }}</time></div>
         </a>
-        <p v-if="!items.length" class="inquiries__empty">Обращения не найдены</p>
-        <UiPagination v-model="page" :total-items="total" :items-per-page="20" label="Страницы обращений" />
+        <p v-if="!items.length" class="inquiries__empty">{{ t('inquiries.notFound') }}</p>
+        <UiPagination v-model="page" :total-items="total" :items-per-page="20" :label="t('inquiries.pages')" />
       </div>
     </div>
   </UiCard>

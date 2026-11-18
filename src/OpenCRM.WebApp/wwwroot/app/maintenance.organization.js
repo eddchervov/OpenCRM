@@ -1,4 +1,6 @@
-﻿if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-time-picker']) {
+﻿var maintenanceLegacyText = JSON.parse(document.getElementById('maintenance-legacy-messages').dataset.messages);
+
+if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-time-picker']) {
     Vue.component('vue-ctk-date-time-picker', window['vue-ctk-date-time-picker']);
 }
 
@@ -10,11 +12,13 @@ new Vue({
     el: '#maintenance-details-form',
     data: function () {
         return {
+            localizedText: maintenanceLegacyText,
+            regionalCurrencyCode: null,
             organizationId: typeof maintenanceOrganizationId !== 'undefined' && maintenanceOrganizationId ? maintenanceOrganizationId : null,
             formLoad: true,
             errorMessage: '',
-            loadingTitle: 'Подготовка файла...',
-            loadingMessage: 'Пожалуйста, подождите',
+            loadingTitle: maintenanceLegacyText.loadingFileTitle,
+            loadingMessage: maintenanceLegacyText.loadingWait,
             maintenance: {
                 id: maintenanceId,
                 status: 3,
@@ -92,10 +96,10 @@ new Vue({
             return this.exportAccess.pdf || this.exportAccess.pdfWithPhotos || this.exportAccess.word || this.exportAccess.wordWithPhotos;
         },
         mileageUnitLabel: function () {
-            return this.vehicle.mileageUnit === 2 ? 'Моточасы' : 'Пробег';
+            return this.vehicle.mileageUnit === 2 ? maintenanceLegacyText.mileageHours : maintenanceLegacyText.mileageKilometers;
         },
         mileageUnitShortText: function () {
-            return this.vehicle.mileageUnit === 2 ? 'м/ч' : 'км';
+            return this.vehicle.mileageUnit === 2 ? maintenanceLegacyText.mileageUnitHours : maintenanceLegacyText.mileageUnitKilometers;
         },
         selectedDocumentTemplate: function () {
             var selectedId = this.selectedDocumentTemplateId;
@@ -112,7 +116,7 @@ new Vue({
                 var raw = value.trim();
                 if (!raw) return null;
 
-                var ruDate = moment(raw, 'DD.MM.YYYY', true);
+                var ruDate = moment(raw, maintenanceLegacyText.dateCalendarFormat, true);
                 if (ruDate.isValid()) return ruDate.format('YYYY-MM-DD');
 
                 var isoDate = moment(raw.substring(0, 10), 'YYYY-MM-DD', true);
@@ -130,7 +134,7 @@ new Vue({
 
         formatDateForPicker: function (value) {
             var date = this.normalizeDateForServer(value);
-            return date ? moment(date, 'YYYY-MM-DD', true).format('DD.MM.YYYY') : null;
+            return date ? moment(date, 'YYYY-MM-DD', true).format(maintenanceLegacyText.dateCalendarFormat) : null;
         },
 
         getWorkspaceParams: function () {
@@ -233,8 +237,8 @@ new Vue({
         },
 
         showLoadingModal: function (title, message) {
-            this.loadingTitle = title || 'Подготовка файла...';
-            this.loadingMessage = message || 'Пожалуйста, подождите';
+            this.loadingTitle = title || maintenanceLegacyText.loadingFileTitle;
+            this.loadingMessage = message || maintenanceLegacyText.loadingWait;
             this.showModal('#loadingModal');
         },
 
@@ -244,7 +248,7 @@ new Vue({
             }
 
             this.documentActionKey = actionKey || 'document';
-            this.showLoadingModal(loadingTitle, 'Пожалуйста, подождите');
+            this.showLoadingModal(loadingTitle, maintenanceLegacyText.loadingWait);
 
             try {
                 await this.downloadBlobFromUrl(url, 'document');
@@ -293,7 +297,7 @@ new Vue({
         },
 
         handleDocumentDownloadError: async function (error, fallbackMessage) {
-            var message = fallbackMessage || 'Не удалось скачать документ';
+            var message = fallbackMessage || maintenanceLegacyText.validationDocumentDownloadError;
 
             if (error && error.response && error.response.data instanceof Blob) {
                 try {
@@ -318,7 +322,7 @@ new Vue({
             try {
                 var response = await fetch('/api/v1/media/' + photoId + '/path');
                 if (!response.ok) {
-                    throw new Error('Не удалось загрузить фотографию');
+                    throw new Error(maintenanceLegacyText.validationUploadPhotoFailure);
                 }
 
                 return await response.text();
@@ -384,9 +388,9 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация Word...',
-                'Разрешите всплывающие окна для скачивания Word документа',
-                'Ошибка при генерации Word документа',
+                maintenanceLegacyText.loadingGeneratingWord,
+                maintenanceLegacyText.loadingPopupBlockedWord,
+                maintenanceLegacyText.loadingWordError,
                 includePhotos ? 'report-word-photos' : 'report-word'
             );
         },
@@ -400,16 +404,16 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация PDF...',
-                'Разрешите всплывающие окна для скачивания PDF',
-                'Ошибка при генерации PDF',
+                maintenanceLegacyText.loadingGeneratingPdf,
+                maintenanceLegacyText.loadingPopupBlockedPdf,
+                maintenanceLegacyText.loadingPdfError,
                 includePhotos ? 'report-pdf-photos' : 'report-pdf'
             );
         },
 
         generateWorkActPDF: function () {
             if (!this.organizationId) {
-                this.showError('Акт выполненных работ доступен только в рабочем пространстве организации.');
+                this.showError(maintenanceLegacyText.validationCancelDocumentOnlyOrg);
                 return;
             }
 
@@ -417,16 +421,16 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация акта...',
-                'Разрешите всплывающие окна для скачивания акта',
-                'Ошибка при генерации акта выполненных работ',
+                maintenanceLegacyText.loadingGeneratingReport,
+                maintenanceLegacyText.loadingPopupBlockedReport,
+                maintenanceLegacyText.loadingReportError,
                 'work-act-pdf'
             );
         },
 
         generateWorkActWord: function () {
             if (!this.organizationId) {
-                this.showError('Акт выполненных работ доступен только в рабочем пространстве организации.');
+                this.showError(maintenanceLegacyText.validationCancelDocumentOnlyOrg);
                 return;
             }
 
@@ -434,16 +438,16 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация акта Word...',
-                'Разрешите всплывающие окна для скачивания акта Word',
-                'Ошибка при генерации акта выполненных работ',
+                maintenanceLegacyText.loadingGeneratingReportWord,
+                maintenanceLegacyText.loadingPopupBlockedReportWord,
+                maintenanceLegacyText.loadingReportError,
                 'work-act-word'
             );
         },
 
         generateWorkOrderPDF: function () {
             if (!this.organizationId) {
-                this.showError('Заказ-наряд доступен только в рабочем пространстве организации.');
+                this.showError(maintenanceLegacyText.validationOrderDocumentOnlyOrg);
                 return;
             }
 
@@ -451,16 +455,16 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация заказ-наряда...',
-                'Разрешите всплывающие окна для скачивания заказ-наряда',
-                'Ошибка при генерации заказ-наряда',
+                maintenanceLegacyText.loadingGeneratingOrder,
+                maintenanceLegacyText.loadingPopupBlockedOrder,
+                maintenanceLegacyText.loadingOrderError,
                 'work-order-pdf'
             );
         },
 
         generateWorkOrderWord: function () {
             if (!this.organizationId) {
-                this.showError('Заказ-наряд доступен только в рабочем пространстве организации.');
+                this.showError(maintenanceLegacyText.validationOrderDocumentOnlyOrg);
                 return;
             }
 
@@ -468,9 +472,9 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация заказ-наряда Word...',
-                'Разрешите всплывающие окна для скачивания заказ-наряда Word',
-                'Ошибка при генерации заказ-наряда',
+                maintenanceLegacyText.loadingGeneratingOrderWord,
+                maintenanceLegacyText.loadingPopupBlockedOrderWord,
+                maintenanceLegacyText.loadingOrderError,
                 'work-order-word'
             );
         },
@@ -478,7 +482,7 @@ new Vue({
         generateScenarioDocument: function (format) {
             var template = this.selectedDocumentTemplate;
             if (!template) {
-                this.showError('Выберите шаблон документа.');
+                this.showError(maintenanceLegacyText.validationSelectDocumentTemplate);
                 return;
             }
 
@@ -486,7 +490,7 @@ new Vue({
             var normalizedFormat = format === 'word' ? 'word' : 'pdf';
 
             if (!this.organizationId) {
-                this.showError('Документы сценария доступны только в рабочем пространстве организации.');
+                this.showError(maintenanceLegacyText.validationScenarioDocumentOnlyOrg);
                 return;
             }
 
@@ -499,16 +503,16 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация документа...',
-                'Разрешите всплывающие окна для скачивания документа',
-                'Ошибка при генерации документа сценария',
+                maintenanceLegacyText.loadingGeneratingDocument,
+                maintenanceLegacyText.loadingPopupBlockedDocument,
+                maintenanceLegacyText.loadingDocumentError,
                 'scenario-' + documentKind + '-' + normalizedFormat
             );
         },
 
         generateScenarioDocumentForTemplate: function (template, format) {
             if (!template || !template.id) {
-                this.showError('Шаблон документа не найден.');
+                this.showError(maintenanceLegacyText.validationDocumentTemplateMissing);
                 return;
             }
 
@@ -583,7 +587,7 @@ new Vue({
                 }
 
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка загрузки данных обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationLoadError);
             } finally {
                 this.formLoad = false;
             }
@@ -598,7 +602,7 @@ new Vue({
                 this.maintenanceDocuments = response.data || [];
             } catch (error) {
                 this.maintenanceDocuments = [];
-                this.handleApiError(error, 'Не удалось загрузить документы');
+                this.handleApiError(error, maintenanceLegacyText.validationDocumentsLoadError);
             } finally {
                 this.maintenanceDocumentsLoaded = true;
             }
@@ -635,7 +639,7 @@ new Vue({
 
                 await this.loadMaintenanceDocuments();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось загрузить документ');
+                this.handleApiError(error, maintenanceLegacyText.validationDocumentLoadError);
             } finally {
                 this.documentUploading = false;
                 if (this.$refs.signedDocumentInput) {
@@ -654,14 +658,14 @@ new Vue({
             }
 
             this.documentActionKey = 'signed-document';
-            this.showLoadingModal('Скачиваем документ...', 'Пожалуйста, подождите');
+            this.showLoadingModal(maintenanceLegacyText.loadingDownloadingDocument, maintenanceLegacyText.loadingWait);
 
             try {
                 await this.downloadBlobFromUrl(
                     this.getDocumentDownloadUrl(document.id),
                     document.fileName || document.title || 'document');
             } catch (error) {
-                await this.handleDocumentDownloadError(error, 'Не удалось скачать документ');
+                await this.handleDocumentDownloadError(error, maintenanceLegacyText.validationDocumentDownloadError);
             } finally {
                 this.hideModal('#loadingModal');
                 this.documentActionKey = null;
@@ -683,18 +687,25 @@ new Vue({
         },
 
         formatDocumentDate: function (dateString) {
-            if (!dateString) return '—';
-            var date = moment(dateString);
-            return date.isValid() ? date.format('DD.MM.YYYY HH:mm') : '—';
+            return dateString ? window.OpenCRMRegional.formatDate(dateString, { dateStyle: 'short', timeStyle: 'short' }) : '—';
         },
 
         formatFileSize: function (size) {
-            if (!size) return '0 КБ';
-            if (size < 1024 * 1024) {
-                return Math.max(1, Math.round(size / 1024)) + ' КБ';
+            if (!size) {
+                return maintenanceLegacyText.documentFileZero;
             }
 
-            return (size / 1024 / 1024).toFixed(1).replace('.', ',') + ' МБ';
+            var formatter = new Intl.NumberFormat(window.OpenCRMRegional.culture);
+            if (size < 1024 * 1024) {
+                var kilobytes = formatter.format(Math.max(1, Math.round(size / 1024)));
+                return maintenanceLegacyText.documentFileKilobytes.replace('{0}', kilobytes);
+            }
+
+            var megabytes = new Intl.NumberFormat(window.OpenCRMRegional.culture, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }).format(size / 1024 / 1024);
+            return maintenanceLegacyText.documentFileMegabytes.replace('{0}', megabytes);
         },
 
         loadMaintenanceHistoryEvents: async function () {
@@ -712,7 +723,7 @@ new Vue({
                 this.maintenanceHistoryEvents = response.data || [];
             } catch (error) {
                 this.maintenanceHistoryEvents = [];
-                this.handleApiError(error, 'Не удалось загрузить историю обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationHistoryLoadError);
             } finally {
                 this.maintenanceHistoryLoaded = true;
             }
@@ -738,22 +749,22 @@ new Vue({
 
         getMaintenanceTypeText: function (type) {
             var typeTexts = {
-                1: 'Ремонт и обслуживание',
-                2: 'Плановое ТО',
-                3: 'Заправка топливом',
-                100: 'Другое'
+                1: maintenanceLegacyText.typeRepair,
+                2: maintenanceLegacyText.typeScheduled,
+                3: maintenanceLegacyText.typeFuel,
+                100: maintenanceLegacyText.typeOther
             };
-            return typeTexts[type] || 'Обслуживание';
+            return typeTexts[type] || maintenanceLegacyText.typeUnknown;
         },
 
         getMaintenanceStatusText: function (status) {
             var statusTexts = {
-                1: 'Запланировано',
-                2: 'В работе',
-                3: 'Выполнено',
-                4: 'Отменено'
+                1: maintenanceLegacyText.statusPlanned,
+                2: maintenanceLegacyText.statusInProgress,
+                3: maintenanceLegacyText.statusCompleted,
+                4: maintenanceLegacyText.statusCancelled
             };
-            return statusTexts[status] || 'Неизвестно';
+            return statusTexts[status] || maintenanceLegacyText.statusUnknown;
         },
         normalizeDateForDisplay: function (dateString) {
             if (!dateString) return null;
@@ -762,7 +773,7 @@ new Vue({
                 var raw = dateString.trim();
                 if (!raw) return null;
 
-                var ruDate = moment(raw, 'DD.MM.YYYY', true);
+                var ruDate = moment(raw, maintenanceLegacyText.dateCalendarFormat, true);
                 if (ruDate.isValid()) return ruDate.format('YYYY-MM-DD');
 
                 var isoDate = moment(raw.substring(0, 10), 'YYYY-MM-DD', true);
@@ -792,7 +803,7 @@ new Vue({
             }
 
             var targetDay = this.getMaintenanceDateDay(targetDate);
-            return targetDay ? targetDay.isBefore(moment().startOf('day'), 'day') : false;
+            return targetDay ? targetDay.format('YYYY-MM-DD') < window.OpenCRMRegional.today() : false;
         },
         getMaintenanceStatusDisplayText: function (status) {
             return this.getMaintenanceStatusText(status);
@@ -809,7 +820,7 @@ new Vue({
         },
 
         getPrimaryMaintenanceDateLabel: function () {
-            return this.maintenance.status === 3 ? 'Дата выполнения' : 'Плановая дата';
+            return this.maintenance.status === 3 ? maintenanceLegacyText.dateCompleted : maintenanceLegacyText.datePlanned;
         },
 
         getPrimaryMaintenanceDateValue: function () {
@@ -819,8 +830,7 @@ new Vue({
         },
 
         formatDate: function (dateString) {
-            var date = this.normalizeDateForDisplay(dateString);
-            return date ? moment(date, 'YYYY-MM-DD', true).format('DD.MM.YYYY') : '—';
+            return dateString ? window.OpenCRMRegional.formatDate(dateString, { dateStyle: 'short' }) : '—';
         },
 
         normalizeTimeForServer: function (value) {
@@ -851,12 +861,10 @@ new Vue({
             return timeText ? dateText + ', ' + timeText : dateText;
         },
 
-        formatPrice: function (price) {
-            return new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                minimumFractionDigits: 0
-            }).format(price);
+        formatPrice: function (price, currencyCode) {
+            const selectedCurrency = currencyCode || this.maintenance?.currencyCode || this.selectedMaintenance?.currencyCode || this.regionalCurrencyCode;
+
+            return window.OpenCRMRegional.formatMoney(price, selectedCurrency);
         },
 
         openPhotoGallery: function (index) {
@@ -876,21 +884,21 @@ new Vue({
             this.workflowPlannedEndTime = this.normalizeTimeForServer(this.maintenance.plannedEndTime) || '10:00';
 
             if (action === 'complete') {
-                this.workflowModalTitle = 'Выполнить обслуживание';
-                this.workflowConfirmText = 'Выполнить';
-                this.workflowDate = this.maintenance.completedDate || moment().format('YYYY-MM-DD');
+                this.workflowModalTitle = maintenanceLegacyText.workflowCompleteTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowCompleteAction;
+                this.workflowDate = this.maintenance.completedDate || window.OpenCRMRegional.today();
             } else if (action === 'cancel') {
-                this.workflowModalTitle = 'Отменить обслуживание';
-                this.workflowConfirmText = 'Отменить';
-                this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || moment().format('YYYY-MM-DD');
+                this.workflowModalTitle = maintenanceLegacyText.workflowCancelTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowCancelAction;
+                this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || window.OpenCRMRegional.today();
             } else if (action === 'reschedule') {
-                this.workflowModalTitle = 'Перенести обслуживание';
-                this.workflowConfirmText = 'Перенести';
-                this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || moment().format('YYYY-MM-DD');
+                this.workflowModalTitle = maintenanceLegacyText.workflowRescheduleTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowRescheduleAction;
+                this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || window.OpenCRMRegional.today();
             } else if (action === 'reopen') {
-                this.workflowModalTitle = 'Возобновить обслуживание';
-                this.workflowConfirmText = 'Возобновить';
-                this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || moment().format('YYYY-MM-DD');
+                this.workflowModalTitle = maintenanceLegacyText.workflowResumeTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowResumeAction;
+                this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || window.OpenCRMRegional.today();
             }
 
             this.workflowDatePickerValue = this.formatDateForPicker(this.workflowDate);
@@ -924,7 +932,7 @@ new Vue({
             };
 
             if (action === 'complete') {
-                payload.completedDate = this.getWorkflowDateForServer() || moment().format('YYYY-MM-DD');
+                payload.completedDate = this.getWorkflowDateForServer() || window.OpenCRMRegional.today();
                 payload.completedDateText = payload.completedDate;
                 payload.mileage = this.workflowMileage || null;
             } else if (action === 'reschedule' || action === 'reopen') {
@@ -934,11 +942,11 @@ new Vue({
                 payload.plannedStartTimeText = this.normalizeTimeForServer(this.workflowPlannedStartTime);
                 payload.plannedEndTimeText = this.normalizeTimeForServer(this.workflowPlannedEndTime);
                 if (!payload.plannedStartTimeText || !payload.plannedEndTimeText) {
-                    this.showError('Укажите время начала и окончания обслуживания');
+                    this.showError(maintenanceLegacyText.validationPlannedTimeRequired);
                     return;
                 }
                 if ((payload.plannedEndDate + 'T' + payload.plannedEndTimeText) <= (payload.plannedDate + 'T' + payload.plannedStartTimeText)) {
-                    this.showError('Время окончания должно быть позже времени начала');
+                    this.showError(maintenanceLegacyText.validationEndAfterStart);
                     return;
                 }
             } else if (action === 'cancel') {
@@ -962,7 +970,7 @@ new Vue({
                     await this.loadMaintenanceHistoryEvents();
                 }
             } catch (error) {
-                this.handleApiError(error, 'Не удалось изменить состояние обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.workflowChangeError);
             } finally {
                 this.workflowSaving = false;
             }
@@ -981,7 +989,7 @@ new Vue({
                 this.hideModal('#deleteMaintenanceModal');
                 this.redirectToVehicle();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось удалить обслуживание');
+                this.handleApiError(error, maintenanceLegacyText.deleteMaintenanceError);
                 this.hideModal('#deleteMaintenanceModal');
             } finally {
                 this.deleteSaving = false;
@@ -1007,6 +1015,7 @@ new Vue({
         }
     },
     mounted: function () {
+        window.OpenCRMRegional.initializeLegacyVm(this);
         this.loadMaintenanceData();
 
         var _this = this;

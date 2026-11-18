@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -24,6 +25,12 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
     private string? _pendingServiceScope;
     private bool _serviceRequestMayHaveReachedServer;
     private AdminBillingPaymentServiceActions? _serviceActions;
+    private string? _confirmationTranslationKey;
+    private object?[] _confirmationArguments = [];
+    private string? _confirmationAppendTranslationKey;
+    private object?[] _confirmationAppendArguments = [];
+    private string? _errorTranslationKey;
+    private bool _isSettingLocalizedError;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RequestServiceActionCommand))]
@@ -60,7 +67,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RequestStatusChangeCommand))]
-    private CommunicationOption _selectedStatus = new("completed", "Оплачено");
+    private CommunicationOption _selectedStatus = CommunicationOption.Localized("completed", "native.billing.oplacheno");
 
     [ObservableProperty]
     private bool _isConfirmationOpen;
@@ -70,8 +77,11 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
 
     public IReadOnlyList<CommunicationOption> StatusOptions { get; } =
     [
-        new("pending", "Ожидание оплаты"), new("completed", "Оплачено"),
-        new("failed", "Ошибка"), new("canceled", "Отменено"), new("refunded", "Возврат")
+        CommunicationOption.Localized("pending", "native.billing.ozhidanie.oplaty"),
+        CommunicationOption.Localized("completed", "native.billing.oplacheno"),
+        CommunicationOption.Localized("failed", "native.billing.oshibka"),
+        CommunicationOption.Localized("canceled", "native.billing.otmeneno"),
+        CommunicationOption.Localized("refunded", "native.billing.vozvrat")
     ];
 
     public bool IsVisible => this._payment != null
@@ -104,13 +114,25 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
 
     public string PendingServiceRequestHint => this._pendingServiceRequest == null
         ? string.Empty
-        : $"Команда по платежу № {this._pendingServicePaymentId} ещё не получила окончательный ответ. Повтор отправит тот же запрос с прежним номером операции.";
+        : AdminLocalization.Instance.Format("native.billing.komanda.po.platezhu.this.pendingservicepaymentid.eshchyo.ne.polu", this._pendingServicePaymentId);
 
     public event Action? SessionExpired;
 
     public event Func<Task>? AccessDenied;
 
     public event Func<CancellationToken, Task>? PaymentChanged;
+
+    public void RefreshLocalizedValues()
+    {
+        foreach (var option in this.StatusOptions)
+        {
+            option.RefreshLocalizedValues();
+        }
+
+        this.RefreshLocalizedConfirmationText();
+        this.RefreshLocalizedError();
+        this.OnPropertyChanged((string?)null);
+    }
 
     /// <summary> Обновляет платёж, сохраняя введённую причину при обновлении той же карточки. </summary>
     public void SetPayment(AdminBillingPayment? payment)
@@ -156,6 +178,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
         this.ConfirmCommand.Cancel();
         this.IsConfirmationOpen = false;
         this._pendingAction = null;
+        this.ClearLocalizedConfirmationText();
         if (!this._serviceRequestMayHaveReachedServer)
         {
             this._pendingServiceRequest = null;
@@ -199,11 +222,71 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
         && this._pendingServicePaymentId == this._payment?.Id && this.IsServicePayment && !this.IsBusy
         && this._pendingServiceScope == this._sessionClient.PendingActionScope;
 
+    private void SetLocalizedConfirmationText(
+        string key,
+        object?[] arguments,
+        string? appendKey = null,
+        object?[]? appendArguments = null)
+    {
+        this._confirmationTranslationKey = key;
+        this._confirmationArguments = arguments;
+        this._confirmationAppendTranslationKey = appendKey;
+        this._confirmationAppendArguments = appendArguments ?? [];
+        this.RefreshLocalizedConfirmationText();
+    }
+
+    private void RefreshLocalizedConfirmationText()
+    {
+        if (this._confirmationTranslationKey == null)
+        {
+            return;
+        }
+
+        if (this._pendingAction == "status" && this._confirmationArguments.Length > 1)
+        {
+            this._confirmationArguments[1] = this.StatusOptions.FirstOrDefault(option => option.Code == this._pendingStatus)?.Name
+                ?? this._confirmationArguments[1];
+        }
+        else if (this._confirmationTranslationKey == "native.billing.podtverdite.deystvie.label.prichina.this.reason.trim"
+            && this._pendingAction == "service" && this._pendingServiceRequest is { } request
+            && this._confirmationArguments.Length > 0)
+        {
+            this._confirmationArguments[0] = this.ServiceActionLabel(request.Action);
+        }
+
+        var text = AdminLocalization.Instance.Format(this._confirmationTranslationKey, this._confirmationArguments);
+        if (this._confirmationAppendTranslationKey is { } appendKey)
+        {
+            text += AdminLocalization.Instance.Format(appendKey, this._confirmationAppendArguments);
+        }
+
+        this.ConfirmationText = text;
+    }
+
+    private string ServiceActionLabel(string action) => action switch
+    {
+        "check" => AdminLocalization.Instance["native.billing.proverit.platyozh.v.yukassa"],
+        "refund" => AdminLocalization.Instance.Format("native.billing.vernut.this.refundamount.n2", this.RefundAmount),
+        "retry-access" => AdminLocalization.Instance["native.billing.povtorit.vydachu.podtverzhdyonnogo.dostupa"],
+        "resolve-review" => AdminLocalization.Instance["native.billing.sokhranit.reshenie.po.razboru"],
+        _ => throw new ArgumentOutOfRangeException(nameof(action))
+    };
+
+    private void ClearLocalizedConfirmationText()
+    {
+        this._confirmationTranslationKey = null;
+        this._confirmationArguments = [];
+        this._confirmationAppendTranslationKey = null;
+        this._confirmationAppendArguments = [];
+        this.ConfirmationText = string.Empty;
+    }
+
     [RelayCommand(CanExecute = nameof(CanSync))]
     private void RequestSync()
     {
         this._pendingAction = "sync";
-        this.ConfirmationText = $"Сверить платёж № {this._payment!.Id} с YooKassa? Сверка может обновить статус и сведения об оплате.";
+        this.SetLocalizedConfirmationText(
+            "native.billing.sverit.platyozh.this.payment.id.s.yookassa.sverka.mozhet.obnovit", [this._payment!.Id]);
         this.IsConfirmationOpen = true;
         this.ConfirmCommand.NotifyCanExecuteChanged();
     }
@@ -215,8 +298,11 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
         this._expectedStatus = this._payment!.PaymentStatus;
         this._pendingStatus = this.SelectedStatus.Code;
         this._pendingReason = this.Reason.Trim();
-        this.ConfirmationText = $"Платёж № {this._payment.Id}: установить статус «{this.SelectedStatus.Name}»? "
-            + $"Причина: {this._pendingReason}. Изменяется локальная запись; возврат денег этим действием не выполняется.";
+        this.SetLocalizedConfirmationText(
+            "native.billing.platyozh.this.payment.id.ustanovit.status.this.selectedstatus.na",
+            [this._payment.Id, this.SelectedStatus.Name],
+            "native.billing.prichina.this.pendingreason.izmenyaetsya.lokalnaya.zapis.vozvrat",
+            [this._pendingReason]);
         this.IsConfirmationOpen = true;
         this.ConfirmCommand.NotifyCanExecuteChanged();
     }
@@ -224,14 +310,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
     [RelayCommand(CanExecute = nameof(CanRequestServiceAction))]
     private void RequestServiceAction(string action)
     {
-        var label = action switch
-        {
-            "check" => "проверить платёж в ЮKassa",
-            "refund" => $"вернуть {this.RefundAmount:N2} ₽",
-            "retry-access" => "повторить выдачу подтверждённого доступа",
-            "resolve-review" => "сохранить решение по разбору",
-            _ => throw new ArgumentOutOfRangeException(nameof(action))
-        };
+        var label = this.ServiceActionLabel(action);
         this._pendingAction = "service";
         this._pendingServicePaymentId = this._payment!.Id;
         this._pendingServiceScope = this._sessionClient.PendingActionScope;
@@ -239,8 +318,10 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
             Guid.NewGuid(), action, this.Reason.Trim(), action == "refund" ? this.RefundAmount : null,
             this._serviceActions!.StateToken);
         this._serviceRequestMayHaveReachedServer = false;
-        this.ConfirmationText = $"Подтвердите действие: {label}. Причина: {this.Reason.Trim()}."
-            + (action == "refund" ? " Выданный срок доступа автоматически не изменится." : string.Empty);
+        this.SetLocalizedConfirmationText(
+            "native.billing.podtverdite.deystvie.label.prichina.this.reason.trim",
+            [label, this.Reason.Trim()],
+            action == "refund" ? "native.billing.vydannyy.srok.dostupa.avtomaticheski.ne.izmenitsya" : null);
         this.IsConfirmationOpen = true;
         this.ConfirmCommand.NotifyCanExecuteChanged();
     }
@@ -274,7 +355,9 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
         }
 
         this._pendingAction = "service";
-        this.ConfirmationText = $"Повторить операцию {this._pendingServiceRequest!.OperationId:D}? Будет отправлен тот же запрос, новая операция не создаётся.";
+        this.SetLocalizedConfirmationText(
+            "native.billing.povtorit.operatsiyu.this.pendingservicerequest.operationid.d.bud",
+            [this._pendingServiceRequest!.OperationId]);
         this.IsConfirmationOpen = true;
         this.ConfirmCommand.NotifyCanExecuteChanged();
     }
@@ -340,7 +423,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
                 this._pendingServiceScope = null;
                 this.IsConfirmationOpen = false;
                 this._pendingAction = null;
-                this.ErrorMessage = "Состояние платежа изменилось. Проверьте обновлённые сведения и подтвердите действие заново.";
+                this.SetLocalizedError("native.billing.sostoyanie.platezha.izmenilos.proverte.obnovlyonnye.svedeniya.i.");
                 this.OnPropertyChanged(nameof(HasUnresolvedServiceRequest));
                 this.OnPropertyChanged(nameof(CanRetryUnresolvedServiceRequest));
                 this.OnPropertyChanged(nameof(PendingServiceRequestHint));
@@ -363,7 +446,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
                 && currentScope == this._sessionClient.PendingActionScope)
             {
                 this._hasDraftLoadError = true;
-                this.ErrorMessage = "Не удалось прочитать сохранённую операцию. Новые действия заблокированы; проверьте журнал и повторите загрузку.";
+                this.SetLocalizedError("native.billing.ne.udalos.prochitat.sokhranyonnuyu.operatsiyu.novye.deystviya.za");
                 this.RefreshAccess();
             }
 
@@ -374,7 +457,22 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
             if (version == this._version && this._payment?.Id == payment.Id
                 && currentScope == this._sessionClient.PendingActionScope)
             {
-                this.ErrorMessage = exception.Message;
+                if (exception.StatusCode == HttpStatusCode.Unauthorized || !this._sessionClient.HasSession)
+                {
+                    this.SessionExpired?.Invoke();
+                }
+                else if (exception.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
+                {
+                    await this.AccessDenied.Invoke();
+                }
+                else if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportErrorKey)
+                {
+                    this.SetLocalizedError(transportErrorKey);
+                }
+                else
+                {
+                    this.ErrorMessage = exception.Message;
+                }
             }
 
             return;
@@ -405,7 +503,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
                     }
                     else
                     {
-                        this.ErrorMessage = "Номер операции найден в журнале с другими данными. Не создавайте новую команду; передайте её номер ответственному администратору.";
+                        this.SetLocalizedError("native.billing.nomer.operatsii.nayden.v.zhurnale.s.drugimi.dannymi.ne.sozdavayt");
                     }
                 }
             }
@@ -417,6 +515,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
     {
         this.IsConfirmationOpen = false;
         this._pendingAction = null;
+        this.ClearLocalizedConfirmationText();
         if (!this._serviceRequestMayHaveReachedServer)
         {
             this._pendingServiceRequest = null;
@@ -447,7 +546,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
             {
                 if (serviceRequest == null || serviceScope != this._sessionClient.PendingActionScope)
                 {
-                    this.ErrorMessage = "Текущий администратор или адрес API изменился. Откройте платёж заново для своей учётной записи.";
+                    this.SetLocalizedError("native.billing.tekushchiy.administrator.ili.adres.api.izmenilsya.otkroyte.platy");
                     return;
                 }
 
@@ -471,7 +570,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
                     || operation.Amount != serviceRequest.Amount
                     || operation.Reason != serviceRequest.Reason)
                 {
-                    this.ErrorMessage = "Ответ сервера не совпадает с отправленной командой. Команда сохранена; проверьте журнал перед повтором.";
+                    this.SetLocalizedError("native.billing.otvet.servera.ne.sovpadaet.s.otpravlennoy.komandoy.komanda.sokhr");
                     this.IsConfirmationOpen = true;
                     this._pendingAction = "service";
                     this.ConfirmCommand.NotifyCanExecuteChanged();
@@ -531,7 +630,7 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
                 return;
             }
 
-            this.ErrorMessage = exception.Message;
+            var transportErrorKey = AdminDisplayLabels.TransportErrorKey(exception);
             var isDefinitiveServiceRejection = exception.ErrorCode is "invalid_request" or "state_changed"
                 || exception.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound;
             if (this._pendingServiceRequest != null && isDefinitiveServiceRejection)
@@ -550,9 +649,13 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
 
             if (this._pendingServiceRequest != null && !isDefinitiveServiceRejection)
             {
-                this.ErrorMessage = exception.ErrorCode == "operation_id_conflict"
-                    ? "Сервер сообщил о конфликте номера операции. Новая команда не создана. Сверьте журнал и обратитесь к ответственному администратору."
-                    : "Ответ сервера не подтверждает результат. Повторите отправку той же операции или обновите журнал.";
+                this.SetLocalizedError(exception.ErrorCode == "operation_id_conflict"
+                    ? "native.billing.server.soobshchil.o.konflikte.nomera.operatsii.novaya.komanda.ne"
+                    : exception.InnerException is HttpRequestException
+                        ? "native.billing.ne.udalos.podtverdit.rezultat.povtorite.otpravku.prezhney.operat"
+                        : exception.InnerException is OperationCanceledException
+                            ? "native.billing.server.ne.otvetil.povtorite.otpravku.prezhney.operatsii.s.tem.zh"
+                            : "native.billing.otvet.servera.ne.podtverzhdaet.rezultat.povtorite.otpravku.toy.z");
                 this.IsConfirmationOpen = true;
                 this._pendingAction = "service";
             }
@@ -569,15 +672,27 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
             {
                 await this.PaymentChanged.Invoke(cancellationToken);
             }
+
+            if (this._pendingServiceRequest == null || isDefinitiveServiceRejection)
+            {
+                if (transportErrorKey != null)
+                {
+                    this.SetLocalizedError(transportErrorKey);
+                }
+                else
+                {
+                    this.ErrorMessage = exception.Message;
+                }
+            }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             if (this.IsCurrent(paymentId, version, cancellationToken)
                 && serviceScope == this._sessionClient.PendingActionScope)
             {
-                this.ErrorMessage = requestMayHaveReachedServer
-                    ? "Не удалось сохранить локальный результат. Запрос мог быть принят; проверьте журнал перед новым действием."
-                    : "Не удалось сохранить номер операции. Запрос не отправлен; проверьте доступ к локальному хранилищу.";
+                this.SetLocalizedError(requestMayHaveReachedServer
+                    ? "native.billing.ne.udalos.sokhranit.lokalnyy.rezultat.zapros.mog.byt.prinyat.pro"
+                    : "native.billing.ne.udalos.sokhranit.nomer.operatsii.zapros.ne.otpravlen.proverte");
                 this.IsConfirmationOpen = this._pendingServiceRequest != null;
                 this._pendingAction = this._pendingServiceRequest == null ? null : "service";
             }
@@ -587,9 +702,9 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
             if (this.IsCurrent(paymentId, version, cancellationToken)
                 && (action != "service" || serviceScope == this._sessionClient.PendingActionScope))
             {
-                this.ErrorMessage = this._pendingServiceRequest == null
-                    ? "Не удалось связаться с сервером. Обновите платёж перед повтором операции."
-                    : "Не удалось подтвердить результат. Повторите отправку прежней операции с тем же номером.";
+                this.SetLocalizedError(this._pendingServiceRequest == null
+                    ? "native.billing.ne.udalos.svyazatsya.s.serverom.obnovite.platyozh.pered.povtorom"
+                    : "native.billing.ne.udalos.podtverdit.rezultat.povtorite.otpravku.prezhney.operat");
                 this.IsConfirmationOpen = this._pendingServiceRequest != null;
                 this._pendingAction = this._pendingServiceRequest == null ? null : "service";
             }
@@ -599,9 +714,9 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
             if (this.IsCurrent(paymentId, version, cancellationToken)
                 && (action != "service" || serviceScope == this._sessionClient.PendingActionScope))
             {
-                this.ErrorMessage = this._pendingServiceRequest == null
-                    ? "Сервер не ответил вовремя. Обновите платёж перед повтором операции."
-                    : "Сервер не ответил. Повторите отправку прежней операции с тем же номером.";
+                this.SetLocalizedError(this._pendingServiceRequest == null
+                    ? "native.billing.server.ne.otvetil.vovremya.obnovite.platyozh.pered.povtorom.oper"
+                    : "native.billing.server.ne.otvetil.povtorite.otpravku.prezhney.operatsii.s.tem.zh");
                 this.IsConfirmationOpen = this._pendingServiceRequest != null;
                 this._pendingAction = this._pendingServiceRequest == null ? null : "service";
             }
@@ -621,6 +736,34 @@ public partial class PaymentActionsViewModel(AdminSessionClient sessionClient, P
 
     private bool IsCurrent(int paymentId, int version, CancellationToken cancellationToken) =>
         this._isActive && this._payment?.Id == paymentId && version == this._version && !cancellationToken.IsCancellationRequested;
+
+    private void SetLocalizedError(string key)
+    {
+        this._errorTranslationKey = key;
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedError = false;
+    }
+
+    private void RefreshLocalizedError()
+    {
+        if (this._errorTranslationKey == null)
+        {
+            return;
+        }
+
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[this._errorTranslationKey];
+        this._isSettingLocalizedError = false;
+    }
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedError)
+        {
+            this._errorTranslationKey = null;
+        }
+    }
 
     partial void OnIsBusyChanged(bool value) => this.RefreshAccess();
 }

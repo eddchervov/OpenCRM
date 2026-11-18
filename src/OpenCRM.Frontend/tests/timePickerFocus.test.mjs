@@ -1,3 +1,4 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -15,7 +16,7 @@ function createPicker() {
   const module = { exports: {} }
   const resolve = id => id === 'vue'
     ? { ...vue, useId: () => 'time-test', useModel: () => model, watch() {}, onBeforeUnmount() {} }
-    : {}
+    : regionalTestDependencies[id] ?? {}
   new Function('require', 'module', 'exports', code)(resolve, module, module.exports)
   const state = module.exports.default.setup({ step: 60 }, { expose() {} })
   const inside = {}

@@ -300,8 +300,8 @@
         }
 
         var isVisible = input.type === 'text';
-        button.setAttribute('aria-label', isVisible ? 'Скрыть пароль' : 'Показать пароль');
-        button.setAttribute('title', isVisible ? 'Скрыть пароль' : 'Показать пароль');
+        button.setAttribute('aria-label', isVisible ? window.OpenCRMText('hidePassword') : window.OpenCRMText('showPassword'));
+        button.setAttribute('title', isVisible ? window.OpenCRMText('hidePassword') : window.OpenCRMText('showPassword'));
         button.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
         button.innerHTML = isVisible
             ? '<i class="fa fa-eye-slash" aria-hidden="true"></i>'
@@ -466,10 +466,10 @@
             lightbox.className = 'image-lightbox';
             lightbox.setAttribute('role', 'dialog');
             lightbox.setAttribute('aria-modal', 'true');
-            lightbox.setAttribute('aria-label', 'Увеличенное изображение');
+            lightbox.setAttribute('aria-label', window.OpenCRMText('imagePreview'));
             lightbox.innerHTML = [
                 '<div class="image-lightbox__dialog" role="document">',
-                '<button type="button" class="image-lightbox__close" aria-label="Закрыть изображение">&times;</button>',
+                '<button type="button" class="image-lightbox__close">&times;</button>',
                 '<img class="image-lightbox__image" alt="">',
                 '<p class="image-lightbox__caption"></p>',
                 '</div>'
@@ -479,6 +479,7 @@
             lightboxImage = lightbox.querySelector('.image-lightbox__image');
             lightboxCaption = lightbox.querySelector('.image-lightbox__caption');
             closeButton = lightbox.querySelector('.image-lightbox__close');
+            closeButton.setAttribute('aria-label', window.OpenCRMText('closeImage'));
 
             lightbox.addEventListener('click', function (event) {
                 if (event.target === lightbox || event.target === closeButton) {
@@ -584,7 +585,7 @@
                 return;
             }
 
-            var loadingText = button.getAttribute('data-submit-loading-text') || 'Отправляем...';
+            var loadingText = button.getAttribute('data-submit-loading-text') || window.OpenCRMText('sending');
             if (button.tagName === 'BUTTON') {
                 button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + loadingText;
                 return;
@@ -671,5 +672,5 @@ function getVehicleDisplayName(vehicle) {
         .filter(function (value) { return value && value.trim(); })
         .map(function (value) { return value.trim(); }).join(' ');
 
-    return identity || ['Автомобиль', vehicle.registrationPlate].filter(Boolean).join(' · ');
+    return identity || [window.OpenCRMText('vehicle'), vehicle.registrationPlate].filter(Boolean).join(' · ');
 }

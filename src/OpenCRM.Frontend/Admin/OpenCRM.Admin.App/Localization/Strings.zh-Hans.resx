@@ -1,0 +1,1520 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="app.title" xml:space="preserve"><value>管理</value></data>
+  <data name="app.subtitle" xml:space="preserve"><value>服务管理面板</value></data>
+  <data name="language.label" xml:space="preserve"><value>语言</value></data>
+  <data name="nav.profile" xml:space="preserve"><value>我的资料</value></data>
+  <data name="page.profile" xml:space="preserve"><value>资料</value></data>
+  <data name="nav.sections" xml:space="preserve"><value>栏目</value></data>
+  <data name="nav.dashboard" xml:space="preserve"><value>仪表盘</value></data>
+  <data name="nav.users" xml:space="preserve"><value>用户</value></data>
+  <data name="nav.organizations" xml:space="preserve"><value>组织</value></data>
+  <data name="nav.billing" xml:space="preserve"><value>付款和订阅</value></data>
+  <data name="nav.support" xml:space="preserve"><value>支持请求</value></data>
+  <data name="nav.emailHistory" xml:space="preserve"><value>邮件历史</value></data>
+  <data name="nav.plans" xml:space="preserve"><value>套餐</value></data>
+  <data name="nav.promoCodes" xml:space="preserve"><value>优惠码</value></data>
+  <data name="nav.roles" xml:space="preserve"><value>角色和权限</value></data>
+  <data name="nav.logout" xml:space="preserve"><value>退出登录</value></data>
+  <data name="nav.newSinceLastVisit" xml:space="preserve"><value>自上次查看以来的新记录</value></data>
+  <data name="nav.billingAttention" xml:space="preserve"><value>已付款但未开票或尚未完成处理的付款</value></data>
+  <data name="nav.pendingCatalog" xml:space="preserve"><value>等待审核的建议</value></data>
+  <data name="nav.productSections" xml:space="preserve"><value>产品栏目</value></data>
+  <data name="nav.placeholderTooltip" xml:space="preserve"><value>此栏目将在后续阶段迁移</value></data>
+  <data name="nav.placeholderLater" xml:space="preserve"><value>稍后</value></data>
+  <data name="users.cardPage" xml:space="preserve"><value>用户 / 详情</value></data>
+  <data name="profile.systemAdmin" xml:space="preserve"><value>系统管理员</value></data>
+  <data name="profile.adminAccess" xml:space="preserve"><value>管理员访问权限</value></data>
+  <data name="core.users.noEmail" xml:space="preserve"><value>无电子邮箱</value></data>
+  <data name="core.users.notLoggedIn" xml:space="preserve"><value>从未登录</value></data>
+  <data name="core.users.deletedStatus" xml:space="preserve"><value>已删除</value></data>
+  <data name="core.users.emailConfirmed" xml:space="preserve"><value>邮箱已验证</value></data>
+  <data name="core.users.emailUnconfirmed" xml:space="preserve"><value>邮箱未验证</value></data>
+  <data name="core.organizations.activeStatus" xml:space="preserve"><value>启用</value></data>
+  <data name="core.organizations.inactiveStatus" xml:space="preserve"><value>未启用</value></data>
+  <data name="core.organizations.archivedStatus" xml:space="preserve"><value>已归档</value></data>
+  <data name="core.organizations.deletedStatus" xml:space="preserve"><value>已删除</value></data>
+  <data name="core.organizations.noActivePlan" xml:space="preserve"><value>无有效套餐</value></data>
+  <data name="core.organizations.noExpiry" xml:space="preserve"><value>永久有效</value></data>
+  <data name="core.user.status.deleted" xml:space="preserve"><value>已删除</value></data>
+  <data name="core.user.status.locked" xml:space="preserve"><value>暂时锁定</value></data>
+  <data name="core.user.status.active" xml:space="preserve"><value>启用</value></data>
+  <data name="operation.compose" xml:space="preserve"><value>撰写邮件</value></data>
+  <data name="operation.campaigns" xml:space="preserve"><value>邮件营销</value></data>
+  <data name="operation.smsHistory" xml:space="preserve"><value>短信历史</value></data>
+  <data name="operation.siteNotifications" xml:space="preserve"><value>网站通知</value></data>
+  <data name="operation.vehicleCatalog" xml:space="preserve"><value>车辆目录</value></data>
+  <data name="operation.catalogSuggestions" xml:space="preserve"><value>目录建议</value></data>
+  <data name="operation.testData" xml:space="preserve"><value>测试数据</value></data>
+  <data name="operation.crmImport" xml:space="preserve"><value>CRM 导入</value></data>
+  <data name="operation.assistant" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="operation.userActivity" xml:space="preserve"><value>用户活动</value></data>
+  <data name="login.title" xml:space="preserve"><value>管理员登录</value></data>
+  <data name="login.email" xml:space="preserve"><value>电子邮箱</value></data>
+  <data name="login.password" xml:space="preserve"><value>密码</value></data>
+  <data name="login.submit" xml:space="preserve"><value>登录</value></data>
+  <data name="login.loading" xml:space="preserve"><value>正在登录…</value></data>
+  <data name="login.server" xml:space="preserve"><value>服务器</value></data>
+  <data name="login.remember" xml:space="preserve"><value>会话保存在设备的安全存储中。</value></data>
+  <data name="error.network" xml:space="preserve"><value>无法连接到服务器。请检查网络连接后重试。</value></data>
+  <data name="error.timeout" xml:space="preserve"><value>服务器响应超时。请重试。</value></data>
+  <data name="error.unauthorized" xml:space="preserve"><value>邮箱或密码错误，或者会话已过期。</value></data>
+  <data name="error.forbidden" xml:space="preserve"><value>此帐户无权访问管理面板。</value></data>
+  <data name="error.emptyResponse" xml:space="preserve"><value>服务器返回了空响应。</value></data>
+  <data name="error.invalidResponse" xml:space="preserve"><value>服务器返回了无效响应。</value></data>
+  <data name="error.loginRequired" xml:space="preserve"><value>请登录管理面板。</value></data>
+  <data name="error.sessionExpired" xml:space="preserve"><value>会话已过期。请重新登录。</value></data>
+  <data name="error.dashboardAccess" xml:space="preserve"><value>您已无权访问仪表盘。权限已刷新。</value></data>
+  <data name="error.usersAccess" xml:space="preserve"><value>您已无权访问用户。权限已刷新。</value></data>
+  <data name="error.billingAccess" xml:space="preserve"><value>您已无权访问付款和订阅。权限已刷新。</value></data>
+  <data name="error.profileRefreshNetwork" xml:space="preserve"><value>无法刷新资料和权限。请检查服务器连接。</value></data>
+  <data name="error.profileRefreshTimeout" xml:space="preserve"><value>服务器响应超时，无法刷新资料。</value></data>
+  <data name="error.logoutNetwork" xml:space="preserve"><value>您已退出登录。服务器不可用，无法确认会话已撤销。</value></data>
+  <data name="error.logoutTimeout" xml:space="preserve"><value>您已退出登录。服务器未能及时确认会话已撤销。</value></data>
+  <data name="error.sessionChanged" xml:space="preserve"><value>会话已更改。请重新登录管理面板。</value></data>
+  <data name="error.profileInvalid" xml:space="preserve"><value>服务器返回的管理员资料不完整或不一致。</value></data>
+  <data name="error.accessDenied" xml:space="preserve"><value>此帐户没有 Admin.Access 权限。</value></data>
+  <data name="error.configuration" xml:space="preserve"><value>无法读取服务器设置。</value></data>
+  <data name="core.dashboard.title" xml:space="preserve"><value>仪表盘</value></data>
+  <data name="core.dashboard.autoRefresh" xml:space="preserve"><value>自动刷新间隔，秒</value></data>
+  <data name="core.refresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="core.period" xml:space="preserve"><value>时间范围</value></data>
+  <data name="core.today" xml:space="preserve"><value>今天</value></data>
+  <data name="core.sevenDays" xml:space="preserve"><value>7 天</value></data>
+  <data name="core.month" xml:space="preserve"><value>月份</value></data>
+  <data name="core.dashboard.activationAlert" xml:space="preserve"><value>紧急：订阅激活失败</value></data>
+  <data name="core.payments" xml:space="preserve"><value>付款</value></data>
+  <data name="core.dashboard.registrationsAndOrganizations" xml:space="preserve"><value>注册和组织</value></data>
+  <data name="core.dashboard.overview" xml:space="preserve"><value>概览</value></data>
+  <data name="core.dashboard.loadOverview" xml:space="preserve"><value>加载概览</value></data>
+  <data name="core.dashboard.overviewHelp" xml:space="preserve"><value>使用此按钮刷新概览</value></data>
+  <data name="core.profile.title" xml:space="preserve"><value>我的资料</value></data>
+  <data name="core.profile.accountAndPermissions" xml:space="preserve"><value>帐户和管理员权限</value></data>
+  <data name="core.readOnly" xml:space="preserve"><value>只读</value></data>
+  <data name="core.profile.roles" xml:space="preserve"><value>角色</value></data>
+  <data name="core.profile.identifier" xml:space="preserve"><value>标识符</value></data>
+  <data name="core.profile.server" xml:space="preserve"><value>服务器</value></data>
+  <data name="core.profile.permissions" xml:space="preserve"><value>权限</value></data>
+  <data name="core.users.title" xml:space="preserve"><value>用户</value></data>
+  <data name="core.users.searchPlaceholder" xml:space="preserve"><value>按电子邮箱或电话搜索</value></data>
+  <data name="core.find" xml:space="preserve"><value>搜索</value></data>
+  <data name="core.reset" xml:space="preserve"><value>重置</value></data>
+  <data name="core.users.includeDeleted" xml:space="preserve"><value>包括已删除用户</value></data>
+  <data name="core.pageSize" xml:space="preserve"><value>每页</value></data>
+  <data name="core.users.organizationsAndPlans" xml:space="preserve"><value>用户组织和套餐</value></data>
+  <data name="core.card" xml:space="preserve"><value>详情</value></data>
+  <data name="core.users.empty" xml:space="preserve"><value>未找到用户</value></data>
+  <data name="core.backToList" xml:space="preserve"><value>← 返回列表</value></data>
+  <data name="core.show" xml:space="preserve"><value>显示</value></data>
+  <data name="core.lastActivity" xml:space="preserve"><value>最近活动</value></data>
+  <data name="core.user.account" xml:space="preserve"><value>用户帐户</value></data>
+  <data name="core.user.openInBrowserAdmin" xml:space="preserve"><value>在浏览器管理界面中打开</value></data>
+  <data name="core.user.testSubscriptions" xml:space="preserve"><value>测试订阅</value></data>
+  <data name="core.user.accessManagement" xml:space="preserve"><value>访问管理</value></data>
+  <data name="core.user.noAccessTargets" xml:space="preserve"><value>没有可管理访问权限的对象。</value></data>
+  <data name="core.user.accessRecipient" xml:space="preserve"><value>访问对象</value></data>
+  <data name="core.user.organizationPlanNote" xml:space="preserve"><value>组织套餐与所有者帐户分开管理。用户的个人车辆不受组织订阅影响。</value></data>
+  <data name="core.user.grantDemo" xml:space="preserve"><value>授予演示权限</value></data>
+  <data name="core.user.grantDemoHelp" xml:space="preserve"><value>仅用于旧版业务场景。美容和汽车维修使用免费套餐；赠送 PRO 请使用优惠码。</value></data>
+  <data name="core.user.revokeDemo" xml:space="preserve"><value>撤销演示权限</value></data>
+  <data name="core.user.revokeDemoHelp" xml:space="preserve"><value>立即撤销所选对象的演示权限。</value></data>
+  <data name="core.user.assignPlanHelp" xml:space="preserve"><value>分配所选付费套餐，不创建付款。请填写期限和原因。</value></data>
+  <data name="core.extend" xml:space="preserve"><value>延长</value></data>
+  <data name="core.user.extendHelp" xml:space="preserve"><value>免费为所选对象的当前访问权限增加指定天数。</value></data>
+  <data name="core.user.stopSubscriptions" xml:space="preserve"><value>停止订阅</value></data>
+  <data name="core.user.stopSubscriptionsHelp" xml:space="preserve"><value>立即停止所选对象的所有有效订阅。未使用的期限不会自动退款。</value></data>
+  <data name="core.plan" xml:space="preserve"><value>套餐</value></data>
+  <data name="core.durationDays" xml:space="preserve"><value>期限，天</value></data>
+  <data name="core.changeReason" xml:space="preserve"><value>变更原因</value></data>
+  <data name="core.changeReasonHelp" xml:space="preserve"><value>原因将保存到审计日志</value></data>
+  <data name="core.confirm" xml:space="preserve"><value>确认</value></data>
+  <data name="core.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="core.organizations.title" xml:space="preserve"><value>组织</value></data>
+  <data name="core.organizations.searchPlaceholder" xml:space="preserve"><value>搜索组织</value></data>
+  <data name="core.organizations.userSearchPlaceholder" xml:space="preserve"><value>用户：ID、电子邮箱或电话</value></data>
+  <data name="core.organizations.open" xml:space="preserve"><value>打开组织</value></data>
+  <data name="core.organizations.empty" xml:space="preserve"><value>未找到组织</value></data>
+  <data name="core.organizations.manage" xml:space="preserve"><value>管理组织</value></data>
+  <data name="core.organizations.archive" xml:space="preserve"><value>强制归档</value></data>
+  <data name="core.organizations.restore" xml:space="preserve"><value>从归档中恢复</value></data>
+  <data name="core.organizations.auditReasonPlaceholder" xml:space="preserve"><value>请输入审计原因</value></data>
+  <data name="core.organizations.confirmTarget" xml:space="preserve"><value>我确认对所选组织执行此操作</value></data>
+  <data name="core.execute" xml:space="preserve"><value>执行</value></data>
+  <data name="core.organization" xml:space="preserve"><value>组织</value></data>
+  <data name="core.organizations.ownerAndContacts" xml:space="preserve"><value>所有者和联系方式</value></data>
+  <data name="core.subscription" xml:space="preserve"><value>订阅</value></data>
+  <data name="core.organizations.allTimeStats" xml:space="preserve"><value>累计统计</value></data>
+  <data name="core.members" xml:space="preserve"><value>成员</value></data>
+  <data name="core.clients" xml:space="preserve"><value>客户</value></data>
+  <data name="core.vehicles" xml:space="preserve"><value>车辆</value></data>
+  <data name="core.orders" xml:space="preserve"><value>订单</value></data>
+  <data name="core.organizations.ordersAfterDiscounts" xml:space="preserve"><value>折扣后订单金额</value></data>
+  <data name="core.organizations.ordersPaid" xml:space="preserve"><value>订单已付款</value></data>
+  <data name="core.organizations.inventoryValue" xml:space="preserve"><value>库存价值</value></data>
+  <data name="core.invitations" xml:space="preserve"><value>邀请</value></data>
+  <data name="core.maintenance" xml:space="preserve"><value>维修保养</value></data>
+  <data name="core.openDefects" xml:space="preserve"><value>未关闭缺陷</value></data>
+  <data name="core.schedulerTasks" xml:space="preserve"><value>计划任务</value></data>
+  <data name="core.inventoryItems" xml:space="preserve"><value>库存项目</value></data>
+  <data name="core.pendingInvitations" xml:space="preserve"><value>待处理邀请</value></data>
+  <data name="core.recentEvents" xml:space="preserve"><value>最近事件</value></data>
+  <data name="core.systemInformation" xml:space="preserve"><value>系统信息</value></data>
+  <data name="core.userId" xml:space="preserve"><value>用户 ID</value></data>
+  <data name="core.activity.collectionDisabled" xml:space="preserve"><value>事件收集已关闭：不会收到新事件。已记录的事件在保留期限内仍可查看。</value></data>
+  <data name="core.user" xml:space="preserve"><value>用户</value></data>
+  <data name="core.activity.allUsersPlaceholder" xml:space="preserve"><value>所有用户 · 电子邮箱或电话</value></data>
+  <data name="core.activity.allUsers" xml:space="preserve"><value>所有用户</value></data>
+  <data name="core.activity.searchingUsers" xml:space="preserve"><value>正在搜索用户…</value></data>
+  <data name="core.activity.eventType" xml:space="preserve"><value>事件类型</value></data>
+  <data name="core.scenario" xml:space="preserve"><value>业务场景</value></data>
+  <data name="core.search" xml:space="preserve"><value>搜索</value></data>
+  <data name="core.activity.searchPlaceholder" xml:space="preserve"><value>组织、操作、页面</value></data>
+  <data name="core.activity.dateFromUtc" xml:space="preserve"><value>开始日期 (UTC)</value></data>
+  <data name="core.datePlaceholder" xml:space="preserve"><value>YYYY-MM-DD</value></data>
+  <data name="core.activity.dateToUtc" xml:space="preserve"><value>结束日期 (UTC)</value></data>
+  <data name="core.apply" xml:space="preserve"><value>应用</value></data>
+  <data name="core.activity.loading" xml:space="preserve"><value>正在加载活动记录…</value></data>
+  <data name="core.activity.empty" xml:space="preserve"><value>没有符合所选筛选条件的记录。</value></data>
+  <data name="core.when" xml:space="preserve"><value>时间</value></data>
+  <data name="core.action" xml:space="preserve"><value>操作</value></data>
+  <data name="core.previousPage" xml:space="preserve"><value>← 上一页</value></data>
+  <data name="core.nextPage" xml:space="preserve"><value>下一页 →</value></data>
+  <data name="core.dateTime.clearLabel" xml:space="preserve"><value>清除日期和时间</value></data>
+  <data name="core.dateTime.label" xml:space="preserve"><value>日期和时间</value></data>
+  <data name="core.dateTime.help" xml:space="preserve"><value>先选择日期，再选择时间</value></data>
+  <data name="core.dateTime.hourFormat" xml:space="preserve"><value>24 小时</value></data>
+  <data name="core.dateTime.time" xml:space="preserve"><value>时间</value></data>
+  <data name="core.clear" xml:space="preserve"><value>清除</value></data>
+  <data name="core.done" xml:space="preserve"><value>完成</value></data>
+  <data name="activity.title" xml:space="preserve"><value>用户活动</value></data>
+  <data name="activity.userTitle" xml:space="preserve"><value>用户活动</value></data>
+  <data name="activity.pageNumber" xml:space="preserve"><value>第 {0} 页</value></data>
+  <data name="activity.selectedUser" xml:space="preserve"><value>已选用户</value></data>
+  <data name="activity.userMissingEmail" xml:space="preserve"><value>用户未提供电子邮箱</value></data>
+  <data name="activity.loadUsersFailed" xml:space="preserve"><value>无法加载用户，请重新搜索。</value></data>
+  <data name="activity.chooseUser" xml:space="preserve"><value>请从列表中选择用户，或清空输入框以显示所有用户。</value></data>
+  <data name="activity.invalidFromDate" xml:space="preserve"><value>开始日期格式应为 YYYY-MM-DD。</value></data>
+  <data name="activity.invalidToDate" xml:space="preserve"><value>结束日期格式应为 YYYY-MM-DD。</value></data>
+  <data name="activity.dateRangeInvalid" xml:space="preserve"><value>开始日期不能晚于结束日期。</value></data>
+  <data name="activity.timeout" xml:space="preserve"><value>服务器响应超时，请重试。</value></data>
+  <data name="activity.network" xml:space="preserve"><value>无法连接服务器，请检查网络连接。</value></data>
+  <data name="core.activity.kind.all" xml:space="preserve"><value>所有事件类型</value></data>
+  <data name="core.activity.kind.page" xml:space="preserve"><value>页面访问</value></data>
+  <data name="core.activity.kind.click" xml:space="preserve"><value>点击</value></data>
+  <data name="core.activity.kind.goal" xml:space="preserve"><value>目标</value></data>
+  <data name="core.activity.kind.operation" xml:space="preserve"><value>操作</value></data>
+  <data name="core.activity.scenario.all" xml:space="preserve"><value>全部</value></data>
+  <data name="activity.scenario.detailing" xml:space="preserve"><value>汽车美容</value></data>
+  <data name="activity.scenario.autoservice" xml:space="preserve"><value>汽车维修</value></data>
+  <data name="activity.scenario.personal" xml:space="preserve"><value>个人中心</value></data>
+  <data name="activity.scenario.account" xml:space="preserve"><value>账户</value></data>
+  <data name="activity.scenario.fleet" xml:space="preserve"><value>车队</value></data>
+  <data name="core.users.emailHeader" xml:space="preserve"><value>用户</value></data>
+  <data name="core.users.registrationHeader" xml:space="preserve"><value>注册时间</value></data>
+  <data name="core.users.vehiclesHeader" xml:space="preserve"><value>车辆</value></data>
+  <data name="core.users.maintenanceHeader" xml:space="preserve"><value>维修</value></data>
+  <data name="core.users.organizationsHeader" xml:space="preserve"><value>组织</value></data>
+  <data name="core.users.total" xml:space="preserve"><value>找到：{0:N0}</value></data>
+  <data name="core.organizations.nameHeader" xml:space="preserve"><value>组织</value></data>
+  <data name="core.organizations.ownerHeader" xml:space="preserve"><value>所有者</value></data>
+  <data name="core.organizations.scenarioHeader" xml:space="preserve"><value>类型</value></data>
+  <data name="core.organizations.statusHeader" xml:space="preserve"><value>状态</value></data>
+  <data name="core.organizations.subscriptionHeader" xml:space="preserve"><value>套餐 / 期限</value></data>
+  <data name="core.organizations.membersHeader" xml:space="preserve"><value>成员</value></data>
+  <data name="core.organizations.clientsHeader" xml:space="preserve"><value>客户</value></data>
+  <data name="core.organizations.vehiclesHeader" xml:space="preserve"><value>车辆</value></data>
+  <data name="core.organizations.ordersHeader" xml:space="preserve"><value>订单</value></data>
+  <data name="core.organizations.createdHeader" xml:space="preserve"><value>创建时间</value></data>
+  <data name="core.organizations.total" xml:space="preserve"><value>找到：{0:N0}</value></data>
+  <data name="core.dashboard.urgentPayment" xml:space="preserve"><value>已收到付款，但订阅尚未激活：{0}。请检查付款处理情况。</value></data>
+  <data name="core.dashboard.period.today" xml:space="preserve"><value>今天</value></data>
+  <data name="core.dashboard.period.week" xml:space="preserve"><value>最近 7 天</value></data>
+  <data name="core.dashboard.period.month" xml:space="preserve"><value>最近 30 天</value></data>
+  <data name="core.dashboard.chartPeriod.today" xml:space="preserve"><value>今天（按小时）</value></data>
+  <data name="core.dashboard.chartPeriod.week" xml:space="preserve"><value>最近 7 天</value></data>
+  <data name="core.dashboard.chartPeriod.month" xml:space="preserve"><value>最近一个月</value></data>
+  <data name="core.dashboard.loadedAt" xml:space="preserve"><value>加载时间：{0}</value></data>
+  <data name="core.dashboard.updatedAt" xml:space="preserve"><value>更新时间：{0}</value></data>
+  <data name="core.dashboard.statisticsLoadFailed" xml:space="preserve"><value>无法加载总体统计数据。</value></data>
+  <data name="core.dashboard.statisticsRefreshFailed" xml:space="preserve"><value>无法刷新总体统计数据。显示之前加载的数据。</value></data>
+  <data name="core.dashboard.refreshFailed" xml:space="preserve"><value>无法刷新数据。显示之前加载的数据。</value></data>
+  <data name="core.dashboard.loadFailed" xml:space="preserve"><value>无法加载仪表板。</value></data>
+  <data name="core.dashboard.receiptsUnsupported" xml:space="preserve"><value>服务器不支持所选时间段的收据统计。请更新服务器。</value></data>
+  <data name="core.dashboard.paymentsRefreshFailed" xml:space="preserve"><value>无法刷新付款数据。显示之前加载的数据。</value></data>
+  <data name="core.dashboard.paymentsLoadFailed" xml:space="preserve"><value>无法加载付款状态。</value></data>
+  <data name="core.dashboard.newUsers" xml:space="preserve"><value>新用户</value></data>
+  <data name="core.dashboard.registrationsForPeriod" xml:space="preserve"><value>本期注册</value></data>
+  <data name="core.dashboard.newOrganizations" xml:space="preserve"><value>新组织</value></data>
+  <data name="core.dashboard.createdForPeriod" xml:space="preserve"><value>本期创建</value></data>
+  <data name="core.dashboard.registrations" xml:space="preserve"><value>注册</value></data>
+  <data name="core.dashboard.maintenance" xml:space="preserve"><value>维修</value></data>
+  <data name="core.dashboard.payments" xml:space="preserve"><value>付款</value></data>
+  <data name="core.dashboard.users" xml:space="preserve"><value>用户</value></data>
+  <data name="core.dashboard.total" xml:space="preserve"><value>总计</value></data>
+  <data name="core.dashboard.newToday" xml:space="preserve"><value>今日新增</value></data>
+  <data name="core.dashboard.newForWeek" xml:space="preserve"><value>近 7 天新增</value></data>
+  <data name="core.dashboard.organizations" xml:space="preserve"><value>组织</value></data>
+  <data name="core.dashboard.active" xml:space="preserve"><value>活跃</value></data>
+  <data name="core.dashboard.members" xml:space="preserve"><value>成员</value></data>
+  <data name="core.dashboard.activeSubscriptions" xml:space="preserve"><value>有效订阅</value></data>
+  <data name="core.dashboard.vehiclesAndMaintenance" xml:space="preserve"><value>车辆与维修</value></data>
+  <data name="core.dashboard.vehicles" xml:space="preserve"><value>车辆</value></data>
+  <data name="core.dashboard.planned" xml:space="preserve"><value>已计划</value></data>
+  <data name="core.dashboard.documents" xml:space="preserve"><value>文档</value></data>
+  <data name="core.dashboard.openDefects" xml:space="preserve"><value>未解决缺陷</value></data>
+  <data name="core.dashboard.finance" xml:space="preserve"><value>财务</value></data>
+  <data name="core.dashboard.amountForMonth" xml:space="preserve"><value>近 30 天金额</value></data>
+  <data name="core.dashboard.paymentsForMonth" xml:space="preserve"><value>近 30 天付款数</value></data>
+  <data name="core.dashboard.problemPayments" xml:space="preserve"><value>异常付款</value></data>
+  <data name="core.dashboard.communications" xml:space="preserve"><value>通信</value></data>
+  <data name="core.dashboard.emailToday" xml:space="preserve"><value>今日电子邮件</value></data>
+  <data name="core.dashboard.emailForWeek" xml:space="preserve"><value>近 7 天电子邮件</value></data>
+  <data name="core.dashboard.sentForWeek" xml:space="preserve"><value>近 7 天已发送</value></data>
+  <data name="core.dashboard.failedForWeek" xml:space="preserve"><value>近 7 天错误</value></data>
+  <data name="core.dashboard.pendingSend" xml:space="preserve"><value>待发送</value></data>
+  <data name="core.dashboard.otherAttention" xml:space="preserve"><value>其他待关注指标</value></data>
+  <data name="core.dashboard.catalogSuggestions" xml:space="preserve"><value>目录建议</value></data>
+  <data name="core.dashboard.pendingInvitations" xml:space="preserve"><value>待处理邀请</value></data>
+  <data name="core.dashboard.overdueTasks" xml:space="preserve"><value>逾期任务</value></data>
+  <data name="core.dashboard.lowStock" xml:space="preserve"><value>库存不足</value></data>
+  <data name="core.dashboard.income" xml:space="preserve"><value>收入</value></data>
+  <data name="core.dashboard.afterRefunds" xml:space="preserve"><value>已扣除退款</value></data>
+  <data name="core.dashboard.paymentsForPeriod" xml:space="preserve"><value>本期付款数</value></data>
+  <data name="core.dashboard.paidWithoutReceipt" xml:space="preserve"><value>已付款但无收据</value></data>
+  <data name="core.dashboard.receiptNotMarked" xml:space="preserve"><value>未标记已开具收据</value></data>
+  <data name="core.dashboard.overdueReceipts" xml:space="preserve"><value>逾期收据</value></data>
+  <data name="core.dashboard.paidOver24HoursAgo" xml:space="preserve"><value>付款已超过 24 小时</value></data>
+  <data name="core.users.refreshCardFailed" xml:space="preserve"><value>无法刷新用户卡片。显示之前加载的数据。</value></data>
+  <data name="core.users.refreshListFailed" xml:space="preserve"><value>无法刷新列表。显示之前加载的数据。</value></data>
+  <data name="core.profile.permissionCount" xml:space="preserve"><value>总计：{0}</value></data>
+  <data name="core.dashboard.duration" xml:space="preserve"><value>{0} 分 {1} 秒</value></data>
+  <data name="core.dateTime.hours" xml:space="preserve"><value>小时</value></data>
+  <data name="core.dateTime.minutes" xml:space="preserve"><value>分钟</value></data>
+  <data name="native.billing.itogo.userdisplayformatting.money.this.purchase.amount.this.refu" xml:space="preserve"><value>· 合计 {0}</value></data>
+  <data name="native.plans.0.dney" xml:space="preserve"><value>{0} 天</value></data>
+  <data name="native.vehicleCatalog.0.edinits.tekhniki" xml:space="preserve"><value>{0} 辆车辆</value></data>
+  <data name="native.vehicleCatalog.0.modeley" xml:space="preserve"><value>{0} 个型号</value></data>
+  <data name="native.email.campaign.sentcount.n0.iz.campaign.totalcount.n0" xml:space="preserve"><value>{0:N0} / {1:N0}</value></data>
+  <data name="native.billing.payment.plandurationdays.n0.dn" xml:space="preserve"><value>{0:N0} 天</value></data>
+  <data name="native.plans.this.plan.durationdays.dney" xml:space="preserve"><value>{0} 天</value></data>
+  <data name="native.promoCodes.this.promocode.organizationapplicationcount.iz.organizationlimit" xml:space="preserve"><value>已使用 {0} / {1} 次</value></data>
+  <data name="native.promoCodes.this.promocode.organizationapplicationcount.primeneniy" xml:space="preserve"><value>已使用 {0} 次</value></data>
+  <data name="native.promoCodes.this.promocode.redemptioncount.iz.redemptionlimit.registratsiy" xml:space="preserve"><value>已兑换 {0} / {1} 次</value></data>
+  <data name="native.promoCodes.this.promocode.redemptioncount.registratsiy" xml:space="preserve"><value>已兑换 {0} 次</value></data>
+  <data name="native.billing.userdisplayformatting.money.this.purchase.amount.vozvrat.userdis" xml:space="preserve"><value>{0} · 退款 {1}</value></data>
+  <data name="native.billing.ntekushchee.sostoyanie.this.pendingpurchase.npdreceiptissued.pri" xml:space="preserve"><value>
+当前状态：{0}。原因：{1}</value></data>
+  <data name="native.email.k.istorii.email" xml:space="preserve"><value>← 返回邮件历史记录</value></data>
+  <data name="native.vehicleCatalog.k.markam" xml:space="preserve"><value>← 返回品牌列表</value></data>
+  <data name="native.support.k.obrashcheniyam" xml:space="preserve"><value>← 返回工单列表</value></data>
+  <data name="native.testData.k.organizatsiyam" xml:space="preserve"><value>← 返回组织列表</value></data>
+  <data name="native.billing.k.pokupkam" xml:space="preserve"><value>← 返回购买记录</value></data>
+  <data name="native.catalogSuggestions.k.predlozheniyam" xml:space="preserve"><value>← 返回建议列表</value></data>
+  <data name="native.promoCodes.k.promokodam" xml:space="preserve"><value>← 返回促销码列表</value></data>
+  <data name="native.billing.k.spisku" xml:space="preserve"><value>← 返回列表</value></data>
+  <data name="native.plans.k.tarifam" xml:space="preserve"><value>← 返回套餐列表</value></data>
+  <data name="native.testData.k.tekhnike.organizatsii" xml:space="preserve"><value>← 返回组织车辆列表</value></data>
+  <data name="native.assistant.predydushchaya" xml:space="preserve"><value>← 上一页</value></data>
+  <data name="native.promoCodes.createButton" xml:space="preserve"><value>+ 新建促销码</value></data>
+  <data name="native.crmImport.1.polzovatel.i.organizatsiya" xml:space="preserve"><value>1. 用户和组织</value></data>
+  <data name="native.crmImport.2.fayl.i.proverka" xml:space="preserve"><value>2. 文件和校验</value></data>
+  <data name="native.crmImport.3.rezultat.proverki" xml:space="preserve"><value>3. 校验结果</value></data>
+  <data name="native.billing.30.dney" xml:space="preserve"><value>30 天</value></data>
+  <data name="native.billing.7.dney" xml:space="preserve"><value>7 天</value></data>
+  <data name="native.siteNotifications.avtomaticheskie.shablony" xml:space="preserve"><value>自动模板</value></data>
+  <data name="native.promoCodes.avtomaticheskogo.demo.net.podarochnye.dni.dobavlyayut.pro.k.vybr" xml:space="preserve"><value>没有自动演示期。赠送天数会在所选套餐上增加 PRO 权限；汽车美容店和维修站可无限期使用 Free。</value></data>
+  <data name="native.promoCodes.avtopark" xml:space="preserve"><value>车队</value></data>
+  <data name="native.billing.avtoprodlenie" xml:space="preserve"><value>自动续费</value></data>
+  <data name="native.support.administrator" xml:space="preserve"><value>管理员</value></data>
+  <data name="native.assistant.administrator.0" xml:space="preserve"><value>管理员：{0}</value></data>
+  <data name="native.siteNotifications.administratory" xml:space="preserve"><value>管理员</value></data>
+  <data name="native.email.adres.nedostupen" xml:space="preserve"><value>地址不可用</value></data>
+  <data name="native.email.adresaty" xml:space="preserve"><value>收件人</value></data>
+  <data name="native.billing.aktivatsiya" xml:space="preserve"><value>激活</value></data>
+  <data name="native.plans.aktiven" xml:space="preserve"><value>活跃</value></data>
+  <data name="native.plans.aktiven.0" xml:space="preserve"><value>已启用：{0}</value></data>
+  <data name="native.billing.aktivna" xml:space="preserve"><value>活跃</value></data>
+  <data name="native.billing.aktivnye" xml:space="preserve"><value>已启用</value></data>
+  <data name="native.assistant.audit.izmeneniy" xml:space="preserve"><value>变更审计</value></data>
+  <data name="native.siteNotifications.auditorii" xml:space="preserve"><value>受众</value></data>
+  <data name="native.vehicleCatalog.baggi.i.utv" xml:space="preserve"><value>越野 buggy 和 UTV</value></data>
+  <data name="native.plans.bazovyy.prezhnyaya.model" xml:space="preserve"><value>基础 · 旧版</value></data>
+  <data name="native.promoCodes.bez.bonusa" xml:space="preserve"><value>无优惠</value></data>
+  <data name="native.plans.bez.gruppy" xml:space="preserve"><value>无分组</value></data>
+  <data name="native.promoCodes.bez.ogranicheniya" xml:space="preserve"><value>不限</value></data>
+  <data name="native.billing.bez.otmetki" xml:space="preserve"><value>未标记</value></data>
+  <data name="native.billing.bez.otmetki.24.ch" xml:space="preserve"><value>超过 24 小时未标记</value></data>
+  <data name="native.promoCodes.bez.sroka" xml:space="preserve"><value>无期限</value></data>
+  <data name="native.plans.besplatno" xml:space="preserve"><value>免费</value></data>
+  <data name="native.plans.bessrochno" xml:space="preserve"><value>长期有效</value></data>
+  <data name="native.plans.bessrochnyy.free.i.varianty.pro.starye.bazovye.i.demo.tarify.sok" xml:space="preserve"><value>Free 永久套餐及 PRO 选项。旧版基础套餐和演示套餐仍按原有条件保留。</value></data>
+  <data name="native.email.blokirovka.spama" xml:space="preserve"><value>垃圾邮件拦截</value></data>
+  <data name="native.promoCodes.bonus.starogo.promokoda.dostupen.tolko.dlya.prosmotra" xml:space="preserve"><value>旧促销码的赠送内容仅供查看。</value></data>
+  <data name="native.testData.budet.sozdano.zapisey.this.count.this.actiontitle.tolowerinvaria" xml:space="preserve"><value>将创建记录：{0} · {1}。此操作无法撤销。</value></data>
+  <data name="native.crmImport.budut.sozdany.zapisi.iz.proverennogo.fayla.dublikaty.budut.propu" xml:space="preserve"><value>将根据已校验的文件创建记录。重复项将被跳过。</value></data>
+  <data name="native.billing.v.ocheredi" xml:space="preserve"><value>排队中</value></data>
+  <data name="native.billing.v.ocheredi.otpravki" xml:space="preserve"><value>等待发送</value></data>
+  <data name="native.promoCodes.v.platezhe" xml:space="preserve"><value>已用于付款</value></data>
+  <data name="native.support.v.rabote" xml:space="preserve"><value>处理中</value></data>
+  <data name="native.catalogSuggestions.v.spiske.0.n0" xml:space="preserve"><value>列表中：{0:N0}</value></data>
+  <data name="native.testData.v.etoy.organizatsii.poka.net.tekhniki.sozdayte.eyo.chtoby.pereyt" xml:space="preserve"><value>此组织还没有车辆。请先创建车辆，再继续生成数据。</value></data>
+  <data name="native.promoCodes.vvedite.datu.i.vremya.v.formate.gggg.mm.dd.chch.mm" xml:space="preserve"><value>请按 YYYY-MM-DD HH:MM 格式输入日期和时间。</value></data>
+  <data name="native.vehicleCatalog.vvedite.nazvanie" xml:space="preserve"><value>请输入名称</value></data>
+  <data name="native.billing.vernut.this.refundamount.n2" xml:space="preserve"><value>退款 {0:N2} RUB</value></data>
+  <data name="native.billing.vernut.dengi" xml:space="preserve"><value>发起退款</value></data>
+  <data name="native.billing.vernut.mozhno.chast.summy" xml:space="preserve"><value>退款金额，RUB（可退还部分金额）</value></data>
+  <data name="native.billing.ves.period" xml:space="preserve"><value>全部时间</value></data>
+  <data name="native.vehicleCatalog.vid.tekhniki" xml:space="preserve"><value>车辆类型</value></data>
+  <data name="native.support.viden.tolko.administratoram" xml:space="preserve"><value>仅管理员可见</value></data>
+  <data name="native.assistant.vklyuchyon" xml:space="preserve"><value>已启用</value></data>
+  <data name="native.plans.vklyucheno" xml:space="preserve"><value>已包含</value></data>
+  <data name="native.plans.vklyuchit" xml:space="preserve"><value>启用</value></data>
+  <data name="native.billing.vladelets" xml:space="preserve"><value>所有者</value></data>
+  <data name="native.testData.vladelets.ne.ukazan" xml:space="preserve"><value>未指定所有者</value></data>
+  <data name="native.siteNotifications.vladeltsy.organizatsiy" xml:space="preserve"><value>组织所有者</value></data>
+  <data name="native.billing.vlozhit.pdf.png.jpg" xml:space="preserve"><value>附加 PDF / PNG / JPG 文件</value></data>
+  <data name="native.billing.vneshniy.status" xml:space="preserve"><value>外部状态</value></data>
+  <data name="native.support.vnutrenniy.kommentariy" xml:space="preserve"><value>内部备注</value></data>
+  <data name="native.billing.vozvrat" xml:space="preserve"><value>退款</value></data>
+  <data name="native.billing.vozvrat.ne.menyaet.ranee.vydannyy.srok.dostupa.prodlenie.i.ostan" xml:space="preserve"><value>退款不会更改已授予的访问期限。若要延长或停止访问，请前往“用户”→ 客户卡片 →“管理”。选择访问权限接收者。</value></data>
+  <data name="native.billing.vozvraty" xml:space="preserve"><value>退款</value></data>
+  <data name="native.billing.vozvrashchyon" xml:space="preserve"><value>已退款</value></data>
+  <data name="native.billing.vozvrashcheno.vsego" xml:space="preserve"><value>退款总额</value></data>
+  <data name="native.plans.vozmozhnosti.tarifa" xml:space="preserve"><value>套餐功能</value></data>
+  <data name="native.plans.vozmozhnosti.tarifa.sokhraneny.dlya.vsekh.srokov.oplaty" xml:space="preserve"><value>已为所有付费周期保存套餐功能。</value></data>
+  <data name="native.email.vremennaya.oshibka" xml:space="preserve"><value>临时错误</value></data>
+  <data name="native.billing.vse" xml:space="preserve"><value>全部</value></data>
+  <data name="native.vehicleCatalog.vse.vidy.tekhniki" xml:space="preserve"><value>所有车辆类型</value></data>
+  <data name="native.assistant.vse.kanaly" xml:space="preserve"><value>所有渠道</value></data>
+  <data name="native.promoCodes.vse.napravleniya" xml:space="preserve"><value>全部业务类型</value></data>
+  <data name="native.support.vse.obrashcheniya" xml:space="preserve"><value>所有请求</value></data>
+  <data name="native.billing.vse.pokupateli" xml:space="preserve"><value>所有买家</value></data>
+  <data name="native.email.vse.polzovateli" xml:space="preserve"><value>所有用户</value></data>
+  <data name="native.promoCodes.vse.statusy" xml:space="preserve"><value>所有状态</value></data>
+  <data name="native.billing.vse.cheki" xml:space="preserve"><value>所有收据</value></data>
+  <data name="native.vehicleCatalog.vsego.0.n0" xml:space="preserve"><value>总计：{0:N0}</value></data>
+  <data name="native.billing.vsego.this.totalcount.n0" xml:space="preserve"><value>总计：{0:N0}</value></data>
+  <data name="native.billing.vsya.ochered" xml:space="preserve"><value>整个队列</value></data>
+  <data name="native.sms.vkhod.po.telefonu" xml:space="preserve"><value>使用手机号登录</value></data>
+  <data name="native.promoCodes.vyberite.aktivnyy.platnyy.biznes.tarif.dlya.podarochnogo.dostupa" xml:space="preserve"><value>请选择一个有效的付费商业套餐，用于赠送访问权限。</value></data>
+  <data name="native.siteNotifications.vyberite.vsekh.polzovateley.libo.odnu.ili.obe.spetsialnye.audito" xml:space="preserve"><value>请选择所有用户，或选择一个或两个特殊受众。</value></data>
+  <data name="native.roles.vyberite.polzovatelya" xml:space="preserve"><value>请选择用户</value></data>
+  <data name="native.testData.vyberite.tekhniku.dlya.generatsii.obsluzhivaniy.i.defektov" xml:space="preserve"><value>选择要生成维修记录和故障数据的车辆。</value></data>
+  <data name="native.email.vyberite.tip.organizatsii" xml:space="preserve"><value>选择组织类型</value></data>
+  <data name="native.crmImport.vyberite.fayl.razmerom.ot.1.bayta.do.10.mb" xml:space="preserve"><value>请选择大小为 1 字节至 10 MB 的文件。</value></data>
+  <data name="native.promoCodes.vyberite.khotya.by.odin.platnyy.biznes.tarif" xml:space="preserve"><value>请至少选择一个付费商业套餐。</value></data>
+  <data name="native.promoCodes.vyberite.khotya.by.odno.napravlenie.ili.vklyuchite.vse.napravlen" xml:space="preserve"><value>请至少选择一种业务类型，或启用全部业务类型。</value></data>
+  <data name="native.billing.vyberite.pdf.png.ili.jpg.razmerom.do.5.mb" xml:space="preserve"><value>请选择不超过 5 MB 的 PDF、PNG 或 JPG 文件。</value></data>
+  <data name="native.testData.vyberite.kakie.demonstratsionnye.zapisi.sozdat" xml:space="preserve"><value>选择要创建哪些演示记录。</value></data>
+  <data name="native.siteNotifications.vybrannye.poluchateli" xml:space="preserve"><value>已选收件人</value></data>
+  <data name="native.siteNotifications.vybrannye.polzovateli" xml:space="preserve"><value>指定用户</value></data>
+  <data name="native.siteNotifications.vybrano.0" xml:space="preserve"><value>已选择：{0}</value></data>
+  <data name="native.testData.vybrat" xml:space="preserve"><value>选择</value></data>
+  <data name="native.email.vybrat.polzovatelya" xml:space="preserve"><value>选择用户</value></data>
+  <data name="native.crmImport.vybrat.fayl" xml:space="preserve"><value>选择文件</value></data>
+  <data name="native.crmImport.vybrat.fayl.crm" xml:space="preserve"><value>选择 CRM 文件</value></data>
+  <data name="native.billing.vybrat.chek.npd" xml:space="preserve"><value>选择自雇税收据</value></data>
+  <data name="native.promoCodes.vygoda" xml:space="preserve"><value>优惠</value></data>
+  <data name="native.promoCodes.vygoda.poluchena" xml:space="preserve"><value>优惠已获得</value></data>
+  <data name="native.billing.vydan" xml:space="preserve"><value>授予时间</value></data>
+  <data name="native.billing.vydannye" xml:space="preserve"><value>已授予</value></data>
+  <data name="native.billing.vydannyy.period" xml:space="preserve"><value>授予期限</value></data>
+  <data name="native.billing.vydannyy.srok.dostupa.avtomaticheski.ne.izmenitsya" xml:space="preserve"><value>已授予的访问期限不会自动更改。</value></data>
+  <data name="native.billing.vydacha.dostupa" xml:space="preserve"><value>授予访问权限</value></data>
+  <data name="native.billing.vydacha.i.otpravka.cheka" xml:space="preserve"><value>开具并发送收据</value></data>
+  <data name="native.billing.vydacha.trebuet.proverki" xml:space="preserve"><value>授权需要审核</value></data>
+  <data name="native.assistant.vyklyuchen" xml:space="preserve"><value>已停用</value></data>
+  <data name="native.email.vypolnyaetsya" xml:space="preserve"><value>进行中</value></data>
+  <data name="native.testData.generatsiya.dlya.tekhniki" xml:space="preserve"><value>生成车辆数据</value></data>
+  <data name="native.testData.generiruyte.demonstratsionnuyu.tekhniku.obsluzhivaniya.i.defekty" xml:space="preserve"><value>为组织生成演示车辆、维修记录和故障数据。</value></data>
+  <data name="native.vehicleCatalog.gidrotsikly" xml:space="preserve"><value>摩托艇</value></data>
+  <data name="native.assistant.globalnoe.vyklyuchenie.skryvaet.knopku.i.blokiruet.rabotu.pomosh" xml:space="preserve"><value>全局关闭后，CRM 更新完成时，所有组织中的助手按钮都会隐藏，助手也会停止工作。下方的网站和 Telegram 渠道可以单独关闭。</value></data>
+  <data name="native.assistant.globalnye.nastroyki" xml:space="preserve"><value>全局设置</value></data>
+  <data name="native.assistant.golos" xml:space="preserve"><value>语音</value></data>
+  <data name="native.support.gost" xml:space="preserve"><value>访客</value></data>
+  <data name="native.vehicleCatalog.gruzovaya.tekhnika" xml:space="preserve"><value>商用车辆</value></data>
+  <data name="native.plans.gruppa" xml:space="preserve"><value>分组</value></data>
+  <data name="native.billing.da" xml:space="preserve"><value>是</value></data>
+  <data name="native.siteNotifications.dalshe" xml:space="preserve"><value>下一步</value></data>
+  <data name="native.crmImport.dannye" xml:space="preserve"><value>数据</value></data>
+  <data name="native.testData.dannye.obnovleny.proverte.kolichestva.pered.povtornym.sozdaniem" xml:space="preserve"><value>数据已更新。再次创建前请检查数量。</value></data>
+  <data name="native.promoCodes.data" xml:space="preserve"><value>日期</value></data>
+  <data name="native.promoCodes.data.okonchaniya.dolzhna.byt.pozzhe.daty.nachala" xml:space="preserve"><value>结束日期必须晚于开始日期。</value></data>
+  <data name="native.promoCodes.deystvie" xml:space="preserve"><value>操作</value></data>
+  <data name="native.billing.deystvie.administratora" xml:space="preserve"><value>管理员操作</value></data>
+  <data name="native.billing.deystviya" xml:space="preserve"><value>操作</value></data>
+  <data name="native.billing.deystviya.s.platezhom" xml:space="preserve"><value>付款操作</value></data>
+  <data name="native.plans.demo.prezhnyaya.model" xml:space="preserve"><value>试用 · 旧版</value></data>
+  <data name="native.plans.demo.tarif" xml:space="preserve"><value>试用套餐</value></data>
+  <data name="native.promoCodes.demo.demoappliedat.tolocaltime.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>演示：{0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.billing.denezhnyy.snimok" xml:space="preserve"><value>付款快照</value></data>
+  <data name="native.promoCodes.deteyling" xml:space="preserve"><value>汽车精洗养护</value></data>
+  <data name="native.testData.defektov.0.n0" xml:space="preserve"><value>故障：{0:N0}</value></data>
+  <data name="native.email.dlya.massovoy.rassylki.pered.zapuskom.obyazatelno.proverte.adres" xml:space="preserve"><value>启动群发前，请务必检查收件人。邮件将立即排队发送，或在所选延迟后发送。</value></data>
+  <data name="native.plans.dlya.sistemnogo.free.tsena.srok.i.statusy.zafiksirovany.menyayte" xml:space="preserve"><value>系统 Free 套餐的价格、期限和状态均已固定。您可以更改套餐配额和功能。</value></data>
+  <data name="native.plans.dlya.tarifa.net.nastraivaemykh.vozmozhnostey" xml:space="preserve"><value>此套餐没有可配置的功能。</value></data>
+  <data name="native.siteNotifications.dlya.shablonov.podpiski.dostupny.peremennye.organization.email.p" xml:space="preserve"><value>订阅模板支持以下变量：{organization}、{email}、{plan}、{days}。</value></data>
+  <data name="native.assistant.dnevnoy.byudzhet" xml:space="preserve"><value>每日预算，RUB</value></data>
+  <data name="native.promoCodes.do.date.tolocaltime.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>截至 {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.promoCodes.dobavit.tarif" xml:space="preserve"><value>添加套餐</value></data>
+  <data name="native.crmImport.dobavleno.klientov.result.createdclients.tekhniki.result.created" xml:space="preserve"><value>已添加客户：{0} · 车辆：{1} · 已跳过重复项：{2} · 错误：{3}</value></data>
+  <data name="native.vehicleCatalog.dobavleno.marok.result.createdbrands.modeley.result.createdmodel" xml:space="preserve"><value>已添加品牌：{0}，型号：{1}。已跳过已删除记录：{2}。</value></data>
+  <data name="native.vehicleCatalog.dopolnit.katalog" xml:space="preserve"><value>补充目录</value></data>
+  <data name="native.email.dostavka" xml:space="preserve"><value>投递</value></data>
+  <data name="native.billing.dostavka.komandy" xml:space="preserve"><value>命令投递</value></data>
+  <data name="native.billing.dostavlen" xml:space="preserve"><value>已送达</value></data>
+  <data name="native.email.dostavleno" xml:space="preserve"><value>已送达</value></data>
+  <data name="native.assistant.dostup.do.lokalnoe.vremya" xml:space="preserve"><value>访问有效期至（本地时间）</value></data>
+  <data name="native.assistant.dostup.organizatsii.sokhranyon.i.zapisan.v.audit" xml:space="preserve"><value>组织访问权限已保存并记录到审计日志。</value></data>
+  <data name="native.assistant.dostup.organizatsiy" xml:space="preserve"><value>组织访问权限</value></data>
+  <data name="native.billing.dostup.po.etoy.pokupke" xml:space="preserve"><value>此次购买授予的访问权限</value></data>
+  <data name="native.assistant.dostup.razreshyon" xml:space="preserve"><value>允许访问</value></data>
+  <data name="native.billing.dostupno.k.vozvratu.0.n2" xml:space="preserve"><value>可退款：{0:N2} RUB</value></data>
+  <data name="native.vehicleCatalog.drugie" xml:space="preserve"><value>其他</value></data>
+  <data name="native.email.est.soglasie.na.rassylku" xml:space="preserve"><value>已同意接收邮件</value></data>
+  <data name="native.billing.eshchyo.ne.nachalas" xml:space="preserve"><value>尚未开始</value></data>
+  <data name="native.billing.eshchyo.ne.nachalis" xml:space="preserve"><value>尚未开始</value></data>
+  <data name="native.billing.za.30.dney" xml:space="preserve"><value>最近 30 天</value></data>
+  <data name="native.billing.za.7.dney" xml:space="preserve"><value>最近 7 天</value></data>
+  <data name="native.billing.za.90.dney" xml:space="preserve"><value>最近 90 天</value></data>
+  <data name="native.billing.za.vsyo.vremya" xml:space="preserve"><value>所有时间</value></data>
+  <data name="native.billing.zavershena" xml:space="preserve"><value>已完成</value></data>
+  <data name="native.billing.zavershyonnye" xml:space="preserve"><value>已完成</value></data>
+  <data name="native.billing.zavershit.razbor" xml:space="preserve"><value>完成审核</value></data>
+  <data name="native.siteNotifications.zagolovok" xml:space="preserve"><value>标题</value></data>
+  <data name="native.assistant.zagruzit" xml:space="preserve"><value>上传</value></data>
+  <data name="native.plans.zagruzka.vozmozhnostey.tarifa.zanyala.slishkom.mnogo.vremeni" xml:space="preserve"><value>加载套餐功能超时。</value></data>
+  <data name="native.plans.zagruzka.tarifov.zanyala.slishkom.mnogo.vremeni.povtorite.popytk" xml:space="preserve"><value>加载套餐超时。请重试。</value></data>
+  <data name="native.billing.zakryvaet.formu.esli.zapros.uzhe.otpravlen.eto.ne.otmenyaet.plat" xml:space="preserve"><value>关闭此表单。如果请求已发送，这不会取消付款操作。</value></data>
+  <data name="native.support.zakryto" xml:space="preserve"><value>已关闭</value></data>
+  <data name="native.support.zakrytye" xml:space="preserve"><value>已关闭</value></data>
+  <data name="native.siteNotifications.zakryt" xml:space="preserve"><value>关闭</value></data>
+  <data name="native.billing.zakryt.podtverzhdenie" xml:space="preserve"><value>关闭确认</value></data>
+  <data name="native.assistant.zapisey.poka.net" xml:space="preserve"><value>暂无记录。</value></data>
+  <data name="native.sms.zapisey.0.n0" xml:space="preserve"><value>记录数：{0:N0}</value></data>
+  <data name="native.billing.zapisi.ne.naydeny" xml:space="preserve"><value>未找到记录</value></data>
+  <data name="native.vehicleCatalog.zapis.kataloga.sokhranena" xml:space="preserve"><value>目录条目已保存。</value></data>
+  <data name="native.email.zaplanirovana" xml:space="preserve"><value>已安排</value></data>
+  <data name="native.testData.zaplanirovannye" xml:space="preserve"><value>已计划</value></data>
+  <data name="native.email.zaplanirovat" xml:space="preserve"><value>安排发送</value></data>
+  <data name="native.siteNotifications.zapros.otpravlen.no.rezultat.ne.podtverzhdyon.proverte.istoriyu." xml:space="preserve"><value>请求已发送，但结果尚未确认。再次发送前请检查通知历史记录。</value></data>
+  <data name="native.email.zapros.uzhe.otpravlen.no.server.ne.podtverdil.rezultat.proverte." xml:space="preserve"><value>请求已发送，但服务器尚未确认结果。再次尝试前请检查邮件活动列表。</value></data>
+  <data name="native.assistant.zaprosy.0.n0" xml:space="preserve"><value>请求数：{0:N0}</value></data>
+  <data name="native.assistant.zaprosy.0" xml:space="preserve"><value>请求数：{0}</value></data>
+  <data name="native.email.zapusk" xml:space="preserve"><value>启动</value></data>
+  <data name="native.email.zapustit.cherez.minut" xml:space="preserve"><value>延迟启动（分钟）</value></data>
+  <data name="native.billing.identifikatory.i.sostoyanie" xml:space="preserve"><value>标识符和状态</value></data>
+  <data name="native.support.izmenenie.statusa" xml:space="preserve"><value>状态已更改</value></data>
+  <data name="native.plans.izmenenie.statusa.zanyalo.slishkom.mnogo.vremeni.obnovite.spisok" xml:space="preserve"><value>更改状态超时。请刷新列表后重试。</value></data>
+  <data name="native.vehicleCatalog.izmeneniya.srazu.poyavyatsya.v.kataloge" xml:space="preserve"><value>更改将立即显示在目录中。</value></data>
+  <data name="native.siteNotifications.izmenit" xml:space="preserve"><value>编辑</value></data>
+  <data name="native.billing.izmenit.lokalnuyu.otmetku" xml:space="preserve"><value>编辑本地标记…</value></data>
+  <data name="native.vehicleCatalog.izmenit.marku" xml:space="preserve"><value>编辑品牌</value></data>
+  <data name="native.vehicleCatalog.izmenit.model.this.selectedbrand.name" xml:space="preserve"><value>编辑型号 · {0}</value></data>
+  <data name="native.billing.izmenit.otmetku.o.vydache" xml:space="preserve"><value>编辑访问授权标记</value></data>
+  <data name="native.assistant.ii.pomoshchnik" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="native.crmImport.import.zavershyon" xml:space="preserve"><value>导入已完成</value></data>
+  <data name="native.crmImport.import.crm" xml:space="preserve"><value>CRM 导入</value></data>
+  <data name="native.email.interval.mezhdu.pismami.sekund" xml:space="preserve"><value>邮件发送间隔（秒）</value></data>
+  <data name="native.promoCodes.ispolzovana" xml:space="preserve"><value>已用完</value></data>
+  <data name="native.promoCodes.ispolzovanie" xml:space="preserve"><value>使用情况</value></data>
+  <data name="native.billing.ispolzuyte.tolko.dlya.starykh.platezhey.eto.ne.vozvrashchaet.den" xml:space="preserve"><value>仅用于旧版付款：此操作不会退款，也不会授予订阅。</value></data>
+  <data name="native.plans.istoricheskie.zapisi.dostupny.tolko.dlya.prosmotra" xml:space="preserve"><value>历史记录仅供查看</value></data>
+  <data name="native.billing.istoricheskiy.period.pokupki.ne.pokazyvaet.tekushchiy.dostup.pro" xml:space="preserve"><value>历史购买期限不代表当前访问权限。请另行检查接收者的订阅。</value></data>
+  <data name="native.promoCodes.istoricheskiy.registratsionnyy.bonus.days.dn" xml:space="preserve"><value>历史注册奖励：{0} 天</value></data>
+  <data name="native.siteNotifications.istoriya" xml:space="preserve"><value>历史记录</value></data>
+  <data name="native.billing.istoriya.izmeneniy" xml:space="preserve"><value>变更历史</value></data>
+  <data name="native.promoCodes.istoriya.primeneniy" xml:space="preserve"><value>兑换历史</value></data>
+  <data name="native.billing.istoriya.pusta" xml:space="preserve"><value>历史记录为空</value></data>
+  <data name="native.siteNotifications.istoriya.uvedomleniy.obnovlena.mozhno.nachat.novoe.uvedomlenie" xml:space="preserve"><value>通知历史记录已更新。您可以创建新通知。</value></data>
+  <data name="native.email.istoriya.email" xml:space="preserve"><value>邮件历史</value></data>
+  <data name="native.sms.istoriya.sms" xml:space="preserve"><value>短信历史</value></data>
+  <data name="native.billing.istochnik" xml:space="preserve"><value>来源</value></data>
+  <data name="native.promoCodes.istochnik.this.usage.sourcecode" xml:space="preserve"><value>来源：{0}</value></data>
+  <data name="native.billing.iskhodnaya.summa" xml:space="preserve"><value>原始金额</value></data>
+  <data name="native.testData.iskhodnuyu.organizatsiyu.ne.udalos.nayti.rezultat.generatsii.ost" xml:space="preserve"><value>找不到源组织。生成结果仍然未知；请检查组织访问权限并再次刷新数据。</value></data>
+  <data name="native.testData.iskhodnuyu.tekhniku.ne.udalos.nayti.v.organizatsii.rezultat.gene" xml:space="preserve"><value>在该组织中找不到源车辆。生成结果仍然未知；请刷新数据并再次检查车辆。</value></data>
+  <data name="native.email.k.rassylkam" xml:space="preserve"><value>返回邮件活动</value></data>
+  <data name="native.email.kampaniya" xml:space="preserve"><value>邮件活动</value></data>
+  <data name="native.assistant.kanal.sayta" xml:space="preserve"><value>网站渠道</value></data>
+  <data name="native.assistant.kanal.sluzhebnogo.telegram" xml:space="preserve"><value>内部 Telegram 渠道</value></data>
+  <data name="native.vehicleCatalog.katalog.budet.dopolnen.bazovymi.markami.i.modelyami.ranee.udalyo" xml:space="preserve"><value>目录将补充标准品牌和型号。之前删除的条目不会恢复。</value></data>
+  <data name="native.vehicleCatalog.katalog.tekhniki" xml:space="preserve"><value>车辆目录</value></data>
+  <data name="native.vehicleCatalog.kvadrotsikly" xml:space="preserve"><value>全地形车</value></data>
+  <data name="native.crmImport.klienty.preview.summary.clients.tekhnika.preview.summary.vehicle" xml:space="preserve"><value>客户：{0} · 车辆：{1} · 待添加：{2} · 重复项：{3} · 错误：{4}</value></data>
+  <data name="native.billing.kod" xml:space="preserve"><value>代码</value></data>
+  <data name="native.promoCodes.kod.promokoda" xml:space="preserve"><value>促销码</value></data>
+  <data name="native.promoCodes.kod.promokoda.dolzhen.soderzhat.ot.1.do.64.simvolov" xml:space="preserve"><value>促销码长度必须为 1 至 64 个字符。</value></data>
+  <data name="native.testData.kolichestvo" xml:space="preserve"><value>数量</value></data>
+  <data name="native.promoCodes.kolichestvo.podarochnykh.dney.dolzhno.byt.ot.1.do.3650" xml:space="preserve"><value>赠送天数必须介于 1 至 3650 天之间。</value></data>
+  <data name="native.billing.komanda.po.platezhu.this.pendingservicepaymentid.eshchyo.ne.polu" xml:space="preserve"><value>付款编号 {0} 的命令尚未收到最终响应。重试将使用相同的操作编号发送相同请求。</value></data>
+  <data name="native.crmImport.kommentariy" xml:space="preserve"><value>备注</value></data>
+  <data name="native.catalogSuggestions.kommentariy.budet.sokhranyon.vmeste.s.resheniem" xml:space="preserve"><value>评论将与处理决定一并保存。</value></data>
+  <data name="native.billing.kommentariy.k.cheku" xml:space="preserve"><value>收据备注</value></data>
+  <data name="native.catalogSuggestions.kommentariy.moderatora" xml:space="preserve"><value>审核员备注</value></data>
+  <data name="native.billing.kommentariy.ne.dolzhen.prevyshat.1000.simvolov" xml:space="preserve"><value>备注不能超过 1,000 个字符。</value></data>
+  <data name="native.siteNotifications.komu" xml:space="preserve"><value>收件人</value></data>
+  <data name="native.billing.korotko.opishite.pochemu.vypolnyaete.operatsiyu.prichina.ostanet" xml:space="preserve"><value>请简要说明执行此操作的原因。该原因将保留在日志中。</value></data>
+  <data name="native.billing.kto.izmenil" xml:space="preserve"><value>修改人</value></data>
+  <data name="native.vehicleCatalog.legkovye.avtomobili" xml:space="preserve"><value>乘用车</value></data>
+  <data name="native.promoCodes.limit.primeneniy.organizatsiyami.dolzhen.byt.tselym.chislom.ne.m" xml:space="preserve"><value>组织使用次数上限必须为不小于 1 的整数。</value></data>
+  <data name="native.promoCodes.limit.registratsiy.dolzhen.byt.tselym.chislom.ne.menshe.1" xml:space="preserve"><value>注册次数上限必须为不小于 1 的整数。</value></data>
+  <data name="native.promoCodes.limit.registratsiy" xml:space="preserve"><value>注册次数上限：</value></data>
+  <data name="native.plans.limit.tekhniki" xml:space="preserve"><value>车辆上限</value></data>
+  <data name="native.plans.lichnye.tarify" xml:space="preserve"><value>个人套餐</value></data>
+  <data name="native.plans.lichnye.tarify.zashchishcheny.ot.izmeneniya.v.administrativnoy.p" xml:space="preserve"><value>个人套餐无法在管理面板中修改。</value></data>
+  <data name="native.plans.lichnyy.tarif.tolko.prosmotr" xml:space="preserve"><value>个人套餐 · 仅供查看</value></data>
+  <data name="native.vehicleCatalog.lodki.i.katera" xml:space="preserve"><value>船只和摩托艇</value></data>
+  <data name="native.billing.lokalnaya.korrektirovka.statusa" xml:space="preserve"><value>本地状态调整</value></data>
+  <data name="native.assistant.maksimalnyy.byudzhet.this.overview.limits.maximumbudgetrub.n2.re" xml:space="preserve"><value>最高预算：{0:N2} RUB；预留：{1:N2} RUB；</value></data>
+  <data name="native.assistant.maksimum.tokenov.otveta" xml:space="preserve"><value>回复令牌数上限</value></data>
+  <data name="native.vehicleCatalog.marka.udalena" xml:space="preserve"><value>品牌已删除。</value></data>
+  <data name="native.vehicleCatalog.marki" xml:space="preserve"><value>品牌</value></data>
+  <data name="native.vehicleCatalog.marki.i.modeli.dostupnye.v.prilozhenii" xml:space="preserve"><value>应用中可用的品牌和型号。</value></data>
+  <data name="native.vehicleCatalog.marki.ne.naydeny.izmenite.filtr.ili.dobavte.novuyu.marku" xml:space="preserve"><value>未找到品牌。请更改筛选条件或添加新品牌。</value></data>
+  <data name="native.billing.menyaet.tolko.lokalnyy.status.legacy.platezha.ne.ispolzuyte.eto." xml:space="preserve"><value>仅更改旧版付款的本地状态。请勿将此操作视为付款或退款确认。</value></data>
+  <data name="native.promoCodes.mestnoe.vremya.pustaya.data.oznachaet.otsutstvie.ogranicheniya" xml:space="preserve"><value>本地时间。日期留空表示不设限制。</value></data>
+  <data name="native.assistant.mesyachnyy.byudzhet" xml:space="preserve"><value>每月预算，RUB</value></data>
+  <data name="native.vehicleCatalog.modeli" xml:space="preserve"><value>型号</value></data>
+  <data name="native.vehicleCatalog.modeli.vybrannoy.marki" xml:space="preserve"><value>所选品牌的型号</value></data>
+  <data name="native.assistant.model" xml:space="preserve"><value>模型</value></data>
+  <data name="native.assistant.model.ozvuchivaniya" xml:space="preserve"><value>语音合成模型</value></data>
+  <data name="native.assistant.model.raspoznavaniya.rechi" xml:space="preserve"><value>语音识别模型</value></data>
+  <data name="native.vehicleCatalog.model.udalena" xml:space="preserve"><value>型号已删除。</value></data>
+  <data name="native.vehicleCatalog.mototsikly" xml:space="preserve"><value>摩托车</value></data>
+  <data name="native.catalogSuggestions.na.moderatsii" xml:space="preserve"><value>待审核</value></data>
+  <data name="native.billing.na.stranitse" xml:space="preserve"><value>每页显示</value></data>
+  <data name="native.siteNotifications.na.etoy.stranitse.uvedomleniy.net" xml:space="preserve"><value>此页面没有通知。</value></data>
+  <data name="native.siteNotifications.nazad" xml:space="preserve"><value>上一页</value></data>
+  <data name="native.plans.nazvanie" xml:space="preserve"><value>名称</value></data>
+  <data name="native.promoCodes.nazvanie.dolzhno.soderzhat.ot.1.do.160.simvolov" xml:space="preserve"><value>名称长度必须为 1 至 160 个字符。</value></data>
+  <data name="native.plans.nazvanie.i.opisanie.kotorye.uvidyat.polzovateli" xml:space="preserve"><value>用户可见的名称和说明</value></data>
+  <data name="native.assistant.nazvanie.organizatsii" xml:space="preserve"><value>组织名称</value></data>
+  <data name="native.testData.nazvanie.organizatsii.ili.email.vladeltsa" xml:space="preserve"><value>组织名称或所有者邮箱</value></data>
+  <data name="native.promoCodes.naznachen.assignedat.tolocaltime.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>已分配：{0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.roles.naznachit" xml:space="preserve"><value>分配</value></data>
+  <data name="native.communications.naydeno.this.totalcount.n0.stranitsa.this.page.iz.math.max.1.int" xml:space="preserve"><value>找到：{0:N0} · 第 {1} 页，共 {2} 页</value></data>
+  <data name="native.testData.naydite.organizatsiyu.v.kotoroy.nuzhno.podgotovit.testovye.danny" xml:space="preserve"><value>查找需要准备测试数据的组织。</value></data>
+  <data name="native.billing.nayti" xml:space="preserve"><value>搜索</value></data>
+  <data name="native.promoCodes.nayti.kod.ili.nazvanie" xml:space="preserve"><value>查找代码或名称</value></data>
+  <data name="native.siteNotifications.nayti.polzovateley.po.email" xml:space="preserve"><value>按邮箱查找用户</value></data>
+  <data name="native.email.napisat.pismo" xml:space="preserve"><value>撰写邮件</value></data>
+  <data name="native.support.napishite.otvet" xml:space="preserve"><value>输入回复…</value></data>
+  <data name="native.catalogSuggestions.napishite.poyasnenie.dlya.avtora.esli.nuzhno" xml:space="preserve"><value>如有需要，请填写给作者的说明</value></data>
+  <data name="native.promoCodes.naprimer.15" xml:space="preserve"><value>例如，15</value></data>
+  <data name="native.plans.naprimer.standart" xml:space="preserve"><value>例如，标准</value></data>
+  <data name="native.assistant.nastroen" xml:space="preserve"><value>已配置</value></data>
+  <data name="native.assistant.nastroyki.dostupa.0" xml:space="preserve"><value>访问设置：{0}</value></data>
+  <data name="native.assistant.nastroyki.izmenilis.na.servere.dannye.obnovleny.proverte.ikh.i.s" xml:space="preserve"><value>服务器上的设置已更改。数据已刷新；请检查并重新保存。</value></data>
+  <data name="native.assistant.nastroyki.pomoshchnika.sokhraneny" xml:space="preserve"><value>助手设置已保存。</value></data>
+  <data name="native.plans.nastroyki.tarifa" xml:space="preserve"><value>套餐设置</value></data>
+  <data name="native.promoCodes.nachalo" xml:space="preserve"><value>开始</value></data>
+  <data name="native.crmImport.nachat.import" xml:space="preserve"><value>开始导入</value></data>
+  <data name="native.testData.ne.vybrano.deystvie.generatsii" xml:space="preserve"><value>未选择生成操作。</value></data>
+  <data name="native.billing.ne.vydan" xml:space="preserve"><value>未授予</value></data>
+  <data name="native.billing.ne.vydan.sredstva.vozvrashcheny" xml:space="preserve"><value>未授予：款项已退还</value></data>
+  <data name="native.assistant.ne.nastroen" xml:space="preserve"><value>未配置</value></data>
+  <data name="native.billing.ne.otmechen" xml:space="preserve"><value>未标记</value></data>
+  <data name="native.billing.ne.otmechen.bolee.24.ch" xml:space="preserve"><value>未标记 · 超过 24 小时</value></data>
+  <data name="native.billing.ne.otpravlen" xml:space="preserve"><value>未发送</value></data>
+  <data name="native.communications.ne.udalos.vypolnit.zapros.povtorite.popytku" xml:space="preserve"><value>无法完成请求。请重试。</value></data>
+  <data name="native.billing.ne.udalos.obnovit.kartochku.server.ne.otvetil.vovremya" xml:space="preserve"><value>无法刷新卡片：服务器未及时响应。</value></data>
+  <data name="native.billing.ne.udalos.obnovit.kartochku.proverte.podklyuchenie.k.serveru" xml:space="preserve"><value>无法刷新卡片。请检查与服务器的连接。</value></data>
+  <data name="native.billing.ne.udalos.obnovit.spisok.server.ne.otvetil.vovremya" xml:space="preserve"><value>无法刷新列表：服务器未及时响应。</value></data>
+  <data name="native.billing.ne.udalos.obnovit.spisok.pokazana.predydushchaya.stranitsa.excep" xml:space="preserve"><value>无法刷新列表。当前显示上一页。{0}</value></data>
+  <data name="native.billing.ne.udalos.obnovit.spisok.proverte.podklyuchenie.k.serveru" xml:space="preserve"><value>无法刷新列表。请检查与服务器的连接。</value></data>
+  <data name="native.promoCodes.ne.udalos.podtverdit.rezultat.operatsii.obnovite.spisok.pered.sl" xml:space="preserve"><value>无法确认操作结果。进行后续更改前请刷新列表。</value></data>
+  <data name="native.billing.ne.udalos.podtverdit.rezultat.povtorite.otpravku.prezhney.operat" xml:space="preserve"><value>无法确认结果。请使用相同编号重试之前的操作。</value></data>
+  <data name="native.billing.ne.udalos.prochitat.sokhranyonnuyu.operatsiyu.novye.deystviya.za" xml:space="preserve"><value>无法读取已保存的操作。新操作已被阻止；请检查日志并重新加载。</value></data>
+  <data name="native.billing.ne.udalos.prochitat.fayl.proverte.dostup.i.povtorite.popytku" xml:space="preserve"><value>无法读取文件。请检查访问权限并重试。</value></data>
+  <data name="native.crmImport.ne.udalos.prochitat.fayl.proverte.dostup" xml:space="preserve"><value>无法读取文件。请检查访问权限。</value></data>
+  <data name="native.billing.ne.udalos.svyazatsya.s.serverom.obnovite.platyozh.pered.povtorom" xml:space="preserve"><value>无法连接服务器。重试操作前请刷新付款信息。</value></data>
+  <data name="native.roles.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori" xml:space="preserve"><value>无法连接服务器。请检查网络连接并重试。</value></data>
+  <data name="native.promoCodes.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie" xml:space="preserve"><value>无法连接服务器。请检查网络连接。</value></data>
+  <data name="native.billing.ne.udalos.sokhranit.lokalnyy.rezultat.zapros.mog.byt.prinyat.pro" xml:space="preserve"><value>无法保存本地结果。请求可能已被接受；执行其他操作前请检查日志。</value></data>
+  <data name="native.billing.ne.udalos.sokhranit.nomer.operatsii.zapros.ne.otpravlen.proverte" xml:space="preserve"><value>无法保存操作编号。请求未发送；请检查本地存储访问权限。</value></data>
+  <data name="native.crmImport.ne.udalos.sokhranit.otchyot.proverte.dostup" xml:space="preserve"><value>无法保存报告。请检查访问权限。</value></data>
+  <data name="native.billing.ne.udalos.sokhranit.fayl.proverte.dostup.i.povtorite.popytku" xml:space="preserve"><value>无法保存文件。请检查访问权限并重试。</value></data>
+  <data name="native.assistant.neizvestnaya.stoimost" xml:space="preserve"><value>费用未知</value></data>
+  <data name="native.assistant.neizvestnaya.stoimost.0" xml:space="preserve"><value>费用未知：{0}</value></data>
+  <data name="native.billing.net" xml:space="preserve"><value>否</value></data>
+  <data name="native.billing.net.dannykh" xml:space="preserve"><value>无数据</value></data>
+  <data name="native.assistant.net.prava.na.prosmotr.nastroek.ili.raskhodov.ii.pomoshchnika" xml:space="preserve"><value>您无权查看 AI 助手设置或费用。</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.izmenenie.statusa.ne.podtverzhdeno.obnovit" xml:space="preserve"><value>无法连接服务器。状态更改尚未确认；重试前请刷新列表。</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.ne.udalos.zagruzit.vozmozhnosti.tarifa" xml:space="preserve"><value>无法连接服务器。未能加载套餐功能。</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.ne.udalos.zagruzit.tarify" xml:space="preserve"><value>无法连接服务器。未能加载套餐。</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.sokhranenie.ne.podtverzhdeno.obnovite.spis" xml:space="preserve"><value>无法连接服务器。保存操作尚未确认；重试前请刷新列表。</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.sokhranenie.ne.podtverzhdeno.obnovite.tari" xml:space="preserve"><value>无法连接服务器。保存操作尚未确认；重试前请刷新套餐。</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.udalenie.ne.podtverzhdeno.obnovite.spisok." xml:space="preserve"><value>无法连接服务器。删除操作尚未确认；重试前请刷新列表。</value></data>
+  <data name="native.vehicleCatalog.novaya.marka" xml:space="preserve"><value>新品牌</value></data>
+  <data name="native.vehicleCatalog.novaya.model" xml:space="preserve"><value>新型号</value></data>
+  <data name="native.vehicleCatalog.novaya.model.this.selectedbrand.name" xml:space="preserve"><value>新型号 · {0}</value></data>
+  <data name="native.support.novoe" xml:space="preserve"><value>新建</value></data>
+  <data name="native.email.novoe.pismo" xml:space="preserve"><value>新邮件</value></data>
+  <data name="native.support.novye" xml:space="preserve"><value>新建</value></data>
+  <data name="native.support.novye.result.newcount.v.rabote.result.inprogresscount.zakrytye.r" xml:space="preserve"><value>新建：{0} · 处理中：{1} · 已关闭：{2} · 垃圾信息：{3}</value></data>
+  <data name="native.plans.novyy.variant.pro" xml:space="preserve"><value>新增 PRO 选项</value></data>
+  <data name="native.promoCodes.createTitle" xml:space="preserve"><value>新建促销码</value></data>
+  <data name="native.plans.novyy.tarif" xml:space="preserve"><value>新增套餐</value></data>
+  <data name="native.billing.nomer.operatsii.nayden.v.zhurnale.s.drugimi.dannymi.ne.sozdavayt" xml:space="preserve"><value>日志中已存在此操作编号，但数据不同。请勿创建新命令；请将该编号提供给负责的管理员。</value></data>
+  <data name="native.billing.o.tekushchem.dostupe" xml:space="preserve"><value>关于当前访问权限</value></data>
+  <data name="native.billing.obnovit" xml:space="preserve"><value>刷新</value></data>
+  <data name="native.testData.obnovit.dannye.i.proverit.rezultat" xml:space="preserve"><value>刷新数据并检查结果</value></data>
+  <data name="native.support.obnovit.perepisku" xml:space="preserve"><value>刷新对话</value></data>
+  <data name="native.billing.obnovlyaet.legacy.platyozh.po.dannym.yookassa.dlya.novykh.platez" xml:space="preserve"><value>根据 YooKassa 数据刷新旧版付款。新自雇税付款可单独检查。</value></data>
+  <data name="native.billing.obrabotka.vozvrata" xml:space="preserve"><value>正在处理退款</value></data>
+  <data name="native.billing.obrabotka.platezha" xml:space="preserve"><value>正在处理付款</value></data>
+  <data name="native.support.obrashchenie" xml:space="preserve"><value>请求</value></data>
+  <data name="native.support.obrashcheniya" xml:space="preserve"><value>支持请求</value></data>
+  <data name="native.support.obrashcheniya.ne.naydeny" xml:space="preserve"><value>未找到支持请求。</value></data>
+  <data name="native.testData.obsluzhivaniy.0.n0" xml:space="preserve"><value>维修记录：{0:N0}</value></data>
+  <data name="native.plans.obshchie.nastroyki.dlya.vsekh.srokov.oplaty.etoy.gruppy" xml:space="preserve"><value>此分组所有付费周期的通用设置</value></data>
+  <data name="native.promoCodes.obshchiy.limit.primeneniy" xml:space="preserve"><value>总使用次数上限</value></data>
+  <data name="native.email.obychnyy.tekst" xml:space="preserve"><value>纯文本</value></data>
+  <data name="native.billing.obyazatelnaya.prichina.izmeneniya" xml:space="preserve"><value>必须填写更改原因</value></data>
+  <data name="native.email.odin.adres" xml:space="preserve"><value>单个地址</value></data>
+  <data name="native.billing.odin.fayl.do.5.mb.skachivanie.dostupno.tolko.avtorizovannomu.adm" xml:space="preserve"><value>单个文件，最大 5 MB。仅已授权的管理员可以下载。</value></data>
+  <data name="native.catalogSuggestions.odobrennye" xml:space="preserve"><value>已批准</value></data>
+  <data name="native.catalogSuggestions.odobrennye.predlozheniya" xml:space="preserve"><value>已批准的建议</value></data>
+  <data name="native.catalogSuggestions.odobrit" xml:space="preserve"><value>批准</value></data>
+  <data name="native.catalogSuggestions.odobrit.predlozhenie.i.dobavit.marku.i.model.v.katalog" xml:space="preserve"><value>是否批准此建议并将品牌和型号添加到目录？</value></data>
+  <data name="native.billing.ozhidaet.vydachi" xml:space="preserve"><value>等待授权</value></data>
+  <data name="native.email.ozhidaet.otpravki" xml:space="preserve"><value>等待发送</value></data>
+  <data name="native.billing.ozhidanie.oplaty" xml:space="preserve"><value>等待付款</value></data>
+  <data name="native.billing.ozhidayut.oplaty" xml:space="preserve"><value>等待付款</value></data>
+  <data name="native.assistant.ozvuchivanie.otvetov" xml:space="preserve"><value>朗读回复</value></data>
+  <data name="native.promoCodes.okonchanie" xml:space="preserve"><value>结束</value></data>
+  <data name="native.billing.okonchanie.do" xml:space="preserve"><value>结束时间早于</value></data>
+  <data name="native.billing.okonchanie.posle" xml:space="preserve"><value>结束时间晚于</value></data>
+  <data name="native.plans.opisanie" xml:space="preserve"><value>说明</value></data>
+  <data name="native.promoCodes.opisanie.ne.dolzhno.prevyshat.1000.simvolov" xml:space="preserve"><value>说明不能超过 1,000 个字符。</value></data>
+  <data name="native.billing.oplata.podtverzhdena" xml:space="preserve"><value>付款已确认</value></data>
+  <data name="native.billing.oplachen" xml:space="preserve"><value>付款时间</value></data>
+  <data name="native.billing.oplacheno" xml:space="preserve"><value>付款时间</value></data>
+  <data name="native.billing.oplacheny" xml:space="preserve"><value>已付款</value></data>
+  <data name="native.testData.organizatsii" xml:space="preserve"><value>组织</value></data>
+  <data name="native.billing.organizatsii.ip" xml:space="preserve"><value>组织 / 个体经营者</value></data>
+  <data name="native.testData.organizatsii.ne.naydeny.izmenite.zapros.i.poprobuyte.eshchyo.raz" xml:space="preserve"><value>未找到组织。请更改搜索条件后重试。</value></data>
+  <data name="native.promoCodes.organizatsionnyy.promokod" xml:space="preserve"><value>组织促销码</value></data>
+  <data name="native.plans.organizatsionnyy.tarif.nastroyki.i.vozmozhnosti" xml:space="preserve"><value>组织套餐 · 设置和功能</value></data>
+  <data name="native.promoCodes.organizatsiya" xml:space="preserve"><value>组织</value></data>
+  <data name="native.billing.organizatsiya.ip" xml:space="preserve"><value>组织 / 个体经营者</value></data>
+  <data name="native.crmImport.organizatsiya.0" xml:space="preserve"><value>组织：{0}</value></data>
+  <data name="native.assistant.osnovanie.sverki" xml:space="preserve"><value>核对依据</value></data>
+  <data name="native.plans.osnovnoe" xml:space="preserve"><value>常规</value></data>
+  <data name="native.billing.ostalos.dney" xml:space="preserve"><value>剩余天数</value></data>
+  <data name="native.billing.ostalos.posle.vozvratov" xml:space="preserve"><value>退款后余额</value></data>
+  <data name="native.support.ot.gostey" xml:space="preserve"><value>来自访客</value></data>
+  <data name="native.support.ot.polzovateley" xml:space="preserve"><value>来自用户</value></data>
+  <data name="native.testData.otvet.na.sozdanie.ne.poluchen.i.rezultat.neizvesten.obnovite.dan" xml:space="preserve"><value>创建请求未收到响应，因此结果未知。请刷新组织和车辆数据，检查最新数量，然后再重新开始生成。</value></data>
+  <data name="native.support.otvet.otpravitelyu" xml:space="preserve"><value>回复发件人</value></data>
+  <data name="native.sms.otvet.provaydera" xml:space="preserve"><value>服务提供商响应</value></data>
+  <data name="native.billing.otvet.servera.ne.podtverzhdaet.rezultat.povtorite.otpravku.toy.z" xml:space="preserve"><value>服务器响应未确认操作结果。请重试发送同一操作或刷新日志。</value></data>
+  <data name="native.billing.otvet.servera.ne.sovpadaet.s.otpravlennoy.komandoy.komanda.sokhr" xml:space="preserve"><value>服务器响应与已发送的命令不一致。命令已保存；重试前请检查日志。</value></data>
+  <data name="native.catalogSuggestions.otklonyonnye" xml:space="preserve"><value>已拒绝</value></data>
+  <data name="native.catalogSuggestions.otklonyonnye.predlozheniya" xml:space="preserve"><value>已拒绝的建议</value></data>
+  <data name="native.catalogSuggestions.otklonit" xml:space="preserve"><value>拒绝</value></data>
+  <data name="native.catalogSuggestions.otklonit.vybrannoe.predlozhenie" xml:space="preserve"><value>是否拒绝所选建议？</value></data>
+  <data name="native.plans.otklyuchyon" xml:space="preserve"><value>已停用</value></data>
+  <data name="native.promoCodes.otklyuchyonnye" xml:space="preserve"><value>已停用</value></data>
+  <data name="native.plans.otklyuchit" xml:space="preserve"><value>停用</value></data>
+  <data name="native.billing.otkrepit.fayl" xml:space="preserve"><value>移除文件</value></data>
+  <data name="native.billing.otkrepit.fayl.cheka.ranee.vydannye.ssylki.na.etot.fayl.stanut.ne" xml:space="preserve"><value>是否移除收据文件？之前生成的文件链接将失效。</value></data>
+  <data name="native.vehicleCatalog.otkroyte.marku.chtoby.upravlyat.eyo.modelyami" xml:space="preserve"><value>打开品牌以管理其型号。</value></data>
+  <data name="native.catalogSuggestions.otkroyte.predlozhenie.chtoby.posmotret.detali.i.otvetit.avtoru" xml:space="preserve"><value>打开建议以查看详情并回复作者。</value></data>
+  <data name="native.email.otkrytiya.message.opencount.perekhody.message.clickcount.sobytiy" xml:space="preserve"><value>打开：{0} · 点击：{1} · 事件：{2}</value></data>
+  <data name="native.email.otkryto" xml:space="preserve"><value>已打开</value></data>
+  <data name="native.billing.otkryt" xml:space="preserve"><value>打开</value></data>
+  <data name="native.plans.otkryt" xml:space="preserve"><value>打开 →</value></data>
+  <data name="native.billing.otmena" xml:space="preserve"><value>取消</value></data>
+  <data name="native.email.otmenena" xml:space="preserve"><value>已取消</value></data>
+  <data name="native.billing.otmeneno" xml:space="preserve"><value>已取消</value></data>
+  <data name="native.billing.otmeneny" xml:space="preserve"><value>已取消</value></data>
+  <data name="native.email.otmenit" xml:space="preserve"><value>取消</value></data>
+  <data name="native.billing.otmetit.chek.vydannym.podtverdite.chto.on.sozdan.v.moyom.naloge." xml:space="preserve"><value>将收据标记为已开具？请确认该收据已在“My Tax”中创建并交付给客户。此标记不会创建或发送收据。</value></data>
+  <data name="native.billing.otmetka.userdisplayformatting.datetime.this.purchase.npdreceipti" xml:space="preserve"><value>标记时间：{0}</value></data>
+  <data name="native.email.otpiska" xml:space="preserve"><value>取消订阅</value></data>
+  <data name="native.support.otpravitel" xml:space="preserve"><value>发件人</value></data>
+  <data name="native.support.otpravit.otvet" xml:space="preserve"><value>发送回复</value></data>
+  <data name="native.siteNotifications.otpravit.uvedomlenie" xml:space="preserve"><value>发送通知…</value></data>
+  <data name="native.billing.otpravit.chek.pokupatelyu" xml:space="preserve"><value>向买家发送收据</value></data>
+  <data name="native.billing.otpravka.ispolzuet.sokhranyonnye.fayl.ili.ssylku.i.email.polzova" xml:space="preserve"><value>发送时将使用已保存的文件或链接以及用户邮箱。若要发送新版本，请更新文件或链接。</value></data>
+  <data name="native.email.otpravka.otklyuchena" xml:space="preserve"><value>发送已禁用</value></data>
+  <data name="native.siteNotifications.otpravka.srazu.vyberite.adresatov.i.auditoriyu.pered.podtverzhde" xml:space="preserve"><value>立即发送：确认前请选择收件人和受众。</value></data>
+  <data name="native.billing.otpravka.userdisplayformatting.datetime.this.purchase.npdreceipt" xml:space="preserve"><value>发送时间：{0}</value></data>
+  <data name="native.billing.otpravlennye" xml:space="preserve"><value>已发送</value></data>
+  <data name="native.email.sentStatus" xml:space="preserve"><value>已发送</value></data>
+  <data name="native.email.sentLabel" xml:space="preserve"><value>已发送：</value></data>
+  <data name="native.catalogSuggestions.ochered.moderatsii" xml:space="preserve"><value>审核队列</value></data>
+  <data name="native.billing.oshibka" xml:space="preserve"><value>失败</value></data>
+  <data name="native.billing.oshibka.aktivatsii" xml:space="preserve"><value>激活错误</value></data>
+  <data name="native.billing.oshibka.otpravki" xml:space="preserve"><value>发送失败</value></data>
+  <data name="native.assistant.oshibki" xml:space="preserve"><value>错误</value></data>
+  <data name="native.email.oshibki.campaign.failedcount.n0.propushcheno.campaign.skippedcou" xml:space="preserve"><value>错误：{0:N0} · 已跳过：{1:N0} · 模拟发送：{2:N0}</value></data>
+  <data name="native.email.parametry.otpravki" xml:space="preserve"><value>发送选项</value></data>
+  <data name="native.email.pauza" xml:space="preserve"><value>暂停</value></data>
+  <data name="native.email.perekhod.po.ssylke" xml:space="preserve"><value>链接点击</value></data>
+  <data name="native.billing.period.po.etoy.pokupke.vydan" xml:space="preserve"><value>此购买对应的期限已授予</value></data>
+  <data name="native.email.pisma.ne.naydeny" xml:space="preserve"><value>未找到邮件。</value></data>
+  <data name="native.email.pismo" xml:space="preserve"><value>邮件</value></data>
+  <data name="native.email.pismo.postavleno.v.ochered.0.adresatov" xml:space="preserve"><value>邮件已加入队列，将发送给 {0} 位收件人。</value></data>
+  <data name="native.promoCodes.platyozh.paymentid" xml:space="preserve"><value>付款 #{paymentId}</value></data>
+  <data name="native.billing.platyozh.payment.id" xml:space="preserve"><value>付款编号 {0}</value></data>
+  <data name="native.billing.platyozh.this.payment.id.ustanovit.status.this.selectedstatus.na" xml:space="preserve"><value>付款编号 {0}：将状态设为“{1}”？</value></data>
+  <data name="native.billing.platezhi" xml:space="preserve"><value>付款</value></data>
+  <data name="native.billing.platezhi.i.podpiski" xml:space="preserve"><value>付款和订阅</value></data>
+  <data name="native.assistant.po.dnyam" xml:space="preserve"><value>按天</value></data>
+  <data name="native.assistant.po.organizatsiyam" xml:space="preserve"><value>按组织</value></data>
+  <data name="native.plans.po.umolchaniyu" xml:space="preserve"><value>默认</value></data>
+  <data name="native.billing.povtorit.vydachu.dostupa" xml:space="preserve"><value>重试授权</value></data>
+  <data name="native.billing.povtorit.vydachu.podtverzhdyonnogo.dostupa" xml:space="preserve"><value>重试授予已确认的访问权限</value></data>
+  <data name="native.billing.povtorit.operatsiyu.this.pendingservicerequest.operationid.d.bud" xml:space="preserve"><value>重试操作 {0:D}？将发送相同请求，不会创建新操作。</value></data>
+  <data name="native.billing.povtorit.tu.zhe.operatsiyu" xml:space="preserve"><value>重试同一操作</value></data>
+  <data name="native.email.povtornaya.otpravka" xml:space="preserve"><value>重新发送</value></data>
+  <data name="native.billing.povtoryaet.prezhniy.zapros.s.tem.zhe.nomerom.esli.server.ne.podt" xml:space="preserve"><value>如果服务器未确认收到命令，将使用相同编号重试之前的请求。</value></data>
+  <data name="native.promoCodes.podarok.this.promocode.bonusdays.0.dn" xml:space="preserve"><value>赠送：{0} 天</value></data>
+  <data name="native.promoCodes.podarochnye.dni" xml:space="preserve"><value>赠送天数</value></data>
+  <data name="native.billing.podpiska.organizatsii.subscription.id" xml:space="preserve"><value>组织订阅编号 {0}</value></data>
+  <data name="native.billing.podpiski.organizatsiy" xml:space="preserve"><value>组织订阅</value></data>
+  <data name="native.billing.podrobnosti" xml:space="preserve"><value>详情</value></data>
+  <data name="native.billing.podtverdite.deystvie.label.prichina.this.reason.trim" xml:space="preserve"><value>确认操作：{0}。原因：{1}。</value></data>
+  <data name="native.catalogSuggestions.podtverdite.reshenie" xml:space="preserve"><value>确认决定</value></data>
+  <data name="native.roles.podtverdite.snyatie.roli.s.vybrannogo.polzovatelya" xml:space="preserve"><value>确认从所选用户移除此角色。</value></data>
+  <data name="native.billing.podtverdit" xml:space="preserve"><value>确认</value></data>
+  <data name="native.crmImport.confirmAction" xml:space="preserve"><value>确认导入</value></data>
+  <data name="native.crmImport.confirmTitle" xml:space="preserve"><value>确认导入？</value></data>
+  <data name="native.siteNotifications.podtverdit.otpravku" xml:space="preserve"><value>确认发送</value></data>
+  <data name="native.vehicleCatalog.podtverzhdenie" xml:space="preserve"><value>确认</value></data>
+  <data name="native.sms.podtverzhdenie.telefona" xml:space="preserve"><value>手机号验证</value></data>
+  <data name="native.vehicleCatalog.poisk.po.nazvaniyu.marki" xml:space="preserve"><value>按品牌名称搜索</value></data>
+  <data name="native.roles.poisk.email.ili.telefona" xml:space="preserve"><value>按邮箱或手机号搜索</value></data>
+  <data name="native.billing.poka.net" xml:space="preserve"><value>暂未确认</value></data>
+  <data name="native.crmImport.pokazat.organizatsii" xml:space="preserve"><value>显示组织</value></data>
+  <data name="native.billing.pokupatel" xml:space="preserve"><value>买家</value></data>
+  <data name="native.billing.pokupatel.inn.email.tarif.ili.id" xml:space="preserve"><value>客户、税号、邮箱、套餐或 ID</value></data>
+  <data name="native.billing.pokupka.this.pendingpurchase.paymentid.this.pendingpurchase.user" xml:space="preserve"><value>购买 #{0} · {1}
+{2}</value></data>
+  <data name="native.billing.pokupka.i.chek.npd" xml:space="preserve"><value>购买记录和自雇税收据</value></data>
+  <data name="native.billing.pokupki.i.cheki.npd" xml:space="preserve"><value>购买和税务收据</value></data>
+  <data name="native.billing.pokupki.po.vybrannym.filtram.ne.naydeny" xml:space="preserve"><value>未找到符合所选筛选条件的购买记录。</value></data>
+  <data name="native.billing.pokupok.allrows.length.oplacheno.allrows.sum.row.row.purchase.am" xml:space="preserve"><value>购买记录：{0} · 已付款：{1:N2} RUB · 退款：{2:N2} RUB · 合计：{3:N2} RUB · 需关注：{4}</value></data>
+  <data name="native.email.poluchateley.this.recipients.totalcount.n0" xml:space="preserve"><value>收件人：{0:N0}</value></data>
+  <data name="native.email.poluchatel" xml:space="preserve"><value>收件人</value></data>
+  <data name="native.email.poluchatel.tema.ili.id" xml:space="preserve"><value>收件人、主题或 ID</value></data>
+  <data name="native.roles.polzovateley" xml:space="preserve"><value>位用户</value></data>
+  <data name="native.roles.polzovateley.net" xml:space="preserve"><value>没有用户</value></data>
+  <data name="native.promoCodes.polzovatel" xml:space="preserve"><value>用户</value></data>
+  <data name="native.billing.polzovatel.organizatsiya.tarif.ili.id" xml:space="preserve"><value>用户、组织、套餐或 ID</value></data>
+  <data name="native.assistant.pomoshchnik.vklyuchyon.globalno" xml:space="preserve"><value>已全局启用助手</value></data>
+  <data name="native.plans.poryadok" xml:space="preserve"><value>排序</value></data>
+  <data name="native.billing.poslednie.deystviya.administratora.do.30" xml:space="preserve"><value>最近的管理员操作（最多 30 条）</value></data>
+  <data name="native.billing.poslednie.tekhnicheskie.sobytiya.do.20" xml:space="preserve"><value>最近的技术事件（最多 20 条）</value></data>
+  <data name="native.billing.posledniy.kod.oshibki" xml:space="preserve"><value>最近错误代码</value></data>
+  <data name="native.email.postavit.v.ochered" xml:space="preserve"><value>加入队列</value></data>
+  <data name="native.billing.postavit.chek.v.ochered.otpravki.na.this.detail.purchase.userema" xml:space="preserve"><value>将收据加入发送队列并发送至 {0}？将发送保存在服务器上的文件或链接。</value></data>
+  <data name="native.roles.prav" xml:space="preserve"><value>项权限 ·</value></data>
+  <data name="native.roles.prava" xml:space="preserve"><value>权限</value></data>
+  <data name="native.roles.prevysheno.vremya.ozhidaniya.otveta.servera.povtorite.popytku" xml:space="preserve"><value>等待服务器响应超时。请重试。</value></data>
+  <data name="native.catalogSuggestions.predlozheniy.s.takim.statusom.net" xml:space="preserve"><value>没有处于此状态的建议。</value></data>
+  <data name="native.catalogSuggestions.predlozheniya.v.katalog" xml:space="preserve"><value>目录建议</value></data>
+  <data name="native.catalogSuggestions.predlozhil" xml:space="preserve"><value>建议者</value></data>
+  <data name="native.email.predprosmotr.pisma" xml:space="preserve"><value>邮件预览</value></data>
+  <data name="native.promoCodes.primenyon" xml:space="preserve"><value>已使用</value></data>
+  <data name="native.billing.primenenie.dostupa" xml:space="preserve"><value>访问权限生效</value></data>
+  <data name="native.promoCodes.primeneniy.poka.net" xml:space="preserve"><value>暂无兑换记录。</value></data>
+  <data name="native.promoCodes.primeneniy.this.usages.count" xml:space="preserve"><value>兑换次数：{0}</value></data>
+  <data name="native.billing.prinyat.pochtovym.servisom" xml:space="preserve"><value>邮件服务已接收</value></data>
+  <data name="native.email.priostanovlena" xml:space="preserve"><value>已暂停</value></data>
+  <data name="native.vehicleCatalog.pritsepy" xml:space="preserve"><value>拖车</value></data>
+  <data name="native.billing.prichina" xml:space="preserve"><value>原因</value></data>
+  <data name="native.billing.prichina.deystviya" xml:space="preserve"><value>操作原因</value></data>
+  <data name="native.billing.prichina.otmetki.ili.snyatiya.otmetki.obyazatelno" xml:space="preserve"><value>标记或取消标记的原因（必填）</value></data>
+  <data name="native.billing.prichina.this.pendingreason.izmenyaetsya.lokalnaya.zapis.vozvrat" xml:space="preserve"><value>原因：{0}。此操作仅更改本地记录，不会退款。</value></data>
+  <data name="native.email.proverit.adresatov" xml:space="preserve"><value>检查收件人</value></data>
+  <data name="native.siteNotifications.proverit.istoriyu.i.nachat.novoe.uvedomlenie" xml:space="preserve"><value>检查历史记录并创建新通知</value></data>
+  <data name="native.billing.proverit.platyozh" xml:space="preserve"><value>检查付款</value></data>
+  <data name="native.billing.proverit.platyozh.v.yukassa" xml:space="preserve"><value>在 YooKassa 中检查付款</value></data>
+  <data name="native.crmImport.proverit.fayl" xml:space="preserve"><value>校验文件</value></data>
+  <data name="native.catalogSuggestions.proveryayte.polzovatelskie.predlozheniya.i.prinimayte.reshenie.p" xml:space="preserve"><value>审核用户建议并逐项作出决定。</value></data>
+  <data name="native.email.progress" xml:space="preserve"><value>进度</value></data>
+  <data name="native.email.prodolzhit" xml:space="preserve"><value>继续</value></data>
+  <data name="native.promoCodes.promokod" xml:space="preserve"><value>优惠码</value></data>
+  <data name="native.promoCodes.promokod.aktiven" xml:space="preserve"><value>促销码有效</value></data>
+  <data name="native.promoCodes.promokod.vklyuchyon" xml:space="preserve"><value>促销码已启用。</value></data>
+  <data name="native.promoCodes.promokod.otklyuchyon" xml:space="preserve"><value>促销码已停用。</value></data>
+  <data name="native.promoCodes.promokod.pogashen" xml:space="preserve"><value>促销码已兑换</value></data>
+  <data name="native.promoCodes.promokod.sokhranyon" xml:space="preserve"><value>优惠码已保存。</value></data>
+  <data name="native.promoCodes.promokod.udalyon" xml:space="preserve"><value>优惠码已删除。</value></data>
+  <data name="native.promoCodes.promokod.uzhe.ispolzovan.ego.mozhno.otklyuchit.no.nelzya.udalit" xml:space="preserve"><value>此促销码已被使用。可以停用，但不能删除。</value></data>
+  <data name="native.promoCodes.promokody" xml:space="preserve"><value>优惠码</value></data>
+  <data name="native.promoCodes.promokody.ne.naydeny" xml:space="preserve"><value>未找到促销码</value></data>
+  <data name="native.promoCodes.protsent.skidki.dolzhen.byt.bolshe.0.i.ne.prevyshat.99" xml:space="preserve"><value>折扣百分比必须大于 0 且不超过 99。</value></data>
+  <data name="native.promoCodes.razmer.skidki" xml:space="preserve"><value>折扣金额</value></data>
+  <data name="native.billing.razmer.fayla.ne.dolzhen.prevyshat.5.mb" xml:space="preserve"><value>文件不能超过 5 MB。</value></data>
+  <data name="native.siteNotifications.razovoe.uvedomlenie" xml:space="preserve"><value>一次性通知</value></data>
+  <data name="native.roles.razresheniya.ne.naydeny" xml:space="preserve"><value>未找到权限</value></data>
+  <data name="native.siteNotifications.rassylka" xml:space="preserve"><value>通知</value></data>
+  <data name="native.email.rassylok.poka.net" xml:space="preserve"><value>暂无邮件活动。</value></data>
+  <data name="native.assistant.raskhod.0.n2" xml:space="preserve"><value>费用：{0:N2} RUB</value></data>
+  <data name="native.assistant.raskhody.i.sverka.stoimosti" xml:space="preserve"><value>用量和费用核对</value></data>
+  <data name="native.promoCodes.registratsionnaya.skidka.this.promocode.discountvalue.n2" xml:space="preserve"><value>注册折扣：{0:N2}</value></data>
+  <data name="native.siteNotifications.redaktirovanie.shablona" xml:space="preserve"><value>编辑模板</value></data>
+  <data name="native.assistant.rezerv" xml:space="preserve"><value>预留金额</value></data>
+  <data name="native.assistant.rezerv.audiozaprosa" xml:space="preserve"><value>音频请求预留金额，RUB</value></data>
+  <data name="native.assistant.rezerv.tekstovogo.zaprosa" xml:space="preserve"><value>文本请求预留金额，RUB</value></data>
+  <data name="native.assistant.rezerv.0.n2" xml:space="preserve"><value>预留：{0:N2} RUB</value></data>
+  <data name="native.crmImport.rezultat" xml:space="preserve"><value>结果</value></data>
+  <data name="native.crmImport.rezultat.zaprosa.neizvesten.obnovite.proverku.pered.povtornym.po" xml:space="preserve"><value>请求结果未知。再次确认前请刷新校验结果。</value></data>
+  <data name="native.plans.rezultat.operatsii.ne.podtverzhdyon.serverom.obnovite.spisok.per" xml:space="preserve"><value>服务器未确认操作结果。重试前请刷新列表。</value></data>
+  <data name="native.roles.roli.i.prava" xml:space="preserve"><value>角色和权限</value></data>
+  <data name="native.roles.roli.ne.naydeny" xml:space="preserve"><value>未找到角色</value></data>
+  <data name="native.billing.s.vozvratom" xml:space="preserve"><value>已退款</value></data>
+  <data name="native.assistant.sayt" xml:space="preserve"><value>网站</value></data>
+  <data name="native.billing.sbrosit" xml:space="preserve"><value>重置</value></data>
+  <data name="native.billing.sverit.platyozh.this.payment.id.s.yookassa.sverka.mozhet.obnovit" xml:space="preserve"><value>将付款编号 {0} 与 YooKassa 对账？对账可能会更新状态和付款信息。</value></data>
+  <data name="native.billing.sverit.s.yookassa" xml:space="preserve"><value>与 YooKassa 对账</value></data>
+  <data name="native.assistant.sverka.zavershyonnogo.zaprosa.s.neizvestnoy.stoimostyu.ukazhite." xml:space="preserve"><value>核对费用未知的已完成请求。请填写服务商后台显示的金额及其依据。</value></data>
+  <data name="native.billing.sverka.platezha" xml:space="preserve"><value>付款对账</value></data>
+  <data name="native.billing.segodnya" xml:space="preserve"><value>今天</value></data>
+  <data name="native.testData.server.vozvrashchaet.tolko.pervye.25.sovpadeniy.dlya.polnoy.post" xml:space="preserve"><value>服务器仅返回前 25 个匹配项。需要更新服务器以支持完整分页加载。</value></data>
+  <data name="native.billing.server.ne.otvetil.vovremya.obnovite.platyozh.pered.povtorom.oper" xml:space="preserve"><value>服务器未及时响应。重试操作前请刷新付款信息。</value></data>
+  <data name="native.billing.server.ne.otvetil.povtorite.otpravku.prezhney.operatsii.s.tem.zh" xml:space="preserve"><value>服务器未响应。请使用相同编号重试之前的操作。</value></data>
+  <data name="native.billing.server.ne.podderzhivaet.postranichnuyu.zagruzku.billinga.trebuet" xml:space="preserve"><value>服务器不支持分页加载账单数据。需要更新服务器。</value></data>
+  <data name="native.billing.server.soobshchil.o.konflikte.nomera.operatsii.novaya.komanda.ne" xml:space="preserve"><value>服务器报告操作编号冲突。未创建新命令。请检查日志并联系负责的管理员。</value></data>
+  <data name="native.billing.simulyatsiya.otpravki" xml:space="preserve"><value>模拟发送</value></data>
+  <data name="native.roles.sistemnaya" xml:space="preserve"><value>系统角色</value></data>
+  <data name="native.roles.sistemnaya.rol.zashchishchena.ot.izmeneniya.prav" xml:space="preserve"><value>系统角色的权限受到保护，无法更改</value></data>
+  <data name="native.plans.sistemnyy.tarif" xml:space="preserve"><value>系统套餐</value></data>
+  <data name="native.plans.sistemnyy.free" xml:space="preserve"><value>系统 Free</value></data>
+  <data name="native.billing.skachat.fayl" xml:space="preserve"><value>下载文件</value></data>
+  <data name="native.billing.skidka" xml:space="preserve"><value>折扣</value></data>
+  <data name="native.promoCodes.skidka.v.protsentakh" xml:space="preserve"><value>百分比折扣</value></data>
+  <data name="native.promoCodes.skidka.v.rublyakh" xml:space="preserve"><value>卢布折扣</value></data>
+  <data name="native.promoCodes.skidka.dostupna" xml:space="preserve"><value>折扣可用期限</value></data>
+  <data name="native.promoCodes.skidka.this.promocode.discountvalue.n2" xml:space="preserve"><value>折扣：{0:N2} RUB</value></data>
+  <data name="native.promoCodes.skidka.this.promocode.discountvalue" xml:space="preserve"><value>折扣：{0}%</value></data>
+  <data name="native.promoCodes.skidka.this.selectedpromocode.discountvalue.n2" xml:space="preserve"><value>折扣：{0:N2} RUB</value></data>
+  <data name="native.promoCodes.skidka.this.selectedpromocode.discountvalue" xml:space="preserve"><value>折扣：{0}%</value></data>
+  <data name="native.assistant.sleduyushchaya" xml:space="preserve"><value>下一页 →</value></data>
+  <data name="native.plans.snachala.naznachte.drugoy.tarif.po.umolchaniyu" xml:space="preserve"><value>请先指定其他默认套餐。</value></data>
+  <data name="native.email.snachala.proverte.spisok.adresatov" xml:space="preserve"><value>请先检查收件人列表。</value></data>
+  <data name="native.billing.snachala.sozdayte.chek.v.moyom.naloge.i.peredayte.pokupatelyu.ot" xml:space="preserve"><value>请先在“My Tax”中创建收据并交给客户。下方标记仅记录收据已交付，不会创建或发送收据。</value></data>
+  <data name="native.vehicleCatalog.snegokhody" xml:space="preserve"><value>雪地摩托</value></data>
+  <data name="native.billing.snyat.otmetku.o.vydache.cheka.izmenenie.s.ukazannoy.prichinoy.bu" xml:space="preserve"><value>是否取消收据已开具标记？此更改及所填原因将保存到日志中。</value></data>
+  <data name="native.roles.snyat.rol" xml:space="preserve"><value>移除角色</value></data>
+  <data name="native.email.sobytiya.dostavki" xml:space="preserve"><value>投递事件</value></data>
+  <data name="native.email.soderzhanie" xml:space="preserve"><value>内容</value></data>
+  <data name="native.billing.sozdan" xml:space="preserve"><value>创建时间</value></data>
+  <data name="native.email.createdColumn" xml:space="preserve"><value>创建时间</value></data>
+  <data name="native.email.createdLabel" xml:space="preserve"><value>创建时间：</value></data>
+  <data name="native.billing.sozdano.0.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>创建时间：{0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.testData.sozdat" xml:space="preserve"><value>创建</value></data>
+  <data name="native.testData.sozdat.defekty" xml:space="preserve"><value>创建故障</value></data>
+  <data name="native.testData.sozdat.obsluzhivaniya" xml:space="preserve"><value>创建维护记录</value></data>
+  <data name="native.testData.sozdat.testovuyu.tekhniku" xml:space="preserve"><value>创建测试车辆</value></data>
+  <data name="native.testData.sozdat.tekhniku" xml:space="preserve"><value>创建车辆</value></data>
+  <data name="native.testData.sostoyanie" xml:space="preserve"><value>状态</value></data>
+  <data name="native.billing.sostoyanie.platezha.izmenilos.proverte.obnovlyonnye.svedeniya.i." xml:space="preserve"><value>付款状态已更改。请检查更新后的信息并重新确认操作。</value></data>
+  <data name="native.billing.sostoyanie.provaydera" xml:space="preserve"><value>服务提供方状态</value></data>
+  <data name="native.plans.sokhranenie.vozmozhnostey.zanyalo.slishkom.mnogo.vremeni.obnovit" xml:space="preserve"><value>保存套餐功能超时。重试前请刷新套餐。</value></data>
+  <data name="native.plans.sokhranenie.tarifa.zanyalo.slishkom.mnogo.vremeni.obnovite.spiso" xml:space="preserve"><value>保存套餐超时。重试前请刷新列表。</value></data>
+  <data name="native.vehicleCatalog.sokhranit" xml:space="preserve"><value>保存</value></data>
+  <data name="native.plans.sokhranit.vozmozhnosti" xml:space="preserve"><value>保存功能</value></data>
+  <data name="native.assistant.sokhranit.dostup" xml:space="preserve"><value>保存访问权限</value></data>
+  <data name="native.crmImport.sokhranit.itogovyy.otchyot" xml:space="preserve"><value>保存最终报告</value></data>
+  <data name="native.assistant.sokhranit.nastroyki" xml:space="preserve"><value>保存设置</value></data>
+  <data name="native.crmImport.sokhranit.otchyot.proverki" xml:space="preserve"><value>保存校验报告</value></data>
+  <data name="native.crmImport.sokhranit.otchyot.crm" xml:space="preserve"><value>保存 CRM 报告</value></data>
+  <data name="native.roles.sokhranit.prava" xml:space="preserve"><value>保存权限</value></data>
+  <data name="native.promoCodes.sokhranit.promokod" xml:space="preserve"><value>保存优惠码</value></data>
+  <data name="native.billing.sokhranit.reshenie.po.razboru" xml:space="preserve"><value>保存核对决定</value></data>
+  <data name="native.billing.sokhranit.ssylku.i.kommentariy" xml:space="preserve"><value>保存链接和备注</value></data>
+  <data name="native.support.sokhranit.status.i.kommentariy" xml:space="preserve"><value>保存状态和备注</value></data>
+  <data name="native.assistant.sokhranit.stoimost.i.osnovanie" xml:space="preserve"><value>保存费用和依据</value></data>
+  <data name="native.plans.sokhranit.tarif" xml:space="preserve"><value>保存套餐</value></data>
+  <data name="native.billing.sokhranit.chek.npd" xml:space="preserve"><value>保存自雇税收据</value></data>
+  <data name="native.siteNotifications.sokhranit.shablon" xml:space="preserve"><value>保存模板</value></data>
+  <data name="native.support.spam" xml:space="preserve"><value>垃圾信息</value></data>
+  <data name="native.vehicleCatalog.spetstekhnika" xml:space="preserve"><value>特种车辆</value></data>
+  <data name="native.billing.sposob.oplaty" xml:space="preserve"><value>付款方式</value></data>
+  <data name="native.plans.srok" xml:space="preserve"><value>期限</value></data>
+  <data name="native.promoCodes.srok.deystviya" xml:space="preserve"><value>有效期</value></data>
+  <data name="native.promoCodes.srok.skidki.dolzhen.byt.tselym.chislom.ot.1.do.3650.dney" xml:space="preserve"><value>折扣期限必须为 1 至 3,650 天的整数。</value></data>
+  <data name="native.promoCodes.srok.skidki.dney" xml:space="preserve"><value>折扣期限（天）</value></data>
+  <data name="native.billing.srok.tarifa" xml:space="preserve"><value>套餐期限</value></data>
+  <data name="native.plans.srok.dney" xml:space="preserve"><value>期限（天）</value></data>
+  <data name="native.plans.srok.stoimost.i.ogranicheniya.rabochego.prostranstva" xml:space="preserve"><value>期限、价格和工作区限制</value></data>
+  <data name="native.billing.ssylka.fns.i.kommentariy" xml:space="preserve"><value>税务局链接和备注</value></data>
+  <data name="native.promoCodes.staryy.registratsionnyy.bonus.days.dn" xml:space="preserve"><value>旧版注册奖励：{0} 天</value></data>
+  <data name="native.plans.status" xml:space="preserve"><value>状态</value></data>
+  <data name="native.billing.status.obnovlyon" xml:space="preserve"><value>状态已更新</value></data>
+  <data name="native.catalogSuggestions.status.predlozheniya" xml:space="preserve"><value>建议状态</value></data>
+  <data name="native.promoCodes.sto" xml:space="preserve"><value>汽车维修</value></data>
+  <data name="native.plans.stoimost" xml:space="preserve"><value>费用</value></data>
+  <data name="native.plans.stoimost.i.limity" xml:space="preserve"><value>价格和限制</value></data>
+  <data name="native.testData.stranitsa.0" xml:space="preserve"><value>第 {0} 页</value></data>
+  <data name="native.assistant.stranitsa.this.overview.page.naydeno.this.overview.totalcount.n0" xml:space="preserve"><value>第 {0} 页 · 共找到 {1:N0}</value></data>
+  <data name="native.assistant.stranitsa.this.usage.page.naydeno.this.usage.totalcount.n0" xml:space="preserve"><value>第 {0} 页 · 共找到 {1:N0}</value></data>
+  <data name="native.crmImport.stroka" xml:space="preserve"><value>行</value></data>
+  <data name="native.billing.summa" xml:space="preserve"><value>金额</value></data>
+  <data name="native.billing.summa.i.vozvraty" xml:space="preserve"><value>金额和退款</value></data>
+  <data name="native.billing.summa.pokupki" xml:space="preserve"><value>购买金额</value></data>
+  <data name="native.billing.summa.0.n2" xml:space="preserve"><value>金额：{0:N2} RUB</value></data>
+  <data name="native.plans.fallbackName" xml:space="preserve"><value>套餐</value></data>
+  <data name="native.plans.planColumn" xml:space="preserve"><value>套餐</value></data>
+  <data name="native.billing.tarif.oplata" xml:space="preserve"><value>套餐 / 付款</value></data>
+  <data name="native.promoCodes.tarif.podarka" xml:space="preserve"><value>赠送套餐</value></data>
+  <data name="native.plans.tarif.sozdan" xml:space="preserve"><value>套餐已创建。</value></data>
+  <data name="native.plans.tarif.sokhranyon" xml:space="preserve"><value>套餐已保存。</value></data>
+  <data name="native.plans.tarif.udalyon" xml:space="preserve"><value>套餐已删除。</value></data>
+  <data name="native.plans.tarifa" xml:space="preserve"><value>套餐</value></data>
+  <data name="native.plans.tarifov" xml:space="preserve"><value>个套餐</value></data>
+  <data name="native.plans.tarify.ne.naydeny" xml:space="preserve"><value>未找到套餐</value></data>
+  <data name="native.plans.tarify.organizatsiy" xml:space="preserve"><value>组织套餐</value></data>
+  <data name="native.plans.tarify.organizatsiy.ne.naydeny" xml:space="preserve"><value>未找到组织套餐</value></data>
+  <data name="native.promoCodes.tarify.so.skidkoy" xml:space="preserve"><value>适用折扣的套餐</value></data>
+  <data name="native.plans.tarify.free.i.pro" xml:space="preserve"><value>Free 和 PRO 套餐</value></data>
+  <data name="native.email.tekst" xml:space="preserve"><value>正文</value></data>
+  <data name="native.email.tekst.pisma" xml:space="preserve"><value>邮件正文</value></data>
+  <data name="native.sms.tekst.soobshcheniya" xml:space="preserve"><value>消息文本</value></data>
+  <data name="native.siteNotifications.tekst.uvedomleniya" xml:space="preserve"><value>通知文本</value></data>
+  <data name="native.siteNotifications.tekst.shablona" xml:space="preserve"><value>模板文本</value></data>
+  <data name="native.assistant.tekstovaya.model" xml:space="preserve"><value>文本模型</value></data>
+  <data name="native.siteNotifications.teksty.sozdayutsya.pri.sistemnykh.sobytiyakh.poluchateli.opredel" xml:space="preserve"><value>消息由系统事件生成。收件人将自动确定。</value></data>
+  <data name="native.billing.tekushchiy.administrator.ili.adres.api.izmenilsya.otkroyte.platy" xml:space="preserve"><value>当前管理员或 API 地址已更改。请使用您的账户重新打开付款记录。</value></data>
+  <data name="native.sms.telefon" xml:space="preserve"><value>电话</value></data>
+  <data name="native.sms.telefon.tekst.ili.kod.sms" xml:space="preserve"><value>电话、文本或短信代码</value></data>
+  <data name="native.email.tema" xml:space="preserve"><value>主题</value></data>
+  <data name="native.email.tema.pisma" xml:space="preserve"><value>邮件主题</value></data>
+  <data name="native.support.tema.tekst.email.ili.organizatsiya" xml:space="preserve"><value>主题、正文、电子邮件或组织</value></data>
+  <data name="native.testData.testovye.dannye" xml:space="preserve"><value>测试数据</value></data>
+  <data name="native.billing.testovyy.platyozh" xml:space="preserve"><value>测试付款</value></data>
+  <data name="native.plans.tekhnika" xml:space="preserve"><value>车辆</value></data>
+  <data name="native.testData.tekhnika.organizatsii" xml:space="preserve"><value>组织车辆</value></data>
+  <data name="native.sms.tip.item.type" xml:space="preserve"><value>类型：{0}</value></data>
+  <data name="native.sms.tip.kod" xml:space="preserve"><value>类型 / 代码</value></data>
+  <data name="native.promoCodes.tip.bonusa.tarify.i.napravleniya.zakrepleny.posle.pervogo.primen" xml:space="preserve"><value>首次兑换后，奖励类型、套餐和适用方向将固定。</value></data>
+  <data name="native.billing.tip.ne.ukazan" xml:space="preserve"><value>未指定类型</value></data>
+  <data name="native.email.tip.organizatsii" xml:space="preserve"><value>组织类型</value></data>
+  <data name="native.email.tip.organizatsii.campaign.targetorganizationtypecode" xml:space="preserve"><value>组织类型 · {0}</value></data>
+  <data name="native.billing.tip.tarifa" xml:space="preserve"><value>套餐类型</value></data>
+  <data name="native.assistant.tokeny.this.overview.limits.maximumoutputtokensallowed.n0.chasov" xml:space="preserve"><value>令牌：{0:N0}；时区：{1}。</value></data>
+  <data name="native.email.tolko.podtverzhdyonnye.email" xml:space="preserve"><value>仅限已验证的电子邮件</value></data>
+  <data name="native.billing.trebuet.vnimaniya" xml:space="preserve"><value>需要关注</value></data>
+  <data name="native.billing.trebuetsya.razbor" xml:space="preserve"><value>需要核对</value></data>
+  <data name="native.billing.trebuyut.vnimaniya" xml:space="preserve"><value>需要关注</value></data>
+  <data name="native.billing.u.platezha.net.vneshnego.identifikatora.dlya.sverki" xml:space="preserve"><value>该付款没有可用于对账的外部标识符。</value></data>
+  <data name="native.vehicleCatalog.u.etoy.marki.poka.net.modeley.dobavte.pervuyu.model.knopkoy.vysh" xml:space="preserve"><value>此品牌尚无型号。请使用上方按钮添加第一个型号。</value></data>
+  <data name="native.siteNotifications.ubrat" xml:space="preserve"><value>移除</value></data>
+  <data name="native.promoCodes.ubrat.tarif" xml:space="preserve"><value>移除套餐</value></data>
+  <data name="native.siteNotifications.uvedomlenie.budet.otpravleno.srazu.vybrannym.polzovatelyam.prove" xml:space="preserve"><value>通知将立即发送给所选用户。请检查标题、文本和受众。</value></data>
+  <data name="native.siteNotifications.uvedomlenie.otpravleno" xml:space="preserve"><value>通知已发送。</value></data>
+  <data name="native.siteNotifications.uvedomlenie.udaleno" xml:space="preserve"><value>通知已删除。</value></data>
+  <data name="native.siteNotifications.uvedomleniya.sayta" xml:space="preserve"><value>网站通知</value></data>
+  <data name="native.plans.udalenie.zanyalo.slishkom.mnogo.vremeni.obnovite.spisok.pered.po" xml:space="preserve"><value>删除操作超时。重试前请刷新列表。</value></data>
+  <data name="native.catalogSuggestions.udalitsya.tolko.eto.predlozhenie.marki.modeli.i.tekhnika.sokhran" xml:space="preserve"><value>仅删除此建议。品牌、型号和车辆将保留。此删除操作无法撤销。</value></data>
+  <data name="native.plans.udalit" xml:space="preserve"><value>删除</value></data>
+  <data name="native.vehicleCatalog.udalit.vybrannuyu.marku.esli.ona.ispolzuetsya.server.otklonit.op" xml:space="preserve"><value>是否删除所选品牌？如果该品牌正在使用，服务器将拒绝此操作。</value></data>
+  <data name="native.vehicleCatalog.udalit.vybrannuyu.model.esli.ona.ispolzuetsya.server.otklonit.op" xml:space="preserve"><value>是否删除所选型号？如果该型号正在使用，服务器将拒绝此操作。</value></data>
+  <data name="native.catalogSuggestions.deleteConfirmTitle" xml:space="preserve"><value>删除建议？</value></data>
+  <data name="native.catalogSuggestions.deleteAction" xml:space="preserve"><value>删除建议…</value></data>
+  <data name="native.promoCodes.deleteAction" xml:space="preserve"><value>删除促销码</value></data>
+  <data name="native.promoCodes.udalit.promokod.this.selectedpromocode.code.eto.deystvie.nelzya." xml:space="preserve"><value>是否删除促销码“{0}”？此操作无法撤销。</value></data>
+  <data name="native.promoCodes.deleteConfirmTitle" xml:space="preserve"><value>删除促销码？</value></data>
+  <data name="native.plans.udalit.tarif" xml:space="preserve"><value>删除套餐</value></data>
+  <data name="native.siteNotifications.udalit.eto.uvedomlenie.iz.istorii" xml:space="preserve"><value>从历史记录中删除此通知？</value></data>
+  <data name="native.promoCodes.ukazhite.polozhitelnyy.razmer.skidki" xml:space="preserve"><value>请输入大于零的折扣金额。</value></data>
+  <data name="native.billing.ukazhite.prichinu" xml:space="preserve"><value>请输入原因</value></data>
+  <data name="native.billing.ukazhite.https.ssylku.na.nalog.ru.ili.ego.poddomen" xml:space="preserve"><value>请输入 nalog.ru 或其子域名的 HTTPS 链接。</value></data>
+  <data name="native.email.ukazat.email" xml:space="preserve"><value>输入电子邮件地址</value></data>
+  <data name="native.assistant.upravlyayte.dostupom.limitami.i.raskhodami.servisa" xml:space="preserve"><value>管理服务访问权限、限额和费用。</value></data>
+  <data name="native.promoCodes.usloviya.primeneniya" xml:space="preserve"><value>使用条件</value></data>
+  <data name="native.roles.uchastniki" xml:space="preserve"><value>成员</value></data>
+  <data name="native.crmImport.fayl.prevyshaet.10.mb" xml:space="preserve"><value>文件超过 10 MB。</value></data>
+  <data name="native.billing.fayl.pust" xml:space="preserve"><value>文件为空。</value></data>
+  <data name="native.crmImport.fayl.crm" xml:space="preserve"><value>CRM 文件</value></data>
+  <data name="native.assistant.fakticheskaya.stoimost.sokhranena.v.audite" xml:space="preserve"><value>实际费用已保存到审计日志。</value></data>
+  <data name="native.assistant.fakticheskaya.stoimost" xml:space="preserve"><value>实际费用，RUB</value></data>
+  <data name="native.billing.fizicheskie.litsa" xml:space="preserve"><value>个人</value></data>
+  <data name="native.billing.fizicheskoe.litso" xml:space="preserve"><value>个人</value></data>
+  <data name="native.plans.price" xml:space="preserve"><value>价格</value></data>
+  <data name="native.plans.tsena.so.skidkoy" xml:space="preserve"><value>折后价格，RUB</value></data>
+  <data name="native.plans.priceRubles" xml:space="preserve"><value>价格，RUB</value></data>
+  <data name="native.billing.chek.dostavka" xml:space="preserve"><value>收据 / 投递</value></data>
+  <data name="native.billing.chek.pdf.png.jpg" xml:space="preserve"><value>收据 PDF / PNG / JPG</value></data>
+  <data name="native.billing.cheki.bez.otmetki.pokazany.pervymi.24.chasa.vnutrenniy.orientir." xml:space="preserve"><value>未标记的收据会优先显示。24 小时是内部监控参考时间。</value></data>
+  <data name="native.siteNotifications.shablon.sokhranyon" xml:space="preserve"><value>模板已保存。</value></data>
+  <data name="native.siteNotifications.shablony" xml:space="preserve"><value>模板</value></data>
+  <data name="native.billing.etap" xml:space="preserve"><value>阶段</value></data>
+  <data name="native.crmImport.etot.fayl.uzhe.importirovan" xml:space="preserve"><value>此文件已导入。</value></data>
+  <data name="native.crmImport.csv.xlsx.json.ili.xml.do.10.mb.do.5000.strok" xml:space="preserve"><value>CSV、XLSX、JSON 或 XML · 最大 10 MB · 最多 5,000 行</value></data>
+  <data name="native.crmImport.email.ili.telefon.polzovatelya" xml:space="preserve"><value>用户邮箱或电话</value></data>
+  <data name="native.email.email.rassylki" xml:space="preserve"><value>邮件群发</value></data>
+  <data name="native.email.email.imya.ili.telefon.polzovatelya" xml:space="preserve"><value>用户邮箱、姓名或电话</value></data>
+  <data name="native.plans.free.besplatno.i.bessrochno" xml:space="preserve"><value>Free · 免费且永久有效</value></data>
+  <data name="native.email.html.prosmotr.nedostupen.iskhodnyy.tekst.pisma.ostayotsya.v.reda" xml:space="preserve"><value>HTML 预览不可用。原始邮件文本仍保留在上方编辑器中。</value></data>
+  <data name="native.email.html.prosmotr.nedostupen.tekst.pisma" xml:space="preserve"><value>HTML 预览不可用。邮件文本：</value></data>
+  <data name="native.billing.id.komandy" xml:space="preserve"><value>命令 ID</value></data>
+  <data name="native.billing.id.platezha.yukassa" xml:space="preserve"><value>YooKassa 付款 ID</value></data>
+  <data name="native.billing.id.pokupki" xml:space="preserve"><value>购买 ID</value></data>
+  <data name="native.billing.id.provaydera" xml:space="preserve"><value>服务提供商 ID</value></data>
+  <data name="native.billing.id.sobytiya" xml:space="preserve"><value>事件 ID</value></data>
+  <data name="native.billing.id.tranzaktsii" xml:space="preserve"><value>交易 ID</value></data>
+  <data name="native.sms.sms.ne.naydeny" xml:space="preserve"><value>未找到短信。</value></data>
+  <data name="native.email.createdLabel.prefix" xml:space="preserve"><value>创建时间： </value></data>
+  <data name="native.email.sentLabel.prefix" xml:space="preserve"><value>已发送： </value></data>
+  <data name="native.promoCodes.limit.registratsiy.prefix" xml:space="preserve"><value>注册次数上限： </value></data>
+  <data name="native.roles.prav.padded" xml:space="preserve"><value> 项权限 · </value></data>
+  <data name="native.roles.polzovateley.suffix" xml:space="preserve"><value> 位用户</value></data>
+  <data name="core.dateTime.notSet" xml:space="preserve"><value>未设置</value></data>
+  <data name="core.dateTime.previousPeriod" xml:space="preserve"><value>上一时段</value></data>
+  <data name="core.dateTime.nextPeriod" xml:space="preserve"><value>下一时段</value></data>
+  <data name="userCard.tab.itemCount" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="userCard.tab.overview" xml:space="preserve"><value>概览</value></data>
+  <data name="userCard.tab.organizations" xml:space="preserve"><value>组织</value></data>
+  <data name="userCard.tab.subscriptions" xml:space="preserve"><value>订阅</value></data>
+  <data name="userCard.tab.payments" xml:space="preserve"><value>付款</value></data>
+  <data name="userCard.tab.vehicles" xml:space="preserve"><value>个人车辆和维修</value></data>
+  <data name="userCard.tab.support" xml:space="preserve"><value>支持请求</value></data>
+  <data name="userCard.tab.features" xml:space="preserve"><value>功能授权</value></data>
+  <data name="userCard.tab.management" xml:space="preserve"><value>管理</value></data>
+  <data name="userCard.empty.organizations" xml:space="preserve"><value>没有符合此状态的组织。</value></data>
+  <data name="userCard.empty.subscriptions" xml:space="preserve"><value>没有符合此状态的订阅。</value></data>
+  <data name="userCard.empty.payments" xml:space="preserve"><value>没有付款记录。</value></data>
+  <data name="userCard.empty.vehicles" xml:space="preserve"><value>没有个人车辆或维修记录。</value></data>
+  <data name="userCard.empty.support" xml:space="preserve"><value>没有支持请求。</value></data>
+  <data name="userCard.empty.features" xml:space="preserve"><value>没有单独授予的功能。</value></data>
+  <data name="userCard.limit.payments" xml:space="preserve"><value>显示最近 40 笔付款。</value></data>
+  <data name="userCard.limit.vehicles" xml:space="preserve"><value>摘要最多显示 30 辆车辆；这里只显示个人车辆。</value></data>
+  <data name="userCard.limit.maintenances" xml:space="preserve"><value>摘要最多显示 20 条维修记录。</value></data>
+  <data name="userCard.limit.support" xml:space="preserve"><value>显示最近 20 条支持请求。</value></data>
+  <data name="userCard.limit.features" xml:space="preserve"><value>显示最近 40 项授权。</value></data>
+  <data name="userCard.user" xml:space="preserve"><value>用户</value></data>
+  <data name="userCard.userId" xml:space="preserve"><value>用户 ID：{0}</value></data>
+  <data name="userCard.registration" xml:space="preserve"><value>注册时间</value></data>
+  <data name="userCard.organizations" xml:space="preserve"><value>组织</value></data>
+  <data name="userCard.section.contacts" xml:space="preserve"><value>联系方式</value></data>
+  <data name="userCard.section.access" xml:space="preserve"><value>访问权限</value></data>
+  <data name="userCard.section.consents" xml:space="preserve"><value>同意事项</value></data>
+  <data name="userCard.field.email" xml:space="preserve"><value>电子邮件</value></data>
+  <data name="userCard.field.phone" xml:space="preserve"><value>电话</value></data>
+  <data name="userCard.field.roles" xml:space="preserve"><value>角色</value></data>
+  <data name="userCard.field.status" xml:space="preserve"><value>状态</value></data>
+  <data name="userCard.field.password" xml:space="preserve"><value>密码</value></data>
+  <data name="userCard.field.failedLogins" xml:space="preserve"><value>登录失败次数</value></data>
+  <data name="userCard.field.dataProcessing" xml:space="preserve"><value>个人数据处理</value></data>
+  <data name="userCard.field.amount" xml:space="preserve"><value>金额</value></data>
+  <data name="userCard.field.method" xml:space="preserve"><value>方式</value></data>
+  <data name="userCard.field.transaction" xml:space="preserve"><value>交易</value></data>
+  <data name="userCard.field.registrationPlate" xml:space="preserve"><value>车牌号</value></data>
+  <data name="userCard.field.mileage" xml:space="preserve"><value>里程</value></data>
+  <data name="userCard.field.maintenances" xml:space="preserve"><value>维修记录</value></data>
+  <data name="userCard.field.openDefects" xml:space="preserve"><value>未解决缺陷</value></data>
+  <data name="userCard.field.lastMaintenance" xml:space="preserve"><value>上次维修</value></data>
+  <data name="userCard.field.location" xml:space="preserve"><value>地点</value></data>
+  <data name="userCard.field.performer" xml:space="preserve"><value>服务人员</value></data>
+  <data name="userCard.field.paid" xml:space="preserve"><value>已支付</value></data>
+  <data name="userCard.field.comment" xml:space="preserve"><value>备注</value></data>
+  <data name="userCard.field.text" xml:space="preserve"><value>内容</value></data>
+  <data name="userCard.field.page" xml:space="preserve"><value>页面</value></data>
+  <data name="userCard.field.value" xml:space="preserve"><value>值</value></data>
+  <data name="userCard.field.source" xml:space="preserve"><value>来源</value></data>
+  <data name="userCard.field.start" xml:space="preserve"><value>开始</value></data>
+  <data name="userCard.field.end" xml:space="preserve"><value>结束</value></data>
+  <data name="userCard.field.role" xml:space="preserve"><value>角色</value></data>
+  <data name="userCard.field.memberSince" xml:space="preserve"><value>加入组织时间</value></data>
+  <data name="userCard.field.members" xml:space="preserve"><value>成员</value></data>
+  <data name="userCard.field.vehicles" xml:space="preserve"><value>车辆</value></data>
+  <data name="userCard.field.clients" xml:space="preserve"><value>客户</value></data>
+  <data name="userCard.field.invitedAt" xml:space="preserve"><value>邀请时间</value></data>
+  <data name="userCard.field.invitedBy" xml:space="preserve"><value>邀请人</value></data>
+  <data name="userCard.field.plan" xml:space="preserve"><value>套餐</value></data>
+  <data name="userCard.start" xml:space="preserve"><value>开始</value></data>
+  <data name="userCard.end" xml:space="preserve"><value>结束</value></data>
+  <data name="userCard.daysLeft" xml:space="preserve"><value>剩余天数</value></data>
+  <data name="userCard.autoRenewal" xml:space="preserve"><value>自动续费</value></data>
+  <data name="userCard.yes" xml:space="preserve"><value>是</value></data>
+  <data name="userCard.no" xml:space="preserve"><value>否</value></data>
+  <data name="userCard.confirmed" xml:space="preserve"><value>已确认</value></data>
+  <data name="userCard.notConfirmed" xml:space="preserve"><value>未确认</value></data>
+  <data name="userCard.passwordSet" xml:space="preserve"><value>已设置</value></data>
+  <data name="userCard.passwordNotSet" xml:space="preserve"><value>未设置</value></data>
+  <data name="userCard.accepted" xml:space="preserve"><value>已接受</value></data>
+  <data name="userCard.notAccepted" xml:space="preserve"><value>未接受</value></data>
+  <data name="userCard.active" xml:space="preserve"><value>正常</value></data>
+  <data name="userCard.inactive" xml:space="preserve"><value>未激活</value></data>
+  <data name="userCard.vehicle.deleted" xml:space="preserve"><value>已删除</value></data>
+  <data name="userCard.vehicle.archived" xml:space="preserve"><value>已归档</value></data>
+  <data name="userCard.planUntil" xml:space="preserve"><value>有效至 {0}{1}</value></data>
+  <data name="userCard.demo" xml:space="preserve"><value>演示</value></data>
+  <data name="userCard.freePlan" xml:space="preserve"><value>无到期时间 · 基础功能仍可使用</value></data>
+  <data name="userCard.noActiveSubscription" xml:space="preserve"><value>没有有效订阅</value></data>
+  <data name="userCard.allowed" xml:space="preserve"><value>允许</value></data>
+  <data name="userCard.denied" xml:space="preserve"><value>禁止</value></data>
+  <data name="userCard.noValue" xml:space="preserve"><value>无值</value></data>
+  <data name="userCard.organizationStatus.active" xml:space="preserve"><value>正常</value></data>
+  <data name="userCard.organizationStatus.archived" xml:space="preserve"><value>已归档</value></data>
+  <data name="userCard.organizationStatus.deleted" xml:space="preserve"><value>已删除</value></data>
+  <data name="userCard.subscriptionStatus.active" xml:space="preserve"><value>有效</value></data>
+  <data name="userCard.subscriptionStatus.ended" xml:space="preserve"><value>已结束</value></data>
+  <data name="userCard.subscriptionStatus.all" xml:space="preserve"><value>全部</value></data>
+  <data name="userManagement.enabled" xml:space="preserve"><value>已启用</value></data>
+  <data name="userManagement.disabled" xml:space="preserve"><value>已停用</value></data>
+  <data name="userManagement.chooseTarget" xml:space="preserve"><value>请选择访问权限的接收对象。</value></data>
+  <data name="userManagement.grantPro" xml:space="preserve"><value>免费授予 PRO</value></data>
+  <data name="userManagement.grantPlan" xml:space="preserve"><value>免费授予套餐</value></data>
+  <data name="userManagement.newEndDate" xml:space="preserve"><value>新的结束日期：{0}</value></data>
+  <data name="userManagement.planAndDaysRequired" xml:space="preserve"><value>请选择套餐和 1 至 366 天的期限。</value></data>
+  <data name="userManagement.personalAccess" xml:space="preserve"><value>用户个人访问权限</value></data>
+  <data name="userManagement.freePlanTarget" xml:space="preserve"><value>Free · 无到期时间</value></data>
+  <data name="userManagement.noActivePlanTarget" xml:space="preserve"><value>没有有效订阅</value></data>
+  <data name="userManagement.planTargetUntil" xml:space="preserve"><value>{0} · 有效至 {1}</value></data>
+  <data name="userManagement.error.noPlans" xml:space="preserve"><value>所选对象没有可用套餐。</value></data>
+  <data name="userManagement.error.planTimeout" xml:space="preserve"><value>加载套餐时服务器超时。请重试。</value></data>
+  <data name="userManagement.error.planLoad" xml:space="preserve"><value>无法加载套餐。请刷新用户卡片后重试。</value></data>
+  <data name="userManagement.error.impersonationUnavailable" xml:space="preserve"><value>当前窗口无法以该用户身份登录。</value></data>
+  <data name="userManagement.error.connectionRefresh" xml:space="preserve"><value>无法连接服务器。重试操作前请刷新卡片。</value></data>
+  <data name="userManagement.error.browser" xml:space="preserve"><value>无法在浏览器中打开网站。{0}</value></data>
+  <data name="userManagement.error.timeoutRefresh" xml:space="preserve"><value>服务器响应超时。重试操作前请刷新卡片。</value></data>
+  <data name="userManagement.success.refreshRequired" xml:space="preserve"><value>服务器已完成操作。请刷新卡片后再执行其他操作。</value></data>
+  <data name="userManagement.success.refreshMissing" xml:space="preserve"><value>操作已完成，但卡片未更新。请刷新卡片后再执行其他操作。</value></data>
+  <data name="userManagement.success.refreshFailed" xml:space="preserve"><value>操作已完成，但无法刷新卡片。请刷新卡片后再执行其他操作。</value></data>
+  <data name="userManagement.errorSuffix.refreshBeforeActions" xml:space="preserve"><value>请刷新卡片后再执行其他操作。</value></data>
+  <data name="userManagement.errorSuffix.refreshTarget" xml:space="preserve"><value>请刷新对象并检查其状态后再重试。</value></data>
+  <data name="userManagement.errorSuffix.checkTarget" xml:space="preserve"><value>请检查对象状态后再重试。</value></data>
+  <data name="userManagement.errorSuffix.cardNotUpdated" xml:space="preserve"><value>卡片未更新。请刷新后再执行其他操作。</value></data>
+  <data name="userManagement.errorSuffix.retryAfterRefresh" xml:space="preserve"><value>请刷新卡片后再重试操作。</value></data>
+  <data name="organization.card.organization" xml:space="preserve"><value>组织：{0}</value></data>
+  <data name="organization.card.owner" xml:space="preserve"><value>所有者：{0}</value></data>
+  <data name="organization.card.created" xml:space="preserve"><value>创建时间：{0}</value></data>
+  <data name="organization.card.updated" xml:space="preserve"><value>更新时间：{0}</value></data>
+  <data name="organization.card.inn" xml:space="preserve"><value>税号：{0}</value></data>
+  <data name="organization.card.subscriptionEnd" xml:space="preserve"><value>有效期至：{0}</value></data>
+  <data name="organization.card.admins" xml:space="preserve"><value>管理员：{0}</value></data>
+  <data name="organization.card.completedOrders" xml:space="preserve"><value>已完成：{0}</value></data>
+  <data name="organization.card.overdueTasks" xml:space="preserve"><value>已逾期：{0}</value></data>
+  <data name="organization.card.lowStock" xml:space="preserve"><value>库存不足：{0}</value></data>
+  <data name="organization.card.scenarioCode" xml:space="preserve"><value>场景代码：{0}</value></data>
+  <data name="organization.card.documentStyle" xml:space="preserve"><value>文档样式：{0}</value></data>
+  <data name="organization.card.archived" xml:space="preserve"><value>归档时间：{0}</value></data>
+  <data name="organization.card.deleted" xml:space="preserve"><value>删除时间：{0}</value></data>
+  <data name="activity.organizationUnavailable" xml:space="preserve"><value>组织不可用</value></data>
+  <data name="activity.noOrganization" xml:space="preserve"><value>无组织</value></data>
+  <data name="activity.event.page" xml:space="preserve"><value>页面访问</value></data>
+  <data name="activity.event.clickButton" xml:space="preserve"><value>点击按钮</value></data>
+  <data name="activity.operation.delete" xml:space="preserve"><value>删除</value></data>
+  <data name="activity.operation.save" xml:space="preserve"><value>保存更改</value></data>
+  <data name="activity.operation.submit" xml:space="preserve"><value>提交数据</value></data>
+  <data name="activity.operation.error" xml:space="preserve"><value>{0} — 失败</value></data>
+  <data name="userManagement.confirm.tests.disable.title" xml:space="preserve"><value>更改测试套餐权限？</value></data>
+  <data name="userManagement.confirm.tests.disable.text" xml:space="preserve"><value>将禁止用户 {0} 使用测试订阅。</value></data>
+  <data name="userManagement.confirm.tests.enable.title" xml:space="preserve"><value>更改测试套餐权限？</value></data>
+  <data name="userManagement.confirm.tests.enable.text" xml:space="preserve"><value>将允许用户 {0} 使用测试订阅。</value></data>
+  <data name="userManagement.confirm.impersonate.title" xml:space="preserve"><value>在浏览器中打开管理页面？</value></data>
+  <data name="userManagement.confirm.impersonate.text" xml:space="preserve"><value>将打开 {0} 的用户卡片。请在浏览器中以管理员身份登录，然后使用“以该用户身份登录”。应用中的登录状态不会传递到浏览器。</value></data>
+  <data name="userManagement.confirm.grantDemo.title" xml:space="preserve"><value>授予演示权限？</value></data>
+  <data name="userManagement.confirm.grantDemo.text" xml:space="preserve"><value>将向“{0}”授予演示套餐。期限由套餐设置决定。</value></data>
+  <data name="userManagement.confirm.revokeDemo.title" xml:space="preserve"><value>撤销演示权限？</value></data>
+  <data name="userManagement.confirm.revokeDemo.text" xml:space="preserve"><value>将撤销“{0}”的演示订阅。</value></data>
+  <data name="userManagement.confirm.revokeDemoFree.title" xml:space="preserve"><value>撤销演示权限？</value></data>
+  <data name="userManagement.confirm.revokeDemoFree.text" xml:space="preserve"><value>将撤销组织“{0}”的演示订阅。美容和维修业务仍可使用免费套餐，历史记录和数据会保留。</value></data>
+  <data name="userManagement.confirm.grantPlan.title" xml:space="preserve"><value>免费授予套餐？</value></data>
+  <data name="userManagement.confirm.grantPlan.text" xml:space="preserve"><value>对象：“{0}”。套餐将立即生效，不会创建付款。</value></data>
+  <data name="userManagement.confirm.grantPro.title" xml:space="preserve"><value>免费授予 PRO？</value></data>
+  <data name="userManagement.confirm.grantPro.text" xml:space="preserve"><value>对象：“{0}”。套餐将立即生效，不会创建付款。</value></data>
+  <data name="userManagement.confirm.extend.title" xml:space="preserve"><value>延长订阅？</value></data>
+  <data name="userManagement.confirm.extend.text" xml:space="preserve"><value>对象：“{0}”。订阅编号 {1} 将延长。</value></data>
+  <data name="userManagement.confirm.stop.title" xml:space="preserve"><value>停止订阅？</value></data>
+  <data name="userManagement.confirm.stop.text" xml:space="preserve"><value>将停止“{0}”的所有有效订阅。未使用的付费期限不会自动退款。</value></data>
+  <data name="userManagement.confirm.stopFree.title" xml:space="preserve"><value>停止订阅？</value></data>
+  <data name="userManagement.confirm.stopFree.text" xml:space="preserve"><value>将停止组织“{0}”的所有订阅。美容和维修业务仍可使用免费套餐，历史记录和数据会保留。未使用的付费期限不会自动退款。</value></data>
+  <data name="activity.action.view" xml:space="preserve"><value>查看</value></data>
+  <data name="activity.action.save" xml:space="preserve"><value>保存</value></data>
+  <data name="activity.action.create" xml:space="preserve"><value>创建</value></data>
+  <data name="activity.action.create_order" xml:space="preserve"><value>创建订单</value></data>
+  <data name="activity.action.create_booking" xml:space="preserve"><value>创建预约</value></data>
+  <data name="activity.action.create_client" xml:space="preserve"><value>创建客户</value></data>
+  <data name="activity.action.create_vehicle" xml:space="preserve"><value>创建车辆</value></data>
+  <data name="activity.action.add_service" xml:space="preserve"><value>添加服务</value></data>
+  <data name="activity.action.add_material" xml:space="preserve"><value>添加材料</value></data>
+  <data name="activity.action.add_employee" xml:space="preserve"><value>添加员工</value></data>
+  <data name="activity.action.add" xml:space="preserve"><value>添加</value></data>
+  <data name="activity.action.delete" xml:space="preserve"><value>删除</value></data>
+  <data name="activity.action.edit" xml:space="preserve"><value>编辑</value></data>
+  <data name="activity.action.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="activity.action.close" xml:space="preserve"><value>关闭</value></data>
+  <data name="activity.action.back" xml:space="preserve"><value>返回</value></data>
+  <data name="activity.action.continue" xml:space="preserve"><value>继续</value></data>
+  <data name="activity.action.next" xml:space="preserve"><value>下一步</value></data>
+  <data name="activity.action.done" xml:space="preserve"><value>完成</value></data>
+  <data name="activity.action.confirm" xml:space="preserve"><value>确认</value></data>
+  <data name="activity.action.open" xml:space="preserve"><value>打开</value></data>
+  <data name="activity.action.open_detailing" xml:space="preserve"><value>打开美容服务</value></data>
+  <data name="activity.action.open_autoservice" xml:space="preserve"><value>打开汽车维修</value></data>
+  <data name="activity.action.open_fleet" xml:space="preserve"><value>打开车队</value></data>
+  <data name="activity.action.open_order" xml:space="preserve"><value>打开订单</value></data>
+  <data name="activity.action.start_work" xml:space="preserve"><value>开始工作</value></data>
+  <data name="activity.action.complete" xml:space="preserve"><value>完成</value></data>
+  <data name="activity.action.complete_work" xml:space="preserve"><value>完成工作</value></data>
+  <data name="activity.action.handover" xml:space="preserve"><value>交接车辆</value></data>
+  <data name="activity.action.record_payment" xml:space="preserve"><value>记录付款</value></data>
+  <data name="activity.action.pay" xml:space="preserve"><value>付款</value></data>
+  <data name="activity.action.activate" xml:space="preserve"><value>启用</value></data>
+  <data name="activity.action.start_demo" xml:space="preserve"><value>启用演示权限</value></data>
+  <data name="activity.action.refresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="activity.action.apply" xml:space="preserve"><value>应用</value></data>
+  <data name="activity.action.reset" xml:space="preserve"><value>重置</value></data>
+  <data name="activity.action.search" xml:space="preserve"><value>搜索</value></data>
+  <data name="activity.action.download" xml:space="preserve"><value>下载</value></data>
+  <data name="activity.action.export" xml:space="preserve"><value>导出</value></data>
+  <data name="activity.action.import" xml:space="preserve"><value>导入</value></data>
+  <data name="activity.action.print" xml:space="preserve"><value>打印</value></data>
+  <data name="activity.action.send" xml:space="preserve"><value>发送</value></data>
+  <data name="activity.action.invite" xml:space="preserve"><value>邀请</value></data>
+  <data name="activity.action.archive" xml:space="preserve"><value>归档</value></data>
+  <data name="activity.action.restore" xml:space="preserve"><value>恢复</value></data>
+  <data name="activity.action.view_list" xml:space="preserve"><value>查看列表</value></data>
+  <data name="activity.action.view_calendar" xml:space="preserve"><value>查看日程</value></data>
+  <data name="activity.action.view_posts" xml:space="preserve"><value>按工位查看</value></data>
+  <data name="activity.action.view_slots" xml:space="preserve"><value>查看时段</value></data>
+  <data name="activity.action.view_month" xml:space="preserve"><value>查看月份</value></data>
+  <data name="activity.action.view_week" xml:space="preserve"><value>查看星期</value></data>
+  <data name="activity.action.view_day" xml:space="preserve"><value>查看日期</value></data>
+  <data name="activity.action.today" xml:space="preserve"><value>转到今天</value></data>
+  <data name="activity.action.previous" xml:space="preserve"><value>上一时段</value></data>
+  <data name="activity.action.load_more" xml:space="preserve"><value>加载更多</value></data>
+  <data name="activity.action.open_scheduler" xml:space="preserve"><value>打开日程</value></data>
+  <data name="activity.action.open_clients" xml:space="preserve"><value>打开客户</value></data>
+  <data name="activity.action.open_finance" xml:space="preserve"><value>打开财务</value></data>
+  <data name="activity.action.open_settings" xml:space="preserve"><value>打开设置</value></data>
+  <data name="activity.action.open_services" xml:space="preserve"><value>打开服务</value></data>
+  <data name="activity.action.open_employees" xml:space="preserve"><value>打开员工</value></data>
+  <data name="activity.action.link" xml:space="preserve"><value>打开链接</value></data>
+  <data name="activity.action.submit" xml:space="preserve"><value>提交表单</value></data>
+  <data name="activity.action.button" xml:space="preserve"><value>按钮</value></data>
+  <data name="activity.action.client_created" xml:space="preserve"><value>已创建客户</value></data>
+  <data name="activity.action.work_created" xml:space="preserve"><value>已创建订单</value></data>
+  <data name="activity.action.vehicle_created" xml:space="preserve"><value>已创建车辆</value></data>
+  <data name="activity.action.demo_activated" xml:space="preserve"><value>已启用演示权限</value></data>
+  <data name="activity.action.checkout_started" xml:space="preserve"><value>已开始结账</value></data>
+  <data name="activity.action.plan_activated" xml:space="preserve"><value>已启用套餐</value></data>
+  <data name="activity.section.scheduler" xml:space="preserve"><value>日程</value></data>
+  <data name="activity.section.detailing" xml:space="preserve"><value>汽车美容</value></data>
+  <data name="activity.section.autoservice" xml:space="preserve"><value>汽车维修</value></data>
+  <data name="activity.section.fleet" xml:space="preserve"><value>车队</value></data>
+  <data name="activity.section.personal" xml:space="preserve"><value>个人账户</value></data>
+  <data name="activity.section.clients" xml:space="preserve"><value>客户</value></data>
+  <data name="activity.section.finance" xml:space="preserve"><value>财务</value></data>
+  <data name="activity.section.settings" xml:space="preserve"><value>设置</value></data>
+  <data name="activity.section.services" xml:space="preserve"><value>服务</value></data>
+  <data name="activity.section.employees" xml:space="preserve"><value>员工</value></data>
+  <data name="activity.section.orders" xml:space="preserve"><value>订单</value></data>
+  <data name="activity.section.vehicles" xml:space="preserve"><value>车辆</value></data>
+  <data name="activity.section.vehicle" xml:space="preserve"><value>车辆</value></data>
+  <data name="activity.section.organizations" xml:space="preserve"><value>组织</value></data>
+  <data name="activity.section.posts" xml:space="preserve"><value>工位</value></data>
+  <data name="activity.section.slots" xml:space="preserve"><value>时段</value></data>
+  <data name="activity.section.profile" xml:space="preserve"><value>个人资料</value></data>
+  <data name="activity.section.account" xml:space="preserve"><value>账户</value></data>
+  <data name="activity.section.workspace" xml:space="preserve"><value>工作区</value></data>
+  <data name="activity.section.catalog" xml:space="preserve"><value>目录</value></data>
+  <data name="activity.section.auth" xml:space="preserve"><value>身份验证</value></data>
+  <data name="activity.section.payments" xml:space="preserve"><value>付款</value></data>
+  <data name="activity.section.export" xml:space="preserve"><value>导出</value></data>
+  <data name="activity.section.import" xml:space="preserve"><value>导入</value></data>
+  <data name="activity.section.maintenance" xml:space="preserve"><value>维修</value></data>
+  <data name="activity.section.organization" xml:space="preserve"><value>组织</value></data>
+  <data name="activity.section.subscription" xml:space="preserve"><value>订阅</value></data>
+  <data name="activity.section.payment" xml:space="preserve"><value>付款</value></data>
+  <data name="activity.section.support" xml:space="preserve"><value>支持</value></data>
+  <data name="activity.section.visualization" xml:space="preserve"><value>可视化</value></data>
+  <data name="activity.section.materials" xml:space="preserve"><value>材料</value></data>
+  <data name="activity.section.work-journal" xml:space="preserve"><value>工作日志</value></data>
+  <data name="activity.section.statistics" xml:space="preserve"><value>统计</value></data>
+  <data name="activity.section.shifts" xml:space="preserve"><value>班次</value></data>
+  <data name="activity.section.members" xml:space="preserve"><value>成员</value></data>
+  <data name="activity.section.billing" xml:space="preserve"><value>账单</value></data>
+  <data name="activity.section.wiki" xml:space="preserve"><value>知识库</value></data>
+  <data name="activity.section.defects" xml:space="preserve"><value>缺陷</value></data>
+  <data name="activity.section.counters" xml:space="preserve"><value>计数器</value></data>
+  <data name="activity.section.bundles" xml:space="preserve"><value>套餐包</value></data>
+  <data name="activity.section.index" xml:space="preserve"><value>主页</value></data>
+  <data name="activity.section.list" xml:space="preserve"><value>列表</value></data>
+  <data name="activity.section.create" xml:space="preserve"><value>创建</value></data>
+  <data name="activity.section.edit" xml:space="preserve"><value>编辑</value></data>
+  <data name="activity.section.new" xml:space="preserve"><value>创建</value></data>
+  <data name="activity.section.details" xml:space="preserve"><value>详情</value></data>
+  <data name="activity.section.history" xml:space="preserve"><value>历史记录</value></data>
+  <data name="activity.section.journal" xml:space="preserve"><value>日志</value></data>
+  <data name="activity.section.albums" xml:space="preserve"><value>相册</value></data>
+  <data name="activity.section.album" xml:space="preserve"><value>相册</value></data>
+  <data name="activity.section.photos" xml:space="preserve"><value>照片</value></data>
+  <data name="activity.section.documents" xml:space="preserve"><value>文档</value></data>
+  <data name="activity.section.quick-booking" xml:space="preserve"><value>快速预约</value></data>
+  <data name="activity.section.quickbooking" xml:space="preserve"><value>快速预约</value></data>
+  <data name="activity.section.overview" xml:space="preserve"><value>概览</value></data>
+  <data name="activity.section.rates" xml:space="preserve"><value>套餐</value></data>
+  <data name="activity.section.invitations" xml:space="preserve"><value>邀请</value></data>
+  <data name="activity.section.notifications" xml:space="preserve"><value>通知</value></data>
+  <data name="activity.section.login" xml:space="preserve"><value>登录</value></data>
+  <data name="activity.section.logout" xml:space="preserve"><value>退出登录</value></data>
+  <data name="activity.section.register" xml:space="preserve"><value>注册</value></data>
+  <data name="activity.section.confirmemail" xml:space="preserve"><value>邮箱确认</value></data>
+  <data name="activity.section.changepassword" xml:space="preserve"><value>更改密码</value></data>
+  <data name="activity.section.setpassword" xml:space="preserve"><value>设置密码</value></data>
+  <data name="activity.section.deleteaccount" xml:space="preserve"><value>删除账户</value></data>
+  <data name="activity.section.vehiclepersonal" xml:space="preserve"><value>个人车辆</value></data>
+  <data name="activity.section.vehicleeditpersonal" xml:space="preserve"><value>编辑车辆</value></data>
+  <data name="activity.section.vehiclecreatepersonal" xml:space="preserve"><value>创建车辆</value></data>
+  <data name="activity.section.vehiclejournal" xml:space="preserve"><value>车辆日志</value></data>
+  <data name="activity.section.vehiclealbums" xml:space="preserve"><value>车辆相册</value></data>
+  <data name="activity.section.vehiclealbum" xml:space="preserve"><value>车辆相册</value></data>
+  <data name="activity.section.vehiclephotos" xml:space="preserve"><value>车辆照片</value></data>
+  <data name="activity.section.maintenancepersonal" xml:space="preserve"><value>个人维修</value></data>
+  <data name="activity.section.maintenanceorganization" xml:space="preserve"><value>组织维修</value></data>
+  <data name="activity.section.createmaintenance" xml:space="preserve"><value>创建维修记录</value></data>
+  <data name="activity.section.createmaintenancepersonal" xml:space="preserve"><value>创建个人维修记录</value></data>
+  <data name="activity.section.createmaintenanceorganization" xml:space="preserve"><value>创建组织维修记录</value></data>
+  <data name="activity.section.maintenancehistory" xml:space="preserve"><value>维修历史</value></data>
+  <data name="activity.section.accountprofile" xml:space="preserve"><value>账户资料</value></data>
+  <data name="activity.section.createorganization" xml:space="preserve"><value>创建组织</value></data>
+  <data name="activity.section.setup" xml:space="preserve"><value>设置</value></data>
+  <data name="activity.section.resources" xml:space="preserve"><value>资源</value></data>
+  <data name="activity.section.schedule" xml:space="preserve"><value>日程</value></data>
+  <data name="activity.section.search" xml:space="preserve"><value>搜索</value></data>
+  <data name="activity.section.help" xml:space="preserve"><value>帮助</value></data>
+  <data name="core.session.readFailed" xml:space="preserve"><value>无法读取已保存的会话。</value></data>
+  <data name="core.session.saveFailed" xml:space="preserve"><value>无法加密并保存会话。请检查应用数据文件夹的访问权限。</value></data>
+  <data name="core.session.deleteFailed" xml:space="preserve"><value>无法删除已保存的会话。请检查应用数据文件夹的访问权限。</value></data>
+  <data name="core.navigation.readFailed" xml:space="preserve"><value>页面已加载，但无法保存已读状态。请再次刷新列表。</value></data>
+  <data name="core.navigation.timeout" xml:space="preserve"><value>服务器响应超时。请重新打开页面。</value></data>
+  <data name="core.navigation.accessDenied" xml:space="preserve"><value>无权执行此操作。用户权限已刷新。</value></data>
+  <data name="core.session.logoutFailed" xml:space="preserve"><value>无法完成退出登录。{0}</value></data>
+  <data name="core.chart.noData" xml:space="preserve"><value>暂无数据</value></data>
+  <data name="core.permission.Admin.Access" xml:space="preserve"><value>访问管理面板</value></data>
+  <data name="core.permission.Admin.Dashboard.View" xml:space="preserve"><value>查看仪表板</value></data>
+  <data name="core.permission.Admin.Users.View" xml:space="preserve"><value>查看用户</value></data>
+  <data name="core.permission.Admin.Users.Manage" xml:space="preserve"><value>管理用户</value></data>
+  <data name="core.permission.Admin.Users.Impersonate" xml:space="preserve"><value>以用户身份登录</value></data>
+  <data name="core.permission.Admin.Billing.View" xml:space="preserve"><value>查看付款和订阅</value></data>
+  <data name="core.permission.Admin.Billing.Manage" xml:space="preserve"><value>管理付款和订阅</value></data>
+  <data name="core.permission.Admin.Content.View" xml:space="preserve"><value>查看支持请求和内容</value></data>
+  <data name="core.permission.Admin.Content.Manage" xml:space="preserve"><value>管理内容</value></data>
+  <data name="core.permission.Admin.Communications.View" xml:space="preserve"><value>查看通信记录</value></data>
+  <data name="core.permission.Admin.Communications.Manage" xml:space="preserve"><value>管理通信</value></data>
+  <data name="core.permission.Admin.Configuration.Manage" xml:space="preserve"><value>配置产品</value></data>
+  <data name="core.permission.Admin.Permissions.Manage" xml:space="preserve"><value>管理角色和权限</value></data>
+  <data name="userCard.maintenanceTitle" xml:space="preserve"><value>维修 · {0}</value></data>
+  <data name="organization.status.archiveWarning" xml:space="preserve"><value>组织将对所有成员停止开放。30 天后，常规清理会将其标记为已删除。归档不会释放组织名额。</value></data>
+  <data name="organization.status.restoreWarning" xml:space="preserve"><value>组织将重新向成员开放。套餐、权限和已保存的数据保持不变。</value></data>
+  <data name="organization.status.unknownResult" xml:space="preserve"><value>未收到服务器响应。请刷新卡片并检查状态后再执行其他操作。</value></data>
+  <data name="Укажите HTTPS-адрес сервера в configuration/brand.json. HTTP допустим только для локальной разработки." xml:space="preserve"><value>请在 configuration/brand.json 中设置 HTTPS 服务器地址。HTTP 仅限本地开发使用。</value></data>
+  <data name="Ссылка раздела должна быть локальным путём." xml:space="preserve"><value>页面链接必须为本地路径。</value></data>
+  <data name="Путь AdminDesktop:PendingActionsDirectory должен быть абсолютным." xml:space="preserve"><value>AdminDesktop:PendingActionsDirectory 必须为绝对路径。</value></data>
+  <data name="Путь AdminDesktop:SessionDirectory должен быть абсолютным." xml:space="preserve"><value>AdminDesktop:SessionDirectory 必须为绝对路径。</value></data>
+  <data name="Путь AdminDesktop:DashboardPreferencesFile должен быть абсолютным." xml:space="preserve"><value>AdminDesktop:DashboardPreferencesFile 必须为绝对路径。</value></data>
+  <data name="core.dateTime.periodStart" xml:space="preserve"><value>期间开始</value></data>
+  <data name="core.dateTime.periodEnd" xml:space="preserve"><value>期间结束</value></data>
+  <data name="core.dateTime.noStart" xml:space="preserve"><value>无开始日期</value></data>
+  <data name="core.dateTime.noEnd" xml:space="preserve"><value>无结束日期</value></data>
+  <data name="core.plans.deleteConfirmation" xml:space="preserve"><value>删除套餐“{0}”？此操作无法撤销。</value></data>
+  <data name="core.format.dateTime" xml:space="preserve"><value>{0:g}</value></data>
+  <data name="core.format.date" xml:space="preserve"><value>{0:d}</value></data>
+  <data name="core.format.rubles" xml:space="preserve"><value>{0:N2} RUB</value></data>
+  <data name="userCard.timeline.registration" xml:space="preserve"><value>注册</value></data>
+  <data name="userCard.timeline.login" xml:space="preserve"><value>登录</value></data>
+  <data name="userCard.timeline.vehicle" xml:space="preserve"><value>车辆</value></data>
+  <data name="userCard.timeline.payment" xml:space="preserve"><value>付款</value></data>
+  <data name="userCard.timeline.subscription" xml:space="preserve"><value>订阅</value></data>
+  <data name="userCard.timeline.support" xml:space="preserve"><value>支持请求</value></data>
+  <data name="userCard.timeline.organization" xml:space="preserve"><value>组织</value></data>
+  <data name="userCard.timeline.registrationTitle" xml:space="preserve"><value>用户已注册</value></data>
+  <data name="userCard.timeline.loginTitle" xml:space="preserve"><value>用户最近登录</value></data>
+  <data name="userCard.maintenance.status.planned" xml:space="preserve"><value>已计划</value></data>
+  <data name="userCard.maintenance.status.inProgress" xml:space="preserve"><value>进行中</value></data>
+  <data name="userCard.maintenance.status.completed" xml:space="preserve"><value>已完成</value></data>
+  <data name="userCard.maintenance.status.cancelled" xml:space="preserve"><value>已取消</value></data>
+  <data name="userCard.maintenance.type.maintenance" xml:space="preserve"><value>维护</value></data>
+  <data name="userCard.maintenance.type.repair" xml:space="preserve"><value>维修</value></data>
+  <data name="userCard.maintenance.type.refill" xml:space="preserve"><value>加注</value></data>
+  <data name="userCard.maintenance.type.other" xml:space="preserve"><value>其他</value></data>
+  <data name="userCard.vehicle.kind.passengerCar" xml:space="preserve"><value>乘用车</value></data>
+  <data name="userCard.vehicle.kind.truck" xml:space="preserve"><value>卡车</value></data>
+  <data name="userCard.vehicle.kind.motorcycle" xml:space="preserve"><value>摩托车</value></data>
+  <data name="userCard.vehicle.kind.atv" xml:space="preserve"><value>全地形车</value></data>
+  <data name="userCard.vehicle.kind.utv" xml:space="preserve"><value>沙滩车或 UTV</value></data>
+  <data name="userCard.vehicle.kind.snowmobile" xml:space="preserve"><value>雪地摩托</value></data>
+  <data name="userCard.vehicle.kind.jetSki" xml:space="preserve"><value>水上摩托</value></data>
+  <data name="userCard.vehicle.kind.boat" xml:space="preserve"><value>船只</value></data>
+  <data name="userCard.vehicle.kind.specialEquipment" xml:space="preserve"><value>特种设备</value></data>
+  <data name="userCard.vehicle.kind.trailer" xml:space="preserve"><value>挂车</value></data>
+  <data name="userCard.vehicle.kind.other" xml:space="preserve"><value>其他车辆</value></data>
+  <data name="userCard.vehicle.mileageUnit.kilometers" xml:space="preserve"><value>公里</value></data>
+  <data name="userCard.vehicle.mileageUnit.engineHours" xml:space="preserve"><value>发动机小时</value></data>
+  <data name="userCard.support.type.question" xml:space="preserve"><value>问题</value></data>
+  <data name="userCard.support.type.suggestion" xml:space="preserve"><value>建议</value></data>
+  <data name="userCard.support.type.bug" xml:space="preserve"><value>错误报告</value></data>
+  <data name="userCard.support.type.billing" xml:space="preserve"><value>账单</value></data>
+  <data name="userCard.support.type.cooperation" xml:space="preserve"><value>合作</value></data>
+  <data name="userCard.support.status.new" xml:space="preserve"><value>新建</value></data>
+  <data name="userCard.support.status.inProgress" xml:space="preserve"><value>处理中</value></data>
+  <data name="userCard.support.status.closed" xml:space="preserve"><value>已关闭</value></data>
+  <data name="userCard.support.status.spam" xml:space="preserve"><value>垃圾信息</value></data>
+  <data name="userCard.payment.status.completed" xml:space="preserve"><value>已付款</value></data>
+  <data name="userCard.payment.status.succeeded" xml:space="preserve"><value>YooKassa 支付成功</value></data>
+  <data name="userCard.payment.status.pending" xml:space="preserve"><value>待处理</value></data>
+  <data name="userCard.payment.status.processing" xml:space="preserve"><value>处理中</value></data>
+  <data name="userCard.payment.status.waitingForCapture" xml:space="preserve"><value>等待确认</value></data>
+  <data name="userCard.payment.status.paidWaitingConfirmation" xml:space="preserve"><value>已付款，等待确认</value></data>
+  <data name="userCard.payment.status.canceled" xml:space="preserve"><value>已取消</value></data>
+  <data name="userCard.payment.status.failed" xml:space="preserve"><value>失败</value></data>
+  <data name="userCard.payment.status.refunded" xml:space="preserve"><value>已退款</value></data>
+  <data name="userCard.payment.status.noStatus" xml:space="preserve"><value>无状态</value></data>
+  <data name="userCard.payment.method.yooKassaExtension" xml:space="preserve"><value>YooKassa：续订</value></data>
+  <data name="userCard.payment.method.workspacePurchase" xml:space="preserve"><value>组织购买</value></data>
+  <data name="userCard.payment.method.workspaceExtension" xml:space="preserve"><value>组织续订</value></data>
+  <data name="userCard.payment.method.noMethod" xml:space="preserve"><value>未指定</value></data>
+  <data name="userCard.field.invitationRole" xml:space="preserve"><value>邀请角色</value></data>
+  <data name="userCard.organization.role.owner" xml:space="preserve"><value>所有者</value></data>
+  <data name="userCard.organization.role.admin" xml:space="preserve"><value>管理员</value></data>
+  <data name="userCard.organization.role.employee" xml:space="preserve"><value>员工</value></data>
+  <data name="userCard.organization.role.performer" xml:space="preserve"><value>执行者</value></data>
+  <data name="userCard.organization.role.viewer" xml:space="preserve"><value>查看者</value></data>
+  <data name="userCard.organization.scenario.personal" xml:space="preserve"><value>个人账户</value></data>
+  <data name="userCard.organization.scenario.serviceStation" xml:space="preserve"><value>汽车维修</value></data>
+  <data name="userCard.organization.scenario.detailing" xml:space="preserve"><value>汽车美容</value></data>
+  <data name="userCard.organization.scenario.wrapping" xml:space="preserve"><value>汽车贴膜</value></data>
+  <data name="userCard.organization.scenario.carWash" xml:space="preserve"><value>洗车</value></data>
+  <data name="userCard.organization.scenario.fleet" xml:space="preserve"><value>车队</value></data>
+  <data name="userCard.organization.scenario.drivingSchool" xml:space="preserve"><value>驾校</value></data>
+  <data name="native.communications.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori" xml:space="preserve"><value>无法连接到服务器。请检查网络连接后重试。</value></data>
+  <data name="native.roles.systemRoleName" xml:space="preserve"><value>系统</value></data>
+  <data name="native.roles.permission.access" xml:space="preserve"><value>访问管理模块</value></data>
+  <data name="native.roles.permission.dashboardView" xml:space="preserve"><value>查看仪表盘</value></data>
+  <data name="native.roles.permission.usersView" xml:space="preserve"><value>查看用户</value></data>
+  <data name="native.roles.permission.usersManage" xml:space="preserve"><value>管理用户</value></data>
+  <data name="native.roles.permission.usersImpersonate" xml:space="preserve"><value>以用户身份登录</value></data>
+  <data name="native.roles.permission.billingView" xml:space="preserve"><value>查看付款和订阅</value></data>
+  <data name="native.roles.permission.billingManage" xml:space="preserve"><value>管理付款和订阅</value></data>
+  <data name="native.roles.permission.contentView" xml:space="preserve"><value>查看内容和支持请求</value></data>
+  <data name="native.roles.permission.contentManage" xml:space="preserve"><value>管理内容和支持请求</value></data>
+  <data name="native.roles.permission.communicationsView" xml:space="preserve"><value>查看消息和群发活动</value></data>
+  <data name="native.roles.permission.communicationsManage" xml:space="preserve"><value>管理消息和群发活动</value></data>
+  <data name="native.roles.permission.configurationManage" xml:space="preserve"><value>管理配置</value></data>
+  <data name="native.roles.permissionGroup.common" xml:space="preserve"><value>常规</value></data>
+  <data name="native.roles.permissionGroup.dashboard" xml:space="preserve"><value>仪表盘</value></data>
+  <data name="native.roles.permissionGroup.users" xml:space="preserve"><value>用户</value></data>
+  <data name="native.roles.permissionGroup.billing" xml:space="preserve"><value>付款</value></data>
+  <data name="native.roles.permissionGroup.content" xml:space="preserve"><value>内容</value></data>
+  <data name="native.roles.permissionGroup.communications" xml:space="preserve"><value>通信</value></data>
+  <data name="native.roles.permissionGroup.configuration" xml:space="preserve"><value>设置</value></data>
+  <data name="userCard.subscriptionEnded" xml:space="preserve"><value>已结束</value></data>
+  <data name="core.payment.needsAttention" xml:space="preserve"><value>需要检查</value></data>
+  <data name="userCard.payment.method.yooKassaPurchase" xml:space="preserve"><value>YooKassa：购买</value></data>
+  <data name="userCard.payment.method.yooKassaWorkspacePurchase" xml:space="preserve"><value>YooKassa：组织购买</value></data>
+  <data name="userCard.payment.method.yooKassaWorkspaceExtension" xml:space="preserve"><value>YooKassa：组织续订</value></data>
+</root>

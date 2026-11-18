@@ -31,6 +31,15 @@ public partial class SmsHistoryViewModel(AdminSessionClient sessionClient) : Com
 
     public bool IsEmpty => !this.IsBusy && this.FilteredRows.Count == 0 && string.IsNullOrWhiteSpace(this.ErrorMessage);
 
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        foreach (var row in this.Rows)
+        {
+            row.RefreshLocalizedValues();
+        }
+    }
+
     protected override async Task LoadPageAsync(CancellationToken cancellationToken)
     {
         var result = await this.SessionClient.GetSmsHistoryAsync(cancellationToken);

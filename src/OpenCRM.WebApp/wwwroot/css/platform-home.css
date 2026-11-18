@@ -27,3 +27,6 @@ a:focus-visible { outline: 3px solid #555; outline-offset: 5px; }
 .home-footer { border-top: 1px solid #ddd; color: #666; font-size: 11px; }
 @media (max-width: 760px) { .home-main { grid-template-columns: 1fr; gap: 45px; } .home-graphic { max-width: 300px; width: 100%; } .home-label { display: none; } .home-footer { flex-wrap: wrap; } }
 @media (prefers-reduced-motion: reduce) { .home-button { transition: none; } }
+
+.home-language { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.home-language select, .home-language button { font: inherit; padding: 6px 8px; border: 1px solid #d7dfeb; border-radius: 6px; background: #fff; color: #243347; }

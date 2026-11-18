@@ -15,6 +15,9 @@ public class ScenarioMaintenanceDocumentPdfModel
     /// <summary> Название документа. </summary>
     public string DocumentTitle { get; set; } = string.Empty;
 
+    /// <summary> Код валюты денежных сумм документа. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Номер документа. </summary>
     public string DocumentNumber { get; set; } = string.Empty;
 

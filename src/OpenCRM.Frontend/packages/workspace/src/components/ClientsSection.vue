@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import WorkspaceAccessNotice from './WorkspaceAccessNotice.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { UiButton, UiCard, UiLoader, UiPagination, UiSearchInput, UiSelect } from '@opencrm/ui'
+import { UiButton, UiCard, UiLoader, UiPagination, UiSearchInput, UiSelect, useLocalization } from '@opencrm/ui'
+import '../clientMessages'
 import {
   loadClientsPage,
   type WorkspaceClient,
@@ -14,6 +15,7 @@ import WorkspacePageHelpButton from './WorkspacePageHelpButton.vue'
 const props = defineProps<{
   context: WorkspaceContext
 }>()
+const { t } = useLocalization()
 
 const clients = ref<WorkspaceClient[]>([])
 const tags = ref<{ id: string; name: string }[]>([])
@@ -48,9 +50,9 @@ const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly !== tr
 const readOnlyMessage = computed(() => props.context.workspaceAccess?.readOnlyMessage ?? '')
 const billingHref = computed(() => '#billing')
 const createClientUrl = computed(() => '#clients/new')
-const clientsTitle = computed(() => props.context.shell.scenario?.terms?.clients ?? 'Клиенты')
-const vehiclesTitle = computed(() => props.context.shell.scenario?.terms?.vehicles ?? 'Автомобили')
-const maintenanceTitle = computed(() => props.context.shell.scenario?.terms?.maintenances ?? 'Услуги')
+const clientsTitle = computed(() => props.context.shell.scenario?.terms?.clients ?? t('clients.title'))
+const vehiclesTitle = computed(() => props.context.shell.scenario?.terms?.vehicles ?? t('clients.vehicles'))
+const maintenanceTitle = computed(() => props.context.shell.scenario?.terms?.maintenances ?? t('clients.services'))
 const isDetailingScenario = computed(() => props.context.shell.scenario?.code === 'detailing')
 const viewModeStorageKey = computed(() => `opencrm-workspace:${encodeURIComponent(props.context.organization.id)}:${encodeURIComponent(props.context.user.id)}:clients:view-mode`)
 const listStateStorageKey = computed(() => `opencrm-workspace:${encodeURIComponent(props.context.organization.id)}:${encodeURIComponent(props.context.user.id)}:clients:list-state`)
@@ -69,33 +71,33 @@ const hasActiveFilters = computed(() => Boolean(
 
 const paginationInfo = computed(() => {
   if (totalCount.value === 0) {
-    return 'Нет записей'
+    return t('clients.noRecords')
   }
 
   const from = (page.value - 1) * pageSize.value + 1
   const to = Math.min(page.value * pageSize.value, totalCount.value)
-  return `${from}-${to} из ${totalCount.value}`
+  return `${from}-${to} / ${totalCount.value}`
 })
 
 const sortOptions = [
-  { value: 'name_asc', label: 'ФИО: А-Я' },
-  { value: 'name_desc', label: 'ФИО: Я-А' },
-  { value: 'vehicles_desc', label: 'Больше техники' },
-  { value: 'maintenance_desc', label: 'Больше обслуживаний' },
-  { value: 'recent_desc', label: 'Недавно обслуживались' }
+  { value: 'name_asc', label: t('clients.sortNameAsc') },
+  { value: 'name_desc', label: t('clients.sortNameDesc') },
+  { value: 'vehicles_desc', label: t('clients.sortVehicles') },
+  { value: 'maintenance_desc', label: t('clients.sortServices') },
+  { value: 'recent_desc', label: t('clients.sortRecent') }
 ]
 const statusFilterOptions = [
-  { value: '', label: 'Все статусы' },
-  { value: 'active', label: 'Активный' },
-  { value: 'lead', label: 'Лид' },
-  { value: 'attention', label: 'Требует внимания' },
-  { value: 'paused', label: 'Пауза' },
-  { value: 'lost', label: 'Потерян' }
+  { value: '', label: t('clients.allStatuses') },
+  { value: 'active', label: t('clients.active') },
+  { value: 'lead', label: t('clients.lead') },
+  { value: 'attention', label: t('clients.attention') },
+  { value: 'paused', label: t('clients.paused') },
+  { value: 'lost', label: t('clients.lost') }
 ]
 const partyTypeFilterOptions = [
-  { value: '', label: 'Все типы' },
-  { value: 'person', label: 'Физлицо' },
-  { value: 'company', label: 'Организация' }
+  { value: '', label: t('clients.allTypes') },
+  { value: 'person', label: t('clients.person') },
+  { value: 'company', label: t('clients.company') }
 ]
 const pageSizeOptions = [
   { value: '10', label: '10' },
@@ -104,21 +106,21 @@ const pageSizeOptions = [
 ]
 const segmentCodes = ['all', 'leads', 'attention', 'no_responsible', 'no_vehicles', 'no_recent_service']
 const responsibleFilterOptions = computed(() => [
-  { value: '', label: 'Все ответственные' },
-  { value: '__none', label: 'Без ответственного' },
+  { value: '', label: t('clients.allResponsible') },
+  { value: '__none', label: t('clients.noResponsible') },
   ...createMemberSelectOptions((props.context.organization.members ?? []).map(member => ({
     ...member,
     value: member.userId
   })))
 ])
 const tagFilterOptions = computed(() => [
-  { value: '', label: 'Все теги' },
+  { value: '', label: t('clients.allTags') },
   ...tags.value.map(tag => ({ value: tag.id, label: tag.name }))
 ])
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'нет'
+    return t('clients.none')
   }
 
   const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
@@ -134,7 +136,7 @@ function formatDate(value?: string | null) {
 }
 
 function partyTypeName(code?: string | null) {
-  return code === 'company' ? 'Организация' : code === 'person' ? 'Физлицо' : 'Тип не указан'
+  return code === 'company' ? t('clients.company') : code === 'person' ? t('clients.person') : t('clients.unknownType')
 }
 
 async function loadClients() {
@@ -177,7 +179,7 @@ async function loadClients() {
     hasLoaded.value = true
   } catch (error) {
     if (request === latestRequest) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить клиентов.'
+      errorMessage.value = error instanceof Error ? error.message : t('clients.loadError')
     }
   } finally {
     if (request === latestRequest) {
@@ -385,59 +387,59 @@ onBeforeUnmount(() => {
 <template>
   <UiCard page :title="clientsTitle" class="client-directory">
     <template #actions>
-      <UiButton class="directory-create" :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" :href="canWrite ? createClientUrl : billingHref" :variant="canWrite ? 'primary' : 'secondary'">＋ Добавить клиента</UiButton>
+      <UiButton class="directory-create" :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" :href="canWrite ? createClientUrl : billingHref" :variant="canWrite ? 'primary' : 'secondary'">{{ t('clients.createClient') }}</UiButton>
       <WorkspacePageHelpButton section-code="clients" :title="clientsTitle" />
     </template>
 
     <WorkspaceAccessNotice v-if="readOnlyMessage" :can-manage-billing="context.organization.canManageBilling === true" :message="readOnlyMessage" :href="billingHref" />
 
-    <div class="directory-summary" aria-label="Сводка по клиентам">
-      <span>Всего клиентов <b>{{ hasLoaded ? allCount : '—' }}</b></span>
+    <div class="directory-summary" :aria-label="t('clients.summary')">
+      <span>{{ t('clients.allClients') }} <b>{{ hasLoaded ? allCount : '—' }}</b></span>
       <span>{{ vehiclesTitle }} <b>{{ hasLoaded ? totalVehiclesCount : '—' }}</b></span>
       <span>{{ maintenanceTitle }} <b>{{ hasLoaded ? totalMaintenanceCount : '—' }}</b></span>
     </div>
 
     <div class="directory-toolbar">
-      <UiSearchInput v-model="searchQuery" id="client-search" placeholder="Имя, телефон или заметка" />
-      <label class="directory-sr-only" for="client-search">Поиск клиентов</label>
-      <UiSelect v-model="selectedPartyTypeCode" class="directory-toolbar__party-type" :options="partyTypeFilterOptions" :searchable="false" aria-label="Тип клиента" />
-      <UiSelect v-model="selectedResponsibleUserId" class="directory-toolbar__responsible" :options="responsibleFilterOptions" :searchable="false" aria-label="Ответственный за клиента" />
+      <UiSearchInput v-model="searchQuery" id="client-search" :placeholder="t('clients.searchPlaceholder')" />
+      <label class="directory-sr-only" for="client-search">{{ t('clients.search') }}</label>
+      <UiSelect v-model="selectedPartyTypeCode" class="directory-toolbar__party-type" :options="partyTypeFilterOptions" :searchable="false" :aria-label="t('clients.clientType')" />
+      <UiSelect v-model="selectedResponsibleUserId" class="directory-toolbar__responsible" :options="responsibleFilterOptions" :searchable="false" :aria-label="t('clients.responsible')" />
       <UiButton class="directory-toolbar__filters" variant="secondary" :aria-expanded="showFilters" aria-controls="client-filters" @click="showFilters = !showFilters">
-        Фильтры<span v-if="filterCount"> · {{ filterCount }}</span>
+        {{ t('clients.filters') }}<span v-if="filterCount"> · {{ filterCount }}</span>
       </UiButton>
-      <div class="directory-toggle" role="group" aria-label="Статус клиентов">
-        <button type="button" :aria-pressed="!isArchiveMode" :disabled="isLoading" @click="isArchiveMode ? toggleArchiveMode() : undefined">Активные</button>
-        <button type="button" :aria-pressed="isArchiveMode" :disabled="isLoading" @click="!isArchiveMode ? toggleArchiveMode() : undefined">Архив</button>
+      <div class="directory-toggle" role="group" :aria-label="t('clients.clientStatus')">
+        <button type="button" :aria-pressed="!isArchiveMode" :disabled="isLoading" @click="isArchiveMode ? toggleArchiveMode() : undefined">{{ t('clients.activeList') }}</button>
+        <button type="button" :aria-pressed="isArchiveMode" :disabled="isLoading" @click="!isArchiveMode ? toggleArchiveMode() : undefined">{{ t('clients.archive') }}</button>
       </div>
     </div>
 
     <div v-if="showFilters" id="client-filters" class="directory-filters">
-      <UiSelect v-model="selectedSort" label="Сортировка" :options="sortOptions" :searchable="false" />
-      <UiSelect v-model="selectedStatusCode" label="Статус" :options="statusFilterOptions" :searchable="false" />
-      <UiSelect v-model="selectedTagId" label="Тег" :options="tagFilterOptions" />
+      <UiSelect v-model="selectedSort" :label="t('clients.sorting')" :options="sortOptions" :searchable="false" />
+      <UiSelect v-model="selectedStatusCode" :label="t('clients.status')" :options="statusFilterOptions" :searchable="false" />
+      <UiSelect v-model="selectedTagId" :label="t('clients.tag')" :options="tagFilterOptions" />
     </div>
 
-    <div v-if="visibleSegments.length" class="directory-segments" role="group" aria-label="Сегменты клиентов">
+    <div v-if="visibleSegments.length" class="directory-segments" role="group" :aria-label="t('clients.segments')">
       <button v-for="segment in visibleSegments" :key="segment.code" type="button" :aria-pressed="selectedSegmentCode === segment.code" :disabled="isLoading" @click="selectSegment(segment.code)">
         {{ segment.name }} <span>{{ segment.count }}</span>
       </button>
     </div>
 
     <div v-if="hasActiveFilters || !isDetailingScenario" class="directory-results">
-      <div v-if="hasActiveFilters" class="directory-results__reset"><button type="button" :disabled="isLoading" @click="resetFilters">Сбросить фильтры</button></div>
-      <div v-if="!isDetailingScenario" class="directory-toggle" role="group" aria-label="Вид списка клиентов">
-        <button type="button" :aria-pressed="isCompactView" @click="setViewMode('compact')">Список</button>
-        <button type="button" :aria-pressed="!isCompactView" @click="setViewMode('cards')">Плитка</button>
+      <div v-if="hasActiveFilters" class="directory-results__reset"><button type="button" :disabled="isLoading" @click="resetFilters">{{ t('clients.reset') }}</button></div>
+      <div v-if="!isDetailingScenario" class="directory-toggle" role="group" :aria-label="t('clients.listView')">
+        <button type="button" :aria-pressed="isCompactView" @click="setViewMode('compact')">{{ t('clients.list') }}</button>
+        <button type="button" :aria-pressed="!isCompactView" @click="setViewMode('cards')">{{ t('clients.tiles') }}</button>
       </div>
     </div>
 
-    <UiLoader v-if="isLoading && !hasLoaded" text="Загружаем клиентов…" />
+    <UiLoader v-if="isLoading && !hasLoaded" :text="t('clients.loading')" />
     <div v-else-if="errorMessage" class="directory-empty" role="alert">
       <p>{{ errorMessage }}</p>
-      <UiButton variant="secondary" @click="loadClients">Повторить</UiButton>
+      <UiButton variant="secondary" @click="loadClients">{{ t('clients.retry') }}</UiButton>
     </div>
     <div v-else class="client-list-shell" :aria-busy="isLoading">
-      <div v-if="isLoading" class="client-list-overlay"><UiLoader compact text="Обновляем список…" /></div>
+      <div v-if="isLoading" class="client-list-overlay"><UiLoader compact :text="t('clients.refreshing')" /></div>
       <table v-if="clients.length && isCompactView" class="directory-table">
         <caption class="directory-sr-only">{{ clientsTitle }}</caption>
         <colgroup>
@@ -448,19 +450,19 @@ onBeforeUnmount(() => {
           <col style="width: 19%" />
           <col style="width: 12%" />
         </colgroup>
-        <thead><tr><th scope="col">Клиент</th><th scope="col">Телефон</th><th scope="col">Ответственный за клиента</th><th scope="col">{{ vehiclesTitle }}</th><th scope="col">Последний визит</th><th scope="col"><span class="directory-sr-only">Действие</span></th></tr></thead>
+        <thead><tr><th scope="col">{{ t('clients.client') }}</th><th scope="col">{{ t('clients.phone') }}</th><th scope="col">{{ t('clients.responsible') }}</th><th scope="col">{{ vehiclesTitle }}</th><th scope="col">{{ t('clients.lastVisit') }}</th><th scope="col"><span class="directory-sr-only">{{ t('clients.action') }}</span></th></tr></thead>
         <tbody>
           <tr v-for="client in clients" :key="client.id">
             <th scope="row" class="directory-identity">
               <a :href="`#clients/${client.id}`">{{ client.name }}</a>
-              <div class="directory-client-meta"><span>{{ partyTypeName(client.partyTypeCode) }}</span><span class="directory-status" :data-status="client.statusCode">{{ client.statusName || 'Активный' }}</span></div>
+              <div class="directory-client-meta"><span>{{ partyTypeName(client.partyTypeCode) }}</span><span class="directory-status" :data-status="client.statusCode">{{ client.statusName || t('clients.active') }}</span></div>
               <div v-if="client.tags?.length" class="directory-tags"><span v-for="tag in client.tags" :key="tag.id">{{ tag.name }}</span></div>
             </th>
-            <td data-label="Телефон"><a v-if="client.phone" class="directory-phone" :href="`tel:${client.phone.replace(/[^+\d]/g, '')}`">{{ client.phone }}</a><span v-else class="directory-muted">Не указан</span></td>
-            <td data-label="Ответственный за клиента"><span :class="{ 'directory-muted': !client.responsibleDisplayName }">{{ client.responsibleDisplayName || 'Не назначен' }}</span></td>
+            <td :data-label="t('clients.phone')"><a v-if="client.phone" class="directory-phone" :href="`tel:${client.phone.replace(/[^+\d]/g, '')}`">{{ client.phone }}</a><span v-else class="directory-muted">{{ t('clients.notSpecified') }}</span></td>
+            <td :data-label="t('clients.responsible')"><span :class="{ 'directory-muted': !client.responsibleDisplayName }">{{ client.responsibleDisplayName || t('clients.unassigned') }}</span></td>
             <td :data-label="vehiclesTitle" class="directory-count">{{ client.vehiclesCount }}</td>
-            <td data-label="Последнее посещение"><span :class="{ 'directory-muted': !client.lastMaintenanceDate }">{{ client.lastMaintenanceDate ? formatDate(client.lastMaintenanceDate) : 'Ещё не было' }}</span><small class="directory-maintenance-count">{{ maintenanceTitle }}: {{ client.maintenanceCount }}</small></td>
-            <td data-label="Действие" class="directory-row-action"><UiButton class="directory-open-button" variant="secondary" :href="`#clients/${client.id}`">Открыть</UiButton></td>
+            <td :data-label="t('clients.lastVisit')"><span :class="{ 'directory-muted': !client.lastMaintenanceDate }">{{ client.lastMaintenanceDate ? formatDate(client.lastMaintenanceDate) : t('clients.never') }}</span><small class="directory-maintenance-count">{{ maintenanceTitle }}: {{ client.maintenanceCount }}</small></td>
+            <td :data-label="t('clients.action')" class="directory-row-action"><UiButton class="directory-open-button" variant="secondary" :href="`#clients/${client.id}`">{{ t('clients.open') }}</UiButton></td>
           </tr>
         </tbody>
       </table>
@@ -469,12 +471,12 @@ onBeforeUnmount(() => {
             <div class="client-card__body">
               <div class="client-card__header">
                 <h3><a :href="`#clients/${client.id}`">{{ client.name }}</a></h3>
-                <span>{{ client.statusName || 'Активный' }}</span>
+                <span>{{ client.statusName || t('clients.active') }}</span>
                 <a v-if="client.phone" :href="`tel:${client.phone.replace(/[^+\d]/g, '')}`">{{ client.phone }}</a>
               </div>
 
               <div v-if="!isCompactView" class="client-card__meta">
-                <span v-if="client.responsibleDisplayName">Ответственный за клиента: <b>{{ client.responsibleDisplayName }}</b></span>
+                <span v-if="client.responsibleDisplayName">{{ t('clients.responsible') }}: <b>{{ client.responsibleDisplayName }}</b></span>
                 <span v-if="client.comment">{{ client.comment }}</span>
               </div>
 
@@ -485,7 +487,7 @@ onBeforeUnmount(() => {
               <div class="client-counts">
                 <span>{{ vehiclesTitle }}: <b>{{ client.vehiclesCount }}</b></span>
                 <span>{{ maintenanceTitle }}: <b>{{ client.maintenanceCount }}</b></span>
-                <span>Последнее: <b>{{ formatDate(client.lastMaintenanceDate) }}</b></span>
+                <span>{{ t('clients.last') }}: <b>{{ formatDate(client.lastMaintenanceDate) }}</b></span>
               </div>
 
               <div v-if="showClientVehicles && client.vehicles?.length && !isCompactView" class="client-vehicles">
@@ -496,7 +498,7 @@ onBeforeUnmount(() => {
                     <small>{{ maintenanceTitle }}: {{ vehicle.maintenanceCount }}</small>
                   </div>
                   <UiButton variant="secondary" :href="`#vehicles/${vehicle.id}`">
-                    Открыть
+                    {{ t('clients.open') }}
                   </UiButton>
                 </div>
               </div>
@@ -504,7 +506,7 @@ onBeforeUnmount(() => {
 
             <div class="client-card__actions">
               <UiButton :href="`#clients/${client.id}`">
-                Открыть
+                {{ t('clients.open') }}
               </UiButton>
             </div>
           </article>
@@ -512,19 +514,19 @@ onBeforeUnmount(() => {
 
 
       <div v-else class="directory-empty">
-        <h3>{{ hasActiveFilters ? (isArchiveMode ? 'В архиве ничего не найдено' : 'Клиенты не найдены') : (canWrite ? 'Добавьте первого клиента' : 'Клиентов пока нет') }}</h3>
-        <p>{{ hasActiveFilters ? 'Измените поиск или сбросьте фильтры.' : (canWrite ? 'Сохраните имя и телефон — автомобили и историю можно добавить позже.' : 'Здесь появятся клиенты организации.') }}</p>
-        <UiButton v-if="hasActiveFilters" variant="secondary" @click="resetFilters">Сбросить фильтры</UiButton>
-        <UiButton v-else-if="canWrite" :href="createClientUrl">Добавить клиента</UiButton>
+        <h3>{{ hasActiveFilters ? (isArchiveMode ? t('clients.archiveEmpty') : t('clients.notFound')) : (canWrite ? t('clients.firstClient') : t('clients.noClients')) }}</h3>
+        <p>{{ hasActiveFilters ? t('clients.changeSearch') : (canWrite ? t('clients.firstClientHint') : t('clients.organizationClients')) }}</p>
+        <UiButton v-if="hasActiveFilters" variant="secondary" @click="resetFilters">{{ t('clients.reset') }}</UiButton>
+        <UiButton v-else-if="canWrite" :href="createClientUrl">{{ t('clients.add') }}</UiButton>
       </div>
     </div>
 
     <div v-if="clients.length" class="directory-pagination">
       <div class="directory-pagination-summary">
         <span aria-live="polite">{{ paginationInfo }}</span>
-        <div class="directory-page-size"><span>На странице</span><UiSelect v-model="selectedPageSize" :options="pageSizeOptions" :searchable="false" aria-label="Размер страницы" /></div>
+        <div class="directory-page-size"><span>{{ t('clients.onPage') }}</span><UiSelect v-model="selectedPageSize" :options="pageSizeOptions" :searchable="false" :aria-label="t('clients.pageSize')" /></div>
       </div>
-      <UiPagination :model-value="page" :total-items="totalCount" :items-per-page="pageSize" :max-pages-shown="3" :disabled="isLoading" label="Навигация по страницам клиентов" @update:model-value="changePage" />
+      <UiPagination :model-value="page" :total-items="totalCount" :items-per-page="pageSize" :max-pages-shown="3" :disabled="isLoading" :label="t('clients.pageNavigation')" @update:model-value="changePage" />
     </div>
   </UiCard>
 </template>

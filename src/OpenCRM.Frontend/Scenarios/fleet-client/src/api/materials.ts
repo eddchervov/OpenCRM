@@ -1,4 +1,7 @@
-﻿export type MaterialStock = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/materialMessages'
+
+export type MaterialStock = {
   id: string
   catalogItemId?: string | null
   name: string
@@ -122,7 +125,7 @@ export async function loadMaterials(organizationId: string, options: LoadMateria
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить склад.')
+    throw new Error(error?.message ?? translate('materials.api.load'))
   }
 
   return response.json()
@@ -132,14 +135,14 @@ export async function createMaterialReceipt(
   organizationId: string,
   payload: MaterialReceiptRequest
 ): Promise<MaterialStock> {
-  return sendMaterialAction(`/api/v1/organizations/${organizationId}/materials/receipt`, 'POST', payload, 'Не удалось добавить приход.')
+  return sendMaterialAction(`/api/v1/organizations/${organizationId}/materials/receipt`, 'POST', payload, translate('materials.api.receipt'))
 }
 
 export async function createMaterialIssue(
   organizationId: string,
   payload: MaterialIssueRequest
 ): Promise<MaterialStock> {
-  return sendMaterialAction(`/api/v1/organizations/${organizationId}/materials/issue`, 'POST', payload, 'Не удалось списать материал.')
+  return sendMaterialAction(`/api/v1/organizations/${organizationId}/materials/issue`, 'POST', payload, translate('materials.api.issue'))
 }
 
 export async function adjustMaterialStock(
@@ -147,7 +150,7 @@ export async function adjustMaterialStock(
   stockId: string,
   payload: { quantityOnHand: number; expectedUpdatedAt: string; averageUnitCost: number | string | null; comment: string }
 ): Promise<MaterialStock> {
-  return sendMaterialAction(`/api/v1/organizations/${organizationId}/materials/${stockId}`, 'PUT', payload, 'Не удалось сохранить корректировку.')
+  return sendMaterialAction(`/api/v1/organizations/${organizationId}/materials/${stockId}`, 'PUT', payload, translate('materials.api.adjustment'))
 }
 
 function getRequestVerificationToken() {

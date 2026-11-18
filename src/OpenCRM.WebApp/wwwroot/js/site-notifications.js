@@ -9,7 +9,7 @@
     }
 
     let notifications = [];
-    const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+    const dateFormatter = new Intl.DateTimeFormat(document.querySelector('meta[name="opencrm-formatting-culture"]')?.content || 'ru-RU', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -38,13 +38,13 @@
 
         if (notification.closedAt) {
             const closed = document.createElement('span');
-            closed.textContent = 'Закрыто';
+            closed.textContent = window.OpenCRMText('closed');
             footer.appendChild(closed);
         } else if (showClose) {
             const close = document.createElement('button');
             close.type = 'button';
             close.className = 'btn btn-sm btn-outline-secondary';
-            close.textContent = 'Закрыть';
+            close.textContent = window.OpenCRMText('close');
             close.dataset.notificationClose = notification.id;
             footer.appendChild(close);
         }
@@ -75,7 +75,7 @@
             const preview = bell.querySelector('[data-site-notification-preview]');
             count.textContent = active.length > 99 ? '99+' : String(active.length);
             count.hidden = active.length === 0;
-            renderList(preview, active.slice(0, 5), 'Новых уведомлений нет.', true);
+            renderList(preview, active.slice(0, 5), window.OpenCRMText('noNewNotifications'), true);
         }
 
         if (home) {
@@ -84,7 +84,7 @@
         }
 
         if (history) {
-            renderList(history, notifications, 'Уведомлений пока нет.', true);
+            renderList(history, notifications, window.OpenCRMText('noNotifications'), true);
         }
     }
 
@@ -92,7 +92,7 @@
         try {
             const response = await fetch('/api/v1/notifications', { credentials: 'same-origin' });
             if (!response.ok) {
-                throw new Error('Не удалось загрузить уведомления.');
+                throw new Error(window.OpenCRMText('loadNotificationsError'));
             }
 
             notifications = await response.json();
@@ -119,7 +119,7 @@
                 headers: token ? { RequestVerificationToken: token } : {}
             });
             if (!response.ok) {
-                throw new Error('Не удалось закрыть уведомление.');
+                throw new Error(window.OpenCRMText('closeNotificationError'));
             }
 
             const notification = notifications.find(item => item.id === close.dataset.notificationClose);

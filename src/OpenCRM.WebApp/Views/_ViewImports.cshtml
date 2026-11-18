@@ -2,6 +2,9 @@
 @using OpenCRM.WebApp.Models.Auth;
 @using Helpers;
 @using OpenCRM.WebApp.Infrastructure
+@using OpenCRM.WebApp.Infrastructure.Localization
+@using Microsoft.Extensions.Localization
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @inject Helpers.ProjectBrand Brand
+@inject IStringLocalizer<LocalizationStrings> Text

@@ -1,6 +1,6 @@
 ﻿@model DeleteAccountModel
 @{
-    ViewData["Title"] = "Удаление аккаунта";
+    ViewData["Title"] = Text["auth.deleteAccount"].Value;
     Layout = "/Views/Personal/_PersonalLayout.cshtml";
 }
 
@@ -8,32 +8,32 @@
     <form id="delete-account-form" method="post" class="personal-form" data-disable-submit-loader novalidate>
         @Html.AntiForgeryToken()
         <div class="personal-warning">
-            <p><strong>Это действие нельзя отменить.</strong></p>
-            <p>Аккаунт и все связанные данные будут удалены без возможности восстановления. Регистрация с тем же email создаст новый пустой аккаунт.</p>
+            <p><strong>@Text["auth.irreversible"]</strong></p>
+            <p>@Text["auth.deleteWarning"]</p>
         </div>
         <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
         @if (Model.HasPassword)
         {
             <div class="personal-field">
-                <label asp-for="Password">Текущий пароль</label>
+                <label asp-for="Password">@Text["auth.currentPassword"]</label>
                 <input asp-for="Password" class="form-control" autocomplete="current-password" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
         }
         else
         {
-            <p class="personal-muted">Для аккаунта не задан локальный пароль. Подтвердите удаление ниже.</p>
+            <p class="personal-muted">@Text["auth.noLocalPassword"]</p>
         }
         <div>
             <label class="personal-check">
                 <input asp-for="ConfirmDeletion" />
-                <span>Я понимаю, что все мои данные будут удалены навсегда</span>
+                <span>@Text["auth.confirmDeletion"]</span>
             </label>
             <span asp-validation-for="ConfirmDeletion" class="text-danger"></span>
         </div>
         <div class="personal-form-actions">
-            <button type="submit" id="delete-account-submit" class="btn btn-danger" disabled>Удалить аккаунт навсегда</button>
-            <a href="~/personal" class="btn entry-secondary">Отмена</a>
+            <button type="submit" id="delete-account-submit" class="btn btn-danger" disabled>@Text["auth.deleteForever"]</button>
+            <a href="~/personal" class="btn entry-secondary">@Text["auth.cancel"]</a>
         </div>
     </form>
 </section>

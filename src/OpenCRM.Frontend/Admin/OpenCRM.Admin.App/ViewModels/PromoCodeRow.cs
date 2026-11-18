@@ -1,9 +1,11 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
 /// <summary> Строка списка промокодов. </summary>
-public sealed class PromoCodeRow(AdminPromoCode promoCode)
+public sealed class PromoCodeRow(AdminPromoCode promoCode) : ObservableObject
 {
     public AdminPromoCode PromoCode { get; } = promoCode;
     public int Id => this.PromoCode.Id;
@@ -12,23 +14,25 @@ public sealed class PromoCodeRow(AdminPromoCode promoCode)
     public string Benefit => this.PromoCode.IsOrganizationCode
         ? this.PromoCode.DiscountTypeCode switch
         {
-            "bonus_days" => $"Подарок: {this.PromoCode.BonusDays ?? 0} дн.",
-            "percentage" => $"Скидка: {this.PromoCode.DiscountValue}%",
-            "fixed_amount" => $"Скидка: {this.PromoCode.DiscountValue:N2} ₽",
-            _ => "Организационный промокод"
+            "bonus_days" => AdminLocalization.Instance.Format("native.promoCodes.podarok.this.promocode.bonusdays.0.dn", this.PromoCode.BonusDays ?? 0),
+            "percentage" => AdminLocalization.Instance.Format("native.promoCodes.skidka.this.promocode.discountvalue", this.PromoCode.DiscountValue),
+            "fixed_amount" => AdminLocalization.Instance.Format("native.promoCodes.skidka.this.promocode.discountvalue.n2", this.PromoCode.DiscountValue),
+            _ => AdminLocalization.Instance["native.promoCodes.organizatsionnyy.promokod"]
         }
         : this.PromoCode.DemoDurationDays is int days
-            ? $"Старый регистрационный бонус: {days} дн."
-            : $"Регистрационная скидка: {this.PromoCode.DiscountValue:N2}";
+            ? AdminLocalization.Instance.Format("native.promoCodes.staryy.registratsionnyy.bonus.days.dn", days)
+            : AdminLocalization.Instance.Format("native.promoCodes.registratsionnaya.skidka.this.promocode.discountvalue.n2", this.PromoCode.DiscountValue);
     public string UsageCount => this.PromoCode.IsOrganizationCode
         ? this.PromoCode.MaximumOrganizationApplications is int organizationLimit
-            ? $"{this.PromoCode.OrganizationApplicationCount} из {organizationLimit} применений"
-            : $"{this.PromoCode.OrganizationApplicationCount} применений"
+            ? AdminLocalization.Instance.Format("native.promoCodes.this.promocode.organizationapplicationcount.iz.organizationlimit", this.PromoCode.OrganizationApplicationCount, organizationLimit)
+            : AdminLocalization.Instance.Format("native.promoCodes.this.promocode.organizationapplicationcount.primeneniy", this.PromoCode.OrganizationApplicationCount)
         : this.PromoCode.MaximumRedemptions is int redemptionLimit
-            ? $"{this.PromoCode.RedemptionCount} из {redemptionLimit} регистраций"
-            : $"{this.PromoCode.RedemptionCount} регистраций";
+            ? AdminLocalization.Instance.Format("native.promoCodes.this.promocode.redemptioncount.iz.redemptionlimit.registratsiy", this.PromoCode.RedemptionCount, redemptionLimit)
+            : AdminLocalization.Instance.Format("native.promoCodes.this.promocode.redemptioncount.registratsiy", this.PromoCode.RedemptionCount);
     public string ValidUntil => this.PromoCode.ValidUntil is DateTime date
-        ? $"До {date.ToLocalTime():dd.MM.yyyy HH:mm}"
-        : "Без срока";
-    public string Status => this.PromoCode.IsActive ? "Активен" : "Отключён";
+        ? AdminLocalization.Instance.Format("native.promoCodes.do.date.tolocaltime.dd.mm.yyyy.hh.mm", date.ToLocalTime())
+        : AdminLocalization.Instance["native.promoCodes.bez.sroka"];
+    public string Status => this.PromoCode.IsActive ? AdminLocalization.Instance["native.plans.aktiven"] : AdminLocalization.Instance["native.plans.otklyuchyon"];
+
+    public void RefreshLocalizedValues() => this.OnPropertyChanged((string?)null);
 }

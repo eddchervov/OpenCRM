@@ -1,3 +1,5 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/proLandingMessages'
 import type { ProFeatureKey } from './proFeatureDetails'
 
 export type ProFeatureLandingContent = {
@@ -8,69 +10,95 @@ export type ProFeatureLandingContent = {
 }
 
 export const proFeatureLandingContent: Record<Exclude<ProFeatureKey, 'team' | 'roles'>, ProFeatureLandingContent> = {
-  shifts: {
-    headline: ['Команда по плану.', 'День под контролем.'], tags: 'График · Сотрудники · Загрузка',
-    benefitTitles: ['План на день', 'Время каждого', 'Команда на виду'],
-    steps: [{ title: 'Выберите день', text: 'Откройте расписание смен на нужную дату.' }, { title: 'Распределите время', text: 'Укажите начало и окончание смен сотрудников.' }, { title: 'Планируйте работу', text: 'Проверяйте, кто работает, прежде чем распределять задачи.' }]
+  get shifts(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.shifts_headline_item1'), translate('proLanding.shifts_headline_item2')], tags: translate('proLanding.shifts_tags'),
+      benefitTitles: [translate('proLanding.shifts_benefitTitles_item1'), translate('proLanding.shifts_benefitTitles_item2'), translate('proLanding.shifts_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.shifts_steps_item1_title'), text: translate('proLanding.shifts_steps_item1_text') }, { title: translate('proLanding.shifts_steps_item2_title'), text: translate('proLanding.shifts_steps_item2_text') }, { title: translate('proLanding.shifts_steps_item3_title'), text: translate('proLanding.shifts_steps_item3_text') }]
+    }
   },
-  statistics: {
-    headline: ['Видеть результат.', 'Принимать решения.'], tags: 'Работы · Начисления · Динамика',
-    benefitTitles: ['Динамика работ', 'Начисления', 'Общая картина'],
-    steps: [{ title: 'Откройте сводку', text: 'Посмотрите показатели за последние 14 дней.' }, { title: 'Посмотрите показатели', text: 'Изучите сводку и динамику работы.' }, { title: 'Найдите изменения', text: 'Оцените динамику работ. Начисления и полученные оплаты — разные показатели.' }]
+  get statistics(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.statistics_headline_item1'), translate('proLanding.statistics_headline_item2')], tags: translate('proLanding.statistics_tags'),
+      benefitTitles: [translate('proLanding.statistics_benefitTitles_item1'), translate('proLanding.statistics_benefitTitles_item2'), translate('proLanding.statistics_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.statistics_steps_item1_title'), text: translate('proLanding.statistics_steps_item1_text') }, { title: translate('proLanding.statistics_steps_item2_title'), text: translate('proLanding.statistics_steps_item2_text') }, { title: translate('proLanding.statistics_steps_item3_title'), text: translate('proLanding.statistics_steps_item3_text') }]
+    }
   },
-  messages: {
-    headline: ['Клиент на связи.', 'Переписка в CRM.'], tags: 'Telegram · MAX · История диалога',
-    benefitTitles: ['Контекст работы', 'Автомобиль готов', 'История общения', 'Готовые ответы'],
-    steps: [{ title: 'Подключите канал', text: 'Настройте клиентского бота и привяжите клиента.' }, { title: 'Напишите из CRM', text: 'Обсудите работу или сообщите о готовности автомобиля.' }, { title: 'Вернитесь к диалогу', text: 'Смотрите историю, когда клиент обратится снова.' }]
+  get messages(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.messages_headline_item1'), translate('proLanding.messages_headline_item2')], tags: translate('proLanding.messages_tags'),
+      benefitTitles: [translate('proLanding.messages_benefitTitles_item1'), translate('proLanding.messages_benefitTitles_item2'), translate('proLanding.messages_benefitTitles_item3'), translate('proLanding.messages_benefitTitles_item4')],
+      steps: [{ title: translate('proLanding.messages_steps_item1_title'), text: translate('proLanding.messages_steps_item1_text') }, { title: translate('proLanding.messages_steps_item2_title'), text: translate('proLanding.messages_steps_item2_text') }, { title: translate('proLanding.messages_steps_item3_title'), text: translate('proLanding.messages_steps_item3_text') }]
+    }
   },
-  intake: {
-    headline: ['Состояние зафиксировано.', 'До начала работ.'], tags: 'Осмотр · Повреждения · Акт',
-    benefitTitles: ['Детали осмотра', 'Повреждения на схеме', 'Акт передачи'],
-    steps: [{ title: 'Осмотрите автомобиль', text: 'Сохраните пробег и замечания при приёмке.' }, { title: 'Отметьте повреждения', text: 'Укажите их на схеме и добавьте фото осмотра.' }, { title: 'Оформите передачу', text: 'Подготовьте акт с зафиксированными данными.' }]
+  get intake(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.intake_headline_item1'), translate('proLanding.intake_headline_item2')], tags: translate('proLanding.intake_tags'),
+      benefitTitles: [translate('proLanding.intake_benefitTitles_item1'), translate('proLanding.intake_benefitTitles_item2'), translate('proLanding.intake_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.intake_steps_item1_title'), text: translate('proLanding.intake_steps_item1_text') }, { title: translate('proLanding.intake_steps_item2_title'), text: translate('proLanding.intake_steps_item2_text') }, { title: translate('proLanding.intake_steps_item3_title'), text: translate('proLanding.intake_steps_item3_text') }]
+    }
   },
-  albums: {
-    headline: ['Работа видна.', 'Результат сохранён.'], tags: 'До / после · Альбомы · История',
-    benefitTitles: ['До и после', 'По работам и этапам', 'Рядом с историей'],
-    steps: [{ title: 'Снимите до работы', text: 'Зафиксируйте исходное состояние автомобиля.' }, { title: 'Соберите альбом', text: 'Сгруппируйте снимки по работе или этапу ухода.' }, { title: 'Покажите результат', text: 'Откройте фотографии после завершения и сравните изменения.' }]
+  get albums(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.albums_headline_item1'), translate('proLanding.albums_headline_item2')], tags: translate('proLanding.albums_tags'),
+      benefitTitles: [translate('proLanding.albums_benefitTitles_item1'), translate('proLanding.albums_benefitTitles_item2'), translate('proLanding.albums_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.albums_steps_item1_title'), text: translate('proLanding.albums_steps_item1_text') }, { title: translate('proLanding.albums_steps_item2_title'), text: translate('proLanding.albums_steps_item2_text') }, { title: translate('proLanding.albums_steps_item3_title'), text: translate('proLanding.albums_steps_item3_text') }]
+    }
   },
-  notifications: {
-    headline: ['Напомнить о визите.', 'Сообщить о готовности.'], tags: 'Запись · Напоминания · Telegram / MAX',
-    benefitTitles: ['До визита', 'После работы', 'Результат отправки'],
-    steps: [{ title: 'Подключите клиента', text: 'Настройте бота Telegram или MAX и привязку клиента.' }, { title: 'Настройте уведомления', text: 'Выберите напоминания перед визитом и сообщения о готовности.' }, { title: 'Проверьте отправку', text: 'Посмотрите историю и статус отправки уведомлений.' }]
+  get notifications(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.notifications_headline_item1'), translate('proLanding.notifications_headline_item2')], tags: translate('proLanding.notifications_tags'),
+      benefitTitles: [translate('proLanding.notifications_benefitTitles_item1'), translate('proLanding.notifications_benefitTitles_item2'), translate('proLanding.notifications_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.notifications_steps_item1_title'), text: translate('proLanding.notifications_steps_item1_text') }, { title: translate('proLanding.notifications_steps_item2_title'), text: translate('proLanding.notifications_steps_item2_text') }, { title: translate('proLanding.notifications_steps_item3_title'), text: translate('proLanding.notifications_steps_item3_text') }]
+    }
   },
-  messageTemplates: {
-    headline: ['Нужные слова.', 'Без повторного набора.'], tags: 'Запись · Готовность · Ответы',
-    benefitTitles: ['Подтверждение записи', 'Выдача автомобиля', 'Частые вопросы'],
-    steps: [{ title: 'Подготовьте текст', text: 'Сохраните сообщение для повторяющейся ситуации.' }, { title: 'Выберите шаблон', text: 'Используйте готовый ответ в переписке с клиентом.' }, { title: 'Проверьте и отправьте', text: 'Уточните детали перед отправкой сообщения.' }]
+  get messageTemplates(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.messageTemplates_headline_item1'), translate('proLanding.messageTemplates_headline_item2')], tags: translate('proLanding.messageTemplates_tags'),
+      benefitTitles: [translate('proLanding.messageTemplates_benefitTitles_item1'), translate('proLanding.messageTemplates_benefitTitles_item2'), translate('proLanding.messageTemplates_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.messageTemplates_steps_item1_title'), text: translate('proLanding.messageTemplates_steps_item1_text') }, { title: translate('proLanding.messageTemplates_steps_item2_title'), text: translate('proLanding.messageTemplates_steps_item2_text') }, { title: translate('proLanding.messageTemplates_steps_item3_title'), text: translate('proLanding.messageTemplates_steps_item3_text') }]
+    }
   },
-  selfAssignment: {
-    headline: ['Есть свободная работа?', 'Мастер берёт её сам.'], tags: 'Команда · Назначение · Задачи',
-    benefitTitles: ['Работы без исполнителя', 'Назначение на себя', 'Свои задачи'],
-    steps: [{ title: 'Разрешите самоназначение', text: 'Включите настройку организации для сотрудников с нужными правами.' }, { title: 'Назначьте на себя', text: 'Мастер выбирает свободную операцию и берёт её в работу.' }, { title: 'Перейдите к выполнению', text: 'Назначенная задача появится в ваших работах.' }]
+  get selfAssignment(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.selfAssignment_headline_item1'), translate('proLanding.selfAssignment_headline_item2')], tags: translate('proLanding.selfAssignment_tags'),
+      benefitTitles: [translate('proLanding.selfAssignment_benefitTitles_item1'), translate('proLanding.selfAssignment_benefitTitles_item2'), translate('proLanding.selfAssignment_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.selfAssignment_steps_item1_title'), text: translate('proLanding.selfAssignment_steps_item1_text') }, { title: translate('proLanding.selfAssignment_steps_item2_title'), text: translate('proLanding.selfAssignment_steps_item2_text') }, { title: translate('proLanding.selfAssignment_steps_item3_title'), text: translate('proLanding.selfAssignment_steps_item3_text') }]
+    }
   },
-  documentStyling: {
-    headline: ['Ваши документы.', 'В едином стиле.'], tags: 'Акты · Заказ-наряды · Оформление',
-    benefitTitles: ['Стиль печатных форм', 'Единое оформление', 'Для всей организации'],
-    steps: [{ title: 'Выберите оформление', text: 'Настройте стиль доступных печатных форм.' }, { title: 'Сохраните настройки', text: 'Используйте выбранное оформление в организации.' }, { title: 'Передайте документ', text: 'Подготовьте акт или заказ-наряд для клиента.' }]
+  get documentStyling(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.documentStyling_headline_item1'), translate('proLanding.documentStyling_headline_item2')], tags: translate('proLanding.documentStyling_tags'),
+      benefitTitles: [translate('proLanding.documentStyling_benefitTitles_item1'), translate('proLanding.documentStyling_benefitTitles_item2'), translate('proLanding.documentStyling_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.documentStyling_steps_item1_title'), text: translate('proLanding.documentStyling_steps_item1_text') }, { title: translate('proLanding.documentStyling_steps_item2_title'), text: translate('proLanding.documentStyling_steps_item2_text') }, { title: translate('proLanding.documentStyling_steps_item3_title'), text: translate('proLanding.documentStyling_steps_item3_text') }]
+    }
   },
-  dataImport: {
-    headline: ['Ваша клиентская база.', 'Уже в новой CRM.'], tags: 'Таблица · Колонки · Проверка',
-    benefitTitles: ['Из таблицы', 'Соответствие колонок', 'Проверка перед переносом'],
-    steps: [{ title: 'Подготовьте таблицу', text: 'Соберите данные клиентов и автомобилей для переноса.' }, { title: 'Сопоставьте колонки', text: 'Укажите, какие поля CRM соответствуют данным таблицы.' }, { title: 'Проверьте строки', text: 'Устраните ошибки до запуска переноса.' }]
+  get dataImport(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.dataImport_headline_item1'), translate('proLanding.dataImport_headline_item2')], tags: translate('proLanding.dataImport_tags'),
+      benefitTitles: [translate('proLanding.dataImport_benefitTitles_item1'), translate('proLanding.dataImport_benefitTitles_item2'), translate('proLanding.dataImport_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.dataImport_steps_item1_title'), text: translate('proLanding.dataImport_steps_item1_text') }, { title: translate('proLanding.dataImport_steps_item2_title'), text: translate('proLanding.dataImport_steps_item2_text') }, { title: translate('proLanding.dataImport_steps_item3_title'), text: translate('proLanding.dataImport_steps_item3_text') }]
+    }
   },
-  accountingExport: {
-    headline: ['Работы в CRM.', 'Данные для бухгалтерии.'], tags: 'Период · JSON · 1С:Бухгалтерия 3.0',
-    benefitTitles: ['Нужный период', 'Работы и оплаты', 'Файл для 1С'],
-    steps: [{ title: 'Выберите период', text: 'Укажите интервал для подготовки сведений.' }, { title: 'Проверьте документы', text: 'Просмотрите состав и замечания перед выгрузкой.' }, { title: 'Загрузите в 1С', text: 'Передайте JSON через отдельную обработку .epf. Сверьте документы перед проведением.' }]
+  get accountingExport(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.accountingExport_headline_item1'), translate('proLanding.accountingExport_headline_item2')], tags: translate('proLanding.accountingExport_tags'),
+      benefitTitles: [translate('proLanding.accountingExport_benefitTitles_item1'), translate('proLanding.accountingExport_benefitTitles_item2'), translate('proLanding.accountingExport_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.accountingExport_steps_item1_title'), text: translate('proLanding.accountingExport_steps_item1_text') }, { title: translate('proLanding.accountingExport_steps_item2_title'), text: translate('proLanding.accountingExport_steps_item2_text') }, { title: translate('proLanding.accountingExport_steps_item3_title'), text: translate('proLanding.accountingExport_steps_item3_text') }]
+    }
   },
-  assistant: {
-    headline: ['Скажите, что сделать.', 'Проверьте и подтвердите.'], tags: 'Голос · Текст · Служебный Telegram-бот',
-    benefitTitles: ['Голосом или текстом', 'В пределах ваших прав', 'Ответ можно прослушать', 'Решение за вами'],
-    steps: [{ title: 'Опишите задачу', text: 'На сайте или в служебном Telegram-боте — голосом или текстом.' }, { title: 'Уточните детали', text: 'Помощник спросит недостающее и подготовит черновик.' }, { title: 'Подтвердите изменение', text: 'Проверьте данные. Изменения выполняются после подтверждения.' }]
+  get assistant(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.assistant_headline_item1'), translate('proLanding.assistant_headline_item2')], tags: translate('proLanding.assistant_tags'),
+      benefitTitles: [translate('proLanding.assistant_benefitTitles_item1'), translate('proLanding.assistant_benefitTitles_item2'), translate('proLanding.assistant_benefitTitles_item3'), translate('proLanding.assistant_benefitTitles_item4')],
+      steps: [{ title: translate('proLanding.assistant_steps_item1_title'), text: translate('proLanding.assistant_steps_item1_text') }, { title: translate('proLanding.assistant_steps_item2_title'), text: translate('proLanding.assistant_steps_item2_text') }, { title: translate('proLanding.assistant_steps_item3_title'), text: translate('proLanding.assistant_steps_item3_text') }]
+    }
   },
-  myWork: {
-    headline: ['Ваши задачи.', 'В одном рабочем списке.'], tags: 'Назначения · Сроки · Выполнение',
-    benefitTitles: ['Всё назначенное', 'Сроки и статусы', 'Детали рядом'],
-    steps: [{ title: 'Откройте свои работы', text: 'Посмотрите назначенные вам задачи.' }, { title: 'Выберите следующую', text: 'Ориентируйтесь на сроки и текущий статус.' }, { title: 'Откройте детали', text: 'Перейдите к работе и продолжайте выполнение.' }]
+  get myWork(): ProFeatureLandingContent {
+    return {
+      headline: [translate('proLanding.myWork_headline_item1'), translate('proLanding.myWork_headline_item2')], tags: translate('proLanding.myWork_tags'),
+      benefitTitles: [translate('proLanding.myWork_benefitTitles_item1'), translate('proLanding.myWork_benefitTitles_item2'), translate('proLanding.myWork_benefitTitles_item3')],
+      steps: [{ title: translate('proLanding.myWork_steps_item1_title'), text: translate('proLanding.myWork_steps_item1_text') }, { title: translate('proLanding.myWork_steps_item2_title'), text: translate('proLanding.myWork_steps_item2_text') }, { title: translate('proLanding.myWork_steps_item3_title'), text: translate('proLanding.myWork_steps_item3_text') }]
+    }
   }
 }

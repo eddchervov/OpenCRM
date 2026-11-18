@@ -51,6 +51,89 @@ public sealed class OrganizationQuickBookingHttpTests(OrganizationsDatabaseFixtu
 {
     private static readonly DateTime s_bookingDate = new(2026, 10, 20, 0, 0, 0, DateTimeKind.Utc);
 
+    [Theory]
+    [InlineData("detailing", "CN")]
+    [InlineData("service_station", "CN")]
+    [InlineData("detailing", "ZZ")]
+    [InlineData("service_station", "ZZ")]
+    public async Task QuickBookingCreatesAndReusesForeignVehicleWithoutChangingItsPlate(string scenario, string countryCode)
+    {
+        await using var seed = fixture.CreateContext();
+        var organization = await fixture.CreateOrganizationAsync(seed);
+        organization.PrimaryScenarioCode = scenario;
+        var organizationClient = new OrganizationClient { Organization = organization, Name = "Тестовый клиент" };
+        seed.OrganizationClients.Add(organizationClient);
+        await seed.SaveChangesAsync();
+        using var host = this.CreateHost();
+        using var client = host.GetTestClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", organization.OwnerUserId);
+        var route = scenario == "detailing" ? DetailingRoute(organization.Id) : AutoServiceRoute(organization.Id);
+        var request = new
+        {
+            registrationPlate = "沪A·12345",
+            registrationCountryCode = countryCode,
+            organizationClientId = organizationClient.Id,
+            plannedDate = s_bookingDate,
+            isPlannedBooking = true,
+            services = new[] { new { name = "Тестовая услуга", quantity = 1 } }
+        };
+
+        using var created = await client.PostAsJsonAsync(route, request);
+        Assert.Equal(HttpStatusCode.OK, created.StatusCode);
+        using var createdJson = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var vehicleId = createdJson.RootElement.GetProperty("vehicleId").GetGuid();
+        using var repeated = await client.PostAsJsonAsync(route, request);
+        Assert.Equal(HttpStatusCode.OK, repeated.StatusCode);
+        using var repeatedJson = JsonDocument.Parse(await repeated.Content.ReadAsStringAsync());
+
+        Assert.Equal(vehicleId, repeatedJson.RootElement.GetProperty("vehicleId").GetGuid());
+        Assert.False(repeatedJson.RootElement.GetProperty("vehicleCreated").GetBoolean());
+        await using var verify = fixture.CreateContext();
+        var vehicle = await verify.Vehicles.AsNoTracking().SingleAsync(item => item.Id == vehicleId);
+        Assert.Equal("沪A·12345", vehicle.RegistrationPlate);
+        Assert.Equal(countryCode, vehicle.RegistrationCountryCode);
+    }
+
+    [Theory]
+    [InlineData("detailing", "XX", "ABC123", 1)]
+    [InlineData("service_station", "XX", "ABC123", 1)]
+    [InlineData("detailing", "ZZ", "京A\n12345", 1)]
+    [InlineData("service_station", "ZZ", "京A\n12345", 1)]
+    [InlineData("detailing", "CN", "京A·12345", 999)]
+    [InlineData("service_station", "CN", "京A·12345", 999)]
+    public async Task InvalidCountryPlateOrKindDoesNotCreateClientVehicleOrOrder(
+        string scenario,
+        string countryCode,
+        string plate,
+        int kind)
+    {
+        await using var seed = fixture.CreateContext();
+        var organization = await fixture.CreateOrganizationAsync(seed);
+        organization.PrimaryScenarioCode = scenario;
+        await seed.SaveChangesAsync();
+        using var host = this.CreateHost();
+        using var client = host.GetTestClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", organization.OwnerUserId);
+        var route = scenario == "detailing" ? DetailingRoute(organization.Id) : AutoServiceRoute(organization.Id);
+
+        using var response = await client.PostAsJsonAsync(route, new
+        {
+            registrationPlate = plate,
+            registrationCountryCode = countryCode,
+            kind,
+            clientName = "Тестовый клиент недопустимого номера",
+            plannedDate = s_bookingDate,
+            isPlannedBooking = true,
+            services = new[] { new { name = "Тестовая услуга", quantity = 1 } }
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await using var verify = fixture.CreateContext();
+        Assert.False(await verify.OrganizationClients.AnyAsync(item => item.OrganizationId == organization.Id));
+        Assert.False(await verify.Vehicles.AnyAsync(item => item.OrganizationId == organization.Id));
+        Assert.False(await verify.Maintenance.AnyAsync(item => item.Vehicle.OrganizationId == organization.Id));
+    }
+
     [Fact]
     public async Task DetailingQuickBookingCreatesClientVehicleAndPlannedMaintenanceAndReusesNormalizedPlate()
     {

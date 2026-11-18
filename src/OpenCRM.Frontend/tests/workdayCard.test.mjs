@@ -6,6 +6,10 @@ import { parse, compileScript } from '@vue/compiler-sfc'
 import * as vue from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { getWorkdayProgress, shouldOpenRecord } from '../packages/workspace/src/utils/workdayCard.ts'
+import { localizationTestContext } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/workdayCardMessages.ts'
+import { formattingCulture, i18n } from '@opencrm/ui/i18n'
+import { formatDateOnly, parseDateOnly } from '../packages/ui/src/dateOnly.ts'
 
 const source = readFileSync(new URL('../packages/workspace/src/utils/vehicleBrandLogo.ts', import.meta.url), 'utf8')
 const code = ts.transpileModule(source, {
@@ -15,7 +19,7 @@ const module = { exports: {} }
 new Function('require', 'module', 'exports', code)(id => id, module, module.exports)
 const { getVehicleBrandLogo } = module.exports
 
-test('Карточка скрывает ложный прогресс и сохраняет реальные исторические операции', async () => {
+function createCard() {
   const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/WorkspaceWorkdayCard.vue', import.meta.url), 'utf8'))
   const compiled = ts.transpileModule(compileScript(descriptor, { id: 'workday-progress', inlineTemplate: true }).content, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
@@ -23,18 +27,51 @@ test('Карточка скрывает ложный прогресс и сох�
   const component = { exports: {} }
   new Function('require', 'module', 'exports', compiled)(id => {
     if (id === 'vue') return vue
-    if (id === '@opencrm/ui') return {}
+    if (id === '@opencrm/ui') return { formatDateOnly, parseDateOnly }
+    if (id === '@opencrm/ui/i18n') return {
+      formattingCulture,
+      useLocalization: () => ({ ...localizationTestContext.useLocalization(), formattingCulture })
+    }
+    if (id === '../workdayCardMessages') return {}
     if (id === '../utils/vehicleBrandLogo') return { getVehicleBrandLogo: () => null }
     if (id === '../utils/workdayCard') return { getWorkdayProgress, shouldOpenRecord }
     throw new Error(`Не задана зависимость: ${id}`)
   }, component, component.exports)
+  return component.exports.default
+}
+
+test('Карточка скрывает ложный прогресс и сохраняет реальные исторические операции', async () => {
+  const component = createCard()
   const item = { id: 'qa', vehicleName: 'QA', date: '2026-10-30', services: ['Полировка'], workTotalCount: 1, workCompletedCount: 0 }
-  const render = hasTrackedWork => renderToString(vue.createSSRApp(component.exports.default, {
+  const render = hasTrackedWork => renderToString(vue.createSSRApp(component, {
     item: { ...item, hasTrackedWork }, stage: 'handedOver', today: '2026-10-30'
   }))
   assert.doesNotMatch(await render(false), /role="progressbar"/)
   assert.match(await render(true), /Выполнено 0 из 1/)
   assert.match(await render(undefined), /role="progressbar"/)
+})
+
+test('Карточка рабочего дня переводит статусы и форматирует срок отдельно от языка', async () => {
+  const component = createCard()
+  const originalLocale = i18n.global.locale.value
+  const originalCulture = formattingCulture.value
+  try {
+    for (const [locale, culture, expectedStatus] of [['en', 'en-GB', 'In progress'], ['zh-Hans', 'zh-CN', '进行中']]) {
+      i18n.global.locale.value = locale
+      formattingCulture.value = culture
+      const html = await renderToString(vue.createSSRApp(component, {
+        item: { id: 'qa', vehicleName: '测试车', date: '2026-11-16', endDate: '2026-11-18', endTime: '17:30', services: [] },
+        stage: 'inProgress', today: '2026-11-16'
+      }))
+      assert.ok(html.includes(expectedStatus), html)
+      const expectedDate = parseDateOnly('2026-11-18').toLocaleDateString(culture, { year: 'numeric', month: '2-digit', day: '2-digit' })
+      assert.ok(html.includes(expectedDate + ' 17:30'), html)
+      assert.doesNotMatch(html, /В работе|План до|Услуги не указаны/)
+    }
+  } finally {
+    i18n.global.locale.value = originalLocale
+    formattingCulture.value = originalCulture
+  }
 })
 
 test('Логотип выбирается только по ключу справочника, без распознавания названия машины', () => {

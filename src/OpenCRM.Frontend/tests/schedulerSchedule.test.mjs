@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { parse, compileScript } from '@vue/compiler-sfc'
+import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import { renderToString } from '@vue/server-renderer'
 import ts from 'typescript'
 import * as vue from 'vue'
@@ -11,6 +11,8 @@ import { useSchedulerViewState } from '../packages/workspace/src/schedulerViewSt
 function compile(path, dependencies, inlineTemplate = false) {
   const { descriptor } = parse(readFileSync(new URL(path, import.meta.url), 'utf8'))
   const script = compileScript(descriptor, { id: 'scheduler-schedule-test', inlineTemplate })
+  const template = compileTemplate({ source: descriptor.template?.content ?? '', id: 'scheduler-schedule-test', filename: path })
+  assert.deepEqual(template.errors, [])
   const code = ts.transpileModule(script.content, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
   }).outputText
@@ -27,9 +29,22 @@ const emptyWeek = Array.from({ length: 7 }, (_, dayOfWeek) => ({
   dayOfWeek, isWorking: false, startTime: null, endTime: null, breaks: []
 }))
 const workingDay = { dayOfWeek: 4, isWorking: true, startTime: '09:00', endTime: '18:00', breaks: [] }
+const schedulerMessages = {}
+const schedulerTranslation = key => ({
+  'scheduler.noPost': 'Без поста', 'scheduler.noZone': 'Без зоны',
+  'schedulerControl.setupSchedule': 'Настройте график работы', 'schedulerControl.scheduleMissing': 'График работы не настроен',
+  'schedulerControl.todayClosed': 'Сегодня выходной', 'schedulerControl.selectedDayClosed': 'В этот день выходной',
+  'schedulerControl.scheduleNotConfigured': 'График работы не настроен', 'schedulerControl.closedDay': 'Выходной день',
+  'schedulerControl.organizationHoursRequired': 'Укажите рабочие дни и часы организации, чтобы планировать записи по графику.',
+  'schedulerControl.askAdministrator': 'Попросите администратора организации указать рабочие дни и часы.',
+  'schedulerControl.closedOnDate': '{date} — выходной по графику организации.', 'schedulerControl.nearestWorkDay': 'К ближайшему рабочему дню',
+  'schedulerControl.nextWorkDayMissing': 'Ближайший рабочий день в графике не указан.', 'schedulerControl.configureSchedule': 'Настроить график'
+})[key] ?? key
 const closedDay = compile('../packages/workspace/src/components/SchedulerClosedDay.vue', {
   vue,
-  '@opencrm/ui': { formatDateOnly: () => today, UiButton: (props, { slots }) => vue.h('button', props, slots.default?.()) },
+  '@opencrm/ui': { formatDateOnly: () => today, useLocalization: () => ({ t: schedulerTranslation }), UiButton: (props, { slots }) => vue.h('button', props, slots.default?.()) },
+  '@opencrm/ui/i18n': { formattingCulture: vue.ref('ru-RU') },
+  '../schedulerControlMessages': schedulerMessages,
   '../workingHours': workingHours
 }, true)
 
@@ -71,7 +86,8 @@ for (const scenario of ['detailing', 'autoservice', 'fleet']) {
       vue: { ...vue, onMounted() {}, watch() {} },
       '@opencrm/workspace': { ...workingHours, useSchedulerViewState },
       '@opencrm/workspace/api/setup': {},
-      '@opencrm/ui': { formatDateOnly: () => today },
+      '@opencrm/ui': { formatDateOnly: () => today, useLocalization: () => ({ t: schedulerTranslation }) },
+      '@opencrm/workspace/schedulerMessages': schedulerMessages,
       ['@/api/' + scenario + 'Bff']: {},
       './MaintenanceCalendar.vue': {},
       './MaintenanceMoveDialog.vue': {},
@@ -95,13 +111,41 @@ for (const scenario of ['detailing', 'autoservice', 'fleet']) {
   })
 }
 
+for (const scenario of ['detailing', 'autoservice', 'fleet']) {
+  test(scenario + ': записи планировщика показывают локализованные статусы и сохраняют валюту снимка', async () => {
+    const loadedItems = [
+      { id: 'ready', date: today, status: 3, statusName: 'Готово к выдаче', readyForHandoverAt: today, currencyCode: 'CNY' },
+      { id: 'handed-over', date: today, status: 3, statusName: 'Выдано', handedOverAt: today, currencyCode: 'USD' }
+    ]
+    const api = { loadMaintenanceCalendar: async () => loadedItems }
+    const component = compile('../Scenarios/' + scenario + '-client/src/components/SchedulerSection.vue', {
+      vue: { ...vue, onMounted() {}, watch() {} },
+      '@opencrm/workspace': { ...workingHours, useSchedulerViewState },
+      '@opencrm/workspace/api/setup': {},
+      '@opencrm/ui': { formatDateOnly: () => today, useLocalization: () => ({ t: schedulerTranslation }) },
+      '@opencrm/workspace/schedulerMessages': schedulerMessages,
+      ['@/api/' + scenario + 'Bff']: api,
+      './MaintenanceCalendar.vue': {},
+      './MaintenanceMoveDialog.vue': {},
+      './QuickBookingSection.vue': {}
+    })
+    const context = { user: { id: 'user-1' }, organization: { id: 'org-1', timeZoneId: 'UTC' }, links: { api: { calendar: '/calendar' } } }
+    const state = component.setup({ context }, { expose() {}, emit() {} })
+    await state.loadItems()
+    assert.deepEqual(state.items.value.map(item => [item.statusName, item.currencyCode]), [
+      ['scheduler.ready', 'CNY'], ['scheduler.handedOver', 'USD']
+    ])
+  })
+}
+
 for (const scenario of ['detailing', 'autoservice']) {
   test(scenario + ': ошибка каталога сбрасывает сохранённый пост и не скрывает расписание', async () => {
     const component = compile('../Scenarios/' + scenario + '-client/src/components/SchedulerSection.vue', {
       vue: { ...vue, onMounted() {}, watch() {} },
       '@opencrm/workspace': { ...workingHours, useSchedulerViewState },
       '@opencrm/workspace/api/setup': {},
-      '@opencrm/ui': { formatDateOnly: () => today },
+      '@opencrm/ui': { formatDateOnly: () => today, useLocalization: () => ({ t: schedulerTranslation }) },
+      '@opencrm/workspace/schedulerMessages': schedulerMessages,
       ['@/api/' + scenario + 'Bff']: { loadScenarioCatalog: async () => { throw new Error('Каталог недоступен.') } },
       './MaintenanceCalendar.vue': {},
       './MaintenanceMoveDialog.vue': {},

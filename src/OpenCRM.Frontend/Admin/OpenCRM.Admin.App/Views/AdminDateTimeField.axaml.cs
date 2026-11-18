@@ -1,8 +1,15 @@
+using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using OpenCRM.Admin.Api;
+using OpenCRM.Admin.App.Localization;
+using Calendar = Avalonia.Controls.Calendar;
 
 namespace OpenCRM.Admin.App.Views;
 
@@ -13,12 +20,11 @@ public sealed partial class AdminDateTimeField : UserControl
         AvaloniaProperty.Register<AdminDateTimeField, DateTime?>(nameof(Value), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<string> PlaceholderProperty =
-        AvaloniaProperty.Register<AdminDateTimeField, string>(nameof(Placeholder), "Не задано");
+        AvaloniaProperty.Register<AdminDateTimeField, string>(nameof(Placeholder), string.Empty);
 
     public static readonly StyledProperty<bool> IsPickerOpenProperty =
         AvaloniaProperty.Register<AdminDateTimeField, bool>(nameof(IsPickerOpen));
 
-    private readonly CultureInfo _culture = CultureInfo.GetCultureInfo("ru-RU");
     private bool _isUpdatingControls;
     private DateTime? _draftDate;
     private TimeSpan? _draftTime;
@@ -27,6 +33,7 @@ public sealed partial class AdminDateTimeField : UserControl
     {
         this.InitializeComponent();
         this.CalendarControl.PropertyChanged += this.OnCalendarPropertyChanged;
+        this.CalendarControl.TemplateApplied += (_, _) => this.QueueCalendarLabels();
         this.TimeControl.PropertyChanged += this.OnTimePropertyChanged;
         this.UpdateDisplay();
     }
@@ -47,6 +54,31 @@ public sealed partial class AdminDateTimeField : UserControl
     {
         get => this.GetValue(AdminDateTimeField.IsPickerOpenProperty);
         set => this.SetValue(AdminDateTimeField.IsPickerOpenProperty, value);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs args)
+    {
+        base.OnAttachedToVisualTree(args);
+        AdminLocalization.Instance.PropertyChanged += this.OnLanguageChanged;
+        this.UpdateDisplay();
+        this.QueueCalendarLabels();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs args)
+    {
+        AdminLocalization.Instance.PropertyChanged -= this.OnLanguageChanged;
+        base.OnDetachedFromVisualTree(args);
+    }
+
+    private void OnLanguageChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName != nameof(AdminLocalization.Language))
+        {
+            return;
+        }
+
+        this.UpdateDisplay();
+        this.QueueCalendarLabels();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -112,6 +144,11 @@ public sealed partial class AdminDateTimeField : UserControl
 
     private void OnCalendarPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs args)
     {
+        if (args.Property == Calendar.DisplayDateProperty || args.Property == Calendar.DisplayModeProperty)
+        {
+            this.QueueCalendarLabels();
+        }
+
         if (this._isUpdatingControls || args.Property != Avalonia.Controls.Calendar.SelectedDateProperty)
         {
             return;
@@ -155,8 +192,57 @@ public sealed partial class AdminDateTimeField : UserControl
     private void UpdateDisplay()
     {
         var value = this.Value;
-        this.DisplayLabel.Text = value?.ToString("dd.MM.yyyy HH:mm", this._culture) ?? this.Placeholder;
+        this.DisplayLabel.Text = value?.ToString("g", CultureInfo.CurrentCulture)
+            ?? (string.IsNullOrEmpty(this.Placeholder) ? AdminLocalization.Instance["core.dateTime.notSet"] : this.Placeholder);
         this.DisplayLabel.Foreground = value is null ? Brush.Parse("#929BA4") : Brush.Parse("#F1F3F5");
         this.ClearButton.IsVisible = value is not null;
+    }
+
+    private void QueueCalendarLabels() => Dispatcher.UIThread.Post(this.UpdateCalendarLabels, DispatcherPriority.Loaded);
+
+    private void UpdateCalendarLabels()
+    {
+        var localization = AdminLocalization.Instance;
+        var language = AdminUiLanguage.Supported.First(option => option.Code == localization.Language);
+        var culture = CultureInfo.GetCultureInfo(language.LanguageTag);
+        var controls = this.CalendarControl.GetVisualDescendants().OfType<Control>().ToArray();
+
+        // Календарь Avalonia берёт подписи из формата ОС; язык интерфейса выбирается отдельно.
+        foreach (var button in controls.OfType<Button>())
+        {
+            if (button.Name == "PART_HeaderButton" && this.CalendarControl.DisplayMode == CalendarMode.Month)
+            {
+                button.Content = this.CalendarControl.DisplayDate.ToString("Y", culture);
+            }
+
+            if (button.Name == "PART_PreviousButton" || button.Name == "PART_NextButton")
+            {
+                AutomationProperties.SetName(button, localization[button.Name == "PART_PreviousButton"
+                    ? "core.dateTime.previousPeriod" : "core.dateTime.nextPeriod"]);
+            }
+        }
+
+        foreach (var grid in controls.OfType<Grid>())
+        {
+            if (grid.Name == "PART_MonthView")
+            {
+                foreach (var day in grid.Children.OfType<Control>().Where(child => Grid.GetRow(child) == 0))
+                {
+                    var dayIndex = ((int)this.CalendarControl.FirstDayOfWeek + Grid.GetColumn(day)) % 7;
+                    day.DataContext = culture.DateTimeFormat.ShortestDayNames[dayIndex];
+                }
+            }
+
+            if (grid.Name == "PART_YearView" && this.CalendarControl.DisplayMode == CalendarMode.Year)
+            {
+                foreach (var month in grid.Children.OfType<Button>())
+                {
+                    if (month.DataContext is DateTime date)
+                    {
+                        month.Content = culture.DateTimeFormat.AbbreviatedMonthNames[date.Month - 1];
+                    }
+                }
+            }
+        }
     }
 }

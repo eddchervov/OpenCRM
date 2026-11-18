@@ -1,6 +1,6 @@
 ﻿@{
     Layout = "/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "История обслуживания";
+    ViewData["Title"] = Text["maintenance.legacy.page.history"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "maintenance-details-page-body";
     var maintenanceId = ViewData["MaintenanceId"] as string ?? string.Empty;
@@ -17,9 +17,9 @@
         {
             ViewData["BreadcrumbLinks"] = new (string Url, string Title)[]
             {
-                ("/vehicles", "Личная техника"),
+                ("/vehicles", Text["maintenance.legacy.page.vehiclePersonal"].Value),
                 ($"/vehicle/{breadcrumbVehicle.Id}", breadcrumbVehicle.DisplayName),
-                ($"/maintenance/{maintenanceId}", "Обслуживание")
+                ($"/maintenance/{maintenanceId}", Text["maintenance.legacy.page.maintenance"].Value)
             };
         }
     }
@@ -28,10 +28,10 @@
     var returnUrl = ViewData["MaintenanceReturnUrl"] as string ?? string.Empty;
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? "Моя техника"
+        ? Text["maintenance.legacy.page.vehiclePersonal"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
+            : Text["maintenance.legacy.page.organization"].Value;
     var workspaceSidebar = new OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
     {
         OrganizationId = string.IsNullOrWhiteSpace(organizationId) ? Guid.Empty : Guid.Parse(organizationId),
@@ -72,8 +72,8 @@
                                 <nav aria-label="breadcrumb" class="mb-4">
                                     <ol class="breadcrumb mb-0">
                                         <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl">@rootBreadcrumbText</a></li>
-                                        <li class="breadcrumb-item"><a :href="getMaintenanceUrl()">Обслуживание</a></li>
-                                        <li class="breadcrumb-item active" aria-current="page">История</li>
+                                        <li class="breadcrumb-item"><a :href="getMaintenanceUrl()">@Text["maintenance.legacy.page.maintenance"]</a></li>
+                                        <li class="breadcrumb-item active" aria-current="page">@Text["maintenance.legacy.page.history"]</li>
                                     </ol>
                                 </nav>
                             }
@@ -83,21 +83,21 @@
                                     <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                                         <h3 class="card-title mb-0">
                                             <i class="fa fa-history me-2"></i>
-                                            История обслуживания
+                                            @Text["maintenance.legacy.page.history"]
                                         </h3>
                                         <a :href="getMaintenanceUrl()" class="btn btn-light btn-sm">
                                             <i class="fa fa-arrow-left me-2"></i>
-                                            К обслуживанию
+                                            @Text["maintenance.legacy.history.backToMaintenance"]
                                         </a>
                                     </div>
                                 </div>
                                 <div class="card-body">
                                     <div v-if="loading" class="d-flex align-items-center gap-2 text-muted">
                                         <i class="fa fa-spinner fa-spin"></i>
-                                        <span>Загружаем историю...</span>
+                                        <span>@Text["maintenance.legacy.history.loading"]</span>
                                     </div>
                                     <div v-else-if="events.length === 0" class="text-muted">
-                                        Пока нет событий по этому обслуживанию.
+                                        @Text["maintenance.legacy.history.empty"]
                                     </div>
                                     <div v-else class="list-group list-group-flush">
                                         <div class="list-group-item px-0" v-for="event in events" :key="event.id">
@@ -105,7 +105,7 @@
                                                 <div>
                                                     <div class="fw-semibold">{{ event.title }}</div>
                                                     <div class="text-muted small" v-if="event.description">{{ event.description }}</div>
-                                                    <div class="text-muted small" v-if="event.actorDisplayName">Автор: {{ event.actorDisplayName }}</div>
+                                                    <div class="text-muted small" v-if="event.actorDisplayName">@Text["maintenance.legacy.history.author"] {{ event.actorDisplayName }}</div>
                                                 </div>
                                                 <div class="text-muted small">{{ formatDate(event.createdAt) }}</div>
                                             </div>
@@ -117,10 +117,10 @@
                             <div class="mt-3 d-flex gap-2 flex-wrap">
                                 <a :href="getMaintenanceUrl()" class="btn btn-outline-dark">
                                     <i class="fa fa-arrow-left me-2"></i>
-                                    Вернуться в обслуживание
+                                    @Text["maintenance.legacy.history.returnToMaintenance"]
                                 </a>
                                 <a v-if="returnUrl" :href="returnUrl" class="btn btn-outline-secondary">
-                                    Вернуться назад
+                                    @Text["maintenance.legacy.history.returnBack"]
                                 </a>
                             </div>
                         </div>

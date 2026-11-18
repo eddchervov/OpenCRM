@@ -1,3 +1,6 @@
+import { parseDateOnly } from '../packages/ui/src/dateOnly.ts'
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -8,6 +11,23 @@ import { getWorkdayProgress } from '../packages/workspace/src/utils/workdayCard.
 import { isSimpleMaintenanceWorkflow } from '../packages/workspace/src/utils/maintenanceWorkflow.ts'
 import { formatWorkDuration, hasRecordedWorkTime } from '../packages/workspace/src/formatWorkDuration.ts'
 
+const testMessages = {
+  'maintenanceCard.completedFeminine': 'Выполнена',
+  'maintenanceCard.noData': 'Нет данных',
+  'maintenanceCard.completed': 'Выполнено',
+  'maintenanceCard.ready': 'Готово',
+  'maintenanceCard.maxHistoryError': 'Не удалось обновить историю MAX.',
+  'maintenanceCard.noPaymentRequired': 'Оплата не требуется',
+  'maintenanceCard.vatNotSpecified': 'Российский НДС не указан',
+  'maintenanceCard.withoutVat': 'Без НДС',
+  'maintenanceCard.russianVatRate': 'Российский НДС {rate} %',
+  'maintenanceCard.historicalCurrencyReadOnly': 'Заказ сохранён в {orderCurrency}. В организации используется {workspaceCurrency}.'
+}
+
+function translate(key, parameters = {}) {
+  return (testMessages[key] ?? key).replace(/\{([^}]+)\}/g, (_, name) => parameters[name] ?? `{${name}}`)
+}
+
 const filename = new URL('../packages/workspace/src/components/MaintenanceCardSection.vue', import.meta.url)
 const { descriptor } = parse(readFileSync(filename, 'utf8'))
 const script = compileScript(descriptor, { id: 'maintenance-card-test' })
@@ -15,18 +35,22 @@ const code = ts.transpileModule(script.content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
-function card({ saveError, maxReader = async () => [], telegramReader = async () => [], photoReader = async () => [] } = {}) {
+function card({ saveError, maintenanceOverrides = {}, maxReader = async () => [], telegramReader = async () => [], photoReader = async () => [] } = {}) {
   const module = { exports: {} }
   const savedCommerce = []
   const maintenanceData = {
-    id: 'order-1', vehicleId: 'vehicle-1', version: 7, status: 2, canEditServices: true,
+    id: 'order-1', vehicleId: 'vehicle-1', version: 7, status: 2, currencyCode: 'RUB', canEditServices: true, canManagePayments: true,
     maintenanceDetails: [
       { detailId: 'a', name: 'Мойка', price: 2000, quantity: 1, vatRateCode: '0' },
       { detailId: 'b', name: 'Полировка', price: 12000, quantity: 1, vatRateCode: 'without_vat' },
       { detailId: 'c', name: 'Материал', materialName: 'Шампунь' }
-    ]
+    ],
+    ...maintenanceOverrides
   }
   const resolve = id => {
+    if (id === '@opencrm/ui') return { parseDateOnly, useLocalization: () => ({ t: translate }) }
+    if (id === '../maintenanceCardMessages') return {}
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onMounted() {}, watch() {}, provide() {}, inject() {} }
     if (id === '../utils/workdayCard') return { getWorkdayProgress }
     if (id === '../utils/maintenanceWorkflow') return { isSimpleMaintenanceWorkflow }
@@ -48,13 +72,29 @@ function card({ saveError, maxReader = async () => [], telegramReader = async ()
   }
   new Function('require', 'module', 'exports', code)(resolve, module, module.exports)
   const props = vue.reactive({
-    context: { organization: { id: 'org-1' }, shell: { scenario: { code: 'detailing' }, menu: [] }, workspaceAccess: {} },
+    context: { organization: { id: 'org-1', currencyCode: 'RUB' }, shell: { scenario: { code: 'detailing' }, menu: [] }, workspaceAccess: {} },
     maintenanceId: 'order-1'
   })
   const state = module.exports.default.setup(props, { expose() {}, emit() {} })
   state.maintenance.value = maintenanceData
   return { state, props, savedCommerce }
 }
+
+test('Дата карточки следует выбранному формату и сохраняет календарный день', () => {
+  const { state } = card()
+  const previousCulture = formattingCulture.value
+  try {
+    for (const [culture, expected] of [
+      ['ru-RU', '16.11.2026'], ['en-GB', '16/11/2026'],
+      ['en-US', '11/16/2026'], ['zh-CN', '2026/11/16']
+    ]) {
+      formattingCulture.value = culture
+      assert.equal(state.formatDate('2026-11-16T00:00:00Z'), expected)
+    }
+  } finally {
+    formattingCulture.value = previousCulture
+  }
+})
 
 test('Документы доступны в Free, общий запрет выгрузок сохраняется', () => {
   const { state, props } = card()
@@ -226,6 +266,26 @@ test('Логотип использует ключ марки, а режим ч�
   assert.equal(state.canEditServices.value, false)
 })
 
+test('Историческая валюта закрывает редактирование услуг и НДС до API-запроса', async () => {
+  const { state, props, savedCommerce } = card({ maintenanceOverrides: { canChangeFinancialData: false } })
+  props.context.organization.currencyCode = 'CNY'
+  await state.loadCard()
+
+  assert.equal(state.canWrite.value, false)
+  assert.equal(state.canEditServices.value, false)
+  assert.equal(state.canManageVat.value, false)
+  assert.match(state.readOnlyMessage.value, /RUB.*CNY/)
+
+  state.editServices()
+  state.editVat()
+  await state.saveServices()
+  await state.saveVat()
+
+  assert.equal(state.editingServices.value, false)
+  assert.equal(state.editingVat.value, false)
+  assert.equal(savedCommerce.length, 0)
+})
+
 test('Сохранение валидных услуг в существующей записи доходит до API', async () => {
   const { state, savedCommerce } = card()
   await state.loadCard()
@@ -289,10 +349,10 @@ test('Окно услуг не закрывается во время отпра
 
 test('Неизвестный НДС не превращается в процент или освобождение от налога', async () => {
   const { state, savedCommerce } = card()
-  assert.equal(state.formatVatRate('none'), 'НДС не указан')
-  assert.equal(state.formatVatRate(null), 'НДС не указан')
+  assert.equal(state.formatVatRate('none'), 'Российский НДС не указан')
+  assert.equal(state.formatVatRate(null), 'Российский НДС не указан')
   assert.equal(state.formatVatRate('without_vat'), 'Без НДС')
-  assert.equal(state.formatVatRate('0'), 'НДС 0 %')
+  assert.equal(state.formatVatRate('0'), 'Российский НДС 0 %')
   state.maintenance.value.maintenanceDetails[0].vatRateCode = 'none'
   state.editVat()
   assert.equal(state.vatDraft.value[0].vatRateCode, '')

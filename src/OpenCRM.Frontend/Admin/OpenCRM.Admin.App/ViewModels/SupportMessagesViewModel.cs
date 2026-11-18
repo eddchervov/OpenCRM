@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -12,6 +13,10 @@ public partial class SupportMessagesViewModel(AdminSessionClient sessionClient) 
     private string _appliedStatus = string.Empty;
     private string _appliedSource = string.Empty;
     private bool _isResettingFilters;
+    private int _newCount;
+    private int _inProgressCount;
+    private int _closedCount;
+    private int _spamCount;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
@@ -25,6 +30,7 @@ public partial class SupportMessagesViewModel(AdminSessionClient sessionClient) 
     [NotifyPropertyChangedFor(nameof(CanReply))]
     [NotifyPropertyChangedFor(nameof(DetailContact))]
     [NotifyPropertyChangedFor(nameof(DetailDate))]
+    [NotifyPropertyChangedFor(nameof(DetailStatus))]
     private AdminSupportMessage? _detail;
 
     [ObservableProperty]
@@ -47,22 +53,22 @@ public partial class SupportMessagesViewModel(AdminSessionClient sessionClient) 
     private string _summary = string.Empty;
 
     [ObservableProperty]
-    private CommunicationOption _selectedStatus = new("", "Все статусы");
+    private CommunicationOption _selectedStatus = CommunicationOption.Localized("", "native.promoCodes.vse.statusy");
 
     [ObservableProperty]
-    private CommunicationOption _selectedSource = new("", "Все обращения");
+    private CommunicationOption _selectedSource = CommunicationOption.Localized("", "native.support.vse.obrashcheniya");
 
     [ObservableProperty]
-    private CommunicationOption _nextStatus = new("new", "Новое");
+    private CommunicationOption _nextStatus = CommunicationOption.Localized("new", "native.support.novoe");
 
     public IReadOnlyList<CommunicationOption> StatusOptions { get; } =
-    [new("", "Все статусы"), new("new", "Новые"), new("in_progress", "В работе"), new("closed", "Закрытые"), new("spam", "Спам")];
+    [CommunicationOption.Localized("", "native.promoCodes.vse.statusy"), CommunicationOption.Localized("new", "native.support.novye"), CommunicationOption.Localized("in_progress", "native.support.v.rabote"), CommunicationOption.Localized("closed", "native.support.zakrytye"), CommunicationOption.Localized("spam", "native.support.spam")];
 
     public IReadOnlyList<CommunicationOption> SourceOptions { get; } =
-    [new("", "Все обращения"), new("users", "От пользователей"), new("guests", "От гостей")];
+    [CommunicationOption.Localized("", "native.support.vse.obrashcheniya"), CommunicationOption.Localized("users", "native.support.ot.polzovateley"), CommunicationOption.Localized("guests", "native.support.ot.gostey")];
 
     public IReadOnlyList<CommunicationOption> EditStatusOptions { get; } =
-    [new("new", "Новое"), new("in_progress", "В работе"), new("closed", "Закрыто"), new("spam", "Спам")];
+    [CommunicationOption.Localized("new", "native.support.novoe"), CommunicationOption.Localized("in_progress", "native.support.v.rabote"), CommunicationOption.Localized("closed", "native.support.zakryto"), CommunicationOption.Localized("spam", "native.support.spam")];
 
     public bool CanManage => this.SessionClient.CurrentProfile is { } profile
         && (profile.IsSystem || profile.Permissions.Contains("Admin.Content.Manage", StringComparer.Ordinal));
@@ -75,9 +81,30 @@ public partial class SupportMessagesViewModel(AdminSessionClient sessionClient) 
 
     public bool IsEmpty => !this.IsBusy && this.Rows.Count == 0 && string.IsNullOrWhiteSpace(this.ErrorMessage);
 
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        CommunicationsViewModel.RefreshLocalizedOptions(this.StatusOptions, this.SourceOptions, this.EditStatusOptions);
+        foreach (var row in this.Rows)
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        foreach (var entry in this.Entries)
+        {
+            entry.RefreshLocalizedValues();
+        }
+
+        this.UpdateSummary();
+    }
+
     public string DetailContact => this.Detail == null ? string.Empty
         : string.Join(" · ", new[] { this.Detail.UserEmail ?? this.Detail.Email, this.Detail.Name, this.Detail.Phone }
             .Where(value => !string.IsNullOrWhiteSpace(value)).Distinct());
+
+    public string DetailStatus => this.Detail == null
+        ? string.Empty
+        : AdminDisplayLabels.SupportStatus(this.Detail.StatusCode, this.Detail.StatusName);
 
     public string DetailDate => UserDisplayFormatting.DateTime(this.Detail?.CreatedAt);
 
@@ -90,7 +117,11 @@ public partial class SupportMessagesViewModel(AdminSessionClient sessionClient) 
         this.TotalCount = result.TotalCount;
         this.PageSize = Math.Max(1, result.PageSize);
         this.SelectedRow = null;
-        this.Summary = $"Новые: {result.NewCount} · В работе: {result.InProgressCount} · Закрытые: {result.ClosedCount} · Спам: {result.SpamCount}";
+        this._newCount = result.NewCount;
+        this._inProgressCount = result.InProgressCount;
+        this._closedCount = result.ClosedCount;
+        this._spamCount = result.SpamCount;
+        this.UpdateSummary();
     }
 
     protected override void ApplyFilters()
@@ -215,4 +246,11 @@ public partial class SupportMessagesViewModel(AdminSessionClient sessionClient) 
         this.ApplyDetail(detail);
         await this.LoadPageAsync(cancellationToken);
     });
+
+    private void UpdateSummary() => this.Summary = AdminLocalization.Instance.Format(
+        "native.support.novye.result.newcount.v.rabote.result.inprogresscount.zakrytye.r",
+        this._newCount,
+        this._inProgressCount,
+        this._closedCount,
+        this._spamCount);
 }

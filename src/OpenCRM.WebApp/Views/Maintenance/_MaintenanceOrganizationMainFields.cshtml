@@ -10,14 +10,14 @@
     var showPerformer = maintenanceFormProfile?.ShowPerformer ?? true;
     var workspaceShell = ViewData["MaintenanceWorkspaceShell"] as OrganizationWorkspaceShellDto;
     var isDetailing = string.Equals(workspaceShell?.Scenario?.Code, OpenCRM.Domain.OrganizationTypeCodes.Detailing, StringComparison.OrdinalIgnoreCase);
-    var materialsLabel = isDetailing ? "Материал" : "Материал / запчасть";
+    var materialsLabel = isDetailing ? Text["maintenance.legacy.form.field.material"].Value : Text["maintenance.legacy.form.field.materialPart"].Value;
 }
 <div class="maintenance-org-form-stack">
     <div class="card create-maintenance-card maintenance-org-section-card">
         <div class="card-header">
             <h3 class="card-title">
                 <i class="fa fa-info-circle me-2"></i>
-                Основная информация
+                @Text["maintenance.legacy.form.section.basic"]
             </h3>
         </div>
         <div class="card-body">
@@ -32,7 +32,7 @@
                               @@input="changeStatus"
                               class="create-maintenance-select">
                         <template slot="no-options">
-                            Не найдено
+                            @Text["maintenance.legacy.form.common.notFound"]
                         </template>
                     </v-select>
                 </div>
@@ -46,7 +46,7 @@
                               v-model="selectedMaintenance.type"
                               class="create-maintenance-select">
                         <template slot="no-options">
-                            Не найдено
+                            @Text["maintenance.legacy.form.common.notFound"]
                         </template>
                     </v-select>
                 </div>
@@ -60,22 +60,22 @@
                                               v-model="plannedDatePicker"
                                               :range="false"
                                               only-date="true"
-                                              format="DD.MM.YYYY"
-                                              formatted="DD.MM.YYYY"
-                                              output-format="DD.MM.YYYY"
-                                              locale="ru"
+                                              format="@Text["maintenance.legacy.date.calendarFormat"]"
+                                              formatted="@Text["maintenance.legacy.date.calendarFormat"]"
+                                              output-format="@Text["maintenance.legacy.date.calendarFormat"]"
+                                              locale="@System.Globalization.CultureInfo.CurrentUICulture.Name"
                                               :first-day-of-week="1"
                                               no-clear-button="true"
                                               label=""
                                               @@click.native.stop>
                     </vue-ctk-date-time-picker>
                     <div class="form-text" v-if="selectedMaintenance.status === maintenanceStatuses.completed">
-                        Можно оставить пустой, если запись не была заранее запланирована.
+                        @Text["maintenance.legacy.form.field.optional"]
                     </div>
                 </div>
 
                 <div class="col-lg-4">
-                    <label class="form-label">Плановая дата окончания</label>
+                    <label class="form-label">@Text["maintenance.legacy.form.field.plannedEndDate"]</label>
                     <input type="date" class="form-control create-maintenance-input" v-model="selectedMaintenance.plannedEndDate" :min="selectedMaintenance.plannedDate">
                 </div>
                 <div class="col-lg-4">
@@ -98,11 +98,11 @@
                                               v-model="completedDatePicker"
                                               :range="false"
                                               only-date="true"
-                                              format="DD.MM.YYYY"
+                                              format="@Text["maintenance.legacy.date.calendarFormat"]"
                                               :max-date="moment().format('YYYY-MM-DD')"
-                                              formatted="DD.MM.YYYY"
-                                              output-format="DD.MM.YYYY"
-                                              locale="ru"
+                                              formatted="@Text["maintenance.legacy.date.calendarFormat"]"
+                                              output-format="@Text["maintenance.legacy.date.calendarFormat"]"
+                                              locale="@System.Globalization.CultureInfo.CurrentUICulture.Name"
                                               :first-day-of-week="1"
                                               no-clear-button="true"
                                               label=""
@@ -156,7 +156,7 @@
                 @scenarioUx.WorksTitle
             </h3>
             <div class="text-muted small">
-                Итого: <strong>{{ maintenanceDetailsTotalText }}</strong>
+                @Text["maintenance.legacy.form.review.total"] <strong>{{ maintenanceDetailsTotalText }}</strong>
             </div>
         </div>
         <div class="card-body">
@@ -164,7 +164,7 @@
                 <div class="create-maintenance-service-item card" v-for="(detail, index) in selectedMaintenance.maintenanceDetails" :key="index">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">Позиция {{ index + 1 }}</h6>
+                            <h6 class="mb-0">@Text["maintenance.legacy.form.field.item"] {{ index + 1 }}</h6>
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger create-maintenance-remove-service"
                                     v-if="selectedMaintenance.maintenanceDetails.length > 1"
@@ -183,7 +183,7 @@
                                           @@input="selectWorkType(detail)"
                                           class="create-maintenance-select">
                                     <template slot="no-options">
-                                        Не найдено
+                                        @Text["maintenance.legacy.form.common.notFound"]
                                     </template>
                                 </v-select>
                                 <input v-else
@@ -193,7 +193,7 @@
                                        placeholder="@scenarioUx.DetailNamePlaceholder">
                             </div>
                             <div class="col-lg-3">
-                                <label class="form-label">Стоимость, руб</label>
+                                <label class="form-label">@Text["maintenance.legacy.form.field.price"]</label>
                                 <input type="number"
                                        class="form-control create-maintenance-input"
                                        v-model.number="detail.price"
@@ -207,11 +207,11 @@
                                     <span v-if="detail.price !== null && detail.price !== undefined">
                                         {{ formatPrice(detail.price) }}
                                     </span>
-                                    <span v-else>Стоимость не указана</span>
+                                    <span v-else>@Text["maintenance.legacy.form.field.priceMissing"]</span>
                                 </div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Описание</label>
+                                <label class="form-label">@Text["maintenance.legacy.form.field.description"]</label>
                                 <textarea class="form-control create-maintenance-input"
                                           v-model.trim="detail.description"
                                           rows="2"
@@ -227,12 +227,12 @@
                                           @@input="selectMaterial(detail)"
                                           class="create-maintenance-select">
                                     <template slot="no-options">
-                                        Не найдено
+                                        @Text["maintenance.legacy.form.common.notFound"]
                                     </template>
                                 </v-select>
                             </div>
                             <div class="col-6 col-lg-3">
-                                <label class="form-label">Количество</label>
+                                <label class="form-label">@Text["maintenance.legacy.form.field.quantity"]</label>
                                 <input type="number"
                                        class="form-control create-maintenance-input"
                                        v-model.number="detail.materialQuantity"
@@ -240,11 +240,11 @@
                                        step="0.01">
                             </div>
                             <div class="col-6 col-lg-4">
-                                <label class="form-label">Ед.</label>
+                                <label class="form-label">@Text["maintenance.legacy.form.field.unit"]</label>
                                 <input type="text"
                                        class="form-control create-maintenance-input"
                                        v-model.trim="detail.materialUnit"
-                                       placeholder="шт, л, м">
+                                       placeholder="@Text["maintenance.legacy.form.field.unitPlaceholder"]">
                             </div>
                             }
                         </div>
@@ -262,11 +262,11 @@
         <div class="card-header">
             <h3 class="card-title">
                 <i class="fa fa-comment me-2"></i>
-                Комментарий
+                @Text["maintenance.legacy.form.field.commentShort"]
             </h3>
         </div>
         <div class="card-body">
-            <label class="form-label">Примечание</label>
+            <label class="form-label">@Text["maintenance.legacy.form.field.note"]</label>
             <textarea class="form-control create-maintenance-input"
                       v-model.trim="selectedMaintenance.comment"
                       rows="4"

@@ -27,6 +27,7 @@ export interface AdminBillingPayment {
   createdAt: string
   statusUpdatedAt: string | null
   paymentMethodName: string
+  paymentMethod?: string | null
   paymentStatus: string | null
   statusGroup: string
   statusName: string

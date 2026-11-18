@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiInput, UiPagination } from '@opencrm/ui'
 import { getVehicleDisplayName, loadVehicle, loadVehiclesPage, type WorkspaceVehicle } from '../api/vehicles'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string; clientId: string; modelValue: string; disabled: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string]; selected: [vehicle: WorkspaceVehicle] }>()
@@ -48,7 +53,7 @@ async function searchVehicles(requestedPage = 1) {
     page.value = requestedPage
     searched.value = true
   } catch (caught) {
-    if (version === searchVersion) searchError.value = caught instanceof Error ? caught.message : 'Не удалось найти автомобили.'
+    if (version === searchVersion) searchError.value = caught instanceof Error ? caught.message : t('inquiries.findVehiclesError')
   } finally {
     if (version === searchVersion) searching.value = false
   }
@@ -71,7 +76,7 @@ async function loadSelected() {
     const vehicle = await loadVehicle(props.organizationId, props.modelValue)
     if (version === selectionVersion) selected.value = vehicle
   } catch (caught) {
-    if (version === selectionVersion) selectedError.value = caught instanceof Error ? caught.message : 'Не удалось загрузить выбранный автомобиль.'
+    if (version === selectionVersion) selectedError.value = caught instanceof Error ? caught.message : t('inquiries.selectedVehicleError')
   } finally {
     if (version === selectionVersion) loadingSelected.value = false
   }
@@ -109,30 +114,30 @@ onBeforeUnmount(() => { searchVersion++; selectionVersion++ })
 
 <template>
   <div class="inquiry-vehicle-picker">
-    <div v-if="modelValue" ref="selectedElement" class="inquiry-vehicle-picker__selected" tabindex="-1" aria-label="Выбранный автомобиль">
-      <div><span class="inquiry-vehicle-picker__caption">Выбранный автомобиль</span><strong>{{ loadingSelected ? 'Загружаем автомобиль…' : selected ? getVehicleDisplayName(selected, true) : 'Автомобиль выбран' }}</strong><small v-if="selected?.organizationClientName">{{ selected.organizationClientName }}</small></div>
-      <UiButton variant="ghost" :disabled="disabled" @click="clearSelection">Убрать</UiButton>
+    <div v-if="modelValue" ref="selectedElement" class="inquiry-vehicle-picker__selected" tabindex="-1" :aria-label="t('inquiries.selectedVehicle')">
+      <div><span class="inquiry-vehicle-picker__caption">{{ t('inquiries.selectedVehicle') }}</span><strong>{{ loadingSelected ? t('inquiries.loadingVehicle') : selected ? getVehicleDisplayName(selected, true) : t('inquiries.vehicleSelected') }}</strong><small v-if="selected?.organizationClientName">{{ selected.organizationClientName }}</small></div>
+      <UiButton variant="ghost" :disabled="disabled" @click="clearSelection">{{ t('inquiries.remove') }}</UiButton>
     </div>
-    <p v-if="selectedError" class="inquiry-vehicle-picker__error" role="alert">{{ selectedError }} <button type="button" @click="loadSelected">Повторить</button></p>
+    <p v-if="selectedError" class="inquiry-vehicle-picker__error" role="alert">{{ selectedError }} <button type="button" @click="loadSelected">{{ t('inquiries.retry') }}</button></p>
     <div class="inquiry-vehicle-picker__search">
-      <UiInput v-model="query" label="Поиск автомобиля" placeholder="Госномер, марка или модель" :disabled="disabled" @keydown.enter.prevent="searchVehicles()" />
-      <UiButton variant="secondary" :disabled="disabled || searching" @click="searchVehicles()">{{ searching ? 'Ищем…' : 'Найти' }}</UiButton>
+      <UiInput v-model="query" :label="t('inquiries.searchVehicle')" :placeholder="t('inquiries.vehicleSearchPlaceholder')" :disabled="disabled" @keydown.enter.prevent="searchVehicles()" />
+      <UiButton variant="secondary" :disabled="disabled || searching" @click="searchVehicles()">{{ searching ? t('inquiries.searching') : t('inquiries.find') }}</UiButton>
     </div>
     <div ref="feedbackElement" class="inquiry-vehicle-picker__feedback" aria-live="polite" role="status">
-      <p v-if="searching">Ищем автомобили…</p>
-      <p v-else-if="searched && !items.length">Автомобили не найдены. Попробуйте другой номер или название.</p>
-      <p v-else-if="searched">Найдено: {{ total }}. Выберите автомобиль.</p>
+      <p v-if="searching">{{ t('inquiries.searchingVehicles') }}</p>
+      <p v-else-if="searched && !items.length">{{ t('inquiries.noVehicles') }}</p>
+      <p v-else-if="searched">{{ t('inquiries.chooseFoundVehicle', { count: total }) }}</p>
     </div>
     <p v-if="searchError" class="inquiry-vehicle-picker__error" role="alert">{{ searchError }}</p>
-    <ul v-if="searched && items.length" ref="resultsElement" class="inquiry-vehicle-picker__results" aria-label="Найденные автомобили">
+    <ul v-if="searched && items.length" ref="resultsElement" class="inquiry-vehicle-picker__results" :aria-label="t('inquiries.foundVehicles')">
       <li v-for="vehicle in items" :key="vehicle.id">
         <button type="button" class="inquiry-vehicle-picker__result" :disabled="disabled" @click="chooseVehicle(vehicle)">
           <span><strong>{{ getVehicleDisplayName(vehicle, true) }}</strong><small v-if="vehicle.organizationClientName">{{ vehicle.organizationClientName }}</small><small v-else-if="vehicle.vin">VIN {{ vehicle.vin }}</small></span>
-          <span class="inquiry-vehicle-picker__choose">Выбрать <span aria-hidden="true">→</span></span>
+          <span class="inquiry-vehicle-picker__choose">{{ t('inquiries.select') }} <span aria-hidden="true">→</span></span>
         </button>
       </li>
     </ul>
-    <UiPagination :model-value="page" :total-items="searched ? total : 0" :items-per-page="5" :disabled="disabled || searching" label="Результаты поиска автомобилей" @update:model-value="searchVehicles" />
+    <UiPagination :model-value="page" :total-items="searched ? total : 0" :items-per-page="5" :disabled="disabled || searching" :label="t('inquiries.vehiclePages')" @update:model-value="searchVehicles" />
   </div>
 </template>
 

@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.ListPagination"
              x:DataType="views:ListPagination"
@@ -9,8 +9,8 @@
     <TextBlock Text="{Binding PageLabel, ElementName=PaginationControl}" Classes="caption"
                VerticalAlignment="Center" Margin="0,0,16,0" />
     <Button Content="←" Command="{Binding PreviousCommand, ElementName=PaginationControl}"
-            ToolTip.Tip="Предыдущая страница" Margin="0,0,8,0" />
+            ToolTip.Tip="{loc:LocalizedText Key=core.previousPage}" Margin="0,0,8,0" />
     <Button Content="→" Command="{Binding NextCommand, ElementName=PaginationControl}"
-            ToolTip.Tip="Следующая страница" />
+            ToolTip.Tip="{loc:LocalizedText Key=core.nextPage}" />
   </WrapPanel>
 </UserControl>

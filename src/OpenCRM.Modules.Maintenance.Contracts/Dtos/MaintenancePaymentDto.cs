@@ -15,6 +15,9 @@ public sealed class MaintenancePaymentDto
     /// <summary> Сумма платежа. </summary>
     public decimal Amount { get; init; }
 
+    /// <summary> Валюта суммы платежа. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Код способа оплаты. </summary>
     public string? MethodCode { get; init; }
 

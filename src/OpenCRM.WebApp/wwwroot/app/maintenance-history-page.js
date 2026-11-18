@@ -1,4 +1,6 @@
-﻿new Vue({
+﻿var maintenanceLegacyText = JSON.parse(document.getElementById('maintenance-legacy-messages').dataset.messages);
+
+new Vue({
     el: '#maintenance-details-form',
     data: function () {
         var page = window.maintenanceHistoryPage || {};
@@ -27,20 +29,7 @@
             return this.appendOrganizationId('/maintenance/' + this.maintenanceId);
         },
         formatDate: function (dateString) {
-            if (!dateString) {
-                return '—';
-            }
-
-            var value = String(dateString).trim();
-            if (!value) {
-                return '—';
-            }
-
-            var date = value.indexOf('T') >= 0
-                ? moment(value)
-                : moment(value.substring(0, 10), 'YYYY-MM-DD', true);
-
-            return date.isValid() ? date.format('DD.MM.YYYY HH:mm') : '—';
+            return dateString ? window.OpenCRMRegional.formatDate(dateString, { dateStyle: 'short', timeStyle: 'short' }) : '—';
         },
         loadEvents: async function () {
             this.loading = true;
@@ -53,7 +42,7 @@
                 this.events = response.data || [];
             } catch (error) {
                 this.events = [];
-                this.handleApiError(error, 'Не удалось загрузить историю обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationHistoryLoadError);
             } finally {
                 this.loading = false;
             }

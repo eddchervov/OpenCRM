@@ -1,15 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.EmailCampaignsView"
              x:DataType="vm:EmailCampaignsViewModel">
   <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
     <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="Email-рассылки" Classes="heading" />
+      <TextBlock Text="{loc:LocalizedText Key=native.email.email.rassylki}" Classes="heading" />
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-        <Button Content="Написать письмо" Classes="configurationPrimary" Command="{Binding ComposeCommand}" />
-        <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+        <Button Content="{loc:LocalizedText Key=native.email.napisat.pismo}" Classes="configurationPrimary" Command="{Binding ComposeCommand}" />
+        <Button Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
       </StackPanel>
     </Grid>
     <StackPanel Grid.Row="1" Spacing="6">
@@ -22,11 +23,11 @@
       <ScrollViewer HorizontalScrollBarVisibility="Auto">
         <Grid RowDefinitions="Auto,*" MinWidth="1050">
           <Grid ColumnDefinitions="2*,150,160,180,190" Margin="16,12">
-            <TextBlock Text="Кампания" Classes="caption" />
-            <TextBlock Grid.Column="1" Text="Запуск" Classes="caption" />
-            <TextBlock Grid.Column="2" Text="Статус" Classes="caption" />
-            <TextBlock Grid.Column="3" Text="Прогресс" Classes="caption" />
-            <TextBlock Grid.Column="4" Text="Действия" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.email.kampaniya}" Classes="caption" />
+            <TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=native.email.zapusk}" Classes="caption" />
+            <TextBlock Grid.Column="2" Text="{loc:LocalizedText Key=native.plans.status}" Classes="caption" />
+            <TextBlock Grid.Column="3" Text="{loc:LocalizedText Key=native.email.progress}" Classes="caption" />
+            <TextBlock Grid.Column="4" Text="{loc:LocalizedText Key=native.billing.deystviya}" Classes="caption" />
           </Grid>
           <ListBox Grid.Row="1" ItemsSource="{Binding Campaigns}" Background="Transparent" BorderThickness="0" ItemContainerTheme="{StaticResource AdminListRowTheme}">
             <ListBox.ItemTemplate>
@@ -38,16 +39,16 @@
                     <Border Grid.Column="2" Classes="configurationBadge" HorizontalAlignment="Left" VerticalAlignment="Center"><TextBlock Text="{Binding StatusLabel}" /></Border>
                     <StackPanel Grid.Column="3" Spacing="4" VerticalAlignment="Center"><TextBlock Text="{Binding Progress}" /><ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressPercent}" Height="5" /></StackPanel>
                     <WrapPanel Grid.Column="4" VerticalAlignment="Center">
-                      <Button Content="Пауза" IsVisible="{Binding CanPause}" Command="{Binding $parent[UserControl].((vm:EmailCampaignsViewModel)DataContext).PauseCommand}" CommandParameter="{Binding}" Margin="0,0,6,6" Padding="10,6" />
-                      <Button Content="Продолжить" IsVisible="{Binding CanResume}" Command="{Binding $parent[UserControl].((vm:EmailCampaignsViewModel)DataContext).ResumeCommand}" CommandParameter="{Binding}" Margin="0,0,6,6" Padding="10,6" />
-                      <Button Content="Отменить" IsVisible="{Binding CanCancel}" Command="{Binding $parent[UserControl].((vm:EmailCampaignsViewModel)DataContext).CancelCommand}" CommandParameter="{Binding}" Margin="0,0,0,6" Padding="10,6" />
+                      <Button Content="{loc:LocalizedText Key=native.email.pauza}" IsVisible="{Binding CanPause}" Command="{Binding $parent[UserControl].((vm:EmailCampaignsViewModel)DataContext).PauseCommand}" CommandParameter="{Binding}" Margin="0,0,6,6" Padding="10,6" />
+                      <Button Content="{loc:LocalizedText Key=native.email.prodolzhit}" IsVisible="{Binding CanResume}" Command="{Binding $parent[UserControl].((vm:EmailCampaignsViewModel)DataContext).ResumeCommand}" CommandParameter="{Binding}" Margin="0,0,6,6" Padding="10,6" />
+                      <Button Content="{loc:LocalizedText Key=native.email.otmenit}" IsVisible="{Binding CanCancel}" Command="{Binding $parent[UserControl].((vm:EmailCampaignsViewModel)DataContext).CancelCommand}" CommandParameter="{Binding}" Margin="0,0,0,6" Padding="10,6" />
                     </WrapPanel>
                   </Grid>
                 </Border>
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="Рассылок пока нет." HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+          <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="{loc:LocalizedText Key=native.email.rassylok.poka.net}" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
         </Grid>
       </ScrollViewer>
     </Border>

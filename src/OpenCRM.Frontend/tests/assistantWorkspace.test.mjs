@@ -5,6 +5,8 @@ import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 import { getAssistantFrameUrl } from '../packages/workspace/src/api/assistantAccess.mjs'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/sectionPagesMessages.ts'
 
 const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/WorkspaceAssistantSection.vue', import.meta.url), 'utf8'))
 const source = ts.transpileModule(compileScript(descriptor, { id: 'assistant-workspace' }).content, {
@@ -18,6 +20,8 @@ function assistant(loadAvailability = async () => available, isLocked = false) {
   const events = []
   const listeners = new Map()
   const dependencies = {
+    ...regionalTestDependencies,
+    '../sectionPagesMessages': {},
     vue: { ...vue, watch() {}, onMounted: callback => mounted.push(callback), onBeforeUnmount: callback => cleanup.push(callback) },
     '@opencrm/ui': {}, '../api/assistant': { getAssistantFrameUrl, loadAssistantAvailability: loadAvailability },
     './WorkspaceProLock.vue': {}, './WorkspaceProFeaturePreview.vue': {}

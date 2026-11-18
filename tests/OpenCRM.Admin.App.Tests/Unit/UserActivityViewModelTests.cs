@@ -2,19 +2,42 @@ using System.Net;
 using System.Net.Http.Json;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 
 namespace OpenCRM.Admin.App.Tests.Unit;
 
-public sealed class UserActivityViewModelTests
+[Collection("Admin localization")]
+public sealed class UserActivityViewModelTests : IDisposable
 {
+    private readonly string _preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-admin-activity-language-{Guid.NewGuid():N}.txt");
+    private readonly IDisposable _preferenceScope;
+    private readonly string _previousLanguage;
+
+    public UserActivityViewModelTests()
+    {
+        this._preferenceScope = AdminLocalization.Instance.UsePreferencePath(this._preferencePath);
+        this._previousLanguage = AdminLocalization.Instance.Language;
+        AdminLocalization.Instance.Language = "ru";
+    }
+
+    public void Dispose()
+    {
+        AdminLocalization.Instance.Language = this._previousLanguage;
+        this._preferenceScope.Dispose();
+        if (File.Exists(this._preferencePath))
+        {
+            File.Delete(this._preferencePath);
+        }
+    }
+
     [Theory]
     [InlineData("create_booking", "Создание записи")]
     [InlineData("add_service", "Добавление услуги")]
     [InlineData("view_calendar", "Просмотр расписания")]
     [InlineData("checkout_started", "Начато оформление оплаты")]
     [InlineData("open_detailing", "Открытие детейлинга")]
-    [InlineData("unknown_action", "Нажатие кнопки")]
+    [InlineData("unknown_action", "unknown_action")]
     public void ActivityRowsShowReadableLabelsWithoutTechnicalDetails(string action, string expectedLabel)
     {
         var row = new UserActivityRow(new AdminUserActivityItem(
@@ -25,6 +48,28 @@ public sealed class UserActivityViewModelTests
         Assert.Equal("contact@example.invalid", row.User);
         Assert.Equal("Без организации", row.Organization);
         Assert.Equal("Детейлинг · Расписание", row.Location);
+    }
+
+    [Fact]
+    public void ActivityBuiltInsChangeWithLanguageWhileUnknownCodesRemainRaw()
+    {
+        var known = new UserActivityRow(new AdminUserActivityItem(
+            1, "user-1", "contact@example.invalid", null, null, Guid.Empty,
+            DateTime.UtcNow, DateTime.UtcNow, "click", "create_booking", "/page", "detailing", "scheduler", null));
+        var unknown = new UserActivityRow(new AdminUserActivityItem(
+            2, "user-1", "contact@example.invalid", null, null, Guid.Empty,
+            DateTime.UtcNow, DateTime.UtcNow, "click", "vendor_action", "/page", "unknown-scenario", "unknown-section", null));
+
+        Assert.Equal("Создание записи", known.Event);
+        Assert.Equal("unknown-scenario · unknown-section", unknown.Location);
+
+        AdminLocalization.Instance.Language = "en";
+        Assert.Equal("Create booking", known.Event);
+        Assert.Equal("unknown-scenario · unknown-section", unknown.Location);
+
+        AdminLocalization.Instance.Language = "zh-Hans";
+        Assert.Equal("创建预约", known.Event);
+        Assert.Equal("unknown-scenario · unknown-section", unknown.Location);
     }
 
     [Theory]
@@ -39,6 +84,79 @@ public sealed class UserActivityViewModelTests
             DateTime.UtcNow, DateTime.UtcNow, "page", "view", page, "detailing", "detailing", null));
 
         Assert.Equal(expected, row.Location);
+    }
+
+    [Fact]
+    public void LanguageRefreshPreservesActivityFiltersAndSelectedCodes()
+    {
+        var previousLanguage = AdminLocalization.Instance.Language;
+        using var httpClient = new HttpClient();
+        using var session = new AdminSessionClient(httpClient);
+        var model = new UserActivityViewModel(session);
+        model.Kind = "page";
+        model.Scenario = "fleet";
+        model.Search = "keep this search";
+        model.FromDate = "2026-01-02";
+
+        try
+        {
+            AdminLocalization.Instance.Language = "ru";
+            model.RefreshLocalizedValues();
+            Assert.Equal("page", model.SelectedKindOption.Code);
+            Assert.Equal("fleet", model.SelectedScenarioOption.Code);
+
+            AdminLocalization.Instance.Language = "en";
+            model.RefreshLocalizedValues();
+            Assert.Equal("Page view", model.SelectedKindOption.Title);
+            Assert.Equal("Fleet", model.SelectedScenarioOption.Title);
+            Assert.Equal("keep this search", model.Search);
+            Assert.Equal("2026-01-02", model.FromDate);
+
+            AdminLocalization.Instance.Language = "zh-Hans";
+            model.RefreshLocalizedValues();
+            Assert.Equal("页面访问", model.SelectedKindOption.Title);
+            Assert.Equal("车队", model.SelectedScenarioOption.Title);
+            Assert.Equal("page", model.SelectedKindOption.Code);
+            Assert.Equal("fleet", model.SelectedScenarioOption.Code);
+            Assert.Equal("keep this search", model.Search);
+            Assert.Equal("2026-01-02", model.FromDate);
+        }
+        finally
+        {
+            AdminLocalization.Instance.Language = previousLanguage;
+        }
+    }
+
+    [Fact]
+    public async Task ClearingActivityErrorOnStopDoesNotRestoreItAfterLanguageChange()
+    {
+        using var client = CreateClient((request, _) =>
+        {
+            if (request.RequestUri!.AbsolutePath == "/api/v1/auth/login")
+            {
+                return Task.FromResult(JsonResponse(HttpStatusCode.OK, CreateTokens()));
+            }
+
+            if (request.RequestUri.AbsolutePath == "/api/v1/admin/current-user")
+            {
+                return Task.FromResult(JsonResponse(HttpStatusCode.OK, CreateProfile()));
+            }
+
+            return Task.FromResult(JsonResponse(HttpStatusCode.OK, CreatePage(100, null)));
+        });
+        using var session = new AdminSessionClient(client);
+        await session.LoginAsync("contact@example.invalid", "password", TestContext.Current.CancellationToken);
+        var model = new UserActivityViewModel(session);
+        await model.ActivateAsync();
+        model.FromDate = "not-a-date";
+        await model.ApplyFiltersCommand.ExecuteAsync(null);
+
+        Assert.Equal("Дата начала должна быть в формате ГГГГ-ММ-ДД.", model.ErrorMessage);
+        await model.DeactivateAsync(clear: true);
+        AdminLocalization.Instance.Language = "en";
+        model.RefreshLocalizedValues();
+
+        Assert.Empty(model.ErrorMessage);
     }
 
     [Fact]

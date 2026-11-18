@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton } from '@opencrm/ui'
+import { i18n, translate as t } from '@opencrm/ui/i18n'
+import '../schedulerMessages'
+import '../schedulerControlMessages'
+import '../schedulerCalendarMessages'
 import SchedulerRecordPreview from './SchedulerRecordPreview.vue'
 import { shouldOpenRecord } from '../utils/workdayCard'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
@@ -32,7 +36,8 @@ const emit = defineEmits<{
   reschedule: [item: SchedulerCalendarItem]
 }>()
 
-const closedPostKeys = computed(() => new Set(props.closedPosts.map(normalizeSchedulerLocation)))
+const closedPostKeys = computed(() => new Set(props.closedPosts.map(normalizeLocation)))
+const normalizedItems = computed(() => props.items.map(item => isPlaceholderPost(item.location) ? { ...item, location: 'Без поста' } : item))
 const pixelsPerMinute = 1.2
 const search = defineModel<string>('search', { default: '' })
 const selectedPost = defineModel<string>('postFilter', { default: '' })
@@ -47,14 +52,20 @@ const now = ref(new Date())
 const plateFormats = ref<VehicleRegistrationPlateFormats | null>(null)
 onMounted(async () => { plateFormats.value = await loadVehicleRegistrationPlateFormats().catch(() => null) })
 let clock: ReturnType<typeof setInterval> | undefined
-const placeholderPost = computed(() => props.posts.find(post => post.startsWith('Без ')) || 'Без поста')
+function isPlaceholderPost(post?: string | null) {
+  return post === t('scheduler.noPost') || post === 'Без поста'
+}
+function normalizeLocation(post?: string | null) {
+  return normalizeSchedulerLocation(isPlaceholderPost(post) ? 'Без поста' : post)
+}
+const placeholderPost = computed(() => props.posts.find(isPlaceholderPost) || t('scheduler.noPost'))
 const window = computed(() => getSchedulerDayWindow(props.items, props.date, props.start, props.end))
 const gridStart = computed(() => Math.floor(window.value.start / 30) * 30)
 const gridEnd = computed(() => Math.ceil(window.value.end / 30) * 30)
 const totalHeight = computed(() => Math.max(60, (gridEnd.value - gridStart.value) * pixelsPerMinute))
 const postOptions = computed(() => props.posts.length ? props.posts : [placeholderPost.value])
 const visiblePosts = computed(() => selectedPost.value ? [selectedPost.value] : postOptions.value)
-const normalizedQuery = computed(() => search.value.trim().toLocaleLowerCase('ru-RU'))
+const normalizedQuery = computed(() => search.value.trim().toLocaleLowerCase(i18n.global.locale.value))
 const visibleItems = computed(() => props.items.filter(item => getSchedulerDayInterval(item, props.date) !== null && matchesSearch(item)))
 const ticks = computed(() => {
   const values: number[] = []
@@ -80,14 +91,14 @@ function matchesSearch(item: SchedulerCalendarItem) {
     item.location,
     ...(item.serviceNames ?? []),
     ...(item.employeeNames ?? [])
-  ].join(' ').toLocaleLowerCase('ru-RU')
+  ].join(' ').toLocaleLowerCase(i18n.global.locale.value)
   return searchable.includes(normalizedQuery.value)
     || matchesRegistrationPlateSearch(item.registrationPlate, normalizedQuery.value, plateFormats.value)
 }
 
 function itemsForPost(post: string) {
-  const normalizedPost = normalizeSchedulerLocation(post)
-  return visibleItems.value.filter(item => normalizeSchedulerLocation(item.location) === normalizedPost)
+  const normalizedPost = normalizeLocation(post)
+  return visibleItems.value.filter(item => normalizeLocation(item.location) === normalizedPost)
 }
 
 function layoutForPost(post: string) {
@@ -122,9 +133,17 @@ function cardClass(item: SchedulerCalendarItem) {
 }
 
 function statusText(item: SchedulerCalendarItem) {
-  if (item.handedOverAt) return 'Выдано'
-  if (item.readyForHandoverAt) return 'Готово к выдаче'
-  return item.statusName || ({ 1: 'Запланировано', 2: 'В работе', 3: 'Выполнено', 4: 'Отменено' }[item.status] ?? 'Запись')
+  if (item.handedOverAt) return t('scheduler.handedOver')
+  if (item.readyForHandoverAt) return t('scheduler.ready')
+
+  const statusKeys: Record<number, string> = {
+    1: 'scheduler.scheduled',
+    2: 'scheduler.inProgress',
+    3: 'scheduler.completed',
+    4: 'scheduler.cancelled'
+  }
+
+  return statusKeys[item.status] ? t(statusKeys[item.status]!) : item.statusName || t('scheduler.statusUnknown')
 }
 
 function timeText(value?: string | null) {
@@ -137,7 +156,9 @@ function itemTime(item: SchedulerCalendarItem) {
   const endDate = (item.plannedEndDate || startDate).slice(0, 10)
   const end = timeText(item.plannedEndTime)
 
-  if (startDate < selectedDate) return endDate > selectedDate ? 'Продолжается' : `До ${end || 'конца дня'}`
+  if (startDate < selectedDate) return endDate > selectedDate
+    ? t('schedulerCalendar.continuing')
+    : t('schedulerCalendar.until', { time: end || t('schedulerCalendar.endOfDay') })
 
   const start = timeText(item.plannedStartTime)
   if (!end) return start
@@ -160,8 +181,8 @@ function accessibleBookingText(item: SchedulerCalendarItem) {
 }
 
 function canCreateAt(location: string, minute: number) {
-  return props.canCreate && !closedPostKeys.value.has(normalizeSchedulerLocation(location)) && minute < 1440
-    && isSchedulerSlotAvailable(props.items, props.date, location, minute)
+  return props.canCreate && !closedPostKeys.value.has(normalizeLocation(location)) && minute < 1440
+    && isSchedulerSlotAvailable(normalizedItems.value, props.date, isPlaceholderPost(location) ? 'Без поста' : location, minute)
 }
 
 function createAt(location: string, minute: number) {
@@ -169,7 +190,7 @@ function createAt(location: string, minute: number) {
 
   const start = addSchedulerMinutes(props.date, minute)
   const end = addSchedulerMinutes(props.date, minute + 60)
-  emit('create', { date: props.date.slice(0, 10), start: start.time, end: end.time, endDate: end.date, location })
+  emit('create', { date: props.date.slice(0, 10), start: start.time, end: end.time, endDate: end.date, location: isPlaceholderPost(location) ? t('scheduler.noPost') : location })
 }
 
 function reschedule(item: SchedulerCalendarItem, event: MouseEvent) {
@@ -198,16 +219,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="scheduler-day" aria-label="Расписание по постам">
+  <section class="scheduler-day" :aria-label="t('schedulerCalendar.dayAria')">
     <div class="scheduler-day__toolbar">
       <label class="scheduler-day__search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></svg>
-        <span class="visually-hidden">Поиск по записям</span>
-        <input v-model="search" type="search" placeholder="Автомобиль, услуга, сотрудник…">
+        <span class="visually-hidden">{{ t('schedulerCalendar.searchLabel') }}</span>
+        <input v-model="search" type="search" :placeholder="t('schedulerCalendar.searchPlaceholder')">
       </label>
-      <label class="scheduler-day__filter"><span class="visually-hidden">Фильтр по посту</span>
-        <select v-model="selectedPost" aria-label="Показать пост">
-          <option value="">Все посты</option>
+      <label class="scheduler-day__filter"><span class="visually-hidden">{{ t('schedulerControl.filterLocation') }}</span>
+        <select v-model="selectedPost" :aria-label="t('schedulerCalendar.filterPostLabel')">
+          <option value="">{{ t('schedulerControl.allLocations') }}</option>
           <option v-for="post in postOptions" :key="post" :value="post">{{ post }}</option>
         </select>
       </label>
@@ -215,21 +236,21 @@ onBeforeUnmount(() => {
 
     <div class="scheduler-day__scroll">
       <div class="scheduler-day__grid" :style="{ '--day-height': `${totalHeight}px`, '--day-post-count': visiblePosts.length }">
-        <div class="scheduler-day__corner">Время</div>
-        <div v-for="post in visiblePosts" :key="post" class="scheduler-day__post-heading">{{ post }}<small v-if="closedPostKeys.has(normalizeSchedulerLocation(post))"> · Закрыт</small></div>
+        <div class="scheduler-day__corner">{{ t('schedulerCalendar.timeAxis') }}</div>
+        <div v-for="post in visiblePosts" :key="post" class="scheduler-day__post-heading">{{ post }}<small v-if="closedPostKeys.has(normalizeLocation(post))"> · {{ t('schedulerCalendar.closed') }}</small></div>
         <div class="scheduler-day__axis" :style="{ height: `${totalHeight}px` }">
           <span v-for="tick in ticks" :key="tick" class="scheduler-day__tick" :class="{ 'scheduler-day__tick--hour': tick % 60 === 0 }" :style="{ top: `${(tick - gridStart) * pixelsPerMinute}px` }">{{ tick % 60 === 0 ? formatTick(tick) : '' }}</span>
         </div>
-        <section v-for="post in visiblePosts" :key="post" class="scheduler-day__column" :aria-label="`Пост ${post}`" :style="{ height: `${totalHeight}px` }">
+        <section v-for="post in visiblePosts" :key="post" class="scheduler-day__column" :aria-label="t('schedulerCalendar.postColumnAria', { post })" :style="{ height: `${totalHeight}px` }">
           <template v-for="(tick, index) in ticks.slice(0, -1)" :key="tick">
             <button
               v-if="canCreateAt(post, slotMinutes(index))"
               type="button"
               class="scheduler-day__slot"
               :style="slotStyle(slotMinutes(index))"
-              :aria-label="`Создать запись ${post}, ${formatTick(slotMinutes(index))}`"
+              :aria-label="t('schedulerCalendar.createAt', { post, time: formatTick(slotMinutes(index)) })"
               @click="createAt(post, slotMinutes(index))"
-            ><span>＋ Записать</span></button>
+            ><span>{{ t('schedulerCalendar.create') }}</span></button>
           </template>
           <div
             v-for="entry in layoutForPost(post)"
@@ -246,11 +267,11 @@ onBeforeUnmount(() => {
             ></a>
             <div class="scheduler-day__booking-content" aria-hidden="true">
               <div class="scheduler-day__booking-top">
-                <strong>{{ itemTime(entry.item) || 'Время не указано' }}</strong>
+                <strong>{{ itemTime(entry.item) || t('schedulerCalendar.unknownTime') }}</strong>
                 <span class="scheduler-day__status" :class="`scheduler-day__status--${statusTone(entry.item)}`">{{ statusText(entry.item) }}</span>
               </div>
               <div class="scheduler-day__vehicle">
-                <img v-if="brandLogo(entry.item)" :src="brandLogo(entry.item)!.src" :alt="`Логотип ${brandLogo(entry.item)!.name}`" class="scheduler-day__brand">
+                <img v-if="brandLogo(entry.item)" :src="brandLogo(entry.item)!.src" :alt="t('schedulerControl.logoAlt', { name: brandLogo(entry.item)!.name })" class="scheduler-day__brand">
                 <span class="scheduler-day__vehicle-name" :title="entry.item.vehicleDisplayName">{{ entry.item.vehicleDisplayName }}</span>
               </div>
             </div>
@@ -259,20 +280,20 @@ onBeforeUnmount(() => {
               variant="secondary"
               class="scheduler-day__move"
               @click="reschedule(entry.item, $event)"
-            >Перенести</UiButton>
+            >{{ t('schedulerCalendar.reschedule') }}</UiButton>
           </div>
           <div v-if="showNowLine" class="scheduler-day__now" :style="{ top: `${nowTop}px` }" aria-hidden="true"><span></span></div>
-          <p v-if="normalizedQuery && !itemsForPost(post).length" class="scheduler-day__empty">Ничего не найдено</p>
-          <p v-else-if="!itemsForPost(post).length" class="scheduler-day__empty">Записей нет</p>
+          <p v-if="normalizedQuery && !itemsForPost(post).length" class="scheduler-day__empty">{{ t('schedulerCalendar.noMatch') }}</p>
+          <p v-else-if="!itemsForPost(post).length" class="scheduler-day__empty">{{ t('schedulerCalendar.noRecords') }}</p>
         </section>
       </div>
     </div>
-    <p v-if="!visibleItems.length && normalizedQuery" class="scheduler-day__empty-search">По запросу «{{ search.trim() }}» записей нет.</p>
-    <ul class="scheduler-day__legend" aria-label="Статусы записей">
-      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--blue"></span>Запланировано</li>
-      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--orange"></span>В работе</li>
-      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--green"></span>Готово / выполнено</li>
-      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--muted"></span>Отменено</li>
+    <p v-if="!visibleItems.length && normalizedQuery" class="scheduler-day__empty-search">{{ t('schedulerCalendar.noRecordsForQuery', { query: search.trim() }) }}</p>
+    <ul class="scheduler-day__legend" :aria-label="t('schedulerCalendar.legend')">
+      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--blue"></span>{{ t('scheduler.scheduled') }}</li>
+      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--orange"></span>{{ t('scheduler.inProgress') }}</li>
+      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--green"></span>{{ t('schedulerCalendar.greenStatus') }}</li>
+      <li><span class="scheduler-day__legend-dot scheduler-day__legend-dot--muted"></span>{{ t('scheduler.cancelled') }}</li>
     </ul>
     <SchedulerRecordPreview :item="previewItem" @close="previewItem = null" />
   </section>

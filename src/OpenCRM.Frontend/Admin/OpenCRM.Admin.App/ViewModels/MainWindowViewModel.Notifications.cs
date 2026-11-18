@@ -11,7 +11,7 @@ namespace OpenCRM.Admin.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private const string NavigationReadFailureMessage = "Раздел загружен, но не удалось сохранить отметку просмотра. Повторите обновление списка.";
+    private const string NavigationReadFailureKey = "core.navigation.readFailed";
 
     private static readonly TimeSpan s_navigationUpdatesInterval = TimeSpan.FromMinutes(1);
 
@@ -276,7 +276,7 @@ public partial class MainWindowViewModel
         {
             if (navigationVersion == this._navigationVersion && !this._isClosing)
             {
-                this.ErrorMessage = "Сервер не ответил вовремя. Повторите открытие раздела.";
+                this.SetLocalizedError("core.navigation.timeout");
             }
         }
         finally
@@ -322,7 +322,7 @@ public partial class MainWindowViewModel
             if (!token.IsCancellationRequested && this.Profile?.Id == profileId)
             {
                 this.ClearNavigationSectionCount(section);
-                if (this.ErrorMessage == NavigationReadFailureMessage)
+                if (this._errorMessageTranslationKey == NavigationReadFailureKey)
                 {
                     this.ErrorMessage = string.Empty;
                 }
@@ -332,7 +332,7 @@ public partial class MainWindowViewModel
         {
             if (this.Profile?.Id == profileId && !token.IsCancellationRequested)
             {
-                this.ErrorMessage = NavigationReadFailureMessage;
+                this.SetLocalizedError(NavigationReadFailureKey);
             }
 
             Debug.WriteLine($"Не удалось сохранить отметку просмотра раздела: {exception.Message}");

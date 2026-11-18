@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -18,14 +19,14 @@ public partial class EmailComposeViewModel(AdminSessionClient sessionClient) : C
     [NotifyPropertyChangedFor(nameof(ShowTargetFilters))]
     [NotifyPropertyChangedFor(nameof(ScheduleButtonLabel))]
     [NotifyPropertyChangedFor(nameof(CanSchedule))]
-    private CommunicationOption _targetMode = new("user", "Пользователь");
+    private CommunicationOption _targetMode = CommunicationOption.Localized("user", "native.promoCodes.polzovatel");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanSchedule))]
     private IReadOnlyList<CommunicationOption> _targetModes =
     [
-        new("email", "Указать email"), new("user", "Выбрать пользователя"),
-        new("organizationType", "Тип организации"), new("all", "Все пользователи")
+        CommunicationOption.Localized("email", "native.email.ukazat.email"), CommunicationOption.Localized("user", "native.email.vybrat.polzovatelya"),
+        CommunicationOption.Localized("organizationType", "native.email.tip.organizatsii"), CommunicationOption.Localized("all", "native.email.vse.polzovateli")
     ];
 
     [ObservableProperty]
@@ -51,7 +52,7 @@ public partial class EmailComposeViewModel(AdminSessionClient sessionClient) : C
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewHtml))]
     [NotifyPropertyChangedFor(nameof(IsPlainText))]
-    private CommunicationOption _bodyFormat = new("text", "Обычный текст");
+    private CommunicationOption _bodyFormat = CommunicationOption.Localized("text", "native.email.obychnyy.tekst");
 
     [ObservableProperty]
     private string _email = string.Empty;
@@ -94,7 +95,7 @@ public partial class EmailComposeViewModel(AdminSessionClient sessionClient) : C
     private bool _isPreviewing;
 
     public IReadOnlyList<CommunicationOption> BodyFormats { get; } =
-    [new("text", "Обычный текст"), new("html", "HTML")];
+    [CommunicationOption.Localized("text", "native.email.obychnyy.tekst"), new("html", "HTML")];
 
     public bool IsSingleRecipient => this.TargetMode.Code is "email" or "user";
     public bool RecipientDetailsVisible => this.TargetMode.Code is "email" or "user" or "organizationType";
@@ -106,9 +107,9 @@ public partial class EmailComposeViewModel(AdminSessionClient sessionClient) : C
     public bool HasBody => !string.IsNullOrWhiteSpace(this.Body);
     public bool IsPlainText => this.BodyFormat.Code == "text";
     public bool HasError => !string.IsNullOrWhiteSpace(this.ErrorMessage);
-    public string ScheduleButtonLabel => this.StartDelayMinutes > 0 ? "Запланировать" : "Поставить в очередь";
+    public string ScheduleButtonLabel => this.StartDelayMinutes > 0 ? AdminLocalization.Instance["native.email.zaplanirovat"] : AdminLocalization.Instance["native.email.postavit.v.ochered"];
     public string ScheduleWarning => this.IsScheduleAttempted && !this.IsScheduled
-        ? "Запрос уже отправлен, но сервер не подтвердил результат. Проверьте список рассылок перед повторной отправкой."
+        ? AdminLocalization.Instance["native.email.zapros.uzhe.otpravlen.no.server.ne.podtverdil.rezultat.proverte."]
         : string.Empty;
     public bool CanSchedule => this.CanLoad() && !this.IsScheduleAttempted && this.Recipients?.TotalCount > 0 &&
         !string.IsNullOrWhiteSpace(this.Subject) && !string.IsNullOrWhiteSpace(this.Body) &&
@@ -124,10 +125,16 @@ public partial class EmailComposeViewModel(AdminSessionClient sessionClient) : C
     public IReadOnlyList<CommunicationOption> TargetModeOptions => this.TargetModes;
 
     public string RecipientCountLabel => this.Recipients == null
-        ? "Сначала проверьте список адресатов."
-        : $"Получателей: {this.Recipients.TotalCount:N0}";
+        ? AdminLocalization.Instance["native.email.snachala.proverte.spisok.adresatov"]
+        : AdminLocalization.Instance.Format("native.email.poluchateley.this.recipients.totalcount.n0", this.Recipients.TotalCount);
 
     public event Action? CloseRequested;
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        CommunicationsViewModel.RefreshLocalizedOptions(this.TargetModes, this.OrganizationTypes, this.BodyFormats);
+    }
 
     [RelayCommand]
     private void Close() => this.CloseRequested?.Invoke();

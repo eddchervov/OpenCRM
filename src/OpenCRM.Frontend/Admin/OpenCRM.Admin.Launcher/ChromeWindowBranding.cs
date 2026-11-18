@@ -83,7 +83,7 @@ internal static class ChromeWindowBranding
             SetStringProperty(propertyStore, 5, "OpenCRM.Admin.Desktop");
             SetStringProperty(propertyStore, 2, $"\"{executablePath}\"");
             SetStringProperty(propertyStore, 3, $"{executablePath},0");
-            SetStringProperty(propertyStore, 4, $"{displayName} — Администрирование");
+            SetStringProperty(propertyStore, 4, $"{displayName} — {LauncherText.Get("Administration")}");
             Marshal.ThrowExceptionForHR(propertyStore.Commit());
         }
         finally

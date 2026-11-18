@@ -1,8 +1,16 @@
 namespace OpenCRM.WebApp.Infrastructure.Api;
 
+using System.Globalization;
+using System.Resources;
+using OpenCRM.WebApp.Infrastructure.Localization;
+
 /// <summary> DTO стандартного ответа об ошибке API. </summary>
 public sealed class ApiErrorResponse
 {
+    private static readonly ResourceManager s_resources = new(
+        "OpenCRM.WebApp.Resources.Infrastructure.Localization.LocalizationStrings",
+        typeof(LocalizationStrings).Assembly);
+
     /// <summary> Признак успешного выполнения запроса. </summary>
     public bool Success { get; init; }
 
@@ -23,13 +31,18 @@ public sealed class ApiErrorResponse
         int statusCode,
         string? message,
         IReadOnlyDictionary<string, string[]>? errors,
-        string? traceId)
+        string? traceId,
+        string? cultureName = null)
     {
+        var culture = cultureName is null ? CultureInfo.CurrentUICulture : CultureInfo.GetCultureInfo(cultureName);
+
         return new ApiErrorResponse
         {
             Success = false,
             ErrorCode = ResolveErrorCode(statusCode),
-            Message = string.IsNullOrWhiteSpace(message) ? ResolveDefaultMessage(statusCode) : message.Trim(),
+            Message = string.IsNullOrWhiteSpace(message)
+                ? ResolveDefaultMessage(statusCode, cultureName)
+                : ApiErrorResponse.s_resources.GetString(message.Trim(), culture) ?? message.Trim(),
             Errors = errors?.Count > 0 ? errors : null,
             TraceId = traceId
         };
@@ -53,19 +66,23 @@ public sealed class ApiErrorResponse
     }
 
     /// <summary> Возвращает сообщение по умолчанию для HTTP-статуса. </summary>
-    public static string ResolveDefaultMessage(int statusCode)
+    public static string ResolveDefaultMessage(int statusCode, string? cultureName = null)
     {
-        return statusCode switch
+        var culture = cultureName is null ? CultureInfo.CurrentUICulture : CultureInfo.GetCultureInfo(cultureName);
+
+        var resourceKey = statusCode switch
         {
-            StatusCodes.Status400BadRequest => "Некорректный запрос.",
-            StatusCodes.Status401Unauthorized => "Требуется авторизация.",
-            StatusCodes.Status402PaymentRequired => "Для действия нужен активный тариф.",
-            StatusCodes.Status403Forbidden => "Недостаточно прав для действия.",
-            StatusCodes.Status404NotFound => "Ресурс не найден.",
-            StatusCodes.Status409Conflict => "Запрос конфликтует с текущим состоянием ресурса.",
-            StatusCodes.Status422UnprocessableEntity => "Проверьте данные формы.",
-            _ when statusCode >= 500 => "Внутренняя ошибка сервера.",
-            _ => "Ошибка обработки запроса."
+            StatusCodes.Status400BadRequest => "api.badRequest",
+            StatusCodes.Status401Unauthorized => "api.unauthorized",
+            StatusCodes.Status402PaymentRequired => "api.paymentRequired",
+            StatusCodes.Status403Forbidden => "api.forbidden",
+            StatusCodes.Status404NotFound => "api.notFound",
+            StatusCodes.Status409Conflict => "api.conflict",
+            StatusCodes.Status422UnprocessableEntity => "api.validationError",
+            _ when statusCode >= 500 => "api.serverError",
+            _ => "api.requestError"
         };
+
+        return ApiErrorResponse.s_resources.GetString(resourceKey, culture)!;
     }
 }

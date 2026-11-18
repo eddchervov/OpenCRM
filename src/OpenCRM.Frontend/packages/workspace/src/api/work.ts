@@ -1,9 +1,13 @@
+import { translate as t } from '@opencrm/ui/i18n'
+import '../workMessages'
+
 export type AssignedWork = {
   maintenanceId: string
   detailId: string
   name: string
   description?: string | null
   price?: number | null
+  currencyCode?: string
   quantity: number
   vehicleName?: string | null
   registrationPlate?: string | null
@@ -101,7 +105,7 @@ export async function loadProductionReport(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить производственный отчёт.')
+    throw new Error(error?.message ?? t('workApi.loadProductionReport'))
   }
 
   return response.json()
@@ -114,7 +118,7 @@ export async function loadWorkPhotos(organizationId: string, work: AssignedWork)
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить фотографии.')
+    throw new Error(error?.message ?? t('workApi.loadPhotos'))
   }
 
   return response.json()
@@ -132,7 +136,7 @@ export async function uploadWorkPhotos(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить фотографии.')
+    throw new Error(error?.message ?? t('workApi.uploadPhotos'))
   }
 }
 
@@ -145,7 +149,7 @@ export async function loadWorkReports(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить замечания.')
+    throw new Error(error?.message ?? t('workApi.loadReports'))
   }
 
   return response.json()
@@ -165,7 +169,7 @@ export async function addWorkReport(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сохранить сообщение.')
+    throw new Error(error?.message ?? t('workApi.saveReport'))
   }
 
   return response.json()
@@ -186,7 +190,7 @@ export async function decideWorkReport(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сохранить решение.')
+    throw new Error(error?.message ?? t('workApi.saveDecision'))
   }
 
   return response.json()
@@ -206,7 +210,7 @@ export async function adjustWorkTime(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось исправить время работы.')
+    throw new Error(error?.message ?? t('workApi.adjustTime'))
   }
 
   return response.json()
@@ -221,7 +225,7 @@ export async function loadAvailableOperationMaterials(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить материалы.')
+    throw new Error(error?.message ?? t('workApi.loadMaterials'))
   }
 
   return response.json()
@@ -236,7 +240,7 @@ export async function loadIssuedOperationMaterials(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить списанные материалы.')
+    throw new Error(error?.message ?? t('workApi.loadIssuedMaterials'))
   }
 
   return response.json()
@@ -256,7 +260,7 @@ export async function issueOperationMaterial(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось списать материал.')
+    throw new Error(error?.message ?? t('workApi.issueMaterial'))
   }
 
   return response.json()
@@ -276,7 +280,7 @@ export async function returnOperationMaterial(
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось вернуть материал.')
+    throw new Error(error?.message ?? t('workApi.returnMaterial'))
   }
 
   return response.json()
@@ -288,7 +292,7 @@ export async function loadWorkProgress(organizationId: string, maintenanceId: st
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить состояние работ.')
+    throw new Error(error?.message ?? t('workApi.loadProgress'))
   }
 
   return response.json()
@@ -305,7 +309,7 @@ export async function completeWorkForEmployee(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось завершить работу.')
+    throw new Error(error?.message ?? t('workApi.completeWork'))
   }
 }
 
@@ -320,7 +324,7 @@ export async function returnWorkForRework(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось вернуть работу.')
+    throw new Error(error?.message ?? t('workApi.returnWork'))
   }
 }
 
@@ -330,7 +334,7 @@ export async function loadAssignedWork(organizationId: string): Promise<Assigned
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить работы.')
+    throw new Error(error?.message ?? t('workApi.loadAssigned'))
   }
 
   return response.json()
@@ -342,7 +346,7 @@ export async function loadAvailableWork(organizationId: string): Promise<Assigne
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить свободные работы.')
+    throw new Error(error?.message ?? t('workApi.loadAvailable'))
   }
 
   return response.json()
@@ -356,7 +360,7 @@ export async function claimAvailableWork(organizationId: string, work: AssignedW
   )
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось взять работу.')
+    throw new Error(error?.message ?? t('workApi.claim'))
   }
 
   return response.json()
@@ -376,7 +380,7 @@ export async function transitionAssignedWork(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось изменить состояние работы.')
+    throw new Error(error?.message ?? t('workApi.transition'))
   }
 
   return response.json()

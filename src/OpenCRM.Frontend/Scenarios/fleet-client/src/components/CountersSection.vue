@@ -1,7 +1,9 @@
 ﻿<script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/counterMessages'
 import { WorkspaceAccessNotice } from '@opencrm/workspace'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { UiButton, UiCard, UiDatePicker, UiLoader, UiNumberInput, UiSelect, UiTextarea, formatDateOnly, parseDateOnly } from '@opencrm/ui'
+import { UiButton, UiCard, UiDatePicker, UiLoader, UiNumberInput, UiSelect, UiTextarea, formatDateOnly } from '@opencrm/ui'
 import { WorkspacePageHelpButton } from '@opencrm/workspace'
 import {
   deleteCounter,
@@ -13,6 +15,8 @@ import {
   type FleetCounterVehicle
 } from '@/api/counters'
 import type { FleetWorkspaceContext } from '@/api/fleetBff'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   context: FleetWorkspaceContext
@@ -48,22 +52,22 @@ const readOnlyMessage = computed(() => props.context.workspaceAccess?.readOnlyMe
 const selectedVehicle = computed(() => vehicles.value.find(vehicle => vehicle.vehicleId === selectedVehicleId.value) ?? null)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
 const vehicleOptions = computed(() => [
-  { value: '', label: 'Выберите технику' },
+  { value: '', get label() { return t('counters.chooseVehicle') } },
   ...vehicles.value.map(vehicle => ({
     value: vehicle.vehicleId,
     label: `${vehicle.vehicleDisplayName}${vehicle.vehicleSubtitle ? ` · ${vehicle.vehicleSubtitle}` : ''}`
   }))
 ])
 const sortOptions = [
-  { value: 'updated_desc', label: 'Недавно обновленные' },
-  { value: 'updated_asc', label: 'Давно не обновлялись' },
-  { value: 'name_asc', label: 'По названию' },
-  { value: 'value_desc', label: 'По большему показанию' }
+  { value: 'updated_desc', get label() { return t('counters.recent') } },
+  { value: 'updated_asc', get label() { return t('counters.oldUpdates') } },
+  { value: 'name_asc', get label() { return t('counters.byName') } },
+  { value: 'value_desc', get label() { return t('counters.byValue') } }
 ]
 const historySortOptions = [
-  { value: 'recorded_desc', label: 'Сначала новые' },
-  { value: 'recorded_asc', label: 'Сначала старые' },
-  { value: 'value_desc', label: 'По большему показанию' }
+  { value: 'recorded_desc', get label() { return t('counters.newest') } },
+  { value: 'recorded_asc', get label() { return t('counters.oldest') } },
+  { value: 'value_desc', get label() { return t('counters.byValue') } }
 ]
 const historySort = ref('recorded_desc')
 
@@ -88,7 +92,7 @@ async function loadData() {
 
     await loadSelectedVehicleData()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить счетчики.'
+    errorMessage.value = error instanceof Error ? error.message : t('counters.loadError')
   } finally {
     isLoading.value = false
   }
@@ -141,7 +145,7 @@ async function saveEntry() {
 
   const parsedValue = Number(form.value)
   if (!form.vehicleId || !Number.isFinite(parsedValue) || parsedValue < 0 || !form.recordedAt) {
-    errorMessage.value = 'Выберите технику, дату и корректное показание.'
+    errorMessage.value = t('counters.required')
     return
   }
 
@@ -157,20 +161,20 @@ async function saveEntry() {
       recordedAt: form.recordedAt,
       comment: form.comment || null
     })
-    successMessage.value = 'Показание сохранено.'
+    successMessage.value = t('counters.saved')
     form.entryId = ''
     form.value = ''
     form.comment = ''
     await loadData()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось сохранить показание.'
+    errorMessage.value = error instanceof Error ? error.message : t('counters.saveError')
   } finally {
     isSaving.value = false
   }
 }
 
 async function removeEntry(entry: FleetCounterEntry) {
-  if (!canWrite.value || !entry.canManage || !window.confirm('Удалить показание?')) {
+  if (!canWrite.value || !entry.canManage || !window.confirm(t('counters.deleteConfirm'))) {
     return
   }
 
@@ -179,10 +183,10 @@ async function removeEntry(entry: FleetCounterEntry) {
 
   try {
     await deleteCounter(props.context.organization.id, entry.id)
-    successMessage.value = 'Показание удалено.'
+    successMessage.value = t('counters.deleted')
     await loadData()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось удалить показание.'
+    errorMessage.value = error instanceof Error ? error.message : t('counters.deleteError')
   } finally {
     isSaving.value = false
   }
@@ -194,14 +198,28 @@ function goToPage(nextPage: number) {
 }
 
 function unitLabel(unit: number) {
-  return unit === 1 ? 'м/ч' : 'км'
+  return unit === 1 ? t('counters.engineHours') : t('counters.km')
 }
 
-function formatDate(value?: string | null) {
+function formatValue(value: number | null | undefined) {
+  return value == null ? t('counters.noReadings') : new Intl.NumberFormat(formattingCulture.value, { maximumFractionDigits: 20 }).format(value)
+}
+
+function sourceName(entry: FleetCounterEntry) {
+  if (entry.sourceType === 'manual') return t('counters.manual')
+  if (entry.sourceType === 'maintenance') return t('counters.maintenance')
+
+  return entry.sourceName
+}
+
+function formatDate(value?: string | null, calendarDate = false) {
   if (!value) {
     return '-'
   }
-  return new Intl.DateTimeFormat('ru-RU').format(parseDateOnly(value) ?? new Date(value))
+  const timeZone = calendarDate ? 'UTC' : props.context.organization.timeZoneId || 'UTC'
+  const date = calendarDate ? new Date(`${value.slice(0, 10)}T00:00:00Z`) : new Date(value)
+
+  return new Intl.DateTimeFormat(formattingCulture.value, { timeZone }).format(date)
 }
 
 function chartHeight(item: FleetCounterEntry) {
@@ -214,27 +232,27 @@ onMounted(loadData)
 
 <template>
   <section class="fleet-entity-section workspace-operations">
-    <UiCard page title="Пробег и наработка">
+    <UiCard page :title="t('counters.title')">
       <template #actions>
-        <WorkspacePageHelpButton section-code="counters" title="Пробег и наработка" />
+        <WorkspacePageHelpButton section-code="counters" :title="t('counters.title')" />
       </template>
       <WorkspaceAccessNotice :can-manage-billing="context.organization.canManageBilling === true" v-if="readOnlyMessage" :message="readOnlyMessage" />
 
       <div class="fleet-toolbar">
-        <UiSelect v-model="filters.sort" label="Сортировка техники" :options="sortOptions" :searchable="false" />
-        <UiSelect v-model="historySort" label="История" :options="historySortOptions" :searchable="false" />
-        <UiButton variant="secondary" :disabled="isLoading" @click="loadData">Обновить</UiButton>
+        <UiSelect v-model="filters.sort" :label="t('counters.vehicleSort')" :options="sortOptions" :searchable="false" />
+        <UiSelect v-model="historySort" :label="t('counters.history')" :options="historySortOptions" :searchable="false" />
+        <UiButton variant="secondary" :disabled="isLoading" @click="loadData">{{ t('counters.refresh') }}</UiButton>
       </div>
 
       <div class="fleet-metrics">
-        <span>Техники: <strong>{{ totalCount }}</strong></span>
-        <span>С показаниями: <strong>{{ vehiclesWithCountersCount }}</strong></span>
-        <span v-if="selectedVehicle">Текущее: <strong>{{ selectedVehicle.currentValue ?? '-' }} {{ unitLabel(selectedVehicle.mileageUnit) }}</strong></span>
+        <span>{{ t('counters.vehicles') }} <strong>{{ totalCount }}</strong></span>
+        <span>{{ t('counters.withReadings') }} <strong>{{ vehiclesWithCountersCount }}</strong></span>
+        <span v-if="selectedVehicle">{{ t('counters.current') }} <strong>{{ formatValue(selectedVehicle.currentValue) }} {{ unitLabel(selectedVehicle.mileageUnit) }}</strong></span>
       </div>
 
       <div v-if="successMessage" class="fleet-state fleet-state-success">{{ successMessage }}</div>
       <div v-if="errorMessage" class="fleet-state fleet-state-error">{{ errorMessage }}</div>
-      <UiLoader v-if="isLoading" text="Загружаем счетчики..." />
+      <UiLoader v-if="isLoading" :text="t('counters.loading')" />
 
       <div v-else class="fleet-split-grid">
         <div class="fleet-list">
@@ -248,59 +266,59 @@ onMounted(loadData)
               <strong>{{ vehicle.vehicleDisplayName }}</strong>
               <small>{{ vehicle.vehicleSubtitle }}</small>
               <span>
-                {{ vehicle.currentValue ?? 'Нет показаний' }}
+                {{ formatValue(vehicle.currentValue) }}
                 <template v-if="vehicle.currentValue !== null && vehicle.currentValue !== undefined">{{ unitLabel(vehicle.mileageUnit) }}</template>
                 <template v-if="vehicle.updatedAt"> · {{ formatDate(vehicle.updatedAt) }}</template>
               </span>
             </button>
           </article>
 
-          <div v-if="vehicles.length === 0" class="fleet-empty">Техника не найдена.</div>
+          <div v-if="vehicles.length === 0" class="fleet-empty">{{ t('counters.noVehicles') }}</div>
 
           <div class="fleet-pagination">
-            <UiButton variant="secondary" :disabled="page <= 1 || isLoading" @click="goToPage(page - 1)">Назад</UiButton>
+            <UiButton variant="secondary" :disabled="page <= 1 || isLoading" @click="goToPage(page - 1)">{{ t('counters.back') }}</UiButton>
             <span>{{ page }} / {{ totalPages }}</span>
-            <UiButton variant="secondary" :disabled="page >= totalPages || isLoading" @click="goToPage(page + 1)">Вперед</UiButton>
+            <UiButton variant="secondary" :disabled="page >= totalPages || isLoading" @click="goToPage(page + 1)">{{ t('counters.next') }}</UiButton>
           </div>
         </div>
 
         <aside class="fleet-detail-panel">
           <form class="fleet-form-grid" @submit.prevent="saveEntry">
-            <UiSelect v-model="form.vehicleId" class="fleet-form-wide" label="Техника" :options="vehicleOptions" required :disabled="isSaving || !canWrite" />
-            <UiNumberInput v-model="form.value" label="Показание" integer :disabled="isSaving || !canWrite" required />
-            <UiDatePicker v-model="form.recordedAt" label="Дата" :disabled="isSaving || !canWrite" required />
-            <UiTextarea v-model="form.comment" class="fleet-form-wide" label="Комментарий" :rows="3" :disabled="isSaving || !canWrite" />
+            <UiSelect v-model="form.vehicleId" class="fleet-form-wide" :label="t('counters.vehicle')" :options="vehicleOptions" required :disabled="isSaving || !canWrite" />
+            <UiNumberInput v-model="form.value" :label="t('counters.reading')" integer :disabled="isSaving || !canWrite" required />
+            <UiDatePicker v-model="form.recordedAt" :label="t('counters.date')" :disabled="isSaving || !canWrite" required />
+            <UiTextarea v-model="form.comment" class="fleet-form-wide" :label="t('counters.comment')" :rows="3" :disabled="isSaving || !canWrite" />
             <div class="fleet-form-actions">
-              <UiButton type="submit" :disabled="isSaving || !canWrite">{{ form.entryId ? 'Сохранить' : 'Добавить' }}</UiButton>
-              <UiButton type="button" variant="secondary" :disabled="isSaving" @click="form.entryId = ''; form.value = ''; form.comment = ''">Сбросить</UiButton>
+              <UiButton type="submit" :disabled="isSaving || !canWrite">{{ form.entryId ? t('counters.save') : t('counters.add') }}</UiButton>
+              <UiButton type="button" variant="secondary" :disabled="isSaving" @click="form.entryId = ''; form.value = ''; form.comment = ''">{{ t('counters.reset') }}</UiButton>
             </div>
           </form>
 
           <section class="fleet-subsection">
-            <h4>Динамика</h4>
+            <h4>{{ t('counters.trend') }}</h4>
             <div v-if="chartItems.length > 0" class="fleet-counter-chart">
               <span
                 v-for="item in chartItems.slice().reverse().slice(-24)"
                 :key="`${item.id}-${item.timelineType}`"
                 :style="{ height: chartHeight(item) }"
-                :title="`${formatDate(item.recordedAt)} · ${item.value} ${unitLabel(item.mileageUnit)}`"
+                :title="`${formatDate(item.recordedAt, true)} · ${formatValue(item.value)} ${unitLabel(item.mileageUnit)}`"
               ></span>
             </div>
-            <div v-else class="fleet-empty">График появится после первых показаний.</div>
+            <div v-else class="fleet-empty">{{ t('counters.chartHint') }}</div>
           </section>
 
           <section class="fleet-subsection">
-            <h4>История</h4>
+            <h4>{{ t('counters.history') }}</h4>
             <div v-for="entry in history" :key="`${entry.id}-${entry.timelineType}`" class="fleet-history-row">
-              <strong>{{ entry.value }} {{ unitLabel(entry.mileageUnit) }}</strong>
-              <span>{{ formatDate(entry.recordedAt) }} · {{ entry.sourceName }}</span>
+              <strong>{{ formatValue(entry.value) }} {{ unitLabel(entry.mileageUnit) }}</strong>
+              <span>{{ formatDate(entry.recordedAt, true) }} · {{ sourceName(entry) }}</span>
               <small>{{ entry.comment }}</small>
               <div v-if="entry.canManage" class="fleet-row-actions">
-                <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="editEntry(entry)">Изменить</UiButton>
-                <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="removeEntry(entry)">Удалить</UiButton>
+                <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="editEntry(entry)">{{ t('counters.edit') }}</UiButton>
+                <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="removeEntry(entry)">{{ t('counters.delete') }}</UiButton>
               </div>
             </div>
-            <div v-if="history.length === 0" class="fleet-empty">История пока пустая.</div>
+            <div v-if="history.length === 0" class="fleet-empty">{{ t('counters.emptyHistory') }}</div>
           </section>
         </aside>
       </div>

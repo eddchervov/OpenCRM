@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../workingHoursMessages'
+import { translate as t } from '@opencrm/ui/i18n'
 import { UiButton, UiTimePicker } from '@opencrm/ui'
 import type { WorkspaceWorkingDay } from '../api/setup'
 import { workingWeek } from '../workingHours'
@@ -24,25 +26,25 @@ function addBreak(day: WorkspaceWorkingDay) {
 
 <template>
   <div class="working-hours">
-    <div class="working-hours-heading" aria-hidden="true"><span>День недели</span><span>Открытие</span><span>Закрытие</span><span /></div>
+    <div class="working-hours-heading" aria-hidden="true"><span>{{ t('workingHours.weekday') }}</span><span>{{ t('workingHours.opening') }}</span><span>{{ t('workingHours.closing') }}</span><span /></div>
     <template v-for="weekDay in workingWeek" :key="weekDay.id">
       <div v-for="day in schedule.filter(item => item.dayOfWeek === weekDay.id)" :key="day.dayOfWeek" class="working-hours-day" :class="{ 'is-closed': !day.isWorking }">
         <label class="working-hours-name"><input v-model="day.isWorking" type="checkbox" :disabled="disabled" @change="enableDay(day)" />{{ weekDay.name }}</label>
         <template v-if="day.isWorking">
           <div class="working-hours-times">
-            <div class="working-hours-time"><span aria-hidden="true">Открытие</span><UiTimePicker class="working-hours-picker" :model-value="day.startTime?.slice(0, 5) ?? ''" :label="weekDay.name + ': открытие'" placeholder="ЧЧ:ММ" :step="60" required :disabled="disabled" @update:model-value="day.startTime = $event" /></div>
-            <div class="working-hours-time"><span aria-hidden="true">Закрытие</span><UiTimePicker class="working-hours-picker" :model-value="day.endTime?.slice(0, 5) ?? ''" :label="weekDay.name + ': закрытие'" placeholder="ЧЧ:ММ" :step="60" align="end" required :disabled="disabled" @update:model-value="day.endTime = $event" /></div>
+            <div class="working-hours-time"><span aria-hidden="true">{{ t('workingHours.opening') }}</span><UiTimePicker class="working-hours-picker" :model-value="day.startTime?.slice(0, 5) ?? ''" :label="t('workingHours.openDay', { day: weekDay.name })" :placeholder="t('workingHours.timePlaceholder')" :step="60" required :disabled="disabled" @update:model-value="day.startTime = $event" /></div>
+            <div class="working-hours-time"><span aria-hidden="true">{{ t('workingHours.closing') }}</span><UiTimePicker class="working-hours-picker" :model-value="day.endTime?.slice(0, 5) ?? ''" :label="t('workingHours.closeDay', { day: weekDay.name })" :placeholder="t('workingHours.timePlaceholder')" :step="60" align="end" required :disabled="disabled" @update:model-value="day.endTime = $event" /></div>
           </div>
-          <UiButton class="working-hours-add" variant="ghost" :disabled="disabled" :aria-label="weekDay.name + ': добавить перерыв'" @click="addBreak(day)">＋ Перерыв</UiButton>
+          <UiButton class="working-hours-add" variant="ghost" :disabled="disabled" :aria-label="t('workingHours.addBreakDay', { day: weekDay.name })" @click="addBreak(day)">{{ t('workingHours.addBreak') }}</UiButton>
           <div v-if="day.breaks.length" class="working-hours-breaks">
             <div v-for="(pause, index) in day.breaks" :key="index" class="working-hours-break">
-              <div class="working-hours-break-field"><span aria-hidden="true">Перерыв с</span><UiTimePicker class="working-hours-picker" :model-value="pause.startTime.slice(0, 5)" :label="weekDay.name + ': начало перерыва ' + (index + 1)" placeholder="ЧЧ:ММ" :step="60" required :disabled="disabled" @update:model-value="pause.startTime = $event" /></div>
-              <div class="working-hours-break-field"><span aria-hidden="true">До</span><UiTimePicker class="working-hours-picker" :model-value="pause.endTime.slice(0, 5)" :label="weekDay.name + ': конец перерыва ' + (index + 1)" placeholder="ЧЧ:ММ" :step="60" align="end" required :disabled="disabled" @update:model-value="pause.endTime = $event" /></div>
-              <button type="button" class="working-hours-remove" :disabled="disabled" :aria-label="weekDay.name + ': удалить перерыв ' + (index + 1)" @click="day.breaks.splice(index, 1)">×</button>
+              <div class="working-hours-break-field"><span aria-hidden="true">{{ t('workingHours.breakStart') }}</span><UiTimePicker class="working-hours-picker" :model-value="pause.startTime.slice(0, 5)" :label="t('workingHours.breakStartDay', { day: weekDay.name, index: index + 1 })" :placeholder="t('workingHours.timePlaceholder')" :step="60" required :disabled="disabled" @update:model-value="pause.startTime = $event" /></div>
+              <div class="working-hours-break-field"><span aria-hidden="true">{{ t('workingHours.breakEnd') }}</span><UiTimePicker class="working-hours-picker" :model-value="pause.endTime.slice(0, 5)" :label="t('workingHours.breakEndDay', { day: weekDay.name, index: index + 1 })" :placeholder="t('workingHours.timePlaceholder')" :step="60" align="end" required :disabled="disabled" @update:model-value="pause.endTime = $event" /></div>
+              <button type="button" class="working-hours-remove" :disabled="disabled" :aria-label="t('workingHours.removeBreakDay', { day: weekDay.name, index: index + 1 })" @click="day.breaks.splice(index, 1)">×</button>
             </div>
           </div>
         </template>
-        <span v-else class="working-hours-closed">Выходной</span>
+        <span v-else class="working-hours-closed">{{ t('workingHours.dayOff') }}</span>
       </div>
     </template>
   </div>

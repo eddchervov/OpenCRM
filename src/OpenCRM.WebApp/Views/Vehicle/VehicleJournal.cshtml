@@ -10,13 +10,14 @@
     }
     var organizationName = ViewData["VehicleOrganizationName"] as string ?? string.Empty;
     var returnUrl = ViewData["VehicleJournalReturnUrl"] as string ?? string.Empty;
+    var journalDateFormat = Text["vehicle.journal.dateFormat"].Value;
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? vehicleScenario.BreadcrumbTitle
+        ? Text["vehicle.list.title"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
-    ViewData["Title"] = "Журнал техники";
+            : Text["vehicle.journal.organization"].Value;
+    ViewData["Title"] = Text["vehicle.journal.title"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "vehicle-card-page-body";
     var workspaceSidebar = new OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
@@ -61,24 +62,24 @@
                                     <div class="maintenance-history-heading">
                                         <h4 class="card-title mb-0">
                                             <i class="fa fa-book me-2"></i>
-                                            Журнал техники
+                                            @Text["vehicle.journal.title"]
                                         </h4>
                                         <a :href="getVehicleUrl()" class="btn btn-outline-dark btn-sm">
                                             <i class="fa fa-arrow-left me-2"></i>
-                                            К технике
+                                            @Text["vehicle.journal.backToVehicle"]
                                         </a>
                                     </div>
                                 </div>
                                 <div class="card-body">
                                     <div class="text-center py-4" v-if="loading">
                                         <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
-                                        <p class="mt-2 text-muted">Загружаем журнал техники...</p>
+                                        <p class="mt-2 text-muted">@Text["vehicle.journal.loading"]</p>
                                     </div>
 
                                     <div class="empty-state text-center py-4" v-else-if="events.length === 0">
                                         <i class="fa fa-book fa-3x mb-3 text-muted"></i>
-                                        <h5>Журнал пока пуст</h5>
-                                        <p class="text-muted mb-0">Здесь появятся изменения техники, обслуживаний, счетчика и неисправностей.</p>
+                                        <h5>@Text["vehicle.journal.empty.title"]</h5>
+                                        <p class="text-muted mb-0">@Text["vehicle.journal.empty.text"]</p>
                                     </div>
 
                                     <div class="vehicle-journal-list" v-else>
@@ -93,8 +94,8 @@
                                                 </div>
                                                 <div class="vehicle-journal-description" v-if="event.description">{{ event.description }}</div>
                                                 <div class="vehicle-journal-meta">
-                                                    <span v-if="event.actorDisplayName">Автор: {{ event.actorDisplayName }}</span>
-                                                    <a v-if="event.relatedUrl" :href="event.relatedUrl">Открыть</a>
+                                                    <span v-if="event.actorDisplayName">@Text["vehicle.journal.author"] {{ event.actorDisplayName }}</span>
+                                                    <a v-if="event.relatedUrl" :href="event.relatedUrl">@Text["vehicle.journal.open"]</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -105,10 +106,10 @@
                             <div class="mt-3 d-flex gap-2 flex-wrap">
                                 <a :href="getVehicleUrl()" class="btn btn-outline-dark">
                                     <i class="fa fa-arrow-left me-2"></i>
-                                    Вернуться к технике
+                                    @Text["vehicle.journal.returnToVehicle"]
                                 </a>
                                 <a v-if="returnUrl" :href="returnUrl" class="btn btn-outline-secondary">
-                                    Вернуться назад
+                                    @Text["vehicle.journal.returnBack"]
                                 </a>
                             </div>
                         </div>
@@ -144,7 +145,8 @@
         {
             vehicleId,
             organizationId,
-            returnUrl
+            returnUrl,
+            dateFormat = journalDateFormat
         }));
     </script>
     <script src="~/app/vehicle-journal-page.js" asp-append-version="true"></script>
@@ -154,8 +156,8 @@
     <nav aria-label="breadcrumb" class="mb-4">
                                 <ol class="breadcrumb mb-0">
                                     <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl">@rootBreadcrumbText</a></li>
-                                    <li class="breadcrumb-item"><a href="/vehicle/@vehicleId">@(ViewData["VehicleDisplayName"] as string ?? "Техника")</a></li>
-                                    <li class="breadcrumb-item active" aria-current="page"><h1>Журнал</h1></li>
+                                    <li class="breadcrumb-item"><a href="/vehicle/@vehicleId">@(ViewData["VehicleDisplayName"] as string ?? Text["vehicle.journal.vehicle"].Value)</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page"><h1>@Text["vehicle.journal.titleShort"]</h1></li>
                                 </ol>
                             </nav>
 }

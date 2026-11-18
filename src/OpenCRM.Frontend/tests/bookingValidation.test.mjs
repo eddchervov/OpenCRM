@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import * as dateInputFormat from '../packages/ui/src/dateInputFormat.ts'
 
 const editorPath = new URL('../packages/workspace/src/components/MaintenanceServicesEditor.vue', import.meta.url)
 const editorSource = readFileSync(editorPath, 'utf8')
@@ -30,11 +31,27 @@ function servicesEditor({ disabled = false, canAssignEmployees = true, service, 
   }
   const props = vue.reactive({ organizationId: 'org', modelValue: items, disabled, canAssignEmployees, defaultVatRateCode })
   const events = []
+  const translations = {
+    'maintenanceWork.namedService': 'услуги «{name}»',
+    'maintenanceWork.work': 'работы',
+    'maintenanceWork.priceInvalidShort': 'Укажите цену {service}',
+    'maintenanceWork.priceInvalid': 'Укажите корректную цену {service}',
+    'maintenanceWork.nameRequired': 'Укажите название работы',
+    'maintenanceWork.quantityInvalid': 'Укажите корректное количество для {service}',
+    'maintenanceWork.vatRequired': 'Выберите ставку НДС для {service}',
+    'maintenanceWork.checkWorkData': 'Проверьте данные работы',
+    'maintenanceWork.addAtLeastOne': 'Добавьте хотя бы одну работу.'
+  }
+  const translate = (key, params = {}) => (translations[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? ''))
   const module = { exports: {} }
   const vueApi = { ...vue, useId: () => 'booking-validation-test', onMounted() {}, watch(source, callback, options) { if (options?.flush === 'sync') return vue.watch(source, callback, options) } }
   new Function('require', 'module', 'exports', editorCode)(id => {
     if (id === 'vue') return vueApi
-    if (id === './EmployeePicker.vue' || id === '@opencrm/ui') return {}
+    if (id === './EmployeePicker.vue') return {}
+    if (id === '@opencrm/ui') return { useLocalization: () => ({ t: translate }) }
+    if (id === '@opencrm/ui/i18n') return { formattingCulture: vue.computed(() => 'ru-RU') }
+    if (id === '../workspaceCurrency') return { useWorkspaceCurrency: () => vue.computed(() => 'RUB') }
+    if (id === '../maintenanceWorkMessages') return {}
     if (id === '../api/employees') return { loadEmployees: async () => ({ items: [] }) }
     if (id === '../api/scenarioCatalog') return { loadScenarioCatalog: async () => ({ services: [], serviceBundles: [] }) }
     if (id === '../serviceDuration') return { calculateServiceDuration: () => null, formatServiceDuration: () => '' }
@@ -423,6 +440,8 @@ test('UiDatePicker синхронно очищает модель пустого
     if (id === 'v-calendar') return { DatePicker: {} }
     if (id === '../dateOnly') return { formatDateOnly: value => value.toISOString(), parseDateOnly: value => new Date(value) }
     if (id === '../workspaceTheme') return { workspaceTheme: 'light' }
+    if (id === '../i18n') return { useLocalization: () => ({ t: key => key === 'common.invalidDate' ? 'Введите существующую дату.' : key }), formattingCulture: vue.computed(() => 'ru-RU') }
+    if (id === '../dateInputFormat') return dateInputFormat
     return {}
   }, module, module.exports)
   const props = { modelValue: '2026-10-23', enableTimePicker: false }

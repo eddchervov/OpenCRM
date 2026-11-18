@@ -8,7 +8,7 @@ const source = ts.transpileModule(readFileSync(new URL('../packages/ui/src/razor
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
-function fields() {
+async function fields() {
   const mounted = []
   const components = { date: {}, time: {} }
   const hosts = ['date', 'time'].map(kind => {
@@ -32,25 +32,28 @@ function fields() {
     './components/UiDatePicker.vue': { default: components.date },
     './components/UiTimePicker.vue': { default: components.time },
     './workspaceTheme': { initializeWorkspaceTheme() {}, syncWorkspaceThemeFromDocument() {} },
+    './i18n': { initializeLocalization: async () => {} },
     './styles.css': {}
   }
   new Function('require', 'exports', 'document', 'Event', 'MutationObserver', source)(
     name => dependencies[name], {}, { querySelectorAll: () => hosts, createElement: () => ({}), documentElement: {} },
     Event, class { observe() {} }
   )
+  await Promise.resolve()
+
   return { mounted, hosts, components }
 }
 
-test('Razor использует общие компоненты даты и времени и сохраняет исходные форматы', () => {
-  const { mounted, components } = fields()
+test('Razor использует общие компоненты даты и времени и сохраняет исходные форматы', async () => {
+  const { mounted, components } = await fields()
   assert.equal(mounted[0]().type, components.date)
   assert.equal(mounted[1]().type, components.time)
   assert.equal(mounted[0]().props.modelValue, '2026-10-27')
   assert.equal(mounted[1]().props.modelValue, '14:35')
 })
 
-test('Выбор и очистка в picker обновляют поле API и событие изменения', () => {
-  const { mounted, hosts } = fields()
+test('Выбор и очистка в picker обновляют поле API и событие изменения', async () => {
+  const { mounted, hosts } = await fields()
   mounted[0]().props['onUpdate:modelValue']('2026-11-01')
   mounted[1]().props['onUpdate:modelValue']('09:05')
   assert.equal(hosts[0].field.value, '2026-11-01')
@@ -60,8 +63,8 @@ test('Выбор и очистка в picker обновляют поле API и 
   assert.equal(hosts[0].field.value, '')
 })
 
-test('Загрузка значения и блокировка с сервера синхронизируются с picker', () => {
-  const { mounted, hosts } = fields()
+test('Загрузка значения и блокировка с сервера синхронизируются с picker', async () => {
+  const { mounted, hosts } = await fields()
   assert.equal(mounted[0]().props.disabled, true)
   hosts[0].field.value = '2026-10-01'
   hosts[0].field.disabled = false

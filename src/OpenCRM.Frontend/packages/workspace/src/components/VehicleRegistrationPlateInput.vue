@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { UiInput } from '@opencrm/ui'
+import { UiInput, useLocalization } from '@opencrm/ui'
+import '../localization'
+import { registrationPlateFormatsForCountry } from '../internationalRegistrationPlate'
 import {
   createVehicleRegistrationPlateMask,
   getVehicleRegistrationPlateFormat,
@@ -22,9 +24,10 @@ const props = withDefaults(defineProps<{
   required?: boolean
   error?: string
   inferOtherFormat?: boolean
+  countryCode?: string | null
 }>(), {
   kind: 1,
-  label: 'Госномер',
+  label: '',
   placeholder: '',
   disabled: false,
   required: false,
@@ -33,16 +36,18 @@ const props = withDefaults(defineProps<{
 })
 
 const config = ref<VehicleRegistrationPlateFormats>()
+const { t } = useLocalization()
+const effectiveConfig = computed(() => config.value && registrationPlateFormatsForCountry(config.value, props.countryCode))
 const configError = ref('')
 const pastedNumberError = ref('')
 const keepRawInput = ref(false)
-const format = computed(() => config.value && getVehicleRegistrationPlateFormat(props.kind ?? 1, config.value))
-const mask = computed(() => config.value && !allowOtherFormat.value && !keepRawInput.value
-  ? createVehicleRegistrationPlateMask(props.kind ?? 1, config.value)
+const format = computed(() => effectiveConfig.value && getVehicleRegistrationPlateFormat(props.kind ?? 1, effectiveConfig.value))
+const mask = computed(() => effectiveConfig.value && !allowOtherFormat.value && !keepRawInput.value
+  ? createVehicleRegistrationPlateMask(props.kind ?? 1, effectiveConfig.value)
   : undefined)
 const inputError = computed(() => props.error || configError.value || pastedNumberError.value)
-const effectivePlaceholder = computed(() => props.placeholder || format.value?.example || 'Номер в свободном формате')
-const inputMaxLength = computed(() => config.value?.maxLength)
+const effectivePlaceholder = computed(() => props.placeholder || format.value?.example || t('regional.freePlate'))
+const inputMaxLength = computed(() => effectiveConfig.value?.maxLength)
 
 onMounted(async () => {
   try {
@@ -52,7 +57,7 @@ onMounted(async () => {
       allowOtherFormat.value = true
     }
   } catch (error) {
-    configError.value = error instanceof Error ? error.message : 'Не удалось загрузить форматы госномеров.'
+    configError.value = error instanceof Error ? error.message : t('regional.plateLoad')
   }
 })
 
@@ -64,7 +69,7 @@ watch(() => props.kind, () => {
 
 function handlePaste(event: ClipboardEvent) {
   const pastedValue = event.clipboardData?.getData('text')
-  if (pastedValue == null || !config.value) return
+  if (pastedValue == null || !effectiveConfig.value) return
 
   const input = event.target as HTMLInputElement
   const selectionStart = input.selectionStart ?? input.value.length
@@ -72,7 +77,7 @@ function handlePaste(event: ClipboardEvent) {
   const result = prepareRegistrationPlatePaste(
     pastedValue,
     props.kind ?? 1,
-    config.value,
+    effectiveConfig.value,
     allowOtherFormat.value,
     input.value,
     selectionStart,
@@ -83,7 +88,7 @@ function handlePaste(event: ClipboardEvent) {
   event.preventDefault()
   model.value = result.value
   pastedNumberError.value = result.error
-    ? 'Вставленный номер не подходит к маске. Проверьте его или включите «Другой формат».'
+    ? t('regional.platePaste')
     : ''
   keepRawInput.value = Boolean(result.error)
   if (!result.error) {
@@ -114,7 +119,7 @@ function handleOtherFormatChange(event: Event) {
 
   if (!isOtherFormat && model.value && config.value && format.value &&
     validateRegistrationPlate(model.value, props.kind ?? 1, config.value)) {
-    pastedNumberError.value = 'Номер не подходит к маске. Проверьте его или снова включите «Другой формат».'
+    pastedNumberError.value = t('regional.plateMask')
     keepRawInput.value = true
     return
   }
@@ -129,7 +134,7 @@ function handleOtherFormatChange(event: Event) {
     <UiInput
       v-model="model"
       :id="id"
-      :label="label"
+      :label="label || t('regional.plate')"
       :placeholder="effectivePlaceholder"
       :disabled="disabled || !config"
       :required="required"
@@ -141,7 +146,7 @@ function handleOtherFormatChange(event: Event) {
     />
     <label v-if="format" class="vehicle-plate-input__other">
       <input type="checkbox" :checked="allowOtherFormat" :disabled="disabled || !config" @change="handleOtherFormatChange">
-      <span>Другой формат номера</span>
+      <span>{{ t('regional.otherPlate') }}</span>
     </label>
   </div>
 </template>

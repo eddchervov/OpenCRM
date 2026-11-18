@@ -16,6 +16,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
     }
 
     var isCreateMode = page.mode === 'create';
+    var messages = root.querySelector('.vehicle-edit-card').dataset;
 
     new Vue({
         el: '#vehicle-edit-page',
@@ -37,6 +38,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                     name: '',
                     vin: '',
                     registrationPlate: '',
+                    registrationCountryCode: 'RU',
                     bodyNumber: '',
                     engineNumber: '',
                     color: '',
@@ -62,21 +64,21 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                 isManualIdentity: false,
                 catalogModeAvailable: true,
                 vehicleKindOptions: [
-                    { value: 1, text: 'Легковой автомобиль' },
-                    { value: 2, text: 'Грузовая техника' },
-                    { value: 3, text: 'Мотоцикл' },
-                    { value: 4, text: 'Квадроцикл' },
-                    { value: 5, text: 'Багги / UTV' },
-                    { value: 6, text: 'Снегоход' },
-                    { value: 7, text: 'Гидроцикл' },
-                    { value: 8, text: 'Лодка / катер' },
-                    { value: 9, text: 'Спецтехника' },
-                    { value: 10, text: 'Прицеп' },
-                    { value: 99, text: 'Другая техника' }
+                    { value: 1, text: messages.kindPassenger },
+                    { value: 2, text: messages.kindTruck },
+                    { value: 3, text: messages.kindMotorcycle },
+                    { value: 4, text: messages.kindAtv },
+                    { value: 5, text: messages.kindUtv },
+                    { value: 6, text: messages.kindSnowmobile },
+                    { value: 7, text: messages.kindJetski },
+                    { value: 8, text: messages.kindBoat },
+                    { value: 9, text: messages.kindSpecial },
+                    { value: 10, text: messages.kindTrailer },
+                    { value: 99, text: messages.kindOther }
                 ],
                 mileageUnitOptions: [
-                    { value: 1, text: 'Километры' },
-                    { value: 2, text: 'Моточасы' }
+                    { value: 1, text: messages.mileageKilometers },
+                    { value: 2, text: messages.mileageEngineHours }
                 ],
                 manualIdentityDraft: {
                     brandName: null,
@@ -142,7 +144,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                         vm.organizationClients = [];
                         vm.organizationClientsEnabled = false;
                         if (!error.response || error.response.status !== 403) {
-                            vm.handleApiError(error, 'Не удалось загрузить клиентов.');
+                            vm.handleApiError(error, messages.errorClients);
                         }
 
                         return [];
@@ -180,7 +182,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                     .catch(function (error) {
                         vm.brands = [];
                         vm.applyCatalogModeAvailability();
-                        vm.handleApiError(error, 'Не удалось загрузить марки техники.');
+                        vm.handleApiError(error, messages.errorBrands);
                     });
             },
             getModelOptions: function (modelId) {
@@ -207,7 +209,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                         vm.models = response.data || [];
                     })
                     .catch(function (error) {
-                        vm.handleApiError(error, 'Не удалось загрузить модели техники.');
+                        vm.handleApiError(error, messages.errorModels);
                     })
                     .finally(function () {
                         vm.loadModels = false;
@@ -262,6 +264,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                 this.vehicle.name = data.name || '';
                 this.vehicle.vin = data.vin || '';
                 this.vehicle.registrationPlate = data.registrationPlate || '';
+                this.vehicle.registrationCountryCode = data.registrationCountryCode || '';
                 this.vehicle.bodyNumber = data.bodyNumber || '';
                 this.vehicle.engineNumber = data.engineNumber || '';
                 this.vehicle.color = data.color || '';
@@ -304,7 +307,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                         this.getModelOptions(this.vehicle.modelId);
                     }
                 } catch (error) {
-                    this.handleApiError(error, 'Не удалось загрузить карточку техники.');
+                    this.handleApiError(error, messages.errorCard);
                 } finally {
                     this.formLoad = false;
                 }
@@ -315,7 +318,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                     this.applyLockedOrganizationClient();
                     await this.getBrandOptions();
                 } catch (error) {
-                    this.handleApiError(error, 'Не удалось подготовить форму техники.');
+                    this.handleApiError(error, messages.errorPrepare);
                 } finally {
                     this.formLoad = false;
                 }
@@ -344,6 +347,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                     Name: this.vehicle.name,
                     Vin: this.vehicle.vin,
                     RegistrationPlate: this.vehicle.registrationPlate,
+                    RegistrationCountryCode: this.vehicle.registrationCountryCode,
                     AllowOtherRegistrationPlateFormat: this.vehicle.allowOtherRegistrationPlateFormat === true,
                     BodyNumber: this.vehicle.bodyNumber,
                     EngineNumber: this.vehicle.engineNumber,
@@ -385,8 +389,8 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
                     })
                     .catch(function (error) {
                         vm.handleApiError(error, vm.isCreateMode
-                            ? 'Не удалось создать технику.'
-                            : 'Не удалось сохранить изменения.');
+                            ? messages.errorCreate
+                            : messages.errorSave);
                     })
                     .finally(function () {
                         vm.saveInProgress = false;

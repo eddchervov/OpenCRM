@@ -39,6 +39,7 @@ internal static class MaintenanceReportModelAdapter
                 Mileage = maintenance.Mileage,
                 Comment = maintenance.Comment,
                 Price = maintenance.Price,
+                CurrencyCode = maintenance.CurrencyCode,
                 MaintenanceDetails = maintenance.MaintenanceDetails
                     .Select(detail => new MaintenanceDetail
                     {
@@ -83,6 +84,7 @@ internal static class MaintenanceReportModelAdapter
                 Mileage = maintenance.Mileage,
                 Comment = maintenance.Comment,
                 Price = (decimal?)maintenance.Price,
+                CurrencyCode = maintenance.CurrencyCode,
                 MaintenanceDetails = maintenance.MaintenanceDetails
                     .Select(detail => new WordMaintenanceDetail
                     {

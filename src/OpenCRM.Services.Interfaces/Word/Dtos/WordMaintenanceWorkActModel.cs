@@ -9,6 +9,9 @@ public class WordMaintenanceWorkActModel
     /// <summary> Код сценария обслуживания. </summary>
     public string ScenarioCode { get; set; } = string.Empty;
 
+    /// <summary> Код валюты денежных сумм документа. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Номер акта. </summary>
     public string ActNumber { get; set; } = string.Empty;
 

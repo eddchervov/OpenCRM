@@ -74,6 +74,8 @@ internal sealed class InventoryStockRepository(OpenCRMContext context, ICatalogM
         stock = new OrganizationMaterialStock
         {
             OrganizationId = organizationId,
+            CurrencyCode = await context.Organizations.Where(organization => organization.Id == organizationId)
+                .Select(organization => organization.CurrencyCode).SingleAsync(),
             CatalogItemId = catalogItemId,
             Name = name,
             Unit = unit,

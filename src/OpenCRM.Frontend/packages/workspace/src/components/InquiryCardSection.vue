@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLocalization, localeCultures } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { UiButton, UiCard, UiDatePicker, UiTimePicker, UiInput, UiLoader, UiPhoneInput, UiSelect, UiTextarea } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
@@ -9,6 +12,8 @@ import InquiryTimeline from './InquiryTimeline.vue'
 import InquiryNoteComposer from './InquiryNoteComposer.vue'
 import { createMemberSelectOptions } from '../utils/memberSelectOptions'
 import { formatInquiryTime, inquiryLocalTime, inquiryUtcTime, resolveInquiryTimeZone } from '../utils/inquiryTime'
+
+const { t, locale } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext; inquiryId: string; canCreate: boolean; canViewClients: boolean; canViewVehicles: boolean; timeZoneId: string | null }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -40,11 +45,11 @@ const organizationZone = computed(() => inquiry.value ? inquiry.value.timeZoneId
 const zone = computed(() => resolveInquiryTimeZone(organizationZone.value))
 const open = computed(() => !inquiry.value || !['closed', 'booked'].includes(inquiry.value.stageCode))
 const canManage = computed(() => (isNew.value ? props.canCreate : inquiry.value?.canManage) && props.context.workspaceAccess?.isReadOnly !== true)
-const memberOptions = computed(() => [{ value: '', label: 'Без ответственного' }, ...createMemberSelectOptions((props.context.organization.members ?? []).map(member => ({ ...member, value: member.userId })))])
-const clientOptions = computed(() => [{ value: '', label: 'Без связи с клиентом' }, ...clients.value.map(client => ({ value: client.id, label: [client.name, client.phone || client.details].filter(Boolean).join(' · ') }))])
+const memberOptions = computed(() => [{ value: '', label: t('inquiries.withoutAssignee') }, ...createMemberSelectOptions((props.context.organization.members ?? []).map(member => ({ ...member, value: member.userId })))])
+const clientOptions = computed(() => [{ value: '', label: t('inquiries.withoutClient') }, ...clients.value.map(client => ({ value: client.id, label: [client.name, client.phone || client.details].filter(Boolean).join(' · ') }))])
 const stageLabel = computed(() => inquiryStages.find(item => item.value === inquiry.value?.stageCode)?.label ?? '')
-const zoneLabel = computed(() => new Intl.DateTimeFormat('ru-RU', { timeZone: zone.value, timeZoneName: 'long' }).formatToParts(new Date()).find(part => part.type === 'timeZoneName')?.value ?? zone.value)
-const sourceLabel = computed(() => inquirySources.find(item => item.value === inquiry.value?.sourceCode)?.label || inquiry.value?.sourceCode || 'Не указан')
+const zoneLabel = computed(() => new Intl.DateTimeFormat(localeCultures[locale.value], { timeZone: zone.value, timeZoneName: 'long' }).formatToParts(new Date()).find(part => part.type === 'timeZoneName')?.value ?? zone.value)
+const sourceLabel = computed(() => inquirySources.find(item => item.value === inquiry.value?.sourceCode)?.label || inquiry.value?.sourceCode || t('inquiries.notSpecified'))
 
 function updateFromHistory(updated: Inquiry) {
   inquiry.value = updated
@@ -68,7 +73,7 @@ async function load() {
     inquiry.value = await loadInquiry(props.context.organization.id, props.inquiryId)
     fill()
     conflict.value = false
-  } catch (caught) { error.value = caught instanceof Error ? caught.message : 'Не удалось открыть обращение.' }
+  } catch (caught) { error.value = caught instanceof Error ? caught.message : t('inquiries.openError') }
   finally { loading.value = false }
 }
 
@@ -89,7 +94,7 @@ async function loadLinks() {
   linksError.value = ''
   try {
     if (props.canViewClients || inquiry.value?.canViewClients) clients.value = await loadClientOptions(props.context.organization.id)
-  } catch (caught) { linksError.value = caught instanceof Error ? caught.message : 'Не удалось загрузить связанные данные.' }
+  } catch (caught) { linksError.value = caught instanceof Error ? caught.message : t('inquiries.linksError') }
 }
 
 async function edit() { fill(); editing.value = true; await loadLinks() }
@@ -104,7 +109,7 @@ async function run(action: () => Promise<Inquiry>, after?: () => void) {
     after?.()
     emit('changed')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить обращение.'
+    error.value = caught instanceof Error ? caught.message : t('inquiries.saveError')
     conflict.value = caught instanceof InquiryRequestError && caught.status === 409
   } finally { busy.value = false }
 }
@@ -112,10 +117,10 @@ async function run(action: () => Promise<Inquiry>, after?: () => void) {
 async function save() {
   if (!formElement.value?.reportValidity()) return
   let nextActionAt: string | null
-  if (!!form.nextActionDate !== !!form.nextActionTime) { error.value = 'Укажите дату и время следующего действия.'; return }
+  if (!!form.nextActionDate !== !!form.nextActionTime) { error.value = t('inquiries.actionDateRequired'); return }
   try { nextActionAt = inquiryUtcTime(form.nextActionDate ? `${form.nextActionDate}T${form.nextActionTime}` : '', zone.value, inquiry.value?.nextActionAt) }
   catch (caught) { error.value = (caught as Error).message; return }
-  if (!!form.nextActionText.trim() !== !!nextActionAt) { error.value = 'Укажите действие и срок вместе.'; return }
+  if (!!form.nextActionText.trim() !== !!nextActionAt) { error.value = t('inquiries.actionPairRequired'); return }
   const { nextActionDate, nextActionTime, ...fields } = form
   const payload = { ...fields, organizationClientId: form.organizationClientId || null, vehicleId: form.vehicleId || null, responsibleUserId: form.responsibleUserId || null, nextActionText: form.nextActionText.trim() || null, nextActionAt, version: inquiry.value?.version }
   if (isNew.value) {
@@ -125,7 +130,7 @@ async function save() {
       const created = await saveInquiry(props.context.organization.id, null, payload)
       emit('changed')
       window.location.hash = `#inquiries/${created.id}`
-    } catch (caught) { error.value = caught instanceof Error ? caught.message : 'Не удалось создать обращение.' }
+    } catch (caught) { error.value = caught instanceof Error ? caught.message : t('inquiries.createError') }
     finally { busy.value = false }
     return
   }
@@ -143,7 +148,7 @@ async function loadRecentHistory() {
     const result = await loadInquiryHistory(props.context.organization.id, inquiry.value.id, 1, active.signal, 3)
     if (!active.signal.aborted) recentHistory.value = result
   } catch (caught) {
-    if (!active.signal.aborted) historyError.value = caught instanceof Error ? caught.message : 'Не удалось загрузить последние события.'
+    if (!active.signal.aborted) historyError.value = caught instanceof Error ? caught.message : t('inquiries.recentError')
   } finally {
     if (recentRequest === active) historyLoading.value = false
   }
@@ -167,97 +172,97 @@ onMounted(async () => { if (!isNew.value) await load(); else await loadLinks() }
 </script>
 
 <template>
-  <UiCard page :title="isNew ? 'Новое обращение' : inquiry?.contactName || 'Обращение'">
+  <UiCard page :title="isNew ? t('inquiries.new') : inquiry?.contactName || t('inquiries.inquiry')">
     <div class="inquiry-detail">
       <UiLoader v-if="loading" />
       <p v-if="error" class="inquiry-detail__error" role="alert">{{ error }}</p>
-      <div v-if="conflict" class="inquiry-detail__conflict"><span>Данные изменились. Черновик сохранён в форме.</span><UiButton variant="secondary" @click="refreshAfterConflict" :disabled="working">Загрузить актуальные данные</UiButton></div>
+      <div v-if="conflict" class="inquiry-detail__conflict"><span>{{ t('inquiries.conflict') }}</span><UiButton variant="secondary" @click="refreshAfterConflict" :disabled="working">{{ t('inquiries.refresh') }}</UiButton></div>
       <form v-if="editing" ref="formElement" class="inquiry-detail__editor" @submit.prevent="save">
         <fieldset :disabled="working || !canManage">
           <div class="inquiry-detail__columns">
             <div class="inquiry-detail__main">
               <section class="inquiry-panel">
-                <header class="inquiry-panel__header"><h3>Контакт и запрос</h3></header>
+                <header class="inquiry-panel__header"><h3>{{ t('inquiries.contactAndRequest') }}</h3></header>
                 <div class="inquiry-detail__fields">
-                  <UiInput v-model="form.contactName" label="Контакт" required :maxlength="160" />
-                  <UiPhoneInput v-model="form.contactPhone" label="Телефон" />
-                  <UiTextarea v-model="form.interestText" label="Что интересует клиента" required :maxlength="4000" class="inquiry-detail__wide" />
-                  <UiInput v-model="form.vehicleDescription" label="Автомобиль со слов клиента" :maxlength="500" />
-                  <UiSelect v-model="form.sourceCode" label="Источник" :options="inquirySources" />
+                  <UiInput v-model="form.contactName" :label="t('inquiries.contact')" required :maxlength="160" />
+                  <UiPhoneInput v-model="form.contactPhone" :label="t('inquiries.phone')" />
+                  <UiTextarea v-model="form.interestText" :label="t('inquiries.interest')" required :maxlength="4000" class="inquiry-detail__wide" />
+                  <UiInput v-model="form.vehicleDescription" :label="t('inquiries.vehicleDescription')" :maxlength="500" />
+                  <UiSelect v-model="form.sourceCode" :label="t('inquiries.source')" :options="inquirySources" />
                 </div>
               </section>
               <details v-if="canViewClients || inquiry?.canViewClients || canViewVehicles || inquiry?.canViewVehicles" class="inquiry-panel inquiry-links" :open="linksOpen" @toggle="linksOpen = ($event.target as HTMLDetailsElement).open">
-                <summary>Связи с клиентом и автомобилем в базе</summary>
+                <summary>{{ t('inquiries.links') }}</summary>
                 <div class="inquiry-detail__fields">
-                  <UiSelect v-if="canViewClients || inquiry?.canViewClients" v-model="form.organizationClientId" label="Клиент" :options="clientOptions" class="inquiry-detail__wide" @update:model-value="form.vehicleId = ''" />
+                  <UiSelect v-if="canViewClients || inquiry?.canViewClients" v-model="form.organizationClientId" :label="t('inquiries.client')" :options="clientOptions" class="inquiry-detail__wide" @update:model-value="form.vehicleId = ''" />
                   <InquiryVehiclePicker v-if="canViewVehicles || inquiry?.canViewVehicles" v-model="form.vehicleId" :organization-id="context.organization.id" :client-id="form.organizationClientId" :disabled="working || !canManage" class="inquiry-detail__wide" />
                 </div>
               </details>
               <p v-if="linksError" role="alert" class="inquiry-detail__error">{{ linksError }}</p>
             </div>
             <section class="inquiry-panel inquiry-panel--work">
-              <header class="inquiry-panel__header"><h3>Следующее действие</h3></header>
+              <header class="inquiry-panel__header"><h3>{{ t('inquiries.nextAction') }}</h3></header>
               <div class="inquiry-detail__work-fields">
-                <UiSelect v-model="form.responsibleUserId" label="Ответственный" :options="memberOptions" />
-                <UiInput v-model="form.nextActionText" label="Что сделать" placeholder="Например, согласовать стоимость" :maxlength="500" />
-                <div class="inquiry-detail__deadline"><UiDatePicker v-model="form.nextActionDate" label="Дата" :disabled="working || !canManage" :required="!!form.nextActionText.trim()" /><UiTimePicker v-model="form.nextActionTime" label="Время" placeholder="ЧЧ:ММ" align="end" :disabled="working || !canManage" :required="!!form.nextActionText.trim()" /></div>
-                <small class="inquiry-panel__meta">{{ organizationZone ? 'Время организации' : 'Ваше местное время' }} · {{ zoneLabel }}</small>
+                <UiSelect v-model="form.responsibleUserId" :label="t('inquiries.responsible')" :options="memberOptions" />
+                <UiInput v-model="form.nextActionText" :label="t('inquiries.whatToDo')" :placeholder="t('inquiries.actionExample')" :maxlength="500" />
+                <div class="inquiry-detail__deadline"><UiDatePicker v-model="form.nextActionDate" :label="t('inquiries.date')" :disabled="working || !canManage" :required="!!form.nextActionText.trim()" /><UiTimePicker v-model="form.nextActionTime" :label="t('inquiries.time')" :placeholder="t('inquiries.timePlaceholder')" align="end" :disabled="working || !canManage" :required="!!form.nextActionText.trim()" /></div>
+                <small class="inquiry-panel__meta">{{ organizationZone ? t('inquiries.organizationTime') : t('inquiries.localTime') }} · {{ zoneLabel }}</small>
               </div>
             </section>
           </div>
         </fieldset>
-        <footer class="inquiry-detail__editor-actions"><UiButton v-if="canManage" type="submit" :disabled="working">{{ working ? 'Сохраняем…' : isNew ? 'Создать обращение' : 'Сохранить изменения' }}</UiButton><UiButton v-if="!isNew" type="button" variant="secondary" :disabled="working" @click="editing = false">Отмена</UiButton><UiButton v-else variant="secondary" href="#inquiries">Отмена</UiButton></footer>
+        <footer class="inquiry-detail__editor-actions"><UiButton v-if="canManage" type="submit" :disabled="working">{{ working ? t('inquiries.saving') : isNew ? t('inquiries.createInquiry') : t('inquiries.saveChanges') }}</UiButton><UiButton v-if="!isNew" type="button" variant="secondary" :disabled="working" @click="editing = false">{{ t('inquiries.cancel') }}</UiButton><UiButton v-else variant="secondary" href="#inquiries">{{ t('inquiries.cancel') }}</UiButton></footer>
       </form>
       <template v-else-if="inquiry">
         <div class="inquiry-detail__toolbar">
           <span class="inquiry-detail__stage" :class="'inquiry-detail__stage--' + inquiry.stageCode"><span aria-hidden="true"></span>{{ stageLabel }}</span>
           <div class="inquiry-detail__actions">
-            <UiButton variant="secondary" :disabled="working" @click="historyOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a9 9 0 1 1-1 8M4 3v5h5M12 7v5l3 2" /></svg>История и заметки</UiButton>
-            <UiButton v-if="canManage && open" variant="secondary" :disabled="working" @click="edit">Изменить</UiButton>
-            <UiButton v-if="inquiry.canCreateBooking && open" :href="'#maintenance/new?inquiry=' + inquiry.id" :disabled="working">Создать запись</UiButton>
-            <UiButton v-if="inquiry.maintenanceId && inquiry.canViewLinkedMaintenance" :href="'#maintenance/' + inquiry.maintenanceId">Открыть запись</UiButton>
+            <UiButton variant="secondary" :disabled="working" @click="historyOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a9 9 0 1 1-1 8M4 3v5h5M12 7v5l3 2" /></svg>{{ t('inquiries.historyNotes') }}</UiButton>
+            <UiButton v-if="canManage && open" variant="secondary" :disabled="working" @click="edit">{{ t('inquiries.edit') }}</UiButton>
+            <UiButton v-if="inquiry.canCreateBooking && open" :href="'#maintenance/new?inquiry=' + inquiry.id" :disabled="working">{{ t('inquiries.createBooking') }}</UiButton>
+            <UiButton v-if="inquiry.maintenanceId && inquiry.canViewLinkedMaintenance" :href="'#maintenance/' + inquiry.maintenanceId">{{ t('inquiries.openBooking') }}</UiButton>
           </div>
         </div>
         <div class="inquiry-detail__columns" :class="{ 'inquiry-detail__columns--complete': !open }">
           <div class="inquiry-detail__main">
             <section class="inquiry-panel inquiry-request">
-              <header class="inquiry-panel__header ui-form-header"><h3>Запрос клиента</h3><span class="inquiry-panel__meta">Источник · {{ sourceLabel }}</span></header>
+              <header class="inquiry-panel__header ui-form-header"><h3>{{ t('inquiries.clientRequest') }}</h3><span class="inquiry-panel__meta">{{ t('inquiries.source') }} · {{ sourceLabel }}</span></header>
               <div class="inquiry-request__body">
                 <p class="inquiry-request__text">{{ inquiry.interestText }}</p>
                 <dl class="inquiry-detail__summary">
-                  <div><dt>Телефон</dt><dd><a v-if="inquiry.contactPhone" :href="'tel:' + inquiry.contactPhone">{{ inquiry.contactPhone }}</a><span v-else class="inquiry-detail__missing">—</span></dd></div>
-                  <div><dt>Автомобиль</dt><dd><a v-if="inquiry.vehicleId && inquiry.canViewLinkedVehicle" :href="'#vehicles/' + inquiry.vehicleId">{{ inquiry.vehicleName || 'Карточка автомобиля' }}</a><span v-else :class="{ 'inquiry-detail__missing': !inquiry.vehicleDescription }">{{ inquiry.vehicleDescription || '—' }}</span><small v-if="inquiry.vehicleId && inquiry.vehicleDescription">{{ inquiry.vehicleDescription }}</small></dd></div>
-                  <div v-if="inquiry.organizationClientId && inquiry.canViewLinkedClient"><dt>Клиент в базе</dt><dd><a :href="'#clients/' + inquiry.organizationClientId">{{ inquiry.organizationClientName || 'Карточка клиента' }}</a></dd></div>
+                  <div><dt>{{ t('inquiries.phone') }}</dt><dd><a v-if="inquiry.contactPhone" :href="'tel:' + inquiry.contactPhone">{{ inquiry.contactPhone }}</a><span v-else class="inquiry-detail__missing">—</span></dd></div>
+                  <div><dt>{{ t('inquiries.vehicle') }}</dt><dd><a v-if="inquiry.vehicleId && inquiry.canViewLinkedVehicle" :href="'#vehicles/' + inquiry.vehicleId">{{ inquiry.vehicleName || t('inquiries.vehicleCard') }}</a><span v-else :class="{ 'inquiry-detail__missing': !inquiry.vehicleDescription }">{{ inquiry.vehicleDescription || '—' }}</span><small v-if="inquiry.vehicleId && inquiry.vehicleDescription">{{ inquiry.vehicleDescription }}</small></dd></div>
+                  <div v-if="inquiry.organizationClientId && inquiry.canViewLinkedClient"><dt>{{ t('inquiries.clientInDatabase') }}</dt><dd><a :href="'#clients/' + inquiry.organizationClientId">{{ inquiry.organizationClientName || t('inquiries.clientCard') }}</a></dd></div>
                 </dl>
-                <div v-if="inquiry.closeReason" class="inquiry-request__closed"><span>Причина закрытия</span><p>{{ inquiry.closeReason }}</p></div>
+                <div v-if="inquiry.closeReason" class="inquiry-request__closed"><span>{{ t('inquiries.closeReason') }}</span><p>{{ inquiry.closeReason }}</p></div>
               </div>
             </section>
           </div>
           <aside v-if="open" class="inquiry-panel inquiry-panel--work">
-            <header class="inquiry-panel__header"><h3>Следующее действие</h3><button v-if="canManage && !inquiry.nextActionText" type="button" class="inquiry-detail__text-button" :disabled="working" @click="edit">Назначить</button></header>
+            <header class="inquiry-panel__header"><h3>{{ t('inquiries.nextAction') }}</h3><button v-if="canManage && !inquiry.nextActionText" type="button" class="inquiry-detail__text-button" :disabled="working" @click="edit">{{ t('inquiries.assign') }}</button></header>
             <div class="inquiry-next">
-              <strong :class="{ 'inquiry-detail__missing': !inquiry.nextActionText }">{{ inquiry.nextActionText || 'Не назначено' }}</strong>
+              <strong :class="{ 'inquiry-detail__missing': !inquiry.nextActionText }">{{ inquiry.nextActionText || t('inquiries.notAssigned') }}</strong>
               <p v-if="inquiry.nextActionAt" class="inquiry-next__date"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>{{ formatInquiryTime(inquiry.nextActionAt, zone) }}<span :title="zone">{{ zoneLabel }}</span></p>
-              <div class="inquiry-next__owner"><span>Ответственный</span><strong>{{ inquiry.responsibleUserName || '—' }}</strong></div>
-              <UiButton v-if="canManage && inquiry.nextActionText" variant="secondary" :disabled="working" @click="run(() => completeInquiryAction(context.organization.id, inquiryId, inquiry!.version))"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>Отметить выполненным</UiButton>
+              <div class="inquiry-next__owner"><span>{{ t('inquiries.responsible') }}</span><strong>{{ inquiry.responsibleUserName || '—' }}</strong></div>
+              <UiButton v-if="canManage && inquiry.nextActionText" variant="secondary" :disabled="working" @click="run(() => completeInquiryAction(context.organization.id, inquiryId, inquiry!.version))"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>{{ t('inquiries.complete') }}</UiButton>
             </div>
             <template v-if="canManage">
               <form class="inquiry-stage-form" @submit.prevent="applyStage">
-                <UiSelect v-model="stage" label="Перевести на этап" :options="inquiryStages.slice(0, 4)" :disabled="working" />
-                <UiTextarea v-if="stage !== inquiry.stageCode || stageComment" v-model="stageComment" label="Комментарий к переходу" placeholder="Почему меняем этап" :rows="3" :maxlength="1000" :disabled="working" />
-                <UiButton type="submit" variant="secondary" :disabled="working || stage === inquiry.stageCode">Применить</UiButton>
+                <UiSelect v-model="stage" :label="t('inquiries.moveStage')" :options="inquiryStages.slice(0, 4)" :disabled="working" />
+                <UiTextarea v-if="stage !== inquiry.stageCode || stageComment" v-model="stageComment" :label="t('inquiries.transitionComment')" :placeholder="t('inquiries.transitionReason')" :rows="3" :maxlength="1000" :disabled="working" />
+                <UiButton type="submit" variant="secondary" :disabled="working || stage === inquiry.stageCode">{{ t('inquiries.apply') }}</UiButton>
               </form>
               <div class="inquiry-close">
-                <button v-if="!closing" type="button" class="inquiry-detail__text-button" :disabled="working" @click="closing = true">Закрыть обращение</button>
-                <form v-else @submit.prevent="run(() => closeInquiry(context.organization.id, inquiryId, inquiry!.version, closeReason), () => { closing = false })"><UiTextarea v-model="closeReason" label="Причина закрытия" required :maxlength="1000" :disabled="working" /><div><UiButton type="submit" variant="secondary" :disabled="working || !closeReason.trim()">Подтвердить</UiButton><UiButton variant="ghost" :disabled="working" @click="closing = false">Отмена</UiButton></div></form>
+                <button v-if="!closing" type="button" class="inquiry-detail__text-button" :disabled="working" @click="closing = true">{{ t('inquiries.closeInquiry') }}</button>
+                <form v-else @submit.prevent="run(() => closeInquiry(context.organization.id, inquiryId, inquiry!.version, closeReason), () => { closing = false })"><UiTextarea v-model="closeReason" :label="t('inquiries.closeReason')" required :maxlength="1000" :disabled="working" /><div><UiButton type="submit" variant="secondary" :disabled="working || !closeReason.trim()">{{ t('inquiries.confirm') }}</UiButton><UiButton variant="ghost" :disabled="working" @click="closing = false">{{ t('inquiries.cancel') }}</UiButton></div></form>
               </div>
             </template>
           </aside>
         </div>
-        <section class="inquiry-panel inquiry-activity" aria-label="Заметки и история">
-          <header class="inquiry-panel__header"><h3>Заметки и история</h3><UiButton variant="ghost" :disabled="working" @click="historyOpen = true">Вся история<span v-if="recentHistory" class="inquiry-activity__count">{{ recentHistory.totalCount }}</span></UiButton></header>
+        <section class="inquiry-panel inquiry-activity" :aria-label="t('inquiries.notesHistory')">
+          <header class="inquiry-panel__header"><h3>{{ t('inquiries.notesHistory') }}</h3><UiButton variant="ghost" :disabled="working" @click="historyOpen = true">{{ t('inquiries.allHistory') }}<span v-if="recentHistory" class="inquiry-activity__count">{{ recentHistory.totalCount }}</span></UiButton></header>
           <InquiryNoteComposer :context="context" :inquiry="inquiry" :disabled="working" @busy="notesBusy = $event" @updated="updateFromHistory" />
-          <div v-if="historyError" class="inquiry-detail__error" role="alert"><p>{{ historyError }}</p><UiButton variant="secondary" @click="loadRecentHistory">Повторить</UiButton></div>
+          <div v-if="historyError" class="inquiry-detail__error" role="alert"><p>{{ historyError }}</p><UiButton variant="secondary" @click="loadRecentHistory">{{ t('inquiries.retry') }}</UiButton></div>
           <UiLoader v-if="historyLoading" />
           <InquiryTimeline v-else-if="recentHistory && !historyError" :events="recentHistory.items" :time-zone-id="inquiry.timeZoneId" :members="context.organization.members" compact />
         </section>

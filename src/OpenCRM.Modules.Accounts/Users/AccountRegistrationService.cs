@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using System.Globalization;
 using OpenCRM.Domain;
 using OpenCRM.Domain.Identity;
 using OpenCRM.Infrastructure.Data;
@@ -31,6 +32,8 @@ public sealed class AccountRegistrationService(
                 UserName = request.Email,
                 OriginalEmail = request.Email,
                 DatetimeCreation = DateTime.UtcNow,
+                PreferredLanguage = string.IsNullOrEmpty(CultureInfo.CurrentUICulture.Name) ? "ru" : CultureInfo.CurrentUICulture.Name,
+                PreferredFormattingCulture = string.IsNullOrEmpty(CultureInfo.CurrentCulture.Name) ? "ru-RU" : CultureInfo.CurrentCulture.Name,
                 EmailConfirmed = request.Password == null
             };
 

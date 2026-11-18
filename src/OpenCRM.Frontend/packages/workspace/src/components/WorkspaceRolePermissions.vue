@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../permissionMessages'
+import '../employeeMessages'
 import { computed, ref } from 'vue'
 import { UiButton, UiInput } from '@opencrm/ui'
 import type { WorkspaceRolePermissionMatrix } from '../api/workspaceAdmin'
+
+const { t, te, locale } = useLocalization()
 
 const props = defineProps<{
   preferredRoleCode?: string
@@ -31,16 +36,29 @@ const changedCount = computed(() => selectedRole.value?.permissions.filter(permi
 const enabledCount = computed(() => selectedRole.value?.permissions.filter(permission => enabledCodes.value.has(permission.code)).length ?? 0)
 const groups = computed(() => {
   const result = new Map<string, WorkspaceRolePermissionMatrix['permissions']>()
-  const query = search.value.trim().toLocaleLowerCase('ru')
-  for (const permission of selectedRole.value?.permissions ?? []) {
+  const query = search.value.trim().toLocaleLowerCase(locale.value)
+  for (const original of selectedRole.value?.permissions ?? []) {
+    const permission = { ...original, name: permissionText(original, 'name'), description: permissionText(original, 'description'), groupName: permissionText(original, 'group') }
     if (query && ![permission.name, permission.description, permission.groupName]
-      .some(value => value.toLocaleLowerCase('ru').includes(query))) continue
-    const name = permission.groupName || 'Общие права'
+      .some(value => value.toLocaleLowerCase(locale.value).includes(query))) continue
+    const name = permission.groupName || t('rolePermissions.general')
     if (!result.has(name)) result.set(name, [])
     result.get(name)!.push(permission)
   }
   return Array.from(result, ([name, permissions]) => ({ name, permissions }))
 })
+
+function permissionText(permission: WorkspaceRolePermissionMatrix['permissions'][number], field: 'name' | 'description' | 'group') {
+  const key = `rolePermissions.entries.${permission.code.replaceAll('.', '_')}.${field}`
+
+  return te(key) ? t(key) : field === 'group' ? permission.groupName : permission[field]
+}
+
+function roleName(role: WorkspaceRolePermissionMatrix) {
+  const key = `employees.roles.${role.roleCode}`
+
+  return te(key) ? t(key) : role.roleName
+}
 
 function selectRole(code: string) {
   if (props.previewOnly || props.isSaving || props.isEditing) return
@@ -63,16 +81,16 @@ function save() {
 <template>
   <section class="role-permissions" aria-labelledby="role-permissions-title">
     <div class="role-permissions__heading ui-form-header">
-      <div><h3 id="role-permissions-title">Права ролей</h3><p>Настройки применяются ко всем сотрудникам с выбранной ролью.</p></div>
+      <div><h3 id="role-permissions-title">{{ t('rolePermissions.title') }}</h3><p>{{ t('rolePermissions.hint') }}</p></div>
     </div>
     <div v-if="previewOnly" class="role-permissions__layout" aria-hidden="true">
-      <nav class="role-permissions__roles" aria-label="Выбор роли">
+      <nav class="role-permissions__roles" :aria-label="t('rolePermissions.chooseRole')">
         <button v-for="index in 4" :key="index" type="button" disabled><i class="role-permissions__preview-bar"></i><i class="role-permissions__preview-bar"></i></button>
       </nav>
       <div class="role-permissions__content">
-        <div class="role-permissions__toolbar ui-section-header"><h4>Права роли</h4><UiButton variant="secondary" disabled>Настроить права</UiButton></div>
-        <UiInput v-model="search" aria-label="Поиск прав" placeholder="Найти право или раздел…" disabled />
-        <section v-for="group in ['Записи', 'Клиенты', 'Автомобили']" :key="group" class="role-permissions__group">
+        <div class="role-permissions__toolbar ui-section-header"><h4>{{ t('rolePermissions.rolePermissions') }}</h4><UiButton variant="secondary" disabled>{{ t('rolePermissions.configure') }}</UiButton></div>
+        <UiInput v-model="search" :aria-label="t('rolePermissions.search')" :placeholder="t('rolePermissions.searchPlaceholder')" disabled />
+        <section v-for="group in [t('rolePermissions.bookings'), t('rolePermissions.clients'), t('rolePermissions.vehicles')]" :key="group" class="role-permissions__group">
           <h5 class="ui-section-header">{{ group }}</h5>
           <div v-for="index in 3" :key="index" class="role-permissions__row">
             <span class="role-permissions__description"><i class="role-permissions__preview-bar"></i><i class="role-permissions__preview-bar"></i></span>
@@ -81,43 +99,43 @@ function save() {
         </section>
       </div>
     </div>
-    <p v-else-if="!roles.length" class="role-permissions__empty">Роли не найдены.</p>
+    <p v-else-if="!roles.length" class="role-permissions__empty">{{ t('rolePermissions.noRoles') }}</p>
     <div v-else class="role-permissions__layout">
-      <nav class="role-permissions__roles" aria-label="Выбор роли">
+      <nav class="role-permissions__roles" :aria-label="t('rolePermissions.chooseRole')">
         <button v-for="role in roles" :key="role.roleCode" type="button"
           :class="{ 'is-selected': selectedRole?.roleCode === role.roleCode }"
           :aria-pressed="selectedRole?.roleCode === role.roleCode"
           :disabled="isSaving || (isEditing && selectedRole?.roleCode !== role.roleCode)"
           @click="selectRole(role.roleCode)">
-          <strong>{{ role.roleName }}</strong>
-          <span>{{ role.permissions.filter(permission => permission.isEnabled).length }} из {{ role.permissions.length }} прав</span>
+          <strong>{{ roleName(role) }}</strong>
+          <span>{{ t('rolePermissions.count', { count: role.permissions.filter(permission => permission.isEnabled).length, total: role.permissions.length }) }}</span>
         </button>
-        <p v-if="isEditing" class="role-permissions__hint">Сохраните или отмените изменения перед выбором другой роли.</p>
+        <p v-if="isEditing" class="role-permissions__hint">{{ t('rolePermissions.editingHint') }}</p>
       </nav>
       <div v-if="selectedRole" class="role-permissions__content">
         <div class="role-permissions__toolbar ui-section-header">
-          <div><h4>{{ selectedRole.roleName }}</h4><span>{{ enabledCount }} из {{ selectedRole.permissions.length }} прав включено</span></div>
-          <UiButton v-if="canEdit && !isEditing" variant="secondary" :disabled="isSaving" @click="emit('startEdit')">Настроить права</UiButton>
-          <span v-else-if="!selectedRole.canEdit" class="role-permissions__badge">Системная роль</span>
-          <span v-else-if="!canManage" class="role-permissions__badge">Только просмотр</span>
+          <div><h4>{{ roleName(selectedRole) }}</h4><span>{{ t('rolePermissions.enabledCount', { count: enabledCount, total: selectedRole.permissions.length }) }}</span></div>
+          <UiButton v-if="canEdit && !isEditing" variant="secondary" :disabled="isSaving" @click="emit('startEdit')">{{ t('rolePermissions.configure') }}</UiButton>
+          <span v-else-if="!selectedRole.canEdit" class="role-permissions__badge">{{ t('rolePermissions.systemRole') }}</span>
+          <span v-else-if="!canManage" class="role-permissions__badge">{{ t('rolePermissions.readOnly') }}</span>
         </div>
-        <UiInput v-model="search" aria-label="Поиск прав" placeholder="Найти право или раздел…" />
-        <p v-if="!groups.length" class="role-permissions__empty">По вашему запросу ничего не найдено.</p>
+        <UiInput v-model="search" :aria-label="t('rolePermissions.search')" :placeholder="t('rolePermissions.searchPlaceholder')" />
+        <p v-if="!groups.length" class="role-permissions__empty">{{ t('rolePermissions.noResults') }}</p>
         <section v-for="group in groups" :key="group.name" class="role-permissions__group">
           <h5 class="ui-section-header">{{ group.name }} <span>{{ group.permissions.filter(permission => enabledCodes.has(permission.code)).length }} / {{ group.permissions.length }}</span></h5>
           <div v-for="permission in group.permissions" :key="permission.code" class="role-permissions__row">
             <label v-if="isEditing && canEdit" class="role-permissions__check">
               <input type="checkbox" :checked="enabledCodes.has(permission.code)" :disabled="isSaving || permission.code === 'workspace.view'"
                 @change="toggle(permission.code, ($event.target as HTMLInputElement).checked)" />
-              <span><strong>{{ permission.name }}</strong><small v-if="permission.description">{{ permission.description }}</small><small v-if="permission.code === 'workspace.view'">Обязательное право для входа в рабочее пространство</small></span>
+              <span><strong>{{ permission.name }}</strong><small v-if="permission.description">{{ permission.description }}</small><small v-if="permission.code === 'workspace.view'">{{ t('rolePermissions.required') }}</small></span>
             </label>
             <div v-else class="role-permissions__description"><strong>{{ permission.name }}</strong><small v-if="permission.description">{{ permission.description }}</small></div>
-            <span v-if="!isEditing || !canEdit" class="role-permissions__status" :class="{ 'is-enabled': enabledCodes.has(permission.code) }">{{ enabledCodes.has(permission.code) ? 'Разрешено' : 'Нет доступа' }}</span>
+            <span v-if="!isEditing || !canEdit" class="role-permissions__status" :class="{ 'is-enabled': enabledCodes.has(permission.code) }">{{ enabledCodes.has(permission.code) ? t('rolePermissions.allowed') : t('rolePermissions.denied') }}</span>
           </div>
         </section>
         <footer v-if="isEditing && canEdit" class="role-permissions__footer">
-          <span>{{ changedCount ? 'Изменено прав: ' + changedCount : 'Нет изменений' }}</span>
-          <div><UiButton variant="secondary" :disabled="isSaving" @click="emit('cancelEdit')">Отмена</UiButton><UiButton :disabled="isSaving || !changedCount" @click="save">{{ isSaving ? 'Сохраняем…' : 'Сохранить права' }}</UiButton></div>
+          <span>{{ changedCount ? t('rolePermissions.changed', { count: changedCount }) : t('rolePermissions.noChanges') }}</span>
+          <div><UiButton variant="secondary" :disabled="isSaving" @click="emit('cancelEdit')">{{ t('rolePermissions.cancel') }}</UiButton><UiButton :disabled="isSaving || !changedCount" @click="save">{{ isSaving ? t('rolePermissions.saving') : t('rolePermissions.save') }}</UiButton></div>
         </footer>
       </div>
     </div>

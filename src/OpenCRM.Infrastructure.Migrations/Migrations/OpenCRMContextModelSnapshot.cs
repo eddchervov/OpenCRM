@@ -3,8 +3,8 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using OpenCRM.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using OpenCRM.Infrastructure.Data;
 
 #nullable disable
 
@@ -1521,6 +1521,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
+                    b.Property<string>("PersonalCurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
+
                     b.Property<bool>("PersonalDataProcessingConsentAccepted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1537,6 +1544,14 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("PreferredFormattingCulture")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("PreferredLanguage")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<string>("SMSCode")
                         .HasColumnType("text");
@@ -1599,6 +1614,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
 
                     b.Property<DateTime?>("CompletedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
@@ -1864,6 +1886,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(260)
@@ -1944,6 +1973,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                         .HasColumnType("character varying(250)")
                         .UseCollation("C");
 
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
+
                     b.Property<decimal>("DebtAmount")
                         .HasPrecision(28, 2)
                         .HasColumnType("numeric(28,2)");
@@ -1965,10 +2001,10 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                         .HasPrecision(28, 2)
                         .HasColumnType("numeric(28,2)");
 
-                    b.Property<bool>("IsVisible")
+                    b.Property<bool>("IsAccruable")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsAccruable")
+                    b.Property<bool>("IsVisible")
                         .HasColumnType("boolean");
 
                     b.Property<decimal>("LaborCostAmount")
@@ -2181,6 +2217,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
 
                     b.Property<bool>("IsOpeningBalance")
                         .HasColumnType("boolean");
@@ -2730,6 +2773,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
 
                     b.Property<DateTime?>("DeletionDate")
                         .HasColumnType("timestamp with time zone");
@@ -4338,6 +4388,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
+
                     b.Property<Guid?>("EmployeeId")
                         .HasColumnType("uuid");
 
@@ -4435,6 +4492,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
 
                     b.Property<decimal>("InventoryValue")
                         .HasPrecision(18, 2)
@@ -4726,6 +4790,13 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
 
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
@@ -5068,6 +5139,12 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                     b.Property<int>("UtcHour")
                         .HasColumnType("integer");
 
+                    b.Property<string>("CurrencyCode")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("RUB");
+
                     b.Property<string>("NameHash")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
@@ -5091,7 +5168,7 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                         .HasColumnType("text")
                         .UseCollation("C");
 
-                    b.HasKey("OrganizationId", "UtcHour", "NameHash");
+                    b.HasKey("OrganizationId", "UtcHour", "CurrencyCode", "NameHash");
 
                     b.ToTable("OrganizationServiceHourlyTotals", null, t =>
                         {
@@ -7055,6 +7132,10 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
                     b.Property<string>("RegistrationCertificate")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RegistrationCountryCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("RegistrationPlate")
                         .HasMaxLength(24)

@@ -117,6 +117,10 @@ internal sealed class MaintenanceVisitReminderService(
                 : statuses.Contains("skipped") ? "skipped" : status;
         }
 
+        var statusDetailCode = status == "disabled"
+            ? organization.VisitReminderHoursBefore.HasValue ? "disabled_record" : "disabled_organization"
+            : status;
+
         var text = status switch
         {
             "disabled" => organization.VisitReminderHoursBefore.HasValue
@@ -141,7 +145,9 @@ internal sealed class MaintenanceVisitReminderService(
             status, text, organization.VisitReminderChannelCode,
             canPreview ? VisitReminderContent.Build(maintenance, organization, maintenance.Vehicle.OrganizationClient?.Name) : string.Empty,
             workspaceAccess?.IsReadOnly == false
-                && await permissions.HasPermissionAsync(userId, organizationId, OrganizationPermissionCodes.MaintenanceEdit));
+                && await permissions.HasPermissionAsync(userId, organizationId, OrganizationPermissionCodes.MaintenanceEdit),
+            organization.ShiftTimeZoneId,
+            statusDetailCode);
     }
 
     public async Task<MaintenanceVisitReminderDto> SetEnabledAsync(string userId, Guid organizationId, Guid maintenanceId, bool enabled, uint version)

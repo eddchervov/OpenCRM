@@ -1,4 +1,6 @@
 import { ApiError } from './ApiError'
+import { translate } from '@opencrm/ui/i18n'
+import '../adminApiMessages'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 const safeMethods = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE'])
@@ -14,12 +16,12 @@ async function getAntiforgeryToken(): Promise<string> {
   })
     .then(async response => {
       if (!response.ok) {
-        throw new ApiError(response.status, 'Не удалось получить защитный токен запроса.')
+        throw new ApiError(response.status, translate('adminApi.tokenError'))
       }
 
       const payload = await response.json() as { requestToken?: string }
       if (!payload.requestToken) {
-        throw new Error('Сервер не вернул защитный токен запроса.')
+        throw new Error(translate('adminApi.tokenMissing'))
       }
 
       return payload.requestToken
@@ -54,7 +56,7 @@ export async function request<TResponse>(
     const payload = await response.json().catch(() => null) as { message?: string; code?: string } | null
     throw new ApiError(
       response.status,
-      payload?.message ?? `API request failed with status ${response.status}.`,
+      payload?.message ?? translate('adminApi.requestError', { status: response.status }),
       payload?.code
     )
   }

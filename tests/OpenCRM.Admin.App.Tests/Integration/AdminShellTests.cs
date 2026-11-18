@@ -9,13 +9,36 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
-public sealed class AdminShellTests
+[Collection("Admin localization")]
+public sealed class AdminShellTests : IDisposable
 {
+    private readonly string _preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-admin-shell-language-{Guid.NewGuid():N}.txt");
+    private readonly IDisposable _preferenceScope;
+    private readonly string _previousLanguage;
+
+    public AdminShellTests()
+    {
+        this._preferenceScope = AdminLocalization.Instance.UsePreferencePath(this._preferencePath);
+        this._previousLanguage = AdminLocalization.Instance.Language;
+        AdminLocalization.Instance.Language = "ru";
+    }
+
+    public void Dispose()
+    {
+        AdminLocalization.Instance.Language = this._previousLanguage;
+        this._preferenceScope.Dispose();
+        if (File.Exists(this._preferencePath))
+        {
+            File.Delete(this._preferencePath);
+        }
+    }
+
     [AvaloniaFact]
     public void LoginScreenMasksPasswordAndDoesNotExposeProfile()
     {
@@ -62,6 +85,12 @@ public sealed class AdminShellTests
             Assert.Equal("contact@example.invalid", AdminShellTests.FindControl<TextBlock>(window, "ProfileEmail").Text);
             Assert.Empty(viewModel.Password);
             Assert.Equal(["Пользователи", "Организации", "Обращения"], viewModel.NavigationItems.Select(item => item.Title));
+            Assert.Equal("Всего: 3", viewModel.PermissionCountLabel);
+            viewModel.Language = "en";
+            Assert.Equal("Total: 3", viewModel.PermissionCountLabel);
+            viewModel.Language = "zh-Hans";
+            Assert.Equal("总计：3", viewModel.PermissionCountLabel);
+            viewModel.Language = "ru";
             var profile = window.GetVisualDescendants().OfType<ProfileView>().Single();
             Assert.Empty(profile.GetVisualDescendants().OfType<TextBox>());
             Assert.DoesNotContain(window.GetVisualDescendants().OfType<Button>(), button =>
@@ -70,6 +99,52 @@ public sealed class AdminShellTests
         }
         finally
         {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task SwitchingLanguageKeepsTheOpenUserFilterAndChangesVisibleText()
+    {
+        using var httpClient = AdminShellTests.CreateHttpClient(new ShellApiHandler());
+        var viewModel = new MainWindowViewModel(new AdminSessionClient(httpClient), httpClient.BaseAddress!);
+        var originalLanguage = viewModel.Language;
+        var window = new MainWindow { DataContext = viewModel };
+        window.Show();
+
+        try
+        {
+            viewModel.Language = "ru";
+            viewModel.Email = "contact@example.invalid";
+            viewModel.Password = "test-password";
+            await viewModel.LoginCommand.ExecuteAsync(null);
+            await viewModel.ShowUsersCommand.ExecuteAsync(null);
+            viewModel.Users.Search = "contact@example.invalid";
+            viewModel.Users.IncludeDeleted = true;
+            await viewModel.Users.ApplyFiltersCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.True(viewModel.IsUsersOpen);
+            Assert.Equal("contact@example.invalid", AdminShellTests.FindControl<TextBox>(window, "UsersSearch").Text);
+
+            viewModel.Language = "en";
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(viewModel.IsUsersOpen);
+            Assert.Equal("contact@example.invalid", viewModel.Users.Search);
+            Assert.True(viewModel.Users.IncludeDeleted);
+            Assert.Equal("Search by email or phone", AdminShellTests.FindControl<TextBox>(window, "UsersSearch").PlaceholderText);
+
+            viewModel.Language = "zh-Hans";
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(viewModel.IsUsersOpen);
+            Assert.Equal("contact@example.invalid", viewModel.Users.Search);
+            Assert.True(viewModel.Users.IncludeDeleted);
+            Assert.Equal("按电子邮箱或电话搜索", AdminShellTests.FindControl<TextBox>(window, "UsersSearch").PlaceholderText);
+        }
+        finally
+        {
+            viewModel.Language = originalLanguage;
+            await viewModel.ShutdownAsync();
             window.Close();
         }
     }
@@ -425,6 +500,13 @@ public sealed class AdminShellTests
             {
                 this.SupportRequests++;
 
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new { items = Array.Empty<object>(), totalCount = 0, page = 1, pageSize = 50 })
+                });
+            }
+            if (request.RequestUri.AbsolutePath == "/api/v1/admin/users")
+            {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = JsonContent.Create(new { items = Array.Empty<object>(), totalCount = 0, page = 1, pageSize = 50 })

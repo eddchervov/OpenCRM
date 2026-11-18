@@ -17,7 +17,7 @@ public sealed partial class AdminSessionClient
     {
         if (content.Length is 0 or > 10 * 1024 * 1024)
         {
-            throw new ArgumentException("Выберите файл размером от 1 байта до 10 МБ.", nameof(content));
+            throw new ArgumentException(this.LocalizeFallback("Выберите файл размером от 1 байта до 10 МБ."), nameof(content));
         }
 
         return this.SendAuthorizedContentAsync<AdminCrmImportPreview>(HttpMethod.Post, "api/v1/admin/crm-import/previews", () =>

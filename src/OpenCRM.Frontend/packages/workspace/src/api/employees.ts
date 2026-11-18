@@ -1,3 +1,6 @@
+import { translate as t } from '@opencrm/ui/i18n'
+import '../employeeMessages'
+
 export type OrganizationEmployee = {
   id: string
   name: string
@@ -17,7 +20,7 @@ export async function loadEmployees(organizationId: string): Promise<{
 }> {
   const response = await fetch(`/api/v1/organizations/${organizationId}/employees`, { headers: { Accept: 'application/json' } })
   if (!response.ok) {
-    const error = new Error('Не удалось загрузить сотрудников. Попробуйте ещё раз.') as Error & { status: number }
+    const error = new Error(t('employeeApi.loadEmployees')) as Error & { status: number }
     error.status = response.status
     throw error
   }
@@ -33,7 +36,7 @@ export async function linkEmployeeMember(organizationId: string, employee: Organ
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось изменить доступ сотрудника.')
+    throw new Error(error?.message ?? t('employeeApi.linkMember'))
   }
 }
 
@@ -46,7 +49,7 @@ export async function saveEmployee(organizationId: string, employee: Organizatio
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сохранить сотрудника.')
+    throw new Error(error?.message ?? t('employeeApi.saveEmployee'))
   }
 }
 
@@ -62,7 +65,7 @@ export async function createEmployeeWithInvitation(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось добавить человека и пригласить его.')
+    throw new Error(error?.message ?? t('employeeApi.inviteEmployee'))
   }
 
   return response.json()
@@ -80,7 +83,7 @@ export async function createEmployeeForMember(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось создать карточку исполнителя.')
+    throw new Error(error?.message ?? t('employeeApi.createPerformer'))
   }
 
   return response.json()
@@ -93,6 +96,6 @@ export async function assignMaintenanceEmployee(organizationId: string, maintena
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось назначить сотрудника.')
+    throw new Error(error?.message ?? t('employeeApi.assignEmployee'))
   }
 }

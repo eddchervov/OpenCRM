@@ -8,7 +8,8 @@ export default defineConfig({
   base: '/admin-panel/',
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@opencrm/ui/i18n': fileURLToPath(new URL('../../packages/ui/src/i18n.ts', import.meta.url))
     }
   },
   server: {

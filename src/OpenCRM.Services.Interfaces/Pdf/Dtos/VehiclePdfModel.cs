@@ -23,6 +23,8 @@ namespace OpenCRM.Services.Interfaces.Pdf.Dtos
 
         /// <summary> Суммарные затраты по обслуживанию. </summary>
         public decimal TotalSpent { get; set; }
+
+        public IReadOnlyDictionary<string, decimal> CurrencyTotals { get; set; } = new Dictionary<string, decimal>();
     }
 }
 

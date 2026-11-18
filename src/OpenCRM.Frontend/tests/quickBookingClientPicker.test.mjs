@@ -1,4 +1,9 @@
-﻿import test from 'node:test'
+﻿import '../packages/workspace/src/quickBookingMessages.ts'
+import { registrationCountryOptions } from '../packages/workspace/src/utils/registrationCountries.ts'
+import { internationalRegistrationPlateError } from '../packages/workspace/src/internationalRegistrationPlate.ts'
+import * as localization from '@opencrm/ui/i18n'
+import '../packages/workspace/src/pickerMessages.ts'
+import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
@@ -23,6 +28,8 @@ function picker(load = async () => ({ items: [], totalCount: 0 }), overrides = {
   let unmount
   const module = { exports: {} }
   new Function('require','module','exports', pickerCode)(id => {
+    if (id === '@opencrm/ui/i18n') return localization
+    if (id === '../pickerMessages') return {}
     if (id === 'vue') return { ...vue, onBeforeUnmount: callback => { unmount = callback } }
     if (id === '@opencrm/ui') return {}
     if (id === '../api/clients') return { loadClientLookup: load }
@@ -115,6 +122,8 @@ function booking(api = {}, workspaceApi = {}, scenario = 'detailing') {
   const props=vue.reactive({context:{organization:{id:'org',timeZoneId:'UTC'},workspaceAccess:{isReadOnly:false},shell:{scenario:{code:scenario}},links:{}},modal:true})
   const module={exports:{}}
   const workspace={
+    registrationCountryOptions, internationalRegistrationPlateError,
+    useWorkspaceCurrency:()=>vue.computed(()=>'RUB'),
     formatDateOnly:()=> '2026-10-30', getVehicleBrandLogo:()=>null,
     getVehicleDisplayName:vehicle=>vehicle.name || vehicle.registrationPlate,
     getVehicleRegistrationPlateFormat:()=>undefined, loadVehicleRegistrationPlateFormats:async()=>({}),
@@ -122,6 +131,8 @@ function booking(api = {}, workspaceApi = {}, scenario = 'detailing') {
     loadVehicleBrandOptions:async()=>[],loadVehicleModelOptions:async()=>[],...workspaceApi
   }
   new Function('require','module','exports','window',bookingCode[scenario])(id=> {
+    if(id==='@opencrm/workspace/quickBookingMessages')return {}
+    if(id==='@opencrm/ui/i18n')return localization
     if(id==='vue')return {...vue,onMounted(){},onBeforeUnmount(){},useId:()=> 'quick-test'}
     if(id==='@opencrm/ui')return {formatDateOnly:()=> '2026-10-30'}
     if(id==='@opencrm/workspace')return workspace
@@ -162,6 +173,24 @@ test('Машина другого клиента не стирает введё�
 })
 
 for (const scenario of ['detailing', 'autoservice']) {
+  for (const country of ['CN', 'ZZ']) {
+    test(`Иностранный номер сохраняет алфавит и страну без российской нормализации: ${scenario}, ${country}`, async () => {
+      const { state, sent } = booking({}, {
+        normalizeRegistrationPlate: () => { throw new Error('Не должна применяться российская нормализация') },
+        validateRegistrationPlate: () => { throw new Error('Не должна применяться российская маска') }
+      }, scenario)
+      state.form.registrationCountryCode = country
+      state.form.registrationPlate = '沪A·12345'
+      state.form.organizationClientId = 'client'
+
+      await state.saveBooking()
+
+      assert.equal(sent.length, 1)
+      assert.equal(sent[0].registrationCountryCode, country)
+      assert.equal(sent[0].registrationPlate, '沪A·12345')
+    })
+  }
+
   test(`Правка черновика очищает ошибку предыдущей отправки в сценарии ${scenario}`, async () => {
     const apiName = scenario === 'detailing' ? 'createDetailingQuickBooking' : 'createAutoServiceQuickBooking'
     const { state } = booking({ [apiName]: async () => { throw new Error('Пост занят после проверки.') } }, {}, scenario)

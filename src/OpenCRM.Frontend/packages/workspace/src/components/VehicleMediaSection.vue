@@ -2,6 +2,8 @@
 import { getVehicleDisplayName } from '../api/vehicles'
 import { computed, inject, onMounted, provide, ref, watch } from 'vue'
 import { pageBreadcrumbsKey, UiButton, UiCard, UiConfirmDialog, UiInput, UiImagePreview, UiLoader } from '@opencrm/ui'
+import { translate as t } from '@opencrm/ui/i18n'
+import '../vehicleMediaMessages'
 import WorkspaceProLock from './WorkspaceProLock.vue'
 import {
   createVehicleAlbum,
@@ -61,7 +63,7 @@ const confirmDialog = ref({
   open: false,
   title: '',
   message: '',
-  confirmText: 'Удалить',
+  confirmText: t('vehicleMedia.delete'),
   onConfirm: null as null | (() => Promise<void>)
 })
 
@@ -71,22 +73,22 @@ const isAlbumsMode = computed(() => props.mode === 'albums')
 const isAlbumMode = computed(() => props.mode === 'album')
 const title = computed(() => {
   if (isAlbumMode.value) {
-    return album.value?.title || 'Альбом'
+    return album.value?.title || t('vehicleMedia.album')
   }
 
-  return isPhotosMode.value ? 'Управление фото техники' : 'Альбомы техники'
+  return isPhotosMode.value ? t('vehicleMedia.photosTitle') : t('vehicleMedia.albumsTitle')
 })
 provide(pageBreadcrumbsKey, computed(() => {
   const vehicleTitle = vehicle.value
     ? [getVehicleDisplayName(vehicle.value), vehicle.value.yearIssue].filter(Boolean).join(' ')
-    : 'Техника'
+    : t('vehicleMedia.vehicle')
   const items = [
     ...(parentBreadcrumbs?.value ?? []),
     { title: vehicleTitle, href: `#vehicles/${props.vehicleId}` }
   ]
 
   if (isAlbumMode.value) {
-    items.push({ title: 'Альбомы техники', href: `#vehicles/${props.vehicleId}/albums` })
+    items.push({ title: t('vehicleMedia.albumsTitle'), href: `#vehicles/${props.vehicleId}/albums` })
   }
 
   return items
@@ -123,7 +125,7 @@ function askConfirmation(options: {
     open: true,
     title: options.title,
     message: options.message,
-    confirmText: options.confirmText ?? 'Удалить',
+    confirmText: options.confirmText ?? t('vehicleMedia.delete'),
     onConfirm: options.onConfirm
   }
 }
@@ -182,7 +184,7 @@ async function loadMedia() {
     photos.value = []
     album.value = null
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить фото.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.load')
   } finally {
     isLoading.value = false
   }
@@ -207,11 +209,11 @@ function validateBatch(files: File[], currentCount?: number) {
   const batchSize = files.reduce((sum, file) => sum + file.size, 0)
 
   if (batchSize > maxBatchBytes) {
-    return 'За одну загрузку можно отправить фото суммарно до 100 МБ.'
+    return t('vehicleMedia.validation.batchSize', { maxMb: maxBatchBytes / 1024 / 1024 })
   }
 
   if (currentCount !== undefined && currentCount + files.length > maxVehiclePhotos) {
-    return `В карточке техники может быть не больше ${maxVehiclePhotos} фото.`
+    return t('vehicleMedia.validation.photoCount', { maxPhotos: maxVehiclePhotos })
   }
 
   return ''
@@ -238,7 +240,7 @@ async function uploadPhotos(event: Event) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить фото.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.upload')
   } finally {
     isUploading.value = false
     isSaving.value = false
@@ -266,7 +268,7 @@ async function uploadAlbumPhotos(event: Event) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить фото в альбом.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.uploadAlbum')
   } finally {
     isUploading.value = false
     isSaving.value = false
@@ -286,7 +288,7 @@ async function makePrimary(photo: WorkspaceVehiclePhoto) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось назначить главное фото.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.setMainPhoto')
   } finally {
     isSaving.value = false
   }
@@ -298,8 +300,8 @@ async function removePhoto(photo: WorkspaceVehiclePhoto) {
   }
 
   askConfirmation({
-    title: 'Удалить фото',
-    message: 'Фото техники будет удалено без возможности восстановления.',
+    title: t('vehicleMedia.deletePhotoTitle'),
+    message: t('vehicleMedia.deletePhotoMessage'),
     onConfirm: async () => {
   isSaving.value = true
   errorMessage.value = ''
@@ -309,7 +311,7 @@ async function removePhoto(photo: WorkspaceVehiclePhoto) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось удалить фото.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.deletePhoto')
   } finally {
     isSaving.value = false
   }
@@ -324,7 +326,7 @@ async function createAlbum() {
 
   const trimmedTitle = albumTitle.value.trim()
   if (!trimmedTitle) {
-    errorMessage.value = 'Укажите название альбома.'
+    errorMessage.value = t('vehicleMedia.albumNameRequired')
     return
   }
 
@@ -336,7 +338,7 @@ async function createAlbum() {
     albumTitle.value = ''
     window.location.hash = `#vehicles/${props.vehicleId}/albums/${createdAlbum.albumId}`
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось создать альбом.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.createAlbum')
   } finally {
     isSaving.value = false
   }
@@ -348,8 +350,8 @@ async function removeAlbum(item: WorkspaceVehicleAlbum) {
   }
 
   askConfirmation({
-    title: 'Удалить альбом',
-    message: `Альбом "${item.title}" и его фото будут удалены.`,
+    title: t('vehicleMedia.deleteAlbumTitle'),
+    message: t('vehicleMedia.deleteAlbumMessage', { title: item.title }),
     onConfirm: async () => {
   isSaving.value = true
   errorMessage.value = ''
@@ -359,7 +361,7 @@ async function removeAlbum(item: WorkspaceVehicleAlbum) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось удалить альбом.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.deleteAlbum')
   } finally {
     isSaving.value = false
   }
@@ -380,7 +382,7 @@ async function makeAlbumPrimary(photo: WorkspaceVehiclePhoto) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось назначить обложку альбома.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.setAlbumCover')
   } finally {
     isSaving.value = false
   }
@@ -393,8 +395,8 @@ async function removeAlbumPhoto(photo: WorkspaceVehiclePhoto) {
 
   const albumId = props.albumId
   askConfirmation({
-    title: 'Удалить фото из альбома',
-    message: 'Фото будет удалено из этого альбома.',
+    title: t('vehicleMedia.deleteAlbumPhotoTitle'),
+    message: t('vehicleMedia.deleteAlbumPhotoMessage'),
     onConfirm: async () => {
   isSaving.value = true
   errorMessage.value = ''
@@ -404,7 +406,7 @@ async function removeAlbumPhoto(photo: WorkspaceVehiclePhoto) {
     await loadMedia()
     emit('changed')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось удалить фото из альбома.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicleMedia.errors.deleteAlbumPhoto')
   } finally {
     isSaving.value = false
   }
@@ -423,26 +425,26 @@ watch(() => [props.vehicleId, props.mode, props.albumId], () => {
   <section class="entity-card-section workspace-media">
     <UiCard page :title="title">
       <template #actions>
-        <UiButton variant="secondary" :href="getBackUrl()">Назад</UiButton>
+        <UiButton variant="secondary" :href="getBackUrl()">{{ t('vehicleMedia.back') }}</UiButton>
         <label v-if="canWrite && isPhotosMode && canUploadVehiclePhotos" class="ui-button btn ui-button--secondary btn-outline-dark entity-upload-button" :aria-disabled="!canChangePhotos">
-          Загрузить фото
+          {{ t('vehicleMedia.uploadPhoto') }}
           <input type="file" accept="image/*" multiple :disabled="isSaving || !canChangePhotos" @change="uploadPhotos">
         </label>
         <label v-if="canWrite && isAlbumMode" class="ui-button btn ui-button--secondary btn-outline-dark entity-upload-button" :aria-disabled="!canChangePhotos">
-          Загрузить фото
+          {{ t('vehicleMedia.uploadPhoto') }}
           <input type="file" accept="image/*" multiple :disabled="isSaving || !canChangePhotos" @change="uploadAlbumPhotos">
         </label>
       </template>
 
-      <UiLoader v-if="isUploading" text="Загружаем фотографии..." />
-      <UiLoader v-else-if="isLoading" text="Загружаем фото..." />
+      <UiLoader v-if="isUploading" :text="t('vehicleMedia.uploadingPhotos')" />
+      <UiLoader v-else-if="isLoading" :text="t('vehicleMedia.loadingPhotos')" />
       <div v-else-if="errorMessage" class="detailing-state detailing-state-error" role="alert">{{ errorMessage }}</div>
 
       <template v-else>
-        <WorkspaceProLock :locked="isPhotoPreview" message="Фотоальбомы доступны в PRO" feature="albums">
+        <WorkspaceProLock :locked="isPhotoPreview" :message="t('vehicleMedia.proAlbums')" feature="albums">
           <div v-if="isPhotoPreview" class="workspace-media__locked-preview" aria-hidden="true">
             <template v-if="isPhotosMode">
-              <h3>Фото автомобиля</h3>
+              <h3>{{ t('vehicleMedia.carPhotos') }}</h3>
               <div class="entity-photo-manage-grid">
                 <span v-for="index in 4" :key="index" class="workspace-media__preview-tile"></span>
               </div>
@@ -462,16 +464,16 @@ watch(() => [props.vehicleId, props.mode, props.albumId], () => {
           </div>
           <div v-else>
         <div v-if="isPhotosMode">
-          <div v-if="sortedPhotos.length === 0" class="detailing-empty">Фото техники пока нет.</div>
+          <div v-if="sortedPhotos.length === 0" class="detailing-empty">{{ t('vehicleMedia.noVehiclePhotos') }}</div>
           <div v-else class="entity-photo-manage-grid">
             <article v-for="photo in sortedPhotos" :key="photo.photoId" class="entity-photo-manage-item">
-              <button type="button" class="workspace-media__preview" :aria-label="`Открыть фото ${photo.originalFileName || ''}`" @click="previewPhotoUrl = photo.url">
-                <img :src="photo.url" :alt="photo.originalFileName || 'Фото техники'">
+              <button type="button" class="workspace-media__preview" :aria-label="t('vehicleMedia.openPhoto', { fileName: photo.originalFileName || t('vehicleMedia.photo') })" @click="previewPhotoUrl = photo.url">
+                <img :src="photo.url" :alt="photo.originalFileName || t('vehicleMedia.photo')">
               </button>
-              <span v-if="photo.isPrimary" class="entity-media-badge">Главное</span>
+              <span v-if="photo.isPrimary" class="entity-media-badge">{{ t('vehicleMedia.mainPhoto') }}</span>
               <div v-if="canWrite" class="entity-card-actions entity-photo-manage-actions">
-                <UiButton v-if="!photo.isPrimary" variant="secondary" :disabled="isSaving || !canChangePhotos" @click="makePrimary(photo)">Сделать главным</UiButton>
-                <UiButton variant="secondary" :disabled="isSaving || !canChangePhotos" @click="removePhoto(photo)">Удалить</UiButton>
+                <UiButton v-if="!photo.isPrimary" variant="secondary" :disabled="isSaving || !canChangePhotos" @click="makePrimary(photo)">{{ t('vehicleMedia.setMainPhoto') }}</UiButton>
+                <UiButton variant="secondary" :disabled="isSaving || !canChangePhotos" @click="removePhoto(photo)">{{ t('vehicleMedia.delete') }}</UiButton>
               </div>
             </article>
           </div>
@@ -479,35 +481,35 @@ watch(() => [props.vehicleId, props.mode, props.albumId], () => {
 
         <div v-else-if="isAlbumsMode">
           <form v-if="canWrite" class="entity-album-create entity-album-create--page" @submit.prevent="createAlbum">
-            <UiInput v-model="albumTitle" label="Название альбома" placeholder="Например, до и после полировки" :disabled="isSaving || !canChangePhotos" />
-            <UiButton type="submit" :disabled="isSaving || !canChangePhotos">Создать</UiButton>
+            <UiInput v-model="albumTitle" :label="t('vehicleMedia.albumTitle')" :placeholder="t('vehicleMedia.albumTitleExample')" :disabled="isSaving || !canChangePhotos" />
+            <UiButton type="submit" :disabled="isSaving || !canChangePhotos">{{ t('vehicleMedia.create') }}</UiButton>
           </form>
 
-          <div v-if="albums.length === 0" class="detailing-empty">Альбомов пока нет.</div>
+          <div v-if="albums.length === 0" class="detailing-empty">{{ t('vehicleMedia.noAlbums') }}</div>
           <div v-else class="entity-album-grid entity-album-grid--page">
             <article v-for="item in albums" :key="item.albumId" class="entity-album-item entity-album-item--manage">
               <a :href="getAlbumUrl(item)">
                 <img v-if="getAlbumCover(item)" :src="getAlbumCover(item)" :alt="item.title">
-                <span v-else class="entity-album-placeholder">Альбом</span>
+                <span v-else class="entity-album-placeholder">{{ t('vehicleMedia.albumPlaceholder') }}</span>
                 <strong>{{ item.title }}</strong>
-                <small>{{ item.photoCount }} фото</small>
+                <small>{{ t(item.photoCount === 1 ? 'vehicleMedia.photoCountOne' : 'vehicleMedia.photoCountMany', { count: item.photoCount }) }}</small>
               </a>
-              <UiButton v-if="canWrite" variant="secondary" :disabled="isSaving || !canChangePhotos" @click="removeAlbum(item)">Удалить</UiButton>
+              <UiButton v-if="canWrite" variant="secondary" :disabled="isSaving || !canChangePhotos" @click="removeAlbum(item)">{{ t('vehicleMedia.delete') }}</UiButton>
             </article>
           </div>
         </div>
 
         <div v-else>
-          <div v-if="albumPhotos.length === 0" class="detailing-empty">В альбоме пока нет фото.</div>
+          <div v-if="albumPhotos.length === 0" class="detailing-empty">{{ t('vehicleMedia.noAlbumPhotos') }}</div>
           <div v-else class="entity-photo-manage-grid">
             <article v-for="photo in albumPhotos" :key="photo.photoId" class="entity-photo-manage-item">
-              <button type="button" class="workspace-media__preview" :aria-label="`Открыть фото ${photo.originalFileName || ''}`" @click="previewPhotoUrl = photo.url">
-                <img :src="photo.url" :alt="photo.originalFileName || album?.title || 'Фото альбома'">
+              <button type="button" class="workspace-media__preview" :aria-label="t('vehicleMedia.openPhoto', { fileName: photo.originalFileName || album?.title || t('vehicleMedia.photo') })" @click="previewPhotoUrl = photo.url">
+                <img :src="photo.url" :alt="photo.originalFileName || album?.title || t('vehicleMedia.photo')">
               </button>
-              <span v-if="photo.photoId === album?.primaryPhotoId || photo.isPrimary" class="entity-media-badge">Обложка</span>
+              <span v-if="photo.photoId === album?.primaryPhotoId || photo.isPrimary" class="entity-media-badge">{{ t('vehicleMedia.albumCover') }}</span>
               <div v-if="canWrite" class="entity-card-actions entity-photo-manage-actions">
-                <UiButton v-if="photo.photoId !== album?.primaryPhotoId && !photo.isPrimary" variant="secondary" :disabled="isSaving || !canChangePhotos" @click="makeAlbumPrimary(photo)">Сделать обложкой</UiButton>
-                <UiButton variant="secondary" :disabled="isSaving || !canChangePhotos" @click="removeAlbumPhoto(photo)">Удалить</UiButton>
+                <UiButton v-if="photo.photoId !== album?.primaryPhotoId && !photo.isPrimary" variant="secondary" :disabled="isSaving || !canChangePhotos" @click="makeAlbumPrimary(photo)">{{ t('vehicleMedia.setAlbumCover') }}</UiButton>
+                <UiButton variant="secondary" :disabled="isSaving || !canChangePhotos" @click="removeAlbumPhoto(photo)">{{ t('vehicleMedia.delete') }}</UiButton>
               </div>
             </article>
           </div>
@@ -516,7 +518,7 @@ watch(() => [props.vehicleId, props.mode, props.albumId], () => {
         </WorkspaceProLock>
         <div v-if="isPhotosFeatureLocked" class="workspace-media__history-action">
           <UiButton variant="secondary" :disabled="isLoading" @click="toggleSavedMediaHistory">
-            {{ showSavedMediaHistory ? 'Скрыть сохранённые альбомы' : 'Показать сохранённые альбомы' }}
+            {{ t(showSavedMediaHistory ? 'vehicleMedia.hideSavedAlbums' : 'vehicleMedia.savedAlbums') }}
           </UiButton>
         </div>
       </template>

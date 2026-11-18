@@ -150,6 +150,7 @@ public sealed class OrganizationInquiryBookingService(
     {
         VehicleId = source.VehicleId,
         RegistrationPlate = source.RegistrationPlate,
+        RegistrationCountryCode = source.RegistrationCountryCode,
         AllowOtherRegistrationPlateFormat = source.AllowOtherRegistrationPlateFormat,
         VehicleText = source.VehicleText,
         Kind = source.Kind,
@@ -174,6 +175,7 @@ public sealed class OrganizationInquiryBookingService(
     private static CreateOrganizationAutoServiceQuickBookingDto Copy(CreateOrganizationAutoServiceQuickBookingDto source) => new()
     {
         RegistrationPlate = source.RegistrationPlate,
+        RegistrationCountryCode = source.RegistrationCountryCode,
         AllowOtherRegistrationPlateFormat = source.AllowOtherRegistrationPlateFormat,
         VehicleId = source.VehicleId,
         VehicleText = source.VehicleText,

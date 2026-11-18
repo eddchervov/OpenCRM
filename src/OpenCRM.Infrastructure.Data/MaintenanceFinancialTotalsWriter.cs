@@ -198,7 +198,7 @@ internal static class MaintenanceFinancialTotalsWriter
     private static FormattableString GetRecomputeSql(Guid[] maintenanceIds) =>
         $"""
         WITH source AS (
-            SELECT maintenance."Id", vehicle."OrganizationId",
+            SELECT maintenance."Id", vehicle."OrganizationId", maintenance."CurrencyCode",
                 COALESCE(maintenance."CompletedDate", maintenance."PlannedDate", maintenance."Date") AS effective_date,
                 NOT maintenance."IsDeleted" AND NOT vehicle."IsDeleted" AND vehicle."OrganizationId" IS NOT NULL AS is_visible,
                 maintenance."Status" <> 4 AS is_accruable_status,
@@ -221,9 +221,9 @@ internal static class MaintenanceFinancialTotalsWriter
             FROM source
         )
         INSERT INTO "MaintenanceFinancialTotals"
-            ("MaintenanceId", "GrossAmount", "OrganizationId", "EffectiveDate", "UtcDay", "IsVisible", "IsAccruable", "ClientId", "ClientName",
+            ("MaintenanceId", "GrossAmount", "OrganizationId", "CurrencyCode", "EffectiveDate", "UtcDay", "IsVisible", "IsAccruable", "ClientId", "ClientName",
             "NetAmount", "PaidAmount", "DebtAmount", "DiscountAmount", "MaterialCostAmount", "LaborCostAmount", "ProfitAmount", "FirstKey")
-        SELECT "Id", gross, "OrganizationId", effective_date,
+        SELECT "Id", gross, "OrganizationId", "CurrencyCode", effective_date,
             FLOOR(EXTRACT(EPOCH FROM normalized_date) / 86400)::integer + 719162, is_visible, is_accruable,
             client_id, client_name, net, "PaidAmount",
             CASE WHEN is_accruable_status THEN GREATEST(0, net - "PaidAmount") ELSE 0 END, "DiscountAmount",
@@ -232,21 +232,21 @@ internal static class MaintenanceFinancialTotalsWriter
                 || ':' || "Id"::text
         FROM calculated WHERE TRUE
         ON CONFLICT ("MaintenanceId") DO UPDATE SET
-            "GrossAmount" = EXCLUDED."GrossAmount", "OrganizationId" = EXCLUDED."OrganizationId",
+            "GrossAmount" = EXCLUDED."GrossAmount", "OrganizationId" = EXCLUDED."OrganizationId", "CurrencyCode" = EXCLUDED."CurrencyCode",
             "EffectiveDate" = EXCLUDED."EffectiveDate", "UtcDay" = EXCLUDED."UtcDay", "IsVisible" = EXCLUDED."IsVisible",
             "IsAccruable" = EXCLUDED."IsAccruable",
             "ClientId" = EXCLUDED."ClientId", "ClientName" = EXCLUDED."ClientName", "NetAmount" = EXCLUDED."NetAmount",
             "PaidAmount" = EXCLUDED."PaidAmount", "DebtAmount" = EXCLUDED."DebtAmount", "DiscountAmount" = EXCLUDED."DiscountAmount",
             "MaterialCostAmount" = EXCLUDED."MaterialCostAmount", "LaborCostAmount" = EXCLUDED."LaborCostAmount",
             "ProfitAmount" = EXCLUDED."ProfitAmount", "FirstKey" = EXCLUDED."FirstKey"
-        WHERE ("MaintenanceFinancialTotals"."GrossAmount", "MaintenanceFinancialTotals"."OrganizationId",
+        WHERE ("MaintenanceFinancialTotals"."GrossAmount", "MaintenanceFinancialTotals"."OrganizationId", "MaintenanceFinancialTotals"."CurrencyCode",
             "MaintenanceFinancialTotals"."EffectiveDate", "MaintenanceFinancialTotals"."UtcDay", "MaintenanceFinancialTotals"."IsVisible",
             "MaintenanceFinancialTotals"."IsAccruable",
             "MaintenanceFinancialTotals"."ClientId", "MaintenanceFinancialTotals"."ClientName", "MaintenanceFinancialTotals"."NetAmount",
             "MaintenanceFinancialTotals"."PaidAmount", "MaintenanceFinancialTotals"."DebtAmount", "MaintenanceFinancialTotals"."DiscountAmount",
             "MaintenanceFinancialTotals"."MaterialCostAmount", "MaintenanceFinancialTotals"."LaborCostAmount",
             "MaintenanceFinancialTotals"."ProfitAmount", "MaintenanceFinancialTotals"."FirstKey")
-            IS DISTINCT FROM (EXCLUDED."GrossAmount", EXCLUDED."OrganizationId", EXCLUDED."EffectiveDate", EXCLUDED."UtcDay", EXCLUDED."IsVisible",
+            IS DISTINCT FROM (EXCLUDED."GrossAmount", EXCLUDED."OrganizationId", EXCLUDED."CurrencyCode", EXCLUDED."EffectiveDate", EXCLUDED."UtcDay", EXCLUDED."IsVisible",
                 EXCLUDED."IsAccruable",
                 EXCLUDED."ClientId", EXCLUDED."ClientName", EXCLUDED."NetAmount", EXCLUDED."PaidAmount", EXCLUDED."DebtAmount", EXCLUDED."DiscountAmount",
                 EXCLUDED."MaterialCostAmount", EXCLUDED."LaborCostAmount", EXCLUDED."ProfitAmount", EXCLUDED."FirstKey")

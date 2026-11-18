@@ -1,7 +1,7 @@
 @model EmailCodeLoginModel
 
 @{
-    ViewData["Title"] = $"Войти по коду из email {Brand.DisplayNameLower}";
+    ViewData["Title"] = $"{Text["auth.emailCodeTitle"]} {Brand.DisplayNameLower}";
 }
 
 <div class="auth-page email-code-login-page">
@@ -9,7 +9,7 @@
         <div class="container">
             <div class="auth-container narrow-form">
                 <div class="auth-form-wrapper">
-                    <h1 class="auth-title">Войти по коду из email</h1>
+                    <h1 class="auth-title">@Text["auth.emailCodeTitle"]</h1>
 
                     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
                     {
@@ -23,27 +23,27 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="form-floating mb-3">
-                            <input type="email" asp-for="Email" class="form-control" placeholder="Введите email адрес">
-                            <label asp-for="Email">Email</label>
+                            <input type="email" asp-for="Email" class="form-control" placeholder="@Text["auth.emailPlaceholder"]">
+                            <label asp-for="Email">@Text["auth.email"]</label>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         @if (Model.RequiresRegistrationConsent)
                         {
                             <div class="auth-form-note mb-3">
-                                Аккаунт с таким email еще не найден. Мы можем создать его после подтверждения кода.
+                                @Text["auth.noAccountFound"]
                             </div>
 
                             <partial name="_RegistrationConsentFields" model="Model.PersonalDataProcessingConsent" />
                         }
 
-                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Отправить код</button>
+                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">@Text["auth.sendCode"]</button>
                     </form>
 
                     @if (Model.CodeSent)
                     {
                         <div class="auth-divider">
-                            <span>код действует 1 час</span>
+                            <span>@Text["auth.codeValidFor"]</span>
                         </div>
 
                         <form method="post" asp-action="VerifyEmailLoginCode" class="auth-form email-code-form">
@@ -58,16 +58,16 @@
                                        inputmode="numeric"
                                        autocomplete="one-time-code"
                                        maxlength="8">
-                                <label asp-for="Code">8-значный код</label>
+                                <label asp-for="Code">@Text["auth.eightDigitCode"]</label>
                                 <span asp-validation-for="Code" class="text-danger"></span>
                             </div>
 
-                            <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Войти</button>
+                            <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">@Text["auth.signIn"]</button>
                         </form>
                     }
 
                     <div class="auth-links text-center">
-                        <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Войти с паролем</a>
+                        <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">@Text["auth.signInWithPassword"]</a>
                     </div>
                 </div>
             </div>

@@ -49,6 +49,13 @@ internal sealed class OrganizationProfileCommandService(
     /// <summary> Внутренняя реализация создания организации. </summary>
     private async Task<Guid> CreateCoreAsync(string ownerUserId, CreateOrganizationDto dto, Guid organizationId)
     {
+        var currencyCode = dto.CurrencyCode?.Trim().ToUpperInvariant();
+        if (!CurrencyCodes.IsSupported(currencyCode))
+        {
+            throw new InvalidOperationException("Выберите поддерживаемую валюту.");
+        }
+
+        var timeZoneId = OrganizationTimeZoneService.NormalizeTimeZoneId(dto.TimeZoneId);
         var scenarioCode = await this._scenarios.NormalizeAsync(dto.PrimaryScenarioCode);
         await this._context.Database.ExecuteSqlInterpolatedAsync(
             $"""SELECT 1 FROM identity."AspNetUsers" WHERE "Id" = {ownerUserId} FOR NO KEY UPDATE""");
@@ -71,6 +78,8 @@ internal sealed class OrganizationProfileCommandService(
             Name = OrganizationRules.NormalizeRequired(dto.Name, "Название организации обязательно."),
             Description = OrganizationRules.NormalizeNullable(dto.Description),
             PrimaryScenarioCode = scenarioCode,
+            CurrencyCode = currencyCode!,
+            ShiftTimeZoneId = timeZoneId,
             SetupAutoOpenPending = true,
             OwnerUserId = ownerUserId,
             CreatedAt = now,

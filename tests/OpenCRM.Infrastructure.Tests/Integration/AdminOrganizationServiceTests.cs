@@ -147,4 +147,86 @@ public sealed class AdminOrganizationServiceTests(NotificationFixture fixture) :
         Assert.Null(card.ActiveSubscriptionName);
         Assert.Null(await service.GetByIdAsync(Guid.NewGuid()));
     }
+
+    [Fact]
+    public async Task OrganizationCardKeepsMaintenanceAndStockTotalsSeparatedByCurrency()
+    {
+        await using var context = fixture.CreateContext();
+        var owner = new ApplicationUser();
+        var search = Guid.NewGuid().ToString("N");
+        var organization = new Organization { Name = $"{search} A Организация CNY", OwnerUser = owner, CurrencyCode = "CNY" };
+        var vehicle = new Vehicle { Organization = organization, User = owner };
+        context.Maintenance.AddRange(
+            new Maintenance
+            {
+                Vehicle = vehicle,
+                User = owner,
+                CurrencyCode = "CNY",
+                PaidAmount = 30m,
+                Details = [new MaintenanceDetail { Name = "Заказ CNY", Price = 50 }]
+            },
+            new Maintenance
+            {
+                Vehicle = vehicle,
+                User = owner,
+                CurrencyCode = "RUB",
+                PaidAmount = 700m,
+                DiscountAmount = 100m,
+                Details = [new MaintenanceDetail { Name = "Исторический заказ RUB", Price = 1000 }]
+            },
+            new Maintenance
+            {
+                Vehicle = vehicle,
+                User = owner,
+                CurrencyCode = "RUB",
+                IsDeleted = true,
+                PaidAmount = 9000m,
+                Details = [new MaintenanceDetail { Name = "Удалённый заказ", Price = 9000 }]
+            });
+        context.OrganizationMaterialStocks.AddRange(
+            new OrganizationMaterialStock
+            {
+                Organization = organization,
+                CurrencyCode = "CNY",
+                Name = "Материал CNY",
+                Unit = "шт",
+                QuantityOnHand = 2m,
+                AverageUnitCost = 10m,
+                InventoryValue = 20m
+            },
+            new OrganizationMaterialStock
+            {
+                Organization = organization,
+                CurrencyCode = "RUB",
+                Name = "Исторический материал RUB",
+                Unit = "шт",
+                QuantityOnHand = 2m,
+                AverageUnitCost = 200m,
+                InventoryValue = 400m
+            });
+        var nextOrganization = new Organization { Name = $"{search} B Другая организация", OwnerUser = owner };
+        context.Maintenance.Add(new Maintenance
+        {
+            Vehicle = new Vehicle { Organization = nextOrganization, User = owner },
+            User = owner,
+            CurrencyCode = "USD",
+            PaidAmount = 10000m
+        });
+        await context.SaveChangesAsync();
+
+        var page = await new AdminOrganizationService(context).GetAsync(search, null, "name", false, 1, 1);
+
+        var card = Assert.Single(page.Organizations);
+        Assert.Equal(2, page.TotalCount);
+        Assert.Equal(organization.Id, card.Id);
+        Assert.Equal("CNY", card.CurrencyCode);
+        Assert.Equal(50m, card.WorkOrdersTotal);
+        Assert.Equal(30m, card.PaymentsTotal);
+        Assert.Equal(20m, card.InventoryValue);
+        var otherCurrency = Assert.Single(card.OtherCurrencyTotals);
+        Assert.Equal("RUB", otherCurrency.CurrencyCode);
+        Assert.Equal(900m, otherCurrency.WorkOrdersTotal);
+        Assert.Equal(700m, otherCurrency.PaymentsTotal);
+        Assert.Equal(400m, otherCurrency.InventoryValue);
+    }
 }

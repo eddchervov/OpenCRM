@@ -3,7 +3,7 @@
 @inject IConfiguration Configuration
 
 @{
-    ViewData["Title"] = $"Войти в аккаунт {Brand.DisplayNameLower}";
+    ViewData["Title"] = $"{Text["auth.loginTitle"]} {Brand.DisplayNameLower}";
     var isEmailDeliveryAvailable = EmailDeliveryPolicy.IsAvailable(Configuration);
 }
 
@@ -14,8 +14,8 @@
                 <!-- Блок формы входа -->
                 <div class="auth-form-wrapper">
                     <div class="auth-form-kicker">@Brand.DisplayName</div>
-                    <h1 class="auth-title">Войти в аккаунт</h1>
-                    <p class="auth-subtitle">Доступ к вашему рабочему пространству.</p>
+                    <h1 class="auth-title">@Text["auth.loginTitle"]</h1>
+                    <p class="auth-subtitle">@Text["auth.loginSubtitle"]</p>
 
                     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                     {
@@ -31,9 +31,9 @@
                            asp-controller="Auth"
                            asp-route-returnUrl="@Model.ReturnUrl"
                            class="w-100 btn btn-lg rounded-4 btn-light auth-email-code-link"
-                           title="Войти без пароля по коду из email">
+                           title="@Text["auth.signInByEmailCodeTitle"]">
                                 <i class="fa fa-envelope-o me-3" aria-hidden="true"></i>
-                                Войти по коду из email
+                                @Text["auth.signInByEmailCode"]
                             </a>
                         </div>
                     }
@@ -41,7 +41,7 @@
                     @if (isEmailDeliveryAvailable)
                     {
                         <div class="auth-divider">
-                            <span>или через email/пароль</span>
+                            <span>@Text["auth.orEmailPassword"]</span>
                         </div>
                     }
 
@@ -49,28 +49,28 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="form-floating mb-3">
-                            <input type="email" asp-for="Email" class="form-control" placeholder="Введите email адрес">
-                            <label asp-for="Email">Email</label>
+                            <input type="email" asp-for="Email" class="form-control" placeholder="@Text["auth.emailPlaceholder"]">
+                            <label asp-for="Email">@Text["auth.email"]</label>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="password" asp-for="Password" class="form-control" placeholder="Пароль">
-                            <label asp-for="Password">Пароль</label>
+                            <input type="password" asp-for="Password" class="form-control" placeholder="@Text["auth.password"]">
+                            <label asp-for="Password">@Text["auth.password"]</label>
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
-                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Войти</button>
+                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">@Text["auth.signIn"]</button>
 
                         <div class="auth-links text-center">
                             @if (isEmailDeliveryAvailable)
                             {
                                 <div class="mb-2">
-                                    <a href="~/auth/forgotPassword" id="forgot-password">Забыли пароль?</a>
+                                    <a href="~/auth/forgotPassword" id="forgot-password">@Text["auth.forgotPassword"]</a>
                                 </div>
                             }
                             <div>
-                                Нет аккаунта? <a asp-controller="Auth" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Зарегистрируйтесь</a>
+                                @Text["auth.noAccount"] <a asp-controller="Auth" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">@Text["auth.register"]</a>
                             </div>
                         </div>
                     </form>

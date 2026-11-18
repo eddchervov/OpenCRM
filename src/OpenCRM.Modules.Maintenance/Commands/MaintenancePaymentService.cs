@@ -50,6 +50,7 @@ internal sealed class MaintenancePaymentService(
             {
                 Id = payment.Id,
                 Amount = payment.Amount,
+                CurrencyCode = payment.CurrencyCode,
                 MethodCode = payment.MethodCode,
                 PayerClientId = payment.PayerClientId,
                 PayerName = payment.PayerName,
@@ -73,19 +74,29 @@ internal sealed class MaintenancePaymentService(
     /// <summary> Выполняет добавление оплаты. </summary>
     private async Task AddPaymentCoreAsync(string userId, Guid organizationId, Guid maintenanceId, AddMaintenancePaymentDto dto)
     {
+        await this._transaction.LockOrganizationAsync(organizationId);
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.FinanceManage);
         if (dto.Id == Guid.Empty || dto.Amount <= 0 || dto.Amount > 999999999 || decimal.Round(dto.Amount, 2) != dto.Amount)
         {
-            throw new InvalidOperationException("Укажите сумму оплаты больше нуля, не более двух знаков после запятой.");
+            throw new MaintenancePaymentValidationException(
+                "maintenance.payment.amountInvalid",
+                "Укажите сумму оплаты больше нуля, не более двух знаков после запятой.");
         }
         var comment = MaintenanceTextRules.NormalizeOptional(dto.Comment);
         var methodCode = MaintenanceTextRules.NormalizeOptional(dto.MethodCode)?.ToLowerInvariant();
         if (methodCode is not (null or "cash" or "card" or "bank" or "other"))
         {
-            throw new InvalidOperationException("Выберите корректный способ оплаты.");
+            throw new MaintenancePaymentValidationException(
+                "maintenance.payment.methodInvalid",
+                "Выберите корректный способ оплаты.");
         }
 
         var maintenance = await this._maintenanceOrderLoader.LockMaintenanceAsync(userId, organizationId, maintenanceId);
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         var existing = await context.MaintenancePayments.AsNoTracking().SingleOrDefaultAsync(payment => payment.Id == dto.Id);
         if (existing != null)
         {
@@ -109,7 +120,11 @@ internal sealed class MaintenancePaymentService(
         var finance = MaintenanceMoneyRules.BuildFinanceSummary(maintenance);
         if (dto.Amount > finance.DebtAmount)
         {
-            throw new InvalidOperationException($"Сумма больше остатка к оплате: {MaintenanceChangeRules.FormatDecimalMoney(finance.DebtAmount)}. Обновите карточку.");
+            var formattedDebt = MaintenanceChangeRules.FormatDecimalMoney(finance.DebtAmount, maintenance.CurrencyCode);
+            throw new MaintenancePaymentValidationException(
+                "maintenance.payment.overpayment",
+                $"Сумма больше остатка к оплате: {formattedDebt}. Обновите карточку.",
+                formattedDebt);
         }
 
         var payment = new MaintenancePayment
@@ -117,6 +132,7 @@ internal sealed class MaintenancePaymentService(
             Id = dto.Id,
             MaintenanceId = maintenanceId,
             Amount = dto.Amount,
+            CurrencyCode = maintenance.CurrencyCode,
             MethodCode = methodCode,
             Comment = comment,
             CreatedAt = systemClock.UtcNow,
@@ -126,7 +142,7 @@ internal sealed class MaintenancePaymentService(
         context.MaintenancePayments.Add(payment);
         maintenance.PaidAmount += dto.Amount;
         await this._maintenanceHistoryWriter.AddHistoryEventAsync(userId, organizationId, maintenance.VehicleId, maintenanceId,
-            "payment_received", "Учтена оплата", $"{MaintenanceChangeRules.FormatDecimalMoney(dto.Amount)}. {comment}".Trim());
+            "payment_received", "Учтена оплата", $"{MaintenanceChangeRules.FormatDecimalMoney(dto.Amount, payment.CurrencyCode)}. {comment}".Trim());
     }
 
     /// <summary> Отменяет оплату по обслуживанию с указанием причины. </summary>
@@ -139,6 +155,7 @@ internal sealed class MaintenancePaymentService(
     /// <summary> Выполняет отмену оплаты. </summary>
     private async Task CancelPaymentCoreAsync(string userId, Guid organizationId, Guid maintenanceId, Guid paymentId, string reason)
     {
+        await this._transaction.LockOrganizationAsync(organizationId);
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.FinanceManage);
         var normalizedReason = MaintenanceTextRules.NormalizeOptional(reason);
         if (normalizedReason == null)
@@ -147,6 +164,11 @@ internal sealed class MaintenancePaymentService(
         }
 
         var maintenance = await this._maintenanceOrderLoader.LockMaintenanceAsync(userId, organizationId, maintenanceId);
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         var payment = await context.MaintenancePayments.SingleOrDefaultAsync(item => item.Id == paymentId && item.MaintenanceId == maintenanceId)
             ?? throw new InvalidOperationException("Оплата не найдена.");
         if (payment.CancelledAt.HasValue)
@@ -163,6 +185,6 @@ internal sealed class MaintenancePaymentService(
         payment.CancellationReason = normalizedReason;
         maintenance.PaidAmount -= payment.Amount;
         await this._maintenanceHistoryWriter.AddHistoryEventAsync(userId, organizationId, maintenance.VehicleId, maintenanceId,
-            "payment_cancelled", "Отменён учёт оплаты", $"{MaintenanceChangeRules.FormatDecimalMoney(payment.Amount)}. Причина: {normalizedReason}");
+            "payment_cancelled", "Отменён учёт оплаты", $"{MaintenanceChangeRules.FormatDecimalMoney(payment.Amount, payment.CurrencyCode)}. Причина: {normalizedReason}");
     }
 }

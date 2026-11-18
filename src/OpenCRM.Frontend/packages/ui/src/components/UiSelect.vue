@@ -3,8 +3,10 @@ import { computed, onMounted, ref, useId } from 'vue'
 import Multiselect from '@vueform/multiselect'
 import '@vueform/multiselect/themes/default.css'
 import UiFieldLabel from './UiFieldLabel.vue'
+import { useLocalization } from '../i18n'
 
 const model = defineModel<string>({ default: '' })
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   appendTo?: string
@@ -29,7 +31,7 @@ const props = withDefaults(defineProps<{
   error: '',
   disabled: false,
   ariaLabel: '',
-  placeholder: 'Выберите значение',
+  placeholder: '',
   searchable: true,
   required: false
 })
@@ -53,7 +55,7 @@ const selectId = computed(() => props.id ?? `ui-select-${fallbackId}`)
       :options="options"
       :disabled="disabled"
       :searchable="searchable"
-      :placeholder="placeholder"
+      :placeholder="placeholder || t('common.selectValue')"
       :aria="{ 'aria-label': ariaLabel || label, 'aria-invalid': !!error || undefined, 'aria-describedby': error ? `${selectId}-error` : undefined }"
       open-direction="bottom"
       :hide-selected="false"
@@ -62,8 +64,8 @@ const selectId = computed(() => props.id ?? `ui-select-${fallbackId}`)
       value-prop="value"
       label="label"
       track-by="label"
-      no-options-text="Список пуст"
-      no-results-text="Ничего не найдено"
+      :no-options-text="t('common.emptyList')"
+      :no-results-text="t('common.nothingFound')"
     />
     <span v-if="error" :id="`${selectId}-error`" class="ui-field__error" role="alert">{{ error }}</span>
   </div>

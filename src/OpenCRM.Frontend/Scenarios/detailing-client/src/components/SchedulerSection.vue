@@ -3,6 +3,8 @@ import { loadWorkspaceSetup, type WorkspaceSetup } from '@opencrm/workspace/api/
 import { SchedulerClosedDay, SchedulerSlots, SchedulerDayCalendar, SchedulerBookingDialog, SchedulerList, SchedulerToolbar, WorkspaceAccessNotice, useSchedulerViewState, getClosedSchedulerPosts } from '@opencrm/workspace'
 import { computed, onMounted, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader, formatDateOnly } from '@opencrm/ui'
+import { useLocalization } from '@opencrm/ui'
+import '@opencrm/workspace/schedulerMessages'
 import { WorkspacePageHelpButton } from '@opencrm/workspace'
 import {
   loadScenarioCatalog,
@@ -24,6 +26,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   changed: []
 }>()
+const { t, locale } = useLocalization()
 
 const schedule = ref<WorkspaceSetup | null>(null)
 const workdayStart = ref('08:00')
@@ -65,7 +68,7 @@ const postColumns = computed(() => {
     .map(post => normalizeLocation(post.name))
   const usedLocations = sortedItems.value.filter(item => item.plannedStartTime).map(item => normalizeLocation(item.location))
   const unique = Array.from(new Set([...configuredPosts, ...usedLocations]))
-  return unique.length ? unique : ['Без поста']
+  return unique.length ? unique : [t('scheduler.noPost')]
 })
 const selectedWorkingDay = computed(() => {
   const date = new Date(selectedDate.value + 'T12:00:00')
@@ -80,7 +83,7 @@ const workingHoursText = computed(() => {
   const day = selectedWorkingDay.value
   if (!day || !schedule.value?.weeklySchedule?.some(value => value.isWorking)) return ''
   if (!day.isWorking) return ''
-  return 'Рабочие часы: ' + workingIntervals(day).map(interval => interval.startTime + '–' + interval.endTime).join(', ')
+  return t('scheduler.workingHours', { hours: workingIntervals(day).map(interval => interval.startTime + '–' + interval.endTime).join(', ') })
 })
 const isScheduleMissing = computed(() => schedule.value !== null && !hasWorkingSchedule(schedule.value.weeklySchedule ?? []))
 const isClosedDay = computed(() => !isScheduleMissing.value && selectedWorkingDay.value?.isWorking === false)
@@ -112,7 +115,7 @@ async function finishMove() {
 
 function normalizeLocation(value?: string | null) {
   const text = value?.trim()
-  return text || 'Без поста'
+  return text || t('scheduler.noPost')
 }
 
 function formatTime(value?: string | null) {
@@ -188,13 +191,13 @@ function getSlotEndTime(time: string) {
 
 function getMaintenanceStatusName(status: number) {
   const names: Record<number, string> = {
-    1: 'Запланировано',
-    2: 'В работе',
-    3: 'Выполнено',
-    4: 'Отменено'
+    1: t('scheduler.scheduled'),
+    2: t('scheduler.inProgress'),
+    3: t('scheduler.completed'),
+    4: t('scheduler.cancelled')
   }
 
-  return names[status] ?? 'Неизвестно'
+  return names[status] ?? t('scheduler.statusUnknown')
 }
 
 function applyMaintenanceStatus(item: Pick<DetailingMaintenanceCalendarItem, 'status' | 'statusName'>, status: number) {
@@ -213,7 +216,7 @@ function buildBookingHref(time?: string, location?: string) {
     params.set('end', getSlotEndTime(time))
   }
 
-  if (location && location !== 'Без поста') {
+  if (location && location !== t('scheduler.noPost')) {
     params.set('location', location)
   }
 
@@ -228,7 +231,7 @@ const bookingDialog = ref<InstanceType<typeof SchedulerBookingDialog> | null>(nu
 
 function createFromCalendar(slot: BookingSlot) {
   if (!canWrite.value) return
-  booking.value = { ...slot, location: slot.location === 'Без поста' ? undefined : slot.location }
+  booking.value = { ...slot, location: slot.location === t('scheduler.noPost') ? undefined : slot.location }
 }
 
 function openBooking(event: MouseEvent, time?: string, location?: string) {
@@ -260,12 +263,13 @@ async function loadItems() {
   try {
     const loaded = await loadMaintenanceCalendar(props.context.links.api.calendar, date, dateTo, { includeAllStatuses: true })
     if (request !== itemsRequest) return
-    itemsLimitWarning.value = loaded.length >= 500 ? 'Достигнут лимит 500 записей. Сократите период для просмотра остальных.' : ''
-    items.value = viewMode.value === 'list' ? loaded : loaded.filter(item => item.date.slice(0, 10) <= date)
-    nextDayItems.value = loaded.filter(item => item.date.slice(0, 10) > date)
+    itemsLimitWarning.value = loaded.length >= 500 ? t('scheduler.itemLimit', { count: 500 }) : ''
+    const localizedItems = loaded.map(localizeStatus)
+    items.value = viewMode.value === 'list' ? localizedItems : localizedItems.filter(item => item.date.slice(0, 10) <= date)
+    nextDayItems.value = localizedItems.filter(item => item.date.slice(0, 10) > date)
   } catch (error) {
     if (request !== itemsRequest) return
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить записи.'
+    errorMessage.value = error instanceof Error ? error.message : t('scheduler.loadError')
   } finally {
     if (request === itemsRequest) isLoading.value = false
   }
@@ -287,7 +291,14 @@ async function loadOrganizationSchedule() {
   try {
     schedule.value = await loadWorkspaceSetup(props.context.organization.id)
   } catch {
-    scheduleError.value = 'Не удалось загрузить рабочие часы организации.'
+    scheduleError.value = t('scheduler.scheduleLoadError')
+  }
+}
+
+function localizeStatus(item: DetailingMaintenanceCalendarItem) {
+  return {
+    ...item,
+    statusName: item.handedOverAt ? t('scheduler.handedOver') : item.readyForHandoverAt ? t('scheduler.ready') : getMaintenanceStatusName(item.status)
   }
 }
 
@@ -299,15 +310,19 @@ onMounted(() => {
 })
 watch([selectedDate, listDays, viewMode], loadItems)
 watch([workdayStart, workdayEnd], saveSchedulerSettings)
+watch(locale, () => {
+  items.value = items.value.map(localizeStatus)
+  nextDayItems.value = nextDayItems.value.map(localizeStatus)
+})
 </script>
 
 <template>
-  <UiCard page title="Записи">
+  <UiCard page :title="t('scheduler.appointmentsTitle')">
     <template #actions>
       <UiButton class="scheduler-create" :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" :href="canWrite ? buildBookingHref() : billingHref" :variant="canWrite ? 'primary' : 'secondary'" @click="openBooking($event)">
-        <span aria-hidden="true">＋</span> Новая запись
+        <span aria-hidden="true">＋</span> {{ t('scheduler.newAppointment') }}
       </UiButton>
-      <WorkspacePageHelpButton section-code="scheduler" title="Записи" />
+      <WorkspacePageHelpButton section-code="scheduler" :title="t('scheduler.appointmentsTitle')" />
     </template>
     <SchedulerToolbar :time-zone-id="context.organization.timeZoneId"
       v-model:date="selectedDate"
@@ -341,24 +356,24 @@ watch([workdayStart, workdayEnd], saveSchedulerSettings)
       :working-days="schedule?.workingDays"
       :workday-start="schedule?.workdayStart"
       :workday-end="schedule?.workdayEnd"
-      empty-text="Нет записей на выбранный период"
+      :empty-text="t('scheduler.noRecordsPeriod')"
     />
 
     <div v-else-if="isLoading" class="scheduler-loading-card">
-      <UiLoader text="Загружаем записи..." />
+      <UiLoader :text="t('scheduler.loadingAppointments')" />
       <div class="scheduler-loading-board" aria-hidden="true">
         <span v-for="index in 12" :key="index"></span>
       </div>
     </div>
     <div v-else-if="errorMessage" class="detailing-state detailing-state-error" role="alert">
-      {{ errorMessage }} <UiButton variant="secondary" @click="loadItems">Повторить</UiButton>
+      {{ errorMessage }} <UiButton variant="secondary" @click="loadItems">{{ t('scheduler.retry') }}</UiButton>
     </div>
 
     <template v-else-if="(isScheduleMissing || isClosedDay) && (viewMode === 'day' || viewMode === 'slots')">
       <SchedulerClosedDay :time-zone-id="context.organization.timeZoneId" :date="selectedDate" :schedule="schedule?.weeklySchedule ?? []" :can-manage="schedule?.canManage === true"
         @select-date="selectedDate = $event" />
       <template v-if="sortedItems.length">
-        <h3 class="scheduler-without-time">{{ isScheduleMissing ? 'Записи на выбранную дату' : 'Записи на выходной день' }} · {{ sortedItems.length }}</h3>
+        <h3 class="scheduler-without-time">{{ isScheduleMissing ? t('scheduler.recordsSelectedDate') : t('scheduler.recordsClosedDay') }} · {{ sortedItems.length }}</h3>
         <SchedulerList :items="sortedItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
           @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
       </template>
@@ -370,7 +385,7 @@ watch([workdayStart, workdayEnd], saveSchedulerSettings)
         :can-move="canWrite && !move" @reschedule="item => { const original = items.find(entry => entry.id === item.id); if (original) requestMove(original) }"
         @create="createFromCalendar" />
       <template v-if="noTimeItems.length">
-        <h3 class="scheduler-without-time">Без времени · {{ noTimeItems.length }}</h3>
+        <h3 class="scheduler-without-time">{{ t('scheduler.withoutTime', { count: noTimeItems.length }) }}</h3>
         <SchedulerList :items="noTimeItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
           @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
       </template>
@@ -380,7 +395,7 @@ watch([workdayStart, workdayEnd], saveSchedulerSettings)
       <SchedulerSlots v-model:duration="slotDuration" v-model:post-filter="postFilter" :posts-loaded="arePostsLoaded" :items="[...items, ...nextDayItems]" :date="selectedDate" :posts="postColumns" :closed-posts="closedPosts"
         :intervals="slotIntervals" :can-create="canWrite" @create="createFromCalendar" />
       <template v-if="noTimeItems.length">
-        <h3 class="scheduler-without-time">Без времени · {{ noTimeItems.length }}</h3>
+        <h3 class="scheduler-without-time">{{ t('scheduler.withoutTime', { count: noTimeItems.length }) }}</h3>
         <SchedulerList :items="noTimeItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
           @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
       </template>
@@ -389,7 +404,7 @@ watch([workdayStart, workdayEnd], saveSchedulerSettings)
     <SchedulerList v-else-if="sortedItems.length" :items="sortedItems" :organization-id="context.organization.id" :can-write="canWrite" :simple-workflow="isSimpleMaintenanceWorkflow(context.organization)"
       @changed="(item, status) => applyMaintenanceStatus(item, status)" @error="message => errorMessage = message" />
     <div v-else class="detailing-empty">
-      На выбранную дату записей пока нет. Можно добавить новую запись или выбрать другой день.
+      {{ t('scheduler.emptyDay') }}
     </div>
   </UiCard>
   <SchedulerBookingDialog ref="bookingDialog" :open="!!booking" :busy="bookingBusy" :dirty="bookingDirty" @close="booking = null; bookingDirty = false">

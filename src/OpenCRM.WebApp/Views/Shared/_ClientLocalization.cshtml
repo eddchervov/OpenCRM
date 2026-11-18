@@ -1,0 +1,15 @@
+@{
+    const string prefix = "clientUi.";
+    var messages = Text.GetAllStrings(includeParentCultures: true)
+        .Where(resource => resource.Name.StartsWith(prefix, StringComparison.Ordinal))
+        .ToDictionary(resource => resource.Name[prefix.Length..], resource => resource.Value);
+}
+<script>
+    window.OpenCRMText = (function (messages) {
+        return function (key, parameters) {
+            return (messages[key] || key).replace(/\{(\w+)\}/g, function (_, name) {
+                return parameters && parameters[name] !== undefined ? parameters[name] : '{' + name + '}';
+            });
+        };
+    })(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(messages)));
+</script>

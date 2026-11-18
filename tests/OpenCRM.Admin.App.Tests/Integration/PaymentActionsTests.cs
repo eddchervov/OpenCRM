@@ -8,13 +8,54 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
+[Collection("Admin localization")]
 public sealed class PaymentActionsTests
 {
+    [Fact]
+    public async Task OpenConfirmationUpdatesWhenTheUiLanguageChanges()
+    {
+        using var handler = new PaymentHandler();
+        using var client = await PaymentActionsTests.CreateClientAsync(handler);
+        var model = new PaymentActionsViewModel(client);
+        var localization = AdminLocalization.Instance;
+        var previousLanguage = localization.Language;
+        var preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-payment-confirmation-{Guid.NewGuid():N}.txt");
+
+        using var preferenceScope = localization.UsePreferencePath(preferencePath);
+        try
+        {
+            localization.Language = "ru";
+            model.SetPayment(handler.Payment);
+            model.RequestSyncCommand.Execute(null);
+            var russianConfirmation = model.ConfirmationText;
+
+            localization.Language = "en";
+            model.RefreshLocalizedValues();
+
+            Assert.NotEqual(russianConfirmation, model.ConfirmationText);
+            Assert.Equal(
+                localization.Format("native.billing.sverit.platyozh.this.payment.id.s.yookassa.sverka.mozhet.obnovit", handler.Payment.Id),
+                model.ConfirmationText);
+            Assert.True(model.IsConfirmationOpen);
+            Assert.Equal(string.Empty, model.Reason);
+        }
+        finally
+        {
+            model.Stop(clear: true);
+            localization.Language = previousLanguage;
+            if (File.Exists(preferencePath))
+            {
+                File.Delete(preferencePath);
+            }
+        }
+    }
+
     [Fact]
     public async Task ReadOnlyAndBillingManagerHaveDifferentMutationPermissions()
     {

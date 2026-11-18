@@ -207,6 +207,7 @@ public sealed class OrganizationMaintenanceJournalQueryService(OpenCRMContext op
                         ? item.CompletedDate ?? item.Date
                         : item.PlannedDate ?? item.Date,
                     WorkActNumber = item.WorkActNumber,
+                    CurrencyCode = item.CurrencyCode,
                     Amount = amount,
                     PaidAmount = canViewPayments ? item.PaidAmount : null,
                     PaymentStatus = paymentStatus

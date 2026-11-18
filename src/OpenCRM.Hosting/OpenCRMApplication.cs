@@ -16,6 +16,8 @@ using OpenCRM.WebApp.Infrastructure.Api;
 using OpenCRM.WebApp.Infrastructure.Hangfire;
 using OpenCRM.WebApp.Infrastructure.Security;
 using OpenCRM.WebApp.Infrastructure.UserActivity;
+using OpenCRM.WebApp.Infrastructure.Localization;
+using Microsoft.AspNetCore.Localization;
 using Serilog;
 using System.Net;
 using System.Security.Claims;
@@ -216,6 +218,13 @@ public static class OpenCRMApplication
         var brand = app.Services.GetRequiredService<Helpers.ProjectBrand>();
 
         app.UseForwardedHeaders();
+        app.UseRequestLocalization(new RequestLocalizationOptions
+        {
+            DefaultRequestCulture = new RequestCulture(SupportedUiLanguages.DefaultCultureName),
+            SupportedCultures = SupportedUiLanguages.FormattingCultures.ToList(),
+            SupportedUICultures = SupportedUiLanguages.Cultures.ToList(),
+            RequestCultureProviders = [new UiRequestCultureProvider()]
+        });
         app.UseMiddleware<ApiExceptionHandlingMiddleware>();
 
         if (app.Environment.IsDevelopment())
@@ -295,6 +304,7 @@ public static class OpenCRMApplication
         app.UseCors(OpenCRMApplication.ApiCorsPolicyName);
         app.UseCookiePolicy();
         app.UseAuthentication();
+        app.UseMiddleware<PreferredUiCultureMiddleware>();
         app.UseRateLimiter();
         app.UseMiddleware<EmailConfirmationMiddleware>();
         app.UseAuthorization();

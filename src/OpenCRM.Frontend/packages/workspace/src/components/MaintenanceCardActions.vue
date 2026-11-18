@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import '../workflowMessages'
+import { translate as t, formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiDatePicker, UiSelect, UiModal, UiTextarea, formatDateOnly } from '@opencrm/ui'
 import { loadScenarioCatalog, type WorkspaceScenarioCatalogItem } from '../api/scenarioCatalog'
@@ -6,22 +10,24 @@ import BookingTimeFields from './BookingTimeFields.vue'
 import { bookingDayOffset } from '../api/bookingSlots'
 import { changeMaintenanceWorkflow, type WorkspaceMaintenance, type WorkspaceMaintenanceWorkflowAction } from '../api/maintenance'
 
+const workspaceCurrency = useWorkspaceCurrency()
+
 type ActionCode = WorkspaceMaintenanceWorkflowAction['action']
 type Action = { code: ActionCode, label: string, description: string, confirm: string }
 const props = defineProps<{ organizationId: string, maintenance: WorkspaceMaintenance, timeZoneId?: string | null, disabled?: boolean, hideTrigger?: boolean, simpleWorkflow?: boolean }>()
 const emit = defineEmits<{ changed: [] }>()
 const actions: Action[] = [
-  { code: 'simple_handover', label: 'Выдать', description: 'Подтвердите выполнение услуг и передачу автомобиля клиенту. Выполнение и выдача сохранятся одним действием. Оплата учитывается отдельно.', confirm: 'Выдать' },
-  { code: 'start', label: 'В работу', description: 'Начать работу по записи.', confirm: 'Взять в работу' },
-  { code: 'complete', label: 'Готов к выдаче', description: 'Завершить работы и отметить готовность к выдаче. Дата выполнения будет зафиксирована сегодня.', confirm: 'Завершить работы' },
-  { code: 'mark_ready', label: 'Отметить готовность', description: 'Работы уже выполнены. Отметьте готовность, если техника ещё у вас и ожидает выдачи.', confirm: 'Готов к выдаче' },
-  { code: 'handover', label: 'Выдать технику', description: 'Подтвердите, что техника передана получателю. Время выдачи сохранится в истории.', confirm: 'Подтвердить выдачу' },
-  { code: 'undo_handover', label: 'Отменить выдачу', description: 'Исправить ошибочную отметку выдачи. Работы останутся выполненными, техника вернётся в ожидающие выдачи.', confirm: 'Отменить выдачу' },
-  { code: 'reschedule', label: 'Перенести запись', description: 'Изменить плановую дату и время, сохранив статус.', confirm: 'Перенести запись' },
-  { code: 'return_to_planned', label: 'Вернуть в запланированные', description: 'Если работу начали по ошибке. Дата, время и данные записи сохранятся.', confirm: 'Вернуть в запланированные' },
-  { code: 'return_to_work', label: 'Вернуть в работу', description: 'Отменить завершение. Фактическая дата очистится, связанный пробег будет пересчитан. Оплаты, материалы и фото сохранятся.', confirm: 'Вернуть в работу' },
-  { code: 'cancel', label: 'Отменить запись', description: 'Освободить время на посту. Запись и её история сохранятся.', confirm: 'Отменить запись' },
-  { code: 'reopen', label: 'Возобновить запись', description: 'Выбрать дату и вернуть отменённую запись в запланированные.', confirm: 'Возобновить запись' }
+  { code: 'simple_handover', label: t('workflow.handover'), description: t('workflow.simpleDescription'), confirm: t('workflow.handover') },
+  { code: 'start', label: t('workflow.start'), description: t('workflow.startDescription'), confirm: t('workflow.startConfirm') },
+  { code: 'complete', label: t('workflow.ready'), description: t('workflow.completeDescription'), confirm: t('workflow.complete') },
+  { code: 'mark_ready', label: t('workflow.markReady'), description: t('workflow.markReadyDescription'), confirm: t('workflow.ready') },
+  { code: 'handover', label: t('workflow.handoverVehicle'), description: t('workflow.handoverDescription'), confirm: t('workflow.confirmHandover') },
+  { code: 'undo_handover', label: t('workflow.undo'), description: t('workflow.undoDescription'), confirm: t('workflow.undo') },
+  { code: 'reschedule', label: t('workflow.reschedule'), description: t('workflow.rescheduleDescription'), confirm: t('workflow.reschedule') },
+  { code: 'return_to_planned', label: t('workflow.planned'), description: t('workflow.plannedDescription'), confirm: t('workflow.planned') },
+  { code: 'return_to_work', label: t('workflow.returnWork'), description: t('workflow.returnDescription'), confirm: t('workflow.returnWork') },
+  { code: 'cancel', label: t('workflow.cancel'), description: t('workflow.cancelDescription'), confirm: t('workflow.cancel') },
+  { code: 'reopen', label: t('workflow.reopen'), description: t('workflow.reopenDescription'), confirm: t('workflow.reopen') }
 ]
 const available = computed(() => {
   if (props.simpleWorkflow) {
@@ -59,12 +65,12 @@ const posts = ref<WorkspaceScenarioCatalogItem[]>([])
 const loadingPosts = ref(false)
 const postError = ref('')
 const postOptions = computed(() => [...new Set(['', location.value, ...posts.value.filter(item => item.isActive).map(item => item.name)])]
-  .map(value => ({ value, label: value || 'Без поста' })))
+  .map(value => ({ value, label: value || t('workflow.noPost') })))
 async function loadPosts() {
   loadingPosts.value = true
   postError.value = ''
   try { posts.value = (await loadScenarioCatalog(props.organizationId)).workPosts ?? [] }
-  catch (failure) { postError.value = failure instanceof Error ? failure.message : 'Не удалось загрузить посты.' }
+  catch (failure) { postError.value = failure instanceof Error ? failure.message : t('workflow.postsError') }
   finally { loadingPosts.value = false }
 }
 const content = ref<HTMLElement | null>(null)
@@ -120,15 +126,15 @@ function handleKey(event: KeyboardEvent) {
 async function submit() {
   if (!selected.value || busy.value || props.disabled) return
   if (!available.value.some(action => action.code === selected.value?.code)) {
-    error.value = 'Статус записи изменился. Обновите карточку.'
+    error.value = t('workflow.stale')
     return
   }
   if (needsSchedule.value && !date.value) {
-    error.value = 'Выберите плановую дату.'
+    error.value = t('workflow.dateRequired')
     return
   }
   if (selected.value.code === 'undo_handover' && !reason.value.trim()) {
-    error.value = 'Укажите причину отмены выдачи.'
+    error.value = t('workflow.reasonRequired')
     return
   }
   busy.value = true
@@ -152,7 +158,7 @@ async function submit() {
     open.value = false
     emit('changed')
   } catch (failure) {
-    error.value = failure instanceof Error ? failure.message : 'Не удалось изменить запись.'
+    error.value = failure instanceof Error ? failure.message : t('workflow.saveError')
   } finally {
     busy.value = false
   }
@@ -176,9 +182,9 @@ watch(date, (value, previous) => {
       {{ primary.label }}
     </UiButton>
     <UiButton v-if="others.length && !hideTrigger" variant="secondary" :disabled="disabled || busy" aria-haspopup="dialog" @click="show()">
-      Действия <svg class="record-actions__chevron" viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      {{ t('workflow.actions') }} <svg class="record-actions__chevron" viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
     </UiButton>
-    <UiModal :open="open" :title="selected?.label ?? 'Действия с записью'" @close="close">
+    <UiModal :open="open" :title="selected?.label ?? t('workflow.actionsTitle')" @close="close">
       <div ref="content" class="workflow-dialog" tabindex="-1" :aria-busy="busy">
         <div v-if="!selected" class="workflow-dialog__actions">
           <button v-for="action in hideTrigger ? available : others" :key="action.code" type="button" class="workflow-dialog__action"
@@ -190,30 +196,29 @@ watch(date, (value, previous) => {
         <template v-else>
           <p class="workflow-dialog__description">{{ selected.description }}</p>
           <p v-if="selected.code === 'return_to_work' && maintenance.linkedDefects.length" class="workflow-dialog__description">
-            Статусы связанных неисправностей сохранятся. При необходимости измените их отдельно.
+            {{ t('workflow.defectsNote') }}
           </p>
           <p v-if="(selected.code === 'handover' || selected.code === 'simple_handover') && maintenance.debtAmount > 0" class="workflow-dialog__balance">
-            Осталось оплатить: <strong>{{ new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(maintenance.debtAmount) }}</strong>.
-            Выдача не изменяет оплату.
+            {{ t('workflow.balance', { amount: new Intl.NumberFormat(formattingCulture, { style: 'currency', currency: workspaceCurrency }).format(maintenance.debtAmount) }) }}
           </p>
           <div v-if="needsSchedule" class="workflow-dialog__schedule">
-            <UiDatePicker v-model="date" label="Дата начала" :disabled="busy" required />
-            <UiDatePicker v-model="endDate" label="Дата окончания" :disabled="busy" required />
-            <UiSelect v-model="location" label="Пост / место" :options="postOptions" :disabled="busy || loadingPosts || !!postError" />
-            <p v-if="postError" role="alert">{{ postError }} <button type="button" @click="loadPosts">Повторить</button></p>
+            <UiDatePicker v-model="date" :label="t('workflow.startDate')" :disabled="busy" required />
+            <UiDatePicker v-model="endDate" :label="t('workflow.endDate')" :disabled="busy" required />
+            <UiSelect v-model="location" :label="t('workflow.post')" :options="postOptions" :disabled="busy || loadingPosts || !!postError" />
+            <p v-if="postError" role="alert">{{ postError }} <button type="button" @click="loadPosts">{{ t('workflow.retry') }}</button></p>
             <BookingTimeFields ref="bookingTimes" v-model:start="start" v-model:end="end"
               :organization-id="organizationId" :date="date" :end-date="endDate" :location="location"
               :exclude-maintenance-id="maintenance.id" :disabled="busy" />
           </div>
-          <UiTextarea v-if="needsReason" v-model="reason" :label="selected.code === 'undo_handover' ? 'Причина отмены выдачи' : 'Комментарий к изменению'" :required="selected.code === 'undo_handover'" :placeholder="selected.code === 'undo_handover' ? 'Например, отметили по ошибке' : 'Необязательно'" :rows="2" :disabled="busy" />
+          <UiTextarea v-if="needsReason" v-model="reason" :label="selected.code === 'undo_handover' ? t('workflow.undoReason') : t('workflow.comment')" :required="selected.code === 'undo_handover'" :placeholder="selected.code === 'undo_handover' ? t('workflow.exampleReason') : t('workflow.optional')" :rows="2" :disabled="busy" />
           <div v-if="error" class="workflow-dialog__error" role="alert">{{ error }}</div>
         </template>
       </div>
       <template #footer>
-        <UiButton v-if="hideTrigger && selected" variant="secondary" :disabled="busy" @click="show()">К действиям</UiButton>
-        <UiButton v-else variant="secondary" :disabled="busy" @click="close">Закрыть</UiButton>
+        <UiButton v-if="hideTrigger && selected" variant="secondary" :disabled="busy" @click="show()">{{ t('workflow.back') }}</UiButton>
+        <UiButton v-else variant="secondary" :disabled="busy" @click="close">{{ t('workflow.close') }}</UiButton>
         <UiButton v-if="selected" :disabled="busy || (needsSchedule && (loadingPosts || !!postError))" :class="{ 'workflow-dialog__cancel': selected.code === 'cancel' }" @click="submit">
-          {{ busy ? 'Сохраняем…' : selected.confirm }}
+          {{ busy ? t('workflow.saving') : selected.confirm }}
         </UiButton>
       </template>
     </UiModal>

@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.SiteNotificationsView"
@@ -34,8 +35,8 @@
   </UserControl.Resources>
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
     <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="Уведомления сайта" Classes="heading" />
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+      <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.uvedomleniya.sayta}" Classes="heading" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
     </Grid>
     <StackPanel Grid.Row="1" Spacing="6">
       <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -47,30 +48,30 @@
       <TabControl.Styles>
         <Style Selector="TabItem"><Setter Property="Theme" Value="{StaticResource CardTabTheme}" /></Style>
       </TabControl.Styles>
-      <TabItem Header="Рассылка">
+      <TabItem Header="{loc:LocalizedText Key=native.siteNotifications.rassylka}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <StackPanel Spacing="16" HorizontalAlignment="Stretch">
             <Border Classes="configurationSection">
               <StackPanel Spacing="12" IsEnabled="{Binding CanManage}">
-                <TextBlock Text="Разовое уведомление" Classes="configurationHeading" />
-                <TextBlock Text="Отправка сразу: выберите адресатов и аудиторию перед подтверждением." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.razovoe.uvedomlenie}" Classes="configurationHeading" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.otpravka.srazu.vyberite.adresatov.i.auditoriyu.pered.podtverzhde}" Classes="caption" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding SendWarning}" IsVisible="{Binding IsSendAttempted}" Foreground="#F1D09B" TextWrapping="Wrap" />
-                <Button Content="Проверить историю и начать новое уведомление" Command="{Binding CheckHistoryAndStartNewCommand}" IsVisible="{Binding IsSendAttempted}" HorizontalAlignment="Left" />
-                <TextBox Text="{Binding SendTitle}" PlaceholderText="Заголовок" MaxLength="200" />
-                <TextBox Text="{Binding SendBody}" PlaceholderText="Текст уведомления" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" VerticalContentAlignment="Top" MaxLength="4000" />
-                <TextBlock Text="Кому" FontWeight="SemiBold" />
+                <Button Content="{loc:LocalizedText Key=native.siteNotifications.proverit.istoriyu.i.nachat.novoe.uvedomlenie}" Command="{Binding CheckHistoryAndStartNewCommand}" IsVisible="{Binding IsSendAttempted}" HorizontalAlignment="Left" />
+                <TextBox Text="{Binding SendTitle}" PlaceholderText="{loc:LocalizedText Key=native.siteNotifications.zagolovok}" MaxLength="200" />
+                <TextBox Text="{Binding SendBody}" PlaceholderText="{loc:LocalizedText Key=native.siteNotifications.tekst.uvedomleniya}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" VerticalContentAlignment="Top" MaxLength="4000" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.komu}" FontWeight="SemiBold" />
                 <ComboBox ItemsSource="{Binding RecipientScopes}" SelectedItem="{Binding RecipientScope}" Width="300" HorizontalAlignment="Left">
                   <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
                 </ComboBox>
                 <StackPanel Spacing="8" IsVisible="{Binding IsSelectedUsers}">
                   <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <TextBox Text="{Binding UserSearch}" PlaceholderText="Найти пользователей по email" />
-                    <Button Grid.Column="1" Content="Найти" Command="{Binding SearchUsersCommand}" />
+                    <TextBox Text="{Binding UserSearch}" PlaceholderText="{loc:LocalizedText Key=native.siteNotifications.nayti.polzovateley.po.email}" />
+                    <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.nayti}" Command="{Binding SearchUsersCommand}" />
                   </Grid>
                   <ItemsControl ItemsSource="{Binding FoundUsers}">
                     <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:SiteNotificationUserOption"><CheckBox Content="{Binding Email}" IsChecked="{Binding IsSelected}" /></DataTemplate></ItemsControl.ItemTemplate>
                   </ItemsControl>
-                  <TextBlock Text="Выбранные получатели" FontWeight="SemiBold" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.vybrannye.poluchateli}" FontWeight="SemiBold" />
                   <ItemsControl ItemsSource="{Binding SelectedUsers}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -78,25 +79,25 @@
                         <Border Classes="configurationBadge" Margin="0,0,8,8">
                           <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="{Binding Email}" VerticalAlignment="Center" />
-                            <Button Content="Убрать" Padding="8,4" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).RemoveSelectedUserCommand}" CommandParameter="{Binding}" />
+                            <Button Content="{loc:LocalizedText Key=native.siteNotifications.ubrat}" Padding="8,4" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).RemoveSelectedUserCommand}" CommandParameter="{Binding}" />
                           </StackPanel>
                         </Border>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                  <TextBlock Text="{Binding SelectedUsers.Count, StringFormat='Выбрано: {0}'}" Classes="caption" />
+                  <TextBlock Text="{loc:LocalizedFormat Key=native.siteNotifications.vybrano.0, Path=SelectedUsers.Count}" Classes="caption" />
                 </StackPanel>
-                <TextBlock Text="Аудитории" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.auditorii}" FontWeight="SemiBold" />
                 <ItemsControl ItemsSource="{Binding AudienceOptions}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:SiteNotificationAudienceOption"><CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="0,0,18,0" /></DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="Выберите всех пользователей либо одну или обе специальные аудитории." Classes="caption" TextWrapping="Wrap" />
-                <Button Content="Отправить уведомление…" Classes="configurationPrimary" Command="{Binding RequestSendCommand}" HorizontalAlignment="Left" IsVisible="{Binding !IsSendConfirmationOpen}" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.vyberite.vsekh.polzovateley.libo.odnu.ili.obe.spetsialnye.audito}" Classes="caption" TextWrapping="Wrap" />
+                <Button Content="{loc:LocalizedText Key=native.siteNotifications.otpravit.uvedomlenie}" Classes="configurationPrimary" Command="{Binding RequestSendCommand}" HorizontalAlignment="Left" IsVisible="{Binding !IsSendConfirmationOpen}" />
                 <Border Classes="configurationSection" IsVisible="{Binding IsSendConfirmationOpen}" Padding="14">
                   <StackPanel Spacing="10">
-                    <TextBlock Text="Уведомление будет отправлено сразу выбранным пользователям. Проверьте заголовок, текст и аудитории." TextWrapping="Wrap" />
-                    <WrapPanel><Button Content="Подтвердить отправку" Classes="configurationPrimary" Command="{Binding ConfirmSendCommand}" Margin="0,0,8,0" /><Button Content="Назад" Command="{Binding CancelSendCommand}" /></WrapPanel>
+                    <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.uvedomlenie.budet.otpravleno.srazu.vybrannym.polzovatelyam.prove}" TextWrapping="Wrap" />
+                    <WrapPanel><Button Content="{loc:LocalizedText Key=native.siteNotifications.podtverdit.otpravku}" Classes="configurationPrimary" Command="{Binding ConfirmSendCommand}" Margin="0,0,8,0" /><Button Content="{loc:LocalizedText Key=native.siteNotifications.nazad}" Command="{Binding CancelSendCommand}" /></WrapPanel>
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -104,15 +105,15 @@
           </StackPanel>
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="История">
+      <TabItem Header="{loc:LocalizedText Key=native.siteNotifications.istoriya}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <StackPanel Spacing="12" HorizontalAlignment="Stretch">
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
               <TextBlock Text="{Binding PageLabel}" Classes="caption" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Content="Назад" Command="{Binding PreviousHistoryPageCommand}" />
-              <Button Grid.Column="2" Content="Дальше" Command="{Binding NextHistoryPageCommand}" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.siteNotifications.nazad}" Command="{Binding PreviousHistoryPageCommand}" />
+              <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.siteNotifications.dalshe}" Command="{Binding NextHistoryPageCommand}" />
             </Grid>
-            <TextBlock Text="На этой странице уведомлений нет." IsVisible="{Binding IsHistoryEmpty}" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.na.etoy.stranitse.uvedomleniy.net}" IsVisible="{Binding IsHistoryEmpty}" Classes="caption" />
             <ItemsControl ItemsSource="{Binding HistoryItems}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="api:AdminSiteNotification">
@@ -122,9 +123,9 @@
                         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
                         <TextBlock Text="{Binding Body}" TextWrapping="Wrap" Classes="muted" />
                         <TextBlock Text="{Binding RecipientEmail}" Classes="caption" />
-                        <TextBlock Text="{Binding CreatedAt, StringFormat='Создано: {0:dd.MM.yyyy HH:mm}'}" Classes="caption" />
+                        <TextBlock Text="{loc:LocalizedFormat Key=native.billing.sozdano.0.dd.mm.yyyy.hh.mm, Path=CreatedAt}" Classes="caption" />
                       </StackPanel>
-                      <Button Grid.Column="1" Content="Удалить" IsVisible="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).CanManage}" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).RequestDeleteCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" />
+                      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.plans.udalit}" IsVisible="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).CanManage}" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).RequestDeleteCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" />
                     </Grid>
                   </Border>
                 </DataTemplate>
@@ -132,20 +133,20 @@
             </ItemsControl>
             <Border Classes="configurationSection" IsVisible="{Binding PendingDelete, Converter={x:Static ObjectConverters.IsNotNull}}" Padding="14">
               <StackPanel Spacing="10">
-                <TextBlock Text="Удалить это уведомление из истории?" TextWrapping="Wrap" />
-                <WrapPanel><Button Content="Удалить" Classes="configurationPrimary" Command="{Binding DeleteCommand}" Margin="0,0,8,0" /><Button Content="Отмена" Command="{Binding CancelDeleteCommand}" /></WrapPanel>
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.udalit.eto.uvedomlenie.iz.istorii}" TextWrapping="Wrap" />
+                <WrapPanel><Button Content="{loc:LocalizedText Key=native.plans.udalit}" Classes="configurationPrimary" Command="{Binding DeleteCommand}" Margin="0,0,8,0" /><Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelDeleteCommand}" /></WrapPanel>
               </StackPanel>
             </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Шаблоны">
+      <TabItem Header="{loc:LocalizedText Key=native.siteNotifications.shablony}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <StackPanel Spacing="12" HorizontalAlignment="Stretch">
             <Border Classes="configurationSection">
               <StackPanel Spacing="12">
-                <TextBlock Text="Автоматические шаблоны" Classes="configurationHeading" />
-                <TextBlock Text="Тексты создаются при системных событиях. Получатели определяются автоматически." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.avtomaticheskie.shablony}" Classes="configurationHeading" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.teksty.sozdayutsya.pri.sistemnykh.sobytiyakh.poluchateli.opredel}" Classes="caption" TextWrapping="Wrap" />
                 <ItemsControl ItemsSource="{Binding Templates}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
@@ -153,7 +154,7 @@
                       <Border Classes="configurationSection" Padding="14">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                           <StackPanel Spacing="5"><TextBlock Text="{Binding TypeCode}" Classes="caption" /><TextBlock Text="{Binding Title}" FontWeight="SemiBold" /><TextBlock Text="{Binding Body}" TextWrapping="Wrap" Classes="muted" /></StackPanel>
-                          <Button Grid.Column="1" Content="Изменить" IsVisible="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).CanManage}" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).EditTemplateCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" />
+                          <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.siteNotifications.izmenit}" IsVisible="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).CanManage}" Command="{Binding $parent[UserControl].((vm:SiteNotificationsViewModel)DataContext).EditTemplateCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" />
                         </Grid>
                       </Border>
                     </DataTemplate>
@@ -163,11 +164,11 @@
             </Border>
             <Border Classes="configurationSection" IsVisible="{Binding EditingTemplate, Converter={x:Static ObjectConverters.IsNotNull}}" Padding="16" IsEnabled="{Binding CanManage}">
               <StackPanel Spacing="10">
-                <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Редактирование шаблона" FontSize="16" FontWeight="SemiBold" /><Button Grid.Column="1" Content="Закрыть" Command="{Binding CancelTemplateEditCommand}" /></Grid>
-                <TextBox Text="{Binding TemplateTitle}" PlaceholderText="Заголовок" MaxLength="200" />
-                <TextBox Text="{Binding TemplateBody}" PlaceholderText="Текст шаблона" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalContentAlignment="Top" MaxLength="4000" />
-                <TextBlock Text="Для шаблонов подписки доступны переменные: {organization}, {email}, {plan}, {days}." Classes="caption" TextWrapping="Wrap" />
-                <Button Content="Сохранить шаблон" Classes="configurationPrimary" Command="{Binding SaveTemplateCommand}" HorizontalAlignment="Left" />
+                <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.redaktirovanie.shablona}" FontSize="16" FontWeight="SemiBold" /><Button Grid.Column="1" Content="{loc:LocalizedText Key=native.siteNotifications.zakryt}" Command="{Binding CancelTemplateEditCommand}" /></Grid>
+                <TextBox Text="{Binding TemplateTitle}" PlaceholderText="{loc:LocalizedText Key=native.siteNotifications.zagolovok}" MaxLength="200" />
+                <TextBox Text="{Binding TemplateBody}" PlaceholderText="{loc:LocalizedText Key=native.siteNotifications.tekst.shablona}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalContentAlignment="Top" MaxLength="4000" />
+                <TextBlock Text="{loc:LocalizedText Key=native.siteNotifications.dlya.shablonov.podpiski.dostupny.peremennye.organization.email.p}" Classes="caption" TextWrapping="Wrap" />
+                <Button Content="{loc:LocalizedText Key=native.siteNotifications.sokhranit.shablon}" Classes="configurationPrimary" Command="{Binding SaveTemplateCommand}" HorizontalAlignment="Left" />
               </StackPanel>
             </Border>
           </StackPanel>

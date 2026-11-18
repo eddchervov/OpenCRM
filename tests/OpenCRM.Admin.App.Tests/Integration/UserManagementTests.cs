@@ -3,12 +3,35 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
-public sealed class UserManagementTests
+[Collection("Admin localization")]
+public sealed class UserManagementTests : IDisposable
 {
+    private readonly string _preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-admin-management-language-{Guid.NewGuid():N}.txt");
+    private readonly IDisposable _preferenceScope;
+    private readonly string _previousLanguage;
+
+    public UserManagementTests()
+    {
+        this._preferenceScope = AdminLocalization.Instance.UsePreferencePath(this._preferencePath);
+        this._previousLanguage = AdminLocalization.Instance.Language;
+        AdminLocalization.Instance.Language = "ru";
+    }
+
+    public void Dispose()
+    {
+        AdminLocalization.Instance.Language = this._previousLanguage;
+        this._preferenceScope.Dispose();
+        if (File.Exists(this._preferencePath))
+        {
+            File.Delete(this._preferencePath);
+        }
+    }
+
     [Fact]
     public async Task AccessFlagsRespectPermissionsDeletionAndCurrentUser()
     {
@@ -63,6 +86,44 @@ public sealed class UserManagementTests
         Assert.Equal("компенсация", body.RootElement.GetProperty("reason").GetString());
         Assert.Contains("выполнена на сервере", model.SuccessMessage, StringComparison.OrdinalIgnoreCase);
         Assert.False(model.BeginActionCommand.CanExecute("grant-plan"));
+    }
+
+    [Fact]
+    public async Task LocaleSwitchPreservesManagementFormTargetPlanAndGuards()
+    {
+        var handler = new UserManagementApiHandler("Admin.Billing.Manage");
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        using var session = new AdminSessionClient(http);
+        await UserManagementTests.LoginAsync(session);
+        var model = new UserManagementViewModel(session);
+        model.SetOverview(UserManagementTests.CreateOverview("target-user", Guid.NewGuid()), true);
+        await model.BeginActionCommand.ExecuteAsync("grant-plan");
+        model.Days = 47;
+        model.Reason = "keep this reason";
+        var targetId = model.SelectedTarget!.TargetId;
+        var planId = model.SelectedPlan!.Id;
+        var canConfirm = model.ConfirmCommand.CanExecute(null);
+
+        AdminLocalization.Instance.Language = "en";
+        model.RefreshLocalizedValues();
+
+        Assert.True(model.IsConfirmationOpen);
+        Assert.Equal(targetId, model.SelectedTarget!.TargetId);
+        Assert.Equal(planId, model.SelectedPlan!.Id);
+        Assert.Equal(47, model.Days);
+        Assert.Equal("keep this reason", model.Reason);
+        Assert.Equal(canConfirm, model.ConfirmCommand.CanExecute(null));
+        Assert.Contains("Target:", model.ConfirmationText, StringComparison.Ordinal);
+
+        AdminLocalization.Instance.Language = "zh-Hans";
+        model.RefreshLocalizedValues();
+
+        Assert.Equal(targetId, model.SelectedTarget!.TargetId);
+        Assert.Equal(planId, model.SelectedPlan!.Id);
+        Assert.Equal(47, model.Days);
+        Assert.Equal("keep this reason", model.Reason);
+        Assert.Equal(canConfirm, model.ConfirmCommand.CanExecute(null));
+        Assert.Contains("对象：", model.ConfirmationText, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -250,6 +311,33 @@ public sealed class UserManagementTests
     }
 
     [Fact]
+    public async Task TransportFailureAndUncertainResultRemainLocalizedAfterLanguageChanges()
+    {
+        var handler = new UserManagementApiHandler("Admin.Billing.Manage") { FailMutationConnection = true };
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://example.invalid/") };
+        using var session = new AdminSessionClient(http);
+        await UserManagementTests.LoginAsync(session);
+        var model = new UserManagementViewModel(session);
+        model.SetOverview(UserManagementTests.CreateOverview("target-user",
+            organizationEnd: new DateTime(2026, 12, 4, 8, 30, 0, DateTimeKind.Utc)), true);
+        await model.BeginActionCommand.ExecuteAsync("extend");
+        model.Days = 20;
+        model.Reason = "Проверка связи";
+        await model.ConfirmCommand.ExecuteAsync(null);
+        var requestCount = handler.Requests.Count;
+
+        foreach (var language in new[] { "en", "zh-Hans" })
+        {
+            AdminLocalization.Instance.Language = language;
+            model.RefreshLocalizedValues();
+            Assert.Contains(AdminLocalization.Instance["native.roles.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori"], model.ErrorMessage);
+            Assert.Contains(AdminLocalization.Instance["userManagement.errorSuffix.refreshBeforeActions"], model.ErrorMessage);
+            Assert.Equal(requestCount, handler.Requests.Count);
+            Assert.Equal("Проверка связи", model.Reason);
+        }
+    }
+
+    [Fact]
     public async Task StaleSubscriptionDateRefreshesOverviewAndShowsActionableError()
     {
         var handler = new UserManagementApiHandler("Admin.Billing.Manage") { MutationStatusCode = HttpStatusCode.Conflict };
@@ -275,6 +363,11 @@ public sealed class UserManagementTests
         Assert.Contains("Обновите цель", model.ErrorMessage, StringComparison.Ordinal);
         Assert.Equal(expectedEndDate.AddDays(3), model.SelectedTarget!.EndDate);
         Assert.False(model.IsConfirmationOpen);
+
+        AdminLocalization.Instance.Language = "en";
+        model.RefreshLocalizedValues();
+        Assert.Contains("Срок подписки изменился.", model.ErrorMessage);
+        Assert.Contains(AdminLocalization.Instance["userManagement.errorSuffix.refreshTarget"], model.ErrorMessage);
     }
 
     [Fact]
@@ -390,6 +483,8 @@ public sealed class UserManagementTests
 
         public bool HoldMutation { get; init; }
 
+        public bool FailMutationConnection { get; init; }
+
         public HttpStatusCode MutationStatusCode { get; init; } = HttpStatusCode.OK;
 
         public TaskCompletionSource MutationStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -438,6 +533,11 @@ public sealed class UserManagementTests
 
             var body = request.Content == null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
             this.Mutations.Add(new CapturedMutation(path, body));
+            if (this.FailMutationConnection)
+            {
+                throw new HttpRequestException("Тестовый сетевой сбой.");
+            }
+
             if (this.HoldMutation)
             {
                 this.MutationStarted.TrySetResult();

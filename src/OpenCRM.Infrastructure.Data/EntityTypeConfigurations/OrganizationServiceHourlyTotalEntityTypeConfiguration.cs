@@ -9,6 +9,7 @@ public sealed class OrganizationServiceHourlyTotalEntityTypeConfiguration : IEnt
 {
     public void Configure(EntityTypeBuilder<OrganizationServiceHourlyTotal> builder)
     {
+        builder.Property(total => total.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.ToTable("OrganizationServiceHourlyTotals", table =>
         {
             table.HasComment("Производная сводка положительных строк услуг по организации, часу UTC и исходному имени. " +
@@ -19,7 +20,7 @@ public sealed class OrganizationServiceHourlyTotalEntityTypeConfiguration : IEnt
             table.HasCheckConstraint("CK_OrganizationServiceHourlyTotals_NameHash",
                 "\"NameHash\" = encode(sha256(convert_to(\"Name\", 'UTF8')), 'hex')");
         });
-        builder.HasKey(total => new { total.OrganizationId, total.UtcHour, total.NameHash });
+        builder.HasKey(total => new { total.OrganizationId, total.UtcHour, total.CurrencyCode, total.NameHash });
         builder.Property(total => total.NameHash).HasMaxLength(64).UseCollation("C");
         builder.Property(total => total.Name).IsRequired().UseCollation("C");
         builder.Property(total => total.Amount).HasPrecision(28, 2);

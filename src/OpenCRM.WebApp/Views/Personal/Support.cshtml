@@ -1,7 +1,7 @@
 @model OpenCRM.WebApp.Models.Personal.SupportViewModel
 @using OpenCRM.Domain
 @{
-    ViewData["Title"] = "Обращения";
+    ViewData["Title"] = Text["personal.support.title"];
     ViewData["ActivePage"] = "Support";
     Layout = "_PersonalLayout.cshtml";
 }
@@ -16,25 +16,25 @@
 }
 
 <div class="support-actions">
-    <a class="btn entry-primary" href="/personal/support/create">Новое обращение</a>
+    <a class="btn entry-primary" href="/personal/support/create">@Text["personal.support.newRequest"]</a>
 </div>
 
 <div class="support-layout">
-    <section class="profile-card support-list" aria-label="Список обращений">
+    <section class="profile-card support-list" aria-label="@Text["personal.support.listAria"]">
         <div class="support-heading">
-            <h2>Мои обращения</h2>
-            <a class="btn entry-secondary" href="/personal/support">Обновить</a>
+            <h2>@Text["personal.support.myRequests"]</h2>
+            <a class="btn entry-secondary" href="/personal/support">@Text["personal.support.refresh"]</a>
         </div>
         @if (Model.Conversations.Count == 0)
         {
-            <p class="personal-muted">Пока обращений нет.</p>
+            <p class="personal-muted">@Text["personal.support.empty"]</p>
         }
         @foreach (var conversation in Model.Conversations)
         {
             <a class="support-list-item @(Model.Selected?.Id == conversation.Id ? "support-list-item--active" : "")" href="/personal/support?id=@conversation.Id">
                 <strong>@conversation.Topic</strong>
-                <span>@(conversation.OrganizationName ?? "Общий вопрос") · @conversation.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
-                <small>@(conversation.StatusCode switch { SupportMessageStatusCodes.New => "Новое", SupportMessageStatusCodes.InProgress => "В работе", SupportMessageStatusCodes.Closed => "Закрыто", _ => "Спам" })</small>
+                <span>@(conversation.OrganizationName ?? Text["personal.support.generalQuestion"]) · @conversation.UpdatedAt.ToLocalTime().ToString("g")</span>
+                <small>@StatusLabel(conversation.StatusCode)</small>
             </a>
         }
     </section>
@@ -44,28 +44,28 @@
         {
             <section class="profile-card support-thread">
                 <div class="support-heading">
-                    <div><h2>@Model.Selected.Topic</h2><span>@(Model.Selected.OrganizationName ?? "Общий вопрос")</span></div>
-                    <strong>@(Model.Selected.StatusCode switch { SupportMessageStatusCodes.New => "Новое", SupportMessageStatusCodes.InProgress => "В работе", SupportMessageStatusCodes.Closed => "Закрыто", _ => "Спам" })</strong>
+                    <div><h2>@Model.Selected.Topic</h2><span>@(Model.Selected.OrganizationName ?? Text["personal.support.generalQuestion"])</span></div>
+                    <strong>@StatusLabel(Model.Selected.StatusCode)</strong>
                 </div>
-                <div class="support-entries" aria-label="Переписка">
+                <div class="support-entries" aria-label="@Text["personal.support.conversationAria"]">
                     @foreach (var entry in Model.Selected.Entries)
                     {
                         <article class="support-entry @(entry.Kind == "status" ? "support-entry--status" : entry.IsStaff ? "support-entry--staff" : "support-entry--user")">
                             @if (entry.Kind != "status")
                             {
-                                <strong>@(entry.IsStaff ? "Поддержка" : "Вы")</strong>
+                                <strong>@(entry.IsStaff ? Text["personal.support.staff"] : Text["personal.support.you"])</strong>
                             }
                             <p>@entry.Text</p>
                             @if (entry.Attachments.Count > 0)
                             {
-                                <ul class="support-entry-attachments" aria-label="Вложения">
+                                <ul class="support-entry-attachments" aria-label="@Text["personal.support.attachmentsAria"]">
                                     @foreach (var attachment in entry.Attachments)
                                     {
                                         <li><a href="/personal/support/attachments/@attachment.Id">@attachment.FileName</a></li>
                                     }
                                 </ul>
                             }
-                            <time>@entry.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</time>
+                            <time>@entry.CreatedAt.ToLocalTime().ToString("g")</time>
                         </article>
                     }
                 </div>
@@ -74,9 +74,9 @@
                     <form action="/personal/support/reply" method="post" enctype="multipart/form-data" class="support-form support-reply">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="Id" value="@Model.Selected.Id">
-                        <label>Ответить <textarea name="Text" maxlength="4000" rows="3" required></textarea></label>
+                        <label>@Text["personal.support.reply"] <textarea name="Text" maxlength="4000" rows="3" required></textarea></label>
                         <partial name="_SupportAttachments" />
-                        <button class="btn entry-primary" type="submit">Отправить</button>
+                        <button class="btn entry-primary" type="submit">@Text["personal.support.send"]</button>
                     </form>
                 }
             </section>
@@ -84,7 +84,7 @@
         else
         {
             <section class="profile-card">
-                <p class="personal-muted mb-0">Выберите обращение из списка или нажмите «Новое обращение», чтобы написать в поддержку.</p>
+                <p class="personal-muted mb-0">@Text["personal.support.selectPrompt"]</p>
             </section>
         }
     </div>
@@ -103,4 +103,14 @@
             }, 30000);
         })();
     </script>
+}
+
+@functions {
+    private string StatusLabel(string statusCode) => statusCode switch
+    {
+        SupportMessageStatusCodes.New => Text["personal.support.status.new"],
+        SupportMessageStatusCodes.InProgress => Text["personal.support.status.inProgress"],
+        SupportMessageStatusCodes.Closed => Text["personal.support.status.closed"],
+        _ => Text["personal.support.status.spam"]
+    };
 }

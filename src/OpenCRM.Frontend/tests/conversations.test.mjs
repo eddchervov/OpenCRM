@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/conversationMessages.ts'
+import { i18n } from '@opencrm/ui/i18n'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -5,6 +8,7 @@ import ts from 'typescript'
 import * as vue from 'vue'
 
 function createModule(file, bindings = {}) {
+  bindings = { require: id => regionalTestDependencies[id] ?? {}, ...bindings }
   const code = ts.transpileModule(readFileSync(new URL(file, import.meta.url), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
   }).outputText
@@ -18,6 +22,17 @@ function createApi(fetch) {
     FormData: globalThis.FormData
   })
 }
+
+test('Ошибка API переводит только fallback и сохраняет статус и полученное сообщение', async () => {
+  const originalLocale = i18n.global.locale.value
+  try {
+    i18n.global.locale.value = 'zh-Hans'
+    const denied = createApi(async () => ({ ok: false, status: 403, json: async () => ({}) }))
+    await assert.rejects(denied.loadConversation('org', 'chat'), error => error.status === 403 && error.message === '无权访问会话。')
+    const specific = createApi(async () => ({ ok: false, status: 409, json: async () => ({ message: 'Сервер сообщил о конфликте' }) }))
+    await assert.rejects(specific.loadConversation('org', 'chat'), error => error.status === 409 && error.message === 'Сервер сообщил о конфликте')
+  } finally { i18n.global.locale.value = originalLocale }
+})
 
 test('Повтор HTTP запроса сохраняет RequestId и контекст обслуживания, ошибки не подменяются успешной отправкой', async () => {
   const sent = []

@@ -1,8 +1,12 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/notificationMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
+import * as localization from '@opencrm/ui/i18n'
+import '../packages/workspace/src/workdayActionMessages.ts'
 
 function compileTypeScript(source) {
   return ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
@@ -13,6 +17,8 @@ function loadApi(fetch, getMutationHeaders = () => ({ 'X-Requested-With': 'XMLHt
   const module = { exports: {} }
   new Function('require', 'module', 'exports', 'fetch', 'window', compileTypeScript(source))(
     id => {
+      if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+      if (id === '@opencrm/workspace/notificationMessages') return {}
       assert.equal(id, './maintenance')
       return { getMutationHeaders }
     },
@@ -76,6 +82,8 @@ test('Create form keeps one command id on retry and leaves contact action off by
   }
   const module = { exports: {} }
   new Function('require', 'module', 'exports', code)((id) => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../notificationMessages' || id === '@opencrm/workspace/notificationMessages') return {}
     if (id === 'vue') return lifecycle
     if (id === '@opencrm/ui') return { UiButton: {}, UiInput: {}, UiPagination: {}, UiSelect: {}, UiTextarea: {} }
     if (id === '../api/repeatVisits') return api
@@ -138,6 +146,10 @@ test('Create form keeps one command id on retry and leaves contact action off by
 test('Organization local contact time converts to UTC without changing the suggested date', () => {
   const source = readFileSync(new URL('../packages/workspace/src/utils/inquiryTime.ts', import.meta.url), 'utf8')
   const module = { exports: {} }
-  new Function('module', 'exports', compileTypeScript(source))(module, module.exports)
+  new Function('require', 'module', 'exports', compileTypeScript(source))(id => {
+    if (id === '@opencrm/ui/i18n') return localization
+    if (id === '@opencrm/workspace/workdayActionMessages') return {}
+    throw new Error('Unexpected module ' + id)
+  }, module, module.exports)
   assert.equal(module.exports.inquiryUtcTime('2026-10-25T09:00', 'Asia/Novosibirsk'), '2026-10-25T02:00:00.000Z')
 })

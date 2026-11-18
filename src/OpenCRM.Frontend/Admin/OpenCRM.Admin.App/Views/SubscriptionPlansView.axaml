@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.SubscriptionPlansView"
@@ -31,9 +32,9 @@
   </UserControl.Styles>
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-      <TextBlock Text="Тарифы Free и PRO" Classes="heading" AutomationProperties.AutomationId="SubscriptionPlansHeading" />
-      <Button Grid.Column="1" Content="Новый вариант PRO" Classes="configurationPrimary" IsVisible="{Binding !IsEditorOpen}" Command="{Binding CreatePlanCommand}" />
-      <Button Grid.Column="2" Content="Обновить" Command="{Binding RefreshCommand}" />
+      <TextBlock Text="{loc:LocalizedText Key=native.plans.tarify.free.i.pro}" Classes="heading" AutomationProperties.AutomationId="SubscriptionPlansHeading" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.plans.novyy.variant.pro}" Classes="configurationPrimary" IsVisible="{Binding !IsEditorOpen}" Command="{Binding CreatePlanCommand}" />
+      <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
     </Grid>
     <StackPanel Grid.Row="1" Spacing="6">
       <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -46,14 +47,14 @@
           <StackPanel Spacing="7" IsVisible="{Binding HasPlans}">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="2,0,2,2">
               <StackPanel Spacing="2">
-                <TextBlock Text="Тарифы организаций" FontSize="18" FontWeight="SemiBold" />
-                <TextBlock Text="Бессрочный Free и варианты PRO. Старые базовые и демо-тарифы сохранены для прежних условий." Classes="caption" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.tarify.organizatsiy}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.bessrochnyy.free.i.varianty.pro.starye.bazovye.i.demo.tarify.sok}" Classes="caption" />
               </StackPanel>
               <TextBlock Grid.Column="1" Text="{Binding BusinessPlanCountLabel}" Classes="caption" VerticalAlignment="Center" />
             </Grid>
             <Border Classes="card" Padding="0" ClipToBounds="True">
               <StackPanel>
-                <Grid ColumnDefinitions="1.5*,*,130,110" ColumnSpacing="16" Margin="18,14"><TextBlock Text="Тариф" Classes="caption" /><TextBlock Grid.Column="1" Text="Группа" Classes="caption" /><TextBlock Grid.Column="2" Text="Стоимость" Classes="caption" /><TextBlock Grid.Column="3" Text="Действия" Classes="caption" /></Grid>
+                <Grid ColumnDefinitions="1.5*,*,130,110" ColumnSpacing="16" Margin="18,14"><TextBlock Text="{loc:LocalizedText Key=native.plans.planColumn}" Classes="caption" /><TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=native.plans.gruppa}" Classes="caption" /><TextBlock Grid.Column="2" Text="{loc:LocalizedText Key=native.plans.stoimost}" Classes="caption" /><TextBlock Grid.Column="3" Text="{loc:LocalizedText Key=native.billing.deystviya}" Classes="caption" /></Grid>
                 <ItemsControl ItemsSource="{Binding BusinessRows}" AutomationProperties.AutomationId="BusinessPlansList">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:SubscriptionPlanListItem">
@@ -66,7 +67,7 @@
                           <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center"><TextBlock Text="{Binding GroupLabel}" TextWrapping="Wrap" /><TextBlock Text="{Binding KindLabel}" Classes="caption" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding KindLabel}" /></StackPanel>
                           <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center"><TextBlock Text="{Binding PriceLabel}" FontWeight="SemiBold" /><TextBlock Text="{Binding DurationLabel}" Classes="caption" TextWrapping="Wrap" /></StackPanel>
                           <StackPanel Grid.Column="3" Spacing="6" VerticalAlignment="Center">
-                            <Button Content="Открыть →" Padding="12,6" Command="{Binding $parent[views:SubscriptionPlansView].((vm:SubscriptionPlansViewModel)DataContext).OpenPlanCommand}" CommandParameter="{Binding}" AutomationProperties.AutomationId="OpenSubscriptionPlan" />
+                            <Button Content="{loc:LocalizedText Key=native.plans.otkryt}" Padding="12,6" Command="{Binding $parent[views:SubscriptionPlansView].((vm:SubscriptionPlansViewModel)DataContext).OpenPlanCommand}" CommandParameter="{Binding}" AutomationProperties.AutomationId="OpenSubscriptionPlan" />
                             <Button Content="{Binding ToggleLabel}" Padding="10,6" IsEnabled="{Binding CanToggle}" Command="{Binding $parent[views:SubscriptionPlansView].((vm:SubscriptionPlansViewModel)DataContext).TogglePlanCommand}" CommandParameter="{Binding}" />
                           </StackPanel>
                         </Grid>
@@ -74,21 +75,21 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="Тарифы организаций не найдены" IsVisible="{Binding !HasBusinessPlans}" Classes="muted" Margin="14" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.tarify.organizatsiy.ne.naydeny}" IsVisible="{Binding !HasBusinessPlans}" Classes="muted" Margin="14" />
               </StackPanel>
             </Border>
           </StackPanel>
           <StackPanel Spacing="7" IsVisible="{Binding HasPersonalPlans}">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="2,0,2,2">
               <StackPanel Spacing="2">
-                <TextBlock Text="Личные тарифы" FontSize="18" FontWeight="SemiBold" />
-                <TextBlock Text="Исторические записи, доступны только для просмотра" Classes="caption" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.lichnye.tarify}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.istoricheskie.zapisi.dostupny.tolko.dlya.prosmotra}" Classes="caption" />
               </StackPanel>
               <TextBlock Grid.Column="1" Text="{Binding PersonalPlanCountLabel}" Classes="caption" VerticalAlignment="Center" />
             </Grid>
             <Border Classes="card" Padding="0" ClipToBounds="True">
               <StackPanel>
-                <Grid ColumnDefinitions="1.5*,*,130,110" ColumnSpacing="16" Margin="18,14"><TextBlock Text="Тариф" Classes="caption" /><TextBlock Grid.Column="1" Text="Группа" Classes="caption" /><TextBlock Grid.Column="2" Text="Стоимость" Classes="caption" /><TextBlock Grid.Column="3" Text="Действия" Classes="caption" /></Grid>
+                <Grid ColumnDefinitions="1.5*,*,130,110" ColumnSpacing="16" Margin="18,14"><TextBlock Text="{loc:LocalizedText Key=native.plans.planColumn}" Classes="caption" /><TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=native.plans.gruppa}" Classes="caption" /><TextBlock Grid.Column="2" Text="{loc:LocalizedText Key=native.plans.stoimost}" Classes="caption" /><TextBlock Grid.Column="3" Text="{loc:LocalizedText Key=native.billing.deystviya}" Classes="caption" /></Grid>
                 <ItemsControl ItemsSource="{Binding PersonalRows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:SubscriptionPlanListItem">
@@ -101,7 +102,7 @@
                           <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center"><TextBlock Text="{Binding GroupLabel}" TextWrapping="Wrap" /><TextBlock Text="{Binding KindLabel}" Classes="caption" TextWrapping="Wrap" /></StackPanel>
                           <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center"><TextBlock Text="{Binding PriceLabel}" FontWeight="SemiBold" /><TextBlock Text="{Binding DurationLabel}" Classes="caption" TextWrapping="Wrap" /></StackPanel>
                           <StackPanel Grid.Column="3" Spacing="6" VerticalAlignment="Center">
-                            <Button Content="Открыть →" Padding="12,6" Command="{Binding $parent[views:SubscriptionPlansView].((vm:SubscriptionPlansViewModel)DataContext).OpenPlanCommand}" CommandParameter="{Binding}" AutomationProperties.AutomationId="OpenSubscriptionPlan" />
+                            <Button Content="{loc:LocalizedText Key=native.plans.otkryt}" Padding="12,6" Command="{Binding $parent[views:SubscriptionPlansView].((vm:SubscriptionPlansViewModel)DataContext).OpenPlanCommand}" CommandParameter="{Binding}" AutomationProperties.AutomationId="OpenSubscriptionPlan" />
 
                           </StackPanel>
                         </Grid>
@@ -120,18 +121,18 @@
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
               <StackPanel Spacing="3">
                 <TextBlock Text="{Binding SelectedPlan.Name}" IsVisible="{Binding !IsCreating}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
-                <TextBlock Text="Новый тариф" IsVisible="{Binding IsCreating}" FontSize="22" FontWeight="SemiBold" />
-                <TextBlock Text="Организационный тариф · настройки и возможности" Classes="caption" IsVisible="{Binding IsBusinessPlanSelected}" />
-                <TextBlock Text="Личный тариф · только просмотр" Classes="caption" IsVisible="{Binding IsReadOnly}" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.novyy.tarif}" IsVisible="{Binding IsCreating}" FontSize="22" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.organizatsionnyy.tarif.nastroyki.i.vozmozhnosti}" Classes="caption" IsVisible="{Binding IsBusinessPlanSelected}" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.lichnyy.tarif.tolko.prosmotr}" Classes="caption" IsVisible="{Binding IsReadOnly}" />
               </StackPanel>
-              <Button Grid.Column="1" Content="← К тарифам" Command="{Binding CancelEditCommand}" VerticalAlignment="Top" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.plans.k.tarifam}" Command="{Binding CancelEditCommand}" VerticalAlignment="Top" />
             </Grid>
             <Border IsVisible="{Binding IsDeleteConfirmationOpen}" Background="#30211C" BorderBrush="#754E41" BorderThickness="1" CornerRadius="8" Padding="14">
               <StackPanel Spacing="10">
-                <TextBlock TextWrapping="Wrap">Удалить тариф «<Run Text="{Binding SelectedPlan.Name}" />»? Это действие нельзя отменить.</TextBlock>
+                <TextBlock TextWrapping="Wrap" Text="{loc:LocalizedFormat Key=core.plans.deleteConfirmation, Path=SelectedPlan.Name}" />
                 <WrapPanel>
-                  <Button Content="Удалить тариф" Classes="danger" Command="{Binding ConfirmDeleteCommand}" Margin="0,0,8,0" AutomationProperties.AutomationId="ConfirmDeletePlan" />
-                  <Button Content="Отмена" Command="{Binding CancelDeleteCommand}" />
+                  <Button Content="{loc:LocalizedText Key=native.plans.udalit.tarif}" Classes="danger" Command="{Binding ConfirmDeleteCommand}" Margin="0,0,8,0" AutomationProperties.AutomationId="ConfirmDeletePlan" />
+                  <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelDeleteCommand}" />
                 </WrapPanel>
               </StackPanel>
             </Border>
@@ -140,22 +141,22 @@
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <StackPanel Spacing="3">
-                      <TextBlock Text="Основное" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="Название и описание, которые увидят пользователи" Classes="caption" TextWrapping="Wrap" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.osnovnoe}" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.nazvanie.i.opisanie.kotorye.uvidyat.polzovateli}" Classes="caption" TextWrapping="Wrap" />
                     </StackPanel>
                     <WrapPanel Grid.Column="1" VerticalAlignment="Center">
-                      <Button Content="Сохранить тариф" Classes="configurationPrimary" Command="{Binding SavePlanCommand}" Margin="0,0,8,0" AutomationProperties.AutomationId="SaveSubscriptionPlan" />
-                      <Button Content="Отмена" Command="{Binding CancelEditCommand}" Margin="0,0,8,0" />
-                      <Button Content="Удалить" Classes="danger" IsVisible="{Binding CanDeletePlan}" Command="{Binding RequestDeleteCommand}" />
+                      <Button Content="{loc:LocalizedText Key=native.plans.sokhranit.tarif}" Classes="configurationPrimary" Command="{Binding SavePlanCommand}" Margin="0,0,8,0" AutomationProperties.AutomationId="SaveSubscriptionPlan" />
+                      <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelEditCommand}" Margin="0,0,8,0" />
+                      <Button Content="{loc:LocalizedText Key=native.plans.udalit}" Classes="danger" IsVisible="{Binding CanDeletePlan}" Command="{Binding RequestDeleteCommand}" />
                     </WrapPanel>
                   </Grid>
                   <StackPanel Spacing="5">
-                    <TextBlock Text="Название" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.nazvanie}" FontWeight="SemiBold" />
                     <TextBox Text="{Binding Editor.Name}" MaxLength="100" AutomationProperties.AutomationId="PlanName"
                              IsEnabled="{Binding !Editor.IsSystemFree}" />
                   </StackPanel>
                   <StackPanel Spacing="5">
-                    <TextBlock Text="Описание" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.opisanie}" FontWeight="SemiBold" />
                     <TextBox Text="{Binding Editor.Description}" MaxLength="1000" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="76" VerticalContentAlignment="Top"
                              IsEnabled="{Binding !Editor.IsSystemFree}" />
                   </StackPanel>
@@ -164,38 +165,38 @@
               <Border Classes="configurationSection">
                 <StackPanel Spacing="12">
                   <StackPanel Spacing="3">
-                    <TextBlock Text="Стоимость и лимиты" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="Срок, стоимость и ограничения рабочего пространства" Classes="caption" TextWrapping="Wrap" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.stoimost.i.limity}" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.srok.stoimost.i.ogranicheniya.rabochego.prostranstva}" Classes="caption" TextWrapping="Wrap" />
                   </StackPanel>
-                  <TextBlock Text="Free · бесплатно и бессрочно" IsVisible="{Binding Editor.IsSystemFree}" FontWeight="SemiBold" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.plans.free.besplatno.i.bessrochno}" IsVisible="{Binding Editor.IsSystemFree}" FontWeight="SemiBold" />
                   <WrapPanel>
                     <StackPanel Width="200" Spacing="5" Margin="0,0,12,10" IsVisible="{Binding !Editor.IsSystemFree}">
-                      <TextBlock Text="Цена, ₽" FontWeight="SemiBold" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.priceRubles}" FontWeight="SemiBold" />
                       <NumericUpDown Value="{Binding Editor.Price}" Minimum="0" Maximum="100000000" Increment="100" FormatString="N2" ParsingNumberStyle="Float" ShowButtonSpinner="False"
                                      IsEnabled="{Binding !Editor.IsSystemFree}" />
                     </StackPanel>
                     <StackPanel Width="200" Spacing="5" Margin="0,0,12,10" IsVisible="{Binding !Editor.IsSystemFree}">
-                      <TextBlock Text="Цена со скидкой, ₽" FontWeight="SemiBold" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.tsena.so.skidkoy}" FontWeight="SemiBold" />
                       <NumericUpDown Value="{Binding Editor.DiscountPrice}" Minimum="0" Maximum="100000000" Increment="100" FormatString="N2" ParsingNumberStyle="Float" ShowButtonSpinner="False"
                                      IsEnabled="{Binding !Editor.IsSystemFree}" />
                     </StackPanel>
                     <StackPanel Width="150" Spacing="5" Margin="0,0,12,10" IsVisible="{Binding !Editor.IsSystemFree}">
-                      <TextBlock Text="Срок, дней" FontWeight="SemiBold" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.srok.dney}" FontWeight="SemiBold" />
                       <NumericUpDown Value="{Binding Editor.DurationDays}" Minimum="1" Maximum="36500" Increment="1" FormatString="0" ParsingNumberStyle="Integer" ShowButtonSpinner="False"
                                      IsEnabled="{Binding !Editor.IsSystemFree}" />
                     </StackPanel>
                     <StackPanel Width="150" Spacing="5" Margin="0,0,12,10">
-                      <TextBlock Text="Лимит техники" FontWeight="SemiBold" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.limit.tekhniki}" FontWeight="SemiBold" />
                       <NumericUpDown Value="{Binding Editor.VehicleLimit}" Minimum="0" Maximum="1000000" Increment="1" FormatString="0" ParsingNumberStyle="Integer" ShowButtonSpinner="False" />
                     </StackPanel>
                     <StackPanel Width="150" Spacing="5" Margin="0,0,12,10">
-                      <TextBlock Text="Порядок" FontWeight="SemiBold" />
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.poryadok}" FontWeight="SemiBold" />
                       <NumericUpDown Value="{Binding Editor.Order}" Minimum="0" Maximum="1000000" Increment="1" FormatString="0" ParsingNumberStyle="Integer" ShowButtonSpinner="False"
                                      IsEnabled="{Binding !Editor.IsSystemFree}" />
                     </StackPanel>
                     <StackPanel Width="260" Spacing="5" Margin="0,0,12,10">
-                      <TextBlock Text="Группа" FontWeight="SemiBold" />
-                      <TextBox Text="{Binding Editor.Group}" MaxLength="100" PlaceholderText="Например, Стандарт"
+                      <TextBlock Text="{loc:LocalizedText Key=native.plans.gruppa}" FontWeight="SemiBold" />
+                      <TextBox Text="{Binding Editor.Group}" MaxLength="100" PlaceholderText="{loc:LocalizedText Key=native.plans.naprimer.standart}"
                                IsEnabled="{Binding !Editor.IsSystemFree}" />
                     </StackPanel>
                   </WrapPanel>
@@ -204,27 +205,27 @@
               <Border Classes="configurationSection">
                 <StackPanel Spacing="10">
                   <StackPanel Spacing="3">
-                    <TextBlock Text="Настройки тарифа" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="Для системного Free цена, срок и статусы зафиксированы. Меняйте квоты и возможности тарифа." Classes="caption" TextWrapping="Wrap"
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.nastroyki.tarifa}" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.dlya.sistemnogo.free.tsena.srok.i.statusy.zafiksirovany.menyayte}" Classes="caption" TextWrapping="Wrap"
                                IsVisible="{Binding Editor.IsSystemFree}" />
                   </StackPanel>
                   <WrapPanel>
-                    <CheckBox Content="Активен" IsChecked="{Binding Editor.IsActive}" IsEnabled="{Binding CanEditActiveFlag}" Margin="0,0,18,0" />
-                    <CheckBox Content="По умолчанию" IsChecked="{Binding Editor.IsDefaultPlan}" IsEnabled="{Binding CanEditDefaultFlag}" Margin="0,0,18,0" />
-                    <CheckBox Content="Демо-тариф" IsChecked="{Binding Editor.IsDemoPlan}" IsEnabled="{Binding CanEditDemoFlag}" />
+                    <CheckBox Content="{loc:LocalizedText Key=native.plans.aktiven}" IsChecked="{Binding Editor.IsActive}" IsEnabled="{Binding CanEditActiveFlag}" Margin="0,0,18,0" />
+                    <CheckBox Content="{loc:LocalizedText Key=native.plans.po.umolchaniyu}" IsChecked="{Binding Editor.IsDefaultPlan}" IsEnabled="{Binding CanEditDefaultFlag}" Margin="0,0,18,0" />
+                    <CheckBox Content="{loc:LocalizedText Key=native.plans.demo.tarif}" IsChecked="{Binding Editor.IsDemoPlan}" IsEnabled="{Binding CanEditDemoFlag}" />
                   </WrapPanel>
                 </StackPanel>
               </Border>
             </StackPanel>
             <Border IsVisible="{Binding IsReadOnly}" Classes="configurationSection">
               <StackPanel Spacing="10">
-                <TextBlock Text="Личные тарифы защищены от изменения в административной панели." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.lichnye.tarify.zashchishcheny.ot.izmeneniya.v.administrativnoy.p}" Classes="caption" TextWrapping="Wrap" />
                 <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
-                  <TextBlock Text="Описание" Classes="caption" /><TextBlock Grid.Column="1" Text="{Binding SelectedPlan.Description}" TextWrapping="Wrap" />
-                  <TextBlock Grid.Row="1" Text="Цена" Classes="caption" /><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedPlan.EffectivePrice, StringFormat='{}{0:C}'}" />
-                  <TextBlock Grid.Row="2" Text="Срок" Classes="caption" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPlan.DurationDays, StringFormat='{}{0} дней'}" />
-                  <TextBlock Grid.Row="3" Text="Техника" Classes="caption" /><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedPlan.VehicleLimit}" />
-                  <TextBlock Grid.Row="4" Text="Статус" Classes="caption" /><TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedPlan.IsActive, StringFormat='Активен: {0}'}" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.plans.opisanie}" Classes="caption" /><TextBlock Grid.Column="1" Text="{Binding SelectedPlan.Description}" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="1" Text="{loc:LocalizedText Key=native.plans.price}" Classes="caption" /><TextBlock Grid.Row="1" Grid.Column="1" Text="{loc:LocalizedFormat Key=core.format.rubles, Path=SelectedPlan.EffectivePrice}" />
+                  <TextBlock Grid.Row="2" Text="{loc:LocalizedText Key=native.plans.srok}" Classes="caption" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedFormat Key=native.plans.0.dney, Path=SelectedPlan.DurationDays}" />
+                  <TextBlock Grid.Row="3" Text="{loc:LocalizedText Key=native.plans.tekhnika}" Classes="caption" /><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedPlan.VehicleLimit}" />
+                  <TextBlock Grid.Row="4" Text="{loc:LocalizedText Key=native.plans.status}" Classes="caption" /><TextBlock Grid.Row="4" Grid.Column="1" Text="{loc:LocalizedFormat Key=native.plans.aktiven.0, Path=SelectedPlan.IsActive}" />
                 </Grid>
               </StackPanel>
             </Border>
@@ -232,10 +233,10 @@
               <StackPanel Spacing="10">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                   <StackPanel Spacing="3">
-                    <TextBlock Text="Возможности тарифа" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="Общие настройки для всех сроков оплаты этой группы" Classes="caption" TextWrapping="Wrap" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.vozmozhnosti.tarifa}" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.plans.obshchie.nastroyki.dlya.vsekh.srokov.oplaty.etoy.gruppy}" Classes="caption" TextWrapping="Wrap" />
                   </StackPanel>
-                  <Button Grid.Column="1" Content="Сохранить возможности" Classes="configurationPrimary" Command="{Binding SaveFeaturesCommand}" IsEnabled="{Binding CanSaveFeatures}" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.plans.sokhranit.vozmozhnosti}" Classes="configurationPrimary" Command="{Binding SaveFeaturesCommand}" IsEnabled="{Binding CanSaveFeatures}" VerticalAlignment="Center" />
                 </Grid>
                 <ItemsControl ItemsSource="{Binding Features}" IsEnabled="{Binding !IsSaving}">
                   <ItemsControl.ItemTemplate>
@@ -247,20 +248,20 @@
                             <TextBlock Text="{Binding Description}" Classes="caption" TextWrapping="Wrap" Margin="24,0,0,0" />
                             <TextBlock Text="{Binding Category}" Classes="caption" Margin="24,0,0,0"  />
                           </StackPanel>
-                          <CheckBox Grid.Column="1" IsVisible="{Binding IsBooleanValue}" Content="Включено" IsChecked="{Binding BoolValue}" IsEnabled="{Binding IsAssigned}" VerticalAlignment="Center" />
+                          <CheckBox Grid.Column="1" IsVisible="{Binding IsBooleanValue}" Content="{loc:LocalizedText Key=native.plans.vklyucheno}" IsChecked="{Binding BoolValue}" IsEnabled="{Binding IsAssigned}" VerticalAlignment="Center" />
                           <NumericUpDown Grid.Column="1" IsVisible="{Binding IsIntegerValue}" Value="{Binding IntValue}" Minimum="0" Maximum="100000000" Increment="1" FormatString="0" ParsingNumberStyle="Integer" ShowButtonSpinner="False" IsEnabled="{Binding IsAssigned}" Width="120" VerticalAlignment="Center" />
                         </Grid>
                       </Border>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="Для тарифа нет настраиваемых возможностей." IsVisible="{Binding !HasFeatures}" Classes="muted" />
+                <TextBlock Text="{loc:LocalizedText Key=native.plans.dlya.tarifa.net.nastraivaemykh.vozmozhnostey}" IsVisible="{Binding !HasFeatures}" Classes="muted" />
               </StackPanel>
             </Border>
           </StackPanel>
         </Border>
       </ScrollViewer>
     </Grid>
-    <TextBlock Grid.Row="2" Text="Тарифы не найдены" IsVisible="{Binding IsEmpty}" Classes="muted" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <TextBlock Grid.Row="2" Text="{loc:LocalizedText Key=native.plans.tarify.ne.naydeny}" IsVisible="{Binding IsEmpty}" Classes="muted" HorizontalAlignment="Center" VerticalAlignment="Center" />
   </Grid>
 </UserControl>

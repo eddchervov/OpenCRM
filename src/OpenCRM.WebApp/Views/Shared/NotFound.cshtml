@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Страница не найдена";
+    ViewData["Title"] = Text["entry.notFound"].Value;
     Layout = "/Views/Shared/_Layout.cshtml";
 }
 
@@ -11,8 +11,8 @@
     <div class="container platform-page-shell">
         <nav aria-label="breadcrumb" class="platform-page-breadcrumbs">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Главная</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Страница не найдена</li>
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">@Text["entry.home"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Text["entry.notFound"]</li>
             </ol>
         </nav>
 
@@ -21,14 +21,14 @@
                 <i class="fa fa-search fa-2x"></i>
             </span>
 
-            <h1 class="platform-page-title h2 mb-3">404 — страница не найдена</h1>
+            <h1 class="platform-page-title h2 mb-3">@Text["entry.notFoundTitle"]</h1>
             <p class="platform-page-subtitle mx-auto mb-4">
-                Возможно, страница была удалена, перемещена или адрес введен с ошибкой.
+                @Text["entry.notFoundHelp"]
             </p>
 
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 <a href="~/" class="btn btn-dark">
-                    <i class="fa fa-home me-2"></i>На главную
+                    <i class="fa fa-home me-2"></i>@Text["entry.homeAction"]
                 </a>
             </div>
         </div>

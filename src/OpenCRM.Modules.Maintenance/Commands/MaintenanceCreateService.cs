@@ -105,7 +105,30 @@ internal sealed class MaintenanceCreateService(
         MaintenanceSchedulerLink? schedulerLink)
     {
         await this._transaction.LockOrganizationAsync(organizationId);
+        if (!organizationId.HasValue)
+        {
+            await this._transaction.LockUserAsync(userId);
+        }
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.MaintenanceCreate);
+        TimeZoneInfo? organizationTimeZone = null;
+        string currencyCode;
+        if (organizationId.HasValue)
+        {
+            var organizationSettings = await context.Organizations
+                .Where(organization => organization.Id == organizationId.Value)
+                .Select(organization => new { organization.CurrencyCode, organization.ShiftTimeZoneId })
+                .SingleAsync();
+            currencyCode = organizationSettings.CurrencyCode;
+            if (!string.IsNullOrWhiteSpace(organizationSettings.ShiftTimeZoneId))
+            {
+                organizationTimeZone = TimeZoneInfo.FindSystemTimeZoneById(organizationSettings.ShiftTimeZoneId);
+            }
+        }
+        else
+        {
+            currencyCode = await context.Users.Where(user => user.Id == userId)
+                .Select(user => user.PersonalCurrencyCode).SingleAsync();
+        }
 
         var vehicle = await vehicleLookup.FindAsync(userId, organizationId, vehicleId)
             ?? throw new Exception($"У пользователя userId={userId}, не найдена техника с vehicleId={vehicleId}");
@@ -123,6 +146,7 @@ internal sealed class MaintenanceCreateService(
         var maintenance = new MaintenanceEntity
         {
             Id = maintenanceId,
+            CurrencyCode = currencyCode,
             VehicleId = vehicleId,
             Comment = MaintenanceTextRules.NormalizeOptional(dto.Comment),
             DateTimeCreation = systemClock.UtcNow,
@@ -155,7 +179,12 @@ internal sealed class MaintenanceCreateService(
         MaintenanceMoneyRules.ApplyFinancialFields(maintenance, dto.DiscountAmount, dto.PaidAmount, dto.LaborCostAmount);
 
         MaintenanceDateRules.ApplyStatusAndDates(maintenance, dto.Status, dto.PlannedDate, dto.CompletedDate);
-        MaintenanceDateRules.ApplyPlannedTime(maintenance, dto.PlannedStartTime, dto.PlannedEndTime, dto.PlannedEndDate ?? maintenance.PlannedEndDate);
+        MaintenanceDateRules.ApplyPlannedTime(
+            maintenance,
+            dto.PlannedStartTime,
+            dto.PlannedEndTime,
+            dto.PlannedEndDate ?? maintenance.PlannedEndDate,
+            organizationTimeZone);
         await this._maintenanceSlotGuard.EnsureNoWorkspaceSlotConflictAsync(organizationId, maintenance);
 
         await maintenanceRepository.Add(maintenance);

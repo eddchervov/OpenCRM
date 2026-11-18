@@ -54,6 +54,9 @@ public class OrganizationDto
     /// <summary> Часовой пояс организации для календарных дат и локального расписания. </summary>
     public string? TimeZoneId { get; set; }
 
+    /// <summary> Валюта денежных сумм организации. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Разрешено ли сотрудникам самостоятельно брать работы. </summary>
     public bool AllowWorkSelfAssignment { get; set; }
 

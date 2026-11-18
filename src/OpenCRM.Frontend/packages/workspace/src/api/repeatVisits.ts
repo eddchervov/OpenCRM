@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/notificationMessages'
+
 import { getMutationHeaders } from './maintenance'
 
 export type RepeatVisit = {
@@ -42,14 +45,14 @@ async function request<T>(organizationId: string, path: string, options: { metho
     })
   } catch (caught) {
     if (caught instanceof DOMException && caught.name === 'AbortError') throw caught
-    throw new Error('Не удалось связаться с CRM. Проверьте соединение и повторите попытку.')
+    throw new Error(translate('notifications.networkError'))
   }
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    if (response.status === 401) throw new Error('Сайт отклонил запрос к рекомендациям (HTTP 401). Обновите страницу и войдите снова.')
-    if (response.status === 403) throw new Error('У вас нет доступа к рекомендациям для этой организации.')
-    if (response.status === 409) throw new Error(error?.message ?? 'Рекомендацию уже изменили. Обновите список и повторите попытку.')
-    throw new Error(error?.message ?? 'Не удалось выполнить действие с рекомендацией.')
+    if (response.status === 401) throw new Error(translate('notifications.repeatSessionExpired'))
+    if (response.status === 403) throw new Error(translate('notifications.repeatForbidden'))
+    if (response.status === 409) throw new Error(error?.message ?? translate('notifications.repeatConflict'))
+    throw new Error(error?.message ?? translate('notifications.repeatRequestError'))
   }
   return response.status === 204 ? undefined as T : response.json()
 }

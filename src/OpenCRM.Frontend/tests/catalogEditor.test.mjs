@@ -1,12 +1,16 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/catalogMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { parse, compileScript } from '@vue/compiler-sfc'
+import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 import { formatServiceDuration } from '../packages/workspace/src/serviceDuration.ts'
+import { i18n } from '@opencrm/ui/i18n'
 
 const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/WorkspaceCatalogSection.vue', import.meta.url), 'utf8'))
+assert.deepEqual(compileTemplate({ source: descriptor.template?.content ?? '', id: 'catalog-editor', filename: 'WorkspaceCatalogSection.vue' }).errors, [])
 const code = ts.transpileModule(compileScript(descriptor, { id: 'catalog-editor' }).content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
@@ -27,7 +31,10 @@ function setup(kind = 'service_bundle', canManage = true) {
   const module = { exports: {} }
   const events = []
   const resolve = id => {
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onBeforeUnmount() {}, watch() {} }
+    if (id === '@opencrm/ui') return { useLocalization: regionalTestDependencies['@opencrm/ui/i18n'].useLocalization }
+    if (id === '../catalogMessages') return {}
     if (id === '../serviceDuration') return { formatServiceDuration }
     return {}
   }
@@ -73,6 +80,25 @@ test('Поиск справочника учитывает описание и �
   assert.equal(services.length, 3)
   state.catalogSearch.value = 'Ничего не найдено'
   assert.equal(state.filteredCatalogItems.value.length, 0)
+})
+
+test('Подписи каталога переключаются вместе с языком, сохраняя имена и описания пользовательских позиций', async () => {
+  const { state, services } = setup('service')
+  const previousLocale = i18n.global.locale.value
+  try {
+    state.mode.value = 'create'
+    assert.equal(state.title.value, 'Новая услуга')
+    assert.equal(state.groupTitle('work_post'), 'Посты / боксы')
+    i18n.global.locale.value = 'en'
+    await vue.nextTick()
+    assert.equal(state.title.value, 'New service')
+    assert.equal(state.groupTitle('work_post'), 'Bays')
+    assert.equal(state.groupHelpKey('service', 'name'), 'catalogEditor.serviceNameHelp')
+    assert.equal(services[0].name, 'Мойка')
+    assert.equal(services[0].description, undefined)
+  } finally {
+    i18n.global.locale.value = previousLocale
+  }
 })
 
 test('Нулевая цена сохраняется; неизвестная цена, время или услуга не подменяются нулём', () => {

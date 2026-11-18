@@ -1,7 +1,7 @@
 @{
     var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
     var returnUrl = ViewData["VehicleEditReturnUrl"] as string ?? "/vehicles";
-    ViewData["Title"] = "Новая техника";
+    ViewData["Title"] = Text["vehicle.edit.pageTitle.create"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "vehicle-card-page-body";
     Layout = "/Views/Personal/_PersonalLayout.cshtml";
@@ -50,7 +50,7 @@
     <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="/vehicles" class="text-decoration-none">@vehicleScenario.BreadcrumbTitle</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><h1>Новая техника</h1></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>@Text["vehicle.edit.pageTitle.create"]</h1></li>
             </ol>
         </nav>
 }

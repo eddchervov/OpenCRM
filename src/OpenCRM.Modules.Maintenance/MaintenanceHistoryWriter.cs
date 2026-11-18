@@ -50,7 +50,7 @@ internal sealed class MaintenanceHistoryWriter(
             hasDetailedEvents = true;
         }
 
-        var detailChanges = MaintenanceChangeRules.BuildDetailChanges(previous.Details, maintenance.Details);
+        var detailChanges = MaintenanceChangeRules.BuildDetailChanges(previous.Details, maintenance.Details, previous.CurrencyCode);
         if (detailChanges.Count > 0)
         {
             this.AddHistoryEvent(

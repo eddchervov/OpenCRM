@@ -1,4 +1,7 @@
+using System.Globalization;
+using System.Text.Json;
 using OpenCRM.Modules.Imports;
+using OpenCRM.Modules.Maintenance.Contracts.Imports;
 using OpenCRM.Services.Interfaces.Imports;
 
 namespace OpenCRM.Modules.Imports.Tests.Unit;
@@ -226,6 +229,150 @@ public sealed class ImportPreparationTests
         ImportCandidateValidator.Validate([row], [], []);
 
         Assert.Equal("error", row.Status);
+    }
+
+    [Fact]
+    public void MappingRecognizesRegistrationCountryAndBuildsVehicleCandidate()
+    {
+        var table = new ImportSourceTable
+        {
+            Id = "cars", Columns = ["VIN", "Госномер", "Страна регистрации"],
+            Rows = [new() { Number = 2, Values = ["VIN123", "京A·2", "cn"] }]
+        };
+
+        var mapping = Assert.Single(ImportMappingBuilder.Suggest([table]));
+        var candidate = Assert.Single(ImportMappingBuilder.Build([table], [mapping]));
+        ImportCandidateValidator.Validate([candidate], [], []);
+
+        Assert.Contains("registrationCountryCode", mapping.Fields.Keys);
+        Assert.Equal("CN", candidate.RegistrationCountryCode);
+        Assert.Equal("京A·2", candidate.Plate);
+    }
+
+    [Fact]
+    public void LegacyDraftWithoutRegistrationCountryKeepsRussianDuplicateRules()
+    {
+        var row = System.Text.Json.JsonSerializer.Deserialize<ImportCandidate>(
+            "{\"Id\":\"legacy\",\"Kind\":\"vehicle\",\"Plate\":\"А001АА\"}")!;
+        var legacyCrmRow = System.Text.Json.JsonSerializer.Deserialize<CrmImportRow>(
+            "{\"Number\":1,\"Type\":\"vehicle\",\"Name\":\"Car\",\"Plate\":\"А001АА\"}")!;
+
+        ImportCandidateValidator.Validate([row], [], [(null, "а 001 аа")]);
+
+        Assert.Null(row.RegistrationCountryCode);
+        Assert.Null(legacyCrmRow.RegistrationCountryCode);
+        Assert.Equal("duplicate", row.Status);
+    }
+
+    [Theory]
+    [InlineData("CN", "京A·2")]
+    [InlineData("ZZ", "京A·2")]
+    public void ForeignRegistrationPlateKeepsRawUnicodeAndTrimsEdges(string countryCode, string plate)
+    {
+        var row = new ImportCandidate
+        {
+            Id = "car", Kind = "vehicle", Name = "Car", RegistrationCountryCode = countryCode.ToLowerInvariant(),
+            Plate = $" {plate} "
+        };
+
+        ImportCandidateValidator.Validate([row], [], []);
+
+        Assert.Equal("create", row.Status);
+        Assert.Equal(countryCode, row.RegistrationCountryCode);
+        Assert.Equal(plate, row.Plate);
+    }
+
+    [Fact]
+    public void SamePlateInDifferentCountriesIsNotDuplicate()
+    {
+        var rows = new List<ImportCandidate>
+        {
+            new() { Id = "cn", Kind = "vehicle", Name = "CN car", RegistrationCountryCode = "CN", Plate = "ABC 123" },
+            new() { Id = "zz", Kind = "vehicle", Name = "Unknown car", RegistrationCountryCode = "ZZ", Plate = "ABC 123" }
+        };
+
+        ImportCandidateValidator.Validate(rows, [], []);
+
+        Assert.All(rows, row => Assert.Equal("create", row.Status));
+    }
+
+    [Fact]
+    public void ForeignPlateDuplicateUsesTrimmedOrdinalCountryScopedKey()
+    {
+        var rows = new List<ImportCandidate>
+        {
+            new() { Id = "first", Kind = "vehicle", Name = "First", RegistrationCountryCode = "CN", Plate = " 京A·2 " },
+            new() { Id = "same", Kind = "vehicle", Name = "Same", RegistrationCountryCode = "CN", Plate = "京A·2" },
+            new() { Id = "case", Kind = "vehicle", Name = "Different case", RegistrationCountryCode = "CN", Plate = "京a·2" }
+        };
+
+        ImportCandidateValidator.Validate(rows, [], []);
+
+        Assert.Equal("create", rows[0].Status);
+        Assert.Equal("error", rows[1].Status);
+        Assert.Equal("create", rows[2].Status);
+        Assert.Equal("京A·2", rows[0].Plate);
+    }
+
+    [Fact]
+    public void InvalidRegistrationCountryIsRejected()
+    {
+        var row = new ImportCandidate { Id = "car", Kind = "vehicle", Name = "Car", RegistrationCountryCode = "X1", Plate = "ABC123" };
+
+        ImportCandidateValidator.Validate([row], [], []);
+
+        Assert.Equal("error", row.Status);
+        Assert.Equal(ImportRowMessageCodes.RegistrationCountryInvalid, row.MessageCode);
+    }
+
+    [Fact]
+    public void ValidationResetReplacesOldMessageCodeAndParameters()
+    {
+        var row = new ImportCandidate
+        {
+            Id = "car",
+            Kind = "vehicle",
+            Name = new string('x', 161),
+            Vin = "VIN123",
+            MessageCode = ImportRowMessageCodes.RegistrationCountryInvalid,
+            MessageParameters = new Dictionary<string, string> { ["stale"] = "value" },
+            MessageDetails = [new ImportRowMessageDetail { Message = "Старая ошибка" }]
+        };
+
+        ImportCandidateValidator.Validate([row], [], []);
+
+        Assert.Equal(ImportRowMessageCodes.VehicleInvalid, row.MessageCode);
+        Assert.Equal(DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture), row.MessageParameters!["maxYear"]);
+
+        row.Name = "Car";
+        ImportCandidateValidator.Validate([row], [], []);
+
+        Assert.Equal("create", row.Status);
+        Assert.Equal(ImportRowMessageCodes.WillCreate, row.MessageCode);
+        Assert.Null(row.MessageParameters);
+        Assert.Null(row.MessageDetails);
+    }
+
+    [Fact]
+    public void OldImportJsonWithoutMessageDetailsRemainsReadable()
+    {
+        var candidate = JsonSerializer.Deserialize<ImportCandidate>("{\"Id\":\"vehicle-1\",\"Kind\":\"vehicle\"}");
+        var businessRecord = JsonSerializer.Deserialize<ImportBusinessRecord>("{\"Id\":\"order-1\",\"Kind\":\"order\"}");
+
+        Assert.NotNull(candidate);
+        Assert.NotNull(businessRecord);
+        Assert.Null(candidate.MessageDetails);
+        Assert.Null(businessRecord.MessageDetails);
+    }
+
+    [Fact]
+    public void VinCollisionWithDifferentForeignPlateRequiresReview()
+    {
+        var row = new ImportCandidate { Id = "car", Kind = "vehicle", Name = "Car", Vin = "VIN123", RegistrationCountryCode = "CN", Plate = "京A·2" };
+
+        ImportCandidateValidator.ValidateWithCountries([row], [], [("VIN123", "京B·3", "CN")]);
+
+        Assert.Equal("conflict", row.Status);
     }
 
     private static ImportCandidate Client(string id, string name, string? phone) =>

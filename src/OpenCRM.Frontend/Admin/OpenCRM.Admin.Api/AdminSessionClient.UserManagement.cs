@@ -111,7 +111,7 @@ public sealed partial class AdminSessionClient
         string reason,
         CancellationToken cancellationToken = default)
     {
-        AdminSessionClient.ValidateSubscriptionScope(scope);
+        this.ValidateSubscriptionScope(scope);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetId);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(planId);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(days);
@@ -138,7 +138,7 @@ public sealed partial class AdminSessionClient
         DateTime? expectedEndDate,
         CancellationToken cancellationToken = default)
     {
-        AdminSessionClient.ValidateSubscriptionScope(scope);
+        this.ValidateSubscriptionScope(scope);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(subscriptionId);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(days);
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
@@ -159,7 +159,7 @@ public sealed partial class AdminSessionClient
         DateTime? expectedEndDate,
         CancellationToken cancellationToken = default)
     {
-        AdminSessionClient.ValidateSubscriptionScope(scope);
+        this.ValidateSubscriptionScope(scope);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(subscriptionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
 
@@ -171,11 +171,11 @@ public sealed partial class AdminSessionClient
             cancellationToken);
     }
 
-    private static void ValidateSubscriptionScope(string scope)
+    private void ValidateSubscriptionScope(string scope)
     {
         if (scope is not ("users" or "organizations"))
         {
-            throw new ArgumentOutOfRangeException(nameof(scope), "Область подписки должна быть users или organizations.");
+            throw new ArgumentOutOfRangeException(nameof(scope), this.LocalizeFallback("Область подписки должна быть users или organizations."));
         }
     }
 

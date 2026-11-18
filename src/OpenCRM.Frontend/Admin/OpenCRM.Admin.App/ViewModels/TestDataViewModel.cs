@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -28,7 +29,7 @@ public partial class TestDataViewModel : CommunicationsViewModel
     [ObservableProperty] private string _search = string.Empty;
     [ObservableProperty] private TestDataAction _action;
     [ObservableProperty] private int _count = 10;
-    [ObservableProperty] private MaintenanceModeOption _selectedMaintenanceMode = new("completed", "Завершённые");
+    [ObservableProperty] private MaintenanceModeOption _selectedMaintenanceMode = new("completed", "native.billing.zavershyonnye");
     [ObservableProperty] private bool _isConfirmationOpen;
     [ObservableProperty] private bool _isGenerationOutcomeUnknown;
     [ObservableProperty] private string _message = string.Empty;
@@ -36,9 +37,11 @@ public partial class TestDataViewModel : CommunicationsViewModel
     private string _appliedSearch = string.Empty;
     private Guid? _attemptedOrganizationId;
     private Guid? _attemptedVehicleId;
+    private string? _messageTranslationKey;
+    private bool _isSettingLocalizedMessage;
 
     public IReadOnlyList<MaintenanceModeOption> MaintenanceModes { get; } =
-    [new("completed", "Завершённые"), new("planned", "Запланированные")];
+    [new("completed", "native.billing.zavershyonnye"), new("planned", "native.testData.zaplanirovannye")];
 
     public bool HasError => !string.IsNullOrWhiteSpace(this.ErrorMessage);
     public bool HasMessage => !string.IsNullOrWhiteSpace(this.Message);
@@ -46,7 +49,7 @@ public partial class TestDataViewModel : CommunicationsViewModel
     public bool HasVehicle => this.SelectedVehicle != null;
     public bool CanStartGeneration => this.CanLoad() && !this.IsGenerationOutcomeUnknown;
     public string OutcomeWarning => this.IsGenerationOutcomeUnknown
-        ? "Ответ на создание не получен, и результат неизвестен. Обновите данные организации и техники, проверьте новые количества и только потом запускайте генерацию снова."
+        ? AdminLocalization.Instance["native.testData.otvet.na.sozdanie.ne.poluchen.i.rezultat.neizvesten.obnovite.dan"]
         : string.Empty;
     public bool IsEmpty => !this.IsBusy && this.Organizations.Count == 0 && !this.HasError;
     public bool HasNoVehicles => this.SelectedOrganization != null && this.Vehicles.Count == 0 && !this.IsBusy;
@@ -56,12 +59,27 @@ public partial class TestDataViewModel : CommunicationsViewModel
     public int MaximumCount => this.Action == TestDataAction.Maintenances ? 300 : 100;
     public string ActionTitle => this.Action switch
     {
-        TestDataAction.Vehicles => "Создать тестовую технику",
-        TestDataAction.Maintenances => "Создать обслуживания",
-        TestDataAction.Defects => "Создать дефекты",
-        _ => "Тестовые данные"
+        TestDataAction.Vehicles => AdminLocalization.Instance["native.testData.sozdat.testovuyu.tekhniku"],
+        TestDataAction.Maintenances => AdminLocalization.Instance["native.testData.sozdat.obsluzhivaniya"],
+        TestDataAction.Defects => AdminLocalization.Instance["native.testData.sozdat.defekty"],
+        _ => AdminLocalization.Instance["native.testData.testovye.dannye"]
     };
-    public string ConfirmationText => $"Будет создано записей: {this.Count} · {this.ActionTitle.ToLowerInvariant()}. Действие нельзя отменить.";
+    public string ConfirmationText => AdminLocalization.Instance.Format("native.testData.budet.sozdano.zapisey.this.count.this.actiontitle.tolowerinvaria", this.Count, this.ActionTitle.ToLowerInvariant());
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        foreach (var option in this.MaintenanceModes)
+        {
+            option.RefreshLocalizedValues();
+        }
+
+        this.SelectedMaintenanceMode.RefreshLocalizedValues();
+        if (this._messageTranslationKey != null)
+        {
+            this.SetLocalizedMessage(this._messageTranslationKey);
+        }
+    }
 
     protected override async Task LoadPageAsync(CancellationToken cancellationToken)
     {
@@ -188,7 +206,7 @@ public partial class TestDataViewModel : CommunicationsViewModel
                 organizationId, vehicleId!.Value, this.Count, this.SelectedMaintenanceMode.Value, token),
             TestDataAction.Defects => await this.SessionClient.GenerateTestDefectsAsync(
                 organizationId, vehicleId!.Value, this.Count, token),
-            _ => throw new InvalidOperationException("Не выбрано действие генерации.")
+            _ => throw new InvalidOperationException(AdminLocalization.Instance["native.testData.ne.vybrano.deystvie.generatsii"])
         };
 
         this.IsGenerationOutcomeUnknown = false;
@@ -228,7 +246,7 @@ public partial class TestDataViewModel : CommunicationsViewModel
         token.ThrowIfCancellationRequested();
         if (organization == null)
         {
-            this.ErrorMessage = "Исходную организацию не удалось найти. Результат генерации остаётся неизвестным; проверьте доступ к организации и обновите данные снова.";
+            this.SetLocalizedErrorMessage("native.testData.iskhodnuyu.organizatsiyu.ne.udalos.nayti.rezultat.generatsii.ost");
             return;
         }
 
@@ -237,7 +255,7 @@ public partial class TestDataViewModel : CommunicationsViewModel
         if (this._attemptedVehicleId is { } vehicleId
             && vehicles.All(vehicle => vehicle.Id != vehicleId))
         {
-            this.ErrorMessage = "Исходную технику не удалось найти в организации. Результат генерации остаётся неизвестным; обновите данные и проверьте технику снова.";
+            this.SetLocalizedErrorMessage("native.testData.iskhodnuyu.tekhniku.ne.udalos.nayti.v.organizatsii.rezultat.gene");
             return;
         }
 
@@ -250,8 +268,16 @@ public partial class TestDataViewModel : CommunicationsViewModel
         this.IsGenerationOutcomeUnknown = false;
         this._attemptedOrganizationId = null;
         this._attemptedVehicleId = null;
-        this.Message = "Данные обновлены. Проверьте количества перед повторным созданием.";
+        this.SetLocalizedMessage("native.testData.dannye.obnovleny.proverte.kolichestva.pered.povtornym.sozdaniem");
     });
+
+    private void SetLocalizedMessage(string key)
+    {
+        this._messageTranslationKey = key;
+        this._isSettingLocalizedMessage = true;
+        this.Message = AdminLocalization.Instance[key];
+        this._isSettingLocalizedMessage = false;
+    }
 
     private void UpdateOrganizationInPage(AdminTestDataOrganization organization)
     {
@@ -312,6 +338,14 @@ public partial class TestDataViewModel : CommunicationsViewModel
     }
     partial void OnOrganizationsChanged(IReadOnlyList<AdminTestDataOrganization> value) => this.OnPropertyChanged(nameof(IsEmpty));
     partial void OnVehiclesChanged(IReadOnlyList<AdminTestDataVehicle> value) => this.OnPropertyChanged(nameof(HasNoVehicles));
+
+    partial void OnMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedMessage)
+        {
+            this._messageTranslationKey = null;
+        }
+    }
 }
 
 public enum TestDataAction
@@ -322,7 +356,18 @@ public enum TestDataAction
     Defects
 }
 
-public sealed record MaintenanceModeOption(string Value, string Label)
+public sealed class MaintenanceModeOption(string value, string localizationKey) : ObservableObject
 {
+    public string Value { get; } = value;
+
+    public string Label => AdminLocalization.Instance[localizationKey];
+
+    public void RefreshLocalizedValues() => this.OnPropertyChanged(nameof(this.Label));
+
     public override string ToString() => this.Label;
+
+    public override bool Equals(object? obj) => obj is MaintenanceModeOption other
+        && string.Equals(this.Value, other.Value, StringComparison.Ordinal);
+
+    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(this.Value);
 }

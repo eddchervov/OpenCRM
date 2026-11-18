@@ -5,8 +5,12 @@ import { updateAdminRolePermissions } from '@/api/adminPermissionsApi'
 import { addAdminRoleMember, getAdminRoleMembers, removeAdminRoleMember } from '@/api/adminRolesApi'
 import type { AdminRoleMember } from '@/models/AdminRoleMember'
 import type { AdminRoleMembers } from '@/models/AdminRoleMembers'
+import { getPermissionGroupLabel, getPermissionNameLabel } from '@/utils/adminSystemLabels'
 import { useSystemAccessStore } from '@/stores/systemAccessStore'
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../adminOperationsMessages'
 
+const { t, locale } = useLocalization()
 const systemAccessStore = useSystemAccessStore()
 const selectedRoleId = ref('')
 const selectedPermissionCodes = ref<string[]>([])
@@ -44,7 +48,7 @@ const roles = computed(() => [...(data.value?.roles ?? [])].sort((firstRole, sec
     return firstRole.isLocked ? -1 : 1
   }
 
-  return firstRole.roleName.localeCompare(secondRole.roleName, 'ru')
+  return firstRole.roleName.localeCompare(secondRole.roleName, locale.value)
 }))
 const selectedRole = computed(() =>
   roles.value.find(role => role.roleId === selectedRoleId.value) ?? null
@@ -60,6 +64,12 @@ const permissionGroups = computed(() => {
 
   return [...groups.entries()].map(([name, permissions]) => ({ name, permissions }))
 })
+function permissionGroupLabel(permission: NonNullable<typeof data.value>['permissions'][number]): string {
+  return getPermissionGroupLabel(permission, locale.value)
+}
+function permissionNameLabel(permission: NonNullable<typeof data.value>['permissions'][number]): string {
+  return getPermissionNameLabel(permission, locale.value)
+}
 const assignedMembers = computed(() => {
   const query = memberSearch.value.trim().toLowerCase()
 
@@ -128,7 +138,7 @@ async function savePermissions(): Promise<void> {
   } catch (error) {
     errorMessage.value = error instanceof ApiError
       ? error.message
-      : 'Не удалось сохранить права роли.'
+      : t('adminOperations.roleSaveError')
   } finally {
     isSaving.value = false
   }
@@ -181,7 +191,7 @@ async function loadMembers(): Promise<void> {
     roleMembers.value = await getAdminRoleMembers(selectedRoleId.value)
   } catch (error) {
     roleMembers.value = null
-    errorMessage.value = error instanceof ApiError ? error.message : 'Не удалось загрузить участников роли.'
+    errorMessage.value = error instanceof ApiError ? error.message : t('adminOperations.roleMembersLoadError')
   } finally {
     isMembersLoading.value = false
   }
@@ -211,7 +221,7 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
     await loadMembers()
     successMessage.value = response.message
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : 'Не удалось изменить участников роли.'
+    errorMessage.value = error instanceof ApiError ? error.message : t('adminOperations.roleMembersChangeError')
   } finally {
     isMemberSaving.value = false
   }
@@ -221,14 +231,14 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
 <template>
   <section class="roles-page">
     <header class="page-heading">
-      <h1>Административные роли</h1>
+      <h1>{{ t('adminOperations.systemRoles') }}</h1>
     </header>
 
     <div
       v-if="systemAccessStore.accessState === 'loading'"
       class="panel-state"
     >
-      Загружаем роли и разрешения…
+      {{ t('adminOperations.loadingRoles') }}
     </div>
 
     <div
@@ -243,7 +253,7 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
       class="roles-editor"
     >
       <aside class="roles-list">
-        <div class="roles-list__title">Роли</div>
+        <div class="roles-list__title">{{ t('adminOperations.roles') }}</div>
         <button
           v-for="role in roles"
           :key="role.roleId"
@@ -253,8 +263,8 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
           @click="selectedRoleId = role.roleId"
         >
           <span>{{ role.roleName }}</span>
-          <small v-if="role.isLocked">Системная</small>
-          <small v-else>{{ role.permissionCodes.length }} разрешений</small>
+          <small v-if="role.isLocked">{{ t('adminOperations.systemRole') }}</small>
+          <small v-else>{{ t('adminOperations.permissionsCount', { count: role.permissionCodes.length }) }}</small>
         </button>
       </aside>
 
@@ -265,8 +275,8 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
       >
         <div class="role-editor-toolbar">
           <div class="role-editor-tabs">
-            <button type="button" :class="{ active: activeMode === 'permissions' }" @click="activeMode = 'permissions'">Права</button>
-            <button type="button" :class="{ active: activeMode === 'members' }" @click="activeMode = 'members'">Участники</button>
+            <button type="button" :class="{ active: activeMode === 'permissions' }" @click="activeMode = 'permissions'">{{ t('adminOperations.permissions') }}</button>
+            <button type="button" :class="{ active: activeMode === 'members' }" @click="activeMode = 'members'">{{ t('adminOperations.membersTab') }}</button>
           </div>
           <button
             v-if="activeMode === 'permissions'"
@@ -274,7 +284,7 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
             class="primary-button"
             :disabled="selectedRole.isLocked || isSaving"
           >
-            {{ isSaving ? 'Сохраняем…' : 'Сохранить' }}
+            {{ isSaving ? t('adminOperations.saving') : t('adminOperations.save') }}
           </button>
         </div>
 
@@ -298,7 +308,7 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
           class="permission-group"
           :disabled="selectedRole.isLocked"
         >
-          <legend>{{ group.name }}</legend>
+          <legend>{{ permissionGroupLabel(group.permissions[0]) }}</legend>
           <label
             v-for="permission in group.permissions"
             :key="permission.code"
@@ -310,54 +320,54 @@ async function runMemberOperation(operation: () => Promise<{ message: string }>)
               :checked="selectedPermissionCodes.includes(permission.code)"
               @change="togglePermission(permission.code, $event)"
             >
-            <strong>{{ permission.name }}</strong>
+            <strong>{{ permissionNameLabel(permission) }}</strong>
           </label>
         </fieldset>
 
         <div v-if="activeMode === 'members'" class="role-members">
           <div class="role-members__toolbar">
-            <input v-model="memberSearch" type="search" placeholder="Email или телефон">
+            <input v-model="memberSearch" type="search" :placeholder="t('adminOperations.searchEmailPhone')">
             <SearchSelect
               v-model="selectedUserId"
               :disabled="isMembersLoading || availableUsers.length === 0"
               :options="availableUsers.map(user => ({ value: user.userId, label: user.displayName }))"
-              placeholder="Выберите пользователя"
+              :placeholder="t('adminOperations.selectUser')"
             />
-            <button class="primary-button" type="submit" :disabled="isMembersLoading || isMemberSaving || !selectedUserId">Назначить</button>
+            <button class="primary-button" type="submit" :disabled="isMembersLoading || isMemberSaving || !selectedUserId">{{ t('adminOperations.assign') }}</button>
           </div>
 
-          <div v-if="isMembersLoading" class="inline-empty">Загрузка…</div>
+          <div v-if="isMembersLoading" class="inline-empty">{{ t('adminOperations.loading') }}</div>
           <div v-else-if="assignedMembers.length" class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Пользователь</th><th>Телефон</th><th></th></tr></thead>
+              <thead><tr><th>{{ t('adminOperations.user') }}</th><th>{{ t('adminOperations.phone') }}</th><th></th></tr></thead>
               <tbody>
                 <tr v-for="user in assignedMembers" :key="user.userId">
                   <td><strong>{{ user.email || user.displayName }}</strong></td>
                   <td>{{ user.phone || '—' }}</td>
-                  <td><button class="table-action danger-link" type="button" :disabled="isMemberSaving || (user.isCurrentUser && roleMembers?.isProtected)" @click="memberToRemove = user">Снять роль</button></td>
+                  <td><button class="table-action danger-link" type="button" :disabled="isMemberSaving || (user.isCurrentUser && roleMembers?.isProtected)" @click="memberToRemove = user">{{ t('adminOperations.removeRole') }}</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div v-else class="inline-empty">В этой роли нет пользователей.</div>
+          <div v-else class="inline-empty">{{ t('adminOperations.noUsersForRole') }}</div>
         </div>
       </form>
     </div>
 
     <div v-else class="panel-state">
-      Нет данных о ролях и разрешениях.
+      {{ t('adminOperations.noRolesData') }}
     </div>
 
     <div v-if="memberToRemove && selectedRole" class="modal-backdrop" @click.self="memberToRemove = null">
       <div class="modal-card modal-card--compact">
         <div class="modal-heading">
-          <strong>Снять роль</strong>
+          <strong>{{ t('adminOperations.removeRole') }}</strong>
           <button type="button" :disabled="isMemberSaving" @click="memberToRemove = null">×</button>
         </div>
         <p>{{ memberToRemove.displayName }} · {{ selectedRole.roleName }}</p>
         <div class="modal-actions">
-          <button class="danger-button" type="button" :disabled="isMemberSaving" @click="removeMember(memberToRemove.userId)">Снять роль</button>
-          <button class="secondary-button" type="button" :disabled="isMemberSaving" @click="memberToRemove = null">Отмена</button>
+          <button class="danger-button" type="button" :disabled="isMemberSaving" @click="removeMember(memberToRemove.userId)">{{ t('adminOperations.removeRole') }}</button>
+          <button class="secondary-button" type="button" :disabled="isMemberSaving" @click="memberToRemove = null">{{ t('adminOperations.cancel') }}</button>
         </div>
       </div>
     </div>

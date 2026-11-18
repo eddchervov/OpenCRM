@@ -14,7 +14,10 @@ import {
   type AdminAssistantUsageResponse
 } from '@/api/assistantApi'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminOperationsMessages'
 
+const { t } = useLocalization()
 const currentUserStore = useAdminCurrentUserStore()
 const assistant = ref<AdminAssistantResponse | null>(null)
 const settingsDraft = ref<AdminAssistantSettings | null>(null)
@@ -65,7 +68,7 @@ async function loadAssistant(): Promise<void> {
     assistant.value = response
     settingsDraft.value = { ...response.settings }
   } catch (error) {
-    settingsError.value = errorMessage(error, 'Не удалось загрузить настройки помощника.')
+    settingsError.value = errorMessage(error, t('adminOperations.assistant.loadSettingsError'))
   } finally {
     organizationLoading.value = false
   }
@@ -96,9 +99,9 @@ async function saveSettings(): Promise<void> {
     })
     settingsDraft.value = { ...saved }
     if (assistant.value) assistant.value.settings = saved
-    settingsMessage.value = 'Настройки сохранены.'
+    settingsMessage.value = t('adminOperations.assistant.settingsSaved')
   } catch (error) {
-    settingsError.value = errorMessage(error, 'Не удалось сохранить настройки помощника.')
+    settingsError.value = errorMessage(error, t('adminOperations.assistant.saveSettingsError'))
   } finally {
     settingsSaving.value = false
   }
@@ -137,7 +140,7 @@ async function saveOrganization(): Promise<void> {
     closeOrganizationEditor()
     await loadAssistant()
   } catch (error) {
-    organizationError.value = errorMessage(error, 'Не удалось сохранить доступ организации.')
+    organizationError.value = errorMessage(error, t('adminOperations.assistant.saveOrgAccessError'))
   } finally {
     organizationSaving.value = false
   }
@@ -159,7 +162,7 @@ async function loadUsage(): Promise<void> {
       pageSize: 50
     })
   } catch (error) {
-    usageError.value = errorMessage(error, 'Не удалось загрузить расходы помощника.')
+    usageError.value = errorMessage(error, t('adminOperations.assistant.loadUsageError'))
   } finally {
     usageLoading.value = false
   }
@@ -181,7 +184,7 @@ async function settleUsage(): Promise<void> {
     settlementItem.value = null
     await loadUsage()
   } catch (error) {
-    usageError.value = errorMessage(error, 'Не удалось сверить расход.')
+    usageError.value = errorMessage(error, t('adminOperations.assistant.settleError'))
   } finally {
     settlementSaving.value = false
   }
@@ -189,24 +192,26 @@ async function settleUsage(): Promise<void> {
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError && error.status === 403
-    ? 'Недостаточно прав для этого действия.'
+    ? t('adminOperations.assistant.accessDenied')
     : fallback
 }
 
 function money(value: number | null | undefined): string {
-  return value == null ? 'Неизвестно' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(value)} ₽`
+  return value == null ? t('adminOperations.assistant.unknown') : new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code', maximumFractionDigits: 2 }).format(value)
 }
 
 function number(value: number | null | undefined): string {
-  return value == null ? '—' : new Intl.NumberFormat('ru-RU').format(value)
+  return value == null ? '—' : new Intl.NumberFormat(formattingCulture.value).format(value)
 }
 
 function dateTime(value: string): string {
-  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+  return new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
 }
 
 function displayStatus(item: AdminAssistantUsageItem): string {
-  if (item.status === 'unknown' || item.costRub == null) return 'Неизвестно'
+  if (item.status === 'unknown' || item.costRub == null) return t('adminOperations.assistant.unknownStatus')
+  const statusKeys: Record<string, string> = { completed: 'completed', settled: 'settled', reserved: 'reserved', failed: 'failed' }
+  if (statusKeys[item.status]) return t(`adminOperations.assistant.statuses.${statusKeys[item.status]}`)
   return item.status
 }
 
@@ -220,122 +225,122 @@ function canSettle(item: AdminAssistantUsageItem): boolean {
 
 <template>
   <section class="operations-page assistant-page">
-    <h1>ИИ-помощник</h1>
+    <h1>{{ t('adminOperations.assistant.title') }}</h1>
 
     <div v-if="settingsError" class="form-message form-message--error" role="alert">{{ settingsError }}</div>
     <div v-if="settingsMessage" class="form-message form-message--success" role="status">{{ settingsMessage }}</div>
-    <div v-if="!settingsDraft && !settingsError" class="form-message">Загрузка настроек…</div>
+    <div v-if="!settingsDraft && !settingsError" class="form-message">{{ t('adminOperations.assistant.loadingSettings') }}</div>
 
     <form v-if="settingsDraft" class="standalone-form modal-grid assistant-settings" @submit.prevent="saveSettings">
       <div class="assistant-settings__master">
-        <label class="assistant-settings__toggle"><input v-model="settingsDraft.isEnabled" type="checkbox"><strong>Помощник включён</strong></label>
-        <p>При выключении помощник скрывается в рабочих пространствах, а новые команды сайта и Telegram блокируются.</p>
+        <label class="assistant-settings__toggle"><input v-model="settingsDraft.isEnabled" type="checkbox"><strong>{{ t('adminOperations.assistant.enabled') }}</strong></label>
+        <p>{{ t('adminOperations.assistant.disabledHelp') }}</p>
       </div>
-      <label><span>Сайт</span><input v-model="settingsDraft.webEnabled" type="checkbox"></label>
-      <label><span>Telegram</span><input v-model="settingsDraft.telegramEnabled" type="checkbox"></label>
-      <label><span>Голосовые ответы</span><input v-model="settingsDraft.speechRepliesEnabled" type="checkbox"></label>
-      <label><span>Текстовая модель</span><input v-model.trim="settingsDraft.textModel" required maxlength="120"></label>
-      <label><span>Модель распознавания речи</span><input v-model.trim="settingsDraft.speechModel" maxlength="120"></label>
-      <label><span>Модель озвучивания</span><input v-model.trim="settingsDraft.voiceModel" maxlength="120"></label>
-      <label><span>Голос</span><input v-model.trim="settingsDraft.voiceName" maxlength="100"></label>
-      <label><span>Дневной лимит, ₽</span><input v-model.number="settingsDraft.dailyBudgetRub" type="number" min="0" step="0.01" required></label>
-      <label><span>Месячный лимит, ₽</span><input v-model.number="settingsDraft.monthlyBudgetRub" type="number" min="0" step="0.01" required></label>
-      <label><span>Резерв на текстовый запрос, ₽</span><input v-model.number="settingsDraft.textReservationRub" type="number" min="0" step="0.01" required></label>
-      <label><span>Резерв на аудиозапрос, ₽</span><input v-model.number="settingsDraft.audioReservationRub" type="number" min="0" step="0.01" required></label>
-      <label><span>Максимум токенов ответа</span><input v-model.number="settingsDraft.maximumOutputTokens" type="number" min="1" :max="assistant?.limits.maximumOutputTokensAllowed" step="1" required></label>
+      <label><span>{{ t('adminOperations.assistant.website') }}</span><input v-model="settingsDraft.webEnabled" type="checkbox"></label>
+      <label><span>{{ t('adminOperations.assistant.telegram') }}</span><input v-model="settingsDraft.telegramEnabled" type="checkbox"></label>
+      <label><span>{{ t('adminOperations.assistant.speechReplies') }}</span><input v-model="settingsDraft.speechRepliesEnabled" type="checkbox"></label>
+      <label><span>{{ t('adminOperations.assistant.textModel') }}</span><input v-model.trim="settingsDraft.textModel" required maxlength="120"></label>
+      <label><span>{{ t('adminOperations.assistant.speechModel') }}</span><input v-model.trim="settingsDraft.speechModel" maxlength="120"></label>
+      <label><span>{{ t('adminOperations.assistant.voiceModel') }}</span><input v-model.trim="settingsDraft.voiceModel" maxlength="120"></label>
+      <label><span>{{ t('adminOperations.assistant.voice') }}</span><input v-model.trim="settingsDraft.voiceName" maxlength="100"></label>
+      <label><span>{{ t('adminOperations.assistant.dailyBudget') }}</span><input v-model.number="settingsDraft.dailyBudgetRub" type="number" min="0" step="0.01" required></label>
+      <label><span>{{ t('adminOperations.assistant.monthlyBudget') }}</span><input v-model.number="settingsDraft.monthlyBudgetRub" type="number" min="0" step="0.01" required></label>
+      <label><span>{{ t('adminOperations.assistant.textReservation') }}</span><input v-model.number="settingsDraft.textReservationRub" type="number" min="0" step="0.01" required></label>
+      <label><span>{{ t('adminOperations.assistant.audioReservation') }}</span><input v-model.number="settingsDraft.audioReservationRub" type="number" min="0" step="0.01" required></label>
+      <label><span>{{ t('adminOperations.assistant.maxOutputTokens') }}</span><input v-model.number="settingsDraft.maximumOutputTokens" type="number" min="1" :max="assistant?.limits.maximumOutputTokensAllowed" step="1" required></label>
       <div class="assistant-settings__provider">
-        <strong>Подключения</strong>
-        <span>RouterAI: {{ assistant?.provider.routerConfigured ? 'настроен' : 'не настроен' }}</span>
-        <span>Telegram: {{ assistant?.provider.telegramConfigured ? 'настроен' : 'не настроен' }}<template v-if="assistant?.provider.telegramBotUsername"> · @{{ assistant.provider.telegramBotUsername }}</template></span>
-        <small>Секретные ключи здесь не отображаются.</small>
+        <strong>{{ t('adminOperations.assistant.connections') }}</strong>
+        <span>RouterAI: {{ assistant?.provider.routerConfigured ? t('adminOperations.assistant.configured') : t('adminOperations.assistant.notConfigured') }}</span>
+        <span>Telegram: {{ assistant?.provider.telegramConfigured ? t('adminOperations.assistant.configured') : t('adminOperations.assistant.notConfigured') }}<template v-if="assistant?.provider.telegramBotUsername"> · @{{ assistant.provider.telegramBotUsername }}</template></span>
+        <small>{{ t('adminOperations.assistant.secretsHidden') }}</small>
       </div>
       <div class="assistant-settings__actions">
-        <button class="primary-button" :disabled="settingsSaving">{{ settingsSaving ? 'Сохранение…' : 'Сохранить настройки' }}</button>
-        <small v-if="assistant?.settings.updatedAt">Изменено {{ dateTime(assistant.settings.updatedAt) }} · ревизия {{ settingsDraft.revision }}</small>
+        <button class="primary-button" :disabled="settingsSaving">{{ settingsSaving ? t('adminOperations.assistant.saving') : t('adminOperations.assistant.saveSettings') }}</button>
+        <small v-if="assistant?.settings.updatedAt">{{ t('adminOperations.assistant.updated', { date: dateTime(assistant.settings.updatedAt), revision: settingsDraft.revision }) }}</small>
       </div>
     </form>
 
     <section class="assistant-section">
-      <div class="assistant-section__heading"><h2>Доступ организаций</h2><form class="operations-toolbar" @submit.prevent="searchOrganizations"><input v-model="organizationSearch" type="search" placeholder="Найти организацию"><button class="secondary-button">Найти</button></form></div>
+      <div class="assistant-section__heading"><h2>{{ t('adminOperations.assistant.organizationAccess') }}</h2><form class="operations-toolbar" @submit.prevent="searchOrganizations"><input v-model="organizationSearch" type="search" :placeholder="t('adminOperations.assistant.findOrganization')"><button class="secondary-button">{{ t('adminOperations.find') }}</button></form></div>
       <div v-if="organizationError" class="form-message form-message--error" role="alert">{{ organizationError }}</div>
-      <div v-if="organizationLoading" class="form-message">Загрузка организаций…</div>
-      <div v-else class="table-wrap"><table class="data-table"><thead><tr><th>Организация</th><th>Доступ</th><th>До</th><th>Каналы</th><th>Лимиты в день / месяц</th><th></th></tr></thead><tbody>
+      <div v-if="organizationLoading" class="form-message">{{ t('adminOperations.assistant.loadingOrganizations') }}</div>
+      <div v-else class="table-wrap"><table class="data-table"><thead><tr><th>{{ t('adminOperations.assistant.organization') }}</th><th>{{ t('adminOperations.assistant.access') }}</th><th>{{ t('adminOperations.assistant.until') }}</th><th>{{ t('adminOperations.assistant.channels') }}</th><th>{{ t('adminOperations.assistant.budgetsPerDayMonth') }}</th><th></th></tr></thead><tbody>
         <tr v-for="organization in assistant?.organizations ?? []" :key="organization.organizationId">
           <td><strong>{{ organization.name }}</strong></td>
-          <td>{{ organization.isEnabled ? 'Включён' : 'Выключен' }}</td>
-          <td>{{ organization.enabledUntil ? new Date(organization.enabledUntil).toLocaleDateString('ru-RU') : 'Без срока' }}</td>
-          <td>{{ [organization.webEnabled ? 'Сайт' : '', organization.telegramEnabled ? 'Telegram' : ''].filter(Boolean).join(', ') || 'Нет' }}</td>
+          <td>{{ organization.isEnabled ? t('adminOperations.assistant.enabled') : t('adminOperations.assistant.disabled') }}</td>
+          <td>{{ organization.enabledUntil ? new Intl.DateTimeFormat(formattingCulture).format(new Date(organization.enabledUntil)) : t('adminOperations.assistant.noExpiry') }}</td>
+          <td>{{ [organization.webEnabled ? t('adminOperations.assistant.website') : '', organization.telegramEnabled ? t('adminOperations.assistant.telegram') : ''].filter(Boolean).join(', ') || t('adminOperations.assistant.noChannels') }}</td>
           <td>{{ money(organization.dailyBudgetRub) }} / {{ money(organization.monthlyBudgetRub) }}</td>
-          <td><button class="table-action" type="button" @click="editOrganization(organization)">Настроить</button></td>
+          <td><button class="table-action" type="button" @click="editOrganization(organization)">{{ t('adminOperations.assistant.configure') }}</button></td>
         </tr>
-        <tr v-if="!assistant?.organizations.length"><td colspan="6">Организации не найдены.</td></tr>
+        <tr v-if="!assistant?.organizations.length"><td colspan="6">{{ t('adminOperations.assistant.notFound') }}</td></tr>
       </tbody></table></div>
-      <div class="assistant-pagination"><button class="secondary-button" :disabled="organizationPage <= 1 || organizationLoading" @click="organizationPage--; loadAssistant()">Назад</button><span>Страница {{ organizationPage }} из {{ organizationPageCount }}</span><button class="secondary-button" :disabled="organizationPage >= organizationPageCount || organizationLoading" @click="organizationPage++; loadAssistant()">Дальше</button></div>
+      <div class="assistant-pagination"><button class="secondary-button" :disabled="organizationPage <= 1 || organizationLoading" @click="organizationPage--; loadAssistant()">{{ t('adminOperations.assistant.previous') }}</button><span>{{ t('adminOperations.assistant.page', { page: organizationPage, pages: organizationPageCount }) }}</span><button class="secondary-button" :disabled="organizationPage >= organizationPageCount || organizationLoading" @click="organizationPage++; loadAssistant()">{{ t('adminOperations.assistant.next') }}</button></div>
     </section>
 
     <section v-if="assistant?.audits.length" class="assistant-section">
-      <h2>Журнал изменений</h2>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>Дата</th><th>Действие</th><th>Описание</th><th>Администратор</th></tr></thead><tbody>
+      <h2>{{ t('adminOperations.assistant.auditLog') }}</h2>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>{{ t('adminOperations.assistant.date') }}</th><th>{{ t('adminOperations.assistant.action') }}</th><th>{{ t('adminOperations.assistant.description') }}</th><th>{{ t('adminOperations.assistant.administrator') }}</th></tr></thead><tbody>
         <tr v-for="audit in assistant.audits" :key="audit.id"><td>{{ dateTime(audit.createdAt) }}</td><td>{{ audit.action }}</td><td>{{ audit.description }}</td><td>{{ audit.adminUserId }}</td></tr>
       </tbody></table></div>
     </section>
 
     <section class="assistant-section">
-      <h2>Расходы и использование</h2>
-      <div v-if="!canViewBilling" class="form-message">Для просмотра расходов требуется право «Просмотр финансов».</div>
+      <h2>{{ t('adminOperations.assistant.usage') }}</h2>
+      <div v-if="!canViewBilling" class="form-message">{{ t('adminOperations.assistant.billingPermissionRequired') }}</div>
       <template v-else>
         <form class="operations-toolbar assistant-usage-filters" @submit.prevent="usagePage = 1; loadUsage()">
-          <label><span>С</span><input v-model="usageFrom" type="date" required></label>
-          <label><span>По</span><input v-model="usageTo" type="date" required></label>
-          <label><span>Организация ID</span><input v-model.trim="usageOrganizationId" type="search"></label>
-          <label><span>Канал</span><select v-model="usageChannel"><option value="">Все</option><option value="web">Сайт</option><option value="telegram">Telegram</option></select></label>
-          <label><span>Модель</span><input v-model.trim="usageModel"></label>
-          <label><span>Статус</span><input v-model.trim="usageStatus"></label>
-          <button class="secondary-button" :disabled="usageLoading">Применить</button>
+          <label><span>{{ t('adminOperations.assistant.from') }}</span><input v-model="usageFrom" type="date" required></label>
+          <label><span>{{ t('adminOperations.assistant.to') }}</span><input v-model="usageTo" type="date" required></label>
+          <label><span>{{ t('adminOperations.assistant.organizationId') }}</span><input v-model.trim="usageOrganizationId" type="search"></label>
+          <label><span>{{ t('adminOperations.assistant.channel') }}</span><select v-model="usageChannel"><option value="">{{ t('adminOperations.assistant.all') }}</option><option value="web">{{ t('adminOperations.assistant.website') }}</option><option value="telegram">Telegram</option></select></label>
+          <label><span>{{ t('adminOperations.assistant.model') }}</span><input v-model.trim="usageModel"></label>
+          <label><span>{{ t('adminOperations.assistant.status') }}</span><input v-model.trim="usageStatus"></label>
+          <button class="secondary-button" :disabled="usageLoading">{{ t('adminOperations.assistant.apply') }}</button>
         </form>
         <div v-if="usageError" class="form-message form-message--error" role="alert">{{ usageError }}</div>
-        <div v-if="usageLoading" class="form-message">Загрузка расходов…</div>
+        <div v-if="usageLoading" class="form-message">{{ t('adminOperations.assistant.loadingUsage') }}</div>
         <template v-else-if="usage">
           <dl class="assistant-usage-totals">
-            <div><dt>Фактические расходы</dt><dd>{{ money(usage.totals.costRub) }}</dd></div>
-            <div><dt>Зарезервировано</dt><dd>{{ money(usage.totals.reservedRub) }}</dd></div>
-            <div><dt>Неизвестные расходы</dt><dd>{{ number(usage.totals.unknownCount) }}</dd></div>
-            <div><dt>Запросы</dt><dd>{{ number(usage.totals.requestCount) }}</dd></div>
-            <div><dt>Входные токены</dt><dd>{{ number(usage.totals.inputTokens) }}</dd></div>
-            <div><dt>Выходные токены</dt><dd>{{ number(usage.totals.outputTokens) }}</dd></div>
+            <div><dt>{{ t('adminOperations.assistant.actualCosts') }}</dt><dd>{{ money(usage.totals.costRub) }}</dd></div>
+            <div><dt>{{ t('adminOperations.assistant.reserved') }}</dt><dd>{{ money(usage.totals.reservedRub) }}</dd></div>
+            <div><dt>{{ t('adminOperations.assistant.unknownCosts') }}</dt><dd>{{ number(usage.totals.unknownCount) }}</dd></div>
+            <div><dt>{{ t('adminOperations.assistant.requests') }}</dt><dd>{{ number(usage.totals.requestCount) }}</dd></div>
+            <div><dt>{{ t('adminOperations.assistant.inputTokens') }}</dt><dd>{{ number(usage.totals.inputTokens) }}</dd></div>
+            <div><dt>{{ t('adminOperations.assistant.outputTokens') }}</dt><dd>{{ number(usage.totals.outputTokens) }}</dd></div>
           </dl>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>Дата</th><th>Факт</th><th>Резерв</th></tr></thead><tbody><tr v-for="day in usage.daily" :key="day.date"><td>{{ day.date }}</td><td>{{ money(day.costRub) }}</td><td>{{ money(day.reservedRub) }}</td></tr></tbody></table></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>Организация</th><th>Факт</th><th>Резерв</th><th>Запросы</th></tr></thead><tbody><tr v-for="organization in usage.byOrganization" :key="organization.organizationId"><td>{{ organization.name }}</td><td>{{ money(organization.costRub) }}</td><td>{{ money(organization.reservedRub) }}</td><td>{{ number(organization.requestCount) }}</td></tr></tbody></table></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>Дата</th><th>Организация / пользователь</th><th>Канал / тип</th><th>Модель</th><th>Токены: вход / выход / кэш</th><th>Статус</th><th>Факт</th><th>Резерв</th><th>Ошибка</th><th></th></tr></thead><tbody>
-            <tr v-for="item in usage.items" :key="item.id"><td>{{ dateTime(item.createdAt) }}</td><td>{{ item.organizationName }}<small>{{ item.userEmail || item.userId }}</small></td><td>{{ item.channel }} / {{ item.kind }}</td><td>{{ item.model }}</td><td>{{ number(item.inputTokens) }} / {{ number(item.outputTokens) }} / {{ number(item.cachedTokens) }}</td><td>{{ displayStatus(item) }}</td><td>{{ money(item.costRub) }}</td><td>{{ money(item.reservedCostRub) }}</td><td>{{ item.errorCode || '—' }}</td><td><button v-if="canSettle(item)" class="table-action" type="button" @click="openSettlement(item)">Сверить</button></td></tr>
-            <tr v-if="!usage.items.length"><td colspan="10">Запросов за период нет.</td></tr>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>{{ t('adminOperations.assistant.date') }}</th><th>{{ t('adminOperations.assistant.actual') }}</th><th>{{ t('adminOperations.assistant.reserved') }}</th></tr></thead><tbody><tr v-for="day in usage.daily" :key="day.date"><td>{{ day.date }}</td><td>{{ money(day.costRub) }}</td><td>{{ money(day.reservedRub) }}</td></tr></tbody></table></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>{{ t('adminOperations.assistant.organization') }}</th><th>{{ t('adminOperations.assistant.actual') }}</th><th>{{ t('adminOperations.assistant.reserved') }}</th><th>{{ t('adminOperations.assistant.requests') }}</th></tr></thead><tbody><tr v-for="organization in usage.byOrganization" :key="organization.organizationId"><td>{{ organization.name }}</td><td>{{ money(organization.costRub) }}</td><td>{{ money(organization.reservedRub) }}</td><td>{{ number(organization.requestCount) }}</td></tr></tbody></table></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>{{ t('adminOperations.assistant.date') }}</th><th>{{ t('adminOperations.assistant.organizationUser') }}</th><th>{{ t('adminOperations.assistant.channelKind') }}</th><th>{{ t('adminOperations.assistant.model') }}</th><th>{{ t('adminOperations.assistant.tokenBreakdown') }}</th><th>{{ t('adminOperations.assistant.status') }}</th><th>{{ t('adminOperations.assistant.actual') }}</th><th>{{ t('adminOperations.assistant.reserved') }}</th><th>{{ t('adminOperations.assistant.error') }}</th><th></th></tr></thead><tbody>
+            <tr v-for="item in usage.items" :key="item.id"><td>{{ dateTime(item.createdAt) }}</td><td>{{ item.organizationName }}<small>{{ item.userEmail || item.userId }}</small></td><td>{{ item.channel }} / {{ item.kind }}</td><td>{{ item.model }}</td><td>{{ number(item.inputTokens) }} / {{ number(item.outputTokens) }} / {{ number(item.cachedTokens) }}</td><td>{{ displayStatus(item) }}</td><td>{{ money(item.costRub) }}</td><td>{{ money(item.reservedCostRub) }}</td><td>{{ item.errorCode || '—' }}</td><td><button v-if="canSettle(item)" class="table-action" type="button" @click="openSettlement(item)">{{ t('adminOperations.assistant.reconcile') }}</button></td></tr>
+            <tr v-if="!usage.items.length"><td colspan="10">{{ t('adminOperations.assistant.noRequests') }}</td></tr>
           </tbody></table></div>
-          <div class="assistant-pagination"><button class="secondary-button" :disabled="usagePage <= 1 || usageLoading" @click="usagePage--; loadUsage()">Назад</button><span>Страница {{ usagePage }} из {{ usagePageCount }}</span><button class="secondary-button" :disabled="usagePage >= usagePageCount || usageLoading" @click="usagePage++; loadUsage()">Дальше</button></div>
+          <div class="assistant-pagination"><button class="secondary-button" :disabled="usagePage <= 1 || usageLoading" @click="usagePage--; loadUsage()">{{ t('adminOperations.assistant.previous') }}</button><span>{{ t('adminOperations.assistant.page', { page: usagePage, pages: usagePageCount }) }}</span><button class="secondary-button" :disabled="usagePage >= usagePageCount || usageLoading" @click="usagePage++; loadUsage()">{{ t('adminOperations.assistant.next') }}</button></div>
         </template>
       </template>
     </section>
 
     <div v-if="organizationDraft" class="modal-backdrop" @click.self="closeOrganizationEditor">
       <form class="modal-card" @submit.prevent="saveOrganization">
-        <div class="modal-heading"><strong>Доступ: {{ organizationDraft.name }}</strong><button type="button" :disabled="organizationSaving" @click="closeOrganizationEditor">×</button></div>
+        <div class="modal-heading"><strong>{{ t('adminOperations.assistant.editAccess', { organization: organizationDraft.name }) }}</strong><button type="button" :disabled="organizationSaving" @click="closeOrganizationEditor">×</button></div>
         <div class="modal-grid">
-          <label><span>Доступ включён</span><input v-model="organizationDraft.isEnabled" type="checkbox"></label>
-          <label><span>Доступ до (необязательно)</span><input v-model="organizationDraft.enabledUntil" type="date"></label>
-          <label><span>Сайт</span><input v-model="organizationDraft.webEnabled" type="checkbox"></label>
-          <label><span>Telegram</span><input v-model="organizationDraft.telegramEnabled" type="checkbox"></label>
-          <label><span>Лимит в день, ₽</span><input v-model.number="organizationDraft.dailyBudgetRub" type="number" min="0" step="0.01" required></label>
-          <label><span>Лимит в месяц, ₽</span><input v-model.number="organizationDraft.monthlyBudgetRub" type="number" min="0" step="0.01" required></label>
+          <label><span>{{ t('adminOperations.assistant.accessEnabled') }}</span><input v-model="organizationDraft.isEnabled" type="checkbox"></label>
+          <label><span>{{ t('adminOperations.assistant.accessUntilOptional') }}</span><input v-model="organizationDraft.enabledUntil" type="date"></label>
+          <label><span>{{ t('adminOperations.assistant.website') }}</span><input v-model="organizationDraft.webEnabled" type="checkbox"></label>
+          <label><span>{{ t('adminOperations.assistant.telegram') }}</span><input v-model="organizationDraft.telegramEnabled" type="checkbox"></label>
+          <label><span>{{ t('adminOperations.assistant.dailyLimit') }}</span><input v-model.number="organizationDraft.dailyBudgetRub" type="number" min="0" step="0.01" required></label>
+          <label><span>{{ t('adminOperations.assistant.monthlyLimit') }}</span><input v-model.number="organizationDraft.monthlyBudgetRub" type="number" min="0" step="0.01" required></label>
         </div>
-        <div class="modal-actions"><button class="primary-button" :disabled="organizationSaving">{{ organizationSaving ? 'Сохранение…' : 'Сохранить доступ' }}</button><button class="secondary-button" type="button" :disabled="organizationSaving" @click="closeOrganizationEditor">Отмена</button></div>
+        <div class="modal-actions"><button class="primary-button" :disabled="organizationSaving">{{ organizationSaving ? t('adminOperations.assistant.saving') : t('adminOperations.assistant.saveAccess') }}</button><button class="secondary-button" type="button" :disabled="organizationSaving" @click="closeOrganizationEditor">{{ t('adminOperations.assistant.cancel') }}</button></div>
       </form>
     </div>
 
     <div v-if="settlementItem" class="modal-backdrop" @click.self="settlementItem = null">
       <form class="modal-card" @submit.prevent="settleUsage">
-        <div class="modal-heading"><strong>Сверка неизвестного расхода</strong><button type="button" :disabled="settlementSaving" @click="settlementItem = null">×</button></div>
-        <p>{{ settlementItem.organizationName }} · {{ dateTime(settlementItem.createdAt) }} · резерв {{ money(settlementItem.reservedCostRub) }}</p>
-        <div class="modal-grid"><label class="span-2"><span>Фактическая стоимость, ₽</span><input v-model.number="settlementCost" type="number" min="0" step="0.0001" required></label><label class="span-2"><span>Причина сверки</span><textarea v-model.trim="settlementReason" rows="3" maxlength="500" required></textarea></label></div>
-        <div class="modal-actions"><button class="primary-button" :disabled="settlementSaving || settlementCost === null || !settlementReason.trim()">{{ settlementSaving ? 'Сохранение…' : 'Сохранить сверку' }}</button><button class="secondary-button" type="button" :disabled="settlementSaving" @click="settlementItem = null">Отмена</button></div>
+        <div class="modal-heading"><strong>{{ t('adminOperations.assistant.reconciliationTitle') }}</strong><button type="button" :disabled="settlementSaving" @click="settlementItem = null">×</button></div>
+        <p>{{ settlementItem.organizationName }} · {{ dateTime(settlementItem.createdAt) }} · {{ t('adminOperations.assistant.reservedInline', { amount: money(settlementItem.reservedCostRub) }) }}</p>
+        <div class="modal-grid"><label class="span-2"><span>{{ t('adminOperations.assistant.actualCost') }}</span><input v-model.number="settlementCost" type="number" min="0" step="0.0001" required></label><label class="span-2"><span>{{ t('adminOperations.assistant.reconciliationReason') }}</span><textarea v-model.trim="settlementReason" rows="3" maxlength="500" required></textarea></label></div>
+        <div class="modal-actions"><button class="primary-button" :disabled="settlementSaving || settlementCost === null || !settlementReason.trim()">{{ settlementSaving ? t('adminOperations.assistant.saving') : t('adminOperations.assistant.saveReconciliation') }}</button><button class="secondary-button" type="button" :disabled="settlementSaving" @click="settlementItem = null">{{ t('adminOperations.assistant.cancel') }}</button></div>
       </form>
     </div>
   </section>

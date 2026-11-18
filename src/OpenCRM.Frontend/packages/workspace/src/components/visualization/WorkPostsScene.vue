@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../../visualizationMessages'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import type * as ThreeTypes from 'three'
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { WorkPostSceneItem, WorkPostSceneState } from './types'
 import { layoutPostMarkers, type PostMarker } from './postMarkers'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   posts: WorkPostSceneItem[]
@@ -26,13 +30,14 @@ const canvas = ref<HTMLCanvasElement | null>(null)
 const renderer = shallowRef<ThreeTypes.WebGLRenderer | null>(null)
 const overlays = ref<Record<string, PostMarker>>({})
 const isUnavailable = ref(false)
-const stateLabels: Record<WorkPostSceneState, string> = {
-  free: 'Свободен',
-  inProgress: 'В работе',
-  overdue: 'Ожидает начала',
-  paused: 'Есть пауза',
-  conflict: 'Несколько заказов'
-}
+const stateLabels = computed<Record<WorkPostSceneState, string>>(() => ({
+  free: t('visualization.free'),
+  inProgress: t('visualization.inProgress'),
+  overdue: t('visualization.overdue'),
+  paused: t('visualization.paused'),
+  conflict: t('visualization.conflict')
+
+}))
 
 const postsById = computed(() => new Map(props.posts.map(post => [post.id, post])))
 let THREE = {} as typeof import('three')
@@ -329,8 +334,14 @@ function rotateView(angle: number) {
   controls.update()
 }
 
+function postDescription(post: WorkPostSceneItem) {
+  const values = { name: post.name, vehicle: post.vehicleLabel || post.registrationPlate || stateLabel(post), state: stateLabel(post), count: post.count }
+
+  return post.count > 0 ? t('visualization.postDescriptionCount', values) : t('visualization.postDescription', values)
+}
+
 function stateLabel(post: WorkPostSceneItem) {
-  return post.state === 'free' ? stateLabels.free : post.state === 'overdue' && post.count > 0 ? 'Ожидает начала' : stateLabels[post.state]
+  return post.state === 'free' ? stateLabels.value.free : post.state === 'overdue' && post.count > 0 ? t('visualization.overdue') : stateLabels.value[post.state]
 }
 
 function vehicleLabel(post: WorkPostSceneItem) {
@@ -429,12 +440,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="work-posts-scene" aria-label="Трёхмерная схема рабочих постов">
-    <div class="work-posts-scene__toolbar" aria-label="Управление видом схемы">
-      <button type="button" aria-label="Повернуть влево" title="Повернуть влево" @click="rotateView(Math.PI / 8)">↶</button>
-      <button type="button" aria-label="Повернуть вправо" title="Повернуть вправо" @click="rotateView(-Math.PI / 8)">↷</button>
-      <button type="button" aria-label="Приблизить схему" @click="changeZoom(0.18)">+</button>
-      <button type="button" aria-label="Отдалить схему" @click="changeZoom(-0.18)">−</button>
+  <section class="work-posts-scene" :aria-label="t('visualization.sceneLabel')">
+    <div class="work-posts-scene__toolbar" :aria-label="t('visualization.sceneControls')">
+      <button type="button" :aria-label="t('visualization.rotateLeft')" :title="t('visualization.rotateLeft')" @click="rotateView(Math.PI / 8)">↶</button>
+      <button type="button" :aria-label="t('visualization.rotateRight')" :title="t('visualization.rotateRight')" @click="rotateView(-Math.PI / 8)">↷</button>
+      <button type="button" :aria-label="t('visualization.zoomIn')" @click="changeZoom(0.18)">+</button>
+      <button type="button" :aria-label="t('visualization.zoomOut')" @click="changeZoom(-0.18)">−</button>
       <button type="button" @click="resetView">100%</button>
     </div>
     <div ref="host" class="work-posts-scene__viewport">
@@ -452,7 +463,7 @@ onBeforeUnmount(() => {
           class="work-posts-scene__marker-button"
           :aria-pressed="selectedPostId === post.id"
           :title="markerTitle(post)"
-          :aria-label="`${post.name}: ${post.vehicleLabel || post.registrationPlate || stateLabel(post)}. ${stateLabel(post)}${post.count > 0 ? `, работ: ${post.count}` : ''}`"
+          :aria-label="postDescription(post)"
           @click="emit('select', post.id)"
         >
           <span class="work-posts-scene__marker-title">{{ overlays[post.id]?.compact ? index + 1 : post.name }}</span>
@@ -461,14 +472,14 @@ onBeforeUnmount(() => {
         </button>
       </div>
       <div v-if="isUnavailable" class="work-posts-scene__fallback">
-        <p>Трёхмерная сцена недоступна в этом браузере.</p>
+        <p>{{ t('visualization.sceneUnavailable') }}</p>
         <button v-for="post in posts" :key="post.id" type="button" @click="emit('select', post.id)">
           <span>{{ post.name }}</span>
           <span>{{ stateLabel(post) }}<template v-if="post.count > 0"> · {{ post.count }}</template></span>
           <span v-if="post.registrationPlate || post.vehicleLabel">{{ post.registrationPlate || post.vehicleLabel }}</span>
         </button>
       </div>
-      <p v-else-if="posts.length === 0" class="work-posts-scene__empty">Нет рабочих постов</p>
+      <p v-else-if="posts.length === 0" class="work-posts-scene__empty">{{ t('visualization.noPosts') }}</p>
     </div>
   </section>
 </template>

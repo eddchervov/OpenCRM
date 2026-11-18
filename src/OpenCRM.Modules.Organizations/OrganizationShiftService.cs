@@ -22,7 +22,11 @@ public sealed class OrganizationShiftService : IOrganizationShiftService
         IOrganizationAuditService auditService)
     {
         this._queries = new OrganizationShiftQueryService(context, subscriptionService, permissionService);
-        this._commands = new OrganizationShiftCommandService(context, subscriptionService, auditService);
+        this._commands = new OrganizationShiftCommandService(
+            context,
+            subscriptionService,
+            auditService,
+            new OrganizationTransaction(context));
     }
 
     /// <summary> Возвращает расписание смен на неделю. </summary>
@@ -43,8 +47,8 @@ public sealed class OrganizationShiftService : IOrganizationShiftService
         this._queries.GetAvailabilityAsync(userId, organizationId, employeeId, startLocal, endLocal);
 
     /// <summary> Устанавливает часовой пояс организации. </summary>
-    public Task SetTimeZoneAsync(string userId, Guid organizationId, string timeZoneId) =>
-        this._commands.SetTimeZoneAsync(userId, organizationId, timeZoneId);
+    public Task SetTimeZoneAsync(string userId, Guid organizationId, string timeZoneId, string? expectedTimeZoneId = null) =>
+        this._commands.SetTimeZoneAsync(userId, organizationId, timeZoneId, expectedTimeZoneId);
 
     /// <summary> Сохраняет смену или создаёт новую. </summary>
     public Task<Guid> SaveAsync(string userId, Guid organizationId, Guid? shiftId, SaveOrganizationShiftDto dto) =>

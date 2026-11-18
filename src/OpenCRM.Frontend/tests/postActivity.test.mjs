@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/commonSectionMessages.ts'
+import '../packages/workspace/src/workspaceApiMessages.ts'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
@@ -16,7 +19,10 @@ function setup(load) {
     loadScenarioCatalog: async () => ({ services: [], serviceBundles: [], workPosts: [], materials: [] })
   }
   const module = { exports: {} }
-  const resolve = id => id === 'vue' ? { ...vue, onMounted() {}, onUnmounted() {} } : id === '../api/scenarioCatalog' ? catalogApi : {}
+  const resolve = id => id === 'vue' ? { ...vue, onMounted() {}, onUnmounted() {} }
+    : id === '@opencrm/ui' || id === '@opencrm/ui/i18n' ? regionalTestDependencies['@opencrm/ui/i18n']
+      : id === '../commonSectionMessages' ? {}
+        : id === '../api/scenarioCatalog' ? catalogApi : {}
   new Function('require', 'module', 'exports', 'window', code)(resolve, module, module.exports, { location: { hash: '#catalog' } })
   const state = module.exports.default.setup(props, { expose() {}, emit() {} })
   state.settings.value = { canManageProfile: true }
@@ -59,7 +65,9 @@ test('API скрывает назначения при отказе в прос�
   const apiCode = ts.transpileModule(apiSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   for (const status of [403, 500]) {
     const module = { exports: {} }
-    new Function('module', 'exports', 'fetch', apiCode)(module, module.exports, async () => ({ ok: false, status }))
+    new Function('require', 'module', 'exports', 'fetch', apiCode)(
+      id => regionalTestDependencies[id] ?? {},
+      module, module.exports, async () => ({ ok: false, status }))
     if (status === 403) {
       assert.deepEqual(await module.exports.loadWorkPostAffectedMaintenances('org', 'post'), { totalCount: 0, items: [], canViewMaintenances: false })
     } else {

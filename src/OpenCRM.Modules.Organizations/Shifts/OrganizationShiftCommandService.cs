@@ -10,10 +10,11 @@ namespace OpenCRM.Modules.Organizations.Shifts;
 internal sealed class OrganizationShiftCommandService(
     OpenCRMContext context,
     IOrganizationSubscriptionService subscriptionService,
-    IOrganizationAuditService auditService)
+    IOrganizationAuditService auditService,
+    OrganizationTransaction transaction)
 {
     /// <summary> Устанавливает часовой пояс организации. </summary>
-    internal async Task SetTimeZoneAsync(string userId, Guid organizationId, string timeZoneId)
+    internal async Task SetTimeZoneAsync(string userId, Guid organizationId, string timeZoneId, string? expectedTimeZoneId = null)
     {
         await subscriptionService.EnsureWorkspaceCanWriteAsync(
             userId,
@@ -27,22 +28,40 @@ internal sealed class OrganizationShiftCommandService(
 
         OrganizationShiftRules.ResolveTimeZone(normalizedTimeZoneId);
 
-        var organization = await context.Organizations.SingleAsync(item =>
-            item.Id == organizationId && item.IsActive && !item.IsDeleted);
-
-        organization.ShiftTimeZoneId = normalizedTimeZoneId;
-        organization.UpdatedAt = DateTime.UtcNow;
-        await auditService.AddAsync(new OrganizationAuditEventCreateDto
+        await transaction.ExecuteAuditedAsync(async eventId =>
         {
-            OrganizationId = organizationId,
-            ActorUserId = userId,
-            EventType = "shifts.timezone.changed",
-            Title = "Часовой пояс смен изменён",
-            Description = normalizedTimeZoneId,
-            TargetType = "organization",
-            TargetId = organizationId.ToString("D")
-        }, saveChanges: false);
-        await context.SaveChangesAsync();
+            await transaction.LockOrganizationAsync(organizationId);
+            var organization = await context.Organizations.SingleAsync(item =>
+                item.Id == organizationId && item.IsActive && !item.IsDeleted);
+            if (!OrganizationShiftCommandService.AreEquivalentTimeZoneIds(
+                    organization.ShiftTimeZoneId,
+                    normalizedTimeZoneId)
+                && await OrganizationShiftCommandService.HasTimedSchedulingDataAsync(context, organizationId))
+            {
+                throw new InvalidOperationException("Часовой пояс нельзя изменить после создания расписания с заданным временем.");
+            }
+
+            if (!OrganizationShiftCommandService.AreEquivalentTimeZoneIds(organization.ShiftTimeZoneId, normalizedTimeZoneId)
+                && !string.Equals(organization.ShiftTimeZoneId, expectedTimeZoneId, StringComparison.Ordinal))
+            {
+                throw new DbUpdateConcurrencyException("Часовой пояс уже изменён. Обновите настройки и повторите попытку.");
+            }
+
+            organization.ShiftTimeZoneId = normalizedTimeZoneId;
+            organization.UpdatedAt = DateTime.UtcNow;
+            await auditService.AddAsync(new OrganizationAuditEventCreateDto
+            {
+                EventId = eventId,
+                OrganizationId = organizationId,
+                ActorUserId = userId,
+                EventType = "shifts.timezone.changed",
+                Title = "Часовой пояс смен изменён",
+                Description = normalizedTimeZoneId,
+                TargetType = "organization",
+                TargetId = organizationId.ToString("D")
+            }, saveChanges: false);
+            await context.SaveChangesAsync();
+        });
     }
 
     /// <summary> Сохраняет смену или создаёт новую. </summary>
@@ -65,6 +84,8 @@ internal sealed class OrganizationShiftCommandService(
             }
 
             isRetry = true;
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM \"Organizations\" WHERE \"Id\" = {organizationId} FOR NO KEY UPDATE");
             var organization = await context.Organizations.SingleAsync(item =>
                 item.Id == organizationId && item.IsActive && !item.IsDeleted);
             var employee = await context.OrganizationEmployees.SingleOrDefaultAsync(item =>
@@ -255,6 +276,8 @@ internal sealed class OrganizationShiftCommandService(
             }
 
             await context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM \"Organizations\" WHERE \"Id\" = {organizationId} FOR NO KEY UPDATE");
+            await context.Database.ExecuteSqlInterpolatedAsync(
                 $"""SELECT 1 FROM "OrganizationEmployees" WHERE "OrganizationId" = {organizationId} ORDER BY "Id" FOR UPDATE""");
 
             var organization = await context.Organizations.SingleAsync(item =>
@@ -397,4 +420,25 @@ internal sealed class OrganizationShiftCommandService(
         DateTime EndLocal,
         DateTime StartUtc,
         DateTime EndUtc);
+
+    private static bool AreEquivalentTimeZoneIds(string? currentTimeZoneId, string normalizedTimeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(currentTimeZoneId))
+        {
+            return false;
+        }
+
+        var normalizedCurrentTimeZoneId = string.Equals(currentTimeZoneId, "UTC", StringComparison.OrdinalIgnoreCase)
+            ? "Etc/UTC"
+            : currentTimeZoneId;
+
+        return string.Equals(normalizedCurrentTimeZoneId, normalizedTimeZoneId, StringComparison.Ordinal);
+    }
+
+    internal static async Task<bool> HasTimedSchedulingDataAsync(OpenCRMContext context, Guid organizationId) =>
+        await context.Maintenance.IgnoreQueryFilters().AnyAsync(item =>
+            item.Vehicle.OrganizationId == organizationId
+            && (item.PlannedStartTime.HasValue || item.PlannedEndTime.HasValue))
+        || await context.OrganizationEmployeeShifts.IgnoreQueryFilters()
+            .AnyAsync(item => item.OrganizationId == organizationId);
 }

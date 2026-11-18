@@ -26,8 +26,8 @@ public class MaintenanceReadApiController(
             var result = await maintenanceQueryService.GetById(userId, organizationId, maintenanceId);
             if (organizationId.HasValue)
             {
-                result.CanManagePayments = await permissionService.HasPermissionAsync(userId, organizationId.Value, OrganizationPermissionCodes.FinanceManage);
-                result.CanEditServices = await permissionService.HasPermissionAsync(userId, organizationId.Value, OrganizationPermissionCodes.MaintenanceEdit);
+                result.CanManagePayments = result.CanChangeFinancialData && await permissionService.HasPermissionAsync(userId, organizationId.Value, OrganizationPermissionCodes.FinanceManage);
+                result.CanEditServices = result.CanChangeFinancialData && await permissionService.HasPermissionAsync(userId, organizationId.Value, OrganizationPermissionCodes.MaintenanceEdit);
             }
 
             return Ok(result);

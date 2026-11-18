@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminUsersMessages'
 
 const props = defineProps<{
   periodLabel: string
-  points: Array<{ label: string; value: number }>
+  periodDays: number
+  points: Array<{ date: string; label: string; value: number }>
 }>()
+const { t } = useLocalization()
 
 const width = 420
 const height = 320
@@ -20,6 +24,20 @@ const slotWidth = computed(() => (width - left - right) / Math.max(props.points.
 const barWidth = computed(() => Math.max(4, Math.min(34, slotWidth.value * 0.62)))
 const labelStep = computed(() => Math.max(1, Math.ceil(props.points.length / 6)))
 
+function formatPointDate(value: string): string {
+  if (props.periodDays === 1) {
+    return new Intl.DateTimeFormat(formattingCulture.value, {
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC'
+    }).format(new Date(value))
+  }
+
+  return new Intl.DateTimeFormat(formattingCulture.value, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC'
+  }).format(new Date(value))
+}
+
 function y(value: number): number {
   return top + (height - top - bottom) * (1 - value / maximum.value)
 }
@@ -29,9 +47,10 @@ function x(index: number): number {
 }
 
 function money(value: number, compact = false): string {
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat(formattingCulture.value, {
     style: 'currency',
     currency: 'RUB',
+    currencyDisplay: 'code',
     notation: compact ? 'compact' : 'standard',
     maximumFractionDigits: 0
   }).format(value)
@@ -41,11 +60,11 @@ function money(value: number, compact = false): string {
 <template>
   <section class="analytics-chart analytics-chart--payments">
     <div class="analytics-chart__header">
-      <div><strong>Платежи</strong><small>{{ periodLabel }}</small></div>
+      <div><strong>{{ t('adminUsers.paymentsChart.payments') }}</strong><small>{{ periodLabel }}</small></div>
       <b>{{ money(total) }}</b>
     </div>
-    <div class="chart-hover-values" :class="{ hidden: hoveredIndex === null }"><strong>{{ hoveredIndex === null ? 'Дата' : points[hoveredIndex]?.label }}</strong><span>{{ money(hoveredIndex === null ? 0 : points[hoveredIndex]?.value ?? 0) }}</span></div>
-    <svg :viewBox="`0 0 ${width} ${height}`" role="img" aria-label="График платежей" @mouseleave="hoveredIndex = null">
+    <div class="chart-hover-values" :class="{ hidden: hoveredIndex === null }"><strong>{{ hoveredIndex === null ? t('adminUsers.paymentsChart.date') : formatPointDate(points[hoveredIndex]?.date ?? '') }}</strong><span>{{ money(hoveredIndex === null ? 0 : points[hoveredIndex]?.value ?? 0) }}</span></div>
+    <svg :viewBox="`0 0 ${width} ${height}`" role="img" :aria-label="t('adminUsers.paymentsChart.aria')" @mouseleave="hoveredIndex = null">
       <g v-for="(value, index) in gridValues" :key="index">
         <line :x1="left" :x2="width - right" :y1="y(value)" :y2="y(value)" class="analytics-grid-line" />
         <text :x="left - 8" :y="y(value) + 4" text-anchor="end">{{ money(value, true) }}</text>
@@ -53,7 +72,7 @@ function money(value: number, compact = false): string {
       <g v-for="(point, index) in points" :key="`${point.label}-${index}`" @mouseenter="hoveredIndex = index">
         <rect :x="x(index)" :y="y(point.value)" :width="barWidth" :height="height - bottom - y(point.value)" rx="5" class="payment-bar" />
         <rect :x="left + slotWidth * index" :y="top" :width="slotWidth" :height="height - top - bottom" class="analytics-hit-area" />
-        <text v-if="index % labelStep === 0 || index === points.length - 1" :x="left + slotWidth * index + slotWidth / 2" :y="height - 10" text-anchor="middle">{{ point.label }}</text>
+        <text v-if="index % labelStep === 0 || index === points.length - 1" :x="left + slotWidth * index + slotWidth / 2" :y="height - 10" text-anchor="middle">{{ formatPointDate(point.date) }}</text>
       </g>
     </svg>
   </section>

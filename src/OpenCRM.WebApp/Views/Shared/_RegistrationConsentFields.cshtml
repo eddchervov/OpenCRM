@@ -1,7 +1,7 @@
 @model bool
 
 @{
-    const string PersonalDataConsentRequiredMessage = "Необходимо дать согласие на обработку персональных данных.";
+    var personalDataConsentRequiredMessage = Text["auth.consentRequired"].Value;
 }
 
 <div class="form-check mb-2">
@@ -12,15 +12,15 @@
            value="true"
            required
            data-val="true"
-           data-val-required="@PersonalDataConsentRequiredMessage"
-           data-msg-required="@PersonalDataConsentRequiredMessage"
+           data-val-required="@personalDataConsentRequiredMessage"
+           data-msg-required="@personalDataConsentRequiredMessage"
            checked="@(Model ? "checked" : null)"
-           oninvalid="this.setCustomValidity('@PersonalDataConsentRequiredMessage')"
+           oninvalid="this.setCustomValidity('@personalDataConsentRequiredMessage')"
            oninput="this.setCustomValidity('')"
            onchange="this.setCustomValidity('')" />
     <input type="hidden" name="PersonalDataProcessingConsent" value="false" />
     <label class="form-check-label small" for="PersonalDataProcessingConsent">
-        Я даю согласие на обработку персональных данных.
+        @Text["auth.consentLabel"]
     </label>
     @Html.ValidationMessage("PersonalDataProcessingConsent", null, new { @class = "text-danger d-block" })
 </div>

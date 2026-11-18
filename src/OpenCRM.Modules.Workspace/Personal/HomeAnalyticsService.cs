@@ -19,8 +19,13 @@ public class HomeAnalyticsService(OpenCRMContext opencrmContext) : IHomeAnalytic
             .ThenInclude(x => x.Brand)
             .Include(x => x.Vehicle)
             .ThenInclude(x => x.Model)
-            .Where(x => x.UserId == userId && !x.IsDeleted && !x.Vehicle.IsDeleted && !x.Vehicle.IsArchived)
+            .Where(x => x.UserId == userId && x.Vehicle.OrganizationId == null
+                && !x.IsDeleted && !x.Vehicle.IsDeleted && !x.Vehicle.IsArchived)
             .ToListAsync();
+        var currencyCode = await opencrmContext.Users.AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => user.PersonalCurrencyCode)
+            .SingleAsync();
 
         var pricedMaintenance = maintenance
             .Select(x => new
@@ -30,10 +35,22 @@ public class HomeAnalyticsService(OpenCRMContext opencrmContext) : IHomeAnalytic
             })
             .ToList();
 
-        var totalSpent = pricedMaintenance.Sum(x => x.Price);
-        var paidMaintenanceCount = pricedMaintenance.Count(x => x.Price > 0);
+        var personalMaintenance = pricedMaintenance.Where(item => item.Maintenance.CurrencyCode == currencyCode).ToList();
+        var otherCurrencyTotals = pricedMaintenance
+            .Where(item => item.Maintenance.CurrencyCode != currencyCode)
+            .GroupBy(item => item.Maintenance.CurrencyCode)
+            .Select(group => new HomeAnalyticsCurrencyTotalDto
+            {
+                CurrencyCode = group.Key,
+                TotalSpent = group.Sum(item => item.Price),
+                MaintenanceCount = group.Count(item => item.Price > 0)
+            })
+            .OrderBy(total => total.CurrencyCode)
+            .ToList();
+        var totalSpent = personalMaintenance.Sum(item => item.Price);
+        var paidMaintenanceCount = personalMaintenance.Count(item => item.Price > 0);
 
-        var monthlyCosts = pricedMaintenance
+        var monthlyCosts = personalMaintenance
             .Where(x => x.Price > 0)
             .GroupBy(x => new DateTime(x.Maintenance.Date.Year, x.Maintenance.Date.Month, 1))
             .OrderBy(x => x.Key)
@@ -53,7 +70,7 @@ public class HomeAnalyticsService(OpenCRMContext opencrmContext) : IHomeAnalytic
                 : 0;
         }
 
-        var topVehicle = pricedMaintenance
+        var topVehicle = personalMaintenance
             .Where(x => x.Price > 0)
             .GroupBy(x => x.Maintenance.Vehicle)
             .Select(x => new
@@ -69,6 +86,8 @@ public class HomeAnalyticsService(OpenCRMContext opencrmContext) : IHomeAnalytic
             VehicleCount = vehicleCount,
             MaintenanceCount = maintenance.Count,
             TotalSpent = totalSpent,
+            CurrencyCode = currencyCode,
+            OtherCurrencyTotals = otherCurrencyTotals,
             AverageMaintenanceCost = paidMaintenanceCount > 0 ? totalSpent / paidMaintenanceCount : 0,
             LastMaintenanceDate = maintenance.Count > 0 ? maintenance.Max(x => x.Date) : null,
             TopVehicleName = topVehicle == null ? null : BuildVehicleName(topVehicle.Vehicle),

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../pageHelpMessages'
 // HIDDEN_FLEET: общие подсказки используют нейтральную терминологию техники. См. docs/hidden-fleet-scenario.md.
 import { computed, ref } from 'vue'
 import { UiButton, UiModal, UiTooltip } from '@opencrm/ui'
@@ -21,146 +23,148 @@ type HelpContent = {
   bullets: string[]
 }
 
+const { t } = useLocalization()
+
 const isOpen = ref(false)
 
 const wikiHref = computed(() => resolveWorkspaceWikiHref(props.sectionCode, props.entityId, props.action))
 const help = computed<HelpContent>(() => {
   if (props.sectionCode === 'vehicles' && (props.entityId === 'new' || props.action === 'edit')) {
     return {
-      title: props.title || 'Форма техники',
-      summary: 'Здесь создается или редактируется карточка автомобиля, спецтехники, прицепа или другой единицы техники.',
+      title: props.title || t('pageHelp.vehicleForm_title'),
+      summary: t('pageHelp.vehicleForm_summary'),
       bullets: [
-        'Выберите клиента, если техника должна быть связана с его историей.',
-        'Заполните марку и модель из справочника или включите ручной ввод.',
-        'Добавьте хотя бы один надежный идентификатор: госномер, VIN, СТС или внутренний номер.',
-        'Описание используйте для особенностей состояния, комплектации или внутренних заметок.'
+        t('pageHelp.vehicleForm_bullets_item1'),
+        t('pageHelp.vehicleForm_bullets_item2'),
+        t('pageHelp.vehicleForm_bullets_item3'),
+        t('pageHelp.vehicleForm_bullets_item4')
       ]
     }
   }
 
   if (props.sectionCode === 'maintenance' && (props.entityId === 'new' || props.action === 'edit' || !props.entityId)) {
     return {
-      title: props.title || 'Форма услуги и обслуживания',
-      summary: 'Форма фиксирует работу по технике: дату, статус, услугу, стоимость, материалы и комментарии.',
+      title: props.title || t('pageHelp.maintenanceForm_title'),
+      summary: t('pageHelp.maintenanceForm_summary'),
       bullets: [
-        'Сначала выберите автомобиль, чтобы запись попала в правильную историю.',
-        'Дата и время помогают планировать загрузку постов и сотрудников.',
-        'Услугу лучше выбирать из справочника, чтобы записи были единообразными.',
-        'Материалы добавляйте, когда важны остатки, расход или себестоимость.'
+        t('pageHelp.maintenanceForm_bullets_item1'),
+        t('pageHelp.maintenanceForm_bullets_item2'),
+        t('pageHelp.maintenanceForm_bullets_item3'),
+        t('pageHelp.maintenanceForm_bullets_item4')
       ]
     }
   }
 
   const bySection: Record<string, HelpContent> = {
     workspace: {
-      title: props.title || 'Рабочий день',
-      summary: 'Сводка показывает текущее состояние рабочего пространства, быстрые действия и важные сигналы по работе.',
-      bullets: ['Смотрите просрочки и ближайшие задачи.', 'Используйте быстрые действия для создания записей.', 'Проверяйте показатели перед началом смены.']
+      title: props.title || t('pageHelp.workspace_title'),
+      summary: t('pageHelp.workspace_summary'),
+      bullets: [t('pageHelp.workspace_bullets_item1'), t('pageHelp.workspace_bullets_item2'), t('pageHelp.workspace_bullets_item3')]
     },
     visualization: {
-      title: 'Визуализация',
-      summary: 'Объёмная схема показывает посты и состояние связанных с ними записей.',
-      bullets: ['Выберите пост, чтобы увидеть его записи.', 'Проверяйте просроченные записи и конфликты загрузки.', 'Записи без поста и готовые работы показаны отдельно.']
+      title: t('pageHelp.visualization_title'),
+      summary: t('pageHelp.visualization_summary'),
+      bullets: [t('pageHelp.visualization_bullets_item1'), t('pageHelp.visualization_bullets_item2'), t('pageHelp.visualization_bullets_item3')]
     },
     finance: {
-      title: props.title || 'Финансы',
-      summary: 'Показатели за выбранный период: оплаты, начисления, долги и затраты на материалы.',
-      bullets: ['Выберите период перед сравнением сумм.', 'Начисления по работам и фактические оплаты учитываются отдельно.', 'При доступной выгрузке в 1С проверьте покупателей оплат и реквизиты.']
+      title: props.title || t('pageHelp.finance_title'),
+      summary: t('pageHelp.finance_summary'),
+      bullets: [t('pageHelp.finance_bullets_item1'), t('pageHelp.finance_bullets_item2'), t('pageHelp.finance_bullets_item3')]
     },
     statistics: {
-      title: 'Статистика',
-      summary: 'Общая статистика работ, клиентов, техники и складских рисков организации.',
-      bullets: ['Сводные показатели работ и начислений показаны за 14 дней.', 'Начисления по закрытым работам не равны полученным оплатам.', 'Для выбора произвольного периода откройте «Финансы».']
+      title: t('pageHelp.statistics_title'),
+      summary: t('pageHelp.statistics_summary'),
+      bullets: [t('pageHelp.statistics_bullets_item1'), t('pageHelp.statistics_bullets_item2'), t('pageHelp.statistics_bullets_item3')]
     },
     employees: {
-      title: 'Команда',
-      summary: 'Карточки сотрудников, их участие в работе и подключение доступа к CRM.',
-      bullets: ['Создайте карточку сотрудника для назначения операций.', 'Доступ к CRM подключается отдельно от карточки сотрудника.', 'Проверяйте роль и разрешения приглашённого пользователя.']
+      title: t('pageHelp.employees_title'),
+      summary: t('pageHelp.employees_summary'),
+      bullets: [t('pageHelp.employees_bullets_item1'), t('pageHelp.employees_bullets_item2'), t('pageHelp.employees_bullets_item3')]
     },
     'my-work': {
-      title: 'Мои работы',
-      summary: 'Назначенные вам операции, их выполнение, материалы, отчёты и фотографии.',
-      bullets: ['Начните операцию перед выполнением и укажите причину при паузе.', 'Завершайте операцию после выполнения.', 'Свободные операции можно взять, если в организации разрешено самостоятельное назначение.']
+      title: t('pageHelp.my_work_title'),
+      summary: t('pageHelp.my_work_summary'),
+      bullets: [t('pageHelp.my_work_bullets_item1'), t('pageHelp.my_work_bullets_item2'), t('pageHelp.my_work_bullets_item3')]
     },
     shifts: {
-      title: 'Смены',
-      summary: 'Недельный график команды и загрузка сотрудников.',
-      bullets: ['Проверьте часовой пояс организации.', 'Укажите начало, окончание и плановый перерыв смены.', 'Для повторения расписания используйте копирование предыдущей недели.']
+      title: t('pageHelp.shifts_title'),
+      summary: t('pageHelp.shifts_summary'),
+      bullets: [t('pageHelp.shifts_bullets_item1'), t('pageHelp.shifts_bullets_item2'), t('pageHelp.shifts_bullets_item3')]
     },
     scheduler: {
-      title: props.title || 'Планировщик',
-      summary: 'Раздел помогает видеть записи, задачи, занятость постов и ближайшие работы.',
-      bullets: ['Фильтры сужают список до нужного клиента, техники или ответственного.', 'Статус показывает, на каком этапе работа.', 'Дата и время нужны для контроля загрузки.']
+      title: props.title || t('pageHelp.scheduler_title'),
+      summary: t('pageHelp.scheduler_summary'),
+      bullets: [t('pageHelp.scheduler_bullets_item1'), t('pageHelp.scheduler_bullets_item2'), t('pageHelp.scheduler_bullets_item3')]
     },
     clients: {
-      title: props.title || 'Клиенты',
-      summary: 'Клиенты объединяют контакты, технику, историю обращений и рабочие заметки.',
-      bullets: ['Создавайте клиента, если техника принадлежит человеку или компании.', 'Используйте теги для группировки.', 'Открывайте карточку клиента перед добавлением его техники.']
+      title: props.title || t('pageHelp.clients_title'),
+      summary: t('pageHelp.clients_summary'),
+      bullets: [t('pageHelp.clients_bullets_item1'), t('pageHelp.clients_bullets_item2'), t('pageHelp.clients_bullets_item3')]
     },
     vehicles: {
-      title: props.title || 'Техника',
-      summary: 'Раздел хранит автомобили и другую технику организации, их идентификаторы и историю.',
-      bullets: ['Фильтруйте список по клиенту, статусу и поиску.', 'Проверяйте карточку перед созданием дубля.', 'Архивируйте технику, которая больше не используется.']
+      title: props.title || t('pageHelp.vehicles_title'),
+      summary: t('pageHelp.vehicles_summary'),
+      bullets: [t('pageHelp.vehicles_bullets_item1'), t('pageHelp.vehicles_bullets_item2'), t('pageHelp.vehicles_bullets_item3')]
     },
     defects: {
-      title: props.title || 'Неисправности',
-      summary: 'Здесь фиксируются замечания, критичность и связь проблем с обслуживанием.',
-      bullets: ['Создавайте неисправность сразу после обнаружения.', 'Обновляйте статус после ремонта.', 'Связывайте проблему с техникой и работой.']
+      title: props.title || t('pageHelp.defects_title'),
+      summary: t('pageHelp.defects_summary'),
+      bullets: [t('pageHelp.defects_bullets_item1'), t('pageHelp.defects_bullets_item2'), t('pageHelp.defects_bullets_item3')]
     },
     counters: {
-      title: props.title || 'Пробег и наработка',
-      summary: 'Раздел хранит показания одометра, моточасы и историю счетчиков.',
-      bullets: ['Вносите актуальные показания регулярно.', 'Используйте историю для планирования ТО.', 'Проверяйте резкие скачки значений.']
+      title: props.title || t('pageHelp.counters_title'),
+      summary: t('pageHelp.counters_summary'),
+      bullets: [t('pageHelp.counters_bullets_item1'), t('pageHelp.counters_bullets_item2'), t('pageHelp.counters_bullets_item3')]
     },
     materials: {
-      title: props.title || 'Материалы',
-      summary: 'Склад показывает остатки, приход, списания и расход материалов в работах.',
-      bullets: ['Заводите часто используемые материалы в справочнике.', 'Фиксируйте приход и списание отдельно.', 'Следите за минимальными остатками.']
+      title: props.title || t('pageHelp.materials_title'),
+      summary: t('pageHelp.materials_summary'),
+      bullets: [t('pageHelp.materials_bullets_item1'), t('pageHelp.materials_bullets_item2'), t('pageHelp.materials_bullets_item3')]
     },
     'maintenance-journal': {
-      title: 'Журнал услуг',
-      summary: 'Все записи организации в одном списке. По умолчанию показаны выполненные за всё время.',
+      title: t('pageHelp.maintenance_journal_title'),
+      summary: t('pageHelp.maintenance_journal_summary'),
       bullets: [
-        'Выберите «Все статусы», чтобы увидеть запланированные, выполняемые, выполненные и отменённые записи.',
-        'Поиск находит услуги, клиентов, марки, модели и госномера по всей истории.',
-        'Для выполненных период учитывает дату выполнения, для остальных — плановую дату.',
-        'В одной строке показаны все услуги записи. Нажмите на строку, чтобы открыть карточку.'
+        t('pageHelp.maintenance_journal_bullets_item1'),
+        t('pageHelp.maintenance_journal_bullets_item2'),
+        t('pageHelp.maintenance_journal_bullets_item3'),
+        t('pageHelp.maintenance_journal_bullets_item4')
       ]
     },
     'work-journal': {
-      title: props.title || 'Журнал работ',
-      summary: 'Журнал помогает быстро посмотреть выполненные работы и историю обслуживания.',
-      bullets: ['Проверяйте закрытые работы по датам.', 'Используйте фильтры для поиска по технике или клиенту.', 'Открывайте карточку записи для деталей и документов.']
+      title: props.title || t('pageHelp.work_journal_title'),
+      summary: t('pageHelp.work_journal_summary'),
+      bullets: [t('pageHelp.work_journal_bullets_item1'), t('pageHelp.work_journal_bullets_item2'), t('pageHelp.work_journal_bullets_item3')]
     },
     organization: {
-      title: props.title || 'Организация',
-      summary: 'Раздел показывает профиль, роль пользователя, лимиты и общее состояние пространства.',
-      bullets: ['Проверяйте текущий сценарий организации.', 'Следите за лимитами техники и участников.', 'Используйте ссылки на настройки, если нужно изменить профиль.']
+      title: props.title || t('pageHelp.organization_title'),
+      summary: t('pageHelp.organization_summary'),
+      bullets: [t('pageHelp.organization_bullets_item1'), t('pageHelp.organization_bullets_item2'), t('pageHelp.organization_bullets_item3')]
     },
     members: {
-      title: props.title || 'Участники',
-      summary: 'Здесь управляют командой, приглашениями, ролями и доступом.',
-      bullets: ['Давайте минимально нужную роль.', 'Проверяйте приглашения перед повторной отправкой.', 'Не выдавайте управление настройками без необходимости.']
+      title: props.title || t('pageHelp.members_title'),
+      summary: t('pageHelp.members_summary'),
+      bullets: [t('pageHelp.members_bullets_item1'), t('pageHelp.members_bullets_item2'), t('pageHelp.members_bullets_item3')]
     },
     catalog: {
-      title: props.title || 'Справочники',
-      summary: 'Справочники задают единые услуги, посты и материалы для форм.',
-      bullets: ['Добавляйте частые услуги заранее.', 'Отключайте использованные элементы вместо удаления.', 'Следите за понятными названиями для сотрудников.']
+      title: props.title || t('pageHelp.catalog_title'),
+      summary: t('pageHelp.catalog_summary'),
+      bullets: [t('pageHelp.catalog_bullets_item1'), t('pageHelp.catalog_bullets_item2'), t('pageHelp.catalog_bullets_item3')]
     },
     settings: {
-      title: props.title || 'Настройки',
-      summary: 'Настройки влияют на профиль организации, реквизиты, документы и рабочий сценарий.',
-      bullets: ['Проверьте реквизиты перед формированием документов.', 'Меняйте сценарий осознанно.', 'Указывайте подписанта и основание подписи.']
+      title: props.title || t('pageHelp.settings_title'),
+      summary: t('pageHelp.settings_summary'),
+      bullets: [t('pageHelp.settings_bullets_item1'), t('pageHelp.settings_bullets_item2'), t('pageHelp.settings_bullets_item3')]
     },
     billing: {
-      title: props.title || 'Тарифы',
-      summary: 'Раздел показывает доступные возможности, лимиты и подключенный тариф.',
-      bullets: ['Проверяйте лимиты перед ростом команды.', 'Смотрите, какие модули включены.', 'Продлевайте тариф до окончания доступа.']
+      title: props.title || t('pageHelp.billing_title'),
+      summary: t('pageHelp.billing_summary'),
+      bullets: [t('pageHelp.billing_bullets_item1'), t('pageHelp.billing_bullets_item2'), t('pageHelp.billing_bullets_item3')]
     },
     wiki: {
-      title: props.title || 'Вики',
-      summary: 'Вики хранит подробные правила и подсказки по работе в CRM.',
-      bullets: ['Ищите статьи по разделу или форме.', 'Используйте вики для обучения новых сотрудников.', 'Краткие подсказки на страницах ведут к полным статьям.']
+      title: props.title || t('pageHelp.wiki_title'),
+      summary: t('pageHelp.wiki_summary'),
+      bullets: [t('pageHelp.wiki_bullets_item1'), t('pageHelp.wiki_bullets_item2'), t('pageHelp.wiki_bullets_item3')]
     }
   }
 
@@ -169,8 +173,8 @@ const help = computed<HelpContent>(() => {
 </script>
 
 <template>
-  <UiTooltip text="Открыть справку по этой странице" placement="left">
-    <button class="workspace-page-help" type="button" aria-label="Открыть справку по странице" @click="isOpen = true">?</button>
+  <UiTooltip :text="t('pageHelp.tooltip')" placement="left">
+    <button class="workspace-page-help" type="button" :aria-label="t('pageHelp.open')" @click="isOpen = true">?</button>
   </UiTooltip>
 
   <UiModal :open="isOpen" :title="help.title" @close="isOpen = false">
@@ -181,8 +185,8 @@ const help = computed<HelpContent>(() => {
       </ul>
     </div>
     <template #footer>
-      <UiButton variant="secondary" :href="wikiHref" @click="isOpen = false">Открыть полную статью в вики</UiButton>
-      <UiButton type="button" @click="isOpen = false">Понятно</UiButton>
+      <UiButton variant="secondary" :href="wikiHref" @click="isOpen = false">{{ t('pageHelp.wiki') }}</UiButton>
+      <UiButton type="button" @click="isOpen = false">{{ t('pageHelp.understood') }}</UiButton>
     </template>
   </UiModal>
 </template>

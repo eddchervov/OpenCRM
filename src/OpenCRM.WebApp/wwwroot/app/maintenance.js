@@ -1,12 +1,16 @@
-﻿new Vue({
+﻿var maintenanceLegacyText = JSON.parse(document.getElementById('maintenance-legacy-messages').dataset.messages);
+
+new Vue({
     el: '#maintenance-details-form',
     data: function () {
         return {
+            localizedText: maintenanceLegacyText,
+            regionalCurrencyCode: null,
             organizationId: typeof maintenanceOrganizationId !== 'undefined' && maintenanceOrganizationId ? maintenanceOrganizationId : null,
             formLoad: true,
             errorMessage: '',
-            loadingTitle: 'Подготовка файла...',
-            loadingMessage: 'Пожалуйста, подождите',
+            loadingTitle: maintenanceLegacyText.loadingFileTitle,
+            loadingMessage: maintenanceLegacyText.loadingWait,
             maintenance: {
                 id: maintenanceId,
                 status: 3,
@@ -55,10 +59,10 @@
             return this.exportAccess.pdf || this.exportAccess.pdfWithPhotos || this.exportAccess.word || this.exportAccess.wordWithPhotos;
         },
         mileageUnitLabel: function () {
-            return this.vehicle.mileageUnit === 2 ? 'Моточасы' : 'Пробег';
+            return this.vehicle.mileageUnit === 2 ? maintenanceLegacyText.mileageHours : maintenanceLegacyText.mileageKilometers;
         },
         mileageUnitShortText: function () {
-            return this.vehicle.mileageUnit === 2 ? 'м/ч' : 'км';
+            return this.vehicle.mileageUnit === 2 ? maintenanceLegacyText.mileageUnitHours : maintenanceLegacyText.mileageUnitKilometers;
         }
     },
     methods: {
@@ -147,8 +151,8 @@
         },
 
         showLoadingModal: function (title, message) {
-            this.loadingTitle = title || 'Подготовка файла...';
-            this.loadingMessage = message || 'Пожалуйста, подождите';
+            this.loadingTitle = title || maintenanceLegacyText.loadingFileTitle;
+            this.loadingMessage = message || maintenanceLegacyText.loadingWait;
             this.showModal('#loadingModal');
         },
 
@@ -158,7 +162,7 @@
             }
 
             this.documentActionKey = actionKey || 'document';
-            this.showLoadingModal(loadingTitle, 'Пожалуйста, подождите');
+            this.showLoadingModal(loadingTitle, maintenanceLegacyText.loadingWait);
 
             try {
                 var documentWindow = window.open(url, '_blank');
@@ -196,7 +200,7 @@
             try {
                 var response = await fetch('/api/v1/media/' + photoId + '/path');
                 if (!response.ok) {
-                    throw new Error('Не удалось загрузить фотографию');
+                    throw new Error(maintenanceLegacyText.validationUploadPhotoFailure);
                 }
 
                 return await response.text();
@@ -262,9 +266,9 @@
 
             this.openDocument(
                 url,
-                'Генерация Word...',
-                'Разрешите всплывающие окна для скачивания Word документа',
-                'Ошибка при генерации Word документа',
+                maintenanceLegacyText.loadingGeneratingWord,
+                maintenanceLegacyText.loadingPopupBlockedWord,
+                maintenanceLegacyText.loadingWordError,
                 includePhotos ? 'report-word-photos' : 'report-word'
             );
         },
@@ -278,9 +282,9 @@
 
             this.openDocument(
                 url,
-                'Генерация PDF...',
-                'Разрешите всплывающие окна для скачивания PDF',
-                'Ошибка при генерации PDF',
+                maintenanceLegacyText.loadingGeneratingPdf,
+                maintenanceLegacyText.loadingPopupBlockedPdf,
+                maintenanceLegacyText.loadingPdfError,
                 includePhotos ? 'report-pdf-photos' : 'report-pdf'
             );
         },
@@ -327,7 +331,7 @@
                 await this.loadMaintenanceHistoryEvents();
 
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка загрузки данных обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationLoadError);
             } finally {
                 this.formLoad = false;
             }
@@ -344,7 +348,7 @@
                 this.maintenanceHistoryEvents = response.data || [];
             } catch (error) {
                 this.maintenanceHistoryEvents = [];
-                this.handleApiError(error, 'Не удалось загрузить историю обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationHistoryLoadError);
             } finally {
                 this.maintenanceHistoryLoaded = true;
             }
@@ -362,22 +366,22 @@
 
         getMaintenanceTypeText: function (type) {
             var typeTexts = {
-                1: 'Ремонт и обслуживание',
-                2: 'Плановое ТО',
-                3: 'Заправка топливом',
-                100: 'Другое'
+                1: maintenanceLegacyText.typeRepair,
+                2: maintenanceLegacyText.typeScheduled,
+                3: maintenanceLegacyText.typeFuel,
+                100: maintenanceLegacyText.typeOther
             };
-            return typeTexts[type] || 'Обслуживание';
+            return typeTexts[type] || maintenanceLegacyText.typeUnknown;
         },
 
         getMaintenanceStatusText: function (status) {
             var statusTexts = {
-                1: 'Запланировано',
-                2: 'В работе',
-                3: 'Выполнено',
-                4: 'Отменено'
+                1: maintenanceLegacyText.statusPlanned,
+                2: maintenanceLegacyText.statusInProgress,
+                3: maintenanceLegacyText.statusCompleted,
+                4: maintenanceLegacyText.statusCancelled
             };
-            return statusTexts[status] || 'Неизвестно';
+            return statusTexts[status] || maintenanceLegacyText.statusUnknown;
         },
 
         getMaintenanceStatusClass: function (status) {
@@ -391,15 +395,11 @@
         },
 
         getPrimaryMaintenanceDateLabel: function () {
-            return this.maintenance.status === 3 ? 'Дата выполнения' : 'Плановая дата';
+            return this.maintenance.status === 3 ? maintenanceLegacyText.dateCompleted : maintenanceLegacyText.datePlanned;
         },
 
         formatDate: function (dateString) {
-            return new Date(dateString).toLocaleDateString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            return window.OpenCRMRegional.formatDate(dateString, { dateStyle: 'short' });
         },
 
         normalizeTimeForServer: function (value) {
@@ -430,12 +430,11 @@
             return timeText ? dateText + ', ' + timeText : dateText;
         },
 
-        formatPrice: function (price) {
-            return new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                minimumFractionDigits: 0
-            }).format(price);
+        formatPrice: function (price, currencyCode) {
+            const selectedCurrency = currencyCode || (this.maintenance && this.maintenance.currencyCode)
+                || (this.selectedMaintenance && this.selectedMaintenance.currencyCode) || this.regionalCurrencyCode;
+
+            return window.OpenCRMRegional.formatMoney(price, selectedCurrency);
         },
 
         openPhotoGallery: function (index) {
@@ -460,7 +459,7 @@
                 this.hideModal('#deleteMaintenanceModal');
                 this.redirectToVehicle();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось удалить обслуживание');
+                this.handleApiError(error, maintenanceLegacyText.deleteMaintenanceError);
                 this.hideModal('#deleteMaintenanceModal');
             } finally {
                 this.deleteSaving = false;
@@ -486,6 +485,7 @@
         }
     },
     mounted: function () {
+        window.OpenCRMRegional.initializeLegacyVm(this);
         this.loadMaintenanceData();
 
         var _this = this;

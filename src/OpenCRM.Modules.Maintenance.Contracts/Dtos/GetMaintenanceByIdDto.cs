@@ -8,6 +8,9 @@ public class GetMaintenanceByIdDto
     /// <summary> Версия записи для контроля конкурентности. </summary>
     public uint? Version { get; set; }
 
+    /// <summary> Совпадает ли валюта записи с текущей валютой рабочего пространства. </summary>
+    public bool CanChangeFinancialData { get; set; } = true;
+
     /// <summary> Признак возможности управления платежами. </summary>
     public bool CanManagePayments { get; set; }
 
@@ -79,6 +82,9 @@ public class GetMaintenanceByIdDto
 
     /// <summary> Общая стоимость обслуживания. </summary>
     public required decimal? Price { get; set; }
+
+    /// <summary> Валюта денежных сумм записи. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
 
     /// <summary> Сумма продажи до скидки.</summary>
     public decimal GrossAmount { get; set; }

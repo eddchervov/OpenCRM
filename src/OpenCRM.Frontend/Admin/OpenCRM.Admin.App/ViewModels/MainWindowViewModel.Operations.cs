@@ -11,7 +11,7 @@ public partial class MainWindowViewModel
             && this.CanViewOperationSection(section)).ToArray();
 
     public CommunicationsViewModel? CurrentOperation => this._operationSections
-        .FirstOrDefault(section => section.Title == this.AdditionalPage && this.CanViewOperationSection(section))?.Model;
+        .FirstOrDefault(section => section.Id == this.AdditionalPage && this.CanViewOperationSection(section))?.Model;
 
     public bool IsOperationsOpen => this.CurrentOperation != null;
 
@@ -19,15 +19,15 @@ public partial class MainWindowViewModel
     {
         this._operationSections =
         [
-            new("Написать письмо", "Admin.Communications.Manage", new EmailComposeViewModel(this._sessionClient)),
-            new("Email-рассылки", "Admin.Communications.Manage", new EmailCampaignsViewModel(this._sessionClient)),
-            new("История SMS", "Admin.Communications.View", new SmsHistoryViewModel(this._sessionClient)),
-            new("Уведомления на сайте", "Admin.Communications.View", new SiteNotificationsViewModel(this._sessionClient)),
-            new("Каталог техники", "Admin.Content.Manage", new VehicleCatalogViewModel(this._sessionClient)),
-            new("Предложения каталога", "Admin.Content.View", new CatalogSuggestionsViewModel(this._sessionClient)),
-            new("Тестовые данные", "Admin.Permissions.Manage", new TestDataViewModel(this._sessionClient)),
-            new("Импорт CRM", "Admin.Permissions.Manage", new CrmImportViewModel(this._sessionClient)),
-            new("ИИ-помощник", "Admin.Configuration.Manage", new AssistantViewModel(this._sessionClient))
+            new("compose", "operation.compose", "Admin.Communications.Manage", new EmailComposeViewModel(this._sessionClient)),
+            new("campaigns", "operation.campaigns", "Admin.Communications.Manage", new EmailCampaignsViewModel(this._sessionClient)),
+            new("sms-history", "operation.smsHistory", "Admin.Communications.View", new SmsHistoryViewModel(this._sessionClient)),
+            new("site-notifications", "operation.siteNotifications", "Admin.Communications.View", new SiteNotificationsViewModel(this._sessionClient)),
+            new("vehicle-catalog", "operation.vehicleCatalog", "Admin.Content.Manage", new VehicleCatalogViewModel(this._sessionClient)),
+            new("catalog-suggestions", "operation.catalogSuggestions", "Admin.Content.View", new CatalogSuggestionsViewModel(this._sessionClient)),
+            new("test-data", "operation.testData", "Admin.Permissions.Manage", new TestDataViewModel(this._sessionClient)),
+            new("crm-import", "operation.crmImport", "Admin.Permissions.Manage", new CrmImportViewModel(this._sessionClient)),
+            new("assistant", "operation.assistant", "Admin.Configuration.Manage", new AssistantViewModel(this._sessionClient))
         ];
 
         foreach (var section in this._operationSections)
@@ -49,10 +49,10 @@ public partial class MainWindowViewModel
 
     [RelayCommand(AllowConcurrentExecutions = true)]
     private Task ShowOperationAsync(AdminOperationSection? section) => section == null ? Task.CompletedTask
-        : this.ShowSectionAsync(section.Title, this.CanViewOperationSection(section), section.Model.ActivateAsync);
+        : this.ShowSectionAsync(section.Id, this.CanViewOperationSection(section), section.Model.ActivateAsync);
 
-    private bool CanViewOperation(string title) => this._operationSections
-        .Any(section => section.Title == title && this.CanViewOperationSection(section));
+    private bool CanViewOperation(string sectionId) => this._operationSections
+        .Any(section => section.Id == sectionId && this.CanViewOperationSection(section));
 
     private bool CanViewOperationSection(AdminOperationSection section) => section.Model is AssistantViewModel assistant
         ? assistant.CanManage || assistant.CanViewBilling
@@ -93,7 +93,7 @@ public partial class MainWindowViewModel
 
             section.Model.Stop(true);
             section.BadgeCount = 0;
-            if (this.AdditionalPage == section.Title)
+            if (this.AdditionalPage == section.Id)
             {
                 this.AdditionalPage = string.Empty;
             }
@@ -108,8 +108,8 @@ public partial class MainWindowViewModel
     {
         foreach (var section in this._operationSections)
         {
-            section.IsSelected = section.Title == value
-                || (section.Model is EmailCampaignsViewModel && value == "Написать письмо");
+            section.IsSelected = section.Id == value
+                || (section.Model is EmailCampaignsViewModel && value == "compose");
         }
 
         this.OnPropertyChanged(nameof(CurrentOperation));

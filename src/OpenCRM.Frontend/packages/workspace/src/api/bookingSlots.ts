@@ -1,3 +1,6 @@
+import { formatLocaleDate, i18n, localeCultures, translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/bookingTimeMessages'
+
 export type OccupiedBookingSlot = {
   id: string
   startMinute: number
@@ -21,7 +24,7 @@ export async function loadOccupiedBookingSlots(
   if (excludeMaintenanceId) query.set('excludeMaintenanceId', excludeMaintenanceId)
 
   const response = await fetch(`/api/v1/maintenance/occupied-slots?${query}`, { signal, credentials: 'same-origin', cache: 'no-store' })
-  if (!response.ok) throw new Error('Не удалось проверить занятость поста. Повторите проверку.')
+  if (!response.ok) throw new Error(t('bookingTime.loadError'))
 
   return await response.json()
 }
@@ -53,12 +56,14 @@ export function findBookingConflicts(slots: OccupiedBookingSlot[], start: number
 
 export function describeOccupiedSlot(slot: OccupiedBookingSlot) {
   if (slot.startAt && slot.endAt) {
-    const formatDateTime = (value: string) => `${value.slice(8, 10)}.${value.slice(5, 7)}.${value.slice(0, 4)} ${value.slice(11, 16)}`
+    const formatDateTime = (value: string) => `${formatLocaleDate(new Date(`${value.slice(0, 10)}T00:00:00Z`), { timeZone: 'UTC' })} ${value.slice(11, 16)}`
     return `${formatDateTime(slot.startAt)}–${formatDateTime(slot.endAt)} · ${slot.vehicle}${slot.service ? ` · ${slot.service}` : ''}`
   }
   const format = (minute: number) => {
     const time = `${String(Math.floor(minute / 60) % 24).padStart(2, '0')}:${String(Math.floor(minute % 60)).padStart(2, '0')}`
-    return minute >= 1440 ? `${time} (+1 день)` : time
+    return minute >= 1440
+      ? `${time} (+${new Intl.NumberFormat(localeCultures[i18n.global.locale.value], { style: 'unit', unit: 'day', unitDisplay: 'long' }).format(Math.floor(minute / 1440))})`
+      : time
   }
 
   return `${format(slot.startMinute)}–${format(slot.endMinute)} · ${slot.vehicle}${slot.service ? ` · ${slot.service}` : ''}`

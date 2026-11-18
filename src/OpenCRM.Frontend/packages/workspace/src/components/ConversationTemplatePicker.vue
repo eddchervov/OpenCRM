@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../conversationMessages'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
 import { loadMessageTemplateCatalog, previewMessageTemplate, type MessageTemplate, type MessageTemplateGroup, type MessageTemplatePreview } from '../api/messageTemplates'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string; conversationId: string; maintenanceId?: string; textLimit: number }>()
 const emit = defineEmits<{ select: [preview: MessageTemplatePreview] }>()
@@ -27,7 +31,7 @@ async function show() {
   try {
     const catalog = await loadMessageTemplateCatalog(props.organizationId, false, active.signal)
     if (!active.signal.aborted) groups.value = catalog.groups
-  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить шаблоны.' }
+  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('conversations.templatesError') }
   finally { if (request === active) loading.value = false }
 }
 async function choose(template: MessageTemplate) {
@@ -37,7 +41,7 @@ async function choose(template: MessageTemplate) {
   try {
     const result = await previewMessageTemplate(props.organizationId, props.conversationId, template, props.maintenanceId, active.signal)
     if (!active.signal.aborted) preview.value = result
-  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось подготовить сообщение.' }
+  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('conversations.prepareError') }
   finally { if (request === active) previewing.value = false }
 }
 function insert() {
@@ -49,19 +53,19 @@ onBeforeUnmount(() => request?.abort())
 </script>
 
 <template>
-  <button type="button" class="template-picker-trigger" @click="show">Шаблоны</button>
-  <SchedulerBookingDialog :open="open" title="Шаблоны сообщений" @close="open = false; request?.abort()">
+  <button type="button" class="template-picker-trigger" @click="show">{{ t('conversations.templates') }}</button>
+  <SchedulerBookingDialog :open="open" :title="t('conversations.templatesTitle')" @close="open = false; request?.abort()">
     <div class="template-picker">
-      <UiLoader v-if="loading" text="Загружаем шаблоны…" />
+      <UiLoader v-if="loading" :text="t('conversations.loadingTemplates')" />
       <template v-else>
-        <div class="template-picker__filters"><input v-model="search" type="search" placeholder="Найти шаблон" aria-label="Поиск шаблона"><select v-model="groupId" aria-label="Группа шаблонов"><option value="">Все группы</option><option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></div>
+        <div class="template-picker__filters"><input v-model="search" type="search" :placeholder="t('conversations.findTemplate')" :aria-label="t('conversations.searchTemplate')"><select v-model="groupId" :aria-label="t('conversations.templateGroup')"><option value="">{{ t('conversations.allGroups') }}</option><option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></div>
         <div class="template-picker__layout">
-          <div class="template-picker__list"><section v-for="group in filtered" :key="group.id"><h4>{{ group.name }}</h4><button v-for="item in group.templates" :key="item.id" type="button" :aria-pressed="selected?.id === item.id" @click="choose(item)">{{ item.name }}</button></section><p v-if="!filtered.length">Шаблонов пока нет. Создайте их в справочнике «Шаблоны сообщений».</p></div>
-          <div class="template-picker__preview" aria-live="polite"><UiLoader v-if="previewing" text="Подставляем данные…" /><template v-else-if="preview"><h4>Текст для клиента</h4><p>{{ preview.text }}</p><small>После вставки текст можно изменить.</small><p v-if="preview.text.length > textLimit" role="alert">Текст превышает ограничение канала: {{ textLimit }} символов.</p></template><p v-else>Выберите шаблон для предпросмотра.</p></div>
+          <div class="template-picker__list"><section v-for="group in filtered" :key="group.id"><h4>{{ group.name }}</h4><button v-for="item in group.templates" :key="item.id" type="button" :aria-pressed="selected?.id === item.id" @click="choose(item)">{{ item.name }}</button></section><p v-if="!filtered.length">{{ t('conversations.noTemplatesHint') }}</p></div>
+          <div class="template-picker__preview" aria-live="polite"><UiLoader v-if="previewing" :text="t('conversations.preparingData')" /><template v-else-if="preview"><h4>{{ t('conversations.clientText') }}</h4><p>{{ preview.text }}</p><small>{{ t('conversations.editableHint') }}</small><p v-if="preview.text.length > textLimit" role="alert">{{ t('conversations.channelTextLimit', { limit: textLimit }) }}</p></template><p v-else>{{ t('conversations.chooseTemplateHint') }}</p></div>
         </div>
         <p v-if="error" class="template-picker__error" role="alert">{{ error }}</p>
       </template>
-      <footer class="template-picker__actions"><UiButton variant="secondary" @click="open = false; request?.abort()">Отмена</UiButton><UiButton :disabled="!preview || previewing || preview.text.length > textLimit" @click="insert">Вставить в сообщение</UiButton></footer>
+      <footer class="template-picker__actions"><UiButton variant="secondary" @click="open = false; request?.abort()">{{ t('conversations.cancel') }}</UiButton><UiButton :disabled="!preview || previewing || preview.text.length > textLimit" @click="insert">{{ t('conversations.insertMessage') }}</UiButton></footer>
     </div>
   </SchedulerBookingDialog>
 </template>

@@ -83,7 +83,8 @@ internal static class MaintenanceDateRules
         MaintenanceEntity maintenance,
         TimeSpan? plannedStartTime,
         TimeSpan? plannedEndTime,
-        DateTime? plannedEndDate)
+        DateTime? plannedEndDate,
+        TimeZoneInfo? organizationTimeZone = null)
     {
         var startDate = (maintenance.PlannedDate ?? maintenance.Date).Date;
         var endDate = plannedEndDate.HasValue ? MaintenanceDateRules.ToStoredMaintenanceDate(plannedEndDate.Value) : startDate;
@@ -123,6 +124,17 @@ internal static class MaintenanceDateRules
         if (finish <= startDate.Add(start))
         {
             throw new InvalidOperationException("Окончание записи должно быть позже начала.");
+        }
+
+        if (organizationTimeZone != null)
+        {
+            var localStart = DateTime.SpecifyKind(startDate.Add(start), DateTimeKind.Unspecified);
+            var localFinish = DateTime.SpecifyKind(finish, DateTimeKind.Unspecified);
+            if (organizationTimeZone.IsInvalidTime(localStart) || organizationTimeZone.IsAmbiguousTime(localStart)
+                || organizationTimeZone.IsInvalidTime(localFinish) || organizationTimeZone.IsAmbiguousTime(localFinish))
+            {
+                throw new InvalidOperationException("Время записи попадает в пропущенный или повторяющийся час при смене времени. Выберите другое время.");
+            }
         }
 
         maintenance.PlannedStartTime = start;

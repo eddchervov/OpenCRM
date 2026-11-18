@@ -9,6 +9,9 @@ using OpenCRM.Services.Interfaces.Home.Dtos;
 using OpenCRM.WebApp.Models.Personal;
 using OpenCRM.WebApp.Infrastructure;
 using OpenCRM.Modules.Support.Personal;
+using System.Globalization;
+using System.Resources;
+using OpenCRM.WebApp.Infrastructure.Localization;
 
 namespace OpenCRM.WebApp.Controllers.Personal;
 
@@ -20,6 +23,10 @@ public class SupportController(
     UserManager<ApplicationUser> userManager,
     ISupportMessageService supportMessageService) : Controller
 {
+    private static readonly ResourceManager s_resources = new(
+        "OpenCRM.WebApp.Resources.Infrastructure.Localization.LocalizationStrings",
+        typeof(LocalizationStrings).Assembly);
+
     /// <summary> Отображает список обращений в поддержку или конкретное обращение. </summary>
     [HttpGet]
     public async Task<IActionResult> Index(int? id = null, CancellationToken cancellationToken = default)
@@ -79,19 +86,20 @@ public class SupportController(
             string.IsNullOrWhiteSpace(request.Text) || request.Text.Trim().Length > 4000)
         {
             return await this.CreateViewAsync(userId, request,
-                "Укажите тему и сообщение и выберите корректный тип обращения.", cancellationToken);
+                SupportController.Localize("personal.support.error.invalidRequest"), cancellationToken);
         }
 
         if (request.IsOrganizationQuestion && request.OrganizationId == null)
         {
             return await this.CreateViewAsync(userId, request,
-                "Выберите организацию для вопроса по организации.", cancellationToken);
+                SupportController.Localize("personal.support.error.selectOrganization"), cancellationToken);
         }
 
         if (request.IsOrganizationQuestion && !await supportMessageService.HasOrganizationAccessAsync(
             userId, request.OrganizationId!.Value, cancellationToken))
         {
-            return await this.CreateViewAsync(userId, request, "Выбранная организация недоступна.", cancellationToken);
+            return await this.CreateViewAsync(userId, request,
+                SupportController.Localize("personal.support.error.organizationUnavailable"), cancellationToken);
         }
 
         IReadOnlyList<SupportAttachmentUploadDto> attachments;
@@ -101,7 +109,7 @@ public class SupportController(
         }
         catch (ArgumentException exception)
         {
-            return await this.CreateViewAsync(userId, request, exception.Message, cancellationToken);
+            return await this.CreateViewAsync(userId, request, SupportController.LocalizeAttachmentError(exception.Message), cancellationToken);
         }
 
         var user = await userManager.FindByIdAsync(userId);
@@ -123,7 +131,7 @@ public class SupportController(
         if (!result.Succeeded)
         {
             return await this.CreateViewAsync(userId, request,
-                result.ErrorMessage ?? "Не удалось создать обращение.", cancellationToken);
+                SupportController.LocalizeKnownError(result.ErrorMessage ?? "Не удалось создать обращение."), cancellationToken);
         }
 
         return this.RedirectToAction(nameof(Index), new { id = result.MessageId });
@@ -145,7 +153,7 @@ public class SupportController(
 
         if (!this.ModelState.IsValid)
         {
-            this.TempData["SupportError"] = "Проверьте сообщение и выбранные файлы. Файлы нужно выбрать повторно.";
+            this.TempData["SupportError"] = SupportController.Localize("personal.support.error.invalidReply");
 
             return this.RedirectToAction(nameof(Index), new { id = request.Id });
         }
@@ -160,7 +168,10 @@ public class SupportController(
         }
         catch (ArgumentException exception)
         {
-            this.TempData["SupportError"] = exception.Message + " Файлы нужно выбрать повторно.";
+            this.TempData["SupportError"] = string.Format(
+                CultureInfo.CurrentCulture,
+                SupportController.Localize("personal.support.error.replyAttachmentRetry"),
+                SupportController.LocalizeAttachmentError(exception.Message));
 
             return this.RedirectToAction(nameof(Index), new { id = request.Id });
         }
@@ -177,7 +188,7 @@ public class SupportController(
 
         if (result == SupportMessageReplyResult.InvalidText)
         {
-            this.TempData["SupportError"] = "Сообщение должно содержать от 1 до 4000 символов.";
+            this.TempData["SupportError"] = SupportController.Localize("personal.support.error.invalidReplyText");
         }
 
         return this.RedirectToAction(nameof(Index), new { id = request.Id });
@@ -223,4 +234,25 @@ public class SupportController(
             Error = error
         });
     }
+
+    private static string Localize(string key) =>
+        SupportController.s_resources.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
+    private static string LocalizeKnownError(string message) => message switch
+    {
+        "Выбранная организация недоступна." => SupportController.Localize("personal.support.error.organizationUnavailable"),
+        "Слишком много сообщений за короткое время. Попробуйте позже." => SupportController.Localize("personal.support.error.rateLimited"),
+        "Не удалось создать обращение." => SupportController.Localize("personal.support.error.createFailed"),
+        _ => message
+    };
+
+    private static string LocalizeAttachmentError(string message) => message switch
+    {
+        "Укажите имя файла длиной до 200 символов без управляющих символов." => SupportController.Localize("personal.support.attachments.invalidName"),
+        "К одному сообщению можно прикрепить не более 5 файлов." or "Можно прикрепить не более 5 файлов." => SupportController.Localize("personal.support.attachments.serverFileCount"),
+        "Выберите непустые файлы: до 10 МБ каждый и до 20 МБ суммарно." => SupportController.Localize("personal.support.attachments.serverFileSize"),
+        "Допустимы изображения JPEG, PNG, WebP, PDF и текстовые файлы TXT, LOG. Содержимое должно соответствовать формату." => SupportController.Localize("personal.support.attachments.serverFileFormat"),
+        "Размер файла не соответствует запросу." => SupportController.Localize("personal.support.attachments.sizeMismatch"),
+        _ => message
+    };
 }

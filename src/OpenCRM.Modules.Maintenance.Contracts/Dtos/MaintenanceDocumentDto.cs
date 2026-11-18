@@ -12,6 +12,9 @@ public class MaintenanceDocumentDto
     /// <summary> Формат документа. </summary>
     public string Format { get; set; } = default!;
 
+    /// <summary> Валюта денежных сумм документа. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Признак включения фотографий. </summary>
     public bool IncludePhotos { get; set; }
 

@@ -1,5 +1,6 @@
 export interface AdminUserSupportMessage {
   id: number
+  typeCode?: string
   typeName: string
   statusCode: string
   statusName: string

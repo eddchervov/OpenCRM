@@ -5,6 +5,8 @@
 /// </summary>
 public class OrganizationMaterialMovement
 {
+    /// <summary>Код валюты учетной суммы движения.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     /// <summary>Идентификатор движения склада.</summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 

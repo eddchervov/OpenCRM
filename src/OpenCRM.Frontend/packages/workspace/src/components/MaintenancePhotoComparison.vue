@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
 import { UiButton, UiImagePreview, UiLoader } from '@opencrm/ui'
+import { useLocalization } from '@opencrm/ui'
+import '../maintenanceMediaMessages'
 import { loadMaintenancePhotoContent, type WorkspaceMaintenancePhoto } from '../api/maintenance'
 
 const props = defineProps<{
@@ -9,6 +11,7 @@ const props = defineProps<{
   organizationName: string
   maintenanceId: string
 }>()
+const { t } = useLocalization()
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const stage = ref<HTMLElement | null>(null)
@@ -25,8 +28,8 @@ const errorMessage = ref('')
 const preview = ref<{ src: string; title: string } | null>(null)
 const retry = ref(0)
 const choices = computed(() => [
-  { title: 'До', photos: beforePhotos.value, selectedId: beforeId.value },
-  { title: 'После', photos: afterPhotos.value, selectedId: afterId.value }
+  { title: t('photoComparison.before'), photos: beforePhotos.value, selectedId: beforeId.value },
+  { title: t('photoComparison.after'), photos: afterPhotos.value, selectedId: afterId.value }
 ])
 
 onMounted(async () => {
@@ -49,18 +52,18 @@ watch([beforeId, afterId, retry], async (_, __, onCleanup) => {
   try {
     const loaded = await Promise.all([beforeId.value, afterId.value].map(async id => {
       const blob = await loadMaintenancePhotoContent(props.organizationId, props.maintenanceId, id, controller.signal)
-      if (controller.signal.aborted) throw new DOMException('Загрузка отменена', 'AbortError')
+      if (controller.signal.aborted) throw new DOMException(t('photoComparison.cancelledLoad'), 'AbortError')
       const url = URL.createObjectURL(blob)
       urls.push(url)
       const image = new Image()
       image.src = url
-      await image.decode().catch(() => { throw new Error('Не удалось прочитать фотографию. Проверьте файл в карточке записи.') })
+      await image.decode().catch(() => { throw new Error(t('photoComparison.readPhotoError')) })
       return image
     }))
     if (!controller.signal.aborted) images.value = loaded
   } catch (error) {
     if (!controller.signal.aborted) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть фотографии.'
+      errorMessage.value = error instanceof Error ? error.message : t('photoComparison.openError')
     }
   } finally {
     if (!controller.signal.aborted) isLoading.value = false
@@ -110,7 +113,7 @@ async function download() {
     const height = Math.round(panelWidth * 3 / 4)
     canvas.height = top + height + margin
     const context = canvas.getContext('2d')
-    if (!context) throw new Error('Браузер не поддерживает сохранение изображения.')
+    if (!context) throw new Error(t('photoComparison.noCanvas'))
     context.fillStyle = '#18202b'
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = '#ffffff'
@@ -120,9 +123,11 @@ async function download() {
     if (title !== props.organizationName) title = title.slice(0, -1) + '…'
     context.fillText(title, margin, 62)
     context.font = '600 30px sans-serif'
-    context.fillText('ДО', margin, 118)
-    const afterX = mode.value === 'side' ? margin + panelWidth + gap : canvas.width - margin - context.measureText('ПОСЛЕ').width
-    context.fillText('ПОСЛЕ', afterX, 118)
+    const beforeLabel = t('photoComparison.before').toLocaleUpperCase()
+    const afterLabel = t('photoComparison.after').toLocaleUpperCase()
+    context.fillText(beforeLabel, margin, 118)
+    const afterX = mode.value === 'side' ? margin + panelWidth + gap : canvas.width - margin - context.measureText(afterLabel).width
+    context.fillText(afterLabel, afterX, 118)
     context.fillStyle = '#242d39'
     context.fillRect(margin, top, width, height)
     if (mode.value === 'side') {
@@ -146,17 +151,17 @@ async function download() {
     }
     const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => {
       if (value) resolve(value)
-      else reject(new Error('Не удалось сохранить сравнение. Попробуйте ещё раз.'))
+      else reject(new Error(t('photoComparison.saveError')))
     }, 'image/png'))
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `do-posle-${props.maintenanceId}.png`
+    link.download = `${t('photoComparison.filePrefix')}-${props.maintenanceId}.png`
     link.click()
     // Браузеру нужно время, чтобы начать скачивание по временному адресу.
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось скачать сравнение.'
+    errorMessage.value = error instanceof Error ? error.message : t('photoComparison.downloadError')
   } finally {
     isDownloading.value = false
   }
@@ -167,26 +172,26 @@ async function download() {
   <Teleport to="body">
     <dialog ref="dialog" class="photo-comparison" aria-labelledby="comparison-title" @close="emit('close')" @click.self="dialog?.close()">
       <header class="photo-comparison__header ui-form-header">
-        <div><h2 id="comparison-title">До / после</h2><p>{{ organizationName }}</p></div>
-        <button class="photo-comparison__close" type="button" aria-label="Закрыть сравнение" autofocus @click="dialog?.close()">×</button>
+        <div><h2 id="comparison-title">{{ t('photoComparison.title') }}</h2><p>{{ organizationName }}</p></div>
+        <button class="photo-comparison__close" type="button" :aria-label="t('photoComparison.close')" autofocus @click="dialog?.close()">×</button>
       </header>
       <div class="photo-comparison__body">
         <div class="photo-comparison__toolbar">
-          <div class="photo-comparison__modes" role="group" aria-label="Режим сравнения">
-            <button type="button" :aria-pressed="mode === 'side'" @click="mode = 'side'">Рядом</button>
-            <button type="button" :aria-pressed="mode === 'slider'" @click="mode = 'slider'">Ползунок</button>
+          <div class="photo-comparison__modes" role="group" :aria-label="t('photoComparison.mode')">
+            <button type="button" :aria-pressed="mode === 'side'" @click="mode = 'side'">{{ t('photoComparison.sideBySide') }}</button>
+            <button type="button" :aria-pressed="mode === 'slider'" @click="mode = 'slider'">{{ t('photoComparison.slider') }}</button>
           </div>
-          <UiButton :disabled="images.length !== 2 || isDownloading" @click="download">{{ isDownloading ? 'Сохраняем…' : 'Скачать PNG' }}</UiButton>
+          <UiButton :disabled="images.length !== 2 || isDownloading" @click="download">{{ isDownloading ? t('photoComparison.saving') : t('photoComparison.download') }}</UiButton>
         </div>
         <div class="photo-comparison__choices">
-          <section v-for="(choice, side) in choices" :key="side" :aria-label="`Фотографии ${choice.title.toLowerCase()}`">
+          <section v-for="(choice, side) in choices" :key="side" :aria-label="t('photoComparison.photos', { side: choice.title.toLocaleLowerCase() })">
             <div class="photo-comparison__choice-heading">
               <h3 class="ui-section-header">{{ choice.title }} <span>{{ choice.photos.length }}</span></h3>
-              <button v-if="images[side]" type="button" @click="preview = { src: images[side].src, title: choice.title }">Увеличить {{ choice.title.toLowerCase() }}</button>
+              <button v-if="images[side]" type="button" @click="preview = { src: images[side].src, title: choice.title }">{{ t('photoComparison.enlarge', { side: choice.title.toLocaleLowerCase() }) }}</button>
             </div>
             <div class="photo-comparison__thumbnails">
               <button v-for="(photo, index) in choice.photos" :key="photo.photoId" type="button" :aria-pressed="choice.selectedId === photo.photoId"
-                :aria-label="`${choice.title}: фото ${index + 1}`" @click="choosePhoto(side, photo.photoId)">
+                :aria-label="t('photoComparison.photo', { side: choice.title, index: index + 1 })" @click="choosePhoto(side, photo.photoId)">
                 <img :src="photo.url" alt="" loading="lazy">
                 <span>{{ index + 1 }}</span>
               </button>
@@ -194,21 +199,21 @@ async function download() {
           </section>
         </div>
         <div v-if="errorMessage" class="photo-comparison__error" role="alert">
-          {{ errorMessage }} <button v-if="images.length !== 2" type="button" @click="retry++">Повторить</button>
+          {{ errorMessage }} <button v-if="images.length !== 2" type="button" @click="retry++">{{ t('photoComparison.retry') }}</button>
         </div>
-        <UiLoader v-if="isLoading" text="Загружаем фотографии…" />
+        <UiLoader v-if="isLoading" :text="t('photoComparison.loading')" />
         <div v-else-if="images.length === 2" ref="stage" class="photo-comparison__stage" :class="`photo-comparison__stage--${mode}`"
           @pointerdown="startDrag" @pointermove="drag" @pointerup="stage?.hasPointerCapture($event.pointerId) && stage.releasePointerCapture($event.pointerId)">
           <figure class="photo-comparison__image photo-comparison__image--after">
-            <img :src="images[1].src" alt="После работы" draggable="false"><figcaption>После</figcaption>
+            <img :src="images[1].src" :alt="t('photoComparison.afterWork')" draggable="false"><figcaption>{{ t('photoComparison.after') }}</figcaption>
           </figure>
           <figure class="photo-comparison__image photo-comparison__image--before" :style="mode === 'slider' ? { clipPath: `inset(0 ${100 - position}% 0 0)` } : undefined">
-            <img :src="images[0].src" alt="До работы" draggable="false"><figcaption>До</figcaption>
+            <img :src="images[0].src" :alt="t('photoComparison.beforeWork')" draggable="false"><figcaption>{{ t('photoComparison.before') }}</figcaption>
           </figure>
           <div v-if="mode === 'slider'" class="photo-comparison__divider" :style="{ left: `${position}%` }" aria-hidden="true"><span>↔</span></div>
         </div>
         <label v-if="mode === 'slider' && images.length === 2" class="photo-comparison__range">
-          <span>До</span><input v-model.number="position" type="range" min="0" max="100" aria-label="Положение границы до и после" :aria-valuetext="`${position}% до, ${100 - position}% после`"><span>После</span>
+          <span>{{ t('photoComparison.before') }}</span><input v-model.number="position" type="range" min="0" max="100" :aria-label="t('photoComparison.dividerPosition')" :aria-valuetext="t('photoComparison.dividerValue', { before: position, after: 100 - position })"><span>{{ t('photoComparison.after') }}</span>
         </label>
       </div>
     </dialog>

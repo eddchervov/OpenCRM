@@ -282,6 +282,9 @@ internal static class CrmImportParser
             Model = Get(values, "model", "модель"),
             Vin = Get(values, "vin", "вин"),
             Plate = Get(values, "plate", "registrationPlate", "госномер", "гос номер"),
+            RegistrationCountryCode = Get(values, "registrationCountryCode", "registration_country_code", "registrationCountry",
+                "registration_country", "registration country code", "countryCode", "country_code", "country code", "country",
+                "страна регистрации", "код страны", "страна"),
             Year = int.TryParse(Get(values, "year", "год", "год выпуска"), out var year) ? year : null,
             YearText = Get(values, "year", "год", "год выпуска")
         };

@@ -14,6 +14,7 @@ public class OrganizationMaterialMovementEntityTypeConfiguration : IEntityTypeCo
     /// </summary>
     public void Configure(EntityTypeBuilder<OrganizationMaterialMovement> builder)
     {
+        builder.Property(movement => movement.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");
 

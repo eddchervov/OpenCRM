@@ -115,6 +115,7 @@ public sealed class OrganizationWorkJournalQueryService(OpenCRMContext opencrmCo
                 MetaText = x.Mileage.HasValue
                     ? $"{x.Mileage.Value:N0} {(x.Vehicle.MileageUnit == VehicleMileageUnit.EngineHours ? "м/ч" : "км")}"
                     : null,
+                CurrencyCode = x.CurrencyCode,
                 Price = (decimal?)x.Details.Sum(d => d.Price ?? 0),
                 DetailUrl = $"#maintenance/{x.Id}",
                 VehicleUrl = $"#vehicles/{x.VehicleId}"

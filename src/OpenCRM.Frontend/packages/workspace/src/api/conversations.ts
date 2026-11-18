@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/conversationMessages'
+
 export type Conversation = {
   id: string; clientId: string | null; clientName: string | null; botUsername: string
   telegramDisplayName: string | null; lastMessageText: string | null; lastMessageAt: string | null
@@ -22,7 +25,7 @@ export type ConversationDeliveryHealth = { queuedUnpublishedCount: number; queue
 export type ConversationDraftAttachment = { id: string; fileName: string; contentType: string; sizeBytes: number }
 export type ConversationChannelRoute = { conversationId: string; connectionId: string; channelCode: string; displayName: string; isReadOnly: boolean; unreadCount: number; lastMessageAt: string | null }
 export type ConversationClientRoutes = { clientId: string | null; displayName: string; isUnknownContact: boolean; activeRoutes: ConversationChannelRoute[]; historyRoutes: ConversationChannelRoute[] }
-export const conversationChannelName = (code: string | null | undefined) => code?.toLowerCase() === 'max' ? 'MAX' : code?.toLowerCase() === 'telegram' ? 'Telegram' : 'Мессенджер'
+export const conversationChannelName = (code: string | null | undefined) => code?.toLowerCase() === 'max' ? 'MAX' : code?.toLowerCase() === 'telegram' ? 'Telegram' : translate('conversations.messenger')
 
 export class ConversationRequestError extends Error {
   constructor(message: string, public readonly status: number) { super(message) }
@@ -41,7 +44,7 @@ async function request<T>(organizationId: string, path: string, options: { metho
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new ConversationRequestError(error?.message ?? (response.status === 403 ? 'Нет доступа к переписке.' : response.status === 429 ? 'Слишком много запросов. Подождите немного и повторите.' : 'Не удалось загрузить переписку.'), response.status)
+    throw new ConversationRequestError(error?.message ?? (response.status === 403 ? translate('conversations.forbidden') : response.status === 429 ? translate('conversations.rateLimit') : translate('conversations.loadChatError')), response.status)
   }
   return response.status === 204 ? undefined as T : response.json()
 }
@@ -80,7 +83,7 @@ export async function uploadConversationFile(organizationId: string, id: string,
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new ConversationRequestError(error?.message ?? 'Не удалось загрузить файл.', response.status)
+    throw new ConversationRequestError(error?.message ?? translate('conversations.uploadError'), response.status)
   }
   return response.json() as Promise<ConversationDraftAttachment>
 }

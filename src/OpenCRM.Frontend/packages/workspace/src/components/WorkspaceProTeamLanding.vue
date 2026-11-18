@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../proPreviewMessages'
 import { getProjectBrand } from '@opencrm/ui'
 import { computed, ref } from 'vue'
 import { UiButton } from '@opencrm/ui'
@@ -6,14 +8,9 @@ import studioImage from '../assets/pro/team-studio.webp'
 import teamImage from '../assets/pro/team.png'
 import rolePermissionsImage from '../assets/pro/role-permissions.png'
 
+const { t } = useLocalization()
+
 const projectBrand = getProjectBrand()
-
-
-
-
-
-
-
 
 defineProps<{ titleId: string; title: string; canManageBilling: boolean }>()
 const emit = defineEmits<{
@@ -23,13 +20,14 @@ const emit = defineEmits<{
 const accessSection = ref<HTMLElement | null>(null)
 const selectedRole = ref<'performer' | 'admin'>('performer')
 const accessExample = computed(() => selectedRole.value === 'performer'
-  ? ['Просмотр', 'Закрыто', 'Просмотр', 'Закрыто']
-  : ['Просмотр и изменение', 'Просмотр и изменение', 'Просмотр и изменение', 'Просмотр'])
-const areas = ['Записи и работы', 'База клиентов', 'Склад', 'Финансы']
-const examples = [
-  { src: teamImage, alt: 'Команда организации: сотрудники и доступ к CRM', title: 'Команда в одном пространстве', description: 'Добавляйте сотрудников, подключайте доступ и назначайте роли.', viewBox: '232 66 1048 590', width: 1280, height: 720 },
-  { src: rolePermissionsImage, alt: 'Матрица прав ролей организации', title: 'Доступ под вашу работу', description: 'Отдельно выбирайте права на просмотр и изменение данных.', viewBox: '275 205 1130 750', width: 1425, height: 1267 }
-]
+  ? [t('proPreview.teamView'), t('proPreview.teamClosed'), t('proPreview.teamView'), t('proPreview.teamClosed')]
+  : [t('proPreview.teamEdit'), t('proPreview.teamEdit'), t('proPreview.teamEdit'), t('proPreview.teamView')])
+const areas = computed(() => [t('proPreview.teamBookings'), t('proPreview.teamClients'), t('proPreview.teamStock'), t('proPreview.teamFinance')])
+const examples = computed(() => [
+  { src: teamImage, alt: t('proPreview.teamScreenshotAlt'), title: t('proPreview.teamScreenshotTitle'), description: t('proPreview.teamScreenshotDescription'), viewBox: '232 66 1048 590', width: 1280, height: 720 },
+  { src: rolePermissionsImage, alt: t('proPreview.teamRolesAlt'), title: t('proPreview.teamRolesTitle'), description: t('proPreview.teamRolesDescription'), viewBox: '275 205 1130 750', width: 1425, height: 1267 }
+])
+
 function showAccessExample() {
   accessSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   accessSection.value?.focus({ preventScroll: true })
@@ -40,54 +38,54 @@ function showAccessExample() {
   <div class="pro-team-landing">
     <section class="pro-team-landing__hero">
       <div class="pro-team-landing__pitch">
-        <span class="pro-team-landing__eyebrow">{{ title }} в PRO</span>
-        <h2 :id="titleId">Ваша команда.<br>Ваши правила работы.</h2>
-        <p>Администратор ведёт запись. Мастер выполняет работу. Вы решаете, кому доступны клиенты, склад и финансы.</p>
+        <span class="pro-team-landing__eyebrow">{{ t('proPreview.titleInPro', { title }) }}</span>
+        <h2 :id="titleId">{{ t('proPreview.teamHeadline1') }}<br>{{ t('proPreview.teamHeadline2') }}</h2>
+        <p>{{ t('proPreview.teamIntro') }}</p>
         <div class="pro-team-landing__actions">
-          <UiButton v-if="canManageBilling" href="#billing" @click="emit('billing')">Выбрать PRO →</UiButton>
-          <button type="button" class="pro-team-landing__text-button" @click="showAccessExample">Посмотреть пример доступа ↓</button>
+          <UiButton v-if="canManageBilling" href="#billing" @click="emit('billing')">{{ t('proPreview.choosePro') }}</UiButton>
+          <button type="button" class="pro-team-landing__text-button" @click="showAccessExample">{{ t('proPreview.teamAccessExample') }}</button>
         </div>
       </div>
-      <button class="pro-team-landing__cover" type="button" aria-label="Увеличить иллюстрацию команды студии" @click="emit('preview', { src: studioImage, alt: 'Иллюстрация совместной работы администратора и мастера в студии' })">
-        <img :src="studioImage" alt="Администратор и мастер обсуждают работу у автомобиля в детейлинг-студии" width="1536" height="1024">
-        <span class="pro-team-landing__cover-label">Работайте вместе <span>↗</span></span>
+      <button class="pro-team-landing__cover" type="button" :aria-label="t('proPreview.teamCoverLabel')" @click="emit('preview', { src: studioImage, alt: t('proPreview.teamIllustrationAlt') })">
+        <img :src="studioImage" :alt="t('proPreview.teamStudioAlt')" width="1536" height="1024">
+        <span class="pro-team-landing__cover-label">{{ t('proPreview.teamWorkTogether') }} <span>↗</span></span>
       </button>
     </section>
-    <section class="pro-team-landing__benefits" aria-label="Возможности команды">
-      <article><span>01 / ЗАДАЧИ</span><h3>У каждой работы — исполнитель</h3><p>Назначайте мастеров на работы и отслеживайте выполнение в CRM.</p></article>
-      <article><span>02 / ДОСТУП</span><h3>Каждому — своя роль</h3><p>Администратор, сотрудник, исполнитель или только просмотр.</p></article>
-      <article><span>03 / КОНТРОЛЬ</span><h3>Финансы — кому разрешите</h3><p>Настраивайте доступ роли к данным и их изменению.</p></article>
+    <section class="pro-team-landing__benefits" :aria-label="t('proPreview.teamFeatures')">
+      <article><span>{{ t('proPreview.teamTasksNumber') }}</span><h3>{{ t('proPreview.teamEachJob') }}</h3><p>{{ t('proPreview.teamAssignHint') }}</p></article>
+      <article><span>{{ t('proPreview.teamAccessNumber') }}</span><h3>{{ t('proPreview.teamEachRole') }}</h3><p>{{ t('proPreview.teamRolesHint') }}</p></article>
+      <article><span>{{ t('proPreview.teamControlNumber') }}</span><h3>{{ t('proPreview.teamFinanceAllowed') }}</h3><p>{{ t('proPreview.teamPermissionsHint') }}</p></article>
     </section>
-    <section ref="accessSection" class="pro-team-landing__access" tabindex="-1" aria-label="Пример настройки доступа">
+    <section ref="accessSection" class="pro-team-landing__access" tabindex="-1" :aria-label="t('proPreview.teamAccessLabel')">
       <div class="pro-team-landing__section-copy">
-        <span class="pro-team-landing__eyebrow">ПРАВА ПОД ВАШ ПРОЦЕСС</span>
-        <h3>Одна CRM.<br>Разный доступ.</h3>
-        <p>Назначьте сотруднику роль и выберите, что ей разрешено. Например, откройте мастеру работы, а финансы оставьте администратору.</p>
-        <p class="pro-team-landing__note">Права роли действуют для всех сотрудников с этой ролью.</p>
+        <span class="pro-team-landing__eyebrow">{{ t('proPreview.teamProcess') }}</span>
+        <h3>{{ t('proPreview.teamOneCrm') }}<br>{{ t('proPreview.teamDifferentAccess') }}</h3>
+        <p>{{ t('proPreview.teamAccessIntro') }}</p>
+        <p class="pro-team-landing__note">{{ t('proPreview.teamAllRoleHint') }}</p>
       </div>
       <div class="pro-team-landing__permission-card">
-        <div class="pro-team-landing__permission-header"><strong>Пример настроек роли</strong><span>Демо</span></div>
-        <div class="pro-team-landing__role-switch" role="group" aria-label="Выбрать пример роли">
-          <button type="button" :aria-pressed="selectedRole === 'performer'" @click="selectedRole = 'performer'">Мастер</button>
-          <button type="button" :aria-pressed="selectedRole === 'admin'" @click="selectedRole = 'admin'">Администратор</button>
+        <div class="pro-team-landing__permission-header"><strong>{{ t('proPreview.teamRoleExample') }}</strong><span>{{ t('proPreview.teamDemo') }}</span></div>
+        <div class="pro-team-landing__role-switch" role="group" :aria-label="t('proPreview.teamChooseRole')">
+          <button type="button" :aria-pressed="selectedRole === 'performer'" @click="selectedRole = 'performer'">{{ t('proPreview.teamTechnician') }}</button>
+          <button type="button" :aria-pressed="selectedRole === 'admin'" @click="selectedRole = 'admin'">{{ t('proPreview.teamAdmin') }}</button>
         </div>
         <div class="pro-team-landing__permissions" aria-live="polite">
-          <div v-for="(area, index) in areas" :key="area"><span>{{ area }}</span><strong :class="{ 'is-closed': accessExample[index] === 'Закрыто' }">{{ accessExample[index] }}</strong></div>
+          <div v-for="(area, index) in areas" :key="area"><span>{{ area }}</span><strong :class="{ 'is-closed': selectedRole === 'performer' && (index === 1 || index === 3) }">{{ accessExample[index] }}</strong></div>
         </div>
       </div>
     </section>
-    <section class="pro-team-landing__screens" aria-label="Экраны команды и прав доступа">
-      <div class="pro-team-landing__screens-heading"><span class="pro-team-landing__eyebrow">ВНУТРИ {{ projectBrand }}</span><h3>Вот как это работает</h3></div>
+    <section class="pro-team-landing__screens" :aria-label="t('proPreview.teamScreens')">
+      <div class="pro-team-landing__screens-heading"><span class="pro-team-landing__eyebrow">{{ t('proPreview.teamInside', { brand: projectBrand }) }}</span><h3>{{ t('proPreview.teamHowWorks') }}</h3></div>
       <div class="pro-team-landing__screen-grid">
         <article v-for="example in examples" :key="example.title">
-          <button type="button" :aria-label="`Увеличить пример: ${example.title}`" @click="emit('preview', example)">
+          <button type="button" :aria-label="t('proPreview.enlargeLabel', { title: example.title })" @click="emit('preview', example)">
             <svg :viewBox="example.viewBox" preserveAspectRatio="xMidYMin slice" role="img" :aria-label="example.alt"><image :href="example.src" :width="example.width" :height="example.height" /></svg>
-            <span>Увеличить пример ↗</span>
+            <span>{{ t('proPreview.enlarge') }}</span>
           </button>
           <h4>{{ example.title }}</h4><p>{{ example.description }}</p>
         </article>
       </div>
-      <p class="pro-team-landing__note">Демонстрационный пример</p>
+      <p class="pro-team-landing__note">{{ t('proPreview.demo') }}</p>
     </section>
   </div>
 </template>

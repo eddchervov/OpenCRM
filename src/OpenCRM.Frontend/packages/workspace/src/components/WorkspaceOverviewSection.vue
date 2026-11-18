@@ -1,5 +1,13 @@
 ﻿<script setup lang="ts">
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../sectionPagesMessages'
 import type { WorkspaceOverviewData } from '../api/workspaceAdmin'
+
+const { t } = useLocalization()
+
+function formatCount(value: number) {
+  return new Intl.NumberFormat(formattingCulture.value).format(value)
+}
 
 defineProps<{
   overview: WorkspaceOverviewData
@@ -13,55 +21,55 @@ defineProps<{
   <div class="workspace-common-stack">
     <div class="workspace-common-grid">
       <article class="workspace-common-tile">
-        <span>Организация</span>
+        <span>{{ t('sectionPages.organization') }}</span>
         <strong>{{ organizationName }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Сценарий</span>
+        <span>{{ t('sectionPages.scenario') }}</span>
         <strong>{{ scenarioTitle }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Участники</span>
-        <strong>{{ overview.organization.membersCount }} / {{ overview.workspaceMembersLimit }}</strong>
+        <span>{{ t('sectionPages.members') }}</span>
+        <strong>{{ formatCount(overview.organization.membersCount) }} / {{ formatCount(overview.workspaceMembersLimit) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Автомобили</span>
-        <strong>{{ overview.activeVehiclesCount }} / {{ overview.workspaceVehicleLimit }}</strong>
+        <span>{{ t('sectionPages.vehicles') }}</span>
+        <strong>{{ formatCount(overview.activeVehiclesCount) }} / {{ formatCount(overview.workspaceVehicleLimit) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Клиенты</span>
-        <strong>{{ overview.clientsCount }}</strong>
+        <span>{{ t('sectionPages.clients') }}</span>
+        <strong>{{ formatCount(overview.clientsCount) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Архив авто</span>
-        <strong>{{ overview.archivedVehiclesCount }}</strong>
+        <span>{{ t('sectionPages.archivedVehicles') }}</span>
+        <strong>{{ formatCount(overview.archivedVehiclesCount) }}</strong>
       </article>
     </div>
 
     <div class="workspace-common-grid">
       <article class="workspace-common-tile">
-        <span>Услуг всего</span>
-        <strong>{{ overview.metrics.maintenanceTotalCount }}</strong>
+        <span>{{ t('sectionPages.totalServices') }}</span>
+        <strong>{{ formatCount(overview.metrics.maintenanceTotalCount) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Запланировано</span>
-        <strong>{{ overview.metrics.maintenancePlannedCount }}</strong>
+        <span>{{ t('sectionPages.planned') }}</span>
+        <strong>{{ formatCount(overview.metrics.maintenancePlannedCount) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>В работе</span>
-        <strong>{{ overview.metrics.maintenanceInProgressCount }}</strong>
+        <span>{{ t('sectionPages.inProgress') }}</span>
+        <strong>{{ formatCount(overview.metrics.maintenanceInProgressCount) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Выполнено</span>
-        <strong>{{ overview.metrics.maintenanceCompletedCount }}</strong>
+        <span>{{ t('sectionPages.done') }}</span>
+        <strong>{{ formatCount(overview.metrics.maintenanceCompletedCount) }}</strong>
       </article>
       <article v-if="!isDetailingScenario" class="workspace-common-tile">
-        <span>Неисправности</span>
-        <strong>{{ overview.metrics.openDefectsCount }}</strong>
+        <span>{{ t('sectionPages.defects') }}</span>
+        <strong>{{ formatCount(overview.metrics.openDefectsCount) }}</strong>
       </article>
       <article class="workspace-common-tile">
-        <span>Сигналы</span>
-        <strong>{{ overview.planning.attentionCount }}</strong>
+        <span>{{ t('sectionPages.alerts') }}</span>
+        <strong>{{ formatCount(overview.planning.attentionCount) }}</strong>
       </article>
     </div>
   </div>

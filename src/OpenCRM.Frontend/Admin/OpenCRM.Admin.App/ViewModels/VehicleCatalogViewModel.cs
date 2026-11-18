@@ -2,11 +2,16 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
 public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) : CommunicationsViewModel(sessionClient)
 {
+    private string? _messageTranslationKey;
+    private object?[] _messageTranslationArguments = [];
+    private bool _isSettingLocalizedMessage;
+
     protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
@@ -18,17 +23,14 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
 
     public IReadOnlyList<CatalogKindOption> KindOptions { get; } =
     [
-        new(0, "Все виды техники"), new(1, "Легковые автомобили"), new(2, "Грузовая техника"),
-        new(3, "Мотоциклы"), new(4, "Квадроциклы"), new(5, "Багги и UTV"),
-        new(6, "Снегоходы"), new(7, "Гидроциклы"), new(8, "Лодки и катера"),
-        new(9, "Спецтехника"), new(10, "Прицепы"), new(99, "Другие")
+        new(0), new(1), new(2), new(3), new(4), new(5), new(6), new(7), new(8), new(9), new(10), new(99)
     ];
 
     [ObservableProperty] private IReadOnlyList<AdminCatalogBrand> _brands = [];
     [ObservableProperty] private IReadOnlyList<AdminCatalogModel> _models = [];
     [ObservableProperty] private AdminCatalogBrand? _selectedBrand;
-    [ObservableProperty] private CatalogKindOption _selectedKind = new(0, "Все виды техники");
-    [ObservableProperty] private CatalogKindOption _selectedEditKind = new(1, "Легковые автомобили");
+    [ObservableProperty] private CatalogKindOption _selectedKind = new(0);
+    [ObservableProperty] private CatalogKindOption _selectedEditKind = new(1);
     [ObservableProperty] private string _search = string.Empty;
     [ObservableProperty] private bool _isEditorOpen;
     [ObservableProperty] private bool _isBrandEditor;
@@ -51,11 +53,22 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
     public bool IsEmpty => !this.IsBusy && this.Brands.Count == 0 && !this.HasError;
     public bool HasNoSelectedBrand => this.SelectedBrand == null;
     public bool HasNoModels => this.SelectedBrand != null && this.Models.Count == 0;
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        foreach (var option in this.KindOptions)
+        {
+            option.RefreshLocalizedValues();
+        }
+
+        this.RefreshLocalizedMessage();
+    }
     public string ConfirmationText => this.Confirmation switch
     {
-        CatalogConfirmation.Seed => "Каталог будет дополнен базовыми марками и моделями. Ранее удалённые записи не восстанавливаются.",
-        CatalogConfirmation.DeleteBrand => "Удалить выбранную марку? Если она используется, сервер отклонит операцию.",
-        CatalogConfirmation.DeleteModel => "Удалить выбранную модель? Если она используется, сервер отклонит операцию.",
+        CatalogConfirmation.Seed => AdminLocalization.Instance["native.vehicleCatalog.katalog.budet.dopolnen.bazovymi.markami.i.modelyami.ranee.udalyo"],
+        CatalogConfirmation.DeleteBrand => AdminLocalization.Instance["native.vehicleCatalog.udalit.vybrannuyu.marku.esli.ona.ispolzuetsya.server.otklonit.op"],
+        CatalogConfirmation.DeleteModel => AdminLocalization.Instance["native.vehicleCatalog.udalit.vybrannuyu.model.esli.ona.ispolzuetsya.server.otklonit.op"],
         _ => string.Empty
     };
 
@@ -109,7 +122,7 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
         this.EditingBrandId = null;
         this.EditingModelId = null;
         this.EditorParentBrandId = null;
-        this.EditorTitle = "Новая марка";
+        this.EditorTitle = AdminLocalization.Instance["native.vehicleCatalog.novaya.marka"];
         this.IsBrandEditor = true;
         this.Name = string.Empty;
         this.SelectedEditKind = this.KindOptions.First(option => option.Value == (this.SelectedKind.Value == 0 ? 1 : this.SelectedKind.Value));
@@ -122,7 +135,7 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
         this.EditingBrandId = null;
         this.EditingModelId = null;
         this.EditorParentBrandId = this.SelectedBrand!.Id;
-        this.EditorTitle = $"Новая модель · {this.SelectedBrand!.Name}";
+        this.EditorTitle = AdminLocalization.Instance.Format("native.vehicleCatalog.novaya.model.this.selectedbrand.name", this.SelectedBrand!.Name);
         this.IsBrandEditor = false;
         this.Name = string.Empty;
         this.IsEditorOpen = true;
@@ -134,7 +147,7 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
         this.EditingBrandId = brand.Id;
         this.EditingModelId = null;
         this.EditorParentBrandId = null;
-        this.EditorTitle = "Изменить марку";
+        this.EditorTitle = AdminLocalization.Instance["native.vehicleCatalog.izmenit.marku"];
         this.IsBrandEditor = true;
         this.Name = brand.Name;
         this.SelectedEditKind = this.KindOptions.First(option => option.Value == brand.Kind);
@@ -147,7 +160,7 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
         this.EditingBrandId = null;
         this.EditingModelId = model.Id;
         this.EditorParentBrandId = model.BrandId;
-        this.EditorTitle = $"Изменить модель · {this.SelectedBrand?.Name}";
+        this.EditorTitle = AdminLocalization.Instance.Format("native.vehicleCatalog.izmenit.model.this.selectedbrand.name", this.SelectedBrand?.Name);
         this.IsBrandEditor = false;
         this.Name = model.Name;
         this.IsEditorOpen = true;
@@ -172,7 +185,7 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
         }
 
         this.IsEditorOpen = false;
-        this.Message = "Запись каталога сохранена.";
+        this.SetLocalizedMessage("native.vehicleCatalog.zapis.kataloga.sokhranena");
         await this.LoadPageAsync(token);
     });
 
@@ -208,7 +221,7 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
         if (this.Confirmation == CatalogConfirmation.Seed)
         {
             var result = await this.SessionClient.SeedVehicleCatalogAsync(token);
-            this.Message = $"Добавлено марок: {result.CreatedBrands}, моделей: {result.CreatedModels}. Пропущено удалённых записей: {result.SkippedDeletedBrands + result.SkippedDeletedModels}.";
+            this.SetLocalizedMessage("native.vehicleCatalog.dobavleno.marok.result.createdbrands.modeley.result.createdmodel", result.CreatedBrands, result.CreatedModels, result.SkippedDeletedBrands + result.SkippedDeletedModels);
         }
         else if (this.Confirmation == CatalogConfirmation.DeleteBrand && this.BrandToDelete is { } brandId)
         {
@@ -219,12 +232,12 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
                 this.Models = [];
             }
 
-            this.Message = "Марка удалена.";
+            this.SetLocalizedMessage("native.vehicleCatalog.marka.udalena");
         }
         else if (this.Confirmation == CatalogConfirmation.DeleteModel && this.ModelToDelete is { } modelId)
         {
             await this.SessionClient.DeleteCatalogModelAsync(modelId, token);
-            this.Message = "Модель удалена.";
+            this.SetLocalizedMessage("native.vehicleCatalog.model.udalena");
         }
 
         await this.LoadPageAsync(token);
@@ -234,6 +247,27 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
     {
         this.Confirmation = confirmation;
         this.IsConfirmationOpen = true;
+    }
+
+    private void SetLocalizedMessage(string key, params object?[] arguments)
+    {
+        this._messageTranslationKey = key;
+        this._messageTranslationArguments = arguments;
+        this._isSettingLocalizedMessage = true;
+        this.Message = AdminLocalization.Instance.Format(key, arguments);
+        this._isSettingLocalizedMessage = false;
+    }
+
+    private void RefreshLocalizedMessage()
+    {
+        if (this._messageTranslationKey == null)
+        {
+            return;
+        }
+
+        this._isSettingLocalizedMessage = true;
+        this.Message = AdminLocalization.Instance.Format(this._messageTranslationKey, this._messageTranslationArguments);
+        this._isSettingLocalizedMessage = false;
     }
 
     protected override void NotifyCommands()
@@ -279,11 +313,42 @@ public partial class VehicleCatalogViewModel(AdminSessionClient sessionClient) :
     }
     partial void OnIsBrandEditorChanged(bool value) => this.SaveCommand.NotifyCanExecuteChanged();
     partial void OnIsConfirmationOpenChanged(bool value) => this.ConfirmCommand.NotifyCanExecuteChanged();
+    partial void OnMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedMessage)
+        {
+            this._messageTranslationKey = null;
+            this._messageTranslationArguments = [];
+        }
+    }
 }
 
-public sealed record CatalogKindOption(int Value, string Label)
+public sealed class CatalogKindOption(int value) : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
+    public int Value { get; } = value;
+
+    public string Label => AdminLocalization.Instance[CatalogKindOption.ResourceKey(this.Value)];
+
+    public void RefreshLocalizedValues() => this.OnPropertyChanged(nameof(this.Label));
+
     public override string ToString() => this.Label;
+
+    private static string ResourceKey(int value) => value switch
+    {
+        0 => "native.vehicleCatalog.vse.vidy.tekhniki",
+        1 => "native.vehicleCatalog.legkovye.avtomobili",
+        2 => "native.vehicleCatalog.gruzovaya.tekhnika",
+        3 => "native.vehicleCatalog.mototsikly",
+        4 => "native.vehicleCatalog.kvadrotsikly",
+        5 => "native.vehicleCatalog.baggi.i.utv",
+        6 => "native.vehicleCatalog.snegokhody",
+        7 => "native.vehicleCatalog.gidrotsikly",
+        8 => "native.vehicleCatalog.lodki.i.katera",
+        9 => "native.vehicleCatalog.spetstekhnika",
+        10 => "native.vehicleCatalog.pritsepy",
+        99 => "native.vehicleCatalog.drugie",
+        _ => "native.vehicleCatalog.vse.vidy.tekhniki"
+    };
 }
 
 public enum CatalogConfirmation

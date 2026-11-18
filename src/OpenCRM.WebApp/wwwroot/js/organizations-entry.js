@@ -4,7 +4,7 @@
         var theme = value === 'dark' ? 'dark' : 'light';
         document.documentElement.dataset.crmTheme = theme;
         document.querySelectorAll('[data-entry-theme]').forEach(function (button) {
-            var label = theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему';
+            var label = theme === 'dark' ? window.OpenCRMText('lightTheme') : window.OpenCRMText('darkTheme');
             button.setAttribute('aria-label', label);
             button.title = label;
         });

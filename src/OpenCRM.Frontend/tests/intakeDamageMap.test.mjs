@@ -5,12 +5,34 @@ import { createHash } from 'node:crypto'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/workspaceApiMessages.ts'
 
 const componentUrl = new URL('../packages/workspace/src/components/IntakeDamageMap.vue', import.meta.url)
 const { descriptor } = parse(readFileSync(componentUrl, 'utf8'))
 const code = ts.transpileModule(compileScript(descriptor, { id: 'intake-damage-map-test' }).content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
+
+const messages = {
+  'intakeDamage.unavailableDiagram': 'Схема автомобиля недоступна. Сохранённые повреждения доступны в списке. Повторите загрузку.',
+  'intakeDamage.deleteChanged': 'Запись изменилась. Проверьте повреждение и повторите удаление.',
+  'intakeDamage.conflictChanged': 'Осмотр обновлён после открытия. Ваши изменения не потеряны. Сравните их с сохранёнными данными перед продолжением.',
+  'intakeDamage.diagramChanged': 'Схема автомобиля обновлена. Ваши изменения относятся к прежней схеме. Откройте актуальный осмотр и отметьте повреждение заново.',
+  'intakeDamage.damageTitle': 'Повреждение №{number}',
+  'intakeDamage.numberPrefix': '№{number}, ',
+  'intakeDamage.summary': '{number}{type}, {view}: {description}; фото: {count}',
+  'intakeDamage.scratch': 'Царапина',
+  'intakeDamage.other': 'Другое',
+  'intakeDamage.front': 'Спереди',
+  'intakeDamage.rear': 'Сзади',
+  'intakeDamage.left': 'Левый борт',
+  'intakeDamage.right': 'Правый борт'
+}
+
+function translate(key, parameters = {}) {
+  return (messages[key] ?? key).replace(/\{([^}]+)\}/g, (_, name) => parameters[name] ?? `{${name}}`)
+}
 
 class FakeIntakeDamageApiError extends Error {
   constructor(message, status) {
@@ -27,7 +49,8 @@ function createEditor({ saveDamage, deleteDamage, readDamages, uploadPhotos, pho
   const reads = []
   const resolve = id => {
     if (id === 'vue') return { ...vue, onBeforeUnmount() {} }
-    if (id === '@opencrm/ui') return { UiButton: {}, UiConfirmDialog: {}, UiModal: {} }
+    if (id === '@opencrm/ui') return { UiButton: {}, UiConfirmDialog: {}, UiModal: {}, useLocalization: () => ({ t: translate }) }
+    if (id === '../maintenanceMediaMessages') return {}
     if (id === './intakeDiagramRegistry') return {
       getIntakeDiagram: version => version === 'sedan-v1' ? {
         version: 'sedan-v1', width: 1619, height: 971, aspectRatio: '1619 / 971',
@@ -702,6 +725,8 @@ test('API передаёт закреплённую версию схемы в J
   }).outputText
   const apiModule = { exports: {} }
   new Function('require', 'module', 'exports', apiCode)((id) => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
+    if (id === '@opencrm/workspace/workspaceApiMessages') return {}
     assert.equal(id, './maintenance')
     return { getMutationHeaders: () => ({ 'X-Test-Token': 'token', 'Content-Type': 'application/json' }) }
   }, apiModule, apiModule.exports)

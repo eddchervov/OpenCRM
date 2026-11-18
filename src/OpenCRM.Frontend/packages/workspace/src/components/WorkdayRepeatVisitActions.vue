@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { formattingCulture, translate as t } from '@opencrm/ui/i18n'
+import '../workdayActionMessages'
 import { onBeforeUnmount, ref, watch } from 'vue'
-import { UiButton, UiDatePicker, UiModal, UiTimePicker } from '@opencrm/ui'
+import { UiButton, UiDatePicker, UiModal, UiTimePicker, parseDateOnly } from '@opencrm/ui'
 import { completeRepeatVisitAction, loadRepeatVisits, rescheduleRepeatVisitAction, type RepeatVisit, type RepeatVisitPage } from '../api/repeatVisits'
 import { inquiryLocalTime, inquiryUtcTime } from '../utils/inquiryTime'
 
@@ -30,7 +32,7 @@ async function load() {
     result.value = loaded
     if (props.userId) result.value.items = result.value.items.filter(item => (!item.responsibleUserId || item.responsibleUserId === props.userId) && item.contactByUtc && !item.contactCompletedAtUtc && item.isActive)
   } catch (caught) {
-    if (!active.signal.aborted && request === active && currentScope === scopeVersion) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить действия по рекомендациям.'
+    if (!active.signal.aborted && request === active && currentScope === scopeVersion) error.value = caught instanceof Error ? caught.message : t('workdayActions.loadRepeatError')
   }
 }
 
@@ -52,7 +54,7 @@ async function runAction(item: RepeatVisit, action: () => Promise<RepeatVisit>) 
     rescheduleId.value = ''
     await load()
   } catch (caught) {
-    if (currentScope === scopeVersion && organizationId === props.organizationId && userId === props.userId && date === props.date) actionError.value = caught instanceof Error ? caught.message : 'Не удалось обновить действие.'
+    if (currentScope === scopeVersion && organizationId === props.organizationId && userId === props.userId && date === props.date) actionError.value = caught instanceof Error ? caught.message : t('workdayActions.updateError')
   } finally {
     if (currentScope === scopeVersion && busyId.value === item.id) busyId.value = ''
   }
@@ -70,34 +72,38 @@ function saveReschedule(item: RepeatVisit) {
     if (!utc) return
     void runAction(item, () => rescheduleRepeatVisitAction(props.organizationId, item.id, item.version, utc))
   } catch (caught) {
-    actionError.value = caught instanceof Error ? caught.message : 'Укажите корректный срок связи.'
+    actionError.value = caught instanceof Error ? caught.message : t('workdayActions.invalidContactTime')
   }
 }
 
+function formatVisitDate(value: string) {
+  return parseDateOnly(value.slice(0, 10))?.toLocaleDateString(formattingCulture.value, { year: 'numeric', month: '2-digit', day: '2-digit' }) ?? ''
+}
+
 function formatDeadline(item: RepeatVisit) {
-  return item.contactByUtc ? new Intl.DateTimeFormat('ru-RU', { timeZone: item.timeZoneId, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(item.contactByUtc)) : ''
+  return item.contactByUtc ? new Intl.DateTimeFormat(formattingCulture.value, { timeZone: item.timeZoneId, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(item.contactByUtc)) : ''
 }
 </script>
 
 <template>
-  <UiButton variant="secondary" aria-haspopup="dialog" :aria-expanded="isOpen" @click="isOpen = true">Повторные визиты <span class="workday-repeat__count">{{ error ? '!' : result?.totalCount ?? '…' }}</span></UiButton>
-  <UiModal :open="isOpen" title="Повторные визиты" @close="!busyId && (isOpen = false)">
-    <section class="workday-repeat" aria-label="Повторные визиты">
-      <header><h3>Связаться по повторным визитам <span v-if="result?.totalCount">{{ result.totalCount }}</span></h3></header>
-      <p v-if="!result && !error" role="status">Загружаем действия…</p>
-      <p v-else-if="result && !result.totalCount" class="workday-repeat__empty">Нет действий на выбранный день и просроченных</p>
-      <p v-if="error" class="workday-repeat__error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
+  <UiButton variant="secondary" aria-haspopup="dialog" :aria-expanded="isOpen" @click="isOpen = true">{{ t('workdayActions.repeatVisits') }} <span class="workday-repeat__count">{{ error ? '!' : result?.totalCount ?? '…' }}</span></UiButton>
+  <UiModal :open="isOpen" :title="t('workdayActions.repeatVisits')" @close="!busyId && (isOpen = false)">
+    <section class="workday-repeat" :aria-label="t('workdayActions.repeatVisits')">
+      <header><h3>{{ t('workdayActions.contactRepeats') }} <span v-if="result?.totalCount">{{ result.totalCount }}</span></h3></header>
+      <p v-if="!result && !error" role="status">{{ t('workdayActions.loading') }}</p>
+      <p v-else-if="result && !result.totalCount" class="workday-repeat__empty">{{ t('workdayActions.empty') }}</p>
+      <p v-if="error" class="workday-repeat__error" role="alert">{{ error }} <button type="button" @click="load">{{ t('workdayActions.retry') }}</button></p>
       <p v-if="actionError" class="workday-repeat__error" role="alert">{{ actionError }}</p>
       <article v-for="item in result?.items" :key="item.id" class="workday-repeat__row">
-        <div><strong>Связаться с клиентом: <a :href="`#clients/${item.organizationClientId}`">{{ item.clientName }}</a> до {{ formatDeadline(item) }}</strong><span v-if="!item.responsibleUserId">Общее действие · для всех сотрудников</span><span>{{ item.vehicleName }} · {{ item.serviceName }}</span><span v-if="item.reason">{{ item.reason }}</span><small>Предлагаемый визит: {{ item.suggestedVisitDate.split('-').reverse().join('.') }}</small></div>
+        <div><strong><a :href="`#clients/${item.organizationClientId}`">{{ t('workdayActions.contact', { name: item.clientName }) }}</a> · {{ t('workdayActions.deadline', { time: formatDeadline(item) }) }}</strong><span v-if="!item.responsibleUserId">{{ t('workdayActions.shared') }}</span><span>{{ item.vehicleName }} · {{ item.serviceName }}</span><span v-if="item.reason">{{ item.reason }}</span><small>{{ t('workdayActions.suggestedVisit', { date: formatVisitDate(item.suggestedVisitDate) }) }}</small></div>
         <div v-if="item.canManageContact" class="workday-repeat__actions">
-          <UiButton variant="secondary" :disabled="!!busyId" @click="runAction(item, () => completeRepeatVisitAction(organizationId, item.id, item.version))">{{ busyId === item.id ? 'Сохраняем…' : 'Выполнено' }}</UiButton>
-          <UiButton variant="secondary" :disabled="!!busyId" @click="startReschedule(item)">Перенести срок</UiButton>
+          <UiButton variant="secondary" :disabled="!!busyId" @click="runAction(item, () => completeRepeatVisitAction(organizationId, item.id, item.version))">{{ busyId === item.id ? t('workdayActions.saving') : t('workdayActions.done') }}</UiButton>
+          <UiButton variant="secondary" :disabled="!!busyId" @click="startReschedule(item)">{{ t('workdayActions.reschedule') }}</UiButton>
         </div>
-        <div v-if="item.canBook && !item.bookedMaintenanceId" class="workday-repeat__booking"><UiButton variant="secondary" :href="`#maintenance/new?repeatVisit=${encodeURIComponent(item.id)}`">Создать запись</UiButton></div>
-        <form v-if="rescheduleId === item.id" class="workday-repeat__reschedule" @submit.prevent="saveReschedule(item)"><UiDatePicker v-model="rescheduleDraft.date" label="Связаться до" :disabled="!!busyId" required /><UiTimePicker v-model="rescheduleDraft.time" label="Время" :disabled="!!busyId" required /><UiButton type="submit" :disabled="!!busyId">Сохранить срок</UiButton><UiButton type="button" variant="secondary" :disabled="!!busyId" @click="rescheduleId = ''">Отмена</UiButton></form>
+        <div v-if="item.canBook && !item.bookedMaintenanceId" class="workday-repeat__booking"><UiButton variant="secondary" :href="`#maintenance/new?repeatVisit=${encodeURIComponent(item.id)}`">{{ t('workdayActions.createBooking') }}</UiButton></div>
+        <form v-if="rescheduleId === item.id" class="workday-repeat__reschedule" @submit.prevent="saveReschedule(item)"><UiDatePicker v-model="rescheduleDraft.date" :label="t('workdayActions.contactBy')" :disabled="!!busyId" required /><UiTimePicker v-model="rescheduleDraft.time" :label="t('workdayActions.time')" :disabled="!!busyId" required /><UiButton type="submit" :disabled="!!busyId">{{ t('workdayActions.saveDeadline') }}</UiButton><UiButton type="button" variant="secondary" :disabled="!!busyId" @click="rescheduleId = ''">{{ t('workdayActions.cancel') }}</UiButton></form>
       </article>
-      <nav v-if="result && result.totalCount > result.pageSize" class="workday-repeat__pagination" aria-label="Страницы действий"><UiButton variant="secondary" :disabled="page <= 1" @click="page--">Назад</UiButton><span>{{ page }} / {{ Math.ceil(result.totalCount / result.pageSize) }}</span><UiButton variant="secondary" :disabled="page * result.pageSize >= result.totalCount" @click="page++">Дальше</UiButton></nav>
+      <nav v-if="result && result.totalCount > result.pageSize" class="workday-repeat__pagination" :aria-label="t('workdayActions.pages')"><UiButton variant="secondary" :disabled="page <= 1" @click="page--">{{ t('workdayActions.back') }}</UiButton><span>{{ page }} / {{ Math.ceil(result.totalCount / result.pageSize) }}</span><UiButton variant="secondary" :disabled="page * result.pageSize >= result.totalCount" @click="page++">{{ t('workdayActions.next') }}</UiButton></nav>
     </section>
   </UiModal>
 </template>

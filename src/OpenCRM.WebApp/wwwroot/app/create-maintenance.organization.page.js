@@ -1,10 +1,14 @@
-﻿Vue.component('v-select', VueSelect.VueSelect);
+﻿var maintenanceLegacyText = JSON.parse(document.getElementById('maintenance-legacy-messages').dataset.messages);
+
+Vue.component('v-select', VueSelect.VueSelect);
 Vue.component('vue-ctk-date-time-picker', window['vue-ctk-date-time-picker']);
 
 new Vue({
     el: '#create-maintenance-form',
     data: function () {
         return {
+            localizedText: maintenanceLegacyText,
+            regionalCurrencyCode: null,
             maintenanceStatuses: {
                 planned: 1,
                 inProgress: 2,
@@ -24,7 +28,7 @@ new Vue({
                 status: 1,
                 type: 1,
                 plannedEndDate: null,
-                plannedDate: moment().format('YYYY-MM-DD'),
+                plannedDate: window.OpenCRMRegional.today(),
                 plannedStartTime: null,
                 plannedEndTime: null,
                 completedDate: null,
@@ -37,10 +41,10 @@ new Vue({
             photos: [],
             selectedFiles: [],
             types: [
-                { id: 1, name: 'Ремонт и обслуживание' },
-                { id: 2, name: 'Плановое ТО' },
-                { id: 3, name: 'Заправка топливом' },
-                { id: 100, name: 'Другое' }
+                { id: 1, name: maintenanceLegacyText.typeRepair },
+                { id: 2, name: maintenanceLegacyText.typeScheduled },
+                { id: 3, name: maintenanceLegacyText.typeFuel },
+                { id: 100, name: maintenanceLegacyText.typeOther }
             ],
             scenarioWorkTypes: Array.isArray(window.maintenanceScenarioWorkTypes)
                 ? window.maintenanceScenarioWorkTypes
@@ -49,10 +53,10 @@ new Vue({
                 ? window.maintenanceScenarioMaterials
                 : (typeof maintenanceScenarioMaterials !== 'undefined' && Array.isArray(maintenanceScenarioMaterials) ? maintenanceScenarioMaterials : []),
             statuses: [
-                { id: 1, name: 'Запланировано' },
-                { id: 2, name: 'В работе' },
-                { id: 3, name: 'Выполнено' },
-                { id: 4, name: 'Отменено' }
+                { id: 1, name: maintenanceLegacyText.statusPlanned },
+                { id: 2, name: maintenanceLegacyText.statusInProgress },
+                { id: 3, name: maintenanceLegacyText.statusCompleted },
+                { id: 4, name: maintenanceLegacyText.statusCancelled }
             ],
             maxMileage: 999999,
             mileageUnit: typeof vehicleMileageUnit !== 'undefined' ? vehicleMileageUnit : 1,
@@ -89,19 +93,19 @@ new Vue({
         },
         mileageInputLabel: function () {
             if (this.selectedMaintenance.status === this.maintenanceStatuses.completed) {
-                return this.mileageUnit === 2 ? 'Моточасы' : 'Пробег, км';
+                return this.mileageUnit === 2 ? maintenanceLegacyText.mileageHours : maintenanceLegacyText.mileageKilometers;
             }
 
-            return this.mileageUnit === 2 ? 'Плановая наработка' : 'Плановый пробег, км';
+            return this.mileageUnit === 2 ? maintenanceLegacyText.mileagePlannedHours : maintenanceLegacyText.mileagePlannedKilometers;
         },
         mileageInputPlaceholder: function () {
             if (this.selectedMaintenance.status === this.maintenanceStatuses.completed) {
-                return this.mileageUnit === 2 ? 'Текущая наработка в моточасах' : 'Текущий пробег техники';
+                return this.mileageUnit === 2 ? maintenanceLegacyText.mileageCurrentHours : maintenanceLegacyText.mileageCurrentMileage;
             }
 
             return this.mileageUnit === 2
-                ? 'На какой наработке планируется обслуживание'
-                : 'На каком пробеге планируется обслуживание';
+                ? maintenanceLegacyText.mileagePlannedAtHours
+                : maintenanceLegacyText.mileagePlannedAtMileage;
         },
         maintenanceDetailsTotal: function () {
             return this.selectedMaintenance.maintenanceDetails.reduce(function (total, detail) {
@@ -110,7 +114,7 @@ new Vue({
         },
         maintenanceDetailsTotalText: function () {
             if (!this.maintenanceDetailsTotal) {
-                return 'стоимость не указана';
+                return maintenanceLegacyText.valuePriceUnspecified;
             }
 
             return this.formatPrice(this.maintenanceDetailsTotal);
@@ -124,8 +128,8 @@ new Vue({
                 var raw = value.trim();
                 if (!raw) return null;
 
-                var ruDate = moment(raw, 'DD.MM.YYYY', true);
-                if (ruDate.isValid()) return ruDate.format('YYYY-MM-DD');
+                var localizedDate = moment(raw, maintenanceLegacyText.dateCalendarFormat, true);
+                if (localizedDate.isValid()) return localizedDate.format('YYYY-MM-DD');
 
                 var isoDate = moment(raw.substring(0, 10), 'YYYY-MM-DD', true);
                 if (isoDate.isValid()) return isoDate.format('YYYY-MM-DD');
@@ -142,7 +146,7 @@ new Vue({
 
         formatDateForPicker: function (value) {
             var date = this.normalizeDateForServer(value);
-            return date ? moment(date, 'YYYY-MM-DD', true).format('DD.MM.YYYY') : null;
+            return date ? moment(date, 'YYYY-MM-DD', true).format(maintenanceLegacyText.dateCalendarFormat) : null;
         },
         normalizeTimeForServer: function (value) {
             if (!value) return null;
@@ -213,24 +217,24 @@ new Vue({
         },
         validateMainFields: function () {
             if (this.plannedDateRequired && !this.selectedMaintenance.plannedDate) {
-                this.showError('Пожалуйста, укажите плановую дату обслуживания');
+                this.showError(maintenanceLegacyText.validationPlannedDate);
                 return false;
             }
 
             var startTime = this.normalizeTimeForServer(this.selectedMaintenance.plannedStartTime);
             var endTime = this.normalizeTimeForServer(this.selectedMaintenance.plannedEndTime);
             if ((startTime && !endTime) || (!startTime && endTime)) {
-                this.showError('Укажите время начала и окончания обслуживания');
+                this.showError(maintenanceLegacyText.validationPlannedTimeRequired);
                 return false;
             }
 
             if (startTime && endTime && (this.selectedMaintenance.plannedEndDate || this.selectedMaintenance.plannedDate) + endTime <= this.selectedMaintenance.plannedDate + startTime) {
-                this.showError('Время окончания должно быть позже времени начала');
+                this.showError(maintenanceLegacyText.validationEndAfterStart);
                 return false;
             }
 
             if (this.showsCompletedDate && !this.selectedMaintenance.completedDate) {
-                this.showError('Пожалуйста, укажите фактическую дату выполнения');
+                this.showError(maintenanceLegacyText.validationCompletedDate);
                 return false;
             }
 
@@ -241,12 +245,12 @@ new Vue({
 
             this.selectedMaintenance.maintenanceDetails.forEach(function (detail, index) {
                 if (!detail.name || !detail.name.trim()) {
-                    this.showError('Пожалуйста, укажите название позиции #' + (index + 1));
+                    this.showError(maintenanceLegacyText.validationPositionName.replace('{0}', index + 1));
                     isValid = false;
                 }
 
                 if (detail.price != null && detail.price < 0) {
-                    this.showError('Стоимость позиции #' + (index + 1) + ' не может быть отрицательной');
+                    this.showError(maintenanceLegacyText.validationPositionPrice.replace('{0}', index + 1));
                     isValid = false;
                 }
             }.bind(this));
@@ -256,14 +260,14 @@ new Vue({
         changeStatus: function () {
             if (this.selectedMaintenance.status === this.maintenanceStatuses.completed) {
                 if (!this.selectedMaintenance.completedDate) {
-                    this.selectedMaintenance.completedDate = this.selectedMaintenance.plannedDate || moment().format('YYYY-MM-DD');
+                    this.selectedMaintenance.completedDate = this.selectedMaintenance.plannedDate || window.OpenCRMRegional.today();
                 }
 
                 return;
             }
 
             if (!this.selectedMaintenance.plannedDate) {
-                this.selectedMaintenance.plannedDate = this.selectedMaintenance.completedDate || moment().format('YYYY-MM-DD');
+                this.selectedMaintenance.plannedDate = this.selectedMaintenance.completedDate || window.OpenCRMRegional.today();
             }
 
             this.selectedMaintenance.completedDate = null;
@@ -324,13 +328,13 @@ new Vue({
             var maxSize = 100 * 1024 * 1024;
 
             if (totalSize > maxSize) {
-                this.showError('Общий размер файлов (' + this.formatFileSize(totalSize) + ') превышает максимально допустимый 100 МБ');
+                this.showError(maintenanceLegacyText.validationUploadSize.replace('{0}', this.formatFileSize(totalSize)));
                 this.resetFileInput();
                 return;
             }
 
             if (this.selectedFiles.length + files.length > 10) {
-                this.showError('Можно загрузить не более 10 фотографий');
+                this.showError(maintenanceLegacyText.validationPhotoCount);
                 this.resetFileInput();
                 return;
             }
@@ -368,15 +372,10 @@ new Vue({
             var i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
-        formatPrice: function (price) {
-            if (typeof price !== 'number') {
-                return '0 руб.';
-            }
+        formatPrice: function (price, currencyCode) {
+            const selectedCurrency = currencyCode || this.maintenance?.currencyCode || this.selectedMaintenance?.currencyCode || this.regionalCurrencyCode;
 
-            return price.toLocaleString('ru-RU', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-            }) + ' руб.';
+            return window.OpenCRMRegional.formatMoney(price, selectedCurrency);
         },
         removePhoto: function (index) {
             if (this.photos[index].preview) {
@@ -453,8 +452,8 @@ new Vue({
 
                 return true;
             } catch (error) {
-                this.photoUploadErrorMessage = 'Обслуживание сохранено, но фотографии не загрузились. Можно повторить загрузку ниже.';
-                this.handleApiError(error, 'Произошла ошибка загрузки фотографий');
+                this.photoUploadErrorMessage = maintenanceLegacyText.validationUploadRetry;
+                this.handleApiError(error, maintenanceLegacyText.validationUploadPhotoError);
                 this.isUploading = false;
                 return false;
             }
@@ -519,13 +518,13 @@ new Vue({
                 this.saveModal = false;
                 this.redirectToCar();
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка создания обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationCreateError);
                 this.saveModal = false;
             }
         },
         uploadPhotos: async function () {
             if (!this.createdMaintenanceId) {
-                this.showError('Сначала сохраните обслуживание, затем загрузите фотографии.');
+                this.showError(maintenanceLegacyText.validationSaveBeforeUpload);
                 return;
             }
 
@@ -541,6 +540,7 @@ new Vue({
         }
     },
     mounted: function () {
+        window.OpenCRMRegional.initializeLegacyVm(this);
         this.click_addMaintenanceDetail();
         this.changeStatus();
 

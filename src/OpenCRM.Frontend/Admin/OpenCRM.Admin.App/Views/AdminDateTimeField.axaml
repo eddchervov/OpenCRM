@@ -1,8 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="using:OpenCRM.Admin.App.Localization"
              x:Class="OpenCRM.Admin.App.Views.AdminDateTimeField"
              x:Name="Root"
-             xml:lang="ru-RU"
              MinWidth="260">
   <UserControl.Resources>
     <ControlTheme x:Key="AdminCalendarDayTheme" TargetType="CalendarDayButton">
@@ -113,13 +112,13 @@
       <Setter Property="FontSize" Value="14" />
     </Style>
     <Style Selector="TimePickerPresenter /template/ TextBlock#PART_HourTextBlock">
-      <Setter Property="Text" Value="ЧАС" />
+      <Setter Property="Text" Value="{loc:LocalizedText Key=core.dateTime.hours}" />
       <Setter Property="FontSize" Value="10" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="#98A4AE" />
     </Style>
     <Style Selector="TimePickerPresenter /template/ TextBlock#PART_MinuteTextBlock">
-      <Setter Property="Text" Value="МИНУТЫ" />
+      <Setter Property="Text" Value="{loc:LocalizedText Key=core.dateTime.minutes}" />
       <Setter Property="FontSize" Value="10" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="#98A4AE" />
@@ -142,7 +141,7 @@
         <Button x:Name="ClearButton" Grid.Column="1" Content="×" Click="OnClearClick"
                 Background="Transparent" BorderThickness="0" Padding="8,0"
                 MinWidth="28" MinHeight="32" FontSize="18" Foreground="#AAB8C5"
-                ToolTip.Tip="Очистить дату и время"
+                ToolTip.Tip="{loc:LocalizedText Key=core.dateTime.clearLabel}"
                 AutomationProperties.AutomationId="AdminDateTimeFieldClear" />
       </Grid>
     </Border>
@@ -152,11 +151,11 @@
         <StackPanel Spacing="12">
           <Grid ColumnDefinitions="*,Auto">
             <StackPanel Spacing="2">
-              <TextBlock Text="Дата и время" FontSize="16" FontWeight="SemiBold" Foreground="#F3F5F7" />
-              <TextBlock Text="Выберите дату, затем время" FontSize="12" Foreground="#AAB4BE" />
+              <TextBlock Text="{loc:LocalizedText Key=core.dateTime.label}" FontSize="16" FontWeight="SemiBold" Foreground="#F3F5F7" />
+              <TextBlock Text="{loc:LocalizedText Key=core.dateTime.help}" FontSize="12" Foreground="#AAB4BE" />
             </StackPanel>
             <Border Grid.Column="1" Background="#222A31" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
-              <TextBlock Text="24 ч" FontSize="11" Foreground="#C5D7E6" />
+              <TextBlock Text="{loc:LocalizedText Key=core.dateTime.hourFormat}" FontSize="11" Foreground="#C5D7E6" />
             </Border>
           </Grid>
           <Border Background="#111315" BorderBrush="#2C3339" BorderThickness="1" CornerRadius="9" Padding="8">
@@ -166,25 +165,25 @@
           </Border>
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
             <StackPanel Spacing="5">
-              <TextBlock Text="ВРЕМЯ" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Foreground="#98A4AE" />
+              <TextBlock Text="{loc:LocalizedText Key=core.dateTime.time}" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Foreground="#98A4AE" />
               <TimePicker x:Name="TimeControl" ClockIdentifier="24HourClock" MinuteIncrement="1" Width="180" MinWidth="0" HorizontalAlignment="Left"
                           UseSeconds="False"
                           AutomationProperties.AutomationId="AdminDateTimeTime" />
             </StackPanel>
-            <Button Grid.Column="1" Content="Сегодня" Click="OnTodayClick" VerticalAlignment="Bottom"
+            <Button Grid.Column="1" Content="{loc:LocalizedText Key=core.today}" Click="OnTodayClick" VerticalAlignment="Bottom"
                     Background="#222A31" BorderBrush="#3B4D5C" BorderThickness="1"
                     Foreground="#D3E3F0" Padding="12,8"
                     AutomationProperties.AutomationId="AdminDateTimeToday" />
           </Grid>
           <Border Height="1" Background="#2C3339" />
           <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <Button Content="Очистить" Click="OnClearDraftClick" HorizontalAlignment="Left"
+            <Button Content="{loc:LocalizedText Key=core.clear}" Click="OnClearDraftClick" HorizontalAlignment="Left"
                     Background="Transparent" Foreground="#BAC4CD" Padding="8,6"
                     AutomationProperties.AutomationId="AdminDateTimeClearDraft" />
-            <Button Grid.Column="1" Content="Отмена" Click="OnCancelClick"
+            <Button Grid.Column="1" Content="{loc:LocalizedText Key=core.cancel}" Click="OnCancelClick"
                     Background="#222629" Foreground="#D2D7DC" Padding="14,8"
                     AutomationProperties.AutomationId="AdminDateTimeCancel" />
-            <Button Grid.Column="2" Content="Готово" Click="OnDoneClick" Classes="primary"
+            <Button Grid.Column="2" Content="{loc:LocalizedText Key=core.done}" Click="OnDoneClick" Classes="primary"
                     Background="#344554" BorderBrush="#59758C" BorderThickness="1"
                     Foreground="#F4F8FB" Padding="16,8"
                     AutomationProperties.AutomationId="AdminDateTimeDone" />

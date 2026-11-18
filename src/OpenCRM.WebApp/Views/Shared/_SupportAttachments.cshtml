@@ -1,13 +1,23 @@
 <link rel="stylesheet" href="~/css/support-attachments.css" asp-append-version="true" />
-<div class="support-attachments">
+<div class="support-attachments"
+     data-formatting-culture="@System.Globalization.CultureInfo.CurrentCulture.Name"
+     data-error-extension="@Text["personal.support.attachments.extensionError"]"
+     data-error-file-size="@Text["personal.support.attachments.fileSizeError"]"
+     data-error-file-count="@Text["personal.support.attachments.fileCountError"]"
+     data-error-total-size="@Text["personal.support.attachments.totalSizeError"]"
+     data-remove-title="@Text["personal.support.attachments.removeTitle"]"
+     data-remove-label-template="@Text["personal.support.attachments.removeLabelTemplate"]"
+     data-bytes="@Text["personal.support.attachments.bytes"]"
+     data-kilobytes="@Text["personal.support.attachments.kilobytes"]"
+     data-megabytes="@Text["personal.support.attachments.megabytes"]">
     <div class="support-attachments__toolbar">
         <input class="support-attachments__input" id="support-attachments" name="Attachments" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.log" aria-describedby="support-attachments-help support-attachments-status" />
-        <label class="support-attachments__add" for="support-attachments" title="JPG, PNG, WebP, PDF, TXT, LOG">
-            <i class="fa fa-paperclip" aria-hidden="true"></i> Прикрепить файлы
+        <label class="support-attachments__add" for="support-attachments" title="@Text["personal.support.attachments.fileTypes"]">
+            <i class="fa fa-paperclip" aria-hidden="true"></i> @Text["personal.support.attachments.add"]
         </label>
-        <span id="support-attachments-help">До 5 файлов · 10 МБ каждый · 20 МБ всего</span>
+        <span id="support-attachments-help">@Text["personal.support.attachments.limits"]</span>
     </div>
-    <ul id="support-attachments-list" aria-label="Выбранные файлы"></ul>
+    <ul id="support-attachments-list" aria-label="@Text["personal.support.attachments.selected"]"></ul>
     <p class="support-attachments__error" id="support-attachments-status" role="status" aria-live="polite"></p>
 </div>
 <script src="~/js/support-attachments.js" asp-append-version="true"></script>

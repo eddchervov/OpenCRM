@@ -2,7 +2,7 @@
 @using OpenCRM.WebApp.Navigation
 
 @{
-    ViewData["Title"] = "Организации";
+    ViewData["Title"] = Text["entry.organizations"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "organizations-entry";
     ViewData["WorkspaceEntry"] = true;
@@ -13,13 +13,13 @@
     <div class="entry-shell">
         <header class="entry-heading">
             <div>
-                <h1>Организации</h1>
-                <p>Выберите, где будете работать сегодня.</p>
+                <h1>@Text["entry.organizations"]</h1>
+                <p>@Text["entry.chooseOrganization"]</p>
             </div>
             <div class="entry-heading-actions">
                 @if (Model.CanCreateOrganization)
                 {
-                    <a class="btn entry-primary" href="/organizations/create"><span aria-hidden="true">+</span> Создать организацию</a>
+                    <a class="btn entry-primary" href="/organizations/create"><span aria-hidden="true">+</span> @Text["entry.createOrganization"]</a>
                 }
             </div>
         </header>
@@ -38,19 +38,19 @@
                 @Model.CreateOrganizationMessage
                 @if (Model.Overview.HasArchivedOrganizations)
                 {
-                    <a href="#organization-archive-tab">Откройте архив, чтобы восстановить организацию.</a>
+                    <a href="#organization-archive-tab">@Text["entry.openArchive"]</a>
                 }
             </div>
         }
 
         <partial name="_PendingOrganizationInvitations" model="Model.Invitations" />
 
-        <div class="entry-tabs" role="tablist" aria-label="Список организаций">
+        <div class="entry-tabs" role="tablist" aria-label="@Text["entry.organizationList"]">
             <button class="active" id="organization-active-tab" data-bs-toggle="tab" data-bs-target="#organization-active-list" type="button" role="tab" aria-controls="organization-active-list" aria-selected="true">
-                Активные <span>@Model.Overview.Organizations.Count</span>
+                @Text["entry.active"] <span>@Model.Overview.Organizations.Count</span>
             </button>
             <button id="organization-archive-tab" data-bs-toggle="tab" data-bs-target="#organization-archive-list" type="button" role="tab" aria-controls="organization-archive-list" aria-selected="false">
-                Архив <span>@Model.Overview.ArchivedOrganizations.Count</span>
+                @Text["entry.archive"] <span>@Model.Overview.ArchivedOrganizations.Count</span>
             </button>
         </div>
         <div class="tab-content">
@@ -59,11 +59,11 @@
                 {
                     <div class="entry-empty">
                         <i class="fa fa-building-o" aria-hidden="true"></i>
-                        <h2>Ваше рабочее пространство</h2>
-                        <p>Создайте организацию, чтобы вести клиентов, автомобили и работу команды.</p>
+                        <h2>@Text["entry.yourWorkspace"]</h2>
+                        <p>@Text["entry.createOrganizationHelp"]</p>
                         @if (Model.CanCreateOrganization)
                         {
-                            <a class="btn entry-primary" href="/organizations/create">Создать организацию</a>
+                            <a class="btn entry-primary" href="/organizations/create">@Text["entry.createOrganization"]</a>
                         }
                     </div>
                 }
@@ -74,9 +74,11 @@
                         {
                             Model.WorkspaceAccessByOrganizationId.TryGetValue(organization.Id, out var workspaceAccess);
                             var hasDedicatedWorkspace = OrganizationWorkspaceUrlHelper.HasDedicatedWorkspace(organization.PrimaryScenarioCode);
+                            var scenario = Text[$"organization.create.scenario.{organization.PrimaryScenarioCode}.title"];
+                            var role = Text[$"organization.role.{organization.CurrentUserRoleCode}"];
 
                             <article class="entry-organization">
-                                <div class="entry-organization-type"><i class="fa fa-building-o" aria-hidden="true"></i> @organization.PrimaryScenarioName</div>
+                                <div class="entry-organization-type"><i class="fa fa-building-o" aria-hidden="true"></i> @(scenario.ResourceNotFound ? organization.PrimaryScenarioName : scenario.Value)</div>
                                 <h2>
                                     @if (hasDedicatedWorkspace)
                                     {
@@ -92,25 +94,25 @@
                                     <p class="entry-organization-description">@organization.Description</p>
                                 }
                                 <div class="entry-organization-meta">
-                                    <span>@organization.CurrentUserRoleName</span>
-                                    <span><i class="fa fa-users" aria-hidden="true"></i> Участников: @organization.MembersCount</span>
+                                    <span>@(role.ResourceNotFound ? organization.CurrentUserRoleName : role.Value)</span>
+                                    <span><i class="fa fa-users" aria-hidden="true"></i> @Text["entry.members"] @organization.MembersCount</span>
                                 </div>
                                 @if (workspaceAccess?.IsReadOnly == true)
                                 {
-                                    <div class="entry-access-note"><i class="fa fa-lock" aria-hidden="true"></i> Режим просмотра</div>
+                                    <div class="entry-access-note"><i class="fa fa-lock" aria-hidden="true"></i> @Text["entry.readOnly"]</div>
                                 }
                                 <div class="entry-organization-actions">
                                     @if (hasDedicatedWorkspace)
                                     {
-                                        <a class="btn entry-primary" href="@OrganizationWorkspaceUrlHelper.Resolve(organization)">Открыть <span aria-hidden="true">→</span></a>
+                                        <a class="btn entry-primary" href="@OrganizationWorkspaceUrlHelper.Resolve(organization)">@Text["entry.open"] <span aria-hidden="true">→</span></a>
                                     }
                                     else
                                     {
-                                        <span class="entry-muted">Рабочее пространство пока недоступно</span>
+                                        <span class="entry-muted">@Text["entry.workspaceUnavailable"]</span>
                                     }
                                     @if (organization.CanManageSettings && hasDedicatedWorkspace)
                                     {
-                                        <a class="btn entry-secondary" href='@OrganizationWorkspaceUrlHelper.Resolve(organization, "settings")'>Настройки</a>
+                                        <a class="btn entry-secondary" href='@OrganizationWorkspaceUrlHelper.Resolve(organization, "settings")'>@Text["entry.settings"]</a>
                                     }
                                 </div>
                             </article>
@@ -123,27 +125,27 @@
                 {
                     <div class="entry-empty">
                         <i class="fa fa-archive" aria-hidden="true"></i>
-                        <h2>Архив пуст</h2>
-                        <p>Здесь будут организации, которые вы перенесли в архив.</p>
+                        <h2>@Text["entry.archiveEmpty"]</h2>
+                        <p>@Text["entry.archiveHelp"]</p>
                     </div>
                 }
                 else
                 {
-                    <div class="alert alert-warning">Организации хранятся в архиве 30 дней. До окончания этого срока их можно восстановить.</div>
+                    <div class="alert alert-warning">@Text["entry.archiveRetention"]</div>
                     <div class="entry-organization-grid">
                         @foreach (var organization in Model.Overview.ArchivedOrganizations)
                         {
                             <article class="entry-organization">
-                                <div class="entry-organization-type"><i class="fa fa-archive" aria-hidden="true"></i> В архиве</div>
+                                <div class="entry-organization-type"><i class="fa fa-archive" aria-hidden="true"></i> @Text["entry.archived"]</div>
                                 <h2>@organization.Name</h2>
-                                <p class="entry-muted">Архивирована: @(organization.ArchiveDate?.ToLocalTime().ToString("dd.MM.yyyy") ?? "не указано")</p>
+                                <p class="entry-muted">@Text["entry.archivedAt", organization.ArchiveDate?.ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture) ?? Text["entry.notSpecified"].Value]</p>
                                 <div class="entry-access-note">
                                     @(organization.DaysLeft switch
                                     {
-                                        null => "Срок удаления уточняется",
-                                        <= 0 => "Будет удалена сегодня",
-                                        1 => "Удаление через 1 день",
-                                        _ => $"Удаление через {organization.DaysLeft} дней"
+                                        null => Text["entry.deleteUnknown"].Value,
+                                        <= 0 => Text["entry.deleteToday"].Value,
+                                        1 => Text["entry.deleteTomorrow"].Value,
+                                        _ => Text["entry.deletedIn", organization.DaysLeft].Value
                                     })
                                 </div>
                                 <div class="entry-organization-actions">
@@ -151,7 +153,7 @@
                                     {
                                         <form asp-controller="Organizations" asp-action="Restore" asp-route-organizationId="@organization.Id" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn entry-secondary">Восстановить</button>
+                                            <button type="submit" class="btn entry-secondary">@Text["entry.restore"]</button>
                                         </form>
                                     }
                                 </div>

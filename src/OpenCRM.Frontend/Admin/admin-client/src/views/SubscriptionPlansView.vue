@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminCatalogMessages'
 import { computed, onMounted, ref } from 'vue'
 import { ApiError } from '@/api/ApiError'
 import { isFreePlan, isRequiredFreeLimit } from '@/utils/subscriptionPolicy'
@@ -14,6 +16,8 @@ import {
 import type { AdminPlanFeature } from '@/models/AdminPlanFeature'
 import type { AdminSubscriptionPlan } from '@/models/AdminSubscriptionPlan'
 import type { AdminSubscriptionPlanForm } from '@/models/AdminSubscriptionPlanForm'
+
+const { t } = useLocalization()
 
 const plans = ref<AdminSubscriptionPlan[]>([])
 const selectedPlan = ref<AdminSubscriptionPlan | null>(null)
@@ -52,7 +56,7 @@ async function loadPlans(selectedId?: number): Promise<void> {
     }
   } catch (error) {
     closeEditor()
-    errorMessage.value = getErrorMessage(error, 'Не удалось загрузить тарифы.')
+    errorMessage.value = getErrorMessage(error, t('adminCatalog.loadPlansError'))
   } finally {
     isLoading.value = false
   }
@@ -89,7 +93,7 @@ async function selectPlan(plan: AdminSubscriptionPlan, clearStatus = true): Prom
     }
   } catch (error) {
     if (requestId === featuresRequest) {
-      errorMessage.value = getErrorMessage(error, 'Не удалось загрузить возможности тарифа.')
+      errorMessage.value = getErrorMessage(error, t('adminCatalog.loadPlanFeaturesError'))
     }
   } finally {
     if (requestId === featuresRequest) {
@@ -127,10 +131,10 @@ async function savePlan(): Promise<void> {
 
     await loadPlans(saved.id)
     if (!errorMessage.value) {
-      successMessage.value = 'Тариф сохранён.'
+      successMessage.value = t('adminCatalog.planSaved')
     }
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось сохранить тариф.')
+    errorMessage.value = getErrorMessage(error, t('adminCatalog.savePlanError'))
   } finally {
     isSaving.value = false
   }
@@ -149,10 +153,10 @@ async function saveFeatures(): Promise<void> {
     const result = await saveAdminPlanFeatures(planId, features.value)
     await loadPlans(planId)
     if (!errorMessage.value) {
-      successMessage.value = result.message || 'Возможности тарифа сохранены.'
+      successMessage.value = result.message || t('adminCatalog.featuresSaved')
     }
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось сохранить возможности тарифа.')
+    errorMessage.value = getErrorMessage(error, t('adminCatalog.savePlanFeaturesError'))
   } finally {
     isSaving.value = false
   }
@@ -166,12 +170,12 @@ async function togglePlan(plan: AdminSubscriptionPlan): Promise<void> {
     successMessage.value = result.message
     await loadPlans()
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось изменить статус тарифа.')
+    errorMessage.value = getErrorMessage(error, t('adminCatalog.togglePlanError'))
   }
 }
 
 async function deletePlan(): Promise<void> {
-  if (!selectedPlan.value || !window.confirm(`Удалить тариф «${selectedPlan.value.name}»?`)) {
+  if (!selectedPlan.value || !window.confirm(t('adminCatalog.deletePlanConfirm', { name: selectedPlan.value.name }))) {
     return
   }
 
@@ -181,10 +185,10 @@ async function deletePlan(): Promise<void> {
   try {
     await deleteAdminSubscriptionPlan(selectedPlan.value.id)
     selectedPlan.value = null
-    successMessage.value = 'Тариф удалён.'
+    successMessage.value = t('adminCatalog.planDeleted')
     await loadPlans()
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось удалить тариф.')
+    errorMessage.value = getErrorMessage(error, t('adminCatalog.deletePlanError'))
   } finally {
     isSaving.value = false
   }
@@ -240,39 +244,39 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 function formatMoney(value: number): string {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code' }).format(value)
 }
 </script>
 
 <template>
   <section class="finance-page">
-    <h1>Тарифы Free и PRO</h1>
-    <p class="muted">Free включается автоматически и действует бессрочно. Варианты PRO задают срок, цену и возможности конкретной организации. Прежние тарифы сохранены отдельно.</p>
+    <h1>{{ t('adminCatalog.plansTitle') }}</h1>
+    <p class="muted">{{ t('adminCatalog.plansIntro') }}</p>
 
     <div class="finance-toolbar finance-toolbar--end">
-      <button class="primary-button" type="button" @click="createPlan">Новый вариант PRO</button>
+      <button class="primary-button" type="button" @click="createPlan">{{ t('adminCatalog.newPro') }}</button>
     </div>
 
     <div v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</div>
     <div v-if="successMessage" class="form-message form-message--success">{{ successMessage }}</div>
-    <div v-if="isLoading && plans.length === 0" class="panel-state">Загрузка…</div>
+    <div v-if="isLoading && plans.length === 0" class="panel-state">{{ t('adminCatalog.loading') }}</div>
 
     <div v-else class="finance-workspace">
       <div class="finance-table-panel">
         <div class="table-wrap">
           <table class="data-table finance-table">
-            <thead><tr><th>Тариф</th><th>Цена</th><th>Срок</th><th>Статус</th><th></th></tr></thead>
+            <thead><tr><th>{{ t('adminCatalog.plan') }}</th><th>{{ t('adminCatalog.price') }}</th><th>{{ t('adminCatalog.duration') }}</th><th>{{ t('adminCatalog.status') }}</th><th></th></tr></thead>
             <tbody>
               <tr v-for="plan in businessPlans" :key="plan.id" :class="{ selected: selectedPlan?.id === plan.id }" @click="selectPlan(plan)">
-                <td><strong>{{ plan.name }}</strong><small>{{ isFreePlan(plan) ? 'Free · системный' : 'PRO' }}</small></td>
-                <td>{{ isFreePlan(plan) ? 'Бесплатно' : formatMoney(plan.effectivePrice) }}</td>
-                <td>{{ isFreePlan(plan) ? 'Бессрочно' : `${plan.durationDays} дней` }}</td>
-                <td><span class="status-badge" :class="plan.isActive ? 'status-badge--success' : 'status-badge--problem'">{{ plan.isActive ? 'Активен' : 'Отключён' }}</span></td>
-                <td><button v-if="!isFreePlan(plan)" class="table-action" type="button" @click.stop="togglePlan(plan)">{{ plan.isActive ? 'Отключить' : 'Включить' }}</button></td>
+                <td><strong>{{ plan.name }}</strong><small>{{ isFreePlan(plan) ? t('adminCatalog.systemFree') : 'PRO' }}</small></td>
+                <td>{{ isFreePlan(plan) ? t('adminCatalog.free') : formatMoney(plan.effectivePrice) }}</td>
+                <td>{{ isFreePlan(plan) ? t('adminCatalog.unlimited') : t('adminCatalog.days', { count: plan.durationDays }) }}</td>
+                <td><span class="status-badge" :class="plan.isActive ? 'status-badge--success' : 'status-badge--problem'">{{ plan.isActive ? t('adminCatalog.active') : t('adminCatalog.inactive') }}</span></td>
+                <td><button v-if="!isFreePlan(plan)" class="table-action" type="button" @click.stop="togglePlan(plan)">{{ plan.isActive ? t('adminCatalog.disable') : t('adminCatalog.enable') }}</button></td>
               </tr>
               <tr v-for="plan in historicalPlans" :key="plan.id" class="historical-row" :class="{ selected: selectedPlan?.id === plan.id }" @click="selectPlan(plan)">
-                <td><strong>{{ plan.name }}</strong><small>{{ plan.isDemoPlan ? 'Демо · прежняя модель' : plan.isDefaultPlan ? 'Базовый · прежняя модель' : 'Личный · прежняя модель' }}</small></td>
-                <td>{{ formatMoney(plan.effectivePrice) }}</td><td>{{ plan.durationDays }} дней</td><td>{{ plan.planTypeCode === 'business' ? 'Совместимость' : 'Только просмотр' }}</td><td></td>
+                <td><strong>{{ plan.name }}</strong><small>{{ plan.isDemoPlan ? t('adminCatalog.demoLegacy') : plan.isDefaultPlan ? t('adminCatalog.defaultLegacy') : t('adminCatalog.personalLegacy') }}</small></td>
+                <td>{{ formatMoney(plan.effectivePrice) }}</td><td>{{ t('adminCatalog.days', { count: plan.durationDays }) }}</td><td>{{ plan.planTypeCode === 'business' ? t('adminCatalog.compatibility') : t('adminCatalog.readOnly') }}</td><td></td>
               </tr>
             </tbody>
           </table>
@@ -281,38 +285,38 @@ function formatMoney(value: number): string {
 
       <div v-if="isCreating || selectedPlan" class="finance-editor finance-editor--wide">
         <form class="finance-form" @submit.prevent="savePlan">
-          <div class="finance-editor__heading"><strong>{{ isCreating ? 'Новый тариф' : selectedPlan?.name }}</strong><button type="button" aria-label="Закрыть" @click="closeEditor">×</button></div>
+          <div class="finance-editor__heading"><strong>{{ isCreating ? t('adminCatalog.newPlan') : selectedPlan?.name }}</strong><button type="button" :aria-label="t('adminCatalog.close')" @click="closeEditor">×</button></div>
           <fieldset :disabled="isReadOnly || isSaving">
-            <label class="span-2"><span>Название</span><input v-model="form.name" maxlength="100" required></label>
-            <label class="span-2"><span>Описание</span><textarea v-model="form.description" maxlength="1000" rows="3"></textarea></label>
-            <label v-if="!isSystemFree"><span>Цена</span><input v-model.number="form.price" type="number" min="0" step="0.01" required></label>
-            <label v-if="!isSystemFree"><span>Цена со скидкой</span><input v-model.number="form.discountPrice" type="number" min="0" step="0.01"></label>
-            <label v-if="!isSystemFree"><span>Срок, дней</span><input v-model.number="form.durationDays" type="number" min="1" required></label>
-            <label><span>Лимит автомобилей</span><input v-model.number="form.vehicleLimit" type="number" min="0" max="1000000" step="1" required></label>
-            <label><span>Порядок</span><input v-model.number="form.order" type="number" required></label>
-            <label class="span-2"><span>Группа</span><input v-model="form.group" maxlength="100" :disabled="isSystemFree"></label>
-            <label class="checkbox-field"><input v-model="form.isActive" type="checkbox" :disabled="isSystemFree"><span>Активен</span></label>
-            <label v-if="selectedPlan?.isDefaultPlan || selectedPlan?.isDemoPlan" class="checkbox-field"><input v-model="form.isDefaultPlan" type="checkbox" @change="setDefaultPlan"><span>По умолчанию</span></label>
-            <label v-if="selectedPlan?.isDefaultPlan || selectedPlan?.isDemoPlan" class="checkbox-field"><input v-model="form.isDemoPlan" type="checkbox" @change="setDemoPlan"><span>Демо-тариф</span></label>
+            <label class="span-2"><span>{{ t('adminCatalog.name') }}</span><input v-model="form.name" maxlength="100" required></label>
+            <label class="span-2"><span>{{ t('adminCatalog.description') }}</span><textarea v-model="form.description" maxlength="1000" rows="3"></textarea></label>
+            <label v-if="!isSystemFree"><span>{{ t('adminCatalog.price') }}</span><input v-model.number="form.price" type="number" min="0" step="0.01" required></label>
+            <label v-if="!isSystemFree"><span>{{ t('adminCatalog.discountPrice') }}</span><input v-model.number="form.discountPrice" type="number" min="0" step="0.01"></label>
+            <label v-if="!isSystemFree"><span>{{ t('adminCatalog.durationDays') }}</span><input v-model.number="form.durationDays" type="number" min="1" required></label>
+            <label><span>{{ t('adminCatalog.vehicleLimit') }}</span><input v-model.number="form.vehicleLimit" type="number" min="0" max="1000000" step="1" required></label>
+            <label><span>{{ t('adminCatalog.order') }}</span><input v-model.number="form.order" type="number" required></label>
+            <label class="span-2"><span>{{ t('adminCatalog.group') }}</span><input v-model="form.group" maxlength="100" :disabled="isSystemFree"></label>
+            <label class="checkbox-field"><input v-model="form.isActive" type="checkbox" :disabled="isSystemFree"><span>{{ t('adminCatalog.active') }}</span></label>
+            <label v-if="selectedPlan?.isDefaultPlan || selectedPlan?.isDemoPlan" class="checkbox-field"><input v-model="form.isDefaultPlan" type="checkbox" @change="setDefaultPlan"><span>{{ t('adminCatalog.default') }}</span></label>
+            <label v-if="selectedPlan?.isDefaultPlan || selectedPlan?.isDemoPlan" class="checkbox-field"><input v-model="form.isDemoPlan" type="checkbox" @change="setDemoPlan"><span>{{ t('adminCatalog.demoPlan') }}</span></label>
           </fieldset>
           <div v-if="!isReadOnly" class="finance-actions">
-            <button class="primary-button" type="submit" :disabled="isSaving">Сохранить тариф</button>
-            <button class="secondary-button" type="button" :disabled="isSaving" @click="closeEditor">Отмена</button>
-            <button v-if="selectedPlan?.canDelete" class="danger-button" type="button" :disabled="isSaving" @click="deletePlan">Удалить</button>
+            <button class="primary-button" type="submit" :disabled="isSaving">{{ t('adminCatalog.savePlan') }}</button>
+            <button class="secondary-button" type="button" :disabled="isSaving" @click="closeEditor">{{ t('adminCatalog.cancel') }}</button>
+            <button v-if="selectedPlan?.canDelete" class="danger-button" type="button" :disabled="isSaving" @click="deletePlan">{{ t('adminCatalog.delete') }}</button>
           </div>
         </form>
 
         <form v-if="selectedPlan && !isReadOnly" class="features-form" @submit.prevent="saveFeatures">
-          <strong>Возможности и лимиты</strong>
-          <span v-if="isLoadingFeatures" role="status">Загрузка возможностей…</span>
-          <p v-if="isSystemFree" class="muted">Бесплатно и бессрочно. Лимиты клиентов и автомобилей обязательны; их значения можно менять. Изменения ниже сохраняются кнопкой «Сохранить возможности».</p>
+          <strong>{{ t('adminCatalog.featuresLimits') }}</strong>
+          <span v-if="isLoadingFeatures" role="status">{{ t('adminCatalog.loadingFeatures') }}</span>
+          <p v-if="isSystemFree" class="muted">{{ t('adminCatalog.freeLimits') }}</p>
           <label v-for="feature in features" :key="feature.featureId" class="feature-row">
             <input v-model="feature.isAssigned" type="checkbox" :disabled="isSaving || isRequiredFreeLimit(selectedPlan, feature.code)">
             <span><strong>{{ feature.name }}</strong><small>{{ feature.description }}</small></span>
             <input v-if="feature.valueType === 'Boolean'" v-model="feature.boolValue" type="checkbox" :disabled="isSaving || !feature.isAssigned">
             <input v-else-if="feature.valueType === 'Integer'" v-model.number="feature.intValue" type="number" min="0" :disabled="isSaving || !feature.isAssigned">
           </label>
-          <button class="secondary-button" type="submit" :disabled="isSaving || isLoadingFeatures || features.length === 0">Сохранить возможности</button>
+          <button class="secondary-button" type="submit" :disabled="isSaving || isLoadingFeatures || features.length === 0">{{ t('adminCatalog.saveFeatures') }}</button>
         </form>
       </div>
     </div>

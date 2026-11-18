@@ -1,9 +1,17 @@
 <script setup lang="ts">
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+import { useLocalization } from '@opencrm/ui'
+import '../schedulerControlMessages'
+
 import { computed, onMounted, ref } from 'vue'
 import { loadVehicleRegistrationPlateFormats, matchesRegistrationPlateSearch, type VehicleRegistrationPlateFormats } from '../vehicleRegistrationPlate'
 import { UiSelect } from '@opencrm/ui'
 import MaintenanceWorkflowActions from './MaintenanceWorkflowActions.vue'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
+
+const workspaceCurrency = useWorkspaceCurrency()
+const { t } = useLocalization()
 
 const plateFormats = ref<VehicleRegistrationPlateFormats | null>(null)
 onMounted(async () => { plateFormats.value = await loadVehicleRegistrationPlateFormats().catch(() => null) })
@@ -28,6 +36,7 @@ interface SchedulerListItem {
   plannedEndTime?: string | null
   location?: string | null
   price?: number | null
+  currencyCode?: string | null
   detailUrl?: string | null
 }
 
@@ -46,10 +55,15 @@ const emit = defineEmits<{
 const search = ref('')
 const selectedLocation = ref('')
 const selectedStatus = ref('')
-const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 })
-const dateFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-const normalizedQuery = computed(() => search.value.trim().toLocaleLowerCase('ru-RU'))
-const locations = computed(() => [...new Set(props.items.map(item => item.location?.trim() || 'Без поста'))].sort((left, right) => left.localeCompare(right, 'ru-RU')))
+function formatMoney(value: number, currencyCode = workspaceCurrency.value) {
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: currencyCode, maximumFractionDigits: 2 }).format(value)
+}
+const dateFormatter = computed(() => new Intl.DateTimeFormat(formattingCulture.value, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))
+const normalizedQuery = computed(() => search.value.trim().toLocaleLowerCase(formattingCulture.value))
+const noLocationValue = '__no-location__'
+const locationValue = (item: SchedulerListItem) => item.location?.trim() || noLocationValue
+const locationLabel = (location: string) => location === noLocationValue ? t('schedulerControl.noPost') : location
+const locations = computed(() => [...new Set(props.items.map(locationValue))].sort((left, right) => locationLabel(left).localeCompare(locationLabel(right), formattingCulture.value)))
 const statuses = computed(() => {
   const options = new Map<string, { value: string, label: string, status: number }>()
   for (const item of props.items) {
@@ -57,17 +71,17 @@ const statuses = computed(() => {
     if (!options.has(value)) options.set(value, { value, label: statusText(item), status: item.status })
   }
 
-  return [...options.values()].sort((left, right) => left.status - right.status || left.label.localeCompare(right.label, 'ru-RU'))
+  return [...options.values()].sort((left, right) => left.status - right.status || left.label.localeCompare(right.label, formattingCulture.value))
 })
-const locationOptions = computed(() => [{ value: '', label: 'Все посты' }, ...locations.value.map(location => ({ value: location, label: location }))])
-const statusOptions = computed(() => [{ value: '', label: 'Все статусы' }, ...statuses.value])
+const locationOptions = computed(() => [{ value: '', label: t('schedulerControl.allLocations') }, ...locations.value.map(location => ({ value: location, label: locationLabel(location) }))])
+const statusOptions = computed(() => [{ value: '', label: t('schedulerControl.allStatuses') }, ...statuses.value])
 const filteredItems = computed(() => props.items
-  .filter(item => !selectedLocation.value || (item.location?.trim() || 'Без поста') === selectedLocation.value)
+  .filter(item => !selectedLocation.value || locationValue(item) === selectedLocation.value)
   .filter(item => !selectedStatus.value || statusFilterValue(item) === selectedStatus.value)
   .filter(matchesSearch)
   .sort((left, right) => left.date.slice(0, 10).localeCompare(right.date.slice(0, 10))
     || (left.plannedStartTime || '').localeCompare(right.plannedStartTime || '')
-    || left.vehicleDisplayName.localeCompare(right.vehicleDisplayName, 'ru-RU')))
+    || left.vehicleDisplayName.localeCompare(right.vehicleDisplayName, formattingCulture.value)))
 const dateGroups = computed(() => {
   const groups = new Map<string, SchedulerListItem[]>()
   for (const item of filteredItems.value) {
@@ -83,7 +97,7 @@ const dateGroups = computed(() => {
 function formatDate(value: string) {
   const [year, month, day] = value.split('-').map(Number)
   if (!year || !month || !day) return value
-  return dateFormatter.format(new Date(year, month - 1, day))
+  return dateFormatter.value.format(new Date(year, month - 1, day))
 }
 
 function matchesSearch(item: SchedulerListItem) {
@@ -96,7 +110,7 @@ function matchesSearch(item: SchedulerListItem) {
     item.location,
     ...(item.serviceNames ?? []),
     ...(item.employeeNames ?? [])
-  ].join(' ').toLocaleLowerCase('ru-RU')
+  ].join(' ').toLocaleLowerCase(formattingCulture.value)
 
   return searchable.includes(normalizedQuery.value)
     || matchesRegistrationPlateSearch(item.registrationPlate, normalizedQuery.value, plateFormats.value)
@@ -114,19 +128,25 @@ function statusClass(item: SchedulerListItem) {
 }
 
 function statusText(item: SchedulerListItem) {
-  if (item.handedOverAt) return 'Выдано'
-  if (item.readyForHandoverAt) return 'Готово к выдаче'
-  return item.statusName || 'Статус не указан'
+  if (item.handedOverAt) return t('schedulerControl.handedOver')
+  if (item.readyForHandoverAt) return t('schedulerControl.ready')
+  const names: Record<number, string> = {
+    1: t('schedulerControl.scheduled'), 2: t('schedulerControl.inProgress'), 3: t('schedulerControl.completed'), 4: t('schedulerControl.cancelled')
+  }
+
+  return names[item.status] ?? t('schedulerControl.statusNotSpecified')
 }
 
 function statusFilterValue(item: SchedulerListItem) {
-  return `${item.status}:${statusText(item)}`
+  if (item.handedOverAt) return 'handedOver'
+  if (item.readyForHandoverAt) return 'ready'
+  return String(item.status)
 }
 
 function timeText(item: SchedulerListItem) {
   const start = item.plannedStartTime?.slice(0, 5)
   const end = item.plannedEndTime?.slice(0, 5)
-  if (!start) return 'Без времени'
+  if (!start) return t('schedulerControl.noTime')
   if (!end) return start
   if (item.plannedEndDate && item.plannedEndDate.slice(0, 10) !== item.date.slice(0, 10)) return `${start} — ${formatDate(item.plannedEndDate.slice(0, 10))}, ${end}`
   return `${start}–${end}`
@@ -138,20 +158,20 @@ function brandLogo(item: SchedulerListItem) {
 </script>
 
 <template>
-  <section class="schedule-list" aria-label="Список записей">
+  <section class="schedule-list" :aria-label="t('schedulerControl.listLabel')">
     <div class="schedule-list__toolbar">
       <label class="schedule-list__search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></svg>
-        <span class="visually-hidden">Поиск по автомобилю, номеру, услуге или сотруднику</span>
-        <input v-model="search" type="search" placeholder="Автомобиль, номер, услуга, сотрудник…">
+        <span class="visually-hidden">{{ t('schedulerControl.searchLabel') }}</span>
+        <input v-model="search" type="search" :placeholder="t('schedulerControl.searchPlaceholder')">
       </label>
-      <UiSelect v-model="selectedLocation" class="schedule-list__filter" :options="locationOptions" :searchable="false" aria-label="Фильтр по посту" />
-      <UiSelect v-model="selectedStatus" class="schedule-list__filter" :options="statusOptions" :searchable="false" aria-label="Фильтр по статусу" />
-      <span class="schedule-list__count">Записей: {{ filteredItems.length }}</span>
+      <UiSelect v-model="selectedLocation" class="schedule-list__filter" :options="locationOptions" :searchable="false" :aria-label="t('schedulerControl.filterLocation')" />
+      <UiSelect v-model="selectedStatus" class="schedule-list__filter" :options="statusOptions" :searchable="false" :aria-label="t('schedulerControl.filterStatus')" />
+      <span class="schedule-list__count">{{ t('schedulerControl.rowsCount', { count: filteredItems.length }) }}</span>
     </div>
 
     <p v-if="!filteredItems.length" class="schedule-list__empty">
-      {{ items.length ? 'По выбранным условиям записей нет.' : 'Записей пока нет.' }}
+      {{ t(items.length ? 'schedulerControl.emptyFiltered' : 'schedulerControl.emptyList') }}
     </p>
 
     <section v-for="group in dateGroups" :key="group.date" class="schedule-list__group" :aria-label="group.label">
@@ -163,23 +183,23 @@ function brandLogo(item: SchedulerListItem) {
         <table class="schedule-list__table">
           <thead>
             <tr>
-              <th scope="col">Время</th>
-              <th scope="col">Автомобиль</th>
-              <th scope="col">Работы</th>
-              <th scope="col">Пост / исполнитель</th>
-              <th scope="col">Статус</th>
-              <th scope="col" class="schedule-list__amount">Стоимость</th>
-              <th v-if="canWrite" scope="col" class="schedule-list__actions-heading"><span class="visually-hidden">Действия</span></th>
+              <th scope="col">{{ t('schedulerControl.time') }}</th>
+              <th scope="col">{{ t('schedulerControl.vehicle') }}</th>
+              <th scope="col">{{ t('schedulerControl.work') }}</th>
+              <th scope="col">{{ t('schedulerControl.locationAssignee') }}</th>
+              <th scope="col">{{ t('schedulerControl.status') }}</th>
+              <th scope="col" class="schedule-list__amount">{{ t('schedulerControl.cost') }}</th>
+              <th v-if="canWrite" scope="col" class="schedule-list__actions-heading"><span class="visually-hidden">{{ t('schedulerControl.actions') }}</span></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in group.items" :key="item.id">
-              <td class="schedule-list__time" data-label="Время">
+              <td class="schedule-list__time" :data-label="t('schedulerControl.time')">
                 <strong>{{ timeText(item) }}</strong>
               </td>
-              <th scope="row" class="schedule-list__vehicle" data-label="Автомобиль">
+              <th scope="row" class="schedule-list__vehicle" :data-label="t('schedulerControl.vehicle')">
                 <a :href="item.detailUrl || `#maintenance/${item.id}`">
-                  <img v-if="brandLogo(item)" :src="brandLogo(item)!.src" :alt="`Логотип ${brandLogo(item)!.name}`">
+                  <img v-if="brandLogo(item)" :src="brandLogo(item)!.src" :alt="t('schedulerControl.logoAlt', { name: brandLogo(item)!.name })">
                   <span class="schedule-list__vehicle-info">
                     <strong>{{ item.vehicleDisplayName }}</strong>
                     <span v-if="item.registrationPlate">{{ item.registrationPlate }}</span>
@@ -187,20 +207,20 @@ function brandLogo(item: SchedulerListItem) {
                   </span>
                 </a>
               </th>
-              <td class="schedule-list__services" data-label="Работы">
+              <td class="schedule-list__services" :data-label="t('schedulerControl.work')">
                 <span v-for="(service, index) in services(item)" :key="`${item.id}-${index}`">{{ service }}</span>
-                <span v-if="!services(item).length" class="schedule-list__muted">Работы не указаны</span>
+                <span v-if="!services(item).length" class="schedule-list__muted">{{ t('schedulerControl.noWorks') }}</span>
               </td>
-              <td class="schedule-list__assignment" data-label="Пост / исполнитель">
-                <strong>{{ item.location?.trim() || 'Без поста' }}</strong>
+              <td class="schedule-list__assignment" :data-label="t('schedulerControl.locationAssignee')">
+                <strong>{{ locationLabel(locationValue(item)) }}</strong>
                 <span v-if="item.employeeNames?.length">{{ item.employeeNames.join(', ') }}</span>
-                <span v-else class="schedule-list__muted">Исполнитель не назначен</span>
+                <span v-else class="schedule-list__muted">{{ t('schedulerControl.unassigned') }}</span>
               </td>
-              <td class="schedule-list__state" data-label="Статус">
+              <td class="schedule-list__state" :data-label="t('schedulerControl.status')">
                 <span class="schedule-list__status" :class="statusClass(item)">{{ statusText(item) }}</span>
               </td>
-              <td class="schedule-list__amount" data-label="Стоимость">{{ item.price == null ? '—' : currency.format(item.price) }}</td>
-              <td v-if="canWrite" class="schedule-list__actions" data-label="Действия">
+              <td class="schedule-list__amount" :data-label="t('schedulerControl.cost')">{{ item.price == null ? '—' : formatMoney(item.price, item.currencyCode ?? workspaceCurrency) }}</td>
+              <td v-if="canWrite" class="schedule-list__actions" :data-label="t('schedulerControl.actions')">
                 <MaintenanceWorkflowActions :organization-id="organizationId" :maintenance-id="item.id" :status="item.status" :simple-workflow="simpleWorkflow" compact
                   @changed="status => emit('changed', item, status)" @error="message => emit('error', message)" />
               </td>

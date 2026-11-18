@@ -5,8 +5,11 @@ import type { AdminDashboard } from '@/models/AdminDashboard'
 import DashboardActivityChart from '@/components/DashboardActivityChart.vue'
 import DashboardPaymentsChart from '@/components/DashboardPaymentsChart.vue'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminUsersMessages'
 
 const currentUserStore = useAdminCurrentUserStore()
+const { t } = useLocalization()
 const dashboard = ref<AdminDashboard | null>(null)
 const periodDays = ref<1 | 7 | 30>(1)
 const isLoading = ref(false)
@@ -22,71 +25,71 @@ const canViewBilling = computed(() =>
   (currentUserStore.isSystem || currentUserStore.currentUser?.permissions.includes('Admin.Billing.View') === true))
 const chartPeriodLabel = computed(() => {
   if (periodDays.value === 1) {
-    return 'Сегодня по часам'
+    return t('adminUsers.dashboard.todayByHour')
   }
 
-  return periodDays.value === 7 ? 'За 7 дней' : 'За месяц'
+  return periodDays.value === 7 ? t('adminUsers.dashboard.forSevenDays') : t('adminUsers.dashboard.forMonth')
 })
 
 const statisticGroups = computed(() => dashboard.value ? [
   {
-    title: 'Пользователи',
+    title: t('adminUsers.dashboard.users'),
     items: [
-      ['Всего', dashboard.value.kpis.usersTotal],
-      ['Новых сегодня', dashboard.value.kpis.newUsersToday],
-      ['Новых за 7 дней', dashboard.value.kpis.newUsers7Days]
+      [t('adminUsers.dashboard.total'), dashboard.value.kpis.usersTotal],
+      [t('adminUsers.dashboard.newToday'), dashboard.value.kpis.newUsersToday],
+      [t('adminUsers.dashboard.newSevenDays'), dashboard.value.kpis.newUsers7Days]
     ]
   },
   {
-    title: 'Организации',
+    title: t('adminUsers.dashboard.organizations'),
     items: [
-      ['Всего', dashboard.value.kpis.organizationsTotal],
-      ['Активных', dashboard.value.kpis.activeOrganizations],
-      ['Новых за 7 дней', dashboard.value.kpis.newOrganizations7Days],
-      ['Участников', dashboard.value.kpis.organizationMembers],
+      [t('adminUsers.dashboard.total'), dashboard.value.kpis.organizationsTotal],
+      [t('adminUsers.dashboard.active'), dashboard.value.kpis.activeOrganizations],
+      [t('adminUsers.dashboard.newSevenDays'), dashboard.value.kpis.newOrganizations7Days],
+      [t('adminUsers.dashboard.members'), dashboard.value.kpis.organizationMembers],
       ...(canViewBilling.value
-        ? [['Активных подписок', dashboard.value.kpis.activeOrganizationSubscriptions]]
+        ? [[t('adminUsers.dashboard.activeSubscriptions'), dashboard.value.kpis.activeOrganizationSubscriptions]]
         : [])
     ]
   },
   {
-    title: 'Техника и обслуживание',
+    title: t('adminUsers.dashboard.equipmentAndMaintenance'),
     items: [
-      ['Техники', dashboard.value.kpis.vehiclesTotal],
-      ['Обслуживаний', dashboard.value.kpis.maintenancesTotal],
-      ['Запланировано', dashboard.value.kpis.plannedMaintenances],
-      ['Документов', dashboard.value.kpis.documentsTotal],
-      ['Открытых дефектов', dashboard.value.kpis.openDefects]
+      [t('adminUsers.dashboard.vehicles'), dashboard.value.kpis.vehiclesTotal],
+      [t('adminUsers.dashboard.maintenances'), dashboard.value.kpis.maintenancesTotal],
+      [t('adminUsers.dashboard.planned'), dashboard.value.kpis.plannedMaintenances],
+      [t('adminUsers.dashboard.documents'), dashboard.value.kpis.documentsTotal],
+      [t('adminUsers.dashboard.openDefects'), dashboard.value.kpis.openDefects]
     ]
   },
   ...(canViewBilling.value
     ? [{
-        title: 'Финансы',
+        title: t('adminUsers.dashboard.finance'),
         items: [
-          ['Сумма за 30 дней', formatMoney(dashboard.value.kpis.payments30DaysAmount)],
-          ['Платежей за 30 дней', dashboard.value.kpis.payments30DaysCount],
-          ['Проблемных платежей', dashboard.value.attention.failedPayments]
+          [t('adminUsers.dashboard.amountThirtyDays'), formatMoney(dashboard.value.kpis.payments30DaysAmount)],
+          [t('adminUsers.dashboard.paymentsThirtyDays'), dashboard.value.kpis.payments30DaysCount],
+          [t('adminUsers.dashboard.problemPayments'), dashboard.value.attention.failedPayments]
         ]
       }]
     : []),
   {
-    title: 'Коммуникации',
+    title: t('adminUsers.dashboard.communications'),
     items: [
-      ['Email сегодня', dashboard.value.kpis.emailsToday],
-      ['Email за 7 дней', dashboard.value.kpis.emails7Days],
-      ['Отправлено за 7 дней', dashboard.value.kpis.sentEmails7Days],
-      ['Ошибок за 7 дней', dashboard.value.kpis.failedEmails7Days],
-      ['Ожидают отправки', dashboard.value.kpis.pendingEmails]
+      [t('adminUsers.dashboard.emailToday'), dashboard.value.kpis.emailsToday],
+      [t('adminUsers.dashboard.emailSevenDays'), dashboard.value.kpis.emails7Days],
+      [t('adminUsers.dashboard.sentSevenDays'), dashboard.value.kpis.sentEmails7Days],
+      [t('adminUsers.dashboard.errorsSevenDays'), dashboard.value.kpis.failedEmails7Days],
+      [t('adminUsers.dashboard.pendingSend'), dashboard.value.kpis.pendingEmails]
     ]
   },
   {
-    title: 'Требует внимания',
+    title: t('adminUsers.dashboard.attention'),
     items: [
-      ['Новые обращения', dashboard.value.attention.newSupportMessages],
-      ['Предложения в каталог', dashboard.value.attention.pendingCatalogSuggestions],
-      ['Ожидающие приглашения', dashboard.value.attention.pendingInvitations],
-      ['Просроченные задачи', dashboard.value.attention.overdueTasks],
-      ['Низкие остатки', dashboard.value.attention.lowStockItems]
+      [t('adminUsers.dashboard.newRequests'), dashboard.value.attention.newSupportMessages],
+      [t('adminUsers.dashboard.suggestions'), dashboard.value.attention.pendingCatalogSuggestions],
+      [t('adminUsers.dashboard.pendingInvitations'), dashboard.value.attention.pendingInvitations],
+      [t('adminUsers.dashboard.overdueTasks'), dashboard.value.attention.overdueTasks],
+      [t('adminUsers.dashboard.lowStock'), dashboard.value.attention.lowStockItems]
     ]
   }
 ] : [])
@@ -154,8 +157,8 @@ async function load(background = false): Promise<void> {
   } catch {
     if (activeRequest === controller && !controller.signal.aborted) {
       error.value = dashboard.value
-        ? 'Не удалось обновить данные. Показаны ранее полученные значения.'
-        : 'Не удалось загрузить дашборд.'
+        ? t('adminUsers.dashboard.refreshError')
+        : t('adminUsers.dashboard.loadError')
     }
   } finally {
     if (activeRequest === controller) {
@@ -175,7 +178,7 @@ function setPeriod(days: 1 | 7 | 30): void {
 }
 
 function formatMoney(value: number): string {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code' }).format(value)
 }
 
 </script>
@@ -183,44 +186,44 @@ function formatMoney(value: number): string {
 <template>
   <section class="dashboard-page">
     <div class="dashboard-toolbar">
-      <h1>Дашборд</h1>
+      <h1>{{ t('adminUsers.dashboard.title') }}</h1>
       <div class="dashboard-refresh">
         <span class="dashboard-update-note" aria-live="polite">
-          {{ isRefreshing ? 'Обновляем…' : dashboard ? 'Обновлено: ' + new Date(dashboard.generatedAt).toLocaleTimeString('ru-RU') : '' }}
+          {{ isRefreshing ? t('adminUsers.dashboard.refreshing') : dashboard ? t('adminUsers.dashboard.updatedAt', { time: new Date(dashboard.generatedAt).toLocaleTimeString(formattingCulture) }) : '' }}
         </span>
-        <label for="dashboard-refresh-interval">Автообновление</label>
+        <label for="dashboard-refresh-interval">{{ t('adminUsers.dashboard.refreshInterval') }}</label>
         <select id="dashboard-refresh-interval" v-model.number="refreshSeconds">
           <option v-for="seconds in refreshIntervals" :key="seconds" :value="seconds">
-            {{ seconds === 60 ? '1 минута' : seconds + ' секунд' }}
+            {{ seconds === 60 ? t('adminUsers.dashboard.refreshMinute') : t('adminUsers.dashboard.refreshSeconds', { seconds }) }}
           </option>
         </select>
-        <button type="button" :disabled="isRefreshing" @click="load(true)">Обновить</button>
+        <button type="button" :disabled="isRefreshing" @click="load(true)">{{ t('adminUsers.dashboard.refresh') }}</button>
       </div>
     </div>
 
     <div class="dashboard-content" :aria-busy="isLoading">
-      <div v-if="isLoading" class="dashboard-loader dashboard-loader--overlay" role="status" aria-label="Загрузка данных">
+      <div v-if="isLoading" class="dashboard-loader dashboard-loader--overlay" role="status" :aria-label="t('adminUsers.dashboard.loading')">
         <i></i>
       </div>
 
       <div class="dashboard-content__body">
         <div class="dashboard-section dashboard-news">
           <div class="dashboard-section__heading">
-            <strong>Что нового</strong>
+            <strong>{{ t('adminUsers.dashboard.newSection') }}</strong>
             <div class="period-switcher">
-              <button :class="{ active: periodDays === 1 }" :disabled="isLoading" @click="setPeriod(1)">Сегодня</button>
-              <button :class="{ active: periodDays === 7 }" :disabled="isLoading" @click="setPeriod(7)">7 дней</button>
-              <button :class="{ active: periodDays === 30 }" :disabled="isLoading" @click="setPeriod(30)">Месяц</button>
+              <button :class="{ active: periodDays === 1 }" :disabled="isLoading" @click="setPeriod(1)">{{ t('adminUsers.dashboard.today') }}</button>
+              <button :class="{ active: periodDays === 7 }" :disabled="isLoading" @click="setPeriod(7)">{{ t('adminUsers.dashboard.sevenDays') }}</button>
+              <button :class="{ active: periodDays === 30 }" :disabled="isLoading" @click="setPeriod(30)">{{ t('adminUsers.dashboard.month') }}</button>
             </div>
           </div>
           <div v-if="error" class="form-message form-message--error">{{ error }}</div>
           <div v-if="dashboard" class="period-metrics">
-            <RouterLink to="/users"><span>Новые пользователи</span><strong>{{ dashboard.period.newUsers }}</strong></RouterLink>
-            <div><span>Новые организации</span><strong>{{ dashboard.period.newOrganizations }}</strong></div>
-            <RouterLink v-if="canViewBilling" to="/finance/billing"><span>Платежи</span><strong>{{ dashboard.period.paymentsCount }}</strong><small>{{ formatMoney(dashboard.period.paymentsAmount) }}</small></RouterLink>
-            <RouterLink to="/communications/emails"><span>Email</span><strong>{{ dashboard.period.emails }}</strong></RouterLink>
-            <RouterLink to="/content/support"><span>Обращения</span><strong>{{ dashboard.period.supportMessages }}</strong></RouterLink>
-            <RouterLink to="/content/catalog-suggestions"><span>Предложения в каталог</span><strong>{{ dashboard.period.catalogSuggestions }}</strong></RouterLink>
+            <RouterLink to="/users"><span>{{ t('adminUsers.dashboard.newUsers') }}</span><strong>{{ dashboard.period.newUsers }}</strong></RouterLink>
+            <div><span>{{ t('adminUsers.dashboard.newOrganizations') }}</span><strong>{{ dashboard.period.newOrganizations }}</strong></div>
+            <RouterLink v-if="canViewBilling" to="/finance/billing"><span>{{ t('adminUsers.dashboard.payments') }}</span><strong>{{ dashboard.period.paymentsCount }}</strong><small>{{ formatMoney(dashboard.period.paymentsAmount) }}</small></RouterLink>
+            <RouterLink to="/communications/emails"><span>{{ t('adminUsers.dashboard.email') }}</span><strong>{{ dashboard.period.emails }}</strong></RouterLink>
+            <RouterLink to="/content/support"><span>{{ t('adminUsers.dashboard.support') }}</span><strong>{{ dashboard.period.supportMessages }}</strong></RouterLink>
+            <RouterLink to="/content/catalog-suggestions"><span>{{ t('adminUsers.dashboard.catalogSuggestions') }}</span><strong>{{ dashboard.period.catalogSuggestions }}</strong></RouterLink>
           </div>
         </div>
 
@@ -231,7 +234,7 @@ function formatMoney(value: number): string {
             :emails="dashboard.charts.emails"
             :maintenances="dashboard.charts.maintenances"
           />
-          <DashboardPaymentsChart v-if="canViewBilling" :period-label="chartPeriodLabel" :points="dashboard.charts.payments" />
+          <DashboardPaymentsChart v-if="canViewBilling" :period-label="chartPeriodLabel" :period-days="dashboard.period.days" :points="dashboard.charts.payments" />
         </div>
 
 

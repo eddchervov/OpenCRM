@@ -156,9 +156,44 @@ internal sealed class OrganizationClientDetailsQueryService(
                 .FirstOrDefaultAsync();
         }
 
+        var currencyCode = await this._context.Organizations.AsNoTracking()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        var paidByCurrency = canViewFinance
+            ? await clientPayments.GroupBy(payment => payment.CurrencyCode)
+                .Select(group => new { CurrencyCode = group.Key, Amount = group.Sum(payment => payment.Amount) })
+                .ToDictionaryAsync(item => item.CurrencyCode, item => item.Amount)
+            : new Dictionary<string, decimal>();
+        var debtByCurrency = canViewFinance
+            ? (await clientMaintenances.Where(maintenance => maintenance.Status != MaintenanceStatus.Cancelled)
+                .Select(maintenance => new
+                {
+                    maintenance.CurrencyCode,
+                    maintenance.DiscountAmount,
+                    maintenance.PaidAmount,
+                    GrossAmount = maintenance.Details.Sum(detail => (decimal?)(detail.Price ?? 0)) ?? 0
+                })
+                .ToListAsync())
+                .GroupBy(item => item.CurrencyCode)
+                .ToDictionary(group => group.Key, group => Math.Round(group.Sum(item => Math.Max(0,
+                    Math.Round(item.GrossAmount, 2, MidpointRounding.AwayFromZero)
+                        - item.DiscountAmount - item.PaidAmount)), 2, MidpointRounding.AwayFromZero))
+            : new Dictionary<string, decimal>();
         var totalPaidAmount = canViewFinance
-            ? Math.Round(await clientPayments.SumAsync(payment => payment.Amount), 2, MidpointRounding.AwayFromZero)
+            ? Math.Round(paidByCurrency.GetValueOrDefault(currencyCode), 2, MidpointRounding.AwayFromZero)
             : (decimal?)null;
+        var totalDebtAmount = canViewFinance ? debtByCurrency.GetValueOrDefault(currencyCode) : (decimal?)null;
+        var otherCurrencyTotals = paidByCurrency.Keys.Concat(debtByCurrency.Keys).Distinct()
+            .Where(code => code != currencyCode)
+            .OrderBy(code => code)
+            .Select(code => new OrganizationClientCurrencyTotalsDto
+            {
+                CurrencyCode = code,
+                TotalPaidAmount = Math.Round(paidByCurrency.GetValueOrDefault(code), 2, MidpointRounding.AwayFromZero),
+                TotalDebtAmount = debtByCurrency.GetValueOrDefault(code)
+            })
+            .ToList();
 
         decimal? upcomingPaidAmount = null;
         if (canViewFinance && upcomingMaintenanceRow != null)
@@ -210,6 +245,9 @@ internal sealed class OrganizationClientDetailsQueryService(
             CanEdit = await this._permissions.HasPermissionAsync(
                 userId, organizationId, OrganizationPermissionCodes.ClientsEdit),
             TotalPaidAmount = totalPaidAmount,
+            TotalDebtAmount = totalDebtAmount,
+            CurrencyCode = currencyCode,
+            OtherCurrencyTotals = otherCurrencyTotals,
             UpcomingMaintenance = !canViewMaintenance || upcomingMaintenanceRow == null
                 ? null
                 : ClientMaintenanceMapper.Map(

@@ -493,6 +493,7 @@ public sealed class VehicleQueryService : IVehicleQueryService
         Name = vehicle.Name,
         Vin = vehicle.Vin,
         RegistrationPlate = vehicle.RegistrationPlate,
+        RegistrationCountryCode = vehicle.RegistrationCountryCode,
         BodyNumber = vehicle.BodyNumber,
         EngineNumber = vehicle.EngineNumber,
         Color = vehicle.Color,

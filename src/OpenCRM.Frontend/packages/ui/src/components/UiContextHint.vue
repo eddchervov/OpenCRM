@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/vue'
+import { useLocalization } from '../i18n'
 
 const props = withDefaults(defineProps<{
   active: boolean
   text: string
   label?: string
 }>(), {
-  label: 'Подсказка'
+  label: ''
 })
+
+const { t, locale } = useLocalization()
 
 const isOpen = ref(false)
 const isDismissed = ref(false)
@@ -121,11 +124,11 @@ onBeforeUnmount(removeDocumentListeners)
     class="ui-context-hint"
     role="region"
     aria-live="polite"
-    :aria-label="label"
+    :aria-label="label || t('common.hint')"
     :style="floatingStyles"
   >
     <span>{{ text }}</span>
-    <button type="button" class="ui-context-hint__close" :aria-label="`Закрыть: ${label.toLocaleLowerCase('ru')}`" @click="dismiss">
+    <button type="button" class="ui-context-hint__close" :aria-label="t('common.closeHint', { label: (label || t('common.hint')).toLocaleLowerCase(locale) })" @click="dismiss">
       <span aria-hidden="true">×</span>
     </button>
   </div>

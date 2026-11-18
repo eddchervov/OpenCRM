@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import * as localization from '@opencrm/ui/i18n'
+import '../packages/workspace/src/employeeMessages.ts'
 
 const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/WorkspaceEmployeesSection.vue', import.meta.url), 'utf8'))
 const code = ts.transpileModule(compileScript(descriptor, { id: 'team' }).content, {
@@ -11,13 +13,14 @@ const code = ts.transpileModule(compileScript(descriptor, { id: 'team' }).conten
 }).outputText
 
 function setup(readonly = false) {
+  localization.i18n.global.locale.value = 'ru'
   const calls = []
   const api = Object.fromEntries(['saveEmployee', 'createEmployeeWithInvitation', 'createEmployeeForMember', 'linkEmployeeMember', 'inviteWorkspaceMember', 'updateWorkspaceMemberRole', 'revokeWorkspaceInvitation', 'removeWorkspaceMember', 'transferWorkspaceOwnership'].map(name => [name, async (...args) => calls.push([name, ...structuredClone(args.map(value => vue.toRaw(value)))])]))
   api.loadEmployees = async () => ({ items: [], members: [], canManage: true, canLinkMembers: true })
   api.loadWorkspaceMembers = async () => ({ organization: { members: [], pendingInvitations: [], currentUserRoleCode: 'owner' }, canRemoveMembers: true, canInviteMembers: true, canManageRoles: true, roleOptions: [] })
   const props = vue.reactive({ context: { organization: { id: 'org' }, workspaceAccess: { isReadOnly: readonly }, shell: { menu: [{ code: 'members', isVisible: true }] } } })
   const module = { exports: {} }
-  new Function('require', 'module', 'exports', code)(id => id === 'vue' ? { ...vue, onMounted() {} } : id.startsWith('../api/') ? api : {}, module, module.exports)
+  new Function('require', 'module', 'exports', code)(id => id === 'vue' ? { ...vue, onMounted() {} } : id === '@opencrm/ui/i18n' ? localization : id.startsWith('../api/') ? api : {}, module, module.exports)
   const state = module.exports.default.setup(props, { expose() {}, emit() {} })
   state.addDialog.value = { showModal() {}, close() {} }
   state.cardDialog.value = { showModal() {}, close() {} }
@@ -203,6 +206,37 @@ test('Скрытая связь аккаунта не выдаётся за от
   state.employees.value = [employee]
   assert.equal(state.rows.value[0].connection, 'Нет данных')
   assert.equal(state.filterOptions.value.some(option => option.value === 'no-access' || option.value === 'invited'), false)
+})
+
+test('Встроенные роли переводятся по коду, пользовательские имена ролей сохраняются', async () => {
+  const { state } = setup()
+  await state.load()
+  state.access.value.roleOptions = [
+    { code: 'admin', name: 'Администратор' },
+    { code: 'custom', name: 'Мой особый доступ' }
+  ]
+  localization.i18n.global.locale.value = 'en'
+
+  assert.deepEqual(state.roleOptions.value, [
+    { value: 'admin', label: 'Administrator' },
+    { value: 'custom', label: 'Мой особый доступ' }
+  ])
+
+  localization.i18n.global.locale.value = 'ru'
+})
+
+test('Все ключи интерфейса сотрудников имеют переводы на трёх языках', () => {
+  const source = `${descriptor.scriptSetup.content}\n${descriptor.template.content}`
+  const keys = [...new Set([...source.matchAll(/\bt\(['"]([^'"]+)['"]\)/g)].map(match => match[1]))]
+
+  for (const locale of ['ru', 'en', 'zh-Hans']) {
+    localization.i18n.global.locale.value = locale
+    for (const key of keys) {
+      assert.notEqual(localization.translate(key), key, `${key} отсутствует для ${locale}`)
+    }
+  }
+
+  localization.i18n.global.locale.value = 'ru'
 })
 
 

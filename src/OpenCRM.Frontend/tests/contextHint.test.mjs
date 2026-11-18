@@ -1,3 +1,4 @@
+import * as localization from '@opencrm/ui/i18n'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -23,6 +24,11 @@ function createHint(active = false) {
   }
   const module = { exports: {} }
   const resolve = name => {
+    if (name === '@opencrm/ui/i18n') return localization
+    if (name === '../i18n') return { useLocalization: () => ({ t: localization.translate }) }
+    if (name === '../bookingTimeMessages') return {}
+    if (name === '@opencrm/ui/i18n') return localization
+    if (name === '../bookingTimeMessages') return {}
     if (name === 'vue') return { ...vue, onBeforeUnmount() {} }
     if (name === '@floating-ui/vue') {
       return {
@@ -98,6 +104,9 @@ function createBooking({ duration, start = '', end = '' }) {
     setup: props => () => props.active ? vue.h('aside', { 'data-context-hint': 'true' }, props.text) : null
   })
   const resolve = name => {
+    if (name === '@opencrm/ui/i18n') return localization
+    if (name === '../i18n') return { useLocalization: () => ({ t: localization.translate }) }
+    if (name === '../bookingTimeMessages') return {}
     if (name === 'vue') return vue
     if (name === '@opencrm/ui') return { UiTimePicker, UiContextHint }
     if (name === '../serviceDuration') return { formatServiceDuration }

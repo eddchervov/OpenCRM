@@ -12,9 +12,9 @@
     <div class="container platform-page-shell">
         <nav aria-label="breadcrumb" class="platform-page-breadcrumbs">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="@Url.Content("~/")" class="text-decoration-none">Главная</a></li>
-                <li class="breadcrumb-item"><a href="@Url.Content("~/subscription")" class="text-decoration-none">Тарифы</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Статус оплаты</li>
+                <li class="breadcrumb-item"><a href="@Url.Content("~/")" class="text-decoration-none">@Text["entry.home"]</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Content("~/subscription")" class="text-decoration-none">@Text["entry.plans"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Text["entry.paymentStatus"]</li>
             </ol>
         </nav>
 
@@ -38,7 +38,7 @@
                     <i class="fa fa-line-chart me-2"></i>@Model.PrimaryActionText
                 </a>
                 <a href="@Url.Content("~/")" class="btn btn-outline-dark">
-                    <i class="fa fa-home me-2"></i>На главную
+                    <i class="fa fa-home me-2"></i>@Text["entry.homeAction"]
                 </a>
             </div>
         </div>

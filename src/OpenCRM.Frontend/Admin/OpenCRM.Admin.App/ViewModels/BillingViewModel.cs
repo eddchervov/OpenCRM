@@ -4,15 +4,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
 /// <summary> Модель представления экрана биллинга. </summary>
 public partial class BillingViewModel : ObservableObject
 {
-    /// <summary> Культура форматирования сумм и дат. </summary>
-    private static readonly CultureInfo s_culture = CultureInfo.GetCultureInfo("ru-RU");
-
     /// <summary> Клиент сессии администратора. </summary>
     private readonly AdminSessionClient _sessionClient;
 
@@ -24,6 +22,10 @@ public partial class BillingViewModel : ObservableObject
 
     /// <summary> Признак изменения фильтров. </summary>
     private bool _isChangingFilters;
+
+    private string? _errorTranslationKey;
+    private string? _detailErrorTranslationKey;
+    private bool _isSettingLocalizedError;
 
     /// <summary> Версия запроса для отбраковки устаревших ответов. </summary>
     private int _requestVersion;
@@ -47,10 +49,12 @@ public partial class BillingViewModel : ObservableObject
     private int _subscriptionTotalCount;
 
     /// <summary> Фильтр статуса платежей. </summary>
-    private string _paymentStatus = "Все";
+    private string _paymentStatusCode = "all";
 
     /// <summary> Фильтр статуса подписок. </summary>
-    private string _subscriptionStatus = "Активные";
+    private string _subscriptionStatusCode = "active";
+
+    private int _selectedPeriodDays = 30;
 
     /// <summary> Ключ сортировки платежей. </summary>
     private string _paymentSortKey = "date";
@@ -124,11 +128,11 @@ public partial class BillingViewModel : ObservableObject
 
     /// <summary> Выбранный фильтр статуса. </summary>
     [ObservableProperty]
-    private string _selectedStatus = "Все";
+    private string _selectedStatus = AdminLocalization.Instance["native.billing.vse"];
 
     /// <summary> Выбранный фильтр периода. </summary>
     [ObservableProperty]
-    private string _selectedPeriod = "30 дней";
+    private string _selectedPeriod = AdminLocalization.Instance["native.billing.30.dney"];
 
     /// <summary> Размер страницы. </summary>
     [ObservableProperty]
@@ -148,14 +152,14 @@ public partial class BillingViewModel : ObservableObject
     private BillingDetailViewModel? _detail;
 
     /// <summary> Доступные варианты периода. </summary>
-    public IReadOnlyList<string> PeriodOptions { get; } = ["30 дней", "7 дней", "Сегодня", "За всё время"];
+    public IReadOnlyList<string> PeriodOptions => [AdminLocalization.Instance["native.billing.30.dney"], AdminLocalization.Instance["native.billing.7.dney"], AdminLocalization.Instance["native.billing.segodnya"], AdminLocalization.Instance["native.billing.za.vsyo.vremya"]];
 
     /// <summary> Доступные варианты статуса платежей. </summary>
-    public IReadOnlyList<string> PaymentStatusOptions { get; } =
-        ["Все", "Оплачены", "Ожидают оплаты", "Отменены", "Возвраты", "Ошибка активации"];
+    public IReadOnlyList<string> PaymentStatusOptions =>
+        [AdminLocalization.Instance["native.billing.vse"], AdminLocalization.Instance["native.billing.oplacheny"], AdminLocalization.Instance["native.billing.ozhidayut.oplaty"], AdminLocalization.Instance["native.billing.otmeneny"], AdminLocalization.Instance["native.billing.vozvraty"], AdminLocalization.Instance["native.billing.oshibka.aktivatsii"]];
 
     /// <summary> Доступные варианты статуса подписок. </summary>
-    public IReadOnlyList<string> SubscriptionStatusOptions { get; } = ["Активные", "Завершённые", "Ещё не начались", "Все"];
+    public IReadOnlyList<string> SubscriptionStatusOptions => [AdminLocalization.Instance["native.billing.aktivnye"], AdminLocalization.Instance["native.billing.zavershyonnye"], AdminLocalization.Instance["native.billing.eshchyo.ne.nachalis"], AdminLocalization.Instance["native.billing.vse"]];
 
     /// <summary> Доступные размеры страницы. </summary>
     public IReadOnlyList<int> PageSizeOptions { get; } = [25, 50, 100];
@@ -178,7 +182,7 @@ public partial class BillingViewModel : ObservableObject
     public string PageLabel => $"{this.Page} / {Math.Max(1, (int)Math.Ceiling((double)this.TotalCount / this.PageSize))}";
 
     /// <summary> Подпись общего количества записей. </summary>
-    public string TotalLabel => $"Всего: {this.TotalCount:N0}";
+    public string TotalLabel => AdminLocalization.Instance.Format("native.billing.vsego.this.totalcount.n0", this.TotalCount);
 
     /// <summary> Формирует заголовок колонки с учётом сортировки. </summary>
     public string SortHeader(string key, string title)
@@ -190,22 +194,47 @@ public partial class BillingViewModel : ObservableObject
     }
 
     /// <summary> Заголовок колонки плательщика. </summary>
-    public string CustomerHeader => this.SortHeader("customer", this.IsPaymentsTab ? "Пользователь" : "Организация");
+    public string CustomerHeader => this.SortHeader("customer", this.IsPaymentsTab ? AdminLocalization.Instance["native.promoCodes.polzovatel"] : AdminLocalization.Instance["native.promoCodes.organizatsiya"]);
 
     /// <summary> Заголовок колонки тарифа. </summary>
-    public string PlanHeader => this.SortHeader("plan", "Тариф");
+    public string PlanHeader => this.SortHeader("plan", AdminLocalization.Instance["native.plans.planColumn"]);
 
     /// <summary> Заголовок колонки суммы. </summary>
-    public string AmountHeader => this.SortHeader(this.IsPaymentsTab ? "amount" : "source", this.IsPaymentsTab ? "Сумма" : "Источник");
+    public string AmountHeader => this.SortHeader(this.IsPaymentsTab ? "amount" : "source", this.IsPaymentsTab ? AdminLocalization.Instance["native.billing.summa"] : AdminLocalization.Instance["native.billing.istochnik"]);
 
     /// <summary> Заголовок колонки даты. </summary>
-    public string DateHeader => this.SortHeader("date", this.IsPaymentsTab ? "Создан" : "Начало");
+    public string DateHeader => this.SortHeader("date", this.IsPaymentsTab ? AdminLocalization.Instance["native.billing.sozdan"] : AdminLocalization.Instance["native.promoCodes.nachalo"]);
 
     /// <summary> Заголовок колонки окончания. </summary>
-    public string EndHeader => this.SortHeader("expires", "Окончание");
+    public string EndHeader => this.SortHeader("expires", AdminLocalization.Instance["native.promoCodes.okonchanie"]);
 
     /// <summary> Заголовок колонки статуса. </summary>
-    public string StatusHeader => this.SortHeader("status", "Статус");
+    public string StatusHeader => this.SortHeader("status", AdminLocalization.Instance["native.plans.status"]);
+
+    public void RefreshLocalizedValues()
+    {
+        this.RefreshLocalizedMessages();
+        this._isChangingFilters = true;
+        this.OnPropertyChanged(nameof(PeriodOptions));
+        this.OnPropertyChanged(nameof(PaymentStatusOptions));
+        this.OnPropertyChanged(nameof(SubscriptionStatusOptions));
+        this.OnPropertyChanged(nameof(StatusOptions));
+        this.SelectedStatus = this.IsPaymentsTab
+            ? BillingViewModel.PaymentStatusLabel(this._paymentStatusCode)
+            : BillingViewModel.SubscriptionStatusLabel(this._subscriptionStatusCode);
+        this.SelectedPeriod = BillingViewModel.PeriodLabel(this._selectedPeriodDays);
+        this._isChangingFilters = false;
+
+        foreach (var row in this._loadedRows)
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        this.Detail = this.Detail?.RefreshLocalizedValues();
+        this.PaymentActions.RefreshLocalizedValues();
+        this.OnPropertyChanged((string?)null);
+        this.NotifyHeaders();
+    }
 
     /// <summary> Уведомляет об изменении заголовков колонок. </summary>
     private void NotifyHeaders()
@@ -268,7 +297,7 @@ public partial class BillingViewModel : ObservableObject
         this.ErrorMessage = string.Empty;
         this.DetailErrorMessage = string.Empty;
         this.Search = string.Empty;
-        this.SelectedPeriod = "30 дней";
+        this.SelectedPeriod = AdminLocalization.Instance["native.billing.30.dney"];
         this.PageSize = 50;
         this.Page = 1;
         this.TotalCount = 0;
@@ -276,14 +305,15 @@ public partial class BillingViewModel : ObservableObject
         this._subscriptionPage = 1;
         this._paymentTotalCount = 0;
         this._subscriptionTotalCount = 0;
-        this._paymentStatus = "Все";
-        this._subscriptionStatus = "Активные";
+        this._paymentStatusCode = "all";
+        this._subscriptionStatusCode = "active";
+        this._selectedPeriodDays = 30;
         this._paymentSortKey = "date";
         this._subscriptionSortKey = "date";
         this._paymentSortDescending = true;
         this._subscriptionSortDescending = true;
         this.IsPaymentsTab = true;
-        this.SelectedStatus = "Все";
+        this.SelectedStatus = AdminLocalization.Instance["native.billing.vse"];
         this.OnPropertyChanged(nameof(StatusOptions));
         this.NotifyCommands();
     }
@@ -323,7 +353,9 @@ public partial class BillingViewModel : ObservableObject
         this._isChangingFilters = true;
         this.IsPaymentsTab = isPaymentsTab;
         this.ClearRows();
-        this.SelectedStatus = isPaymentsTab ? this._paymentStatus : this._subscriptionStatus;
+        this.SelectedStatus = isPaymentsTab
+            ? BillingViewModel.PaymentStatusLabel(this._paymentStatusCode)
+            : BillingViewModel.SubscriptionStatusLabel(this._subscriptionStatusCode);
         this.Page = isPaymentsTab ? this._paymentPage : this._subscriptionPage;
         this.TotalCount = isPaymentsTab ? this._paymentTotalCount : this._subscriptionTotalCount;
         this.ErrorMessage = string.Empty;
@@ -349,8 +381,8 @@ public partial class BillingViewModel : ObservableObject
         await this.CancelRefreshAsync();
         this._isChangingFilters = true;
         this.Search = string.Empty;
-        this.SelectedStatus = this.IsPaymentsTab ? "Все" : "Активные";
-        this.SelectedPeriod = "30 дней";
+        this.SelectedStatus = this.IsPaymentsTab ? AdminLocalization.Instance["native.billing.vse"] : AdminLocalization.Instance["native.billing.aktivnye"];
+        this.SelectedPeriod = AdminLocalization.Instance["native.billing.30.dney"];
         this.PageSize = 50;
         this._isChangingFilters = false;
         await this.RefreshWithUpdatedFiltersAsync(resetPage: true, cancelPrevious: false);
@@ -500,14 +532,14 @@ public partial class BillingViewModel : ObservableObject
         {
             if (this.IsCurrentRequest(requestVersion, isPaymentsTab, cancellationToken))
             {
-                this.ErrorMessage = "Не удалось обновить список. Проверьте подключение к серверу.";
+                this.SetLocalizedError("native.billing.ne.udalos.obnovit.spisok.proverte.podklyuchenie.k.serveru");
             }
         }
         catch (OperationCanceledException)
         {
             if (this.IsCurrentRequest(requestVersion, isPaymentsTab, cancellationToken))
             {
-                this.ErrorMessage = "Не удалось обновить список: сервер не ответил вовремя.";
+                this.SetLocalizedError("native.billing.ne.udalos.obnovit.spisok.server.ne.otvetil.vovremya");
             }
         }
         finally
@@ -638,14 +670,14 @@ public partial class BillingViewModel : ObservableObject
         {
             if (this.IsCurrentDetail(row, cancellationToken))
             {
-                this.DetailErrorMessage = "Не удалось обновить карточку. Проверьте подключение к серверу.";
+                this.SetLocalizedDetailError("native.billing.ne.udalos.obnovit.kartochku.proverte.podklyuchenie.k.serveru");
             }
         }
         catch (OperationCanceledException)
         {
             if (this.IsCurrentDetail(row, cancellationToken))
             {
-                this.DetailErrorMessage = "Не удалось обновить карточку: сервер не ответил вовремя.";
+                this.SetLocalizedDetailError("native.billing.ne.udalos.obnovit.kartochku.server.ne.otvetil.vovremya");
             }
         }
         finally
@@ -747,11 +779,11 @@ public partial class BillingViewModel : ObservableObject
 
         if (this.IsPaymentsTab)
         {
-            this._paymentStatus = this.SelectedStatus;
+            this._paymentStatusCode = BillingViewModel.PaymentStatusCode(this.SelectedStatus);
         }
         else
         {
-            this._subscriptionStatus = this.SelectedStatus;
+            this._subscriptionStatusCode = BillingViewModel.SubscriptionStatusCode(this.SelectedStatus);
         }
 
         var restartVersion = ++this._queryRestartVersion;
@@ -781,33 +813,152 @@ public partial class BillingViewModel : ObservableObject
         this._isActive && this.IsDetailOpen && !cancellationToken.IsCancellationRequested
         && this._detailId == row.Id && this._detailIsPayment == row.IsPayment;
 
-    /// <summary> Возвращает код статуса платежа. </summary>
-    private static string PaymentStatusCode(string status) => status switch
+    private void SetLocalizedError(string key)
     {
-        "Оплачены" => "success",
-        "Ожидают оплаты" => "pending",
-        "Отменены" => "canceled",
-        "Возвраты" => "refunded",
-        "Ошибка активации" => "activationfailed",
-        _ => "all"
-    };
+        this._errorTranslationKey = key;
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedError = false;
+    }
+
+    private void SetLocalizedDetailError(string key)
+    {
+        this._detailErrorTranslationKey = key;
+        this._isSettingLocalizedError = true;
+        this.DetailErrorMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedError = false;
+    }
+
+    private void RefreshLocalizedMessages()
+    {
+        if (this._errorTranslationKey != null)
+        {
+            this._isSettingLocalizedError = true;
+            this.ErrorMessage = AdminLocalization.Instance[this._errorTranslationKey];
+            this._isSettingLocalizedError = false;
+        }
+
+        if (this._detailErrorTranslationKey != null)
+        {
+            this._isSettingLocalizedError = true;
+            this.DetailErrorMessage = AdminLocalization.Instance[this._detailErrorTranslationKey];
+            this._isSettingLocalizedError = false;
+        }
+    }
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedError)
+        {
+            this._errorTranslationKey = null;
+        }
+    }
+
+    partial void OnDetailErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedError)
+        {
+            this._detailErrorTranslationKey = null;
+        }
+    }
+
+    /// <summary> Возвращает код статуса платежа. </summary>
+    private static string PaymentStatusCode(string status)
+    {
+        if (status == AdminLocalization.Instance["native.billing.oplacheny"])
+        {
+            return "success";
+        }
+
+        if (status == AdminLocalization.Instance["native.billing.ozhidayut.oplaty"])
+        {
+            return "pending";
+        }
+
+        if (status == AdminLocalization.Instance["native.billing.otmeneny"])
+        {
+            return "canceled";
+        }
+
+        if (status == AdminLocalization.Instance["native.billing.vozvraty"])
+        {
+            return "refunded";
+        }
+
+        if (status == AdminLocalization.Instance["native.billing.oshibka.aktivatsii"])
+        {
+            return "activationfailed";
+        }
+
+        return "all";
+    }
 
     /// <summary> Возвращает код статуса подписки. </summary>
-    private static string SubscriptionStatusCode(string status) => status switch
+    private static string SubscriptionStatusCode(string status)
     {
-        "Завершённые" => "expired",
-        "Ещё не начались" => "scheduled",
-        "Все" => "all",
-        _ => "active"
-    };
+        if (status == AdminLocalization.Instance["native.billing.zavershyonnye"])
+        {
+            return "expired";
+        }
+
+        if (status == AdminLocalization.Instance["native.billing.eshchyo.ne.nachalis"])
+        {
+            return "scheduled";
+        }
+
+        if (status == AdminLocalization.Instance["native.billing.vse"])
+        {
+            return "all";
+        }
+
+        return "active";
+    }
 
     /// <summary> Возвращает длительность периода в днях. </summary>
-    private static int PeriodDays(string period) => period switch
+    private static int PeriodDays(string period)
     {
-        "Сегодня" => 1,
-        "7 дней" => 7,
-        "За всё время" => 0,
-        _ => 30
+        if (period == AdminLocalization.Instance["native.billing.segodnya"])
+        {
+            return 1;
+        }
+
+        if (period == AdminLocalization.Instance["native.billing.7.dney"])
+        {
+            return 7;
+        }
+
+        if (period == AdminLocalization.Instance["native.billing.za.vsyo.vremya"])
+        {
+            return 0;
+        }
+
+        return 30;
+    }
+
+    private static string PaymentStatusLabel(string statusCode) => statusCode switch
+    {
+        "success" => AdminLocalization.Instance["native.billing.oplacheny"],
+        "pending" => AdminLocalization.Instance["native.billing.ozhidayut.oplaty"],
+        "canceled" => AdminLocalization.Instance["native.billing.otmeneny"],
+        "refunded" => AdminLocalization.Instance["native.billing.vozvraty"],
+        "activationfailed" => AdminLocalization.Instance["native.billing.oshibka.aktivatsii"],
+        _ => AdminLocalization.Instance["native.billing.vse"]
+    };
+
+    private static string SubscriptionStatusLabel(string statusCode) => statusCode switch
+    {
+        "expired" => AdminLocalization.Instance["native.billing.zavershyonnye"],
+        "scheduled" => AdminLocalization.Instance["native.billing.eshchyo.ne.nachalis"],
+        "all" => AdminLocalization.Instance["native.billing.vse"],
+        _ => AdminLocalization.Instance["native.billing.aktivnye"]
+    };
+
+    private static string PeriodLabel(int days) => days switch
+    {
+        1 => AdminLocalization.Instance["native.billing.segodnya"],
+        7 => AdminLocalization.Instance["native.billing.7.dney"],
+        0 => AdminLocalization.Instance["native.billing.za.vsyo.vremya"],
+        _ => AdminLocalization.Instance["native.billing.30.dney"]
     };
 
     /// <summary> Возвращает допустимые ключи сортировки для вкладки. </summary>
@@ -828,33 +979,39 @@ public partial class BillingViewModel : ObservableObject
 
         var fields = new List<DashboardMetric>
         {
-            new("Пользователь", UserDisplayFormatting.Text(payment.User)),
+            new(AdminLocalization.Instance["native.promoCodes.polzovatel"], UserDisplayFormatting.Text(payment.User)),
             new("Email", UserDisplayFormatting.Text(payment.UserEmail)),
-            new("Телефон", UserDisplayFormatting.Text(payment.UserPhone)),
-            new("Тариф", UserDisplayFormatting.Text(payment.PlanName)),
-            new("Срок тарифа", $"{payment.PlanDurationDays:N0} дн."),
-            new("Сумма", UserDisplayFormatting.Money(payment.Amount)),
-            new("Исходная сумма", payment.OriginalAmount is decimal originalAmount ? UserDisplayFormatting.Money(originalAmount) : "—"),
-            new("Скидка", payment.PromoDiscountAmount is decimal discount ? UserDisplayFormatting.Money(discount) : "—"),
-            new("Промокод", UserDisplayFormatting.Text(payment.PromoCodeSnapshot)),
-            new("Способ оплаты", UserDisplayFormatting.Text(payment.PaymentMethodName)),
-            new("Создан", UserDisplayFormatting.DateTime(payment.CreatedAt)),
-            new("Статус обновлён", UserDisplayFormatting.DateTime(payment.StatusUpdatedAt)),
-            new("Статус", UserDisplayFormatting.Text(payment.StatusName)),
-            new("Внешний статус", UserDisplayFormatting.Text(payment.PaymentStatus)),
-            new("ID транзакции", UserDisplayFormatting.Text(payment.TransactionId)),
-            new("ID провайдера", UserDisplayFormatting.Text(payment.ExternalPaymentId))
+            new(AdminLocalization.Instance["native.sms.telefon"], UserDisplayFormatting.Text(payment.UserPhone)),
+            new(AdminLocalization.Instance["native.plans.planColumn"], UserDisplayFormatting.Text(payment.PlanName)),
+            new(AdminLocalization.Instance["native.billing.srok.tarifa"], AdminLocalization.Instance.Format("native.billing.payment.plandurationdays.n0.dn", payment.PlanDurationDays)),
+            new(AdminLocalization.Instance["native.billing.summa"], UserDisplayFormatting.Money(payment.Amount)),
+            new(AdminLocalization.Instance["native.billing.iskhodnaya.summa"], payment.OriginalAmount is decimal originalAmount ? UserDisplayFormatting.Money(originalAmount) : "—"),
+            new(AdminLocalization.Instance["native.billing.skidka"], payment.PromoDiscountAmount is decimal discount ? UserDisplayFormatting.Money(discount) : "—"),
+            new(AdminLocalization.Instance["native.promoCodes.promokod"], UserDisplayFormatting.Text(payment.PromoCodeSnapshot)),
+            new(AdminLocalization.Instance["native.billing.sposob.oplaty"], AdminDisplayLabels.PaymentMethod(payment.PaymentMethod ?? string.Empty, payment.PaymentMethodName)),
+            new(AdminLocalization.Instance["native.billing.sozdan"], UserDisplayFormatting.DateTime(payment.CreatedAt)),
+            new(AdminLocalization.Instance["native.billing.status.obnovlyon"], UserDisplayFormatting.DateTime(payment.StatusUpdatedAt)),
+            new(AdminLocalization.Instance["native.plans.status"], AdminDisplayLabels.PaymentStatus(payment.PaymentStatus ?? string.Empty, payment.StatusName, payment.ApplicationStatus)),
+            new(AdminLocalization.Instance["native.billing.vneshniy.status"], UserDisplayFormatting.Text(payment.PaymentStatus)),
+            new(AdminLocalization.Instance["native.billing.id.tranzaktsii"], UserDisplayFormatting.Text(payment.TransactionId)),
+            new(AdminLocalization.Instance["native.billing.id.provaydera"], UserDisplayFormatting.Text(payment.ExternalPaymentId))
         };
         var auditGroups = audits.Select(audit => new DashboardStatisticGroup(
-            $"{UserDisplayFormatting.Text(audit.PreviousStatus)} → {UserDisplayFormatting.Text(audit.NewStatus)}",
+            $"{AdminDisplayLabels.PaymentStatus(audit.PreviousStatus, audit.PreviousStatus)} → {AdminDisplayLabels.PaymentStatus(audit.NewStatus, audit.NewStatus)}",
             [
-                new("Дата", UserDisplayFormatting.DateTime(audit.ChangedAt)),
-                new("Источник", UserDisplayFormatting.Text(audit.Source)),
-                new("Кто изменил", UserDisplayFormatting.Text(audit.ChangedBy)),
-                new("Причина", UserDisplayFormatting.Text(audit.Reason))
+                new(AdminLocalization.Instance["native.promoCodes.data"], UserDisplayFormatting.DateTime(audit.ChangedAt)),
+                new(AdminLocalization.Instance["native.billing.istochnik"], UserDisplayFormatting.Text(audit.Source)),
+                new(AdminLocalization.Instance["native.billing.kto.izmenil"], UserDisplayFormatting.Text(audit.ChangedBy)),
+                new(AdminLocalization.Instance["native.billing.prichina"], UserDisplayFormatting.Text(audit.Reason))
             ])).ToArray();
 
-        return new BillingDetailViewModel(payment.PlanName, $"Платёж № {payment.Id}", fields, auditGroups, auditError);
+        return new BillingDetailViewModel(
+            payment.PlanName,
+            AdminLocalization.Instance.Format("native.billing.platyozh.payment.id", payment.Id),
+            fields,
+            auditGroups,
+            auditError,
+            localizedVersionFactory: () => BillingViewModel.CreatePaymentDetail(payment, audits, auditError));
     }
 
     /// <summary> Разделяет подтверждённые деньги, исторический доступ и технические события покупки. </summary>
@@ -863,60 +1020,67 @@ public partial class BillingViewModel : ObservableObject
         var confirmed = payment.PaidAt.HasValue || payment.ProviderStatus == "Succeeded";
         var granted = payment.AppliedAt.HasValue || payment.ApplicationStatus == "applied";
         var fullyRefunded = payment.RefundedAmount >= payment.Amount && payment.RefundedAmount > 0;
-        var access = granted ? "Период по этой покупке выдан"
-            : fullyRefunded ? "Не выдан: средства возвращены"
-            : payment.ApplicationStatus == "needs_attention" || payment.RefundedAmount > 0 ? "Выдача требует проверки"
-            : confirmed ? "Ожидает выдачи" : "Не выдан";
+        var access = granted ? AdminLocalization.Instance["native.billing.period.po.etoy.pokupke.vydan"]
+            : fullyRefunded ? AdminLocalization.Instance["native.billing.ne.vydan.sredstva.vozvrashcheny"]
+            : payment.ApplicationStatus == "needs_attention" || payment.RefundedAmount > 0 ? AdminLocalization.Instance["native.billing.vydacha.trebuet.proverki"]
+            : confirmed ? AdminLocalization.Instance["native.billing.ozhidaet.vydachi"] : AdminLocalization.Instance["native.billing.ne.vydan"];
         var serviceFields = new List<DashboardMetric>
         {
-            new("Покупатель", UserDisplayFormatting.Text(payment.User)),
-            new("Организация", UserDisplayFormatting.Text(payment.OrganizationName)),
-            new("Тариф", payment.PlanName),
-            new("Сумма покупки", UserDisplayFormatting.Money(payment.Amount)),
-            new("Оплата подтверждена", confirmed ? UserDisplayFormatting.Money(payment.Amount) : "Пока нет"),
-            new("Возвращено всего", UserDisplayFormatting.Money(payment.RefundedAmount)),
-            new("Осталось после возвратов", confirmed ? UserDisplayFormatting.Money(Math.Max(0, payment.Amount - payment.RefundedAmount)) : "—"),
-            new("Доступ по этой покупке", access),
-            new("Выданный период", granted ? UserDisplayFormatting.DateTime(payment.GrantedFrom) + " — " + UserDisplayFormatting.DateTime(payment.GrantedUntil) : "—"),
-            new("О текущем доступе", "Исторический период покупки не показывает текущий доступ. Проверьте подписку получателя отдельно."),
-            new("ID платежа ЮKassa", UserDisplayFormatting.Text(payment.ExternalPaymentId)),
-            new("Создан", UserDisplayFormatting.DateTime(payment.CreatedAt)),
-            new("Оплачен", UserDisplayFormatting.DateTime(payment.PaidAt)),
-            new("Тестовый платёж", payment.IsTest == true ? "Да" : payment.IsTest == false ? "Нет" : "Нет данных")
+            new(AdminLocalization.Instance["native.billing.pokupatel"], UserDisplayFormatting.Text(payment.User)),
+            new(AdminLocalization.Instance["native.promoCodes.organizatsiya"], UserDisplayFormatting.Text(payment.OrganizationName)),
+            new(AdminLocalization.Instance["native.plans.planColumn"], payment.PlanName),
+            new(AdminLocalization.Instance["native.billing.summa.pokupki"], UserDisplayFormatting.Money(payment.Amount)),
+            new(AdminLocalization.Instance["native.billing.oplata.podtverzhdena"], confirmed ? UserDisplayFormatting.Money(payment.Amount) : AdminLocalization.Instance["native.billing.poka.net"]),
+            new(AdminLocalization.Instance["native.billing.vozvrashcheno.vsego"], UserDisplayFormatting.Money(payment.RefundedAmount)),
+            new(AdminLocalization.Instance["native.billing.ostalos.posle.vozvratov"], confirmed ? UserDisplayFormatting.Money(Math.Max(0, payment.Amount - payment.RefundedAmount)) : "—"),
+            new(AdminLocalization.Instance["native.billing.dostup.po.etoy.pokupke"], access),
+            new(AdminLocalization.Instance["native.billing.vydannyy.period"], granted ? UserDisplayFormatting.DateTime(payment.GrantedFrom) + " — " + UserDisplayFormatting.DateTime(payment.GrantedUntil) : "—"),
+            new(AdminLocalization.Instance["native.billing.o.tekushchem.dostupe"], AdminLocalization.Instance["native.billing.istoricheskiy.period.pokupki.ne.pokazyvaet.tekushchiy.dostup.pro"]),
+            new(AdminLocalization.Instance["native.billing.id.platezha.yukassa"], UserDisplayFormatting.Text(payment.ExternalPaymentId)),
+            new(AdminLocalization.Instance["native.billing.sozdan"], UserDisplayFormatting.DateTime(payment.CreatedAt)),
+            new(AdminLocalization.Instance["native.billing.oplachen"], UserDisplayFormatting.DateTime(payment.PaidAt)),
+            new(AdminLocalization.Instance["native.billing.testovyy.platyozh"], payment.IsTest == true ? AdminLocalization.Instance["native.billing.da"] : payment.IsTest == false ? AdminLocalization.Instance["native.billing.net"] : AdminLocalization.Instance["native.billing.net.dannykh"])
         };
         var technical = new List<DashboardStatisticGroup>
         {
-            new("Идентификаторы и состояние", [
-                new("ID покупки", payment.PurchaseId?.ToString("D") ?? "—"),
-                new("Состояние провайдера", UserDisplayFormatting.Text(payment.ProviderStatus)),
-                new("Применение доступа", UserDisplayFormatting.Text(payment.ApplicationStatus)),
-                new("Последний код ошибки", UserDisplayFormatting.Text(payment.LastErrorCode))
+            new(AdminLocalization.Instance["native.billing.identifikatory.i.sostoyanie"], [
+                new(AdminLocalization.Instance["native.billing.id.pokupki"], payment.PurchaseId?.ToString("D") ?? "—"),
+                new(AdminLocalization.Instance["native.billing.sostoyanie.provaydera"], UserDisplayFormatting.Text(payment.ProviderStatus)),
+                new(AdminLocalization.Instance["native.billing.primenenie.dostupa"], UserDisplayFormatting.Text(payment.ApplicationStatus)),
+                new(AdminLocalization.Instance["native.billing.posledniy.kod.oshibki"], UserDisplayFormatting.Text(payment.LastErrorCode))
             ])
         };
         foreach (var item in payment.ProviderEvents)
         {
             var stage = item.Stage switch
             {
-                "access_application" => "Выдача доступа",
-                "service_reconciliation" => "Сверка платежа",
-                "attention" or "inbox_conflict" => "Требуется разбор",
-                "admin_action" => "Действие администратора",
-                "command_delivery" => "Доставка команды",
-                "state" => "Денежный снимок",
-                _ when item.Stage.StartsWith("refund_", StringComparison.Ordinal) => "Обработка возврата",
-                _ => "Обработка платежа"
+                "access_application" => AdminLocalization.Instance["native.billing.vydacha.dostupa"],
+                "service_reconciliation" => AdminLocalization.Instance["native.billing.sverka.platezha"],
+                "attention" or "inbox_conflict" => AdminLocalization.Instance["native.billing.trebuetsya.razbor"],
+                "admin_action" => AdminLocalization.Instance["native.billing.deystvie.administratora"],
+                "command_delivery" => AdminLocalization.Instance["native.billing.dostavka.komandy"],
+                "state" => AdminLocalization.Instance["native.billing.denezhnyy.snimok"],
+                _ when item.Stage.StartsWith("refund_", StringComparison.Ordinal) => AdminLocalization.Instance["native.billing.obrabotka.vozvrata"],
+                _ => AdminLocalization.Instance["native.billing.obrabotka.platezha"]
             };
             technical.Add(new(stage, [
-                new("Дата", UserDisplayFormatting.DateTime(item.CreatedAt)),
-                new("Этап", item.Stage),
-                new("Код", item.Code),
-                new("ID события", item.Id.ToString("D")),
-                new("ID команды", item.CommandId?.ToString("D") ?? "—"),
-                new("Возвращено всего", item.RefundedAmountMinor.HasValue ? UserDisplayFormatting.Money(item.RefundedAmountMinor.Value / 100m) : "—")
+                new(AdminLocalization.Instance["native.promoCodes.data"], UserDisplayFormatting.DateTime(item.CreatedAt)),
+                new(AdminLocalization.Instance["native.billing.etap"], item.Stage),
+                new(AdminLocalization.Instance["native.billing.kod"], item.Code),
+                new(AdminLocalization.Instance["native.billing.id.sobytiya"], item.Id.ToString("D")),
+                new(AdminLocalization.Instance["native.billing.id.komandy"], item.CommandId?.ToString("D") ?? "—"),
+                new(AdminLocalization.Instance["native.billing.vozvrashcheno.vsego"], item.RefundedAmountMinor.HasValue ? UserDisplayFormatting.Money(item.RefundedAmountMinor.Value / 100m) : "—")
             ]));
         }
 
-        return new BillingDetailViewModel(payment.PlanName, $"Платёж № {payment.Id}", serviceFields, technical, auditError, "Последние технические события (до 20)");
+        return new BillingDetailViewModel(
+            payment.PlanName,
+            AdminLocalization.Instance.Format("native.billing.platyozh.payment.id", payment.Id),
+            serviceFields,
+            technical,
+            auditError,
+            AdminLocalization.Instance["native.billing.poslednie.tekhnicheskie.sobytiya.do.20"],
+            () => BillingViewModel.CreateServicePaymentDetail(payment, auditError));
     }
 
     /// <summary> Создаёт модель детализации подписки с аудитом. </summary>
@@ -927,29 +1091,34 @@ public partial class BillingViewModel : ObservableObject
     {
         var fields = new List<DashboardMetric>
         {
-            new("Организация", UserDisplayFormatting.Text(subscription.OrganizationName)),
-            new("Владелец", UserDisplayFormatting.Text(subscription.Owner)),
-            new("Тариф", UserDisplayFormatting.Text(subscription.PlanName)),
-            new("Тип тарифа", UserDisplayFormatting.Text(subscription.PlanTypeCode)),
-            new("Источник", UserDisplayFormatting.Text(subscription.Source)),
-            new("Начало", UserDisplayFormatting.DateTime(subscription.StartDate)),
-            new("Окончание", UserDisplayFormatting.DateTime(subscription.EndDate)),
-            new("Осталось дней", Math.Max(0, subscription.DaysLeft).ToString("N0", s_culture)),
-            new("Автопродление", subscription.AutoRenewal ? "Да" : "Нет"),
-            new("Статус", BillingRow.SubscriptionStatus(subscription))
+            new(AdminLocalization.Instance["native.promoCodes.organizatsiya"], UserDisplayFormatting.Text(subscription.OrganizationName)),
+            new(AdminLocalization.Instance["native.billing.vladelets"], UserDisplayFormatting.Text(subscription.Owner)),
+            new(AdminLocalization.Instance["native.plans.planColumn"], UserDisplayFormatting.Text(subscription.PlanName)),
+            new(AdminLocalization.Instance["native.billing.tip.tarifa"], UserDisplayFormatting.Text(subscription.PlanTypeCode)),
+            new(AdminLocalization.Instance["native.billing.istochnik"], UserDisplayFormatting.Text(subscription.Source)),
+            new(AdminLocalization.Instance["native.promoCodes.nachalo"], UserDisplayFormatting.DateTime(subscription.StartDate)),
+            new(AdminLocalization.Instance["native.promoCodes.okonchanie"], UserDisplayFormatting.DateTime(subscription.EndDate)),
+            new(AdminLocalization.Instance["native.billing.ostalos.dney"], Math.Max(0, subscription.DaysLeft).ToString("N0", CultureInfo.CurrentCulture)),
+            new(AdminLocalization.Instance["native.billing.avtoprodlenie"], subscription.AutoRenewal ? AdminLocalization.Instance["native.billing.da"] : AdminLocalization.Instance["native.billing.net"]),
+            new(AdminLocalization.Instance["native.plans.status"], BillingRow.SubscriptionStatus(subscription))
         };
         var auditGroups = audits.Select(audit => new DashboardStatisticGroup(
             UserDisplayFormatting.Text(audit.Action),
             [
-                new("Дата", UserDisplayFormatting.DateTime(audit.ChangedAt)),
-                new("Кто изменил", UserDisplayFormatting.Text(audit.ChangedBy)),
-                new("Окончание до", UserDisplayFormatting.DateTime(audit.PreviousEndDate)),
-                new("Окончание после", UserDisplayFormatting.DateTime(audit.NewEndDate)),
-                new("Причина", UserDisplayFormatting.Text(audit.Reason))
+                new(AdminLocalization.Instance["native.promoCodes.data"], UserDisplayFormatting.DateTime(audit.ChangedAt)),
+                new(AdminLocalization.Instance["native.billing.kto.izmenil"], UserDisplayFormatting.Text(audit.ChangedBy)),
+                new(AdminLocalization.Instance["native.billing.okonchanie.do"], UserDisplayFormatting.DateTime(audit.PreviousEndDate)),
+                new(AdminLocalization.Instance["native.billing.okonchanie.posle"], UserDisplayFormatting.DateTime(audit.NewEndDate)),
+                new(AdminLocalization.Instance["native.billing.prichina"], UserDisplayFormatting.Text(audit.Reason))
             ])).ToArray();
 
-        return new BillingDetailViewModel(subscription.OrganizationName,
-            $"Подписка организации № {subscription.Id}", fields, auditGroups, auditError);
+        return new BillingDetailViewModel(
+            subscription.OrganizationName,
+            AdminLocalization.Instance.Format("native.billing.podpiska.organizatsii.subscription.id", subscription.Id),
+            fields,
+            auditGroups,
+            auditError,
+            localizedVersionFactory: () => BillingViewModel.CreateSubscriptionDetail(subscription, audits, auditError));
     }
 
     /// <summary> Определяет доступность загрузки данных. </summary>
@@ -1001,6 +1170,20 @@ public partial class BillingViewModel : ObservableObject
             return;
         }
 
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportErrorKey)
+        {
+            if (isDetail)
+            {
+                this.SetLocalizedDetailError(transportErrorKey);
+            }
+            else
+            {
+                this.SetLocalizedError(transportErrorKey);
+            }
+
+            return;
+        }
+
         if (isDetail)
         {
             this.DetailErrorMessage = exception.Message;
@@ -1008,10 +1191,10 @@ public partial class BillingViewModel : ObservableObject
         }
 
         this.ErrorMessage = exception.StatusCode == HttpStatusCode.NotFound
-            ? "Сервер не поддерживает постраничную загрузку биллинга. Требуется обновление сервера."
+            ? AdminLocalization.Instance["native.billing.server.ne.podderzhivaet.postranichnuyu.zagruzku.billinga.trebuet"]
             : this.Rows.Count == 0
                 ? exception.Message
-                : $"Не удалось обновить список. Показана предыдущая страница. {exception.Message}";
+                : AdminLocalization.Instance.Format("native.billing.ne.udalos.obnovit.spisok.pokazana.predydushchaya.stranitsa.excep", exception.Message);
     }
 
     /// <summary> Реагирует на смену вкладки платежей. </summary>
@@ -1033,7 +1216,9 @@ public partial class BillingViewModel : ObservableObject
         this._detailId = null;
         this.ClearRows();
         this._isChangingFilters = true;
-        this.SelectedStatus = value ? this._paymentStatus : this._subscriptionStatus;
+        this.SelectedStatus = value
+            ? BillingViewModel.PaymentStatusLabel(this._paymentStatusCode)
+            : BillingViewModel.SubscriptionStatusLabel(this._subscriptionStatusCode);
         this.Page = value ? this._paymentPage : this._subscriptionPage;
         this.TotalCount = value ? this._paymentTotalCount : this._subscriptionTotalCount;
         this._isChangingFilters = false;
@@ -1049,6 +1234,11 @@ public partial class BillingViewModel : ObservableObject
     /// <summary> Реагирует на смену фильтра периода. </summary>
     partial void OnSelectedPeriodChanged(string value)
     {
+        if (!this._isChangingFilters)
+        {
+            this._selectedPeriodDays = BillingViewModel.PeriodDays(value);
+        }
+
         if (this.IsPaymentsTab)
         {
             this.RestartForChangedFilter();

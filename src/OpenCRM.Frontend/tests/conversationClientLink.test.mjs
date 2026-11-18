@@ -21,6 +21,8 @@ function component({ clients = async () => ({ items: [], totalCount: 0 }), link 
   }
   const resolve = id => {
     if (id === 'vue') return { ...vue, onBeforeUnmount: handler => { cleanup = handler } }
+    if (id === '@opencrm/ui') return { useLocalization: () => ({ t: key => key, locale: { value: 'en' } }) }
+    if (id === '../clientMessages') return {}
     if (id === '../api/clientLookup') return api
     if (id === '../api/conversations') return api
     return {}

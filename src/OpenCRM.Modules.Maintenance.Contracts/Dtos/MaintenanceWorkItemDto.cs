@@ -20,6 +20,9 @@ public sealed class MaintenanceWorkItemDto
     /// <summary> Цена работы. </summary>
     public decimal? Price { get; set; }
 
+    /// <summary> Валюта снимка обслуживания. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Количество. </summary>
     public int Quantity { get; set; }
 

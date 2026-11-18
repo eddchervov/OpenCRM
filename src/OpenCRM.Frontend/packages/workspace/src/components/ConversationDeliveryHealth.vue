@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../conversationMessages'
 import { onBeforeUnmount, ref } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
 import { loadConversationDeliveryHealth, type ConversationDeliveryHealth } from '../api/conversations'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string }>()
 const open = ref(false)
@@ -15,25 +19,25 @@ async function load() {
   request?.abort()
   const active = new AbortController(); request = active
   try { const result = await loadConversationDeliveryHealth(props.organizationId, active.signal); if (!active.signal.aborted) health.value = result }
-  catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось проверить доставку.' }
+  catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('conversations.healthError') }
   finally { if (request === active) loading.value = false }
 }
 onBeforeUnmount(() => request?.abort())
 </script>
 
 <template>
-  <UiButton variant="secondary" class="delivery-health-trigger" @click="load">Доставка</UiButton>
-  <SchedulerBookingDialog :open="open" title="Доставка сообщений организации" @close="open = false; request?.abort()">
+  <UiButton variant="secondary" class="delivery-health-trigger" @click="load">{{ t('conversations.delivery') }}</UiButton>
+  <SchedulerBookingDialog :open="open" :title="t('conversations.deliveryTitle')" @close="open = false; request?.abort()">
     <div class="delivery-health">
-      <UiLoader v-if="loading" text="Проверяем состояние…" />
+      <UiLoader v-if="loading" :text="t('conversations.checking')" />
       <p v-if="error" role="alert">{{ error }}</p>
       <template v-if="health">
-        <dl><div><dt>Ожидают отправки</dt><dd>{{ health.queuedUnpublishedCount + health.queuedPublishedCount }}</dd></div><div><dt>Ожидание дольше 15 минут</dt><dd>{{ health.staleQueuedCount }}</dd></div><div><dt>Восстанавливается результат отправки</dt><dd>{{ health.expiredSendingCount }}</dd></div><div><dt>Завершились ошибкой</dt><dd>{{ health.failedCount }}</dd></div><div><dt>Результат не подтверждён</dt><dd>{{ health.uncertainCount }}</dd></div></dl>
-        <p v-if="health.uncertainCount">Если ответ мессенджера потерян, сообщение не отправляется повторно автоматически: оно уже могло дойти клиенту. Проверьте переписку перед повторной отправкой.</p>
-        <p v-if="health.staleQueuedCount">Ожидающие сообщения сохранены. Сервис повторно проверит доставку после восстановления соединения.</p>
-        <small>Ошибки и неподтверждённые результаты включают историю организации.</small>
+        <dl><div><dt>{{ t('conversations.queuedSending') }}</dt><dd>{{ health.queuedUnpublishedCount + health.queuedPublishedCount }}</dd></div><div><dt>{{ t('conversations.staleQueued') }}</dt><dd>{{ health.staleQueuedCount }}</dd></div><div><dt>{{ t('conversations.recoveringResult') }}</dt><dd>{{ health.expiredSendingCount }}</dd></div><div><dt>{{ t('conversations.failed') }}</dt><dd>{{ health.failedCount }}</dd></div><div><dt>{{ t('conversations.unconfirmed') }}</dt><dd>{{ health.uncertainCount }}</dd></div></dl>
+        <p v-if="health.uncertainCount">{{ t('conversations.uncertainHint') }}</p>
+        <p v-if="health.staleQueuedCount">{{ t('conversations.staleHint') }}</p>
+        <small>{{ t('conversations.historyHint') }}</small>
       </template>
-      <footer><UiButton variant="secondary" :disabled="loading" @click="load">Обновить</UiButton><UiButton @click="open = false; request?.abort()">Закрыть</UiButton></footer>
+      <footer><UiButton variant="secondary" :disabled="loading" @click="load">{{ t('conversations.refresh') }}</UiButton><UiButton @click="open = false; request?.abort()">{{ t('conversations.close') }}</UiButton></footer>
     </div>
   </SchedulerBookingDialog>
 </template>

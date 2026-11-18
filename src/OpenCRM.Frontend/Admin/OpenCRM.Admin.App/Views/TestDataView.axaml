@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.TestDataView"
@@ -7,10 +8,10 @@
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="14">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
       <StackPanel Spacing="4">
-        <TextBlock Text="Тестовые данные" Classes="heading" />
-        <TextBlock Text="Генерируйте демонстрационную технику, обслуживания и дефекты для организации." Classes="caption" TextWrapping="Wrap" />
+        <TextBlock Text="{loc:LocalizedText Key=native.testData.testovye.dannye}" Classes="heading" />
+        <TextBlock Text="{loc:LocalizedText Key=native.testData.generiruyte.demonstratsionnuyu.tekhniku.obsluzhivaniya.i.defekty}" Classes="caption" TextWrapping="Wrap" />
       </StackPanel>
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
     </Grid>
 
     <StackPanel Grid.Row="1" Spacing="7">
@@ -19,7 +20,7 @@
       <Border IsVisible="{Binding IsGenerationOutcomeUnknown}" Background="#302719" BorderBrush="#80613C" BorderThickness="1" CornerRadius="8" Padding="12">
         <StackPanel Spacing="8">
           <TextBlock Text="{Binding OutcomeWarning}" Foreground="#F0C58B" TextWrapping="Wrap" />
-          <Button Content="Обновить данные и проверить результат" Command="{Binding RefreshUnknownOutcomeCommand}" HorizontalAlignment="Left" />
+          <Button Content="{loc:LocalizedText Key=native.testData.obnovit.dannye.i.proverit.rezultat}" Command="{Binding RefreshUnknownOutcomeCommand}" HorizontalAlignment="Left" />
         </StackPanel>
       </Border>
       <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
@@ -30,20 +31,20 @@
         <Border Classes="configurationSection" IsVisible="{Binding !HasSelection}" Padding="0">
           <StackPanel>
             <StackPanel Spacing="4" Margin="18,16,18,12">
-              <TextBlock Text="Организации" Classes="configurationHeading" />
-              <TextBlock Text="Найдите организацию, в которой нужно подготовить тестовые данные." Classes="caption" TextWrapping="Wrap" />
+              <TextBlock Text="{loc:LocalizedText Key=native.testData.organizatsii}" Classes="configurationHeading" />
+              <TextBlock Text="{loc:LocalizedText Key=native.testData.naydite.organizatsiyu.v.kotoroy.nuzhno.podgotovit.testovye.danny}" Classes="caption" TextWrapping="Wrap" />
             </StackPanel>
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="18,0,18,14">
-              <TextBox Text="{Binding Search}" PlaceholderText="Название организации или email владельца" />
-              <Button Grid.Column="1" Content="Найти" Command="{Binding ApplyFiltersCommand}" />
+              <TextBox Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=native.testData.nazvanie.organizatsii.ili.email.vladeltsa}" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.nayti}" Command="{Binding ApplyFiltersCommand}" />
             </Grid>
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="18,0,18,14">
               <TextBlock Text="{Binding PageLabel}" Classes="caption" VerticalAlignment="Center" IsVisible="{Binding !IsLegacyOrganizationPaging}" />
-              <TextBlock Text="{Binding Page, StringFormat='Страница {0}'}" Classes="caption" VerticalAlignment="Center" IsVisible="{Binding IsLegacyOrganizationPaging}" />
-              <Button Grid.Column="1" Content="Назад" Command="{Binding PreviousPageCommand}" />
-              <Button Grid.Column="2" Content="Дальше" Command="{Binding NextPageCommand}" />
+              <TextBlock Text="{loc:LocalizedFormat Key=native.testData.stranitsa.0, Path=Page}" Classes="caption" VerticalAlignment="Center" IsVisible="{Binding IsLegacyOrganizationPaging}" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.siteNotifications.nazad}" Command="{Binding PreviousPageCommand}" />
+              <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.siteNotifications.dalshe}" Command="{Binding NextPageCommand}" />
             </Grid>
-            <TextBlock Text="Сервер возвращает только первые 25 совпадений. Для полной постраничной загрузки требуется обновить сервер."
+            <TextBlock Text="{loc:LocalizedText Key=native.testData.server.vozvrashchaet.tolko.pervye.25.sovpadeniy.dlya.polnoy.post}"
                        IsVisible="{Binding IsLegacyOrganizationPaging}" Classes="caption" TextWrapping="Wrap" Margin="18,0,18,14" />
             <ItemsControl ItemsSource="{Binding Organizations}">
               <ItemsControl.ItemTemplate>
@@ -52,14 +53,14 @@
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="18">
                       <StackPanel Spacing="4" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding OwnerEmail, FallbackValue='Владелец не указан'}" Classes="caption"
+                        <TextBlock Text="{loc:LocalizedFormat Path=OwnerEmail, FallbackKey=native.testData.vladelets.ne.ukazan}" Classes="caption"
                                    TextTrimming="CharacterEllipsis" />
                       </StackPanel>
                       <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="Техника" Classes="caption" />
+                        <TextBlock Text="{loc:LocalizedText Key=native.plans.tekhnika}" Classes="caption" />
                         <TextBlock Text="{Binding VehiclesCount, StringFormat='{}{0:N0}'}" FontWeight="SemiBold" />
                       </StackPanel>
-                      <Button Grid.Column="2" Content="Выбрать" Classes="configurationPrimary"
+                      <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.testData.vybrat}" Classes="configurationPrimary"
                               Command="{Binding $parent[UserControl].((vm:TestDataViewModel)DataContext).SelectOrganizationCommand}"
                               CommandParameter="{Binding}" VerticalAlignment="Center" />
                     </Grid>
@@ -68,7 +69,7 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
             <Border IsVisible="{Binding IsEmpty}" Padding="18,24">
-              <TextBlock Text="Организации не найдены. Измените запрос и попробуйте ещё раз." Classes="caption" TextWrapping="Wrap" />
+              <TextBlock Text="{loc:LocalizedText Key=native.testData.organizatsii.ne.naydeny.izmenite.zapros.i.poprobuyte.eshchyo.raz}" Classes="caption" TextWrapping="Wrap" />
             </Border>
           </StackPanel>
         </Border>
@@ -78,23 +79,23 @@
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="18,16,18,14">
               <StackPanel Spacing="4">
                 <TextBlock Text="{Binding SelectedOrganization.Name}" Classes="configurationHeading" TextWrapping="Wrap" />
-                <TextBlock Text="{Binding SelectedOrganization.OwnerEmail, FallbackValue='Владелец не указан'}" Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedFormat Path=SelectedOrganization.OwnerEmail, FallbackKey=native.testData.vladelets.ne.ukazan}" Classes="caption" TextWrapping="Wrap" />
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Border Classes="configurationBadge" VerticalAlignment="Center">
                   <TextBlock Text="{Binding SelectedOrganization.ScenarioLabel}" />
                 </Border>
-                <Button Content="← К организациям" Command="{Binding CloseOrganizationCommand}" />
+                <Button Content="{loc:LocalizedText Key=native.testData.k.organizatsiyam}" Command="{Binding CloseOrganizationCommand}" />
               </StackPanel>
             </Grid>
             <Border BorderBrush="#292D32" BorderThickness="0,1,0,0" Padding="18,14" IsVisible="{Binding !HasVehicle}">
               <StackPanel Spacing="12">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                   <StackPanel Spacing="3">
-                    <TextBlock Text="Техника организации" Classes="configurationHeading" />
-                    <TextBlock Text="Выберите технику для генерации обслуживаний и дефектов." Classes="caption" TextWrapping="Wrap" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.testData.tekhnika.organizatsii}" Classes="configurationHeading" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.testData.vyberite.tekhniku.dlya.generatsii.obsluzhivaniy.i.defektov}" Classes="caption" TextWrapping="Wrap" />
                   </StackPanel>
-                  <Button Grid.Column="1" Content="Создать технику" Classes="configurationPrimary"
+                  <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.testData.sozdat.tekhniku}" Classes="configurationPrimary"
                           Command="{Binding RequestVehiclesCommand}" VerticalAlignment="Center" />
                 </Grid>
                 <ItemsControl ItemsSource="{Binding Vehicles}">
@@ -104,10 +105,10 @@
                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="18">
                           <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" />
                           <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding MaintenanceCount, StringFormat='Обслуживаний: {0:N0}'}" Classes="caption" />
-                            <TextBlock Text="{Binding DefectCount, StringFormat='Дефектов: {0:N0}'}" Classes="caption" />
+                            <TextBlock Text="{loc:LocalizedFormat Key=native.testData.obsluzhivaniy.0.n0, Path=MaintenanceCount}" Classes="caption" />
+                            <TextBlock Text="{loc:LocalizedFormat Key=native.testData.defektov.0.n0, Path=DefectCount}" Classes="caption" />
                           </StackPanel>
-                          <Button Grid.Column="2" Content="Выбрать"
+                          <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.testData.vybrat}"
                                   Command="{Binding $parent[UserControl].((vm:TestDataViewModel)DataContext).SelectVehicleCommand}"
                                   CommandParameter="{Binding}" VerticalAlignment="Center" />
                         </Grid>
@@ -115,7 +116,7 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="В этой организации пока нет техники. Создайте её, чтобы перейти к генерации данных." IsVisible="{Binding HasNoVehicles}"
+                <TextBlock Text="{loc:LocalizedText Key=native.testData.v.etoy.organizatsii.poka.net.tekhniki.sozdayte.eyo.chtoby.pereyt}" IsVisible="{Binding HasNoVehicles}"
                            Classes="caption" TextWrapping="Wrap" />
               </StackPanel>
             </Border>
@@ -123,15 +124,15 @@
               <StackPanel Spacing="16">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                   <StackPanel Spacing="4">
-                    <TextBlock Text="Генерация для техники" Classes="configurationHeading" />
+                    <TextBlock Text="{loc:LocalizedText Key=native.testData.generatsiya.dlya.tekhniki}" Classes="configurationHeading" />
                     <TextBlock Text="{Binding SelectedVehicle.DisplayName}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
                   </StackPanel>
-                  <Button Grid.Column="1" Content="← К технике организации" Command="{Binding CloseVehicleCommand}" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.testData.k.tekhnike.organizatsii}" Command="{Binding CloseVehicleCommand}" VerticalAlignment="Center" />
                 </Grid>
-                <TextBlock Text="Выберите, какие демонстрационные записи создать." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.testData.vyberite.kakie.demonstratsionnye.zapisi.sozdat}" Classes="caption" TextWrapping="Wrap" />
                 <WrapPanel>
-                  <Button Content="Создать обслуживания" Classes="configurationPrimary" Command="{Binding RequestMaintenancesCommand}" Margin="0,0,8,8" />
-                  <Button Content="Создать дефекты" Command="{Binding RequestDefectsCommand}" Margin="0,0,8,8" />
+                  <Button Content="{loc:LocalizedText Key=native.testData.sozdat.obsluzhivaniya}" Classes="configurationPrimary" Command="{Binding RequestMaintenancesCommand}" Margin="0,0,8,8" />
+                  <Button Content="{loc:LocalizedText Key=native.testData.sozdat.defekty}" Command="{Binding RequestDefectsCommand}" Margin="0,0,8,8" />
                 </WrapPanel>
               </StackPanel>
             </Border>
@@ -149,17 +150,17 @@
           </StackPanel>
           <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
             <StackPanel Spacing="7">
-              <TextBlock Text="Количество" Classes="caption" />
+              <TextBlock Text="{loc:LocalizedText Key=native.testData.kolichestvo}" Classes="caption" />
               <NumericUpDown Value="{Binding Count}" Minimum="1" Maximum="{Binding MaximumCount}" ShowButtonSpinner="False" />
             </StackPanel>
             <StackPanel Grid.Column="1" Spacing="7" IsVisible="{Binding IsGeneratingMaintenances}">
-              <TextBlock Text="Состояние" Classes="caption" />
+              <TextBlock Text="{loc:LocalizedText Key=native.testData.sostoyanie}" Classes="caption" />
               <ComboBox ItemsSource="{Binding MaintenanceModes}" SelectedItem="{Binding SelectedMaintenanceMode}" />
             </StackPanel>
           </Grid>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Создать" Classes="configurationPrimary" Command="{Binding ConfirmCommand}" />
-            <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.testData.sozdat}" Classes="configurationPrimary" Command="{Binding ConfirmCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelConfirmationCommand}" />
           </StackPanel>
         </StackPanel>
       </Border>

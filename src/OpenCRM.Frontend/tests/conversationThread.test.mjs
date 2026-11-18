@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/conversationMessages.ts'
+import { formattingCulture, i18n, setFormattingCulture } from '@opencrm/ui/i18n'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -22,6 +25,7 @@ function thread(messagingAvailable = true) {
     sendConversationMessage: async (...args) => { sent.push(args); return { id: 'saved' } }
   }
   const resolve = id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, watch() {}, onMounted() {}, onBeforeUnmount() {} }
     if (id === '../api/conversations') return api
     if (id === '../utils/conversationDrafts') return { getConversationDraft: () => ({ text: '' }), saveConversationDraft() {} }
@@ -35,6 +39,23 @@ function thread(messagingAvailable = true) {
   state.page.value = page()
   return { state, sent, cursors, setItems(items) { nextItems = items }, deny(status) { nextItems = new RequestError(status) } }
 }
+
+test('Статус доставки следует языку, а время сообщения — формату и поясу организации', () => {
+  const originalLocale = i18n.global.locale.value
+  const originalCulture = formattingCulture.value
+  try {
+    const { state } = thread()
+    state.page.value.timeZoneId = 'Asia/Shanghai'
+    i18n.global.locale.value = 'zh-Hans'
+    setFormattingCulture('en-GB')
+    assert.equal(state.status({ status: 'queued' }), '排队中')
+    assert.equal(state.status({ status: 2 }), 'MAX 已接受')
+    assert.match(state.formatTime('2026-11-16T09:30:00Z'), /16 Nov 2026, 17:30/)
+    state.draft.value = 'Пользовательский текст — 客户消息'
+    i18n.global.locale.value = 'en'
+    assert.equal(state.draft.value, 'Пользовательский текст — 客户消息')
+  } finally { i18n.global.locale.value = originalLocale; setFormattingCulture(originalCulture) }
+})
 
 test('Шаблон передаёт серверные имена полей версии вместе с контекстом обслуживания и отредактированным текстом', async () => {
   const { state, sent } = thread()

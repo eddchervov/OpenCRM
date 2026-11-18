@@ -38,7 +38,7 @@ internal sealed class CatalogCommandService(
 
         var organization = await context.Organizations
             .Where(x => x.Id == organizationId)
-            .Select(x => new { x.PrimaryScenarioCode })
+            .Select(x => new { x.PrimaryScenarioCode, x.CurrencyCode })
             .FirstOrDefaultAsync() ?? throw new InvalidOperationException("Организация не найдена.");
 
         var kindCode = OrganizationScenarioCatalogKindCodes.Normalize(dto.KindCode);
@@ -52,6 +52,7 @@ internal sealed class CatalogCommandService(
         var item = new OrganizationScenarioCatalogItem
         {
             OrganizationId = organizationId,
+            CurrencyCode = organization.CurrencyCode,
             ScenarioCode = OrganizationScenarioProcessCatalog.NormalizeScenarioCode(organization.PrimaryScenarioCode),
             KindCode = kindCode,
             Code = await this.BuildUniqueCodeAsync(organizationId, kindCode, CatalogRules.Slug(name)),
@@ -310,7 +311,7 @@ internal sealed class CatalogCommandService(
 
         if (price.HasValue && (price < 0 || price > 999999999 || decimal.Round(price.Value, 2) != price))
         {
-            throw new InvalidOperationException("Укажите цену от 0 до 999999999 рублей, не более двух знаков после запятой.");
+            throw new InvalidOperationException("Укажите цену от 0 до 999999999, не более двух знаков после запятой.");
         }
         if (kind != OrganizationScenarioCatalogKindCodes.ServiceBundle)
         {

@@ -2,6 +2,19 @@
     var root = document.querySelector('[data-ai-pilot]');
     if (!root) return;
 
+    var uiMessages = JSON.parse(root.dataset.uiMessages || '{}');
+    function uiText(key, parameters) {
+        return (uiMessages[key] || key).replace(/\{(\w+)\}/g, function (_, name) {
+            return parameters && parameters[name] !== undefined ? parameters[name] : '{' + name + '}';
+        });
+    }
+
+    function actionLabel(action, field) {
+        return uiMessages['action.' + action.action + '.' + field] || action[field]
+            || (field === 'title' ? action.action || uiText('action') : '');
+    }
+
+
     var apiBase = root.dataset.apiUrl || '';
     var tokenUrl = root.dataset.tokenUrl || '';
     var organizationId = root.dataset.organizationId || '';
@@ -95,17 +108,17 @@
         if (message) return message;
 
         var statusMessages = {
-            400: 'Проверьте сообщение и попробуйте ещё раз.',
-            401: 'Сессия завершилась. Войдите в аккаунт и откройте помощника снова.',
-            403: 'У помощника нет доступа к выбранной организации.',
-            404: 'Действие или разговор больше не доступны.',
-            409: 'Данные изменились или черновик устарел. Отправьте сообщение заново.',
-            413: 'Файл превышает допустимый размер.',
-            429: 'Превышен лимит запросов. Попробуйте позже.',
-            502: 'Сервис распознавания или ИИ временно недоступен.',
-            503: 'Помощник временно недоступен.'
+            400: uiText('badRequest'),
+            401: uiText('sessionExpired'),
+            403: uiText('forbidden'),
+            404: uiText('notFound'),
+            409: uiText('conflict'),
+            413: uiText('fileTooLarge'),
+            429: uiText('rateLimit'),
+            502: uiText('providerUnavailable'),
+            503: uiText('unavailable')
         };
-        return statusMessages[status] || 'Не удалось выполнить запрос. Попробуйте ещё раз.';
+        return statusMessages[status] || uiText('requestFailed');
     }
 
     async function ensureRequestToken() {
@@ -200,7 +213,7 @@
         var entry = document.createElement('div');
         entry.className = 'chat-message chat-' + role;
         var label = document.createElement('strong');
-        label.textContent = role === 'user' ? 'Вы' : 'Помощник';
+        label.textContent = role === 'user' ? uiText('you') : uiText('assistant');
         var content = document.createElement('p');
         content.textContent = message;
         entry.append(label, content);
@@ -209,10 +222,10 @@
     }
 
     function formatAmount(value) {
-        if (value === null || value === undefined || value === '') return 'Не указано';
+        if (value === null || value === undefined || value === '') return uiText('notSpecified');
         var amount = Number(value);
         return Number.isFinite(amount)
-            ? new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(amount) + ' ₽'
+            ? new Intl.NumberFormat(root.dataset.formatCulture || 'ru-RU', { style: 'currency', currency: 'RUB', currencyDisplay: 'code', maximumFractionDigits: 2 }).format(amount)
             : String(value);
     }
 
@@ -220,7 +233,7 @@
         if (depth > 4 || value == null) return;
         if (Array.isArray(value)) {
             if (!value.length) {
-                parent.textContent = 'Ничего не найдено.';
+                parent.textContent = uiText('nothingFound');
                 return;
             }
             value.slice(0, 100).forEach(function (item) {
@@ -270,15 +283,15 @@
         container.replaceChildren();
         var message = document.createElement('p');
         message.className = 'result-message';
-        message.textContent = result.message || 'Действие выполнено.';
+        message.textContent = result.message || uiText('actionCompleted');
         container.appendChild(message);
 
         var links = document.createElement('div');
         links.className = 'result-links';
-        addResultLink(links, 'Открыть обслуживание', result.maintenanceUrl);
-        addResultLink(links, 'Открыть автомобиль', result.vehicleUrl);
-        addResultLink(links, 'Открыть клиента', result.clientUrl);
-        addResultLink(links, 'Открыть раздел', result.url);
+        addResultLink(links, uiText('openMaintenance'), result.maintenanceUrl);
+        addResultLink(links, uiText('openVehicle'), result.vehicleUrl);
+        addResultLink(links, uiText('openClient'), result.clientUrl);
+        addResultLink(links, uiText('openSection'), result.url);
         if (links.childElementCount) container.appendChild(links);
         container.hidden = false;
         appendMessage('assistant', message.textContent);
@@ -299,7 +312,7 @@
         root.querySelector('[data-read-result]').replaceChildren();
         root.querySelector('[data-destructive-confirm]').hidden = true;
         root.querySelector('[data-confirm-destructive]').checked = false;
-        setStatus('Ожидает команды');
+        setStatus(uiText('waitingCommand'));
     }
 
     function renderDraft(draft, showDialog) {
@@ -310,7 +323,7 @@
         root.querySelector('[data-result]').hidden = true;
         root.querySelector('[data-clarification]').hidden = true;
         root.querySelector('[data-summary]').textContent = draft.summary || '';
-        root.querySelector('[data-plan-target]').textContent = draft.target || 'Действие для выбранной организации';
+        root.querySelector('[data-plan-target]').textContent = draft.target || uiText('organizationAction');
         var changes = root.querySelector('[data-plan-changes]');
         changes.replaceChildren();
         (draft.changes || []).forEach(function (change) {
@@ -334,8 +347,8 @@
         if (!data.hidden) renderData(data, draft.data, 0);
 
         root.querySelector('[data-draft]').hidden = false;
-        confirmButton.textContent = draft.readOnly ? 'Показать' : 'Подтвердить';
-        setStatus(draft.readOnly ? 'Проверьте результат' : 'Проверьте черновик');
+        confirmButton.textContent = draft.readOnly ? uiText('show') : uiText('confirm');
+        setStatus(draft.readOnly ? uiText('reviewResult') : uiText('reviewDraft'));
         updateControls();
         if (showDialog !== false) openDraftDialog();
     }
@@ -344,8 +357,8 @@
         clearDraft();
         if (!clarification) return;
         root.querySelector('[data-draft-empty]').hidden = false;
-        setStatus('Нужно уточнение');
-        root.querySelector('[data-clarification-message]').textContent = clarification.message || 'Уточните выбор';
+        setStatus(uiText('needsClarification'));
+        root.querySelector('[data-clarification-message]').textContent = clarification.message || uiText('clarify');
         var choices = root.querySelector('[data-clarification-choices]');
         choices.replaceChildren();
         (clarification.choices || []).forEach(function (choice) {
@@ -411,7 +424,7 @@
         transcript.value = value;
         if (activeDraft) {
             clearDraft();
-            setStatus('Черновик устарел · отправьте новое сообщение');
+            setStatus(uiText('draftExpired'));
         }
         updateControls();
     }
@@ -426,13 +439,13 @@
         }
         if (reply.draft) {
             renderDraft(reply.draft);
-            if (reply.cost != null) showToast('Черновик подготовлен · запрос ' + formatAmount(reply.cost));
+            if (reply.cost != null) showToast(uiText('draftCost', { amount: formatAmount(reply.cost) }));
         } else if (reply.clarification) {
             renderClarification(reply.clarification);
         } else {
             clearDraft();
-            setStatus(reply.awaitingAnswer ? 'Ждёт вашего ответа' : 'Ожидает команды');
-            if (reply.cost != null) showToast('Ответ помощника · запрос ' + formatAmount(reply.cost));
+            setStatus(reply.awaitingAnswer ? uiText('waitingAnswer') : uiText('waitingCommand'));
+            if (reply.cost != null) showToast(uiText('replyCost', { amount: formatAmount(reply.cost) }));
         }
     }
 
@@ -464,10 +477,10 @@
         stopSpeaking();
         clearDraft();
         appendMessage('user', text);
-        setStatus('Помощник отвечает');
+        setStatus(uiText('assistantReplying'));
         setDialogFeedback(composerDialog, '', false);
         try {
-            await withBusy(sendButton, 'Отвечаем…', async function () {
+            await withBusy(sendButton, uiText('replying'), async function () {
                 var reply = await postJson('chat', {
                     organizationId: organizationId || null,
                     text: text,
@@ -480,9 +493,9 @@
             });
             if (!draftDialog.open && !composerDialog.open) root.querySelector('[data-open-composer]').focus();
         } catch (error) {
-            setStatus('Не удалось получить ответ');
-            setDialogFeedback(composerDialog, error.message || 'Не удалось отправить сообщение.', true);
-            appendMessage('assistant', error.message || 'Не удалось получить ответ. Повторите сообщение.');
+            setStatus(uiText('replyFailed'));
+            setDialogFeedback(composerDialog, error.message || uiText('sendFailed'), true);
+            appendMessage('assistant', error.message || uiText('replyRetry'));
         }
     }
 
@@ -499,8 +512,8 @@
                 handleReply(reply);
             });
         } catch (error) {
-            setStatus('Не удалось применить выбор');
-            appendMessage('assistant', error.message || 'Выбор устарел. Отправьте сообщение заново.');
+            setStatus(uiText('choiceFailed'));
+            appendMessage('assistant', error.message || uiText('choiceExpired'));
             root.querySelector('[data-clarification]').hidden = true;
         }
     }
@@ -509,7 +522,7 @@
         if (!activeDraft || busy) return;
         var draft = activeDraft;
         try {
-            await withBusy(confirmButton, 'Выполняем…', async function () {
+            await withBusy(confirmButton, uiText('executing'), async function () {
                 var result = await postJson('confirm', {
                     organizationId: organizationId || null,
                     draftId: draft.id,
@@ -517,15 +530,15 @@
                 });
                 activeDraft = null;
                 root.querySelector('[data-draft]').hidden = true;
-                setStatus('Выполнено');
+                setStatus(uiText('completed'));
                 renderResult(result);
                 root.dispatchEvent(new CustomEvent('assistant:action-completed'));
                 if (root.querySelector('[data-speak-replies]').checked) speakMessage(null, draft.id);
             });
         } catch (error) {
-            setStatus('Не удалось выполнить');
-            setDialogFeedback(draftDialog, error.message || 'Не удалось выполнить действие.', true);
-            appendMessage('assistant', error.message || 'Не удалось выполнить действие.');
+            setStatus(uiText('executionFailed'));
+            setDialogFeedback(draftDialog, error.message || uiText('actionFailed'), true);
+            appendMessage('assistant', error.message || uiText('actionFailed'));
         }
     }
 
@@ -569,7 +582,7 @@
             speechAudio.addEventListener('ended', stopSpeaking, { once: true });
             await speechAudio.play();
         } catch (error) {
-            if (!pageUnloading) showToast(error.message || 'Не удалось озвучить ответ.');
+            if (!pageUnloading) showToast(error.message || uiText('speechFailed'));
         }
     }
 
@@ -577,18 +590,18 @@
         syncText(text || '');
         root.querySelector('[data-transcribe-cost]').textContent = cost == null
             ? ''
-            : 'Распознавание: ' + formatAmount(cost);
+            : uiText('transcriptionCost', { amount: formatAmount(cost) });
         transcript.focus();
     }
 
     async function transcribe(blob, filename) {
         if (busy || !maximumAudioBytes || blob.size > maximumAudioBytes) {
-            showToast('Аудиофайл превышает допустимый размер.');
+            showToast(uiText('audioTooLarge'));
             return;
         }
         transcriptionCount += 1;
         root.dispatchEvent(new CustomEvent('assistant:busy', { detail: { busy: true } }));
-        root.querySelector('[data-record-title]').textContent = 'Распознаём речь';
+        root.querySelector('[data-record-title]').textContent = uiText('transcribing');
         updateControls();
         try {
             var form = new FormData();
@@ -596,13 +609,13 @@
             var query = new URLSearchParams({ organizationId: organizationId });
             var result = await request('transcribe?' + query.toString(), { method: 'POST', body: form });
             showTranscript(result.text || '', result.cost);
-            root.querySelector('[data-record-title]').textContent = 'Голос распознан';
+            root.querySelector('[data-record-title]').textContent = uiText('transcribed');
         } catch (error) {
-            showToast(error.message || 'Не удалось распознать аудио.');
+            showToast(error.message || uiText('transcribeFailed'));
         } finally {
             transcriptionCount = Math.max(0, transcriptionCount - 1);
             root.dispatchEvent(new CustomEvent('assistant:busy', { detail: { busy: busy || transcriptionCount > 0 } }));
-            if (!transcriptionCount) root.querySelector('[data-record-title]').textContent = 'Записать голосовое';
+            if (!transcriptionCount) root.querySelector('[data-record-title]').textContent = uiText('recordVoice');
             updateControls();
         }
     }
@@ -613,12 +626,10 @@
         maximumAudioDurationSeconds = Number(limits.maximumAudioDurationSeconds) || 0;
 
         if (!maximumMessageCharacters || !maximumAudioBytes || !maximumAudioDurationSeconds) {
-            throw new Error('Сервер не передал лимиты помощника.');
+            throw new Error(uiText('limitsMissing'));
         }
         transcript.maxLength = maximumMessageCharacters;
-        root.querySelector('[data-audio-limit]').textContent = 'Максимум ' +
-            new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(maximumAudioBytes / (1024 * 1024)) +
-            ' МБ · ' + maximumAudioDurationSeconds + ' с';
+        root.querySelector('[data-audio-limit]').textContent = uiText('audioLimit', { size: new Intl.NumberFormat(root.dataset.formatCulture || 'ru-RU', { maximumFractionDigits: 1 }).format(maximumAudioBytes / (1024 * 1024)), seconds: maximumAudioDurationSeconds });
     }
 
     async function refreshAvailability() {
@@ -628,8 +639,8 @@
             var availability = await request('availability?' + query.toString());
             contextAvailable = availability.visible === true && availability.enabled === true;
             if (!contextAvailable) {
-                setStatus('Помощник отключён для этой организации');
-                root.querySelector('[data-organization]').textContent = 'Доступ отключён';
+                setStatus(uiText('disabledOrganization'));
+                root.querySelector('[data-organization]').textContent = uiText('accessDisabled');
                 stopSpeaking();
             }
             updateControls();
@@ -646,7 +657,7 @@
             if (!organizationId) organizationId = context.organizationId || '';
             applyLimits(context.limits || {});
             contextAvailable = true;
-            root.querySelector('[data-organization]').textContent = context.organizationName || 'Рабочее пространство';
+            root.querySelector('[data-organization]').textContent = context.organizationName || uiText('workspace');
             var speechOption = root.querySelector('[data-speak-replies]');
             speechOption.disabled = context.serverSpeechEnabled !== true;
             if (!context.serverSpeechEnabled) speechOption.checked = false;
@@ -657,8 +668,8 @@
                 var entry = document.createElement('div');
                 var title = document.createElement('strong');
                 var description = document.createElement('p');
-                title.textContent = action.title || action.action || 'Действие';
-                description.textContent = action.description || '';
+                title.textContent = actionLabel(action, 'title');
+                description.textContent = actionLabel(action, 'description');
                 entry.append(title, description);
                 actionsList.appendChild(entry);
             });
@@ -673,18 +684,18 @@
             root.dispatchEvent(new CustomEvent('assistant:ready'));
         } catch (error) {
             contextAvailable = false;
-            root.querySelector('[data-organization]').textContent = 'Не удалось загрузить';
-            showToast(error.message || 'Не удалось загрузить помощника.');
+            root.querySelector('[data-organization]').textContent = uiText('loadFailed');
+            showToast(error.message || uiText('loadAssistantFailed'));
             updateControls();
         }
     }
 
     function setRecordingState(recording) {
         recordButton.classList.toggle('is-recording', recording);
-        recordButton.setAttribute('aria-label', recording ? 'Остановить запись голоса' : 'Начать запись голоса');
+        recordButton.setAttribute('aria-label', recording ? uiText('stopRecording') : uiText('startRecording'));
         root.querySelector('[data-record-title]').textContent = recording
-            ? 'Идёт запись — нажмите, чтобы остановить'
-            : 'Записать голосовое';
+            ? uiText('recording')
+            : uiText('recordVoice');
     }
 
     function stopRecording() {
@@ -695,7 +706,7 @@
         window.clearInterval(recordingTimer);
         root.querySelector('[data-record-timer]').hidden = true;
         setRecordingState(false);
-        if (recordingStopping) root.querySelector('[data-record-title]').textContent = 'Завершаем запись…';
+        if (recordingStopping) root.querySelector('[data-record-title]').textContent = uiText('finishingRecording');
         updateControls();
     }
 
@@ -709,7 +720,7 @@
             return;
         }
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-            showToast('Запись голоса недоступна в этом браузере. Загрузите аудио или введите сообщение.');
+            showToast(uiText('recordingUnavailable'));
             return;
         }
 
@@ -731,7 +742,7 @@
                 recordingChunks.push(event.data);
                 recordingBytes += event.data.size;
                 if (maximumAudioBytes && recordingBytes > maximumAudioBytes) {
-                    showToast('Достигнут предел размера записи.');
+                    showToast(uiText('sizeLimit'));
                     stopRecording();
                 }
             });
@@ -762,7 +773,7 @@
                 timer.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
                 timer.hidden = false;
                 if (maximumAudioDurationSeconds && seconds >= maximumAudioDurationSeconds) {
-                    showToast('Достигнут предел длительности записи.');
+                    showToast(uiText('durationLimit'));
                     stopRecording();
                 }
             }, 250);
@@ -770,7 +781,7 @@
             if (requestId !== microphoneRequest) return;
             microphonePending = false;
             setRecordingState(false);
-            showToast('Не удалось включить микрофон. Проверьте разрешение браузера или загрузите аудио.');
+            showToast(uiText('microphoneFailed'));
             updateControls();
         });
     }
@@ -810,7 +821,7 @@
         event.target.value = '';
         if (!file) return;
         if (!maximumAudioBytes || file.size > maximumAudioBytes) {
-            showToast('Аудиофайл превышает допустимый размер.');
+            showToast(uiText('audioTooLarge'));
             return;
         }
         transcribe(file, file.name);
@@ -830,13 +841,13 @@
                 updateControls();
             });
         } catch (error) {
-            showToast(error.message || 'Не удалось продолжить разговор.');
+            showToast(error.message || uiText('resumeFailed'));
         }
     });
     root.querySelector('[data-new-conversation]').addEventListener('click', async function () {
         if (busy) return;
         var button = this;
-        await withBusy(button, 'Закрываем…', async function () {
+        await withBusy(button, uiText('closing'), async function () {
             if (conversationId) {
                 await postJson('close', { organizationId: organizationId || null, conversationId: conversationId });
             }
@@ -848,9 +859,9 @@
             transcript.value = '';
             root.querySelector('[data-transcribe-cost]').textContent = '';
             clearDraft();
-            appendMessage('assistant', 'Новая беседа. Расскажите про автомобиль и работы — я уточню недостающее.');
+            appendMessage('assistant', uiText('newConversationWelcome'));
         }).catch(function (error) {
-            showToast(error.message || 'Не удалось закрыть беседу.');
+            showToast(error.message || uiText('closeFailed'));
         });
     });
     root.querySelector('[data-speak-replies]').addEventListener('change', function () {

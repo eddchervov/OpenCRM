@@ -1,14 +1,19 @@
 @using Microsoft.AspNetCore.Antiforgery
+@using OpenCRM.WebApp.Infrastructure.Localization
 @inject IAntiforgery Antiforgery
 @{
     var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
-    var title = ViewData["Title"] as string ?? "ИИ - Голосовой помощник";
+    var title = ViewData["Title"] as string ?? Text["assistant.ui.title"].Value;
+    var currentLanguage = SupportedUiLanguages.ResolveLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name);
+    var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
 }
 <!doctype html>
-<html lang="ru">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
+    <partial name="_ClientLocalization" />
     <meta name="project-brand" content="@Brand.DisplayName" />
     <meta charset="utf-8" />
+    <meta name="opencrm-formatting-culture" content="@System.Globalization.CultureInfo.CurrentCulture.Name" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="request-verification-token" content="@antiforgeryToken" />
@@ -19,6 +24,18 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="organizations-entry assistant-page assistant-embedded">
+    <form action="@Url.Action("SetLanguage", "Localization")" method="post" class="d-flex justify-content-end align-items-center gap-2 p-2">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <label for="ui-language" class="mb-0">@Text["auth.language"]</label>
+        <select id="ui-language" name="locale" class="form-select form-select-sm" style="width: auto">
+            @foreach (var language in SupportedUiLanguages.Languages)
+            {
+                <option value="@language.Code" selected="@(currentLanguage == language.Code)">@language.NativeName</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">@Text["auth.apply"]</button>
+    </form>
     <main role="main">
         @RenderBody()
     </main>

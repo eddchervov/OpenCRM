@@ -57,6 +57,9 @@ public sealed partial class OrganizationImportService
             {
                 row.Status = "error";
                 row.Message = "Повторяется внешний ID автомобиля. Исправьте ID перед переносом заказов.";
+                row.MessageCode = ImportRowMessageCodes.DuplicateVehicleExternalId;
+                row.MessageDetails = null;
+                row.MessageParameters = null;
             }
             vehicleIds[ExternalKey(row.ExternalId)!] = applied.GetValueOrDefault(row.Id)?.TargetId ??
                 vehicleIds.GetValueOrDefault(ExternalKey(row.ExternalId)!, Guid.NewGuid());
@@ -88,6 +91,9 @@ public sealed partial class OrganizationImportService
             {
                 row.Status = results[row.Id].Status;
                 row.Message = results[row.Id].Message;
+                row.MessageCode = results[row.Id].MessageCode;
+                row.MessageParameters = results[row.Id].MessageParameters;
+                row.MessageDetails = results[row.Id].MessageDetails;
             }
 
             var invalidVehicles = rows.Where(row => row.Kind == "vehicle" && (row.Status is "error" or "conflict" || row.Excluded))
@@ -96,6 +102,9 @@ public sealed partial class OrganizationImportService
             {
                 row.Status = "error";
                 row.Message = "Автомобиль заказа исключён или не прошёл проверку.";
+                row.MessageCode = ImportRowMessageCodes.VehicleNotReady;
+                row.MessageDetails = null;
+                row.MessageParameters = null;
             }
         }
 
@@ -117,6 +126,9 @@ public sealed partial class OrganizationImportService
             {
                 row.Status = "error";
                 row.Message = "Внешние идентификаторы ограничены 100 символами.";
+                row.MessageCode = ImportRowMessageCodes.ExternalIdentityTooLong;
+                row.MessageDetails = null;
+                row.MessageParameters = null;
             }
         }
     }
@@ -264,11 +276,11 @@ public sealed partial class OrganizationImportService
             var duplicateVehicles = batch.Where(row => row.Kind == "vehicle" && row.Status == "duplicate").ToList();
             var existingVehicles = duplicateVehicles.Count == 0 ? [] : await context.Vehicles.AsNoTracking()
                 .Where(vehicle => vehicle.OrganizationId == organizationId && !vehicle.IsDeleted)
-                .Select(vehicle => new { vehicle.Id, vehicle.Vin, vehicle.RegistrationPlate }).ToListAsync(cancellationToken);
+                .Select(vehicle => new { vehicle.Id, vehicle.Vin, vehicle.RegistrationPlate, vehicle.RegistrationCountryCode }).ToListAsync(cancellationToken);
             var vehiclesByVin = existingVehicles.Where(vehicle => NormalizeVehicleKey(vehicle.Vin).Length > 0)
                 .ToLookup(vehicle => NormalizeVehicleKey(vehicle.Vin));
-            var vehiclesByPlate = existingVehicles.Where(vehicle => NormalizeVehicleKey(vehicle.RegistrationPlate).Length > 0)
-                .ToLookup(vehicle => NormalizeVehicleKey(vehicle.RegistrationPlate));
+            var vehiclesByPlate = existingVehicles.Where(vehicle => NormalizePlateMatchKey(vehicle.RegistrationPlate, vehicle.RegistrationCountryCode).Length > 0)
+                .ToLookup(vehicle => NormalizePlateMatchKey(vehicle.RegistrationPlate, vehicle.RegistrationCountryCode), StringComparer.Ordinal);
             foreach (var row in duplicateVehicles)
             {
                 if (row.TargetId.HasValue)
@@ -277,7 +289,7 @@ public sealed partial class OrganizationImportService
                     continue;
                 }
 
-                var candidates = vehiclesByVin[NormalizeVehicleKey(row.Vin)].Concat(vehiclesByPlate[NormalizeVehicleKey(row.Plate)])
+                var candidates = vehiclesByVin[NormalizeVehicleKey(row.Vin)].Concat(vehiclesByPlate[NormalizePlateMatchKey(row.Plate, row.RegistrationCountryCode)])
                     .Select(vehicle => vehicle.Id).Distinct().ToList();
                 if (candidates.Count != 1)
                 {
@@ -315,7 +327,16 @@ public sealed partial class OrganizationImportService
                 entry.AppliedAt = DateTime.UtcNow;
                 row.AppliedAt = entry.AppliedAt;
                 row.TargetId = entry.TargetId;
+                if (row.Status == "create")
+                {
+                    row.Message = "Создано.";
+                    row.MessageCode = ImportRowMessageCodes.StatusCreated;
+                    row.MessageDetails = null;
+                    row.MessageParameters = null;
+                }
+
                 UpdateRow(entry, row);
+
                 if (row.Status is "skip" or "duplicate")
                 {
                     result.Skipped++;
@@ -506,6 +527,18 @@ public sealed partial class OrganizationImportService
 
     private static string NormalizeVehicleKey(string? value) =>
         new((value ?? string.Empty).Where(char.IsLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
+
+    private static string NormalizePlateMatchKey(string? plate, string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(plate))
+        {
+            return string.Empty;
+        }
+
+        return countryCode is null or "RU"
+            ? NormalizeVehicleKey(plate)
+            : $"{countryCode}\0{plate.Trim()}";
+    }
 
     private static ImportBusinessRecord ToBusinessRecord(ImportCandidate row)
     {

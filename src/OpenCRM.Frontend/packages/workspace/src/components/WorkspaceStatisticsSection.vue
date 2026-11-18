@@ -1,9 +1,17 @@
 <script setup lang="ts">
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../sectionPagesMessages'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Chart from 'chart.js/auto'
 import { workspaceChartColors, workspaceTheme } from '@opencrm/ui'
 import type { Chart as ChartInstance, ChartOptions } from 'chart.js'
 import type { WorkspaceStatisticsData } from '../api/workspaceAdmin'
+
+const workspaceCurrency = useWorkspaceCurrency()
+
+const { t, te, locale } = useLocalization()
 
 const props = defineProps<{
   statistics: Pick<WorkspaceStatisticsData, 'analytics'>
@@ -24,41 +32,52 @@ const materialRiskTotal = computed(() =>
 )
 const reportCards = computed(() => [
   {
-    title: 'Работы',
+    title: t('sectionPages.work'),
     value: formatNumber(kpis.value.completedWorks14Days),
-    meta: `${formatNumber(kpis.value.plannedWorks)} запланировано, ${formatNumber(kpis.value.inProgressWorks)} в работе`
+    meta: t('sectionPages.workMeta', { planned: formatNumber(kpis.value.plannedWorks), inProgress: formatNumber(kpis.value.inProgressWorks) })
   },
   {
-    title: 'Начислено по закрытым работам',
+    title: t('sectionPages.charged'),
     value: formatMoney(kpis.value.revenue14Days),
-    meta: 'по закрытым работам за 14 дней'
+    meta: t('sectionPages.chargedHint')
   },
   {
-    title: 'Клиенты и техника',
+    title: t('sectionPages.clientsVehicles'),
     value: `${formatNumber(kpis.value.clients)} / ${formatNumber(kpis.value.activeVehicles)}`,
-    meta: 'клиентов / активной техники'
+    meta: t('sectionPages.clientsVehiclesHint')
   },
   {
-    title: 'Контроль',
+    title: t('sectionPages.control'),
     value: formatNumber(kpis.value.openDefects + kpis.value.materialsLowStock + kpis.value.materialsOutOfStock),
-    meta: 'открытые дефекты и складские риски'
+    meta: t('sectionPages.controlHint')
   }
 ])
 
 function formatNumber(value: number) {
   if (props.previewOnly) return '—'
 
-  return new Intl.NumberFormat('ru-RU').format(value)
+  return new Intl.NumberFormat(formattingCulture.value).format(value)
 }
 
 function formatMoney(value: number) {
   if (props.previewOnly) return '—'
 
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat(formattingCulture.value, {
     style: 'currency',
-    currency: 'RUB',
+    currency: workspaceCurrency.value,
+    currencyDisplay: 'code',
     maximumFractionDigits: 2
   }).format(value)
+}
+
+function seriesDate(value: string) {
+  return new Intl.DateTimeFormat(formattingCulture.value, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`))
+}
+
+function breakdownName(item: { code: string; label: string }) {
+  const key = `sectionPages.breakdown_${item.code}`
+
+  return te(key) ? t(key) : item.label
 }
 
 function destroyCharts() {
@@ -145,8 +164,8 @@ function renderCharts() {
   destroyCharts()
   const createdSeries = analytics.value.maintenanceCreatedSeries
   const completedSeries = analytics.value.maintenanceCompletedSeries
-  const completedByLabel = new Map(completedSeries.map(point => [point.label, point.value]))
-  const workLabels = createdSeries.map(point => point.label)
+  const completedByDate = new Map(completedSeries.map(point => [point.date, point.value]))
+  const workLabels = createdSeries.map(point => seriesDate(point.date))
 
   maintenanceChart = new Chart(maintenanceCanvas, {
     type: 'bar',
@@ -154,7 +173,7 @@ function renderCharts() {
       labels: workLabels,
       datasets: [
         {
-          label: 'Создано',
+          label: t('sectionPages.created'),
           data: createdSeries.map(point => point.value),
           backgroundColor: 'rgba(14, 165, 233, 0.72)',
           borderColor: '#0284c7',
@@ -163,8 +182,8 @@ function renderCharts() {
           maxBarThickness: 18
         },
         {
-          label: 'Закрыто',
-          data: workLabels.map(label => completedByLabel.get(label) ?? 0),
+          label: t('sectionPages.completed'),
+          data: createdSeries.map(point => completedByDate.get(point.date) ?? 0),
           backgroundColor: 'rgba(15, 118, 110, 0.72)',
           borderColor: '#0f766e',
           borderRadius: 6,
@@ -179,10 +198,10 @@ function renderCharts() {
   revenueChart = new Chart(revenueCanvas, {
     type: 'line',
     data: {
-      labels: analytics.value.revenueSeries.map(point => point.label),
+      labels: analytics.value.revenueSeries.map(point => seriesDate(point.date)),
       datasets: [
         {
-          label: 'Начислено',
+          label: t('sectionPages.charges'),
           data: analytics.value.revenueSeries.map(point => point.value),
           borderColor: '#0f766e',
           backgroundColor: 'rgba(15, 118, 110, 0.14)',
@@ -201,7 +220,7 @@ function renderCharts() {
   })
 }
 
-watch(() => [props.statistics, workspaceTheme.value], async () => {
+watch(() => [props.statistics, workspaceTheme.value, locale.value, formattingCulture.value, workspaceCurrency.value], async () => {
   await nextTick()
   renderCharts()
 }, { deep: true })
@@ -226,34 +245,34 @@ onBeforeUnmount(destroyCharts)
     <div class="workspace-statistics-grid">
       <article class="workspace-statistics-panel workspace-statistics-panel--wide">
         <div class="workspace-statistics-panel-head">
-          <h3 class="ui-section-header">Динамика работ</h3>
-          <p>созданные и закрытые работы за последние 14 дней</p>
+          <h3 class="ui-section-header">{{ t('sectionPages.workTrend') }}</h3>
+          <p>{{ t('sectionPages.workTrendHint') }}</p>
         </div>
         <div v-if="previewOnly" class="workspace-statistics-chart workspace-statistics-chart--dual workspace-statistics-chart--preview" aria-hidden="true">
           <span v-for="index in 14" :key="index" :style="{ height: `${24 + (index % 5) * 11}%` }"></span>
         </div>
-        <div v-else class="workspace-statistics-chart workspace-statistics-chart--dual" aria-label="Динамика работ">
-          <canvas ref="maintenanceChartCanvas" aria-label="Workspace maintenance chart" role="img"></canvas>
+        <div v-else class="workspace-statistics-chart workspace-statistics-chart--dual" :aria-label="t('sectionPages.workTrend')">
+          <canvas ref="maintenanceChartCanvas" :aria-label="t('sectionPages.maintenanceChart')" role="img"></canvas>
         </div>
       </article>
 
       <article class="workspace-statistics-panel">
         <div class="workspace-statistics-panel-head">
-          <h3 class="ui-section-header">Начислено по закрытым работам</h3>
-          <p>{{ formatMoney(kpis.revenue14Days) }} за 14 дней</p>
+          <h3 class="ui-section-header">{{ t('sectionPages.charged') }}</h3>
+          <p>{{ t('sectionPages.chargedPeriod', { amount: formatMoney(kpis.revenue14Days) }) }}</p>
         </div>
         <div v-if="previewOnly" class="workspace-statistics-chart workspace-statistics-chart--money workspace-statistics-chart--preview" aria-hidden="true">
           <span v-for="index in 14" :key="index" :style="{ height: `${20 + (index % 6) * 10}%` }"></span>
         </div>
-        <div v-else class="workspace-statistics-chart workspace-statistics-chart--money" aria-label="Начислено по закрытым работам">
-          <canvas ref="revenueChartCanvas" aria-label="Workspace revenue chart" role="img"></canvas>
+        <div v-else class="workspace-statistics-chart workspace-statistics-chart--money" :aria-label="t('sectionPages.charged')">
+          <canvas ref="revenueChartCanvas" :aria-label="t('sectionPages.revenueChart')" role="img"></canvas>
         </div>
       </article>
 
       <article class="workspace-statistics-panel">
         <div class="workspace-statistics-panel-head">
-          <h3 class="ui-section-header">Статусы</h3>
-          <p>{{ formatNumber(statusTotal) }} работ в срезе</p>
+          <h3 class="ui-section-header">{{ t('sectionPages.statuses') }}</h3>
+          <p>{{ t('sectionPages.workCount', { count: formatNumber(statusTotal) }) }}</p>
         </div>
         <div class="workspace-statistics-breakdown">
           <template v-if="previewOnly">
@@ -263,7 +282,7 @@ onBeforeUnmount(destroyCharts)
           </template>
           <template v-else>
             <div v-for="item in analytics.statusBreakdown" :key="item.code" class="workspace-statistics-breakdown-row">
-              <span>{{ item.label }}</span>
+              <span>{{ breakdownName(item) }}</span>
               <strong>{{ formatNumber(item.value) }}</strong>
               <i><b :style="{ width: item.percent + '%' }"></b></i>
             </div>
@@ -273,8 +292,8 @@ onBeforeUnmount(destroyCharts)
 
       <article class="workspace-statistics-panel">
         <div class="workspace-statistics-panel-head">
-          <h3 class="ui-section-header">Складские риски</h3>
-          <p>{{ formatNumber(materialRiskTotal) }} позиций требуют внимания</p>
+          <h3 class="ui-section-header">{{ t('sectionPages.stockRisks') }}</h3>
+          <p>{{ t('sectionPages.stockRiskCount', { count: formatNumber(materialRiskTotal) }) }}</p>
         </div>
         <div class="workspace-statistics-breakdown">
           <template v-if="previewOnly">
@@ -284,7 +303,7 @@ onBeforeUnmount(destroyCharts)
           </template>
           <template v-else>
             <div v-for="item in analytics.materialRiskBreakdown" :key="item.code" class="workspace-statistics-breakdown-row">
-              <span>{{ item.label }}</span>
+              <span>{{ breakdownName(item) }}</span>
               <strong>{{ formatNumber(item.value) }}</strong>
               <i><b :style="{ width: item.percent + '%' }"></b></i>
             </div>

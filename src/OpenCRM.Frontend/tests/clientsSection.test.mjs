@@ -26,7 +26,9 @@ function setup(organizationId, userId) {
   const resolve = id => {
     if (id === '../utils/memberSelectOptions') return { createMemberSelectOptions }
     if (id === 'vue') return componentVue
-    if (id === '@opencrm/ui' || id.endsWith('.vue')) return {}
+    if (id === '@opencrm/ui') return { useLocalization: () => ({ t: key => ({ 'clients.noResponsible': 'Без ответственного' }[key] ?? key) }) }
+    if (id === '../clientMessages') return {}
+    if (id.endsWith('.vue')) return {}
     if (id === '../api/clients') return {
       loadClientsPage: async (...args) => {
         pageRequests.push(args)

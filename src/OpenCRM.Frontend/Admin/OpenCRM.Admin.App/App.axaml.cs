@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
 using OpenCRM.Admin.Api;
+using OpenCRM.Admin.App.Localization;
 using Helpers;
 
 namespace OpenCRM.Admin.App;
@@ -38,7 +39,7 @@ public partial class App : Application
             }
             catch (Exception exception) when (exception is IOException or JsonException or InvalidOperationException or UnauthorizedAccessException or ArgumentException)
             {
-                configurationError = "Не удалось прочитать настройки сервера. " + exception.Message;
+                configurationError = exception.Message;
             }
 
             var httpClient = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false })
@@ -75,11 +76,19 @@ public partial class App : Application
                 _ = viewModel.RefreshBackgroundProfileAsync();
             };
 
-            desktop.MainWindow = new MainWindow
+            var mainWindow = new MainWindow
             {
                 DataContext = viewModel,
-                Title = $"{brand.DisplayName} — Администрирование"
+                Title = $"{brand.DisplayName} — {AdminLocalization.Instance["app.title"]}"
             };
+            AdminLocalization.Instance.PropertyChanged += (_, eventArgs) =>
+            {
+                if (eventArgs.PropertyName == nameof(AdminLocalization.Language))
+                {
+                    mainWindow.Title = $"{brand.DisplayName} — {AdminLocalization.Instance["app.title"]}";
+                }
+            };
+            desktop.MainWindow = mainWindow;
             desktop.MainWindow.Opened += async (_, _) =>
             {
                 if (viewModel.RestoreSessionCommand.CanExecute(null))

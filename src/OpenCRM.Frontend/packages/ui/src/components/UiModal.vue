@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { activateModalFocus } from '../modalFocus'
+import { useLocalization } from '../i18n'
+
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   open?: boolean
@@ -45,12 +48,12 @@ onBeforeUnmount(deactivateModal)
 
 <template>
   <Teleport to="body">
-    <div v-if="open" ref="dialogRoot" class="ui-modal" role="dialog" aria-modal="true" :aria-label="title || 'Диалоговое окно'" tabindex="-1">
-      <button class="ui-modal__backdrop" type="button" aria-label="Закрыть" @click="emit('close')" />
+    <div v-if="open" ref="dialogRoot" class="ui-modal" role="dialog" aria-modal="true" :aria-label="title || t('common.dialog')" tabindex="-1">
+      <button class="ui-modal__backdrop" type="button" :aria-label="t('common.close')" @click="emit('close')" />
       <section class="ui-modal__panel">
         <header class="ui-modal__header ui-form-header">
           <h2>{{ title }}</h2>
-          <button class="ui-modal__close" type="button" aria-label="Закрыть" @click="emit('close')">×</button>
+          <button class="ui-modal__close" type="button" :aria-label="t('common.close')" @click="emit('close')">×</button>
         </header>
         <div class="ui-modal__body">
           <slot />

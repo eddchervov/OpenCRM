@@ -8,7 +8,7 @@
     var organizationId = ViewData["OrganizationId"]?.ToString() ?? string.Empty;
     var contextUrl = ViewData["ContextUrl"]?.ToString() ?? string.Empty;
     var workspaceUrl = ViewData["WorkspaceUrl"]?.ToString() ?? string.Empty;
-    var title = ViewData["Title"]?.ToString() ?? "Автопарк";
+    var title = ViewData["Title"]?.ToString() ?? Text["entry.fleetTitle"].Value;
     var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
     var frontendAssets = FrontendAssets.ReadEntry(Environment.WebRootPath, "clients/fleet", "index.html");
     var hostConfig = new
@@ -20,10 +20,12 @@
 }
 
 <!doctype html>
-<html lang="ru">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
+    <partial name="_ClientLocalization" />
     <meta name="project-brand" content="@Brand.DisplayName" />
     <meta charset="utf-8" />
+    <meta name="opencrm-formatting-culture" content="@System.Globalization.CultureInfo.CurrentCulture.Name" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="request-verification-token" content="@antiforgeryToken" />

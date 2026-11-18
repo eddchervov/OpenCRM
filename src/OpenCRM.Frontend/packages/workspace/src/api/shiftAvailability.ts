@@ -1,3 +1,5 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
 export type ShiftAvailability = { isAvailable: boolean | null }
 
 export async function checkShiftAvailability(
@@ -11,6 +13,6 @@ export async function checkShiftAvailability(
     headers: { Accept: 'application/json' }
   })
   if (response.status === 403) return { isAvailable: null }
-  if (!response.ok) throw new Error('Не удалось проверить график.')
+  if (!response.ok) throw new Error(translate('workspaceApi.checkShiftAvailability'))
   return response.json() as Promise<ShiftAvailability>
 }

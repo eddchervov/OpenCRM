@@ -30,6 +30,9 @@ namespace OpenCRM.Services.Interfaces.Word.Dtos
         /// <summary> Стоимость обслуживания, если указана. </summary>
         public decimal? Price { get; set; }
 
+        /// <summary> Код валюты денежных сумм обслуживания. </summary>
+        public string CurrencyCode { get; set; } = "RUB";
+
         /// <summary> Строки работ и услуг обслуживания. </summary>
         public List<WordMaintenanceDetail> MaintenanceDetails { get; set; }
 

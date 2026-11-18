@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
-import { getProjectBrand, pageBreadcrumbsKey, toggleWorkspaceTheme, workspaceTheme, type ProfileLink } from '@opencrm/ui'
+import { formatLocaleDate, getProjectBrand, LanguageSwitcher, pageBreadcrumbsKey, toggleWorkspaceTheme, useLocalization, workspaceTheme, type ProfileLink } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
+import { provideWorkspaceCurrency } from '../workspaceCurrency'
 import type { WorkspaceBreadcrumbItem } from './WorkspaceBreadcrumbs.vue'
 import { provideConversationUpdates } from '../composables/conversationUpdates'
 import WorkspaceCrmNavigation, { type CrmSection } from './WorkspaceCrmNavigation.vue'
@@ -12,15 +13,10 @@ import WorkspaceProSectionPreview from './WorkspaceProSectionPreview.vue'
 import { commercialModuleEnabledKey, proFeatureBillingAccessKey } from '../proFeatureAccess'
 import type { ProFeatureKey } from '../proFeatureDetails'
 import { withPathBase } from '../utils/pathBase.mjs'
+import '../workspaceChromeMessages'
 
 const projectBrand = getProjectBrand()
-
-
-
-
-
-
-
+const { t } = useLocalization()
 
 const props = defineProps<{
   context: WorkspaceContext | null
@@ -31,6 +27,7 @@ const props = defineProps<{
   displayName: string
 }>()
 provide(pageBreadcrumbsKey, computed(() => props.breadcrumbs.slice(1, -1)))
+provideWorkspaceCurrency(computed(() => props.context?.organization.currencyCode ?? 'RUB'))
 const commercialEnabled = computed(() => props.context?.workspaceAccess?.commercialEnabled === true)
 provide(commercialModuleEnabledKey, commercialEnabled)
 provide(proFeatureBillingAccessKey, computed(() => props.context?.organization.canManageBilling === true
@@ -56,17 +53,17 @@ const lockedSection = computed(() => props.context?.shell.menu?.find(item =>
   item.isVisible && item.isAvailable === false
   && (item.code === props.activeSection || item.sectionCodes?.includes(props.activeSection))))
 const lockedSectionMessage = computed(() => {
-  if (!commercialEnabled.value) return 'Функция отключена в настройках установки'
-  if (!isFreePlan.value) return 'Недоступно в этом тарифе'
-  const messages: Record<string, string> = {
-    statistics: 'Статистика доступна в PRO',
-    employees: 'Команда доступна в PRO',
-    members: 'Роли и права доступны в PRO',
-    shifts: 'Смены доступны в PRO',
-    messages: 'Сообщения доступны в PRO',
-    'my-work': 'Мои работы доступны в PRO'
+  if (!commercialEnabled.value) return t('workspaceChrome.featureDisabled')
+  if (!isFreePlan.value) return t('workspaceChrome.proUnavailable')
+  const messageKeys: Record<string, string> = {
+    statistics: 'workspaceChrome.statisticsPro',
+    employees: 'workspaceChrome.employeesPro',
+    members: 'workspaceChrome.rolesPro',
+    shifts: 'workspaceChrome.shiftsPro',
+    messages: 'workspaceChrome.messagesPro',
+    'my-work': 'workspaceChrome.myWorkPro'
   }
-  return messages[props.activeSection] ?? 'Доступно в PRO'
+  return t(messageKeys[props.activeSection] ?? 'workspaceChrome.available')
 })
 const canSeeInquiryActions = computed(() => props.sections.some(section => section.code === 'inquiries'))
 
@@ -78,7 +75,7 @@ const isMenuOpen = ref(false)
 const isSidebarCompact = ref(false)
 const sidebarStorageKey = 'opencrm.workspace.sidebar.compact'
 const organizations = computed(() => props.context?.organizationSwitcher?.organizations ?? [])
-const organizationName = computed(() => props.context?.organization.name ?? 'Рабочее пространство')
+const organizationName = computed(() => props.context?.organization.name ?? t('workspaceChrome.workspace'))
 const organizationsUrl = computed(() => props.context?.organizationSwitcher?.manageUrl ?? withPathBase('/organizations'))
 const avatar = computed(() => props.displayName.trim().slice(0, 1).toUpperCase())
 const accountLinks = computed(() => props.profileLinks.filter(link => link.href !== withPathBase('/organizations')))
@@ -111,7 +108,7 @@ async function closeNotification(notification: SiteNotification) {
 }
 
 function notificationDate(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium' }).format(new Date(value))
+  return formatLocaleDate(value, { dateStyle: 'medium' })
 }
 
 function closeDropdowns(event?: Event) {
@@ -198,20 +195,20 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="shell" class="crm-shell" :class="{ 'crm-shell--compact': isSidebarCompact, 'crm-shell--single-section': sections.length <= 1 }">
-    <a class="crm-skip" href="#crm-content" @click.prevent="focusContent">К содержимому</a>
+    <a class="crm-skip" href="#crm-content" @click.prevent="focusContent">{{ t('workspaceChrome.skip') }}</a>
     <aside v-if="sections.length > 1" class="crm-sidebar">
-      <a class="crm-brand" :href="`#${sections[0]?.code ?? 'workspace'}`"><span class="crm-brand__mark">O</span><span>{{ projectBrand }}<span class="crm-brand__caption">Рабочее пространство</span></span></a>
-      <button type="button" class="crm-sidebar-toggle" :aria-label="isSidebarCompact ? 'Развернуть меню' : 'Свернуть меню'" :title="isSidebarCompact ? 'Развернуть меню' : 'Свернуть меню'" @click="toggleSidebar">
+      <a class="crm-brand" :href="`#${sections[0]?.code ?? 'workspace'}`"><span class="crm-brand__mark">O</span><span>{{ projectBrand }}<span class="crm-brand__caption">{{ t('workspaceChrome.workspace') }}</span></span></a>
+      <button type="button" class="crm-sidebar-toggle" :aria-label="isSidebarCompact ? t('workspaceChrome.help') : t('workspaceChrome.collapse')" :title="isSidebarCompact ? t('workspaceChrome.help') : t('workspaceChrome.collapse')" @click="toggleSidebar">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 7-5 5 5 5" /></svg>
       </button>
       <div class="crm-sidebar__scroll">
         <WorkspaceCrmNavigation v-if="context" :sections="navigationSections" :active-section="activeSection" :compact="isSidebarCompact" :show-pro-badges="isFreePlan" @select="selectSection" />
       </div>
-      <a class="crm-sidebar__bottom" :href="withPathBase('/personal/support')">Помощь и поддержка <span aria-hidden="true">↗</span></a>
+      <a class="crm-sidebar__bottom" :href="withPathBase('/personal/support')">{{ t('workspaceChrome.support') }} <span aria-hidden="true">↗</span></a>
     </aside>
 
     <header class="crm-topbar">
-      <button v-if="sections.length > 1" ref="menuButton" type="button" class="crm-icon-button crm-menu-button" aria-label="Открыть меню" aria-controls="crm-mobile-menu" :aria-expanded="isMenuOpen" @click="openMenu">
+      <button v-if="sections.length > 1" ref="menuButton" type="button" class="crm-icon-button crm-menu-button" :aria-label="t('workspaceChrome.openMenu')" aria-controls="crm-mobile-menu" :aria-expanded="isMenuOpen" @click="openMenu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16 M4 12h16 M4 18h16" /></svg>
       </button>
       <div class="crm-organization">
@@ -228,6 +225,7 @@ onBeforeUnmount(() => {
         <span class="crm-organization__scenario">{{ context?.shell.scenario?.title }}</span>
       </div>
       <div class="crm-topbar__actions">
+        <LanguageSwitcher />
         <WorkspaceAssistantButton
           v-if="context && context.shell.scenario?.modules?.assistantVisible !== false"
           :organization-id="context.organization.id"
@@ -240,31 +238,31 @@ onBeforeUnmount(() => {
           :user-id="context.user.id"
         />
         <details class="crm-dropdown crm-notifications">
-          <summary class="crm-icon-button crm-notifications__bell" aria-label="Уведомления" title="Уведомления">
+          <summary class="crm-icon-button crm-notifications__bell" :aria-label="t('workspaceChrome.notifications')" :title="t('workspaceChrome.notifications')">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
             <span v-if="activeNotifications.length" class="crm-notifications__badge">{{ activeNotifications.length > 99 ? '99+' : activeNotifications.length }}</span>
           </summary>
           <div class="crm-dropdown__panel crm-notifications__panel">
-            <strong>Уведомления</strong>
-            <p v-if="!activeNotifications.length" class="crm-notifications__empty">Новых уведомлений нет</p>
+            <strong>{{ t('workspaceChrome.notifications') }}</strong>
+            <p v-if="!activeNotifications.length" class="crm-notifications__empty">{{ t('workspaceChrome.noNotifications') }}</p>
             <div v-else class="crm-notifications__list">
               <div v-for="notification in activeNotifications" :key="notification.id" class="crm-notifications__item">
                 <b>{{ notification.title }}</b>
                 <p>{{ notification.body }}</p>
                 <small>{{ notificationDate(notification.createdAt) }}</small>
-                <button type="button" @click="closeNotification(notification)">Закрыть</button>
+                <button type="button" @click="closeNotification(notification)">{{ t('workspaceChrome.close') }}</button>
               </div>
             </div>
-            <a :href="withPathBase('/notifications')">Вся история уведомлений</a>
+            <a :href="withPathBase('/notifications')">{{ t('workspaceChrome.notificationHistory') }}</a>
           </div>
         </details>
         <details class="crm-dropdown crm-account">
-          <summary class="crm-avatar" aria-label="Профиль" :title="displayName">{{ avatar }}</summary>
+          <summary class="crm-avatar" :aria-label="t('workspaceChrome.profile')" :title="displayName">{{ avatar }}</summary>
           <div class="crm-dropdown__panel">
             <div class="crm-account__name">{{ displayName }}</div>
-            <a :href="organizationsUrl">Организации</a>
+            <a :href="organizationsUrl">{{ t('workspaceChrome.organizations') }}</a>
             <button type="button" @click="toggleWorkspaceTheme">
-              {{ workspaceTheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему' }}
+              {{ workspaceTheme === 'dark' ? t('workspaceChrome.lightTheme') : t('workspaceChrome.darkTheme') }}
             </button>
             <hr>
             <template v-for="link in accountLinks" :key="`${link.label}-${link.href}`">
@@ -282,7 +280,7 @@ onBeforeUnmount(() => {
 
     <main id="crm-content" class="crm-content" tabindex="-1">
       <div v-if="lockedSection && activeSection === 'messages' && isFreePlan" class="crm-message-history">
-        <button type="button" @click="showMessageHistory = !showMessageHistory">{{ showMessageHistory ? 'Закрыть историю' : 'Сохранённая переписка' }}</button>
+        <button type="button" @click="showMessageHistory = !showMessageHistory">{{ showMessageHistory ? t('workspaceChrome.closeHistory') : t('workspaceChrome.savedMessages') }}</button>
       </div>
       <WorkspaceProLock v-if="lockedSection && context && !(activeSection === 'messages' && showMessageHistory)" :key="context.organization.id + ':' + activeSection" locked :message="lockedSectionMessage" :feature="lockedSectionFeature">
         <WorkspaceProSectionPreview :context="context" :section-code="activeSection" :title="lockedSection.title" />
@@ -291,11 +289,11 @@ onBeforeUnmount(() => {
       <footer class="crm-attribution">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a></footer>
     </main>
 
-    <dialog v-if="sections.length > 1" id="crm-mobile-menu" ref="mobileMenu" class="crm-mobile-menu" aria-label="Навигация организации" @close="restorePage" @click="($event.target === mobileMenu) && closeMenu()">
-      <div class="crm-mobile-menu__head"><strong>{{ projectBrand }}</strong><button type="button" class="crm-icon-button" aria-label="Закрыть меню" autofocus @click="closeMenu">×</button></div>
+    <dialog v-if="sections.length > 1" id="crm-mobile-menu" ref="mobileMenu" class="crm-mobile-menu" :aria-label="t('workspaceChrome.mobileNavigation')" @close="restorePage" @click="($event.target === mobileMenu) && closeMenu()">
+      <div class="crm-mobile-menu__head"><strong>{{ projectBrand }}</strong><button type="button" class="crm-icon-button" :aria-label="t('workspaceChrome.closeMenu')" autofocus @click="closeMenu">×</button></div>
       <div class="crm-mobile-menu__organization">{{ organizationName }}</div>
       <WorkspaceCrmNavigation v-if="context" :sections="navigationSections" :active-section="activeSection" :show-pro-badges="isFreePlan" @select="selectSection" />
-      <a class="crm-sidebar__bottom" :href="organizationsUrl">Организации <span aria-hidden="true">↗</span></a>
+      <a class="crm-sidebar__bottom" :href="organizationsUrl">{{ t('workspaceChrome.organizations') }} <span aria-hidden="true">↗</span></a>
     </dialog>
   </div>
 </template>

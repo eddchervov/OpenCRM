@@ -1,3 +1,4 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -18,14 +19,35 @@ const code = ts.transpileModule(script.content, {
 function progressComponent(api = {}) {
   const watchers = []
   const module = { exports: {} }
+  const translations = {
+    'maintenanceWork.historyTitle': 'История работ',
+    'maintenanceWork.performersAndAdjustments': 'Исполнители и корректировки',
+    'maintenanceWork.workControl': 'Контроль работ',
+    'maintenanceWork.workProgress': 'Ход работ',
+    'maintenanceWork.minutesRange': 'Введите целое число минут от −10 080 до 10 080.',
+    'maintenanceWork.cannotReduce': 'Уменьшить время нельзя: учтено меньше минуты.',
+    'maintenanceWork.canRemoveMinutes': 'Можно убрать не больше {minutes} мин.',
+    'maintenanceWork.minutesShort': 'мин',
+    'maintenanceWork.secondsShort': 'с',
+    'maintenanceWork.hoursShort': 'ч',
+    'maintenanceWork.zeroMinutes': '0 мин',
+    'maintenanceWork.currentTimeUnknown': 'Не удалось определить текущее время. Закройте форму и обновите данные.',
+    'maintenanceWork.timeChangeError': 'Не удалось исправить время работы.',
+    'maintenanceWork.returnError': 'Не удалось вернуть работу.',
+    'maintenanceWork.completionError': 'Не удалось завершить работу.',
+    'maintenanceWork.completionReasonRequired': 'Укажите причину завершения (до 1000 символов).'
+  }
+  const translate = (key, params = {}) => (translations[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? ''))
   const resolve = id => {
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return {
       ...vue,
       onMounted() {},
       onUnmounted() {},
       watch: (source, callback) => watchers.push({ source, callback })
     }
-    if (id === '@opencrm/ui') return { UiButton: {}, UiTooltip: {} }
+    if (id === '@opencrm/ui') return { UiButton: {}, UiTooltip: {}, useLocalization: () => ({ t: translate }) }
+    if (id === '../maintenanceWorkMessages') return {}
     if (id === '../api/work') return {
       loadWorkProgress: async () => [],
       loadWorkReports: async () => [],
@@ -138,7 +160,7 @@ test('Сводка остаётся в карточке, а управление
   })
   assert.deepEqual(template.errors, [])
   assert.match(source, /compact\?: boolean/)
-  assert.match(source, /compact \? 'Контроль работ' : 'Ход работ'/)
+  assert.match(source, /compact \? t\('maintenanceWork\.workControl'\) : t\('maintenanceWork\.workProgress'\)/)
   const templateAst = parseTemplate(descriptor.template.content)
   const management = []
   const summaries = []

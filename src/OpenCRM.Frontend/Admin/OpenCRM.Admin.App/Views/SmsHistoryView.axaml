@@ -1,12 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              x:Class="OpenCRM.Admin.App.Views.SmsHistoryView"
              x:DataType="vm:SmsHistoryViewModel">
   <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
     <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="История SMS" Classes="heading" />
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+      <TextBlock Text="{loc:LocalizedText Key=native.sms.istoriya.sms}" Classes="heading" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
     </Grid>
     <StackPanel Grid.Row="1" Spacing="6">
       <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -14,19 +15,19 @@
     </StackPanel>
     <Border Grid.Row="2" Classes="configurationSection" Padding="12">
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-        <TextBox Text="{Binding Search}" PlaceholderText="Телефон, текст или код SMS" />
-        <TextBlock Grid.Column="1" Text="{Binding TotalCount, StringFormat='Записей: {0:N0}'}" Classes="caption" VerticalAlignment="Center" />
+        <TextBox Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=native.sms.telefon.tekst.ili.kod.sms}" />
+        <TextBlock Grid.Column="1" Text="{loc:LocalizedFormat Key=native.sms.zapisey.0.n0, Path=TotalCount}" Classes="caption" VerticalAlignment="Center" />
       </Grid>
     </Border>
     <Border Grid.Row="3" Classes="configurationSection" Padding="0">
       <ScrollViewer HorizontalScrollBarVisibility="Auto">
         <Grid RowDefinitions="Auto,*" MinWidth="1050">
           <Grid ColumnDefinitions="150,2*,130,170,2*" Margin="16,12">
-            <TextBlock Text="Телефон" Classes="caption" />
-            <TextBlock Grid.Column="1" Text="Текст сообщения" Classes="caption" />
-            <TextBlock Grid.Column="2" Text="Тип / код" Classes="caption" />
-            <TextBlock Grid.Column="3" Text="Дата" Classes="caption" />
-            <TextBlock Grid.Column="4" Text="Ответ провайдера" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.sms.telefon}" Classes="caption" />
+            <TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=native.sms.tekst.soobshcheniya}" Classes="caption" />
+            <TextBlock Grid.Column="2" Text="{loc:LocalizedText Key=native.sms.tip.kod}" Classes="caption" />
+            <TextBlock Grid.Column="3" Text="{loc:LocalizedText Key=native.promoCodes.data}" Classes="caption" />
+            <TextBlock Grid.Column="4" Text="{loc:LocalizedText Key=native.sms.otvet.provaydera}" Classes="caption" />
           </Grid>
           <ListBox Grid.Row="1" ItemsSource="{Binding FilteredRows}" Background="Transparent" BorderThickness="0" ItemContainerTheme="{StaticResource AdminListRowTheme}">
             <ListBox.ItemTemplate>
@@ -43,7 +44,7 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="SMS не найдены." HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+          <TextBlock Grid.Row="1" IsVisible="{Binding IsEmpty}" Text="{loc:LocalizedText Key=native.sms.sms.ne.naydeny}" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="caption" />
         </Grid>
       </ScrollViewer>
     </Border>

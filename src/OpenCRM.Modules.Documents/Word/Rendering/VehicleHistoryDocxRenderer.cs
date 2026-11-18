@@ -33,7 +33,7 @@ internal sealed class VehicleHistoryDocxRenderer(string projectName)
             WordDocumentComponents.AddVehicleInfo(body, model.Vehicle);
 
             WordDocumentComponents.AddSectionHeading(body, "Сводка");
-            WordDocumentComponents.AddStatistics(body, model.TotalMaintenanceCount, model.TotalSpent);
+            WordDocumentComponents.AddStatistics(body, model.TotalMaintenanceCount, model.CurrencyTotals);
 
             WordDocumentComponents.AddSectionHeading(body, "История обслуживания");
             if (model.MaintenanceHistory?.Any() == true)

@@ -4,6 +4,8 @@ import { ApiError } from '@/api/ApiError'
 import { getAdminUsers } from '@/api/adminUsersApi'
 import type { AdminUserListItem } from '@/models/AdminUserListItem'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminUsersMessages'
 
 type SortKey = 'date' | 'email' | 'vehicles' | 'maintenance' | 'organizations' | 'plan'
 
@@ -22,13 +24,13 @@ const sortOptions: Record<SortKey, SortOption> = {
   plan: { ascending: 13, descending: 14, defaultDirection: 'ascending' }
 }
 
-const sortLabels: Record<SortKey, string> = {
-  date: 'Регистрация',
-  email: 'Пользователь',
-  vehicles: 'Техника',
-  maintenance: 'ТО',
-  organizations: 'Организации',
-  plan: 'Личный тариф · прежняя модель'
+const sortLabelKeys: Record<SortKey, string> = {
+  date: 'adminUsers.users.registration',
+  email: 'adminUsers.users.user',
+  vehicles: 'adminUsers.users.vehicles',
+  maintenance: 'adminUsers.users.maintenance',
+  organizations: 'adminUsers.users.organizations',
+  plan: 'adminUsers.users.sortPlan'
 }
 
 const users = ref<AdminUserListItem[]>([])
@@ -48,6 +50,7 @@ const visiblePages = computed(() => {
   return Array.from({ length: Math.min(5, totalPages.value - first + 1) }, (_, index) => first + index)
 })
 const currentUserStore = useAdminCurrentUserStore()
+const { t } = useLocalization()
 const commercialEnabled = computed(() => currentUserStore.currentUser?.commercialEnabled === true)
 const visibleSortOptions = computed(() => (Object.keys(sortOptions) as SortKey[])
   .filter(key => commercialEnabled.value || key !== 'plan')
@@ -92,9 +95,7 @@ async function loadUsers(resetPage = false): Promise<void> {
     page.value = response.page
   } catch (error) {
     if (requestId !== latestRequest) return
-    errorMessage.value = error instanceof ApiError
-      ? error.message
-      : 'Не удалось загрузить пользователей.'
+    errorMessage.value = adminErrorMessage(error, 'adminUsers.users.loadError')
   } finally {
     if (requestId === latestRequest) isLoading.value = false
   }
@@ -153,41 +154,55 @@ function formatDate(value: string | null): string {
     return '—'
   }
 
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   }).format(new Date(value))
 }
 
+function sortLabel(key: SortKey): string {
+  return t(sortLabelKeys[key])
+}
+
+function adminErrorMessage(error: unknown, fallbackKey: string): string {
+  if (error instanceof ApiError) {
+    return error.message.startsWith('API request failed with status ')
+      ? t('adminUsers.api.requestFailed', { status: error.status })
+      : error.message
+  }
+
+  return t(fallbackKey)
+}
+
 </script>
 
 <template>
   <section class="users-page">
-    <h1>Пользователи</h1>
+    <h1>{{ t('adminUsers.users.title') }}</h1>
 
     <form class="users-toolbar users-toolbar--list" @submit.prevent="submitSearch">
       <input
         v-model="search"
         type="search"
-        placeholder="Email или телефон…"
-        aria-label="Поиск по email или телефону"
+        :placeholder="t('adminUsers.users.searchPlaceholder')"
+        :aria-label="t('adminUsers.users.searchLabel')"
       >
       <label class="deleted-filter">
         <input v-model="includeDeleted" type="checkbox" @change="loadUsers(true)">
-        <span>Показывать удалённых</span>
+        <span>{{ t('adminUsers.users.includeDeleted') }}</span>
       </label>
       <button class="primary-button" type="submit" :disabled="isLoading">
-        Найти
+        {{ t('adminUsers.users.find') }}
       </button>
       <button class="secondary-button" type="button" :disabled="isLoading" @click="resetSearch">
-        Сбросить
+        {{ t('adminUsers.users.reset') }}
       </button>
-      <span class="users-toolbar__count">Найдено: {{ allCount }}</span>
+      <span class="users-toolbar__count">{{ t('adminUsers.users.found', { count: allCount }) }}</span>
     </form>
 
     <div v-if="isLoading && users.length === 0" class="panel-state">
-      Загружаем пользователей…
+      {{ t('adminUsers.users.loading') }}
     </div>
 
     <div v-else-if="errorMessage" class="panel-state panel-state--error">
@@ -195,16 +210,16 @@ function formatDate(value: string | null): string {
     </div>
 
     <div v-else-if="users.length === 0" class="panel-state">
-      Пользователи не найдены.
+      {{ t('adminUsers.users.empty') }}
     </div>
 
     <div v-else class="users-table-panel" :class="{ 'is-loading': isLoading }">
       <label class="users-sort">
-        Сортировка
+        {{ t('adminUsers.users.sort') }}
         <select v-model.number="sort" :disabled="isLoading" @change="loadUsers(true)">
           <template v-for="([key, option]) in visibleSortOptions" :key="key">
-            <option :value="option.ascending">{{ sortLabels[key] }} ↑</option>
-            <option :value="option.descending">{{ sortLabels[key] }} ↓</option>
+            <option :value="option.ascending">{{ sortLabel(key) }} ↑</option>
+            <option :value="option.descending">{{ sortLabel(key) }} ↓</option>
           </template>
         </select>
       </label>
@@ -212,46 +227,46 @@ function formatDate(value: string | null): string {
         <table class="data-table users-table">
           <thead>
             <tr>
-              <th scope="col" aria-label="Пользователь" :aria-sort="getSortDirection('email')">
-                <button type="button" @click="changeSort('email')">Пользователь {{ getSortMark('email') }}</button>
+              <th scope="col" :aria-label="t('adminUsers.users.user')" :aria-sort="getSortDirection('email')">
+                <button type="button" @click="changeSort('email')">{{ t('adminUsers.users.user') }} {{ getSortMark('email') }}</button>
               </th>
-              <th v-if="commercialEnabled" scope="col" aria-label="Тариф" :aria-sort="getSortDirection('plan')">
-                <button type="button" @click="changeSort('plan')">Тариф {{ getSortMark('plan') }}</button>
+              <th v-if="commercialEnabled" scope="col" :aria-label="t('adminUsers.users.plan')" :aria-sort="getSortDirection('plan')">
+                <button type="button" @click="changeSort('plan')">{{ t('adminUsers.users.plan') }} {{ getSortMark('plan') }}</button>
               </th>
-              <th scope="col" aria-label="Регистрация" :aria-sort="getSortDirection('date')">
-                <button type="button" @click="changeSort('date')">Регистрация {{ getSortMark('date') }}</button>
+              <th scope="col" :aria-label="t('adminUsers.users.registration')" :aria-sort="getSortDirection('date')">
+                <button type="button" @click="changeSort('date')">{{ t('adminUsers.users.registration') }} {{ getSortMark('date') }}</button>
               </th>
-              <th scope="col" aria-label="Техника" class="users-table__number" :aria-sort="getSortDirection('vehicles')">
-                <button type="button" @click="changeSort('vehicles')">Техника {{ getSortMark('vehicles') }}</button>
+              <th scope="col" :aria-label="t('adminUsers.users.vehicles')" class="users-table__number" :aria-sort="getSortDirection('vehicles')">
+                <button type="button" @click="changeSort('vehicles')">{{ t('adminUsers.users.vehicles') }} {{ getSortMark('vehicles') }}</button>
               </th>
-              <th scope="col" aria-label="ТО" class="users-table__number" :aria-sort="getSortDirection('maintenance')">
-                <button type="button" @click="changeSort('maintenance')">ТО {{ getSortMark('maintenance') }}</button>
+              <th scope="col" :aria-label="t('adminUsers.users.maintenance')" class="users-table__number" :aria-sort="getSortDirection('maintenance')">
+                <button type="button" @click="changeSort('maintenance')">{{ t('adminUsers.users.maintenance') }} {{ getSortMark('maintenance') }}</button>
               </th>
-              <th scope="col" aria-label="Организации" class="users-table__number" :aria-sort="getSortDirection('organizations')">
-                <button type="button" @click="changeSort('organizations')">Организации {{ getSortMark('organizations') }}</button>
+              <th scope="col" :aria-label="t('adminUsers.users.organizations')" class="users-table__number" :aria-sort="getSortDirection('organizations')">
+                <button type="button" @click="changeSort('organizations')">{{ t('adminUsers.users.organizations') }} {{ getSortMark('organizations') }}</button>
               </th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="user in users" :key="user.id" :class="{ 'users-table__deleted': user.isDeleted }">
-              <td data-label="Пользователь">
+              <td :data-label="t('adminUsers.users.user')">
                 <div class="users-table__identity">
                   <RouterLink :to="{ name: 'user-overview', params: { userId: user.id } }" class="users-table__email">
-                    {{ user.email || user.phone || 'Открыть карточку' }}
+                    {{ user.email || user.phone || t('adminUsers.users.openCard') }}
                   </RouterLink>
-                  <span>{{ user.phone || 'Телефон не указан' }}</span>
-                  <span v-if="!user.emailConfirmed" class="confirmation">Email не подтверждён</span>
-                  <span v-if="user.isDeleted" class="deleted-label">Удалён</span>
+                  <span>{{ user.phone || t('adminUsers.users.phoneNotProvided') }}</span>
+                  <span v-if="!user.emailConfirmed" class="confirmation">{{ t('adminUsers.users.emailUnconfirmed') }}</span>
+                  <span v-if="user.isDeleted" class="deleted-label">{{ t('adminUsers.users.deleted') }}</span>
                 </div>
               </td>
-              <td v-if="commercialEnabled" data-label="Тариф">
-                <strong>{{ user.effectivePlanName || 'Не назначен' }}</strong>
-                <small v-if="user.currentSubscriptionEndDate">до {{ formatDate(user.currentSubscriptionEndDate) }}</small>
+              <td v-if="commercialEnabled" :data-label="t('adminUsers.users.plan')">
+                <strong>{{ user.effectivePlanName || t('adminUsers.users.notAssigned') }}</strong>
+                <small v-if="user.currentSubscriptionEndDate">{{ t('adminUsers.users.until', { date: formatDate(user.currentSubscriptionEndDate) }) }}</small>
               </td>
-              <td data-label="Регистрация">{{ formatDate(user.datetimeCreation) }}</td>
-              <td class="users-table__number" data-label="Техника">{{ user.countVehicles }}</td>
-              <td class="users-table__number" data-label="ТО">{{ user.countMaintenance }}</td>
-              <td class="users-table__number" data-label="Организации">{{ user.organizationsCount }}</td>
+              <td :data-label="t('adminUsers.users.registration')">{{ formatDate(user.datetimeCreation) }}</td>
+              <td class="users-table__number" :data-label="t('adminUsers.users.vehicles')">{{ user.countVehicles }}</td>
+              <td class="users-table__number" :data-label="t('adminUsers.users.maintenance')">{{ user.countMaintenance }}</td>
+              <td class="users-table__number" :data-label="t('adminUsers.users.organizations')">{{ user.organizationsCount }}</td>
             </tr>
           </tbody>
         </table>
@@ -259,9 +274,9 @@ function formatDate(value: string | null): string {
     </div>
 
     <div v-if="allCount > 0 && !errorMessage" class="users-pagination">
-      <span>Показаны {{ firstItem }}–{{ lastItem }} из {{ allCount }}</span>
-      <div class="users-pagination__controls" aria-label="Страницы пользователей">
-        <button type="button" :disabled="page === 1 || isLoading" @click="goToPage(page - 1)">Назад</button>
+      <span>{{ t('adminUsers.users.range', { first: firstItem, last: lastItem, total: allCount }) }}</span>
+      <div class="users-pagination__controls" :aria-label="t('adminUsers.users.pagination')">
+        <button type="button" :disabled="page === 1 || isLoading" @click="goToPage(page - 1)">{{ t('adminUsers.users.previous') }}</button>
         <button
           v-for="pageNumber in visiblePages"
           :key="pageNumber"
@@ -271,10 +286,10 @@ function formatDate(value: string | null): string {
           :disabled="isLoading"
           @click="goToPage(pageNumber)"
         >{{ pageNumber }}</button>
-        <button type="button" :disabled="page === totalPages || isLoading" @click="goToPage(page + 1)">Вперёд</button>
+        <button type="button" :disabled="page === totalPages || isLoading" @click="goToPage(page + 1)">{{ t('adminUsers.users.next') }}</button>
       </div>
       <label class="users-pagination__size">
-        На странице
+        {{ t('adminUsers.users.pageSize') }}
         <select v-model.number="pageSize" @change="loadUsers(true)">
           <option :value="25">25</option>
           <option :value="50">50</option>

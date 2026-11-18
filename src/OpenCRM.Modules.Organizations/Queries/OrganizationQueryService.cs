@@ -131,6 +131,7 @@ internal sealed class OrganizationQueryService(
             DocumentStyleCode = organization.DocumentStyleCode,
             MaintenanceWorkflowMode = OrganizationRules.NormalizeMaintenanceWorkflowMode(organization.MaintenanceWorkflowMode),
             TimeZoneId = organization.ShiftTimeZoneId,
+            CurrencyCode = organization.CurrencyCode,
             AllowWorkSelfAssignment = organization.AllowWorkSelfAssignment,
             PrimaryScenarioCode = organization.PrimaryScenarioCode,
             PrimaryScenarioName = scenarioNames.TryGetValue(organization.PrimaryScenarioCode, out var scenarioName)

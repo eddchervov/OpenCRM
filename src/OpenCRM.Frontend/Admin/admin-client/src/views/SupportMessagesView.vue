@@ -5,7 +5,11 @@ import { getSupportMessage, getSupportMessages, replyToSupportMessage, updateSup
 import { ApiError } from '@/api/ApiError'
 import type { AdminSupportMessage } from '@/models/AdminSupportMessage'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminOperationsMessages'
+import { getAdminRecordLabel } from '@/utils/adminRecordLabels'
 
+const { t, locale } = useLocalization()
 const currentUserStore = useAdminCurrentUserStore()
 const route = useRoute()
 const router = useRouter()
@@ -49,7 +53,7 @@ async function loadSelectedFromRoute() {
     const item = await getSupportMessage(id)
     open(item)
   } catch {
-    error.value = 'Не удалось открыть обращение.'
+    error.value = t('adminOperations.support.openError')
   }
 }
 
@@ -78,7 +82,7 @@ async function load(isRefresh = false) {
         ?? await getSupportMessage(selected.value.id)
     }
   } catch {
-    if (!isRefresh) error.value = 'Не удалось загрузить обращения.'
+    if (!isRefresh) error.value = t('adminOperations.support.loadError')
   } finally {
     isLoading.value = false
   }
@@ -110,14 +114,14 @@ async function sendReply() {
     await replyToSupportMessage(selected.value.id, replyText.value.trim())
     replyText.value = ''
     await load()
-    success.value = selected.value.userId ? 'Ответ сохранён в переписке.' : 'Ответ поставлен в очередь отправки на email.'
+    success.value = selected.value.userId ? t('adminOperations.support.replySaved') : t('adminOperations.support.replyQueued')
   } catch (cause) {
     if (cause instanceof ApiError && cause.status === 401) {
-      error.value = 'Сеанс завершён. Войдите снова и повторите отправку.'
+      error.value = t('adminOperations.support.sessionExpired')
     } else if (cause instanceof ApiError && cause.status === 403) {
-      error.value = 'Недостаточно прав для ответа на обращение.'
+      error.value = t('adminOperations.support.replyForbidden')
     } else {
-      error.value = cause instanceof ApiError ? cause.message : 'Не удалось отправить ответ.'
+      error.value = cause instanceof ApiError ? cause.message : t('adminOperations.support.replyError')
     }
   } finally {
     isSaving.value = false
@@ -130,7 +134,9 @@ function supportAttachmentUrl(id: string) {
 }
 
 function formatAttachmentSize(size: number) {
-  return `${(size / 1024 / 1024).toFixed(2)} МБ`
+  const formattedSize = new Intl.NumberFormat(formattingCulture.value, { maximumFractionDigits: 2 }).format(size / 1024 / 1024)
+
+  return t('adminOperations.support.attachmentSize', { size: formattedSize })
 }
 
 async function saveDetails() {
@@ -142,7 +148,7 @@ async function saveDetails() {
     await updateSupportMessage(selected.value.id, nextStatus.value, adminComment.value)
     await load()
   } catch {
-    error.value = 'Не удалось сохранить статус и внутренний комментарий.'
+    error.value = t('adminOperations.support.saveError')
   } finally {
     isSaving.value = false
   }
@@ -156,50 +162,59 @@ async function changePage(nextPage: number) {
 }
 
 function date(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+  return new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
 }
 
 function sender(item: AdminSupportMessage) {
-  return item.userEmail || item.email || item.phone || item.name || 'Гость'
+  return item.userEmail || item.email || item.phone || item.name || t('adminOperations.support.guest')
+}
+
+function supportStatusName(code: string, fallback: string) {
+  if (code === 'new') return t('adminOperations.support.newLabel')
+  if (code === 'in_progress') return t('adminOperations.support.inProgress')
+  if (code === 'closed') return t('adminOperations.support.closed')
+  if (code === 'spam') return t('adminOperations.support.spam')
+
+  return fallback
 }
 
 function entryLabel(kind: string) {
-  if (kind === 'internal_comment' || kind === 'internal') return 'Внутренний комментарий'
-  if (kind === 'status') return 'Изменение статуса'
+  if (kind === 'internal_comment' || kind === 'internal') return t('adminOperations.support.internalComment')
+  if (kind === 'status') return t('adminOperations.support.statusChanged')
   return ''
 }
 
 function deliveryStatusName(status: string | null) {
-  if (status === 'delivered' || status === 'opened' || status === 'clicked') return 'Доставлено'
-  if (status === 'sent' || status === 'accepted') return 'Принято почтовым сервисом'
-  if (status === 'failed' || status === 'hard_bounced' || status === 'soft_bounced' || status === 'spam' || status === 'spam_block' || status === 'unsubscribed') return 'Ошибка доставки'
-  if (status === 'simulated') return 'Отправка отключена'
-  return 'В очереди отправки'
+  if (status === 'delivered' || status === 'opened' || status === 'clicked') return t('adminOperations.support.deliveryDelivered')
+  if (status === 'sent' || status === 'accepted') return t('adminOperations.support.deliveryAccepted')
+  if (status === 'failed' || status === 'hard_bounced' || status === 'soft_bounced' || status === 'spam' || status === 'spam_block' || status === 'unsubscribed') return t('adminOperations.support.deliveryError')
+  if (status === 'simulated') return t('adminOperations.support.deliveryDisabled')
+  return t('adminOperations.support.deliveryQueued')
 }
 </script>
 
 <template>
   <section class="operations-page support-page">
-    <h1>Обращения</h1>
+    <h1>{{ t('adminOperations.support.title') }}</h1>
 
-    <button v-if="isDetail" class="secondary-button support-back" type="button" @click="router.push('/content/support')">← К списку обращений</button>
+    <button v-if="isDetail" class="secondary-button support-back" type="button" @click="router.push('/content/support')">← {{ t('adminOperations.support.back') }}</button>
 
     <div v-if="!isDetail" class="operations-toolbar support-toolbar">
-      <input v-model="search" type="search" placeholder="Тема, текст, email или организация" @keyup.enter="applyFilters">
+      <input v-model="search" type="search" :placeholder="t('adminOperations.support.searchPlaceholder')" @keyup.enter="applyFilters">
       <SearchSelect v-model="source" :options="[
-        { value: '', label: 'Все обращения' },
-        { value: 'users', label: 'От пользователей' },
-        { value: 'guests', label: 'От гостей' }
+        { value: '', label: t('adminOperations.support.allRequests') },
+        { value: 'users', label: t('adminOperations.support.fromUsers') },
+        { value: 'guests', label: t('adminOperations.support.fromGuests') }
       ]" @change="applyFilters" />
       <SearchSelect v-model="status" :options="[
-        { value: '', label: 'Все статусы' },
-        { value: 'new', label: 'Новые' },
-        { value: 'in_progress', label: 'В работе' },
-        { value: 'closed', label: 'Закрытые' },
-        { value: 'spam', label: 'Спам' }
+        { value: '', label: t('adminOperations.support.allStatuses') },
+        { value: 'new', label: t('adminOperations.support.newStatus') },
+        { value: 'in_progress', label: t('adminOperations.support.inProgress') },
+        { value: 'closed', label: t('adminOperations.support.closed') },
+        { value: 'spam', label: t('adminOperations.support.spam') }
       ]" @change="applyFilters" />
-      <button class="secondary-button" :disabled="isLoading" @click="applyFilters">Найти</button>
-      <button class="secondary-button" :disabled="isLoading" @click="load()">Обновить</button>
+      <button class="secondary-button" :disabled="isLoading" @click="applyFilters">{{ t('adminOperations.support.find') }}</button>
+      <button class="secondary-button" :disabled="isLoading" @click="load()">{{ t('adminOperations.support.refresh') }}</button>
     </div>
 
     <div v-if="error" class="form-message form-message--error">{{ error }}</div>
@@ -209,7 +224,7 @@ function deliveryStatusName(status: string | null) {
       <div v-if="!isDetail" class="table-wrap support-list-wrap">
         <table class="data-table support-list">
           <thead>
-            <tr><th>Обращение</th><th>Организация</th><th>Отправитель</th><th>Статус</th></tr>
+            <tr><th>{{ t('adminOperations.support.request') }}</th><th>{{ t('adminOperations.support.organization') }}</th><th>{{ t('adminOperations.support.sender') }}</th><th>{{ t('adminOperations.support.status') }}</th></tr>
           </thead>
           <tbody>
             <tr
@@ -220,19 +235,19 @@ function deliveryStatusName(status: string | null) {
               @click="open(item)"
               @keydown.enter="open(item)"
             >
-              <td><strong>{{ item.topic }}</strong><small>{{ item.typeName }} · {{ date(item.createdAt) }}</small></td>
+              <td><strong>{{ item.topic }}</strong><small>{{ getAdminRecordLabel('supportType', item.typeCode, item.typeName, locale) }} · {{ date(item.createdAt) }}</small></td>
               <td>{{ item.organizationName || '—' }}</td>
               <td>{{ sender(item) }}</td>
-              <td>{{ item.statusName }}</td>
+              <td>{{ supportStatusName(item.statusCode, item.statusName) }}</td>
             </tr>
-            <tr v-if="items.length === 0"><td colspan="4" class="support-empty">{{ isLoading ? 'Загрузка…' : 'Обращения не найдены.' }}</td></tr>
+            <tr v-if="items.length === 0"><td colspan="4" class="support-empty">{{ isLoading ? t('adminOperations.support.loading') : t('adminOperations.support.notFound') }}</td></tr>
           </tbody>
         </table>
         <div class="support-pagination">
-          <span>{{ totalCount }} обращений · страница {{ page }} из {{ totalPages }}</span>
+          <span>{{ t('adminOperations.support.totalAndPage', { count: totalCount, page, pages: totalPages }) }}</span>
           <div>
-            <button class="secondary-button" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">Назад</button>
-            <button class="secondary-button" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">Далее</button>
+            <button class="secondary-button" :disabled="page <= 1 || isLoading" @click="changePage(page - 1)">{{ t('adminOperations.support.previous') }}</button>
+            <button class="secondary-button" :disabled="page >= totalPages || isLoading" @click="changePage(page + 1)">{{ t('adminOperations.support.next') }}</button>
           </div>
         </div>
       </div>
@@ -241,10 +256,10 @@ function deliveryStatusName(status: string | null) {
         <header class="support-conversation__header">
           <div>
             <h2>{{ selected.topic }}</h2>
-            <p>{{ selected.organizationName || 'Без организации' }} · {{ sender(selected) }}</p>
-            <small v-if="selected.organizationId">Организация #{{ selected.organizationId }}</small>
+            <p>{{ selected.organizationName || t('adminOperations.support.noOrganization') }} · {{ sender(selected) }}</p>
+            <small v-if="selected.organizationId">{{ t('adminOperations.support.organizationId', { id: selected.organizationId }) }}</small>
           </div>
-          <span class="support-status">{{ selected.statusName }}</span>
+          <span class="support-status">{{ supportStatusName(selected.statusCode, selected.statusName) }}</span>
         </header>
 
         <div class="support-history" aria-live="polite">
@@ -258,17 +273,17 @@ function deliveryStatusName(status: string | null) {
             }"
           >
             <div class="support-entry__meta">
-              <strong>{{ entryLabel(entry.kind) || (entry.isStaff ? 'Администратор' : sender(selected)) }}</strong>
+              <strong>{{ entryLabel(entry.kind) || (entry.isStaff ? t('adminOperations.support.administrator') : sender(selected)) }}</strong>
               <time :datetime="entry.createdAt">{{ date(entry.createdAt) }}</time>
             </div>
             <p>{{ entry.text }}</p>
-            <ul v-if="entry.attachments?.length" class="support-attachments" aria-label="Вложения">
+            <ul v-if="entry.attachments?.length" class="support-attachments" :aria-label="t('adminOperations.support.attachments')">
               <li v-for="attachment in entry.attachments" :key="attachment.id">
                 <a :href="supportAttachmentUrl(attachment.id)" target="_blank" rel="noopener">{{ attachment.fileName }}</a>
                 <small>{{ formatAttachmentSize(attachment.sizeBytes) }}</small>
               </li>
             </ul>
-            <small v-if="entry.kind === 'guest_email_reply'" class="support-delivery" :class="{ 'support-delivery--error': deliveryStatusName(entry.deliveryStatus) === 'Ошибка доставки' }">
+            <small v-if="entry.kind === 'guest_email_reply'" class="support-delivery" :class="{ 'support-delivery--error': deliveryStatusName(entry.deliveryStatus) === t('adminOperations.support.deliveryError') }">
               {{ deliveryStatusName(entry.deliveryStatus) }}<template v-if="entry.deliveryError"> · {{ entry.deliveryError }}</template>
             </small>
           </article>
@@ -279,26 +294,26 @@ function deliveryStatusName(status: string | null) {
         </div>
 
         <form v-if="canManage && (selected.userId || selected.email)" class="support-reply" @submit.prevent="sendReply">
-          <label for="support-reply">{{ selected.userId ? 'Ответ пользователю' : `Ответ гостю на ${selected.email}` }}</label>
-          <textarea id="support-reply" v-model="replyText" rows="3" maxlength="4000" placeholder="Напишите ответ…"></textarea>
-          <button class="primary-button" :disabled="isSaving || !replyText.trim()">Отправить ответ</button>
+          <label for="support-reply">{{ selected.userId ? t('adminOperations.support.replyUser') : t('adminOperations.support.replyGuest', { email: selected.email }) }}</label>
+          <textarea id="support-reply" v-model="replyText" rows="3" maxlength="4000" :placeholder="t('adminOperations.support.replyPlaceholder')"></textarea>
+          <button class="primary-button" :disabled="isSaving || !replyText.trim()">{{ t('adminOperations.support.sendReply') }}</button>
         </form>
         <div v-else-if="canManage" class="support-reply">
-          <span>У обращения нет email для ответа.</span>
+          <span>{{ t('adminOperations.support.noReplyEmail') }}</span>
         </div>
 
         <form v-if="canManage" class="support-admin-details" @submit.prevent="saveDetails">
-          <label><span>Статус</span><SearchSelect v-model="nextStatus" :options="[
-            { value: 'new', label: 'Новое' },
-            { value: 'in_progress', label: 'В работе' },
-            { value: 'closed', label: 'Закрыто' },
-            { value: 'spam', label: 'Спам' }
+          <label><span>{{ t('adminOperations.support.status') }}</span><SearchSelect v-model="nextStatus" :options="[
+            { value: 'new', label: t('adminOperations.support.newLabel') },
+            { value: 'in_progress', label: t('adminOperations.support.inProgress') },
+            { value: 'closed', label: t('adminOperations.support.closed') },
+            { value: 'spam', label: t('adminOperations.support.spam') }
           ]" /></label>
-          <label><span>Внутренний комментарий</span><textarea v-model="adminComment" rows="2" maxlength="2000" placeholder="Виден только администраторам"></textarea></label>
-          <button class="secondary-button" :disabled="isSaving">Сохранить статус и комментарий</button>
+          <label><span>{{ t('adminOperations.support.internalComment') }}</span><textarea v-model="adminComment" rows="2" maxlength="2000" :placeholder="t('adminOperations.support.internalCommentPlaceholder')"></textarea></label>
+          <button class="secondary-button" :disabled="isSaving">{{ t('adminOperations.support.saveStatus') }}</button>
         </form>
       </section>
-      <section v-else class="support-conversation support-placeholder">Выберите обращение, чтобы открыть переписку.</section>
+      <section v-else class="support-conversation support-placeholder">{{ t('adminOperations.support.chooseRequest') }}</section>
     </div>
   </section>
 </template>

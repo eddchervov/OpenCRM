@@ -26,9 +26,9 @@ internal sealed class CatalogSetupService(OpenCRMContext context) : ICatalogSetu
             throw new InvalidOperationException("Длительность услуги должна быть от 1 до 525600 минут.");
         }
 
-        var scenarioCode = await context.Organizations
+        var organization = await context.Organizations
             .Where(organization => organization.Id == organizationId)
-            .Select(organization => organization.PrimaryScenarioCode)
+            .Select(organization => new { organization.PrimaryScenarioCode, organization.CurrencyCode })
             .SingleAsync();
         var items = await context.OrganizationScenarioCatalogItems
             .Where(item => item.OrganizationId == organizationId && item.KindCode == kindCode)
@@ -115,7 +115,8 @@ internal sealed class CatalogSetupService(OpenCRMContext context) : ICatalogSetu
                 {
                     Id = value.Id,
                     OrganizationId = organizationId,
-                    ScenarioCode = scenarioCode,
+                    CurrencyCode = organization.CurrencyCode,
+                    ScenarioCode = organization.PrimaryScenarioCode,
                     KindCode = kindCode,
                     Code = "setup-" + value.Id.ToString("N"),
                     SortOrder = (items.Count + 1) * 10

@@ -124,7 +124,9 @@ public sealed class CoreAssistantActionHandler(
             }
         }
 
-        var details = await this.ResolveServicesAsync(command.Services, actor, selection, ct, useCatalogPrices: command.Action == "book");
+        var resolvedServices = await this.ResolveServicesAsync(command.Services, actor, selection, ct, useCatalogPrices: command.Action == "book");
+        var details = resolvedServices.Details;
+        var currencyCode = resolvedServices.CurrencyCode;
         if (details.Count == 0)
         {
             throw new AssistantClarificationException("Какая работа была выполнена и сколько она стоила?", "services");
@@ -184,8 +186,8 @@ public sealed class CoreAssistantActionHandler(
         var workPost = command.Action == "book" ? await this.ResolveBookingWorkPostAsync(command, actor, selection, ct) : null;
         var workPostSnapshot = Fingerprint(workPost?.Id, workPost?.Name);
         var snapshot = vehicle is null
-            ? Fingerprint(newVehicle!.RegistrationPlate, newVehicle.Name, newVehicle.Kind, details, plannedDate, startTime, endTime, workPostSnapshot)
-            : Fingerprint(vehicle.Id, vehicle.RegistrationPlate, vehicle.OrganizationClientId, details, plannedDate, startTime, endTime, workPostSnapshot);
+            ? Fingerprint(newVehicle!.RegistrationPlate, newVehicle.Name, newVehicle.Kind, currencyCode, details, plannedDate, startTime, endTime, workPostSnapshot)
+            : Fingerprint(vehicle.Id, vehicle.RegistrationPlate, vehicle.OrganizationClientId, currencyCode, details, plannedDate, startTime, endTime, workPostSnapshot);
         var plateValue = vehicle?.RegistrationPlate ?? newVehicle!.RegistrationPlate;
         var changes = new List<string> { command.Action switch { "book" => "Создать запись", "arrive" => "Начать обслуживание", _ => "Зафиксировать выполненное обслуживание" } };
         if (newVehicle is not null)
@@ -213,19 +215,19 @@ public sealed class CoreAssistantActionHandler(
             changes.Add($"Пост: {workPost.Name}");
         }
 
-        changes.AddRange(details.Select(item => $"{item.Name}: {item.Price?.ToString("0.##", CultureInfo.InvariantCulture) ?? "цена уточняется"} ₽"));
+        changes.AddRange(details.Select(item => $"{item.Name}: {FormatMoney(item.Price, currencyCode, "цена уточняется")}"));
         if (command.Action == "book" && command.TotalAmount.HasValue && details.Count > 1 && details.All(item => item.Price.HasValue))
         {
             var workTotal = details.Sum(item => item.Price!.Value * item.Quantity);
             if (workTotal != command.TotalAmount.Value)
             {
-                changes.Add($"Проверьте сумму: названо {command.TotalAmount.Value.ToString("0.##", CultureInfo.InvariantCulture)} ₽, сумма работ {workTotal.ToString("0.##", CultureInfo.InvariantCulture)} ₽.");
+                changes.Add($"Проверьте сумму: названо {FormatMoney(command.TotalAmount.Value, currencyCode)}, сумма работ {FormatMoney(workTotal, currencyCode)}.");
             }
         }
 
         if (paidAmount.HasValue)
         {
-            changes.Add($"Записать оплату {paidAmount.Value.ToString("0.##", CultureInfo.InvariantCulture)} ₽");
+            changes.Add($"Записать оплату {FormatMoney(paidAmount.Value, currencyCode)}");
         }
 
         return new AssistantPreparedAction
@@ -247,9 +249,16 @@ public sealed class CoreAssistantActionHandler(
                     EnsureSnapshot(workPostSnapshot, Fingerprint(freshPost?.Id, freshPost?.Name));
                 }
 
+                var freshServices = await this.ResolveServicesAsync(
+                    command.Services,
+                    actor,
+                    selection,
+                    token,
+                    useCatalogPrices: command.Action == "book");
+                EnsureSnapshot(currencyCode, freshServices.CurrencyCode);
                 if (command.Action == "book")
                 {
-                    var freshDetails = await this.ResolveServicesAsync(command.Services, actor, selection, token, useCatalogPrices: true);
+                    var freshDetails = freshServices.Details;
                     if (command.TotalAmount.HasValue && freshDetails.Count == 1 && command.Services[0].Price is null)
                     {
                         freshDetails[0].Price = command.TotalAmount.Value;
@@ -274,7 +283,7 @@ public sealed class CoreAssistantActionHandler(
                 {
                     var currentVehicle = await vehicleQuery.GetById(actor.UserId, actor.OrganizationId, vehicle!.Id);
                     EnsureSnapshot(Fingerprint(snapshot, paidAmount), Fingerprint(
-                        Fingerprint(currentVehicle.Id, currentVehicle.RegistrationPlate, currentVehicle.OrganizationClientId, details, plannedDate, startTime, endTime, workPostSnapshot),
+                        Fingerprint(currentVehicle.Id, currentVehicle.RegistrationPlate, currentVehicle.OrganizationClientId, currencyCode, details, plannedDate, startTime, endTime, workPostSnapshot),
                         paidAmount));
                     targetVehicleId = vehicle.Id;
                 }
@@ -507,11 +516,11 @@ public sealed class CoreAssistantActionHandler(
         var current = await ResolveMaintenanceAsync(command, actor, selection, ct);
         var rows = current.MaintenanceDetails.ToList();
         var details = rows.Select(ToCreateDetail).ToList();
-        var line = command.Action is "service_update" or "service_remove" ? ResolveLine(command, rows, selection) : null;
+        var line = command.Action is "service_update" or "service_remove" ? ResolveLine(command, rows, selection, current.CurrencyCode) : null;
         switch (command.Action)
         {
             case "service_add":
-                var newService = (await ResolveServicesAsync([new AiPilotServiceLine { Name = GetString(command, "serviceName") ?? string.Empty, Price = GetDecimal(command, "price") }], actor, selection, ct))[0];
+                var newService = (await ResolveServicesAsync([new AiPilotServiceLine { Name = GetString(command, "serviceName") ?? string.Empty, Price = GetDecimal(command, "price") }], actor, selection, ct)).Details[0];
                 newService.Quantity = GetInt(command, "quantity") ?? 1;
                 newService.Description = GetString(command, "description");
                 newService.VatRateCode = GetString(command, "vatRateCode");
@@ -540,7 +549,7 @@ public sealed class CoreAssistantActionHandler(
                         [new AiPilotServiceLine { Name = GetString(command, "newName")!, Price = details[index].Price }],
                         actor,
                         selection,
-                        ct))[0];
+                        ct)).Details[0];
                     replacement.DetailId = details[index].DetailId;
                     replacement.Quantity = details[index].Quantity;
                     replacement.Description = details[index].Description;
@@ -558,7 +567,7 @@ public sealed class CoreAssistantActionHandler(
                 {
                     throw new AssistantClarificationException("Назовите работы, которые должны остаться в заказе.", "services");
                 }
-                details = await ResolveServicesAsync(command.Services, actor, selection, ct);
+                details = (await ResolveServicesAsync(command.Services, actor, selection, ct)).Details;
                 break;
         }
 
@@ -571,7 +580,7 @@ public sealed class CoreAssistantActionHandler(
         return new AssistantPreparedAction
         {
             Target = GetMaintenanceLabel(current),
-            Changes = [command.Action == "services_replace" ? "Заменить список работ" : "Изменить список работ", .. details.Select(item => $"{item.Name}: {item.Price?.ToString("0.##", CultureInfo.InvariantCulture) ?? "цена не указана"} ₽")],
+            Changes = [command.Action == "services_replace" ? "Заменить список работ" : "Изменить список работ", .. details.Select(item => $"{item.Name}: {FormatMoney(item.Price, current.CurrencyCode, "цена не указана")}")],
             Snapshot = snapshot,
             Destructive = command.Action is "service_remove" or "services_replace",
             ExecuteAsync = async token =>
@@ -645,7 +654,7 @@ public sealed class CoreAssistantActionHandler(
             {
                 throw new AssistantClarificationException("Какую сумму оплаты записать?", "amount");
             }
-            return MaintenanceMutation(command, actor, current, $"Принять оплату {amount:0.##} ₽", async token =>
+            return MaintenanceMutation(command, actor, current, $"Принять оплату {FormatMoney(amount.Value, current.CurrencyCode)}", async token =>
             {
                 await maintenancePayment.AddPayment(actor.UserId, actor.OrganizationId, current.Id, new AddMaintenancePaymentDto
                 {
@@ -667,7 +676,7 @@ public sealed class CoreAssistantActionHandler(
         }
         if (matching.Count != 1)
         {
-            throw new AssistantClarificationException("Уточните, какую оплату отменить.", "paymentNumber", OperationsAssistantLimits.Choices(options, matching.Select((payment, index) => new AssistantChoice((index + 1).ToString(CultureInfo.InvariantCulture), $"{payment.Amount:0.##} ₽"))));
+            throw new AssistantClarificationException("Уточните, какую оплату отменить.", "paymentNumber", OperationsAssistantLimits.Choices(options, matching.Select((payment, index) => new AssistantChoice((index + 1).ToString(CultureInfo.InvariantCulture), FormatMoney(payment.Amount, payment.CurrencyCode)))));
         }
 
         var reason = GetString(command, "reason");
@@ -679,7 +688,7 @@ public sealed class CoreAssistantActionHandler(
         return new AssistantPreparedAction
         {
             Target = GetMaintenanceLabel(current),
-            Changes = [$"Отменить оплату {selected.Amount:0.##} ₽", $"Причина: {reason}"],
+            Changes = [$"Отменить оплату {FormatMoney(selected.Amount, selected.CurrencyCode)}", $"Причина: {reason}"],
             Snapshot = Fingerprint(current, payments),
             Destructive = true,
             ExecuteAsync = async token =>
@@ -1144,7 +1153,7 @@ public sealed class CoreAssistantActionHandler(
         return matches[0];
     }
 
-    private async Task<List<CreateMaintenanceDetailDto>> ResolveServicesAsync(
+    private async Task<(List<CreateMaintenanceDetailDto> Details, string CurrencyCode)> ResolveServicesAsync(
         IReadOnlyList<AiPilotServiceLine> services,
         AssistantActor actor,
         AssistantActionSelection selection,
@@ -1193,7 +1202,7 @@ public sealed class CoreAssistantActionHandler(
                 CatalogItemId = catalogItem?.Id
             });
         }
-        return result;
+        return (result, catalog.CurrencyCode);
     }
 
     private AssistantPreparedAction MaintenanceMutation(AiPilotCommand command, AssistantActor actor, GetMaintenanceByIdDto current, string description, Func<CancellationToken, Task<AssistantActionResult>> mutate)
@@ -1249,7 +1258,11 @@ public sealed class CoreAssistantActionHandler(
         Quantity = item.Quantity
     };
 
-    private MaintenanceDetailDto? ResolveLine(AiPilotCommand command, IReadOnlyList<MaintenanceDetailDto> rows, AssistantActionSelection selection)
+    private MaintenanceDetailDto? ResolveLine(
+        AiPilotCommand command,
+        IReadOnlyList<MaintenanceDetailDto> rows,
+        AssistantActionSelection selection,
+        string currencyCode)
     {
         var name = GetString(command, "serviceName", selection);
         var matches = rows.Where(item => string.IsNullOrWhiteSpace(name) || string.Equals(Normalize(item.Name), Normalize(name), StringComparison.OrdinalIgnoreCase)).ToList();
@@ -1264,12 +1277,15 @@ public sealed class CoreAssistantActionHandler(
         }
         if (matches.Count != 1)
         {
-            throw new AssistantClarificationException(matches.Count == 0 ? "Не нашёл такую работу в заказе." : "Уточните, какую из одинаковых работ изменить.", "lineNumber", OperationsAssistantLimits.Choices(options, matches.Select((item, index) => new AssistantChoice((index + 1).ToString(CultureInfo.InvariantCulture), $"{item.Name} — {item.Price:0.##} ₽"))));
+            throw new AssistantClarificationException(matches.Count == 0 ? "Не нашёл такую работу в заказе." : "Уточните, какую из одинаковых работ изменить.", "lineNumber", OperationsAssistantLimits.Choices(options, matches.Select((item, index) => new AssistantChoice((index + 1).ToString(CultureInfo.InvariantCulture), $"{item.Name} — {FormatMoney(item.Price, currencyCode)}"))));
         }
         return matches[0];
     }
 
     private static string GetMaintenanceLabel(GetMaintenanceByIdDto item) => $"Заказ от {item.Date:dd.MM.yyyy}, {item.Status}";
+    private static string FormatMoney(decimal? amount, string currencyCode, string missingValue = "не указано") => amount.HasValue
+        ? $"{amount.Value.ToString("0.##", CultureInfo.InvariantCulture)} {currencyCode}"
+        : missingValue;
     private static string Normalize(string? value) => new((value ?? string.Empty).Where(char.IsLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
     private static string Require(string? value, string field) => !string.IsNullOrWhiteSpace(value) ? value.Trim() : throw new AssistantClarificationException("Уточните госномер автомобиля.", field);
     private static Guid? GetGuid(AiPilotCommand command, string key, AssistantActionSelection? selection = null) => Guid.TryParse(GetString(command, key, selection), out var id) ? id : null;
@@ -1289,7 +1305,7 @@ public sealed class CoreAssistantActionHandler(
     }
 
     private static string Fingerprint(params object?[] values) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(values))));
-    private static string Fingerprint(GetMaintenanceByIdDto item) => Fingerprint(item.Id, item.Version, item.Status, item.Date, item.PlannedDate, item.PlannedStartTime, item.PlannedEndTime, item.CompletedDate, item.Comment, item.Price, item.PaidAmount, item.VehicleId, item.MaintenanceDetails);
+    private static string Fingerprint(GetMaintenanceByIdDto item) => Fingerprint(item.Id, item.CurrencyCode, item.Version, item.Status, item.Date, item.PlannedDate, item.PlannedStartTime, item.PlannedEndTime, item.CompletedDate, item.Comment, item.Price, item.PaidAmount, item.VehicleId, item.MaintenanceDetails);
     private static string Fingerprint(GetMaintenanceByIdDto item, IReadOnlyList<MaintenancePaymentDto> payments) => Fingerprint(Fingerprint(item), payments);
     private static string Fingerprint(GetVehicleDto item) => Fingerprint(item.Id, item.OrganizationId, item.RegistrationPlate, item.Name, item.Vin, item.YearIssue, item.Color, item.Description, item.OrganizationClientId, item.IsArchived);
     private static string Fingerprint(OrganizationClientDto item) => Fingerprint(item.Id, item.OrganizationId, item.Name, item.Phone, item.Comment, item.StatusCode, item.IsArchived);

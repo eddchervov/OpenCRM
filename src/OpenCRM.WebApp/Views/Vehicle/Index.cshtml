@@ -19,12 +19,12 @@
     var hasSchedulerModule = ViewData["VehicleHasSchedulerModule"] is bool schedulerModule && schedulerModule;
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? vehicleScenario.BreadcrumbTitle
+        ? Text["vehicle.list.title"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Техника организации";
-    var nextStepTitle = ViewData["VehicleNextStepTitle"] as string ?? "Что сделать дальше";
-    var nextStepText = ViewData["VehicleNextStepText"] as string ?? "Начните с базовых действий, чтобы карточка техники стала полезной историей.";
+            : Text["vehicle.card.organizationVehicles"].Value;
+    var nextStepTitle = Text["vehicle.card.nextStep.title"].Value;
+    var nextStepText = Text["vehicle.card.nextStep.text"].Value;
     var transferOrganizationsJson = ViewData["TransferOrganizationsJson"] as string ?? "[]";
     var nextActions = ViewData["VehicleNextActions"] as IEnumerable<dynamic> ?? new[]
     {
@@ -32,7 +32,7 @@
         new { Kind = "UploadPhoto", IconCssClass = "fa fa-camera", Title = "Добавить фото", Text = "Сохраните внешний вид техники или важные детали." },
         new { Kind = "EditVehicle", IconCssClass = "fa fa-pencil", Title = "Заполнить карточку", Text = "Уточните имя, номер, год выпуска и описание." }
     };
-    ViewData["Title"] = vehicleScenario.DetailsTitle;
+    ViewData["Title"] = Text["vehicle.card.detailsTitle"];
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "vehicle-card-page-body";
     var workspaceSidebar = new OpenCRM.WebApp.Models.Organizations.OrganizationWorkspaceSidebarViewModel
@@ -55,7 +55,215 @@
     }
 </style>
 
-<div id="vehicle-form" v-cloak>
+<div id="vehicle-form" v-cloak
+     data-card-sort-mileage-desc="@Text["vehicle.card.sort.mileageDesc"]"
+     data-card-sort-mileage-asc="@Text["vehicle.card.sort.mileageAsc"]"
+     data-card-sort-date-newest="@Text["vehicle.card.sort.dateNewest"]"
+     data-card-sort-date-oldest="@Text["vehicle.card.sort.dateOldest"]"
+     data-card-filter-all-types="@Text["vehicle.card.filter.allTypes"]"
+     data-card-maintenance-repair="@Text["vehicle.card.maintenance.repair"]"
+     data-card-maintenance-planned-service="@Text["vehicle.card.maintenance.plannedService"]"
+     data-card-maintenance-fuel="@Text["vehicle.card.maintenance.fuel"]"
+     data-card-other="@Text["vehicle.card.other"]"
+     data-card-filter-all-statuses="@Text["vehicle.card.filter.allStatuses"]"
+     data-card-status-planned="@Text["vehicle.card.status.planned"]"
+     data-card-status-in-progress="@Text["vehicle.card.status.inProgress"]"
+     data-card-status-completed="@Text["vehicle.card.status.completed"]"
+     data-card-status-cancelled="@Text["vehicle.card.status.cancelled"]"
+     data-card-unit-short-hours="@Text["vehicle.card.unit.shortHours"]"
+     data-card-unit-short-kilometers="@Text["vehicle.card.unit.shortKilometers"]"
+     data-card-unit-hours="@Text["vehicle.card.unit.hours"]"
+     data-card-unit-kilometers="@Text["vehicle.card.unit.kilometers"]"
+     data-card-counter-add-hours="@Text["vehicle.card.counter.addHours"]"
+     data-card-counter-add-kilometers="@Text["vehicle.card.counter.addKilometers"]"
+     data-card-counter-add-hours-on-date="@Text["vehicle.card.counter.addHoursOnDate"]"
+     data-card-counter-add-kilometers-on-date="@Text["vehicle.card.counter.addKilometersOnDate"]"
+     data-card-counter-edit-entry="@Text["vehicle.card.counter.editEntry"]"
+     data-card-counter-save-changes="@Text["vehicle.card.counter.saveChanges"]"
+     data-card-counter-save-entry="@Text["vehicle.card.counter.saveEntry"]"
+     data-card-counter-from-maintenance="@Text["vehicle.card.counter.fromMaintenance"]"
+     data-card-counter-manual-entry="@Text["vehicle.card.counter.manualEntry"]"
+     data-card-counter-hours-label="@Text["vehicle.card.counter.hoursLabel"]"
+     data-card-counter-mileage-label="@Text["vehicle.card.counter.mileageLabel"]"
+     data-card-chart-kind="@Text["vehicle.card.chart.kind"]"
+     data-card-chart-type="@Text["vehicle.card.chart.type"]"
+     data-card-chart-date="@Text["vehicle.card.chart.date"]"
+     data-card-chart-value="@Text["vehicle.card.chart.value"]"
+     data-card-chart-comment="@Text["vehicle.card.chart.comment"]"
+     data-card-chart-maintenance="@Text["vehicle.card.chart.maintenance"]"
+     data-card-no-data="@Text["vehicle.card.noData"]"
+     data-card-days-short="@Text["vehicle.card.daysShort"]"
+     data-card-error-photo="@Text["vehicle.card.error.photo"]"
+     data-card-error-download-report="@Text["vehicle.card.error.downloadReport"]"
+     data-card-error-check-counter-date="@Text["vehicle.card.error.checkCounterDate"]"
+     data-card-error-counter-date-required="@Text["vehicle.card.error.counterDateRequired"]"
+     data-card-error-counter-value-required="@Text["vehicle.card.error.counterValueRequired"]"
+     data-card-error-counter-negative="@Text["vehicle.card.error.counterNegative"]"
+     data-card-error-counter-save="@Text["vehicle.card.error.counterSave"]"
+     data-card-error-clients="@Text["vehicle.card.error.clients"]"
+     data-card-error-maintenance-required="@Text["vehicle.card.error.maintenanceRequired"]"
+     data-card-error-word="@Text["vehicle.card.error.word"]"
+     data-card-error-pdf="@Text["vehicle.card.error.pdf"]"
+     data-card-error-vehicle-load="@Text["vehicle.card.error.vehicleLoad"]"
+     data-card-error-analytics="@Text["vehicle.card.error.analytics"]"
+     data-card-error-journal="@Text["vehicle.card.error.journal"]"
+     data-card-error-counter-history="@Text["vehicle.card.error.counterHistory"]"
+     data-card-error-maintenance-history="@Text["vehicle.card.error.maintenanceHistory"]"
+     data-card-error-deleted-maintenance="@Text["vehicle.card.error.deletedMaintenance"]"
+     data-card-error-vehicle-update="@Text["vehicle.card.error.vehicleUpdate"]"
+     data-card-error-models="@Text["vehicle.card.error.models"]"
+     data-card-error-brands="@Text["vehicle.card.error.brands"]"
+     data-card-error-photo-upload="@Text["vehicle.card.error.photoUpload"]"
+     data-card-error-photo-delete="@Text["vehicle.card.error.photoDelete"]"
+     data-card-error-transfer="@Text["vehicle.card.error.transfer"]"
+     data-card-error-vehicle-delete="@Text["vehicle.card.error.vehicleDelete"]"
+     data-card-status-unknown="@Text["vehicle.card.status.unknown"]"
+     data-card-maintenance-completion-date="@Text["vehicle.card.maintenance.completionDate"]"
+     data-card-maintenance-planned-date="@Text["vehicle.card.maintenance.plannedDate"]"
+     data-card-unspecified="@Text["vehicle.card.unspecified"]"
+     data-card-price-million="@Text["vehicle.card.price.million"]"
+     data-card-price-thousand="@Text["vehicle.card.price.thousand"]"
+     data-card-error-maintenance-delete="@Text["vehicle.card.error.maintenanceDelete"]"
+     data-card-organization-vehicles="@Text["vehicle.card.organizationVehicles"]"
+     data-card-next-step-title="@Text["vehicle.card.nextStep.title"]"
+     data-card-next-step-text="@Text["vehicle.card.nextStep.text"]"
+     data-card-details-title="@Text["vehicle.card.detailsTitle"]"
+     data-card-loading="@Text["vehicle.card.loading"]"
+     data-card-photo-previous="@Text["vehicle.card.photo.previous"]"
+     data-card-photo-next="@Text["vehicle.card.photo.next"]"
+     data-card-photo-load-failed="@Text["vehicle.card.photo.loadFailed"]"
+     data-card-photo-none="@Text["vehicle.card.photo.none"]"
+     data-card-photo-manage="@Text["vehicle.card.photo.manage"]"
+     data-card-albums-title="@Text["vehicle.card.albums.title"]"
+     data-card-make-model="@Text["vehicle.card.makeModel"]"
+     data-card-client-none="@Text["vehicle.card.client.none"]"
+     data-card-description-none="@Text["vehicle.card.description.none"]"
+     data-card-button-edit="@Text["vehicle.card.button.edit"]"
+     data-card-button-add-maintenance="@Text["vehicle.card.button.addMaintenance"]"
+     data-card-counters-title="@Text["vehicle.card.counters.title"]"
+     data-card-defects-title="@Text["vehicle.card.defects.title"]"
+     data-card-button-transfer="@Text["vehicle.card.button.transfer"]"
+     data-card-button-delete="@Text["vehicle.card.button.delete"]"
+     data-card-export-title="@Text["vehicle.card.export.title"]"
+     data-card-export-checking="@Text["vehicle.card.export.checking"]"
+     data-card-export-unavailable="@Text["vehicle.card.export.unavailable"]"
+     data-card-export-requires-maintenance="@Text["vehicle.card.export.requiresMaintenance"]"
+     data-card-export-choose-format="@Text["vehicle.card.export.chooseFormat"]"
+     data-card-export-in-plan="@Text["vehicle.card.export.inPlan"]"
+     data-card-export-available="@Text["vehicle.card.export.available"]"
+     data-card-export-not-in-plan="@Text["vehicle.card.export.notInPlan"]"
+     data-card-export-unavailable-formats="@Text["vehicle.card.export.unavailableFormats"]"
+     data-card-export-pdf-with-photos="@Text["vehicle.card.export.pdfWithPhotos"]"
+     data-card-export-pdf="@Text["vehicle.card.export.pdf"]"
+     data-card-export-word-with-photos="@Text["vehicle.card.export.wordWithPhotos"]"
+     data-card-export-word="@Text["vehicle.card.export.word"]"
+     data-card-albums-show-all="@Text["vehicle.card.albums.showAll"]"
+     data-card-albums-loading="@Text["vehicle.card.albums.loading"]"
+     data-card-albums-empty-title="@Text["vehicle.card.albums.emptyTitle"]"
+     data-card-albums-empty-text="@Text["vehicle.card.albums.emptyText"]"
+     data-card-albums-create="@Text["vehicle.card.albums.create"]"
+     data-card-albums-photo-count="@Text["vehicle.card.albums.photoCount"]"
+     data-card-history-chart-title="@Text["vehicle.card.historyChart.title"]"
+     data-card-history-chart-loading="@Text["vehicle.card.historyChart.loading"]"
+     data-card-history-chart-empty-title="@Text["vehicle.card.historyChart.emptyTitle"]"
+     data-card-history-chart-empty-text="@Text["vehicle.card.historyChart.emptyText"]"
+     data-card-journal-title="@Text["vehicle.card.journal.title"]"
+     data-card-button-open="@Text["vehicle.card.button.open"]"
+     data-card-maintenance-title="@Text["vehicle.card.maintenance.title"]"
+     data-card-maintenance-deleted-only="@Text["vehicle.card.maintenance.deletedOnly"]"
+     data-card-maintenance-sort="@Text["vehicle.card.maintenance.sort"]"
+     data-card-maintenance-type="@Text["vehicle.card.maintenance.type"]"
+     data-card-maintenance-status="@Text["vehicle.card.maintenance.status"]"
+     data-card-button-reset="@Text["vehicle.card.button.reset"]"
+     data-card-maintenance-empty-title="@Text["vehicle.card.maintenance.emptyTitle"]"
+     data-card-maintenance-empty-text="@Text["vehicle.card.maintenance.emptyText"]"
+     data-card-maintenance-no-matches-title="@Text["vehicle.card.maintenance.noMatchesTitle"]"
+     data-card-maintenance-no-matches-text="@Text["vehicle.card.maintenance.noMatchesText"]"
+     data-card-maintenance-reset-filters="@Text["vehicle.card.maintenance.resetFilters"]"
+     data-card-maintenance-deleted-empty-title="@Text["vehicle.card.maintenance.deletedEmptyTitle"]"
+     data-card-maintenance-deleted-empty-text="@Text["vehicle.card.maintenance.deletedEmptyText"]"
+     data-card-maintenance-loading="@Text["vehicle.card.maintenance.loading"]"
+     data-card-maintenance-loading-deleted="@Text["vehicle.card.maintenance.loadingDeleted"]"
+     data-card-maintenance-overdue="@Text["vehicle.card.maintenance.overdue"]"
+     data-card-maintenance-deleted="@Text["vehicle.card.maintenance.deleted"]"
+     data-card-maintenance-details="@Text["vehicle.card.maintenance.details"]"
+     data-card-maintenance-status-label="@Text["vehicle.card.maintenance.statusLabel"]"
+     data-card-maintenance-planned-date-label="@Text["vehicle.card.maintenance.plannedDateLabel"]"
+     data-card-maintenance-completion-date-label="@Text["vehicle.card.maintenance.completionDateLabel"]"
+     data-card-maintenance-performer="@Text["vehicle.card.maintenance.performer"]"
+     data-card-maintenance-services="@Text["vehicle.card.maintenance.services"]"
+     data-card-maintenance-comment="@Text["vehicle.card.maintenance.comment"]"
+     data-card-maintenance-photos="@Text["vehicle.card.maintenance.photos"]"
+     data-card-loading-short="@Text["vehicle.card.loadingShort"]"
+     data-card-load-more="@Text["vehicle.card.loadMore"]"
+     data-card-modal-edit-title="@Text["vehicle.card.modal.editTitle"]"
+     data-card-button-close="@Text["vehicle.card.button.close"]"
+     data-card-mileage-help="@Text["vehicle.card.mileage.help"]"
+     data-card-identity-mode-aria="@Text["vehicle.card.identityMode.aria"]"
+     data-card-identity-catalog="@Text["vehicle.card.identity.catalog"]"
+     data-card-identity-manual="@Text["vehicle.card.identity.manual"]"
+     data-card-identity-manual-mode="@Text["vehicle.card.identity.manualMode"]"
+     data-card-identity-no-makes="@Text["vehicle.card.identity.noMakes"]"
+     data-card-identity-loading-models="@Text["vehicle.card.identity.loadingModels"]"
+     data-card-identity-no-models="@Text["vehicle.card.identity.noModels"]"
+     data-card-identity-brand-manufacturer="@Text["vehicle.card.identity.brandManufacturer"]"
+     data-card-identity-moderation="@Text["vehicle.card.identity.moderation"]"
+     data-card-client-none-option="@Text["vehicle.card.client.noneOption"]"
+     data-card-saving="@Text["vehicle.card.saving"]"
+     data-card-mileage-warning-title="@Text["vehicle.card.mileageWarning.title"]"
+     data-card-mileage-warning-text="@Text["vehicle.card.mileageWarning.text"]"
+     data-card-mileage-warning-details="@Text["vehicle.card.mileageWarning.details"]"
+     data-card-button-got-it="@Text["vehicle.card.button.gotIt"]"
+     data-card-photo-delete-title="@Text["vehicle.card.photo.deleteTitle"]"
+     data-card-photo-delete-confirm="@Text["vehicle.card.photo.deleteConfirm"]"
+     data-card-action-irreversible="@Text["vehicle.card.action.irreversible"]"
+     data-card-modal-delete-title="@Text["vehicle.card.modal.deleteTitle"]"
+     data-card-modal-delete-confirm="@Text["vehicle.card.modal.deleteConfirm"]"
+     data-card-modal-delete-text="@Text["vehicle.card.modal.deleteText"]"
+     data-card-deleting="@Text["vehicle.card.deleting"]"
+     data-card-modal-transfer-title="@Text["vehicle.card.modal.transferTitle"]"
+     data-card-modal-transfer-text="@Text["vehicle.card.modal.transferText"]"
+     data-card-workspace="@Text["vehicle.card.workspace"]"
+     data-card-organization-select="@Text["vehicle.card.organization.select"]"
+     data-card-modal-transfer-description="@Text["vehicle.card.modal.transferDescription"]"
+     data-card-transferring="@Text["vehicle.card.transferring"]"
+     data-card-personal-vehicles="@Text["vehicle.card.personalVehicles"]"
+     data-card-counter-date="@Text["vehicle.card.counter.date"]"
+     data-card-counter-comment="@Text["vehicle.card.counter.comment"]"
+     data-card-counter-checking-date="@Text["vehicle.card.counter.checkingDate"]"
+     data-card-counter-saving="@Text["vehicle.card.counter.saving"]"
+     data-card-error-title="@Text["vehicle.card.error.title"]"
+     data-card-maintenance-delete-confirm="@Text["vehicle.card.maintenance.deleteConfirm"]"
+     data-card-maintenance-date-label="@Text["vehicle.card.maintenance.dateLabel"]"
+     data-card-photo-viewer-title="@Text["vehicle.card.photo.viewerTitle"]"
+     data-card-photo-maintenance-alt="@Text["vehicle.card.photo.maintenanceAlt"]"
+     data-card-photo-none-to-display="@Text["vehicle.card.photo.noneToDisplay"]"
+     data-card-pdf-generating="@Text["vehicle.card.pdf.generating"]"
+     data-card-please-wait="@Text["vehicle.card.pleaseWait"]"
+     data-card-kind-passenger="@Text["vehicle.edit.kind.passenger"]"
+     data-card-kind-truck="@Text["vehicle.edit.kind.truck"]"
+     data-card-kind-motorcycle="@Text["vehicle.edit.kind.motorcycle"]"
+     data-card-kind-atv="@Text["vehicle.edit.kind.atv"]"
+     data-card-kind-utv="@Text["vehicle.edit.kind.utv"]"
+     data-card-kind-snowmobile="@Text["vehicle.edit.kind.snowmobile"]"
+     data-card-kind-jetski="@Text["vehicle.edit.kind.jetski"]"
+     data-card-kind-boat="@Text["vehicle.edit.kind.boat"]"
+     data-card-kind-special="@Text["vehicle.edit.kind.special"]"
+     data-card-kind-trailer="@Text["vehicle.edit.kind.trailer"]"
+     data-card-kind-other="@Text["vehicle.edit.kind.other"]"
+     data-card-mileage-kilometers="@Text["vehicle.edit.mileage.kilometers"]"
+     data-card-mileage-engine-hours="@Text["vehicle.edit.mileage.engineHours"]"
+     data-card-counter-placeholder-hours="@Text["vehicle.card.counter.placeholder.hours"]"
+     data-card-counter-placeholder-kilometers="@Text["vehicle.card.counter.placeholder.kilometers"]"
+     data-card-counter-placeholder-comment="@Text["vehicle.card.counter.placeholder.comment"]"
+     data-card-maintenance-delete-title="@Text["vehicle.card.maintenance.deleteTitle"]"
+     data-card-photo-change="@Text["vehicle.card.photo.change"]"
+     data-card-export-account-unavailable="@Text["vehicle.card.export.accountUnavailable"]"
+     data-card-export-disabled="@Text["vehicle.card.export.disabled"]"
+     data-card-maintenance-no-active="@Text["vehicle.card.maintenance.noActive"]"
+     data-card-maintenance-overdue-count="@Text["vehicle.card.maintenance.overdueCount"]"
+     data-card-maintenance-active-count="@Text["vehicle.card.maintenance.activeCount"]"
+     data-card-maintenance-active-and-overdue-count="@Text["vehicle.card.maintenance.activeAndOverdueCount"]">
     <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organizations-page")">
         <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "container-fluid px-4 px-xxl-5 organization-workspace-shell organization-workspace-shell-wide")">
             <div class="@(string.IsNullOrWhiteSpace(organizationId) ? string.Empty : "organization-workspace-layout")">
@@ -71,7 +279,7 @@
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">@vehicleScenario.DetailsTitle</li>
+                    <li class="breadcrumb-item active" aria-current="page">@Text["vehicle.card.detailsTitle"]</li>
                 </ol>
             </nav>
 
@@ -79,19 +287,19 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fa fa-car"></i>
-                        @vehicleScenario.DetailsTitle
+                        @Text["vehicle.card.detailsTitle"]
                     </h3>
                     @if (!string.IsNullOrWhiteSpace(organizationName))
                     {
                         <div class="text-muted small mt-2">
-                            Рабочее пространство: @organizationName
+                            @Text["vehicle.card.workspace"]: @organizationName
                         </div>
                     }
                 </div>
                 <div class="card-body vehicle-details-card-body">
                     <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
                         <i class="fa fa-spinner fa-spin"></i>
-                        <span>Загружаем данные техники...</span>
+                        <span>@Text["vehicle.card.loading"]</span>
                     </div>
                     <div class="row">
                         <!-- Изображение техники -->
@@ -106,21 +314,21 @@
                                 <template v-else>
                                     <div class="vehicle-details-placeholder">
                                         <i class="fa fa-car fa-4x"></i>
-                                        <p class="mb-0 mt-2" v-if="vehicle.photoLoadFailed">Не удалось загрузить фото</p>
-                                        <p class="mb-0 mt-2" v-else>Нет фотографии</p>
+                                        <p class="mb-0 mt-2" v-if="vehicle.photoLoadFailed">@Text["vehicle.card.photo.loadFailed"]</p>
+                                        <p class="mb-0 mt-2" v-else>@Text["vehicle.card.photo.none"]</p>
                                     </div>
                                 </template>
 
                                 <div class="vehicle-details-image-actions mt-3">
                                     <label for="vehiclePhotoUpload" class="btn btn-outline-dark btn-sm">
                                         <i class="fa fa-camera me-1"></i>
-                                        Изменить фото
+                                        @Text["vehicle.card.photo.change"]
                                     </label>
                                     <input type="file" id="vehiclePhotoUpload" class="d-none" accept="image/*" @@change="uploadVehiclePhoto">
 
                                     <button v-if="vehicle.photoId" class="btn btn-outline-danger btn-sm ms-2" @@click="openDeletePhotoModal" :disabled="vehicle.isUploading">
                                         <i class="fa fa-trash me-1"></i>
-                                        Удалить фото
+                                        @Text["vehicle.card.button.delete"] @Text["vehicle.card.albums.photoCount"]
                                     </button>
                                 </div>
                             </div>
@@ -130,46 +338,46 @@
                         <div class="col-md-8">
                             <div class="vehicle-overview-grid mb-4">
                                 <div class="vehicle-info-item compact">
-                                    <label class="vehicle-details-label">Тип техники</label>
+                                    <label class="vehicle-details-label">@Text["vehicle.edit.kind.label"]</label>
                                     <p class="vehicle-details-value">{{ getVehicleKindText(vehicle.kind) }}</p>
                                 </div>
 
                                 <div class="vehicle-info-item compact">
-                                    <label class="vehicle-details-label">Марка и модель</label>
+                                    <label class="vehicle-details-label">@Text["vehicle.card.makeModel"]</label>
                                     <p class="vehicle-details-value">{{ vehicle.brandName || '—' }} {{ vehicle.modelName || '' }}</p>
                                 </div>
 
                                 <div class="vehicle-info-item compact">
-                                    <label class="vehicle-details-label">Год выпуска</label>
-                                    <p class="vehicle-details-value">{{ vehicle.yearIssue ? vehicle.yearIssue + ' г.' : '—' }}</p>
+                                    <label class="vehicle-details-label">@Text["vehicle.edit.year"]</label>
+                                    <p class="vehicle-details-value">{{ vehicle.yearIssue ? vehicle.yearIssue + ' @Text["vehicle.list.yearSuffix"]' : '—' }}</p>
                                 </div>
 
                                 <div class="vehicle-info-item compact">
-                                    <label class="vehicle-details-label">Имя / номер</label>
+                                    <label class="vehicle-details-label">@Text["vehicle.edit.name"]</label>
                                     <p class="vehicle-details-value" :class="{ empty: !vehicle.name }">
-                                        {{ vehicle.name || 'Не указано' }}
+                                        {{ vehicle.name || '@Text["vehicle.card.unspecified"]' }}
                                     </p>
                                 </div>
 
                                 <div class="vehicle-info-item compact">
-                                    <label class="vehicle-details-label">{{ vehicle.mileageUnit === 2 ? 'Моточасы' : 'Километры' }}</label>
+                                    <label class="vehicle-details-label">{{ vehicle.mileageUnit === 2 ? '@Text["vehicle.edit.mileage.engineHours"]' : '@Text["vehicle.edit.mileage.kilometers"]' }}</label>
                                     <p class="vehicle-details-value" :class="{ empty: vehicle.currentMileage === null || vehicle.currentMileage === undefined }">
-                                        {{ vehicle.currentMileage !== null && vehicle.currentMileage !== undefined ? vehicle.currentMileage.toLocaleString() + ' ' + mileageUnitShortText : 'Не указано' }}
+                                        {{ vehicle.currentMileage !== null && vehicle.currentMileage !== undefined ? vehicle.currentMileage.toLocaleString() + ' ' + mileageUnitShortText : '@Text["vehicle.card.unspecified"]' }}
                                     </p>
                                 </div>
 
                                 <div class="vehicle-info-item compact" v-if="vehicle.organizationId">
-                                    <label class="vehicle-details-label">Клиент</label>
+                                    <label class="vehicle-details-label">@Text["vehicle.edit.client"]</label>
                                     <p class="vehicle-details-value" :class="{ empty: !vehicle.organizationClientName }">
-                                        {{ vehicle.organizationClientName || 'Не привязан' }}
+                                        {{ vehicle.organizationClientName || '@Text["vehicle.card.client.none"]' }}
                                     </p>
                                 </div>
                             </div>
 
                             <div class="vehicle-info-item vehicle-info-item-description">
-                                <label class="vehicle-details-label">Описание</label>
+                                <label class="vehicle-details-label">@Text["vehicle.edit.description"]</label>
                                 <p class="vehicle-details-value" :class="{ empty: !vehicle.description }">
-                                    {{ vehicle.description || 'Описание отсутствует' }}
+                                    {{ vehicle.description || '@Text["vehicle.card.description.none"]' }}
                                 </p>
                             </div>
 
@@ -177,18 +385,18 @@
                                 <div class="d-flex flex-column flex-sm-row gap-2">
                                     <button class="btn btn-edit-vehicle py-2 flex-fill" @@click="openEditVehicleModal">
                                         <i class="fa fa-pencil me-2"></i>
-                                        Редактировать
+                                        @Text["vehicle.card.button.edit"]
                                     </button>
                                     <a :href="getMaintenanceCreateUrl()" class="btn btn-dark py-2 flex-fill">
                                         <i class="fa fa-plus me-2"></i>
-                                        Добавить обслуживание
+                                        @Text["vehicle.card.button.addMaintenance"]
                                     </a>
                                     @if (!string.IsNullOrWhiteSpace(organizationId) && hasCountersModule)
                                     {
                                         <a class="btn btn-outline-dark py-2 flex-fill"
                                            href="/organizations">
                                             <i class="fa fa-tachometer me-2"></i>
-                                            Пробег и наработка
+                                            @Text["vehicle.card.counters.title"]
                                         </a>
                                     }
                                     else
@@ -203,18 +411,18 @@
                                         <a class="btn btn-outline-dark py-2 flex-fill"
                                            href="/organizations">
                                             <i class="fa fa-exclamation-triangle me-2"></i>
-                                            Неисправности
+                                            @Text["vehicle.card.defects.title"]
                                         </a>
                                     }
                                     <button v-if="canTransferCurrentVehicle"
                                             class="btn btn-outline-primary py-2 flex-fill"
                                             @@click="openTransferVehicleModal">
                                         <i class="fa fa-share me-2"></i>
-                                        В организацию
+                                        @Text["vehicle.card.button.transfer"]
                                     </button>
                                     <button class="btn btn-outline-danger py-2 flex-fill" @@click="openDeleteVehicleModal">
                                         <i class="fa fa-trash me-2"></i>
-                                        Удалить
+                                        @Text["vehicle.card.button.delete"]
                                     </button>
                                 </div>
                             </div>
@@ -222,43 +430,43 @@
                                 <div class="vehicle-export-panel">
                                     <h6 class="mb-3">
                                         <i class="fa fa-download me-1"></i>
-                                        Экспорт отчетов
+                                        @Text["vehicle.card.export.title"]
                                     </h6>
                                     <div v-if="!exportAccess.loaded" class="text-muted small mb-3">
-                                        Проверяем доступные форматы...
+                                        @Text["vehicle.card.export.checking"]
                                     </div>
                                     <div v-else-if="!hasAnyExportAccess" class="alert alert-warning mb-3">
-                                        @(commercialEnabled ? "Экспорт отчетов недоступен для вашего аккаунта. Вы можете включить нужные фичи через тариф или отдельную выдачу." : "Экспорт отчётов отключён в настройках установки.")
+                                        @(commercialEnabled ? Text["vehicle.card.export.accountUnavailable"] : Text["vehicle.card.export.disabled"])
                                     </div>
                                     <div v-else-if="!hasMaintenanceRecordsForExport" class="alert alert-info mb-3">
-                                        Экспорт станет доступен после добавления хотя бы одной записи обслуживания.
+                                        @Text["vehicle.card.export.requiresMaintenance"]
                                     </div>
 
                                     <div class="dropdown" v-else>
                                         <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="fa fa-download me-2"></i>
-                                            Выбрать формат
+                                            @Text["vehicle.card.export.chooseFormat"]
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li class="dropdown-header" v-if="exportAccess.pdf || exportAccess.pdfWithPhotos || exportAccess.word || exportAccess.wordWithPhotos">@(commercialEnabled ? "Входит в тариф" : "Доступные форматы")</li>
+                                            <li class="dropdown-header" v-if="exportAccess.pdf || exportAccess.pdfWithPhotos || exportAccess.word || exportAccess.wordWithPhotos">@(commercialEnabled ? Text["vehicle.card.export.inPlan"] : Text["vehicle.card.export.available"])</li>
                                             <li v-if="exportAccess.pdfWithPhotos">
                                                 <button type="button" class="dropdown-item" @@click="generateVehiclePdf(true)">
-                                                    <i class="fa fa-file-pdf-o text-danger me-2"></i>PDF с фотографиями
+                                                    <i class="fa fa-file-pdf-o text-danger me-2"></i>@Text["vehicle.card.export.pdfWithPhotos"]
                                                 </button>
                                             </li>
                                             <li v-if="exportAccess.pdf">
                                                 <button type="button" class="dropdown-item" @@click="generateVehiclePdf(false)">
-                                                    <i class="fa fa-file-pdf-o text-danger me-2"></i>PDF без фотографий
+                                                    <i class="fa fa-file-pdf-o text-danger me-2"></i>@Text["vehicle.card.export.pdf"]
                                                 </button>
                                             </li>
                                             <li v-if="exportAccess.wordWithPhotos">
                                                 <button type="button" class="dropdown-item" @@click="generateVehicleWord(true)">
-                                                    <i class="fa fa-file-word-o text-primary me-2"></i>Word с фотографиями
+                                                    <i class="fa fa-file-word-o text-primary me-2"></i>@Text["vehicle.card.export.wordWithPhotos"]
                                                 </button>
                                             </li>
                                             <li v-if="exportAccess.word">
                                                 <button type="button" class="dropdown-item" @@click="generateVehicleWord(false)">
-                                                    <i class="fa fa-file-word-o text-primary me-2"></i>Word без фотографий
+                                                    <i class="fa fa-file-word-o text-primary me-2"></i>@Text["vehicle.card.export.word"]
                                                 </button>
                                             </li>
 
@@ -266,25 +474,25 @@
                                                 <hr class="dropdown-divider">
                                             </li>
 
-                                            <li class="dropdown-header text-muted" v-if="!exportAccess.pdf || !exportAccess.pdfWithPhotos || !exportAccess.word || !exportAccess.wordWithPhotos">@(commercialEnabled ? "Не входит в тариф" : "Недоступные форматы")</li>
+                                            <li class="dropdown-header text-muted" v-if="!exportAccess.pdf || !exportAccess.pdfWithPhotos || !exportAccess.word || !exportAccess.wordWithPhotos">@(commercialEnabled ? Text["vehicle.card.export.notInPlan"] : Text["vehicle.card.export.unavailableFormats"])</li>
                                             <li v-if="!exportAccess.pdfWithPhotos">
                                                 <button type="button" class="dropdown-item disabled" disabled>
-                                                    <i class="fa fa-file-pdf-o me-2"></i>PDF с фотографиями
+                                                    <i class="fa fa-file-pdf-o me-2"></i>@Text["vehicle.card.export.pdfWithPhotos"]
                                                 </button>
                                             </li>
                                             <li v-if="!exportAccess.pdf">
                                                 <button type="button" class="dropdown-item disabled" disabled>
-                                                    <i class="fa fa-file-pdf-o me-2"></i>PDF без фотографий
+                                                    <i class="fa fa-file-pdf-o me-2"></i>@Text["vehicle.card.export.pdf"]
                                                 </button>
                                             </li>
                                             <li v-if="!exportAccess.wordWithPhotos">
                                                 <button type="button" class="dropdown-item disabled" disabled>
-                                                    <i class="fa fa-file-word-o me-2"></i>Word с фотографиями
+                                                    <i class="fa fa-file-word-o me-2"></i>@Text["vehicle.card.export.wordWithPhotos"]
                                                 </button>
                                             </li>
                                             <li v-if="!exportAccess.word">
                                                 <button type="button" class="dropdown-item disabled" disabled>
-                                                    <i class="fa fa-file-word-o me-2"></i>Word без фотографий
+                                                    <i class="fa fa-file-word-o me-2"></i>@Text["vehicle.card.export.word"]
                                                 </button>
                                             </li>
                                         </ul>
@@ -303,31 +511,31 @@
                         <div class="maintenance-history-heading">
                             <h4 class="card-title mb-0">
                                 <i class="fa fa-line-chart me-2"></i>
-                                Пробег и история обслуживания
+                                @Text["vehicle.card.historyChart.title"]
                             </h4>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="text-center py-4" v-if="!maintenanceAnalyticsLoaded || !counterHistoryLoaded">
                             <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
-                            <p class="mt-2 text-muted">Подготавливаем график...</p>
+                            <p class="mt-2 text-muted">@Text["vehicle.card.historyChart.loading"]</p>
                         </div>
 
                         <div class="empty-state text-center py-4" v-else-if="!hasVehicleTimelineData">
                             <i class="fa fa-line-chart fa-3x mb-3 text-muted"></i>
-                            <h5>Пока нет данных для графика</h5>
-                            <p class="text-muted mb-0">Добавьте пробег, наработку или обслуживание с указанным значением.</p>
+                            <h5>@Text["vehicle.card.historyChart.emptyTitle"]</h5>
+                            <p class="text-muted mb-0">@Text["vehicle.card.historyChart.emptyText"]</p>
                         </div>
 
                         <template v-else>
                             <div class="vehicle-timeline-legend mb-3">
                                 <span class="vehicle-timeline-legend-item">
                                     <span class="vehicle-timeline-legend-dot vehicle-timeline-legend-dot-counter"></span>
-                                    {{ vehicle.mileageUnit === 2 ? 'Наработка' : 'Пробег' }}
+                                    {{ vehicle.mileageUnit === 2 ? '@Text["vehicle.card.counter.hoursLabel"]' : '@Text["vehicle.card.counter.mileageLabel"]' }}
                                 </span>
                                 <span class="vehicle-timeline-legend-item">
                                     <span class="vehicle-timeline-legend-dot vehicle-timeline-legend-dot-maintenance"></span>
-                                    Обслуживание
+                                    @Text["vehicle.card.chart.maintenance"]
                                 </span>
                             </div>
 
@@ -335,7 +543,7 @@
                                 <svg viewBox="0 0 780 320"
                                      preserveAspectRatio="xMidYMid meet"
                                      role="img"
-                                     aria-label="График пробега, наработки и обслуживаний">
+                                     aria-label="@Text["vehicle.card.historyChart.title"]">
                                     <line x1="56" y1="24" x2="56" y2="276" class="vehicle-timeline-axis"></line>
                                     <line x1="56" y1="276" x2="740" y2="276" class="vehicle-timeline-axis"></line>
 
@@ -368,26 +576,26 @@
                 </div>
             </div>
 
-            <!-- История обслуживания -->
+            <!-- @Text["vehicle.card.maintenance.title"] -->
             <div class="maintenance-history-section mt-4">
                 <div class="card maintenance-history-card">
                     <div class="card-header">
                         <div class="maintenance-history-heading">
                             <h4 class="card-title mb-0">
                                 <i class="fa fa-history me-2"></i>
-                                История обслуживания
+                                @Text["vehicle.card.maintenance.title"]
                                 <span class="maintenance-count-badge badge bg-orange">{{ maintenanceTotalCount }}</span>
                             </h4>
                             <a :href="getMaintenanceCreateUrl()" class="btn btn-dark btn-sm">
                                 <i class="fa fa-plus me-2"></i>
-                                Добавить обслуживание
+                                @Text["vehicle.card.button.addMaintenance"]
                             </a>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="maintenance-history-controls" v-if="initialMaintenanceLoaded || maintenanceHistory.length > 0">
                             <div class="maintenance-history-control">
-                                <label class="form-label">Сортировка</label>
+                                <label class="form-label">@Text["vehicle.card.maintenance.sort"]</label>
                                 <select class="form-select" v-model="maintenanceFilters.sort" @@change="changeMaintenanceFilters">
                                     <option v-for="option in maintenanceSortOptions" :key="option.value" :value="option.value">
                                         {{ option.text }}
@@ -395,7 +603,7 @@
                                 </select>
                             </div>
                             <div class="maintenance-history-control">
-                                <label class="form-label">Тип обслуживания</label>
+                                <label class="form-label">@Text["vehicle.card.maintenance.type"]</label>
                                 <select class="form-select" v-model="maintenanceFilters.type" @@change="changeMaintenanceFilters">
                                     <option v-for="option in maintenanceTypeFilterOptions" :key="option.value" :value="option.value">
                                         {{ option.text }}
@@ -405,26 +613,26 @@
                             <button type="button" class="btn btn-outline-dark maintenance-filter-reset"
                                     v-if="hasMaintenanceFilters"
                                     @@click="resetMaintenanceFilters">
-                                Сбросить
+                                @Text["vehicle.card.button.reset"]
                             </button>
                         </div>
 
                         <div class="empty-state text-center py-4" v-if="initialMaintenanceLoaded && maintenanceHistory.length === 0 && !pagination.isLoading && !hasMaintenanceFilters">
                             <i class="fa fa-wrench fa-3x mb-3 text-muted"></i>
-                            <h5>Нет записей обслуживания</h5>
-                            <p class="text-muted">Добавьте первое обслуживание для этой техники</p>
+                            <h5>@Text["vehicle.card.maintenance.emptyTitle"]</h5>
+                            <p class="text-muted">@Text["vehicle.card.maintenance.emptyText"]</p>
                         </div>
 
                         <div class="empty-state text-center py-4" v-if="initialMaintenanceLoaded && maintenanceHistory.length === 0 && !pagination.isLoading && hasMaintenanceFilters">
                             <i class="fa fa-filter fa-3x mb-3 text-muted"></i>
-                            <h5>Ничего не найдено</h5>
-                            <p class="text-muted">Попробуйте изменить сортировку или сбросить фильтр по типу обслуживания</p>
-                            <button type="button" class="btn btn-outline-dark" @@click="resetMaintenanceFilters">Сбросить фильтры</button>
+                            <h5>@Text["vehicle.card.maintenance.noMatchesTitle"]</h5>
+                            <p class="text-muted">@Text["vehicle.card.maintenance.noMatchesText"]</p>
+                            <button type="button" class="btn btn-outline-dark" @@click="resetMaintenanceFilters">@Text["vehicle.card.maintenance.resetFilters"]</button>
                         </div>
 
                         <div class="text-center py-4" v-if="!initialMaintenanceLoaded">
                             <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
-                            <p class="mt-2 text-muted">Загрузка истории обслуживания...</p>
+                            <p class="mt-2 text-muted">@Text["vehicle.card.maintenance.loading"]</p>
                         </div>
 
                         <div class="maintenance-list" v-if="maintenanceHistory.length > 0">
@@ -452,13 +660,13 @@
                                     </div>
 
                                     <div class="maintenance-price" v-if="maintenance.price">
-                                        <span class="price-amount">{{ formatPrice(maintenance.price) }}</span>
+                                        <span class="price-amount">{{ formatPrice(maintenance.price, maintenance.currencyCode) }}</span>
                                     </div>
 
                                     <div class="maintenance-actions-header ms-2" @@click.stop>
                                         <a class="btn btn-sm btn-dark px-3" :href="getMaintenanceDetailsUrl(maintenance)">
                                             <i class="fa fa-info-circle me-1"></i>
-                                            Подробнее
+                                            @Text["vehicle.card.maintenance.details"]
                                         </a>
                                     </div>
 
@@ -470,19 +678,19 @@
                                 <div class="maintenance-details" v-if="expandedMaintenance === index">
 
                                     <div class="maintenance-services" v-if="maintenance.maintenanceDetails && maintenance.maintenanceDetails.length > 0">
-                                        <strong>Услуги и работы:</strong>
+                                        <strong>@Text["vehicle.card.maintenance.services"]</strong>
                                         <ul class="service-list">
                                             <li v-for="detail in maintenance.maintenanceDetails" :key="detail.id">
                                                 {{ detail.name }}
                                                 <span v-if="detail.price" class="service-price">
-                                                    {{ formatPrice(detail.price) }}
+                                                    {{ formatPrice(detail.price, maintenance.currencyCode) }}
                                                 </span>
                                             </li>
                                         </ul>
                                     </div>
 
                                     <div class="maintenance-comment" v-if="maintenance.comment">
-                                        <strong>Комментарий:</strong>
+                                        <strong>@Text["vehicle.card.maintenance.comment"]</strong>
                                         <p class="mb-0">{{ maintenance.comment }}</p>
                                     </div>
 
@@ -494,7 +702,7 @@
                                     </template> *@
 
                                     <div class="maintenance-photos" v-if="(maintenance.photoUrls && maintenance.photoUrls.length > 0) || maintenance.failedPhotoCount > 0">
-                                        <strong>Фотографии:</strong>
+                                        <strong>@Text["vehicle.card.maintenance.photos"]</strong>
                                         <div class="photo-thumbnails">
                                             <img v-for="(photoUrl, photoIndex) in maintenance.photoUrls"
                                                  :key="photoIndex"
@@ -506,7 +714,7 @@
                                                  class="photo-thumbnail d-flex flex-column align-items-center justify-content-center text-center bg-light text-muted p-2"
                                                  style="cursor: default;">
                                                 <i class="fa fa-image mb-1"></i>
-                                                <small>Не удалось загрузить фото</small>
+                                                <small>@Text["vehicle.card.photo.loadFailed"]</small>
                                             </div>
                                         </div>
                                     </div>
@@ -514,11 +722,11 @@
                                     <div class="maintenance-actions mt-3">
                                     <a :href="getMaintenanceUpdateUrl(maintenance)" class="btn btn-sm btn btn-outline-dark me-2">
                                             <i class="fa fa-edit me-1"></i>
-                                            Редактировать
+                                            @Text["vehicle.card.button.edit"]
                                         </a>
                                         <button class="btn btn-sm btn-outline-danger" @@click="deleteMaintenance(maintenance)">
                                             <i class="fa fa-trash me-1"></i>
-                                            Удалить
+                                            @Text["vehicle.card.button.delete"]
                                         </button>
                                     </div>
                                 </div>
@@ -531,11 +739,11 @@
                                     :disabled="pagination.isLoading">
                                 <template v-if="pagination.isLoading">
                                     <i class="fa fa-spinner fa-spin me-2"></i>
-                                    Загрузка...
+                                    @Text["vehicle.card.loadingShort"]
                                 </template>
                                 <template v-else>
                                     <i class="fa fa-arrow-down me-2"></i>
-                                    Загрузить еще
+                                    @Text["vehicle.card.loadMore"]
                                 </template>
                             </button>
                         </div>
@@ -553,14 +761,14 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-pencil me-2"></i>
-                            Редактирование техники
+                            @Text["vehicle.card.modal.editTitle"]
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.card.button.close"]"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row mb-3">
                             <div class="col-12">
-                                <label class="form-label">Тип техники</label>
+                                <label class="form-label">@Text["vehicle.edit.kind.label"]</label>
                                 <select class="form-select" v-model.number="vehicle.kind" @@change="changeVehicleKind">
                                     <option v-for="option in vehicleKindOptions" :key="option.value" :value="option.value">
                                         {{ option.text }}
@@ -571,36 +779,36 @@
 
                         <div class="row mb-3">
                             <div class="col-12">
-                                <label class="form-label">Учет пробега / наработки</label>
+                                <label class="form-label">@Text["vehicle.edit.mileage.label"]</label>
                                 <select class="form-select" v-model.number="vehicle.mileageUnit" @@change="changeMileageUnit">
                                     <option v-for="option in mileageUnitOptions" :key="option.value" :value="option.value">
                                         {{ option.text }}
                                     </option>
                                 </select>
                                 <small class="text-muted d-block mt-1">
-                                    В обслуживании поле будет автоматически подписано как километры или моточасы.
+                                    @Text["vehicle.card.mileage.help"]
                                 </small>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-12">
-                                <div class="btn-group w-100" role="group" aria-label="Способ заполнения техники" v-if="catalogModeAvailable">
+                                <div class="btn-group w-100" role="group" aria-label="@Text["vehicle.card.identityMode.aria"]" v-if="catalogModeAvailable">
                                     <button type="button"
                                             class="btn"
                                             :class="!isManualIdentity ? 'btn-dark' : 'btn-outline-dark'"
                                             @@click="toggleIdentityMode(false)">
-                                        Из справочника
+                                        @Text["vehicle.card.identity.catalog"]
                                     </button>
                                     <button type="button"
                                             class="btn"
                                             :class="isManualIdentity ? 'btn-dark' : 'btn-outline-dark'"
                                             @@click="toggleIdentityMode(true)">
-                                        Ввести вручную
+                                        @Text["vehicle.card.identity.manual"]
                                     </button>
                                 </div>
                                 <button type="button" class="btn btn-dark w-100" v-else disabled>
-                                    Ручной режим
+                                    @Text["vehicle.card.identity.manualMode"]
                                 </button>
                             </div>
                         </div>
@@ -608,7 +816,7 @@
                         <template v-if="!isManualIdentity">
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <label class="form-label">Марка</label>
+                                    <label class="form-label">@Text["vehicle.edit.brand"]</label>
                                     <v-select :options="brands"
                                               :reduce="brand => brand.id"
                                               label="name"
@@ -616,7 +824,7 @@
                                               @@input="getModelOptions(null)"
                                               v-model="selectedBrandId">
                                         <template slot="no-options">
-                                            Не найдено марок
+                                            @Text["vehicle.card.identity.noMakes"]
                                         </template>
                                     </v-select>
                                 </div>
@@ -624,11 +832,11 @@
 
                             <div class="row mb-3" v-if="selectedBrandId">
                                 <div class="col-12">
-                                    <label class="form-label">Модель</label>
+                                    <label class="form-label">@Text["vehicle.edit.model"]</label>
                                     <template v-if="loadModels">
                                         <div class="text-center">
                                             <i class="fa fa-spinner fa-spin fa-fw c-blue"></i>
-                                            <span>Загрузка моделей...</span>
+                                            <span>@Text["vehicle.card.identity.loadingModels"]</span>
                                         </div>
                                     </template>
                                     <template v-else>
@@ -638,7 +846,7 @@
                                                   :clearable="false"
                                                   v-model="vehicle.modelId">
                                             <template slot="no-options">
-                                                Не найдено моделей
+                                                @Text["vehicle.card.identity.noModels"]
                                             </template>
                                         </v-select>
                                     </template>
@@ -649,28 +857,28 @@
                         <template v-else>
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <label class="form-label">Бренд / производитель</label>
+                                    <label class="form-label">@Text["vehicle.card.identity.brandManufacturer"]</label>
                                     <input type="text"
                                            class="form-control"
                                            v-model.trim="vehicle.manualBrandName"
-                                           placeholder="Например: Yamaha, Polaris, КамАЗ">
+                                           placeholder="@Text["vehicle.edit.manualBrand.placeholder"]">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <label class="form-label">Модель</label>
+                                    <label class="form-label">@Text["vehicle.edit.model"]</label>
                                     <input type="text"
                                            class="form-control"
                                            v-model.trim="vehicle.manualModelName"
-                                           placeholder="Например: Grizzly 700, Ranger XP 1000, 65115">
+                                           placeholder="@Text["vehicle.edit.manualModel.placeholder"]">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-12">
                                     <small class="text-muted d-block">
-                                        Бренд / производитель и модель будут автоматически добавлены в справочники после одобрения модератором.
+                                        @Text["vehicle.card.identity.moderation"]
                                     </small>
                                 </div>
                             </div>
@@ -678,32 +886,32 @@
 
                         <div class="row mb-3">
                             <div class="col-12">
-                                <label class="form-label">Год выпуска</label>
+                                <label class="form-label">@Text["vehicle.edit.year"]</label>
                                 <input type="number"
                                        class="form-control"
                                        v-model.number="vehicle.yearIssue"
                                        @@input="changeYearIssue"
                                        min="1900"
                                        :max="new Date().getFullYear()"
-                                       placeholder="Укажите год выпуска">
+                                       placeholder="@Text["vehicle.edit.year.placeholder"]">
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-12">
-                                <label class="form-label">Имя/Номер техники</label>
+                                <label class="form-label">@Text["vehicle.edit.name"]</label>
                                 <input type="text"
                                        class="form-control"
                                        v-model.trim="vehicle.name"
-                                       placeholder="Например: 'Рабочий квадроцикл' или 'A123BC'">
+                                       placeholder="@Text["vehicle.edit.name.placeholder"]">
                             </div>
                         </div>
 
                         <div class="row mb-3" v-if="vehicle.organizationId && organizationClientsEnabled">
                             <div class="col-12">
-                                <label class="form-label">Клиент</label>
+                                <label class="form-label">@Text["vehicle.edit.client"]</label>
                                 <select class="form-select" v-model="vehicle.organizationClientId" :disabled="loadOrganizationClients">
-                                    <option value="">Без клиента</option>
+                                    <option value="">@Text["vehicle.card.client.noneOption"]</option>
                                     <option v-for="client in organizationClients"
                                             :key="'vehicle-card-client-' + client.id"
                                             :value="client.id">
@@ -715,17 +923,17 @@
 
                         <div class="row mb-3">
                             <div class="col-12">
-                                <label class="form-label">Описание</label>
+                                <label class="form-label">@Text["vehicle.edit.description"]</label>
                                 <textarea class="form-control"
                                           v-model.trim="vehicle.description"
                                           rows="4"
-                                          placeholder="Дополнительная информация о технике..."></textarea>
+                                          placeholder="@Text["vehicle.edit.description.placeholder"]"></textarea>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @@click="cancelVehicleEdit">
-                            Отмена
+                            @Text["vehicle.edit.cancel"]
                         </button>
                         <button type="button"
                                 class="btn btn-primary"
@@ -733,11 +941,11 @@
                                 :disabled="!canSaveVehicle || saveModal">
                             <template v-if="saveModal">
                                 <i class="fa fa-spinner fa-spin fa-fw"></i>
-                                Сохранение...
+                                @Text["vehicle.card.saving"]
                             </template>
                             <template v-else>
                                 <i class="fa fa-save me-1"></i>
-                                Сохранить изменения
+                                @Text["vehicle.edit.submit.save"]
                             </template>
                         </button>
                     </div>
@@ -751,48 +959,48 @@
                     <div class="modal-header bg-warning text-dark">
                         <h5 class="modal-title">
                             <i class="fa fa-exclamation-triangle me-2"></i>
-                            Проверьте историю обслуживания
+                            @Text["vehicle.card.mileageWarning.title"]
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.card.button.close"]"></button>
                     </div>
                     <div class="modal-body">
                         <p class="mb-2">
-                            Вы меняете единицу учета для уже созданной техники.
+                            @Text["vehicle.card.mileageWarning.text"]
                         </p>
                         <p class="mb-0">
-                            Числа в существующих обслуживаниях останутся прежними, но будут отображаться в новой единице. Например, старое значение пробега может начать показываться как моточасы. Проверьте историю обслуживания после сохранения.
+                            @Text["vehicle.card.mileageWarning.details"]
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Понятно</button>
+                        <button type="button" class="btn btn-dark" data-bs-dismiss="modal">@Text["vehicle.card.button.gotIt"]</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Модалка удаления фото -->
+        <!-- Модалка удаления фотографии -->
         <div class="modal fade" id="deletePhotoModal" tabindex="-1">
             <div class="modal-dialog modal-md">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-exclamation-triangle me-2"></i>
-                            Удаление фотографии
+                            @Text["vehicle.card.photo.deleteTitle"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="text-center">
                             <i class="fa fa-trash fa-3x text-danger mb-3"></i>
-                            <h5>Вы уверены, что хотите удалить фотографию?</h5>
-                            <p class="text-muted">Это действие нельзя будет отменить</p>
+                            <h5>@Text["vehicle.card.photo.deleteConfirm"]</h5>
+                            <p class="text-muted">@Text["vehicle.card.action.irreversible"]</p>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.edit.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="deleteVehiclePhoto">
                             <i class="fa fa-trash me-1"></i>
-                            Удалить
+                            @Text["vehicle.card.button.delete"]
                         </button>
                     </div>
                 </div>
@@ -805,31 +1013,31 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-exclamation-triangle me-2 text-danger"></i>
-                            Удаление техники
+                            @Text["vehicle.card.modal.deleteTitle"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="text-center">
                             <i class="fa fa-trash fa-3x text-danger mb-3"></i>
-                            <h5>Удалить эту технику?</h5>
+                            <h5>@Text["vehicle.card.modal.deleteConfirm"]</h5>
                             <p class="text-muted mb-2">
                                 <strong>{{ getVehicleDisplayName(vehicle) }}</strong>
-                                <span v-if="vehicle.yearIssue">({{ vehicle.yearIssue }} г.)</span>
+                                <span v-if="vehicle.yearIssue">({{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"])</span>
                             </p>
-                            <p class="text-muted mb-0">Техника перейдет в архив и исчезнет из активного списка.</p>
+                            <p class="text-muted mb-0">@Text["vehicle.card.modal.deleteText"]</p>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.edit.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="deleteCurrentVehicle" :disabled="saveModal">
                             <template v-if="!saveModal">
                                 <i class="fa fa-trash me-1"></i>
-                                Удалить
+                                @Text["vehicle.card.button.delete"]
                             </template>
                             <template v-else>
                                 <i class="fa fa-spinner fa-spin fa-fw"></i>
-                                Удаление...
+                                @Text["vehicle.card.deleting"]
                             </template>
                         </button>
                     </div>
@@ -843,21 +1051,21 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-share me-2"></i>
-                            Перенести в рабочее пространство
+                            @Text["vehicle.card.modal.transferTitle"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <p class="mb-3">
                             <strong>{{ getVehicleDisplayName(vehicle) }}</strong>
-                            <span v-if="vehicle.yearIssue">({{ vehicle.yearIssue }} г.)</span>
-                            будет перенесена из личной техники в организацию.
+                            <span v-if="vehicle.yearIssue">({{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"])</span>
+                            @Text["vehicle.card.modal.transferText"]
                         </p>
 
                         <div class="mb-3">
-                            <label class="form-label">Рабочее пространство</label>
+                            <label class="form-label">@Text["vehicle.card.workspace"]</label>
                             <select class="form-select" v-model="selectedTransferOrganizationId">
-                                <option value="">Выберите организацию</option>
+                                <option value="">@Text["vehicle.card.organization.select"]</option>
                                 <option v-for="organization in transferOrganizations"
                                         :key="'detail-transfer-org-' + organization.id"
                                         :value="organization.id">
@@ -867,21 +1075,21 @@
                         </div>
 
                         <div class="text-muted small">
-                            После переноса техника исчезнет из личного списка и будет доступна в выбранной организации вместе с историей обслуживания и фото.
+                            @Text["vehicle.card.modal.transferDescription"]
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.edit.cancel"]</button>
                         <button type="button"
                                 class="btn btn-primary"
                                 :disabled="!selectedTransferOrganizationId || transferSaveInProgress"
                                 @@click="confirmTransferVehicle">
                             <template v-if="!transferSaveInProgress">
-                                Перенести
+                                @Text["vehicle.card.button.transfer"]
                             </template>
                             <template v-else>
                                 <i class="fa fa-spinner fa-spin fa-fw"></i>
-                                Переносим...
+                                @Text["vehicle.card.transferring"]
                             </template>
                         </button>
                     </div>
@@ -897,15 +1105,15 @@
                             <i class="fa fa-tachometer me-2"></i>
                             {{ personalCounterTitle }}
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.card.button.close"]"></button>
                     </div>
                     <div class="modal-body">
                         <div class="vehicle-counter-modal-summary mb-3">
                             <div class="vehicle-counter-modal-title">{{ getVehicleDisplayName(vehicle) }}</div>
                             <div class="vehicle-counter-modal-subtitle">
                                 <span v-if="vehicle.name">{{ vehicle.name }}</span>
-                                <span v-else-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
-                                <span v-else>Личная техника</span>
+                                <span v-else-if="vehicle.yearIssue">{{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"]</span>
+                                <span v-else>@Text["vehicle.card.personalVehicles"]</span>
                             </div>
                         </div>
 
@@ -916,7 +1124,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Дата <span class="text-danger">*</span></label>
+                            <label class="form-label">@Text["vehicle.card.counter.date"] <span class="text-danger">*</span></label>
                             <vue-ctk-date-time-picker class="vehicle-counter-date-picker"
                                                       v-model="personalCounterForm.recordedAt"
                                                       :range="false"
@@ -944,26 +1152,26 @@
                                    step="1"
                                    class="form-control"
                                    v-model.number="personalCounterForm.value"
-                                   :placeholder="vehicle.mileageUnit === 2 ? 'Например: 480' : 'Например: 125000'">
+                                   :placeholder="vehicle.mileageUnit === 2 ? @System.Text.Json.JsonSerializer.Serialize(Text["vehicle.card.counter.placeholder.hours"].Value) : @System.Text.Json.JsonSerializer.Serialize(Text["vehicle.card.counter.placeholder.kilometers"].Value)">
                         </div>
 
                         <div class="mb-0">
-                            <label class="form-label">Комментарий</label>
+                            <label class="form-label">@Text["vehicle.card.counter.comment"]</label>
                             <textarea class="form-control"
                                       rows="3"
                                       maxlength="500"
                                       v-model.trim="personalCounterForm.comment"
-                                      placeholder="Например: внесено вручную после поездки"></textarea>
+                                      placeholder="@Text["vehicle.card.counter.placeholder.comment"]"></textarea>
                         </div>
 
                         <div class="d-flex align-items-center gap-2 text-muted small mt-3" v-if="personalCounterLookupLoading">
                             <i class="fa fa-spinner fa-spin"></i>
-                            <span>Проверяем запись на выбранную дату...</span>
+                            <span>@Text["vehicle.card.counter.checkingDate"]</span>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" :disabled="personalCounterSaveInProgress">
-                            Отмена
+                            @Text["vehicle.edit.cancel"]
                         </button>
                         <button type="button"
                                 class="btn btn-dark"
@@ -974,7 +1182,7 @@
                             </template>
                             <template v-else>
                                 <i class="fa fa-spinner fa-spin me-2"></i>
-                                Сохраняем...
+                                @Text["vehicle.card.counter.saving"]
                             </template>
                         </button>
                     </div>
@@ -989,7 +1197,7 @@
                     <div class="modal-header bg-danger text-white">
                         <h5 class="modal-title">
                             <i class="fa fa-exclamation-triangle me-2"></i>
-                            Ошибка
+                            @Text["vehicle.card.error.title"]
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
@@ -997,7 +1205,7 @@
                         <p>{{ errorMessage }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.card.button.close"]</button>
                     </div>
                 </div>
             </div>
@@ -1010,23 +1218,23 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-exclamation-triangle me-2 text-danger"></i>
-                            Удаление обслуживания
+                            @Text["vehicle.card.maintenance.deleteTitle"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="text-center">
                             <i class="fa fa-trash fa-3x text-danger mb-3"></i>
-                            <h5>Вы уверены, что хотите удалить обслуживание?</h5>
-                            <p class="text-muted mb-2">За дату: <strong>{{ selectedMaintenanceDate }}</strong></p>
-                            <p class="text-muted">Это действие нельзя будет отменить</p>
+                            <h5>@Text["vehicle.card.maintenance.deleteConfirm"]</h5>
+                            <p class="text-muted mb-2">@Text["vehicle.card.maintenance.dateLabel"] <strong>{{ selectedMaintenanceDate }}</strong></p>
+                            <p class="text-muted">@Text["vehicle.card.action.irreversible"]</p>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.edit.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="confirmDeleteMaintenance">
                             <i class="fa fa-trash me-1"></i>
-                            Удалить
+                            @Text["vehicle.card.button.delete"]
                         </button>
                     </div>
                 </div>
@@ -1040,7 +1248,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-image me-2"></i>
-                            Просмотр фотографии
+                            @Text["vehicle.card.photo.viewerTitle"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -1049,7 +1257,7 @@
                             <img :src="currentPhotos[currentPhotoIndex]"
                                  class="img-fluid rounded"
                                  style="max-height: 70vh; object-fit: contain;"
-                                 :alt="'Фото обслуживания ' + (currentPhotoIndex + 1)">
+                                 :alt="'@Text["vehicle.card.photo.maintenanceAlt"]' + (currentPhotoIndex + 1)">
 
                             <div class="mt-3 d-flex justify-content-center align-items-center">
                                 <button class="btn btn-outline-secondary me-2"
@@ -1070,13 +1278,13 @@
                             </div>
                         </div>
                         <div v-else>
-                            <p>Нет фотографий для отображения</p>
+                            <p>@Text["vehicle.card.photo.noneToDisplay"]</p>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fa fa-times me-1"></i>
-                            Закрыть
+                            @Text["vehicle.card.button.close"]
                         </button>
                     </div>
                 </div>
@@ -1089,10 +1297,10 @@
                 <div class="modal-content">
                     <div class="modal-body text-center py-4">
                         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="visually-hidden">Загрузка...</span>
+                            <span class="visually-hidden">@Text["vehicle.card.loadingShort"]</span>
                         </div>
-                        <h5>Генерация PDF...</h5>
-                        <p class="text-muted">Пожалуйста, подождите</p>
+                        <h5>@Text["vehicle.card.pdf.generating"]</h5>
+                        <p class="text-muted">@Text["vehicle.card.pleaseWait"]</p>
                     </div>
                 </div>
             </div>

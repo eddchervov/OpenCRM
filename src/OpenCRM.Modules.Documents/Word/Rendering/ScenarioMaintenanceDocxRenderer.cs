@@ -36,7 +36,7 @@ internal sealed class ScenarioMaintenanceDocxRenderer(string projectName)
             WordDocumentComponents.AddSectionHeading(body, GetScenarioWorksTitle(model.DocumentKindCode, preset));
             if (model.Works.Any())
             {
-                WordTableComponents.AddServicesTable(body, model.Works);
+                WordTableComponents.AddServicesTable(body, model.Works, currencyCode: model.CurrencyCode);
             }
             else
             {
@@ -347,23 +347,23 @@ internal sealed class ScenarioMaintenanceDocxRenderer(string projectName)
 
         if (kindCode == OrganizationScenarioDocumentKindCodes.WorkOrder)
         {
-            WordTableComponents.AddInfoRow(table, "Предварительная сумма", WordDocumentComponents.FormatMoney(model.GrossAmount));
+            WordTableComponents.AddInfoRow(table, "Предварительная сумма", WordDocumentComponents.FormatMoney(model.GrossAmount, model.CurrencyCode));
             if (model.DiscountAmount > 0)
             {
-                WordTableComponents.AddInfoRow(table, "Скидка", WordDocumentComponents.FormatMoney(model.DiscountAmount));
+                WordTableComponents.AddInfoRow(table, "Скидка", WordDocumentComponents.FormatMoney(model.DiscountAmount, model.CurrencyCode));
             }
-            WordTableComponents.AddInfoRow(table, "Плановая стоимость", WordDocumentComponents.FormatMoney(netAmount));
+            WordTableComponents.AddInfoRow(table, "Плановая стоимость", WordDocumentComponents.FormatMoney(netAmount, model.CurrencyCode));
         }
         else
         {
-            WordTableComponents.AddInfoRow(table, "Сумма", WordDocumentComponents.FormatMoney(model.GrossAmount));
+            WordTableComponents.AddInfoRow(table, "Сумма", WordDocumentComponents.FormatMoney(model.GrossAmount, model.CurrencyCode));
             if (model.DiscountAmount > 0)
             {
-                WordTableComponents.AddInfoRow(table, "Скидка", WordDocumentComponents.FormatMoney(model.DiscountAmount));
+                WordTableComponents.AddInfoRow(table, "Скидка", WordDocumentComponents.FormatMoney(model.DiscountAmount, model.CurrencyCode));
             }
-            WordTableComponents.AddInfoRow(table, "Итого к оплате", WordDocumentComponents.FormatMoney(netAmount));
-            WordTableComponents.AddInfoRow(table, "Оплачено", WordDocumentComponents.FormatMoney(model.PaidAmount));
-            WordTableComponents.AddInfoRow(table, "Остаток", WordDocumentComponents.FormatMoney(model.DebtAmount));
+            WordTableComponents.AddInfoRow(table, "Итого к оплате", WordDocumentComponents.FormatMoney(netAmount, model.CurrencyCode));
+            WordTableComponents.AddInfoRow(table, "Оплачено", WordDocumentComponents.FormatMoney(model.PaidAmount, model.CurrencyCode));
+            WordTableComponents.AddInfoRow(table, "Остаток", WordDocumentComponents.FormatMoney(model.DebtAmount, model.CurrencyCode));
             WordTableComponents.AddInfoRow(table, "Статус оплаты", GetPaymentStatusText(model.PaymentStatus));
         }
 

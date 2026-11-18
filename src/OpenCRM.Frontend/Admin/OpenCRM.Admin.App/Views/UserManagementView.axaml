@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.UserManagementView"
@@ -8,11 +8,11 @@
   <StackPanel Spacing="18" MaxWidth="1040" AutomationProperties.AutomationId="UserManagement">
     <Border Classes="configurationSection" IsVisible="{Binding CanManageAccount}">
       <StackPanel Spacing="12">
-        <TextBlock Text="Аккаунт пользователя" Classes="configurationHeading" />
+        <TextBlock Text="{loc:LocalizedText Key=core.user.account}" Classes="configurationHeading" />
         <WrapPanel>
-          <Button Content="Открыть в браузерной админке" Command="{Binding BeginActionCommand}" CommandParameter="impersonate"
+          <Button Content="{loc:LocalizedText Key=core.user.openInBrowserAdmin}" Command="{Binding BeginActionCommand}" CommandParameter="impersonate"
                   IsVisible="{Binding CanImpersonate}" Margin="0,0,8,6" AutomationProperties.AutomationId="UserImpersonate" />
-          <Button Content="Тестовые подписки" Command="{Binding BeginActionCommand}" CommandParameter="test-subscriptions"
+          <Button Content="{loc:LocalizedText Key=core.user.testSubscriptions}" Command="{Binding BeginActionCommand}" CommandParameter="test-subscriptions"
                   IsVisible="{Binding CanManageTests}" Margin="0,0,8,6" AutomationProperties.AutomationId="UserTestSubscriptions" />
           <TextBlock Text="{Binding TestSubscriptionsLabel}" Classes="caption" VerticalAlignment="Center"
                      IsVisible="{Binding CanManageTests}" Margin="0,0,0,6" />
@@ -21,38 +21,38 @@
     </Border>
     <Border Classes="configurationSection" IsVisible="{Binding CanManageBilling}">
       <StackPanel Spacing="16">
-        <TextBlock Text="Управление доступом" Classes="configurationHeading" />
-        <TextBlock Text="Нет получателей доступа." Classes="caption" IsVisible="{Binding !HasTargets}" />
+        <TextBlock Text="{loc:LocalizedText Key=core.user.accessManagement}" Classes="configurationHeading" />
+        <TextBlock Text="{loc:LocalizedText Key=core.user.noAccessTargets}" Classes="caption" IsVisible="{Binding !HasTargets}" />
         <StackPanel Spacing="12" IsVisible="{Binding HasTargets}">
-          <TextBlock Text="Получатель доступа" Classes="caption" />
+          <TextBlock Text="{loc:LocalizedText Key=core.user.accessRecipient}" Classes="caption" />
           <ComboBox ItemsSource="{Binding Targets}" SelectedItem="{Binding SelectedTarget}"
                     HorizontalAlignment="Left" MinWidth="320" MaxWidth="640" IsEnabled="{Binding !IsBusy}"
                     AutomationProperties.AutomationId="UserManagementTarget">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:UserManagementTarget">
-                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
-          <TextBlock Text="Тариф организации действует отдельно от аккаунта владельца. Личная техника пользователя сохраняется независимо от подписки организации."
+          <TextBlock Text="{loc:LocalizedText Key=core.user.organizationPlanNote}"
                      Classes="caption" TextWrapping="Wrap" />
           <TextBlock Text="{Binding CurrentTargetSummary}" Classes="caption" TextWrapping="Wrap" />
           <WrapPanel>
-            <Button Content="Выдать демо" Command="{Binding BeginActionCommand}" CommandParameter="grant-demo"
+            <Button Content="{loc:LocalizedText Key=core.user.grantDemo}" Command="{Binding BeginActionCommand}" CommandParameter="grant-demo"
                     IsVisible="{Binding CanGrantDemo}" IsEnabled="{Binding CanGrantDemo}" Margin="0,0,8,6" AutomationProperties.AutomationId="UserGrantDemo"
-                    ToolTip.Tip="Доступно только для исторических сценариев. Детейлинг и СТО начинают с бесплатного Free; подарочный PRO выдаётся промокодом." />
-            <Button Content="Отозвать демо" Command="{Binding BeginActionCommand}" CommandParameter="revoke-demo"
+                    ToolTip.Tip="{loc:LocalizedText Key=core.user.grantDemoHelp}" />
+            <Button Content="{loc:LocalizedText Key=core.user.revokeDemo}" Command="{Binding BeginActionCommand}" CommandParameter="revoke-demo"
                     IsVisible="{Binding SelectedTarget.IsDemo}" IsEnabled="{Binding CanRevokeDemo}" Margin="0,0,8,6"
-                    ToolTip.Tip="Немедленно отзывает демонстрационный доступ выбранного получателя." />
+                    ToolTip.Tip="{loc:LocalizedText Key=core.user.revokeDemoHelp}" />
             <Button Content="{Binding GrantPlanButtonLabel}" Command="{Binding BeginActionCommand}" CommandParameter="grant-plan"
                     IsVisible="{Binding !SelectedTarget.HasActiveSubscription}" IsEnabled="{Binding CanGrantPlan}" Margin="0,0,8,6" AutomationProperties.AutomationId="UserGrantPlan"
-                    ToolTip.Tip="Назначает выбранный платный тариф без создания платежа. Укажите срок и причину." />
-            <Button Content="Продлить" Command="{Binding BeginActionCommand}" CommandParameter="extend"
+                    ToolTip.Tip="{loc:LocalizedText Key=core.user.assignPlanHelp}" />
+            <Button Content="{loc:LocalizedText Key=core.extend}" Command="{Binding BeginActionCommand}" CommandParameter="extend"
                     IsVisible="{Binding SelectedTarget.HasActiveSubscription}" IsEnabled="{Binding CanExtend}" Margin="0,0,8,6" AutomationProperties.AutomationId="UserExtendPlan"
-                    ToolTip.Tip="Добавляет выбранное число дней к действующему доступу выбранного получателя без оплаты." />
-            <Button Content="Остановить подписки" Command="{Binding BeginActionCommand}" CommandParameter="stop"
+                    ToolTip.Tip="{loc:LocalizedText Key=core.user.extendHelp}" />
+            <Button Content="{loc:LocalizedText Key=core.user.stopSubscriptions}" Command="{Binding BeginActionCommand}" CommandParameter="stop"
                     IsVisible="{Binding SelectedTarget.HasActiveSubscription}" IsEnabled="{Binding CanStop}" Margin="0,0,8,6" AutomationProperties.AutomationId="UserStopPlan"
-                    ToolTip.Tip="Немедленно останавливает все действующие подписки выбранного получателя. Неиспользованный срок автоматически не возвращается." />
+                    ToolTip.Tip="{loc:LocalizedText Key=core.user.stopSubscriptionsHelp}" />
           </WrapPanel>
         </StackPanel>
       </StackPanel>
@@ -66,7 +66,7 @@
         <TextBlock Text="{Binding ConfirmationTitle}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
         <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap" />
         <StackPanel Spacing="6" IsVisible="{Binding NeedsPlan}">
-          <TextBlock Text="Тариф" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:LocalizedText Key=core.plan}" FontWeight="SemiBold" />
           <ComboBox ItemsSource="{Binding TargetPlans}" SelectedItem="{Binding SelectedPlan}" IsEnabled="{Binding !IsBusy}"
                     HorizontalAlignment="Left" MinWidth="320" MaxWidth="640" AutomationProperties.AutomationId="UserPlanChoice">
             <ComboBox.ItemTemplate>
@@ -77,22 +77,22 @@
           </ComboBox>
         </StackPanel>
         <StackPanel Spacing="6" IsVisible="{Binding NeedsDays}">
-          <TextBlock Text="Срок, дней" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:LocalizedText Key=core.durationDays}" FontWeight="SemiBold" />
           <NumericUpDown Value="{Binding Days}" Minimum="1" Maximum="366" Increment="1" FormatString="0"
                          ParsingNumberStyle="Integer" ShowButtonSpinner="False" Width="130" HorizontalAlignment="Left" IsEnabled="{Binding !IsBusy}"
                          AutomationProperties.AutomationId="UserPlanDays" />
           <TextBlock Text="{Binding PreviewEndDateLabel}" Classes="caption" TextWrapping="Wrap" />
         </StackPanel>
         <StackPanel Spacing="6" IsVisible="{Binding NeedsReason}">
-          <TextBlock Text="Причина изменения" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:LocalizedText Key=core.changeReason}" FontWeight="SemiBold" />
           <TextBox Text="{Binding Reason}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70"
-                   IsEnabled="{Binding !IsBusy}" PlaceholderText="Причина будет сохранена в журнале изменений"
+                   IsEnabled="{Binding !IsBusy}" PlaceholderText="{loc:LocalizedText Key=core.changeReasonHelp}"
                    AutomationProperties.AutomationId="UserManagementReason" />
         </StackPanel>
         <WrapPanel>
-          <Button Content="Подтвердить" Classes="primary" Command="{Binding ConfirmCommand}" Margin="0,0,8,0"
+          <Button Content="{loc:LocalizedText Key=core.confirm}" Classes="primary" Command="{Binding ConfirmCommand}" Margin="0,0,8,0"
                   AutomationProperties.AutomationId="UserManagementConfirm" />
-          <Button Content="Отмена" Command="{Binding CancelCommand}" />
+          <Button Content="{loc:LocalizedText Key=core.cancel}" Command="{Binding CancelCommand}" />
         </WrapPanel>
       </StackPanel>
     </Border>

@@ -33,6 +33,8 @@ internal sealed partial class StockCommandService
         Guid movementId)
     {
         await context.Database.ExecuteSqlInterpolatedAsync(
+            $"""SELECT 1 FROM "Organizations" WHERE "Id" = {organizationId} FOR NO KEY UPDATE""");
+        await context.Database.ExecuteSqlInterpolatedAsync(
             $"""SELECT 1 FROM "OrganizationMaterialStocks" WHERE "Id" = {stockId} AND "OrganizationId" = {organizationId} FOR UPDATE""");
         var stock = await context.OrganizationMaterialStocks
             .FirstOrDefaultAsync(item => item.OrganizationId == organizationId && item.Id == stockId)
@@ -56,7 +58,7 @@ internal sealed partial class StockCommandService
         var previousInventoryValue = stock.InventoryValue;
         var averageUnitCost = request.AverageUnitCost ?? stock.AverageUnitCost;
         var description = $"{reason}\nОстаток: {InventoryDtoMapper.FormatQuantity(stock.QuantityOnHand)} -> {InventoryDtoMapper.FormatQuantity(request.QuantityOnHand)} {stock.Unit}."
-            + $"\nСебестоимость единицы: {stock.AverageUnitCost} -> {averageUnitCost} ₽.";
+            + $"\nСебестоимость единицы: {stock.AverageUnitCost} -> {averageUnitCost} {stock.CurrencyCode}.";
         stock.QuantityOnHand = request.QuantityOnHand;
         stock.MinQuantity = Math.Max(0, request.MinQuantity ?? stock.MinQuantity);
         stock.AverageUnitCost = averageUnitCost;
@@ -66,6 +68,7 @@ internal sealed partial class StockCommandService
         {
             Id = movementId,
             OrganizationId = organizationId,
+            CurrencyCode = stock.CurrencyCode,
             StockId = stock.Id,
             CatalogItemId = stock.CatalogItemId,
             TypeCode = OrganizationMaterialMovementTypeCodes.Adjustment,

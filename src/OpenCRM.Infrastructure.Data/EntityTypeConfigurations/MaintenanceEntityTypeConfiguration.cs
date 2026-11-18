@@ -11,6 +11,7 @@ public class MaintenanceEntityTypeConfiguration : IEntityTypeConfiguration<Maint
     /// <summary> Настраивает модель обслуживания техники. </summary>
     public void Configure(EntityTypeBuilder<Maintenance> builder)
     {
+        builder.Property(maintenance => maintenance.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");
 

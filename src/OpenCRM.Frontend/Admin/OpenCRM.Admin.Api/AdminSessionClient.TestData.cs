@@ -64,7 +64,7 @@ public sealed partial class AdminSessionClient
     public Task<AdminTestDataGenerationResult> GenerateTestVehiclesAsync(
         Guid organizationId, int count, CancellationToken cancellationToken = default)
     {
-        ValidateCount(count, 100);
+        this.ValidateCount(count, 100);
 
         return this.SendAuthorizedRequestAsync<AdminTestDataGenerationResult>(HttpMethod.Post,
             $"api/v1/admin/test-data/organizations/{organizationId}/vehicles/generate",
@@ -74,10 +74,10 @@ public sealed partial class AdminSessionClient
     public Task<AdminTestDataGenerationResult> GenerateTestMaintenancesAsync(
         Guid organizationId, Guid vehicleId, int count, string mode, CancellationToken cancellationToken = default)
     {
-        ValidateCount(count, 300);
+        this.ValidateCount(count, 300);
         if (mode is not ("completed" or "planned"))
         {
-            throw new ArgumentOutOfRangeException(nameof(mode), "Укажите завершённые или запланированные обслуживания.");
+            throw new ArgumentOutOfRangeException(nameof(mode), this.LocalizeFallback("Укажите завершённые или запланированные обслуживания."));
         }
 
         return this.SendAuthorizedRequestAsync<AdminTestDataGenerationResult>(HttpMethod.Post,
@@ -88,18 +88,19 @@ public sealed partial class AdminSessionClient
     public Task<AdminTestDataGenerationResult> GenerateTestDefectsAsync(
         Guid organizationId, Guid vehicleId, int count, CancellationToken cancellationToken = default)
     {
-        ValidateCount(count, 100);
+        this.ValidateCount(count, 100);
 
         return this.SendAuthorizedRequestAsync<AdminTestDataGenerationResult>(HttpMethod.Post,
             $"api/v1/admin/test-data/organizations/{organizationId}/vehicles/{vehicleId}/defects/generate",
             new GenerateRequest(count), "Не удалось создать тестовые дефекты.", cancellationToken);
     }
 
-    private static void ValidateCount(int count, int maximum)
+    private void ValidateCount(int count, int maximum)
     {
         if (count is < 1 || count > maximum)
         {
-            throw new ArgumentOutOfRangeException(nameof(count), $"Количество должно быть от 1 до {maximum}.");
+            throw new ArgumentOutOfRangeException(nameof(count), this.LocalizeFallback("Количество должно быть от 1 до {maximum}.").Replace(
+                "{maximum}", maximum.ToString(System.Globalization.CultureInfo.CurrentCulture), StringComparison.Ordinal));
         }
     }
 

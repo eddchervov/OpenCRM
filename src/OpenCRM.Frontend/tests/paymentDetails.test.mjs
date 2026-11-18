@@ -2,14 +2,23 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import { formattingCulture, translate } from '@opencrm/ui/i18n'
+import '../Admin/admin-client/src/adminBillingMessages.ts'
 
 const source = readFileSync(new URL('../Admin/admin-client/src/paymentDetails.ts', import.meta.url), 'utf8')
 const code = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText
 const module = { exports: {} }
-new Function('module', 'exports', code)(module, module.exports)
-const { formatPaymentEvent, getPaymentAccessStatus, getPaymentMoneyStatus, getPaymentMoneySummary, getPaymentNotice } = module.exports
+new Function('require', 'module', 'exports', code)(id => id === '@opencrm/ui/i18n' ? { formattingCulture } : {}, module, module.exports)
+const details = module.exports
+const localize = (key, params) => translate(key, params)
+const formatMoney = amount => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(amount)
+const formatPaymentEvent = (event) => details.formatPaymentEvent(event, localize)
+const getPaymentAccessStatus = payment => details.getPaymentAccessStatus(payment, localize)
+const getPaymentMoneyStatus = payment => details.getPaymentMoneyStatus(payment, localize)
+const getPaymentMoneySummary = details.getPaymentMoneySummary
+const getPaymentNotice = payment => details.getPaymentNotice(payment, localize, formatMoney)
 
 function payment(overrides = {}) {
   return {
@@ -52,7 +61,7 @@ test('Полный возврат остаётся возвратом, даже 
   assert.equal(money.refundKind, 'full')
   assert.equal(money.remaining, 0)
   assert.equal(notice.title, 'Деньги возвращены полностью')
-  assert.match(notice.followUp, /Сверьте сумму возврата в ЮKassa/)
+  assert.match(notice.followUp, /Сверьте сумму возврата с платёжным сервисом/)
   assert.match(notice.message, /Доступ по этой покупке не выдавался/)
 })
 
@@ -93,7 +102,7 @@ test('Конфликт без возврата требует проверки �
   })
   const notice = getPaymentNotice(result)
 
-  assert.equal(notice.title, 'Деньги подтверждены, требуется проверка обработки покупки')
+  assert.equal(notice.title, 'Платёж требует проверки')
   assert.equal(notice.tone, 'warning')
   assert.match(notice.followUp, /Не просите клиента платить повторно/)
 })
@@ -107,8 +116,8 @@ test('Подтверждённая оплата с NeedsAttention остаётс
 
   assert.equal(getPaymentMoneySummary(result).confirmed, true)
   assert.equal(getPaymentMoneyStatus(result), 'Оплата подтверждена')
-  assert.equal(notice.title, 'Деньги подтверждены, требуется проверка обработки покупки')
-  assert.match(notice.message, /ЮKassa подтвердила оплату/)
+  assert.equal(notice.title, 'Платёж требует проверки')
+  assert.match(notice.message, /Платёжная система подтвердила оплату/)
 })
 
 test('Полный возврат до выдачи не утверждает, что период доступа выдан или его нужно останавливать', () => {

@@ -1,4 +1,9 @@
 ﻿<script setup lang="ts">
+import '../bookingFormMessages'
+import { translate as t, formattingCulture } from '@opencrm/ui/i18n'
+import { provideWorkspaceCurrency, useWorkspaceCurrency } from '../workspaceCurrency'
+import '../maintenanceCardMessages'
+
 import EmployeePicker from './EmployeePicker.vue'
 import WorkspaceProFeatureDialog from './WorkspaceProFeatureDialog.vue'
 import { proFeatureBillingAccessKey } from '../proFeatureAccess'
@@ -30,6 +35,8 @@ import type { WorkspaceContext } from '../types'
 import { trackWorkspaceGoal } from '../analytics'
 import WorkspacePageHelpButton from './WorkspacePageHelpButton.vue'
 import { getUnknownServiceDurationSaveMessage } from '../serviceDuration'
+
+const inheritedCurrency = useWorkspaceCurrency()
 
 const teamPreviewOpen = ref(false)
 const canManageBilling = inject(proFeatureBillingAccessKey, computed(() => false))
@@ -89,6 +96,9 @@ type MaterialLine = {
 const clients = ref<WorkspaceClientOption[]>([])
 const services = ref<WorkspaceScenarioCatalogItem[]>([])
 const maintenanceVersion = ref<number | undefined>()
+const maintenanceCurrencyCode = ref<string>()
+const maintenanceCanChangeFinancialData = ref<boolean | undefined>()
+const workspaceCurrency = provideWorkspaceCurrency(computed(() => maintenanceCurrencyCode.value ?? inheritedCurrency.value))
 const savedBuyerClientId = ref('')
 const servicesEditor = ref<InstanceType<typeof MaintenanceServicesEditor> | null>(null)
 type ServiceLine = {
@@ -124,12 +134,12 @@ const parentBreadcrumbs = inject(pageBreadcrumbsKey, undefined)
 const navigationSuffix = computed(() => props.fromVehicle ? '?from=vehicle' : '')
 provide(pageBreadcrumbsKey, computed(() => {
   if (!props.fromVehicle) return parentBreadcrumbs?.value ?? []
-  const items = [{ title: props.context.shell.menu?.find(item => item.code === 'vehicles')?.title ?? 'Техника', href: '#vehicles' }]
+  const items = [{ title: props.context.shell.menu?.find(item => item.code === 'vehicles')?.title ?? t('bookingForm.vehicles'), href: '#vehicles' }]
   if (selectedVehicle.value) {
     items.push({ title: getVehicleDisplayName(selectedVehicle.value, true), href: `#vehicles/${selectedVehicle.value.id}` })
   }
   if (props.maintenanceId) {
-    items.push({ title: 'Запись', href: `#maintenance/${props.maintenanceId}${navigationSuffix.value}` })
+    items.push({ title: t('bookingForm.booking'), href: `#maintenance/${props.maintenanceId}${navigationSuffix.value}` })
   }
   return items
 }))
@@ -138,7 +148,7 @@ const isFormReady = ref(false)
 const isSaving = ref(false)
 const isSavingPhotos = ref(false)
 const uploadStage = ref('1')
-const photoStageOptions = [{ value: '1', label: 'До работы' }, { value: '2', label: 'После работы' }, { value: '0', label: 'Без категории' }]
+const photoStageOptions = [{ value: '1', label: t('bookingForm.before') }, { value: '2', label: t('bookingForm.after') }, { value: '0', label: t('bookingForm.uncategorized') }]
 const errorMessage = ref('')
 const errorDialogMessage = ref('')
 const photoMessage = ref('')
@@ -155,15 +165,26 @@ const isDetailingScenario = computed(() => props.context.shell.scenario?.code ==
 const isSimpleMaintenanceWorkflow = computed(() =>
   hasSimpleMaintenanceWorkflow(props.context.organization)
 )
-const isReadOnly = computed(() => props.context.workspaceAccess?.isReadOnly === true)
+const historicalCurrencyReadOnly = computed(() => {
+  const orderCurrency = maintenanceCurrencyCode.value
+  const organizationCurrency = props.context.organization.currencyCode
+  const currenciesDiffer = Boolean(orderCurrency && organizationCurrency
+    && orderCurrency.toUpperCase() !== organizationCurrency.toUpperCase())
+
+  return maintenanceCanChangeFinancialData.value === false || currenciesDiffer
+})
+const isReadOnly = computed(() => props.context.workspaceAccess?.isReadOnly === true || historicalCurrencyReadOnly.value)
 const canEditPhotos = computed(() => !isReadOnly.value && props.context.shell.scenario?.modules?.photos !== false)
 const canUseMaterials = computed(() => props.context.shell.scenario?.modules?.materials !== false)
 const canUseTeam = computed(() => props.context.shell.scenario?.modules?.members !== false)
-const readOnlyMessage = computed(() =>
-  props.context.workspaceAccess?.readOnlyMessage ?? 'Рабочее пространство сейчас доступно только для просмотра.'
-)
+const readOnlyMessage = computed(() => historicalCurrencyReadOnly.value
+  ? t('maintenanceCard.historicalCurrencyReadOnly', {
+    orderCurrency: maintenanceCurrencyCode.value ?? inheritedCurrency.value,
+    workspaceCurrency: props.context.organization.currencyCode ?? inheritedCurrency.value
+  })
+  : props.context.workspaceAccess?.readOnlyMessage ?? t('bookingForm.readOnly'))
 const billingHref = computed(() => '#billing')
-const title = computed(() => isEditMode.value ? 'Редактирование записи' : 'Новая запись')
+const title = computed(() => isEditMode.value ? t('bookingForm.editTitle') : t('bookingForm.newTitle'))
 const cancelHref = computed(() => props.maintenanceId
   ? `#maintenance/${props.maintenanceId}${navigationSuffix.value}`
   : props.initialVehicleId ? `#vehicles/${props.initialVehicleId}` : '#scheduler')
@@ -176,11 +197,11 @@ const payableAmount = computed(() =>
 const remainingAmount = computed(() => Math.max(0, payableAmount.value - (toNullableNumber(form.paidAmount) ?? 0)))
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: workspaceCurrency.value, maximumFractionDigits: 2 }).format(value)
 }
 
 const buyerOptions = computed(() => [
-  { value: '', label: 'Не указан' },
+  { value: '', label: t('bookingForm.unspecified') },
   ...clients.value.map(client => ({ value: client.id, label: [client.name, client.phone || client.details].filter(Boolean).join(' · ') }))
 ])
 
@@ -192,17 +213,17 @@ const statusOptions = computed(() => {
         : [savedStatus.value ?? 1]
 
   return [
-    { value: '1', label: savedStatus.value === 4 ? 'Возобновить запись' : 'Запланировано' },
-    { value: '2', label: 'В работе' },
-    { value: '3', label: 'Выполнено' },
-    { value: '4', label: 'Отменено' }
+    { value: '1', label: savedStatus.value === 4 ? t('bookingForm.reopen') : t('bookingForm.planned') },
+    { value: '2', label: t('bookingForm.inProgress') },
+    { value: '3', label: t('bookingForm.completed') },
+    { value: '4', label: t('bookingForm.cancelled') }
   ].filter(option => allowed.includes(Number(option.value)))
 })
 
 const typeOptions = [
-  { value: '1', label: 'Уход / мойка' },
-  { value: '2', label: 'Ремонт' },
-  { value: '100', label: 'Другое' }
+  { value: '1', label: t('bookingForm.care') },
+  { value: '2', label: t('bookingForm.repair') },
+  { value: '100', label: t('bookingForm.other') }
 ]
 function createServiceLine(detail?: WorkspaceMaintenanceDetail): ServiceLine {
   const item = services.value.find(service => service.id === detail?.catalogItemId)
@@ -233,9 +254,9 @@ const postOptions = computed(() => [...new Set([
   ...posts.value
     .filter(item => item.isActive !== false && item.name?.trim())
     .map(item => item.name.trim())
-])].map(value => ({ value, label: value || 'Без поста' })))
+])].map(value => ({ value, label: value || t('bookingForm.noPost') })))
 const materialOptions = computed(() => [
-  { value: '', label: 'Без материала' },
+  { value: '', label: t('bookingForm.noMaterial') },
   ...materials.value
     .filter(item => item.isActive !== false && item.name?.trim())
     .map(item => ({ value: item.id, label: item.name.trim() }))
@@ -294,7 +315,7 @@ function getMaterialName(materialCatalogItemId: string) {
 
 function getMaterialDisplayName(line: MaterialLine) {
   return line.materialCatalogItemId
-    ? getMaterialName(line.materialCatalogItemId) || String(line.materialName ?? '').trim() || 'Материал'
+    ? getMaterialName(line.materialCatalogItemId) || String(line.materialName ?? '').trim() || t('bookingForm.material')
     : String(line.materialName ?? '').trim()
 }
 
@@ -328,12 +349,12 @@ function collectFiles(event: Event) {
 
 function validatePhotoFiles(files: File[]) {
   if (files.length > maxMaintenancePhotoFiles) {
-    return 'За одну загрузку можно добавить не более 10 фото.'
+    return t('bookingForm.photoLimit')
   }
 
   const totalSize = files.reduce((sum, file) => sum + file.size, 0)
   if (totalSize > maxMaintenancePhotoBatchSize) {
-    return 'Фото услуги: максимум 100 МБ за одну загрузку.'
+    return t('bookingForm.photoSize')
   }
 
   return ''
@@ -360,7 +381,7 @@ async function loadPhotoHistory(event: Event) {
   try {
     await reloadPhotos()
   } catch (error) {
-    photoMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить сохранённые фото.'
+    photoMessage.value = error instanceof Error ? error.message : t('bookingForm.photosLoadError')
   } finally {
     isSavingPhotos.value = false
   }
@@ -385,7 +406,7 @@ async function uploadPhotos(event: Event) {
     await uploadMaintenancePhotos(organizationId.value, props.maintenanceId, files, Number(uploadStage.value) as MaintenancePhotoStage)
     await reloadPhotos()
   } catch (error) {
-    photoMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить фото услуги.'
+    photoMessage.value = error instanceof Error ? error.message : t('bookingForm.photoUploadError')
   } finally {
     isSavingPhotos.value = false
   }
@@ -418,7 +439,7 @@ async function confirmRemovePhoto() {
     await deleteMaintenancePhoto(organizationId.value, props.maintenanceId, photo.photoId)
     await reloadPhotos()
   } catch (error) {
-    photoMessage.value = error instanceof Error ? error.message : 'Не удалось удалить фото услуги.'
+    photoMessage.value = error instanceof Error ? error.message : t('bookingForm.photoDeleteError')
   } finally {
     isSavingPhotos.value = false
     photoDeleteConfirm.value = null
@@ -466,6 +487,8 @@ function resetForCreate() {
 }
 
 async function loadForm() {
+  maintenanceCurrencyCode.value = undefined
+  maintenanceCanChangeFinancialData.value = undefined
   isLoading.value = true
   isFormReady.value = false
   errorMessage.value = ''
@@ -507,6 +530,8 @@ async function loadForm() {
       serviceLines.value = serviceDetails.map(createServiceLine)
       form.discountAmount = maintenance.discountAmount ? String(maintenance.discountAmount) : ''
       maintenanceVersion.value = maintenance.version
+      maintenanceCurrencyCode.value = maintenance.currencyCode
+      maintenanceCanChangeFinancialData.value = maintenance.canChangeFinancialData
       form.paidAmount = maintenance.paidAmount ? String(maintenance.paidAmount) : ''
       form.laborCostAmount = maintenance.laborCostAmount ? String(maintenance.laborCostAmount) : ''
       materialLines.value = maintenance.maintenanceDetails
@@ -534,7 +559,7 @@ async function loadForm() {
 
     isFormReady.value = true
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть форму записи.'
+    errorMessage.value = error instanceof Error ? error.message : t('bookingForm.formLoadError')
   } finally {
     isLoading.value = false
   }
@@ -548,15 +573,15 @@ function validateMaterialLines() {
     }
 
     if (!line.materialCatalogItemId && !String(line.materialName ?? '').trim()) {
-      return 'Укажите материал или удалите пустую строку.'
+      return t('bookingForm.materialRequired')
     }
 
     const quantity = toNullableNumber(line.materialQuantity, maxMaterialQuantity)
     if (String(line.materialQuantity ?? '').trim() && quantity === null) {
-      return `Расход материала должен быть от 0 до ${maxMaterialQuantity}.`
+      return t('bookingForm.materialRange', { max: maxMaterialQuantity })
     }
     if (quantity !== null && isDiscreteMaterialUnit(line.materialUnit) && !Number.isInteger(quantity)) {
-      return `Для единицы «${line.materialUnit}» расход должен быть целым числом.`
+      return t('bookingForm.materialInteger', { unit: line.materialUnit })
     }
   }
 
@@ -649,7 +674,7 @@ async function saveMaintenance() {
   errorMessage.value = ''
   errorDialogMessage.value = ''
   const serviceValidationError = servicesEditor.value?.validate()
-  if (serviceValidationError === undefined) { errorMessage.value = 'Не удалось проверить строки работ.'; return }
+  if (serviceValidationError === undefined) { errorMessage.value = t('bookingForm.validationError'); return }
   if (serviceValidationError) { errorMessage.value = serviceValidationError; return }
 
   if (isReadOnly.value) {
@@ -658,17 +683,17 @@ async function saveMaintenance() {
   }
 
   if (!form.vehicleId) {
-    showFormError('Выберите автомобиль для записи.')
+    showFormError(t('bookingForm.vehicleRequired'))
     return
   }
 
   if (!form.plannedDate) {
-    showFormError('Укажите дату записи.')
+    showFormError(t('bookingForm.dateRequired'))
     return
   }
 
   if (!serviceLines.value.length || serviceLines.value.some(line => !getServiceName(line).trim())) {
-    showFormError('Укажите название работы в каждой строке.')
+    showFormError(t('bookingForm.serviceRequired'))
     return
   }
 
@@ -711,7 +736,7 @@ async function saveMaintenance() {
       }
     }
   } catch (error) {
-    showFormError(error instanceof Error ? error.message : 'Не удалось сохранить услугу.')
+    showFormError(error instanceof Error ? error.message : t('bookingForm.saveError'))
   } finally {
     isSaving.value = false
   }
@@ -739,10 +764,10 @@ watch(() => form.plannedDate, (date, previous) => {
         :title="title"
       />
     </template>
-    <UiLoader v-if="isLoading" text="Открываем запись…" />
+    <UiLoader v-if="isLoading" :text="t('bookingForm.loading')" />
     <div v-else-if="!isFormReady" class="booking-error" role="alert">
       <p>{{ errorMessage }}</p>
-      <UiButton variant="secondary" @click="loadForm">Повторить</UiButton>
+      <UiButton variant="secondary" @click="loadForm">{{ t('bookingForm.retry') }}</UiButton>
     </div>
     <form v-else class="booking-form" @submit.prevent="saveMaintenance" @invalid.capture="revealInvalidField">
       <WorkspaceAccessNotice
@@ -755,7 +780,7 @@ watch(() => form.plannedDate, (date, previous) => {
         <div v-if="isEditMode && selectedVehicle" class="booking-context__vehicle">
           <a :href="`#vehicles/${selectedVehicle.id}`">{{ getVehicleLabel(selectedVehicle) }}</a>
           <span v-if="selectedVehicle.organizationClientName">{{ selectedVehicle.organizationClientName }}</span>
-          <span v-if="statusOptions.length === 1" class="booking-context__status">Статус: {{ statusOptions[0]?.label }}</span>
+          <span v-if="statusOptions.length === 1" class="booking-context__status">{{ t('bookingForm.statusValue', { status: statusOptions[0]?.label }) }}</span>
         </div>
         <template v-else>
           <InquiryVehiclePicker
@@ -769,14 +794,14 @@ watch(() => form.plannedDate, (date, previous) => {
         </template>
         <UiSelect
           v-model="form.buyerClientId"
-          label="Покупатель по заказу"
+          :label="t('bookingForm.buyer')"
           :options="buyerOptions"
           :disabled="isSaving || isReadOnly"
         />
         <UiSelect
           v-if="isEditMode && !isSimpleMaintenanceWorkflow && statusOptions.length > 1"
           v-model="form.status"
-          label="Статус"
+          :label="t('bookingForm.status')"
           :options="statusOptions"
           :searchable="false"
           :disabled="isSaving || isReadOnly"
@@ -786,15 +811,15 @@ watch(() => form.plannedDate, (date, previous) => {
         <div class="booking-main">
           <section class="booking-section" aria-labelledby="booking-visit-title">
             <div class="booking-heading ui-section-header">
-              <h3 id="booking-visit-title">Дата и место</h3>
+              <h3 id="booking-visit-title">{{ t('bookingForm.dateLocation') }}</h3>
             </div>
             <div class="booking-fields booking-fields--visit">
-              <UiDatePicker v-model="form.plannedDate" label="Дата начала" :disabled="isSaving || isReadOnly" required />
-              <UiDatePicker v-model="form.plannedEndDate" @update:model-value="bookingTimes?.useManualEnd()" label="Дата окончания" :disabled="isSaving || isReadOnly" required />
+              <UiDatePicker v-model="form.plannedDate" :label="t('bookingForm.startDate')" :disabled="isSaving || isReadOnly" required />
+              <UiDatePicker v-model="form.plannedEndDate" @update:model-value="bookingTimes?.useManualEnd()" :label="t('bookingForm.endDate')" :disabled="isSaving || isReadOnly" required />
               <div class="booking-linked">
-                <UiSelect v-model="form.location" label="Пост / место" :options="postOptions" :disabled="isSaving || isReadOnly" />
-                <a v-if="canOpenCatalog && !isSaving" href="#catalog?catalog=work_post" aria-label="Открыть справочник постов">
-                  Справочник ↗
+                <UiSelect v-model="form.location" :label="t('bookingForm.post')" :options="postOptions" :disabled="isSaving || isReadOnly" />
+                <a v-if="canOpenCatalog && !isSaving" href="#catalog?catalog=work_post" :aria-label="t('bookingForm.openPosts')">
+                  {{ t('bookingForm.catalog') }}
                 </a>
               </div>
               <BookingTimeFields
@@ -814,18 +839,18 @@ watch(() => form.plannedDate, (date, previous) => {
               />
             </div>
             <details class="booking-disclosure booking-extra">
-              <summary><strong>Дополнительно</strong><span>Сотрудник, тип работ</span></summary>
+              <summary><strong>{{ t('bookingForm.additional') }}</strong><span>{{ t('bookingForm.employeeType') }}</span></summary>
               <div class="booking-disclosure__body booking-fields booking-fields--visit">
                 <EmployeePicker v-if="canUseTeam" v-model="form.employeeId" :current-name="form.performer" :organization-id="organizationId" :planned-start-local="plannedStartLocal" :planned-end-local="plannedEndLocal" :disabled="isSaving || isReadOnly" />
                 <div v-else class="ui-field booking-team-field">
-                  <span class="ui-field-label">Сотрудник</span>
+                  <span class="ui-field-label">{{ t('bookingForm.employee') }}</span>
                   <UiButton variant="secondary" class="booking-team-field__button" aria-haspopup="dialog" :aria-expanded="teamPreviewOpen" @click="teamPreviewOpen = true">
-                    <span class="booking-team-field__name" :title="form.performer || undefined">{{ form.performer || (form.employeeId ? 'Назначен' : 'Назначить') }}</span><span class="booking-team-field__badge">PRO</span>
+                    <span class="booking-team-field__name" :title="form.performer || undefined">{{ form.performer || (form.employeeId ? t('bookingForm.assigned') : t('bookingForm.assign')) }}</span><span class="booking-team-field__badge">PRO</span>
                   </UiButton>
                 </div>
                 <UiSelect
                   v-model="form.type"
-                  label="Тип работ"
+                  :label="t('bookingForm.workType')"
                   :options="typeOptions"
                   :searchable="false"
                   :disabled="isSaving || isReadOnly"
@@ -833,13 +858,13 @@ watch(() => form.plannedDate, (date, previous) => {
                 <UiDatePicker
                   v-if="savedStatus === 3 && Number(form.status) === 3"
                   v-model="form.completedDate"
-                  label="Дата выполнения"
+                  :label="t('bookingForm.completionDate')"
                   :disabled="isSaving || isReadOnly"
                 />
                 <UiInput
                   v-if="!isDetailingScenario"
                   v-model="form.mileage"
-                  label="Пробег"
+                  :label="t('bookingForm.mileage')"
                   type="number"
                   :disabled="isSaving || isReadOnly"
                 />
@@ -848,32 +873,32 @@ watch(() => form.plannedDate, (date, previous) => {
           </section>
           <section class="booking-section" aria-labelledby="booking-service-title">
             <div class="booking-heading ui-section-header">
-              <h3 id="booking-service-title">Услуги</h3>
-              <a v-if="canOpenCatalog && !isSaving" href="#catalog?catalog=service">Справочник услуг ↗</a>
+              <h3 id="booking-service-title">{{ t('bookingForm.services') }}</h3>
+              <a v-if="canOpenCatalog && !isSaving" href="#catalog?catalog=service">{{ t('bookingForm.serviceCatalog') }}</a>
             </div>
             <MaintenanceServicesEditor :can-assign-employees="context.shell.scenario?.modules?.members !== false" ref="servicesEditor" @duration-change="serviceDuration = $event" v-model="serviceEditorRows" :can-open-catalog="canOpenCatalog" :organization-id="context.organization.id" :default-vat-rate-code="isEditMode ? undefined : 'without_vat'" :planned-start-local="plannedStartLocal" :planned-end-local="plannedEndLocal" :disabled="isSaving || isReadOnly" />
           </section>
           <details v-if="isDetailingScenario" ref="materialSection" class="booking-disclosure booking-section booking-materials-section">
-            <summary><strong>Материалы</strong><span>{{ materialLines.length ? materialLines.length + ' добавлено' : 'Не добавлены' }}</span></summary>
-            <p v-if="!canUseMaterials" role="status">Изменение материалов — <a href="#billing">доступно в PRO</a>. Сохранённые строки остаются в заказе.</p>
+            <summary><strong>{{ t('bookingForm.materials') }}</strong><span>{{ materialLines.length ? t('bookingForm.addedCount', { count: materialLines.length }) : t('bookingForm.notAdded') }}</span></summary>
+            <p v-if="!canUseMaterials" role="status"><a href="#billing">{{ t('bookingForm.materialsPro') }}</a></p>
             <div v-if="canUseMaterials" class="booking-disclosure__body">
               <div class="booking-heading ui-section-header">
-                <a v-if="canOpenCatalog && !isSaving" href="#catalog?catalog=material">Справочник ↗</a>
-                <UiButton v-if="!isReadOnly" variant="secondary" :disabled="isSaving" @click="addMaterialLine">＋ Добавить материал</UiButton>
+                <a v-if="canOpenCatalog && !isSaving" href="#catalog?catalog=material">{{ t('bookingForm.catalog') }}</a>
+                <UiButton v-if="!isReadOnly" variant="secondary" :disabled="isSaving" @click="addMaterialLine">{{ t('bookingForm.addMaterial') }}</UiButton>
               </div>
-              <div v-if="!materialLines.length" class="booking-empty">Материалы не добавлены</div>
+              <div v-if="!materialLines.length" class="booking-empty">{{ t('bookingForm.materialsEmpty') }}</div>
               <div v-else class="booking-materials">
                 <div v-for="(line, index) in materialLines" :key="line.id" class="booking-material">
                   <div class="booking-material__heading">
-                    <span>Материал {{ index + 1 }}</span>
+                    <span>{{ t('bookingForm.materialIndex', { index: index + 1 }) }}</span>
                     <button
                       v-if="!isReadOnly"
                       type="button"
                       :disabled="isSaving"
-                      :aria-label="`Удалить материал ${index + 1}`"
+                      :aria-label="t('bookingForm.removeMaterial', { index: index + 1 })"
                       @click="removeMaterialLine(line.id)"
                     >
-                      Удалить
+                      {{ t('bookingForm.delete') }}
                     </button>
                   </div>
                   <div class="booking-material__fields">
@@ -881,7 +906,7 @@ watch(() => form.plannedDate, (date, previous) => {
                       <UiSelect
                         v-model="line.materialCatalogItemId"
                       @update:model-value="line.materialUnitCost = ''"
-                        label="Материал"
+                        :label="t('bookingForm.material')"
                         :options="materialOptions"
                         :disabled="isSaving || isReadOnly"
                       />
@@ -889,14 +914,14 @@ watch(() => form.plannedDate, (date, previous) => {
                         v-if="!line.materialCatalogItemId"
                         v-model="line.materialName"
                       @update:model-value="line.materialUnitCost = ''"
-                        label="Название вручную"
+                        :label="t('bookingForm.manualName')"
                         :disabled="isSaving || isReadOnly"
                       />
                     </div>
                     <UiNumberInput
                       v-model="line.materialQuantity"
                       @update:model-value="line.materialUnitCost = ''"
-                      label="Расход"
+                      :label="t('bookingForm.consumption')"
                       :min="0"
                       :max="999999999"
                       :step="isDiscreteMaterialUnit(line.materialUnit) ? 1 : 0.001"
@@ -906,7 +931,7 @@ watch(() => form.plannedDate, (date, previous) => {
                     <UiSelect
                       v-model="line.materialUnit"
                       @update:model-value="line.materialUnitCost = ''"
-                      label="Ед. изм."
+                      :label="t('bookingForm.unit')"
                       :options="materialUnitOptions"
                       :searchable="false"
                       :disabled="isSaving || isReadOnly"
@@ -917,72 +942,72 @@ watch(() => form.plannedDate, (date, previous) => {
             </div>
           </details>
           <details class="booking-disclosure booking-section" :open="Boolean(form.comment)">
-            <summary><strong>Комментарий к записи</strong><span v-if="!form.comment">Добавить</span></summary>
+            <summary><strong>{{ t('bookingForm.comment') }}</strong><span v-if="!form.comment">{{ t('bookingForm.add') }}</span></summary>
             <div class="booking-disclosure__body">
               <UiTextarea
                 v-model="form.comment"
-                label="Комментарий к записи"
-                placeholder="Что важно учесть при выполнении и выдаче"
+                :label="t('bookingForm.comment')"
+                :placeholder="t('bookingForm.commentPlaceholder')"
                 :rows="3"
                 :disabled="isSaving || isReadOnly"
               />
             </div>
           </details>
           <details v-if="isEditMode && context.shell.scenario?.modules?.photos !== false" class="booking-disclosure booking-section booking-photos-section" @toggle="loadPhotoHistory">
-            <summary><strong>Фото до / после</strong><span>{{ photos.length ? photos.length + ' фото' : hasLoadedPhotos ? 'Фото нет' : 'Показать фото' }}</span></summary>
+            <summary><strong>{{ t('bookingForm.photos') }}</strong><span>{{ photos.length ? t('bookingForm.photoCount', { count: photos.length }) : hasLoadedPhotos ? t('bookingForm.noPhotos') : t('bookingForm.showPhotos') }}</span></summary>
             <div class="booking-disclosure__body">
               <div v-if="canEditPhotos" class="booking-heading ui-section-header">
-                <UiSelect v-model="uploadStage" label="Этап съёмки" :options="photoStageOptions" required :searchable="false" :disabled="isSavingPhotos || isSaving" />
+                <UiSelect v-model="uploadStage" :label="t('bookingForm.photoStage')" :options="photoStageOptions" required :searchable="false" :disabled="isSavingPhotos || isSaving" />
                 <label class="booking-upload">
-                  ＋ Добавить фото
+                  {{ t('bookingForm.addPhoto') }}
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     :disabled="isSavingPhotos || isSaving"
-                    aria-label="Добавить фото записи"
+                    :aria-label="t('bookingForm.addBookingPhoto')"
                     @change="uploadPhotos"
                   >
                 </label>
               </div>
-              <UiLoader v-if="isSavingPhotos" compact text="Обновляем фото…" />
+              <UiLoader v-if="isSavingPhotos" compact :text="t('bookingForm.updatingPhotos')" />
               <div v-if="photoMessage" class="booking-error" role="alert">{{ photoMessage }}</div>
               <div v-if="photos.length" class="booking-photos">
                 <article v-for="(photo, index) in photos" :key="photo.photoId" class="booking-photo">
                   <button
                     type="button"
                     class="photo-preview-button"
-                    :aria-label="`Открыть фото ${index + 1}`"
+                    :aria-label="t('bookingForm.openPhoto', { index: index + 1 })"
                     @click="previewPhoto = photo"
                   >
-                    <img :src="photo.url" :alt="`Фото записи ${index + 1}`" loading="lazy">
+                    <img :src="photo.url" :alt="t('bookingForm.photoAlt', { index: index + 1 })" loading="lazy">
                   </button>
                   <span>{{ photoStageOptions.find(stage => stage.value === String(photo.stage))?.label }}</span>
                   <button
                     v-if="canEditPhotos"
                     type="button"
                     :disabled="isSavingPhotos || isSaving"
-                    :aria-label="`Удалить фото ${index + 1}`"
+                    :aria-label="t('bookingForm.deletePhotoIndex', { index: index + 1 })"
                     @click="removePhoto(photo)"
                   >
-                    Удалить
+                    {{ t('bookingForm.delete') }}
                   </button>
                 </article>
               </div>
-              <div v-else class="booking-empty">Фото пока нет</div>
+              <div v-else class="booking-empty">{{ t('bookingForm.photosEmpty') }}</div>
             </div>
           </details>
         </div>
         <aside class="booking-finance" aria-labelledby="booking-finance-title">
-          <h3 id="booking-finance-title" class="ui-section-header">Расчёт</h3>
+          <h3 id="booking-finance-title" class="ui-section-header">{{ t('bookingForm.settlement') }}</h3>
           <div class="booking-total">
-            <span>К оплате со скидкой</span>
+            <span>{{ t('bookingForm.discountedTotal') }}</span>
             <strong>{{ formatMoney(payableAmount) }}</strong>
           </div>
           <div class="booking-finance__fields">
             <UiMoneyInput
               v-model="form.discountAmount"
-              label="Скидка, ₽"
+              :label="t('bookingForm.discount', { currency: workspaceCurrency })"
               :min="0"
               :max="999999999"
               :step="0.01"
@@ -991,15 +1016,15 @@ watch(() => form.plannedDate, (date, previous) => {
 
           </div>
           <dl class="booking-balance">
-            <dt>Осталось оплатить</dt>
+            <dt>{{ t('bookingForm.balance') }}</dt>
             <dd>{{ formatMoney(remainingAmount) }}</dd>
           </dl>
           <details class="booking-disclosure booking-labor">
-            <summary><strong>Себестоимость труда</strong><span>{{ form.laborCostAmount ? formatMoney(Number(form.laborCostAmount)) : 'Не указана' }}</span></summary>
+            <summary><strong>{{ t('bookingForm.laborCost') }}</strong><span>{{ form.laborCostAmount ? formatMoney(Number(form.laborCostAmount)) : t('bookingForm.unspecifiedCost') }}</span></summary>
             <div class="booking-disclosure__body">
             <UiMoneyInput
               v-model="form.laborCostAmount"
-              label="Себестоимость труда, ₽"
+              :label="t('bookingForm.laborCostCurrency', { currency: workspaceCurrency })"
               :min="0"
               :max="999999999"
               :step="0.01"
@@ -1011,34 +1036,34 @@ watch(() => form.plannedDate, (date, previous) => {
       </div>
       <div class="booking-actions">
         <UiButton v-if="!isReadOnly" type="submit" :disabled="isSaving || isSavingPhotos">
-          {{ isSaving ? 'Сохраняем…' : isEditMode ? 'Сохранить изменения' : 'Создать запись' }}
+          {{ isSaving ? t('bookingForm.saving') : isEditMode ? t('bookingForm.save') : t('bookingForm.create') }}
         </UiButton>
         <UiButton variant="secondary" :disabled="isSaving || isSavingPhotos" :href="cancelHref">
-          {{ isReadOnly ? 'Назад' : 'Отмена' }}
+          {{ isReadOnly ? t('bookingForm.back') : t('bookingForm.cancel') }}
         </UiButton>
       </div>
     </form>
     <UiAlertDialog
       :open="Boolean(errorDialogMessage)"
-      title="Не удалось сохранить"
+      :title="t('bookingForm.saveFailed')"
       :message="errorDialogMessage"
       tone="danger"
       @close="errorDialogMessage = ''"
     />
     <UiConfirmDialog
       :open="canEditPhotos && Boolean(photoPromptMaintenanceId)"
-      title="Добавить фото записи"
-      message="Запись создана. Можно сразу приложить фото осмотра, результата или пропустить этот шаг."
-      confirm-text="Добавить фото"
-      cancel-text="Пропустить"
+      :title="t('bookingForm.addBookingPhoto')"
+      :message="t('bookingForm.createdPhotos')"
+      :confirm-text="t('bookingForm.addPhotos')"
+      :cancel-text="t('bookingForm.skip')"
       @close="skipSavedMaintenancePhotos"
       @confirm="openSavedMaintenance"
     />
     <UiConfirmDialog
       :open="Boolean(photoDeleteConfirm)"
-      title="Удалить фото"
-      message="Фото записи будет удалено без возможности восстановления."
-      confirm-text="Удалить"
+      :title="t('bookingForm.deletePhoto')"
+      :message="t('bookingForm.deletePhotoWarning')"
+      :confirm-text="t('bookingForm.delete')"
       :busy="isSavingPhotos"
       tone="danger"
       @close="closePhotoDeleteConfirmation"

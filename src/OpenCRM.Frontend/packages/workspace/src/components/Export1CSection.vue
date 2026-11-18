@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../exportMessages'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { UiButton, UiDatePicker, UiLoader, formatDateOnly } from '@opencrm/ui'
 import {
@@ -11,6 +13,8 @@ import {
 } from '../api/export1C'
 import type { WorkspaceContext } from '../types'
 import WorkspaceProLock from './WorkspaceProLock.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   context: WorkspaceContext
@@ -91,7 +95,7 @@ async function loadCapabilities() {
     sections.materials = result.canExportMaterials
   } catch (error) {
     if (request === capabilitiesRequest && props.context.organization.id === organizationId) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть выгрузку.'
+      errorMessage.value = error instanceof Error ? error.message : t('accountingExport.openError')
     }
   } finally {
     if (request === capabilitiesRequest && props.context.organization.id === organizationId) isLoading.value = false
@@ -118,7 +122,7 @@ async function checkData() {
   previewError.value = ''
   if (isAccountingExportLocked.value) return
   if (!filters.dateFrom || !filters.dateTo || filters.dateFrom > filters.dateTo) {
-    previewError.value = 'Проверьте даты периода.'
+    previewError.value = t('accountingExport.invalidPeriod')
     return
   }
   isPreviewing.value = true
@@ -134,7 +138,7 @@ async function checkData() {
     previewOptionsKey.value = JSON.stringify(options)
   } catch (error) {
     if (request === previewRequest && organizationId === props.context.organization.id && !isAccountingExportLocked.value) {
-      previewError.value = error instanceof Error ? error.message : 'Не удалось проверить данные.'
+      previewError.value = error instanceof Error ? error.message : t('accountingExport.previewError')
     }
   } finally {
     if (request === previewRequest) isPreviewing.value = false
@@ -145,7 +149,7 @@ async function exportData() {
   exportMessage.value = ''
   if (isAccountingExportLocked.value) return
   if (!filters.dateFrom || !filters.dateTo || filters.dateFrom > filters.dateTo) {
-    exportMessage.value = 'Проверьте даты периода.'
+    exportMessage.value = t('accountingExport.invalidPeriod')
     return
   }
 
@@ -159,12 +163,12 @@ async function exportData() {
     if (request !== downloadRequest || organizationId !== props.context.organization.id || isAccountingExportLocked.value) return
     if (issueCount) {
       exportMessage.value = exportMode.value === 'bp3'
-        ? `В файле ${issueCount} замечаний к данным. Нажмите «Проверить данные» и исправьте их перед загрузкой в 1С.`
-        : `В файле ${issueCount} замечаний к данным. Нажмите «Проверить данные», чтобы просмотреть их.`
+        ? t('accountingExport.bp3Issues', { count: issueCount })
+        : t('accountingExport.fullIssues', { count: issueCount })
     }
   } catch (error) {
     if (request === downloadRequest && organizationId === props.context.organization.id && !isAccountingExportLocked.value) {
-      exportMessage.value = error instanceof Error ? error.message : 'Не удалось сформировать выгрузку.'
+      exportMessage.value = error instanceof Error ? error.message : t('accountingExport.exportError')
     }
   } finally {
     if (request === downloadRequest) isExporting.value = false
@@ -212,86 +216,86 @@ onMounted(loadCapabilities)
 <template>
   <div class="finance-export-page">
     <section class="finance-export-page__destination" aria-labelledby="export-mode-title">
-      <h3 id="export-mode-title" class="ui-section-header">Назначение файла</h3>
+      <h3 id="export-mode-title" class="ui-section-header">{{ t('accountingExport.destination') }}</h3>
       <div class="finance-export-page__mode">
-        <label><input v-model="exportMode" type="radio" value="full" :disabled="!capabilities?.canExport" /> Расширенный JSON для другой системы</label>
-        <label><input v-model="exportMode" type="radio" value="bp3" :disabled="!capabilities?.canExport" /> Для 1С:Бухгалтерии 3.0 <span v-if="capabilities?.canExport && (capabilities.canExportBp3 === false || (capabilities.canExportBp3 === undefined && accountingExport === false))" class="finance-export-page__pro-badge">PRO</span></label>
+        <label><input v-model="exportMode" type="radio" value="full" :disabled="!capabilities?.canExport" /> {{ t('accountingExport.fullMode') }}</label>
+        <label><input v-model="exportMode" type="radio" value="bp3" :disabled="!capabilities?.canExport" /> {{ t('accountingExport.bp3Mode') }} <span v-if="capabilities?.canExport && (capabilities.canExportBp3 === false || (capabilities.canExportBp3 === undefined && accountingExport === false))" class="finance-export-page__pro-badge">PRO</span></label>
       </div>
     </section>
 
-    <p v-if="!isLoading && (errorMessage || !capabilities?.canExport)" class="finance-export-page__error" role="alert">{{ errorMessage || 'Выгрузка недоступна для этой организации.' }}</p>
+    <p v-if="!isLoading && (errorMessage || !capabilities?.canExport)" class="finance-export-page__error" role="alert">{{ errorMessage || t('accountingExport.unavailable') }}</p>
     <WorkspaceProLock
       v-else
       centered
       :locked="isAccountingExportLocked"
-      message="Выгрузка в 1С доступна в PRO" feature="accountingExport"
+      :message="t('accountingExport.pro')" feature="accountingExport"
       class="finance-export-page__locked-content"
       :class="{ 'finance-export-page__locked-content--locked': isAccountingExportLocked }"
     >
-      <UiLoader v-if="isLoading" text="Проверяем доступ к выгрузке..." />
+      <UiLoader v-if="isLoading" :text="t('accountingExport.checkingAccess')" />
       <template v-else-if="capabilities?.canExport">
-        <p class="finance-export-page__intro">{{ exportMode === 'bp3' ? 'Выгрузите документы для 1С:Бухгалтерии 3.0.' : 'Выгрузите выбранные данные в формате JSON для другой системы.' }}</p>
+        <p class="finance-export-page__intro">{{ exportMode === 'bp3' ? t('accountingExport.bp3Intro') : t('accountingExport.fullIntro') }}</p>
       <section class="finance-export-page__period" aria-labelledby="export-period-title">
-        <h3 id="export-period-title" class="ui-section-header">Период выгрузки</h3>
+        <h3 id="export-period-title" class="ui-section-header">{{ t('accountingExport.period') }}</h3>
         <div class="finance-date-form">
-          <UiDatePicker v-model="filters.dateFrom" label="С" required />
-          <UiDatePicker v-model="filters.dateTo" label="По" required />
+          <UiDatePicker v-model="filters.dateFrom" :label="t('accountingExport.from')" required />
+          <UiDatePicker v-model="filters.dateTo" :label="t('accountingExport.to')" required />
         </div>
-        <p>{{ exportMode === 'bp3' ? 'Заказы и оплаты' : 'Заказы, оплаты и движения по складу' }} попадут в файл за этот период.</p>
+        <p>{{ exportMode === 'bp3' ? t('accountingExport.bp3PeriodHint') : t('accountingExport.fullPeriodHint') }}</p>
       </section>
 
       <section class="finance-export-page__content" aria-labelledby="export-content-title">
-        <h3 id="export-content-title" class="ui-section-header">Что включить в файл</h3>
+        <h3 id="export-content-title" class="ui-section-header">{{ t('accountingExport.content') }}</h3>
         <div class="finance-export__groups">
           <fieldset>
-            <legend>{{ exportMode === 'bp3' ? 'Черновики в 1С' : 'Операции за период' }}</legend>
-            <label v-if="capabilities.canExportOrders"><input v-model="sections.orders" type="checkbox" /> {{ exportMode === 'bp3' ? 'Завершённые заказы и работы' : 'Заказы и работы' }}</label>
-            <label v-if="exportMode === 'full' && sections.orders" class="finance-export__nested"><input v-model="sections.unfinishedOrders" type="checkbox" /> Включить незавершённые заказы</label>
-            <label v-if="capabilities.canExportOrders"><input v-model="sections.payments" type="checkbox" /> Оплаты и отмены</label>
-            <label v-if="exportMode === 'full' && capabilities.canExportMaterials"><input v-model="sections.materials" type="checkbox" /> Движения по складу</label>
+            <legend>{{ exportMode === 'bp3' ? t('accountingExport.bp3Drafts') : t('accountingExport.operations') }}</legend>
+            <label v-if="capabilities.canExportOrders"><input v-model="sections.orders" type="checkbox" /> {{ exportMode === 'bp3' ? t('accountingExport.completedOrders') : t('accountingExport.orders') }}</label>
+            <label v-if="exportMode === 'full' && sections.orders" class="finance-export__nested"><input v-model="sections.unfinishedOrders" type="checkbox" /> {{ t('accountingExport.unfinished') }}</label>
+            <label v-if="capabilities.canExportOrders"><input v-model="sections.payments" type="checkbox" /> {{ t('accountingExport.payments') }}</label>
+            <label v-if="exportMode === 'full' && capabilities.canExportMaterials"><input v-model="sections.materials" type="checkbox" /> {{ t('accountingExport.stock') }}</label>
           </fieldset>
           <fieldset v-if="exportMode === 'full'">
-            <legend>Актуальные данные</legend>
-            <label v-if="capabilities.canExportClients"><input v-model="sections.clients" type="checkbox" /> Клиенты</label>
-            <label v-if="capabilities.canExportVehicles"><input v-model="sections.vehicles" type="checkbox" /> Автомобили</label>
-            <label v-if="capabilities.canExportCatalog"><input v-model="sections.catalog" type="checkbox" /> Услуги и материалы</label>
+            <legend>{{ t('accountingExport.currentData') }}</legend>
+            <label v-if="capabilities.canExportClients"><input v-model="sections.clients" type="checkbox" /> {{ t('accountingExport.clients') }}</label>
+            <label v-if="capabilities.canExportVehicles"><input v-model="sections.vehicles" type="checkbox" /> {{ t('accountingExport.vehicles') }}</label>
+            <label v-if="capabilities.canExportCatalog"><input v-model="sections.catalog" type="checkbox" /> {{ t('accountingExport.catalog') }}</label>
           </fieldset>
         </div>
-        <p v-if="exportMode === 'full'">Справочники и остатки попадут в файл в текущем состоянии. Используйте его для обмена с другой системой.</p>
-        <p v-else>Отменённые оплаты останутся в файле для сверки; обработка 1С не создаёт по ним новый платёж.</p>
+        <p v-if="exportMode === 'full'">{{ t('accountingExport.fullHint') }}</p>
+        <p v-else>{{ t('accountingExport.paymentHint') }}</p>
       </section>
 
       <section class="finance-export-page__content" aria-labelledby="export-check-title">
-        <h3 id="export-check-title" class="ui-section-header">Проверка перед выгрузкой</h3>
-        <UiButton variant="secondary" :disabled="isPreviewing" @click="checkData">{{ isPreviewing ? 'Проверяем...' : 'Проверить данные' }}</UiButton>
+        <h3 id="export-check-title" class="ui-section-header">{{ t('accountingExport.checkTitle') }}</h3>
+        <UiButton variant="secondary" :disabled="isPreviewing" @click="checkData">{{ isPreviewing ? t('accountingExport.checking') : t('accountingExport.check') }}</UiButton>
         <p v-if="previewError" role="alert">{{ previewError }}</p>
         <template v-if="preview && isPreviewCurrent">
-          <p>Заказов: {{ exportMode === 'bp3' ? (preview.completedOrdersCount ?? preview.ordersCount) : preview.ordersCount }} · оплат: {{ preview.paymentsCount }} · замечаний: {{ preview.validationIssues.length }}</p>
+          <p>{{ t('accountingExport.previewCounts', { orders: exportMode === 'bp3' ? (preview.completedOrdersCount ?? preview.ordersCount) : preview.ordersCount, payments: preview.paymentsCount, issues: preview.validationIssues.length }) }}</p>
           <p v-if="exportMode === 'bp3' && (preview.ordersNeedingReviewCount || preview.paymentsNeedingReviewCount)">
-            До загрузки проверьте заказы: {{ preview.ordersNeedingReviewCount }}, оплаты: {{ preview.paymentsNeedingReviewCount }}.
+            {{ t('accountingExport.reviewCounts', { orders: preview.ordersNeedingReviewCount ?? 0, payments: preview.paymentsNeedingReviewCount ?? 0 }) }}
           </p>
           <ul v-if="preview.validationIssues.length" class="finance-export-page__issues">
             <li v-for="(issue, index) in preview.validationIssues" :key="`${issue.entityType}-${issue.entityId}-${index}`">
-              <a v-if="issue.orderId" :href="`#maintenance/${issue.orderId}`">Заказ ↗</a>
+              <a v-if="issue.orderId" :href="`#maintenance/${issue.orderId}`">{{ t('accountingExport.orderLink') }}</a>
               <span>{{ issue.message }}</span>
             </li>
           </ul>
-          <p v-else>Замечаний нет.</p>
+          <p v-else>{{ t('accountingExport.noIssues') }}</p>
         </template>
       </section>
 
       <section v-if="exportMode === 'bp3'" class="finance-export-page__content" aria-labelledby="export-1c-title">
-        <h3 id="export-1c-title" class="ui-section-header">Загрузка в 1С</h3>
-        <p>В 1С откройте обработку через «Файл → Открыть». Выберите JSON, организацию и услугу; сопоставьте клиентов и создайте черновики. Перед проведением сверьте договоры, даты и оплаты.</p>
-        <p v-if="capabilities?.processingDownloadUrl"><a :href="capabilities.processingDownloadUrl" download>Скачать обработку для 1С</a></p>
-        <p v-else>Исходники обработки входят в OpenCRM. Готовый файл для своей версии 1С предоставляет администратор установки.</p>
+        <h3 id="export-1c-title" class="ui-section-header">{{ t('accountingExport.uploadTitle') }}</h3>
+        <p>{{ t('accountingExport.uploadHint') }}</p>
+        <p v-if="capabilities?.processingDownloadUrl"><a :href="capabilities.processingDownloadUrl" download>{{ t('accountingExport.downloadProcessor') }}</a></p>
+        <p v-else>{{ t('accountingExport.processorHint') }}</p>
       </section>
 
       <div class="finance-export-page__footer">
         <UiButton
           :disabled="isExporting || !hasSelectedContent"
           @click="exportData"
-        >{{ isExporting ? 'Формируем файл...' : 'Скачать файл JSON' }}</UiButton>
+        >{{ isExporting ? t('accountingExport.generating') : t('accountingExport.download') }}</UiButton>
         <p v-if="exportMessage" role="status">{{ exportMessage }}</p>
       </div>
       </template>

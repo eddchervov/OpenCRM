@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.RolesView"
@@ -17,8 +18,8 @@
   </UserControl.Styles>
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
     <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="Роли и права" Classes="heading" AutomationProperties.AutomationId="RolesHeading" />
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+      <TextBlock Text="{loc:LocalizedText Key=native.roles.roli.i.prava}" Classes="heading" AutomationProperties.AutomationId="RolesHeading" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
     </Grid>
     <StackPanel Grid.Row="1" Spacing="6">
       <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -34,12 +35,12 @@
               <Border BorderBrush="#292929" BorderThickness="0,0,0,1" Padding="10">
                 <StackPanel Spacing="4">
                   <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                  <TextBlock Text="Системная" IsVisible="{Binding IsProtected}" Classes="caption" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.roles.sistemnaya}" IsVisible="{Binding IsProtected}" Classes="caption" />
                   <TextBlock IsVisible="{Binding !IsProtected}" Classes="caption" TextWrapping="Wrap">
                     <Run Text="{Binding PermissionCount}" />
-                    <Run Text=" прав · " />
+                    <Run Text="{loc:LocalizedText Key=native.roles.prav.padded}" />
                     <Run Text="{Binding UsersCount}" />
-                    <Run Text=" пользователей" />
+                    <Run Text="{loc:LocalizedText Key=native.roles.polzovateley.suffix}" />
                   </TextBlock>
                 </StackPanel>
               </Border>
@@ -52,17 +53,17 @@
           <Grid>
             <StackPanel Spacing="3">
               <TextBlock Text="{Binding SelectedRole.Name}" FontSize="20" FontWeight="SemiBold" />
-              <TextBlock Text="Системная роль защищена от изменения прав" Classes="caption" IsVisible="{Binding SelectedRole.IsLocked}" />
+              <TextBlock Text="{loc:LocalizedText Key=native.roles.sistemnaya.rol.zashchishchena.ot.izmeneniya.prav}" Classes="caption" IsVisible="{Binding SelectedRole.IsLocked}" />
             </StackPanel>
           </Grid>
           <WrapPanel Grid.Row="1">
-              <Button Content="Права" Classes="tab" Classes.active="{Binding !IsMembersTab}" Command="{Binding SelectTabCommand}" Margin="0,0,8,6">
+              <Button Content="{loc:LocalizedText Key=native.roles.prava}" Classes="tab" Classes.active="{Binding !IsMembersTab}" Command="{Binding SelectTabCommand}" Margin="0,0,8,6">
                 <Button.CommandParameter><x:Boolean>False</x:Boolean></Button.CommandParameter>
               </Button>
-              <Button Content="Участники" Classes="tab" Classes.active="{Binding IsMembersTab}" Command="{Binding SelectTabCommand}" Margin="0,0,8,6">
+              <Button Content="{loc:LocalizedText Key=native.roles.uchastniki}" Classes="tab" Classes.active="{Binding IsMembersTab}" Command="{Binding SelectTabCommand}" Margin="0,0,8,6">
                 <Button.CommandParameter><x:Boolean>True</x:Boolean></Button.CommandParameter>
               </Button>
-              <Button Content="Сохранить права" Classes="primary" IsVisible="{Binding !IsMembersTab}" Margin="0,0,0,6"
+              <Button Content="{loc:LocalizedText Key=native.roles.sokhranit.prava}" Classes="primary" IsVisible="{Binding !IsMembersTab}" Margin="0,0,0,6"
                       IsEnabled="{Binding CanEditPermissions}" Command="{Binding SavePermissionsCommand}" />
           </WrapPanel>
           <ScrollViewer Grid.Row="2" IsVisible="{Binding !IsMembersTab}" HorizontalScrollBarVisibility="Disabled">
@@ -88,24 +89,24 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <TextBlock Text="Разрешения не найдены" IsVisible="{Binding !HasGroups}" Classes="muted" />
+              <TextBlock Text="{loc:LocalizedText Key=native.roles.razresheniya.ne.naydeny}" IsVisible="{Binding !HasGroups}" Classes="muted" />
             </StackPanel>
           </ScrollViewer>
           <Grid Grid.Row="2" IsVisible="{Binding IsMembersTab}" RowDefinitions="Auto,Auto,*" RowSpacing="10">
             <WrapPanel>
-              <TextBox Text="{Binding MemberSearch}" PlaceholderText="Поиск email или телефона" VerticalContentAlignment="Center" Width="190" Margin="0,0,8,6" />
+              <TextBox Text="{Binding MemberSearch}" PlaceholderText="{loc:LocalizedText Key=native.roles.poisk.email.ili.telefona}" VerticalContentAlignment="Center" Width="190" Margin="0,0,8,6" />
               <ComboBox ItemsSource="{Binding AvailableMembers}" SelectedItem="{Binding SelectedMember}"
-                        PlaceholderText="Выберите пользователя" IsEnabled="{Binding HasAvailableMembers}" Width="220" Margin="0,0,8,6">
+                        PlaceholderText="{loc:LocalizedText Key=native.roles.vyberite.polzovatelya}" IsEnabled="{Binding HasAvailableMembers}" Width="220" Margin="0,0,8,6">
                 <ComboBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:RoleMemberItem">
                     <TextBlock Text="{Binding DisplayName}" />
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
-              <Button Content="Назначить" Classes="primary" Command="{Binding AddMemberCommand}" Margin="0,0,0,6" />
+              <Button Content="{loc:LocalizedText Key=native.roles.naznachit}" Classes="primary" Command="{Binding AddMemberCommand}" Margin="0,0,0,6" />
             </WrapPanel>
             <ProgressBar Grid.Row="1" IsVisible="{Binding IsMembersLoading}" IsIndeterminate="True" Height="3" />
-            <TextBlock Grid.Row="1" Text="Пользователей нет" IsVisible="{Binding !HasMembers}" Classes="muted" />
+            <TextBlock Grid.Row="1" Text="{loc:LocalizedText Key=native.roles.polzovateley.net}" IsVisible="{Binding !HasMembers}" Classes="muted" />
             <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
               <ItemsControl ItemsSource="{Binding FilteredMembers}">
                 <ItemsControl.ItemTemplate>
@@ -117,7 +118,7 @@
                           <TextBlock Text="{Binding DisplayName}" Classes="caption" />
                           <TextBlock Text="{Binding Phone}" Classes="caption" />
                         </StackPanel>
-                        <Button Grid.Column="1" Content="Снять роль" Classes="danger" Command="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).RequestRemoveMemberCommand}"
+                        <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.roles.snyat.rol}" Classes="danger" Command="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).RequestRemoveMemberCommand}"
                                 CommandParameter="{Binding}" IsEnabled="{Binding $parent[views:RolesView].((vm:RolesViewModel)DataContext).CanManageMembers}" />
                       </Grid>
                     </Border>
@@ -129,16 +130,16 @@
         </Grid>
       </Border>
     </Grid>
-    <TextBlock Grid.Row="2" Text="Роли не найдены" IsVisible="{Binding IsEmpty}" Classes="muted" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <TextBlock Grid.Row="2" Text="{loc:LocalizedText Key=native.roles.roli.ne.naydeny}" IsVisible="{Binding IsEmpty}" Classes="muted" HorizontalAlignment="Center" VerticalAlignment="Center" />
     <Border Grid.RowSpan="3" Background="#AA000000" IsVisible="{Binding IsRemovalConfirmationOpen}">
       <Border Classes="card" Padding="18" Width="420" HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel Spacing="12">
-          <TextBlock Text="Снять роль" FontSize="20" FontWeight="SemiBold" />
-          <TextBlock Text="Подтвердите снятие роли с выбранного пользователя." TextWrapping="Wrap" />
+          <TextBlock Text="{loc:LocalizedText Key=native.roles.snyat.rol}" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:LocalizedText Key=native.roles.podtverdite.snyatie.roli.s.vybrannogo.polzovatelya}" TextWrapping="Wrap" />
           <TextBlock Text="{Binding MemberToRemove.DisplayName}" Classes="caption" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Отмена" Command="{Binding CancelRemoveMemberCommand}" />
-            <Button Content="Снять роль" Classes="danger" Command="{Binding ConfirmRemoveMemberCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelRemoveMemberCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.roles.snyat.rol}" Classes="danger" Command="{Binding ConfirmRemoveMemberCommand}" />
           </StackPanel>
         </StackPanel>
       </Border>

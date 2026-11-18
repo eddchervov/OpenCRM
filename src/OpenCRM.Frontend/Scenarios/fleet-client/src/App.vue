@@ -1,4 +1,5 @@
 ﻿<script setup lang="ts">
+import '@opencrm/workspace/scenarioAppMessages'
 // HIDDEN_FLEET: сохранено для прежних организаций и согласованного возврата. См. docs/hidden-fleet-scenario.md.
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import { UiLoader, type ProfileLink } from '@opencrm/ui'
@@ -9,6 +10,8 @@ import {
   pushHashState,
   type WorkspaceBreadcrumbItem
 } from '@opencrm/workspace'
+import { useLocalization } from '@opencrm/ui'
+import { workspaceLabelKey } from '@opencrm/workspace'
 import { loadFleetContext, resolveHostConfig, type FleetWorkspaceContext } from '@/api/fleetBff'
 import MaterialsSection from '@/components/MaterialsSection.vue'
 import { buildFleetSections, isFleetSectionCode, type FleetSectionCode } from '@/sections'
@@ -41,27 +44,28 @@ const activeAction = ref(initialRoute.action)
 const activeChildId = ref(initialRoute.childId)
 const activeQuery = ref(initialRoute.query)
 
-const organizationName = computed(() => context.value?.organization.name ?? 'Автопарк')
-const displayName = computed(() => context.value?.user.displayName || context.value?.user.email || 'Профиль')
+const organizationName = computed(() => context.value?.organization.name ?? t('scenarioApp.fleet'))
+const displayName = computed(() => context.value?.user.displayName || context.value?.user.email || t('scenarioApp.profile'))
 const canOpenAdminPanel = computed(() => context.value?.user.canOpenAdminPanel === true)
 const profileLinks = computed<ProfileLink[]>(() => {
   const links: ProfileLink[] = []
 
   if (context.value && canOpenAdminPanel.value) {
-    links.push({ label: 'Админ-панель', href: context.value.links.adminUrl ?? '/admin-panel/index.html' })
+    links.push({ label: t('scenarioApp.admin'), href: context.value.links.adminUrl ?? '/admin-panel/index.html' })
   }
 
   links.push(
-    { label: 'Организации', href: '/organizations' },
-    { label: 'Профиль', href: '/personal' },
-    { label: 'Личная техника', href: '/vehicles' },
+    { label: t('scenarioApp.organizations'), href: '/organizations' },
+    { label: t('scenarioApp.profile'), href: '/personal' },
+    { label: t('scenarioApp.personalVehicles'), href: '/vehicles' },
     { label: '', href: '#', kind: 'divider' },
-    { label: 'Выйти', href: '/auth/logout?returnUrl=/', kind: 'logout' }
+    { label: t('scenarioApp.logout'), href: '/auth/logout?returnUrl=/', kind: 'logout' }
   )
 
   return links
 })
 const sections = computed(() => buildFleetSections(context.value?.shell.menu))
+const { t, te } = useLocalization()
 const currentSection = computed(() =>
   sections.value.find(section => section.code === resolveBreadcrumbSectionCode(activeSection.value)) ?? sections.value[0]
 )
@@ -69,23 +73,25 @@ const breadcrumbs = computed<WorkspaceBreadcrumbItem[]>(() => {
   const items: WorkspaceBreadcrumbItem[] = [
     { title: organizationName.value, href: `#${sections.value[0]?.code ?? 'workspace'}` }
   ]
-  const sectionTitle = currentSection.value?.title ?? 'Раздел'
+  const sectionCode = currentSection.value?.code
+  const sectionKey = sectionCode ? workspaceLabelKey(sectionCode) : ''
+  const sectionTitle = sectionKey && te(sectionKey) ? t(sectionKey) : currentSection.value?.title ?? t('scenarioApp.section')
   if (activeSection.value === 'members' && sections.value.some(section => section.code === 'employees')) {
-    items.push({ title: 'Команда', href: '#employees' })
+    items.push({ title: t('workspaceChrome.labels.members'), code: 'members', href: '#employees' })
   }
 
   if (activeSection.value === 'workspace') {
-    items.push({ title: sectionTitle })
+    items.push({ title: sectionTitle, code: sectionCode })
     return items
   }
 
   if (activeEntityId.value) {
-    items.push({ title: sectionTitle, href: resolveBreadcrumbSectionHref(activeSection.value) })
+    items.push({ title: sectionTitle, code: sectionCode, href: resolveBreadcrumbSectionHref(activeSection.value) })
     items.push({ title: resolveEntityBreadcrumbTitle() })
     return items
   }
 
-  items.push({ title: sectionTitle })
+  items.push({ title: sectionTitle, code: sectionCode })
   return items
 })
 
@@ -157,28 +163,28 @@ async function refreshWorkspaceContext() {
 
 function resolveEntityBreadcrumbTitle() {
   if (activeSection.value === 'finance' && activeEntityId.value === 'export') {
-    return 'Выгрузка для бухгалтерии'
+    return t('scenarioApp.accountingExport')
   }
 
   if (activeEntityId.value === 'new') {
     return activeSection.value === 'maintenance'
-      ? 'Новая запись'
-      : 'Создание'
+      ? t('scenarioApp.newBooking')
+      : t('scenarioApp.create')
   }
 
   if (activeAction.value === 'edit') {
-    return 'Редактирование'
+    return t('scenarioApp.edit')
   }
 
   if (activeAction.value === 'photos') {
-    return 'Фото'
+    return t('scenarioApp.photos')
   }
 
   if (activeAction.value === 'albums') {
-    return activeChildId.value ? 'Альбом' : 'Альбомы'
+    return activeChildId.value ? t('scenarioApp.album') : t('scenarioApp.albums')
   }
 
-  return 'Карточка'
+  return t('scenarioApp.profileCard')
 }
 
 onMounted(async () => {
@@ -188,7 +194,7 @@ onMounted(async () => {
     context.value = await loadFleetContext(host.contextUrl)
     ensureVisibleSection()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть клиент автопарка.'
+    errorMessage.value = error instanceof Error ? error.message : t('scenarioApp.fleetError')
   } finally {
     isLoading.value = false
   }
@@ -214,7 +220,7 @@ onUnmounted(() => {
     <section v-if="isLoading" class="fleet-layout--loading" aria-busy="true">
       <div class="fleet-main">
         <section class="fleet-loading-card">
-          <UiLoader text="Открываем рабочий стол..." />
+          <UiLoader :text="t('scenarioApp.opening')" />
           <div class="fleet-loading-grid">
             <span></span>
             <span></span>
@@ -327,6 +333,6 @@ onUnmounted(() => {
         <OverviewSection v-else :context="context" />
       </div>
     </section>
-    <section v-else class="crm-page">Нет доступных разделов организации.</section>
+    <section v-else class="crm-page">{{ t('scenarioApp.noSections') }}</section>
   </WorkspaceCrmShell>
 </template>

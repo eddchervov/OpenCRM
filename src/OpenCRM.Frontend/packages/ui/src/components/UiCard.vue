@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { translate as t } from '../i18n'
 import { computed, inject } from 'vue'
 import { pageBreadcrumbsKey, type PageBreadcrumb } from '../pageBreadcrumbs'
 
@@ -26,7 +27,7 @@ function followBreadcrumb(event: MouseEvent, item: PageBreadcrumb) {
     <header v-if="title || subtitle || $slots.header || $slots.actions" class="ui-card__header card-header" :class="page ? 'ui-form-header' : 'ui-section-header'">
       <slot name="header">
         <div class="ui-card__title">
-          <nav v-if="page && breadcrumbs && title" class="ui-card__breadcrumbs" aria-label="Хлебные крошки">
+          <nav v-if="page && breadcrumbs && title" class="ui-card__breadcrumbs" :aria-label="t('common.breadcrumbs')">
             <ol>
               <li v-for="(item, index) in breadcrumbs" :key="index"><a v-if="item.href" :href="item.href" @click="followBreadcrumb($event, item)">{{ item.title }}</a><span v-else>{{ item.title }}</span></li>
               <li><h2 aria-current="page">{{ title }}</h2></li>

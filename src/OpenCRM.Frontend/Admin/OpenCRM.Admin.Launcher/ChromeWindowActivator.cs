@@ -66,7 +66,9 @@ internal static class ChromeWindowActivator
     private static bool IsProjectWindow(string title, string displayName)
     {
         return title.Contains(displayName, StringComparison.OrdinalIgnoreCase)
-            || title.Contains("Администрирование", StringComparison.OrdinalIgnoreCase);
+            || title.Contains("Администрирование", StringComparison.OrdinalIgnoreCase)
+            || title.Contains("Administration", StringComparison.OrdinalIgnoreCase)
+            || title.Contains("管理", StringComparison.Ordinal);
     }
 
     /// <summary> WinAPI-функция асинхронного показа окна с командой. </summary>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
-import { UiButton, UiPagination, UiSearchInput } from '@opencrm/ui'
+import { UiButton, UiPagination, UiSearchInput, useLocalization } from '@opencrm/ui'
+import '../clientMessages'
 import { loadClientLookup, type WorkspaceClientLookupItem } from '../api/clientLookup'
 import { linkConversationClient } from '../api/conversations'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
@@ -12,6 +13,7 @@ const props = defineProps<{
   currentClientName?: string | null
 }>()
 const emit = defineEmits<{ changed: []; close: [] }>()
+const { t, locale } = useLocalization()
 const search = ref('')
 const items = ref<WorkspaceClientLookupItem[]>([])
 const loading = ref(false)
@@ -66,7 +68,7 @@ async function find(current: number, query: string, pageNumber: number) {
     items.value = result.items
   } catch (caught) {
     if (current === generation && !active.signal.aborted) {
-      error.value = caught instanceof Error ? caught.message : 'Не удалось найти клиентов.'
+      error.value = caught instanceof Error ? caught.message : t('clients.lookupError')
     }
   } finally {
     if (current === generation) {
@@ -106,7 +108,7 @@ async function saveLink(clientId: string | null) {
     emit('changed')
     emit('close')
   } catch (caught) {
-    if (current === generation) saveError.value = caught instanceof Error ? caught.message : 'Не удалось изменить связь с клиентом.'
+    if (current === generation) saveError.value = caught instanceof Error ? caught.message : t('clients.linkError')
   } finally {
     if (current === generation) saving.value = false
   }
@@ -138,12 +140,12 @@ function close() {
 }
 
 function initials(client: WorkspaceClientLookupItem) {
-  return client.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toLocaleUpperCase('ru-RU') ?? '').join('') || 'К'
+  return client.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toLocaleUpperCase(locale.value) ?? '').join('') || t('clients.initial')
 }
 
 function clientType(client: WorkspaceClientLookupItem) {
-  if (client.partyTypeCode === 'company') return 'Организация'
-  if (client.partyTypeCode === 'person') return 'Физлицо'
+  if (client.partyTypeCode === 'company') return t('clients.company')
+  if (client.partyTypeCode === 'person') return t('clients.person')
   return ''
 }
 
@@ -164,40 +166,40 @@ onBeforeUnmount(invalidateSearch)
 </script>
 
 <template>
-  <SchedulerBookingDialog :open="true" :busy="saving" :dismiss-on-backdrop="false" title="Связь с клиентом" @close="close">
-    <section class="conversation-link" aria-label="Связь переписки с клиентом">
+  <SchedulerBookingDialog :open="true" :busy="saving" :dismiss-on-backdrop="false" :title="t('clients.linkTitle')" @close="close">
+    <section class="conversation-link" :aria-label="t('clients.linkTitle')">
       <div v-if="currentClientId" class="conversation-link__current">
-        <span class="conversation-link__current-label">Сейчас связан</span>
-        <strong>{{ currentClientName || 'Клиент' }}</strong>
-        <span v-if="confirmUnlink" class="conversation-link__unlink-confirm">Связь будет удалена, а ожидающие сообщения отменены. Продолжить?</span>
-        <UiButton v-if="!confirmUnlink" variant="secondary" :disabled="saving" @click="confirmRemoval">Отвязать</UiButton>
+        <span class="conversation-link__current-label">{{ t('clients.currentlyLinked') }}</span>
+        <strong>{{ currentClientName || t('clients.client') }}</strong>
+        <span v-if="confirmUnlink" class="conversation-link__unlink-confirm">{{ t('clients.unlinkConfirm') }}</span>
+        <UiButton v-if="!confirmUnlink" variant="secondary" :disabled="saving" @click="confirmRemoval">{{ t('clients.unlink') }}</UiButton>
         <template v-else>
-          <UiButton variant="secondary" :disabled="saving" @click="confirmUnlink = false">Оставить связь</UiButton>
-          <UiButton variant="secondary" :disabled="saving" @click="confirmRemoval">Подтвердить отвязку</UiButton>
+          <UiButton variant="secondary" :disabled="saving" @click="confirmUnlink = false">{{ t('clients.keepLink') }}</UiButton>
+          <UiButton variant="secondary" :disabled="saving" @click="confirmRemoval">{{ t('clients.confirmUnlink') }}</UiButton>
         </template>
       </div>
 
-      <p class="conversation-link__hint">При сохранении связи неотправленные сообщения этого диалога будут отменены.</p>
-      <UiSearchInput v-model="search" label="Найти клиента" placeholder="Имя или телефон клиента" :disabled="saving" />
-      <p v-if="search.trim().length < 2" class="conversation-link__state">Введите не менее двух символов, чтобы найти клиента.</p>
-      <p v-else-if="loading" class="conversation-link__state" role="status">Ищем клиентов…</p>
+      <p class="conversation-link__hint">{{ t('clients.linkWarning') }}</p>
+      <UiSearchInput v-model="search" :label="t('clients.findClient')" :placeholder="t('clients.findClientPlaceholder')" :disabled="saving" />
+      <p v-if="search.trim().length < 2" class="conversation-link__state">{{ t('clients.minimumSearch') }}</p>
+      <p v-else-if="loading" class="conversation-link__state" role="status">{{ t('clients.searchingClients') }}</p>
       <div v-else-if="error" class="conversation-link__state conversation-link__error" role="alert">
         <span>{{ error }}</span>
-        <UiButton variant="secondary" :disabled="saving" @click="searchClients">Повторить</UiButton>
+        <UiButton variant="secondary" :disabled="saving" @click="searchClients">{{ t('clients.retry') }}</UiButton>
       </div>
-      <p v-else-if="!items.length" class="conversation-link__state">Клиенты по этому запросу не найдены.</p>
+      <p v-else-if="!items.length" class="conversation-link__state">{{ t('clients.lookupEmpty') }}</p>
       <template v-else>
-        <ul class="conversation-link__results" aria-label="Результаты поиска клиентов">
+        <ul class="conversation-link__results" :aria-label="t('clients.searchResults')">
           <li v-for="client in items" :key="client.id">
             <article class="conversation-link__client" :class="{ 'conversation-link__client--selected': selectedClientId === client.id, 'conversation-link__client--current': currentClientId === client.id }">
               <span class="conversation-link__avatar" aria-hidden="true">{{ initials(client) }}</span>
               <span class="conversation-link__identity">
                 <strong>{{ client.name }}</strong>
-                <span>{{ client.phone || 'Телефон не указан' }}<template v-if="clientType(client)"> · {{ clientType(client) }}</template></span>
-                <small v-if="currentClientId === client.id">Текущая связь</small>
+                <span>{{ client.phone || t('clients.phoneMissing') }}<template v-if="clientType(client)"> · {{ clientType(client) }}</template></span>
+                <small v-if="currentClientId === client.id">{{ t('clients.currentLink') }}</small>
               </span>
               <UiButton variant="secondary" :disabled="saving || currentClientId === client.id" :aria-pressed="selectedClientId === client.id" @click="chooseClient(client.id)">
-                {{ currentClientId === client.id ? 'Связан' : selectedClientId === client.id ? 'Выбран' : 'Выбрать' }}
+                {{ currentClientId === client.id ? t('clients.linked') : selectedClientId === client.id ? t('clients.selected') : t('clients.select') }}
               </UiButton>
             </article>
           </li>
@@ -205,15 +207,15 @@ onBeforeUnmount(invalidateSearch)
       </template>
 
       <div v-if="totalCount" class="conversation-link__pagination">
-        <span>Найдено: {{ totalCount }}</span>
-        <UiPagination :model-value="page" :total-items="totalCount" :items-per-page="8" :disabled="saving || loading" label="Страницы результатов поиска" @update:model-value="changePage" />
+        <span>{{ t('clients.foundTotal', { total: totalCount }) }}</span>
+        <UiPagination :model-value="page" :total-items="totalCount" :items-per-page="8" :disabled="saving || loading" :label="t('clients.searchResultPages')" @update:model-value="changePage" />
       </div>
 
       <p v-if="saveError" class="conversation-link__error" role="alert">{{ saveError }}</p>
       <footer class="conversation-link__footer">
-        <UiButton variant="secondary" :disabled="saving" @click="close">Отмена</UiButton>
+        <UiButton variant="secondary" :disabled="saving" @click="close">{{ t('clients.cancel') }}</UiButton>
         <UiButton :disabled="saving || !selectedClientId || selectedClientId === currentClientId" @click="confirmSelection">
-          {{ saving ? 'Сохраняем…' : currentClientId ? 'Сохранить связь' : 'Связать с клиентом' }}
+          {{ saving ? t('clients.saving') : currentClientId ? t('clients.saveLink') : t('clients.linkClient') }}
         </UiButton>
       </footer>
     </section>

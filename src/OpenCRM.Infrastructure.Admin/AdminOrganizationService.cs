@@ -90,6 +90,7 @@ public sealed class AdminOrganizationService(OpenCRMContext opencrmContext, ICon
             {
                 organization.Id,
                 organization.Name,
+                organization.CurrencyCode,
                 organization.Description,
                 organization.LegalName,
                 organization.Inn,
@@ -125,11 +126,15 @@ public sealed class AdminOrganizationService(OpenCRMContext opencrmContext, ICon
                     maintenance.Vehicle.OrganizationId == organization.Id && !maintenance.IsDeleted
                     && maintenance.Status == MaintenanceStatus.Completed),
                 WorkOrdersTotal = this._opencrmContext.Maintenance
-                    .Where(maintenance => maintenance.Vehicle.OrganizationId == organization.Id && !maintenance.IsDeleted)
+                    .Where(maintenance => maintenance.Vehicle.OrganizationId == organization.Id
+                        && !maintenance.IsDeleted
+                        && maintenance.CurrencyCode == organization.CurrencyCode)
                     .Sum(maintenance => (decimal?)Math.Max(0m,
                         maintenance.Details.Sum(detail => (decimal)(detail.Price ?? 0)) - maintenance.DiscountAmount)) ?? 0m,
                 PaymentsTotal = this._opencrmContext.Maintenance
-                    .Where(maintenance => maintenance.Vehicle.OrganizationId == organization.Id && !maintenance.IsDeleted)
+                    .Where(maintenance => maintenance.Vehicle.OrganizationId == organization.Id
+                        && !maintenance.IsDeleted
+                        && maintenance.CurrencyCode == organization.CurrencyCode)
                     .Sum(maintenance => (decimal?)maintenance.PaidAmount) ?? 0m,
                 OpenDefectsCount = organization.Defects.Count(defect =>
                     !defect.IsDeleted &&
@@ -149,7 +154,8 @@ public sealed class AdminOrganizationService(OpenCRMContext opencrmContext, ICon
                     stock.OrganizationId == organization.Id &&
                     stock.QuantityOnHand <= stock.MinQuantity),
                 InventoryValue = this._opencrmContext.OrganizationMaterialStocks
-                    .Where(stock => stock.OrganizationId == organization.Id)
+                    .Where(stock => stock.OrganizationId == organization.Id
+                        && stock.CurrencyCode == organization.CurrencyCode)
                     .Sum(stock => (decimal?)stock.InventoryValue) ?? 0m,
                 ActiveSubscriptionName = commercialEnabled ? this._opencrmContext.OrganizationSubscriptions
                     .Where(subscription => subscription.OrganizationId == organization.Id
@@ -254,6 +260,58 @@ public sealed class AdminOrganizationService(OpenCRMContext opencrmContext, ICon
 
         var organizations = await pageQuery.ToListAsync(cancellationToken);
 
+        var organizationCurrencies = organizations.ToDictionary(organization => organization.Id, organization => organization.CurrencyCode);
+        var organizationIds = organizationCurrencies.Keys.ToArray();
+        var otherMaintenanceTotals = await this._opencrmContext.Maintenance
+            .AsNoTracking()
+            .Where(maintenance => maintenance.Vehicle.OrganizationId.HasValue
+                && organizationIds.Contains(maintenance.Vehicle.OrganizationId.Value)
+                && !maintenance.IsDeleted)
+            .GroupBy(maintenance => new { OrganizationId = maintenance.Vehicle.OrganizationId!.Value, maintenance.CurrencyCode })
+            .Select(group => new
+            {
+                OrganizationId = group.Key.OrganizationId,
+                group.Key.CurrencyCode,
+                WorkOrdersTotal = group.Sum(maintenance => Math.Max(0m,
+                    maintenance.Details.Sum(detail => (decimal)(detail.Price ?? 0)) - maintenance.DiscountAmount)),
+                PaymentsTotal = group.Sum(maintenance => maintenance.PaidAmount)
+            })
+            .ToListAsync(cancellationToken);
+        var otherInventoryTotals = await this._opencrmContext.OrganizationMaterialStocks
+            .AsNoTracking()
+            .Where(stock => organizationIds.Contains(stock.OrganizationId))
+            .GroupBy(stock => new { stock.OrganizationId, stock.CurrencyCode })
+            .Select(group => new
+            {
+                OrganizationId = group.Key.OrganizationId,
+                group.Key.CurrencyCode,
+                InventoryValue = group.Sum(stock => stock.InventoryValue)
+            })
+            .ToListAsync(cancellationToken);
+        var maintenanceTotalsByCurrency = otherMaintenanceTotals
+            .Where(total => total.CurrencyCode != organizationCurrencies[total.OrganizationId])
+            .ToDictionary(total => (total.OrganizationId, total.CurrencyCode));
+        var inventoryTotalsByCurrency = otherInventoryTotals
+            .Where(total => total.CurrencyCode != organizationCurrencies[total.OrganizationId])
+            .ToDictionary(total => (total.OrganizationId, total.CurrencyCode));
+        var otherCurrencyKeys = maintenanceTotalsByCurrency.Keys
+            .Concat(inventoryTotalsByCurrency.Keys)
+            .Distinct()
+            .ToArray();
+        var otherCurrencyTotals = new Dictionary<(Guid OrganizationId, string CurrencyCode), AdminOrganizationCurrencyTotalDto>();
+        foreach (var key in otherCurrencyKeys)
+        {
+            maintenanceTotalsByCurrency.TryGetValue(key, out var maintenanceTotal);
+            inventoryTotalsByCurrency.TryGetValue(key, out var inventoryTotal);
+            otherCurrencyTotals.Add(key, new AdminOrganizationCurrencyTotalDto
+            {
+                CurrencyCode = key.CurrencyCode,
+                WorkOrdersTotal = maintenanceTotal?.WorkOrdersTotal ?? 0m,
+                PaymentsTotal = maintenanceTotal?.PaymentsTotal ?? 0m,
+                InventoryValue = inventoryTotal?.InventoryValue ?? 0m
+            });
+        }
+
         var items = organizations
             .Select(organization => new AdminOrganizationDto
             {
@@ -265,6 +323,7 @@ public sealed class AdminOrganizationService(OpenCRMContext opencrmContext, ICon
                 Phone = organization.Phone,
                 Email = organization.Email,
                 PrimaryScenarioCode = organization.PrimaryScenarioCode,
+                CurrencyCode = organization.CurrencyCode,
                 ScenarioName = scenarioNames.TryGetValue(organization.PrimaryScenarioCode, out var scenarioName)
                     ? scenarioName
                     : organization.PrimaryScenarioCode,
@@ -298,6 +357,10 @@ public sealed class AdminOrganizationService(OpenCRMContext opencrmContext, ICon
                 StockItemsCount = organization.StockItemsCount,
                 LowStockItemsCount = organization.LowStockItemsCount,
                 InventoryValue = organization.InventoryValue,
+                OtherCurrencyTotals = otherCurrencyTotals
+                    .Where(total => total.Key.OrganizationId == organization.Id)
+                    .Select(total => total.Value)
+                    .ToArray(),
                 ActiveSubscriptionName = organization.ActiveSubscriptionName,
                 ActiveSubscriptionEndDate = organization.ActiveSubscriptionEndDate,
                 LastAuditAt = organization.LastAuditAt,

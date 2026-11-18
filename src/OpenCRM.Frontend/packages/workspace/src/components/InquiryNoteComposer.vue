@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiTextarea } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
 import { addInquiryNote, InquiryRequestError, loadInquiry, type Inquiry } from '../api/inquiries'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext; inquiry: Inquiry; disabled?: boolean }>()
 const emit = defineEmits<{ updated: [inquiry: Inquiry]; busy: [value: boolean] }>()
@@ -30,7 +35,7 @@ async function saveNote() {
     composing.value = false
     conflict.value = false
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить заметку.'
+    error.value = caught instanceof Error ? caught.message : t('inquiries.noteError')
     conflict.value = caught instanceof InquiryRequestError && caught.status === 409
   } finally { saving.value = false }
 }
@@ -42,7 +47,7 @@ async function refreshInquiry() {
   try {
     emit('updated', await loadInquiry(props.context.organization.id, props.inquiry.id))
     conflict.value = false
-  } catch (caught) { error.value = caught instanceof Error ? caught.message : 'Не удалось обновить обращение.' }
+  } catch (caught) { error.value = caught instanceof Error ? caught.message : t('inquiries.updateError') }
   finally { saving.value = false }
 }
 
@@ -52,12 +57,12 @@ onBeforeUnmount(() => emit('busy', false))
 
 <template>
   <div v-if="canManage" class="inquiry-note">
-    <UiButton v-if="!composing" variant="secondary" :disabled="disabled" @click="startNote">Добавить заметку</UiButton>
+    <UiButton v-if="!composing" variant="secondary" :disabled="disabled" @click="startNote">{{ t('inquiries.addNote') }}</UiButton>
     <form v-else ref="composer" class="inquiry-note__form" @submit.prevent="saveNote">
-      <UiTextarea v-model="note" label="Новая заметка" placeholder="Договорённости, результат звонка или важные детали" required :maxlength="1000" :disabled="saving || disabled" />
-      <div><UiButton type="submit" :disabled="saving || disabled || conflict || !note.trim()">{{ saving ? 'Сохраняем…' : 'Сохранить заметку' }}</UiButton><UiButton variant="ghost" :disabled="saving || disabled" @click="composing = false">Отмена</UiButton></div>
+      <UiTextarea v-model="note" :label="t('inquiries.newNote')" :placeholder="t('inquiries.notePlaceholder')" required :maxlength="1000" :disabled="saving || disabled" />
+      <div><UiButton type="submit" :disabled="saving || disabled || conflict || !note.trim()">{{ saving ? t('inquiries.saving') : t('inquiries.saveNote') }}</UiButton><UiButton variant="ghost" :disabled="saving || disabled" @click="composing = false">{{ t('inquiries.cancel') }}</UiButton></div>
     </form>
-    <div v-if="error" class="inquiry-note__error" role="alert"><p>{{ error }}</p><UiButton v-if="conflict" variant="secondary" :disabled="saving || disabled" @click="refreshInquiry">Обновить обращение</UiButton></div>
+    <div v-if="error" class="inquiry-note__error" role="alert"><p>{{ error }}</p><UiButton v-if="conflict" variant="secondary" :disabled="saving || disabled" @click="refreshInquiry">{{ t('inquiries.updateInquiry') }}</UiButton></div>
   </div>
 </template>
 

@@ -9,7 +9,7 @@ namespace OpenCRM.Modules.Documents.Pdf.Rendering;
 internal sealed class PdfTableComponents
 {
     /// <summary> Отрисовывает таблицу работ или услуг обслуживания. </summary>
-    internal static void RenderServices(IContainer container, List<MaintenanceDetail> services, bool showTotal = true)
+    internal static void RenderServices(IContainer container, List<MaintenanceDetail> services, bool showTotal = true, string currencyCode = "RUB")
     {
         container.Border(1).BorderColor(PdfDocumentComponents.BorderColor).Table(table =>
         {
@@ -37,7 +37,7 @@ internal sealed class PdfTableComponents
                 RenderBodyCell(table.Cell(), (rowIndex + 1).ToString(), fill, alignCenter: true);
                 RenderBodyCell(table.Cell(), service.Quantity > 1 ? $"{service.Name} × {service.Quantity}" : service.Name, fill, bold: true);
                 RenderBodyCell(table.Cell(), string.IsNullOrWhiteSpace(service.Description) ? "-" : service.Description, fill, color: string.IsNullOrWhiteSpace(service.Description) ? PdfDocumentComponents.MutedColor : PdfDocumentComponents.TextColor);
-                RenderBodyCell(table.Cell(), service.Price.HasValue && service.Price > 0 ? PdfDocumentComponents.FormatMoney(service.Price.Value) : "-", fill, alignRight: true, color: service.Price > 0 ? PdfDocumentComponents.AccentColor : PdfDocumentComponents.MutedColor);
+                RenderBodyCell(table.Cell(), service.Price.HasValue && service.Price > 0 ? PdfDocumentComponents.FormatMoney(service.Price.Value, currencyCode) : "-", fill, alignRight: true, color: service.Price > 0 ? PdfDocumentComponents.AccentColor : PdfDocumentComponents.MutedColor);
 
                 rowIndex++;
             }
@@ -60,7 +60,7 @@ internal sealed class PdfTableComponents
                         .Background(PdfDocumentComponents.PrimaryLightColor)
                         .Padding(8)
                         .AlignRight()
-                        .Text(PdfDocumentComponents.FormatMoney(total))
+                        .Text(PdfDocumentComponents.FormatMoney(total, currencyCode))
                         .FontSize(10)
                         .Bold()
                         .FontColor(PdfDocumentComponents.AccentColor);

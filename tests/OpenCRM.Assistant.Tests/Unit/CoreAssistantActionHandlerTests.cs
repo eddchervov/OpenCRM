@@ -1,3 +1,4 @@
+using OpenCRM.Domain;
 using OpenCRM.Modules.Catalog.Contracts;
 using OpenCRM.Modules.Catalog.Contracts.Dtos;
 using OpenCRM.Modules.Maintenance.Contracts;
@@ -317,9 +318,9 @@ public sealed class CoreAssistantActionHandlerTests
         var vehicles = new Mock<IVehicleQueryService>();
         vehicles.Setup(service => service.Get("user-1", organizationId, 1, 100, false, null, null, "A123AA", null, true))
             .ReturnsAsync(Vehicles([vehicle]));
-        var first = new OrganizationScenarioCatalogItemDto { Id = Guid.NewGuid(), Name = "Мойка", IsActive = true, UnitPrice = 500 };
-        var second = new OrganizationScenarioCatalogItemDto { Id = Guid.NewGuid(), Name = "Мойка", IsActive = true, UnitPrice = 700 };
-        var items = new OrganizationScenarioCatalogDto { Services = [first, second] };
+        var first = new OrganizationScenarioCatalogItemDto { Id = Guid.NewGuid(), Name = "Мойка", IsActive = true, UnitPrice = 500, CurrencyCode = CurrencyCodes.Cny };
+        var second = new OrganizationScenarioCatalogItemDto { Id = Guid.NewGuid(), Name = "Мойка", IsActive = true, UnitPrice = 700, CurrencyCode = CurrencyCodes.Cny };
+        var items = new OrganizationScenarioCatalogDto { CurrencyCode = CurrencyCodes.Cny, Services = [first, second] };
         var catalog = new Mock<ICatalogQueryService>();
         catalog.Setup(service => service.GetAsync("user-1", organizationId)).ReturnsAsync(() => items);
         var create = new Mock<IMaintenanceCreateService>();
@@ -337,11 +338,12 @@ public sealed class CoreAssistantActionHandlerTests
         var selection = new AssistantActionSelection(CatalogChoices: new Dictionary<string, string> { [question.Field] = second.Id.ToString() });
         var plan = await handler.PrepareAsync(command, actor, selection, CancellationToken.None);
 
-        Assert.Contains("Мойка: 700 ₽", plan.Changes);
-        Assert.Contains("Проверьте сумму: названо 1000 ₽, сумма работ 1200 ₽.", plan.Changes);
+        Assert.Contains("Мойка: 700 CNY", plan.Changes);
+        Assert.Contains("Проверьте сумму: названо 1000 CNY, сумма работ 1200 CNY.", plan.Changes);
         items = new OrganizationScenarioCatalogDto
         {
-            Services = [first, new OrganizationScenarioCatalogItemDto { Id = second.Id, Name = second.Name, IsActive = true, UnitPrice = 900 }]
+            CurrencyCode = CurrencyCodes.Cny,
+            Services = [first, new OrganizationScenarioCatalogItemDto { Id = second.Id, Name = second.Name, IsActive = true, UnitPrice = 900, CurrencyCode = CurrencyCodes.Cny }]
         };
 
         await Assert.ThrowsAsync<AssistantClarificationException>(() => plan.ExecuteAsync(CancellationToken.None));

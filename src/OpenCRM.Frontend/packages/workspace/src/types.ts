@@ -88,6 +88,7 @@ export type WorkspaceContext = {
   organization: {
     id: string
     name: string
+    currencyCode?: string
     timeZoneId?: string | null
     description?: string | null
     primaryScenarioCode?: string | null

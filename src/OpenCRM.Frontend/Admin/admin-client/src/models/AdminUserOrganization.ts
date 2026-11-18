@@ -4,6 +4,7 @@ export interface AdminUserOrganization {
   primaryScenarioCode: string
   scenarioName: string | null
   roleName: string
+  roleCode?: string
   joinedAt: string
   isOwner: boolean
   isActive: boolean

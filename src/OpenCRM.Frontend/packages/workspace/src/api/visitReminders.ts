@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/notificationMessages'
+
 import { getMutationHeaders } from './maintenance'
 
 export type VisitReminderChannelCode = 'auto' | 'telegram' | 'max' | 'both'
@@ -16,6 +19,8 @@ export type MaintenanceVisitReminder = {
   scheduledAtUtc: string | null
   statusCode: string
   statusText: string
+  statusDetailCode?: string | null
+  timeZoneId?: string | null
   channelCode: string
   preview: string
   canEdit: boolean
@@ -35,18 +40,18 @@ async function request<T>(url: string, method = 'GET', body?: unknown, signal?: 
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error
     }
-    throw new Error('Не удалось связаться с CRM. Проверьте соединение и повторите попытку.')
+    throw new Error(translate('notifications.networkError'))
   }
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
     if (response.status === 401) {
-      throw new Error('Сайт отклонил запрос к напоминаниям (HTTP 401). Обновите страницу и войдите снова.')
+      throw new Error(translate('notifications.reminderSessionExpired'))
     }
     if (response.status === 409) {
-      throw new Error(error?.message ?? 'Запись уже изменили. Обновите напоминание и повторите попытку.')
+      throw new Error(error?.message ?? translate('notifications.reminderConflict'))
     }
-    throw new Error(error?.message ?? 'Не удалось выполнить действие с напоминанием.')
+    throw new Error(error?.message ?? translate('notifications.reminderRequestError'))
   }
 
   if (response.status === 204) {

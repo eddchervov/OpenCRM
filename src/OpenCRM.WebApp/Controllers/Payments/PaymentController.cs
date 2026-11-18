@@ -1,4 +1,7 @@
-﻿using OpenCRM.WebApp.Infrastructure.Security;
+﻿using System.Globalization;
+using System.Resources;
+using OpenCRM.WebApp.Infrastructure.Localization;
+using OpenCRM.WebApp.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OpenCRM.Domain.Identity;
@@ -17,6 +20,14 @@ public class PaymentController(
     IPaymentPurchaseQueryService paymentPurchaseQueryService,
     Helpers.ProjectBrand? brand = null) : Controller
 {
+    private static readonly ResourceManager s_resources = new(
+        "OpenCRM.WebApp.Resources.Infrastructure.Localization.LocalizationStrings",
+        typeof(LocalizationStrings).Assembly);
+
+    private static string Localize(string key) =>
+        PaymentController.s_resources.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
+
     /// <summary> Отображает страницу завершения оплаты. </summary>
     [HttpGet("complete")]
     public async Task<IActionResult> Complete([FromQuery] Guid? purchaseId)
@@ -72,14 +83,20 @@ public class PaymentController(
             ? $"opencrm://payment/complete?purchaseId={purchaseId.Value:D}"
             : "opencrm://payment/complete";
         var fallbackUrl = Url.Content("~/");
+        var brandName = brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName;
+        var returningTitle = System.Text.Encodings.Web.HtmlEncoder.Default.Encode(PaymentController.Localize("payment.mobile.returning"));
+        var homeLabel = System.Text.Encodings.Web.HtmlEncoder.Default.Encode(string.Format(
+            CultureInfo.CurrentCulture, PaymentController.Localize("payment.mobile.home"), brandName));
+        var openAppLabel = System.Text.Encodings.Web.HtmlEncoder.Default.Encode(string.Format(
+            CultureInfo.CurrentCulture, PaymentController.Localize("payment.mobile.openApp"), brandName));
 
         return Content($$"""
             <!doctype html>
-            <html lang="ru">
+            <html lang="{{CultureInfo.CurrentUICulture.Name}}">
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>Возвращаемся в приложение — {{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName)}}</title>
+              <title>{{returningTitle}} — {{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName)}}</title>
               <meta name="robots" content="noindex,nofollow">
               <meta http-equiv="refresh" content="1; url={{appUrl}}">
               <style>
@@ -94,11 +111,11 @@ public class PaymentController(
             </head>
             <body>
               <main>
-                <a class="brand" href="{{fallbackUrl}}" aria-label="{{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName)}} — главная страница">{{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName)}}</a>
-                <h1>Возвращаемся в приложение</h1>
-                <p>Если приложение не открылось автоматически, нажмите ссылку ниже.</p>
-                <p><a href="{{appUrl}}">Открыть {{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName)}}</a></p>
-                <p><a href="{{fallbackUrl}}">Открыть сайт</a></p>
+                <a class="brand" href="{{fallbackUrl}}" aria-label="{{homeLabel}}">{{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(brand?.DisplayName ?? Helpers.ProjectBrand.DefaultName)}}</a>
+                <h1>{{returningTitle}}</h1>
+                <p>{{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(PaymentController.Localize("payment.mobile.help"))}}</p>
+                <p><a href="{{appUrl}}">{{openAppLabel}}</a></p>
+                <p><a href="{{fallbackUrl}}">{{System.Text.Encodings.Web.HtmlEncoder.Default.Encode(PaymentController.Localize("payment.mobile.openSite"))}}</a></p>
               </main>
               <script>
                 window.location.href = "{{appUrl}}";
@@ -122,27 +139,27 @@ public class PaymentController(
     /// <summary> Возвращает заголовок по статусу оплаты. </summary>
     private static string GetPaymentCompleteTitle(string? statusCode) => statusCode switch
     {
-        "confirmed" => "Оплата подтверждена",
-        "canceled" => "Оплата не завершена",
-        "refunded" => "Платеж возвращён",
-        "paid_waiting_activation" => "Оплата получена",
-        "manual_review" => "Платеж требует проверки",
-        "purchase_not_found" => "Покупка не найдена",
-        "pending" => "Оплата ожидает подтверждения",
-        _ => "Возврат со страницы оплаты"
+        "confirmed" => PaymentController.Localize("clientUi.paymentConfirmed"),
+        "canceled" => PaymentController.Localize("clientUi.paymentCanceled"),
+        "refunded" => PaymentController.Localize("clientUi.paymentRefunded"),
+        "paid_waiting_activation" => PaymentController.Localize("clientUi.paymentReceived"),
+        "manual_review" => PaymentController.Localize("clientUi.paymentReview"),
+        "purchase_not_found" => PaymentController.Localize("payment.purchaseMissing"),
+        "pending" => PaymentController.Localize("clientUi.paymentPending"),
+        _ => PaymentController.Localize("payment.returned")
     };
 
     /// <summary> Возвращает текст сообщения по статусу оплаты. </summary>
     private static string GetPaymentCompleteMessage(string? statusCode) => statusCode switch
     {
-        "confirmed" => "Платеж успешно обработан. Подписка активна и уже доступна в вашем аккаунте.",
-        "canceled" => "Платеж был отменен или не завершен. Тариф не изменился.",
-        "refunded" => "Платёж возвращён. Если у вас есть вопросы о доступе к подписке, обратитесь в поддержку.",
-        "paid_waiting_activation" => "Оплата получена, активируем подписку. Обновите эту страницу через некоторое время.",
-        "manual_review" => "Оплата требует проверки. Не оплачивайте повторно; обратитесь в поддержку.",
-        "purchase_not_found" => "Не удалось найти эту покупку. Войдите в аккаунт, с которого оформлялась подписка, или обратитесь в поддержку.",
-        "pending" => "Мы еще не получили окончательное подтверждение оплаты. Если вы завершили оплату, статус подписки обновится автоматически в ближайшее время.",
-        _ => "Если вы не завершили оплату, ничего не изменилось. Вы можете вернуться к тарифам и попробовать еще раз."
+        "confirmed" => PaymentController.Localize("clientUi.paymentConfirmedHelp"),
+        "canceled" => PaymentController.Localize("clientUi.paymentCanceledHelp"),
+        "refunded" => PaymentController.Localize("clientUi.paymentRefundedHelp"),
+        "paid_waiting_activation" => PaymentController.Localize("clientUi.paymentReceivedHelp"),
+        "manual_review" => PaymentController.Localize("clientUi.paymentReviewHelp"),
+        "purchase_not_found" => PaymentController.Localize("payment.purchaseMissingHelp"),
+        "pending" => PaymentController.Localize("clientUi.paymentPendingHelp"),
+        _ => PaymentController.Localize("payment.returnedHelp")
     };
 
     /// <summary> Возвращает текст основного действия по его адресу. </summary>
@@ -150,8 +167,8 @@ public class PaymentController(
         !string.IsNullOrWhiteSpace(primaryActionUrl) &&
         (primaryActionUrl.StartsWith("/organizations", StringComparison.OrdinalIgnoreCase) ||
          primaryActionUrl.EndsWith("#billing", StringComparison.OrdinalIgnoreCase))
-            ? "К тарифам рабочего пространства"
-            : "К тарифам";
+            ? PaymentController.Localize("payment.workspacePlans")
+            : PaymentController.Localize("payment.plans");
 
     private static string GetPurchaseStatusCode(PaymentPurchaseState? state)
     {

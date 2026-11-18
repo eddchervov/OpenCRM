@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../permissionMessages'
+const { t } = useLocalization()
 import WorkspaceRolePermissions from './WorkspaceRolePermissions.vue'
 import type { WorkspaceMembersData } from '../api/workspaceAdmin'
 
@@ -22,7 +25,7 @@ defineEmits<{
 
 <template>
   <div class="workspace-common-stack">
-    <a href="#employees">← Команда</a>
+    <a href="#employees">{{ t('rolePermissions.backToTeam') }}</a>
     <WorkspaceRolePermissions :roles="members.rolePermissionMatrix" :preferred-role-code="preferredRoleCode"
       :can-manage="members.canManageRoles && !isReadOnly" :is-editing="isEditingPermissions"
       :is-saving="isSaving" :drafts="permissionDrafts" :preview-only="previewOnly"

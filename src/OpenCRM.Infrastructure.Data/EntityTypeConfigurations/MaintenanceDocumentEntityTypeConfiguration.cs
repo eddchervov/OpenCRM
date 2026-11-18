@@ -10,6 +10,7 @@ public class MaintenanceDocumentEntityTypeConfiguration : IEntityTypeConfigurati
     /// <summary> Настраивает модель сформированного документа обслуживания. </summary>
     public void Configure(EntityTypeBuilder<MaintenanceDocument> builder)
     {
+        builder.Property(document => document.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");
 

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using OpenCRM.Domain;
+using OpenCRM.Modules.Vehicles.Contracts;
 using OpenCRM.Services.Interfaces.Imports;
 
 namespace OpenCRM.Modules.Imports;
@@ -10,7 +11,7 @@ namespace OpenCRM.Modules.Imports;
 public sealed partial class OrganizationImportService
 {
     private static readonly Lazy<System.Reflection.PropertyInfo[]> s_semanticProperties = new(() => typeof(ImportCandidate).GetProperties()
-        .Where(property => s_editableFields.Contains(property.Name) && property.Name is not ("Excluded" or "ExistingClientId" or "CreateSeparateClient"))
+        .Where(property => s_editableFields.Contains(property.Name) && property.Name is not ("Excluded" or "ExistingClientId" or "CreateSeparateClient" or "RegistrationCountryCode"))
         .OrderBy(property => property.Name, StringComparer.Ordinal).ToArray());
 
     private async Task EnsureHistoricalSourceAsync(OrganizationImportDraft draft, CancellationToken cancellationToken)
@@ -72,6 +73,9 @@ public sealed partial class OrganizationImportService
             {
                 row.Status = "conflict";
                 row.Message = "Внешний ID повторяется внутри пакета. Оставьте одну запись для каждого ID.";
+                row.MessageCode = ImportRowMessageCodes.IdentityExternalIdDuplicate;
+                row.MessageDetails = null;
+                row.MessageParameters = null;
                 continue;
             }
 
@@ -81,6 +85,9 @@ public sealed partial class OrganizationImportService
                 {
                     row.Status = "error";
                     row.Message = "Для защиты между файлами сопоставьте столбец с постоянным внешним ID исходной CRM. Номер строки и телефон не заменяют этот ID.";
+                    row.MessageCode = ImportRowMessageCodes.SourceExternalIdRequired;
+                    row.MessageDetails = null;
+                    row.MessageParameters = null;
                 }
 
                 continue;
@@ -95,6 +102,9 @@ public sealed partial class OrganizationImportService
             row.Status = identical ? row.Kind == "client" ? "link" : "duplicate" : "conflict";
             row.Message = identical ? "Уже перенесено из этой базы CRM; существующие данные сохранятся." :
                 "Этот ID уже переносили, но исходные данные изменились или запись удалена. Автоматическое обновление запрещено; проверьте расхождения.";
+            row.MessageCode = identical ? ImportRowMessageCodes.AlreadyImported : ImportRowMessageCodes.IdentityConflict;
+            row.MessageDetails = null;
+            row.MessageParameters = null;
             row.TargetId = identical ? identity.TargetId : null;
             if (identical && row.Kind == "client")
             {
@@ -108,6 +118,9 @@ public sealed partial class OrganizationImportService
                     child.Status = identical ? "duplicate" : "conflict";
                     child.Message = identical ? "Строка входит в ранее перенесённый заказ; повторное создание не требуется." :
                         "Состав ранее перенесённого заказа изменился. Проверьте заказ целиком.";
+                    child.MessageCode = identical ? ImportRowMessageCodes.ChildIdentityAlreadyImported : ImportRowMessageCodes.ChildIdentityConflict;
+                    child.MessageDetails = null;
+                    child.MessageParameters = null;
                 }
             }
         }
@@ -227,6 +240,22 @@ public sealed partial class OrganizationImportService
     {
         var values = s_semanticProperties.Value
             .ToDictionary(property => property.Name, property => property.GetValue(row));
+        if (row.Kind == "vehicle")
+        {
+            try
+            {
+                var countryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(row.RegistrationCountryCode);
+                if (countryCode is not (null or "RU"))
+                {
+                    values["RegistrationCountryCode"] = countryCode;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Ошибочный код страны уже блокирует импорт и не должен останавливать расчёт остальных строк.
+            }
+        }
+
         values["Kind"] = row.Kind;
 
         return JsonSerializer.Serialize(values);

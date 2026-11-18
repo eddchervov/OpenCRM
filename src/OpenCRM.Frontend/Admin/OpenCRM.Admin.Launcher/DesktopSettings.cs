@@ -67,7 +67,7 @@ internal sealed class DesktopSettings
         var profileDirectory = Environment.ExpandEnvironmentVariables(configuredPath);
         if (!Path.IsPathFullyQualified(profileDirectory))
         {
-            throw new InvalidDataException("Путь AdminDesktop:ChromeProfileDirectory должен быть абсолютным.");
+            throw new InvalidDataException(LauncherText.Get("AbsoluteProfilePathRequired"));
         }
 
         return profileDirectory;
@@ -79,7 +79,7 @@ internal sealed class DesktopSettings
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)
             || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            throw new InvalidDataException("Адрес админ-панели должен быть абсолютным HTTP- или HTTPS-адресом.");
+            throw new InvalidDataException(LauncherText.Get("AbsoluteHttpAddressRequired"));
         }
 
         return uri;

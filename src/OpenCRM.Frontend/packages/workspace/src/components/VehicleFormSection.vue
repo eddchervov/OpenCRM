@@ -21,6 +21,11 @@ import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 import type { WorkspaceContext } from '../types'
 import { trackWorkspaceGoal } from '../analytics'
 import WorkspacePageHelpButton from './WorkspacePageHelpButton.vue'
+import { useLocalization } from '@opencrm/ui'
+import '../localization'
+import '../vehicleMessages'
+import { registrationCountryOptions } from '../utils/registrationCountries'
+import { internationalRegistrationPlateError } from '../internationalRegistrationPlate'
 
 const props = defineProps<{
   context: WorkspaceContext
@@ -34,6 +39,7 @@ const form = reactive({
   manualBrandName: '',
   manualModelName: '',
   registrationPlate: '',
+  registrationCountryCode: 'RU',
   allowOtherRegistrationPlateFormat: false,
   yearIssue: '',
   color: '',
@@ -75,26 +81,34 @@ const vehicleYearMin = 1900
 const vehicleYearMax = new Date().getFullYear()
 
 const organizationId = computed(() => props.context.organization.id)
+const { t, locale } = useLocalization()
+const countryOptions = computed(() => [
+  { value: 'ZZ', label: t('regional.unknownCountry') },
+  ...registrationCountryOptions(locale.value)
+])
+const isInternationalPlate = computed(() => Boolean(form.registrationCountryCode && form.registrationCountryCode !== 'RU'))
 const isEditMode = computed(() => Boolean(props.vehicleId))
 const isRegistrationPlateUnchanged = computed(() => isEditMode.value && loadedVehicle.value !== null &&
-  Number(form.kind) === loadedVehicle.value.kind && form.registrationPlate === (loadedVehicle.value.registrationPlate || ''))
+  Number(form.kind) === loadedVehicle.value.kind &&
+  form.registrationCountryCode === (loadedVehicle.value.registrationCountryCode || 'RU') &&
+  form.registrationPlate === (loadedVehicle.value.registrationPlate || ''))
 const canEditVehicles = computed(() => props.context.workspaceAccess?.canEditVehicles === true)
 const canCreateVehicle = computed(() => props.context.workspaceAccess?.isReadOnly !== true
   && props.context.shell.quickActions?.some(action => action.code === 'create-vehicle' && action.isVisible) === true)
 const isReadOnly = computed(() => props.context.workspaceAccess?.isReadOnly === true
   || (isEditMode.value ? !canEditVehicles.value : !canCreateVehicle.value))
 const readOnlyMessage = computed(() =>
-  props.context.workspaceAccess?.readOnlyMessage ?? 'Рабочее пространство сейчас доступно только для просмотра.'
+  props.context.workspaceAccess?.readOnlyMessage ?? t('vehicle.readOnly')
 )
 const billingHref = computed(() => '#billing')
 const isFleetScenario = computed(() => props.context.shell.scenario?.code === 'fleet')
 const title = computed(() => isEditMode.value
-  ? (isFleetScenario.value ? 'Редактирование техники' : 'Редактирование автомобиля')
-  : (isFleetScenario.value ? 'Новая техника' : 'Новый автомобиль'))
+  ? (isFleetScenario.value ? t('vehicle.editEquipment') : t('vehicle.editVehicle'))
+  : (isFleetScenario.value ? t('vehicle.newEquipment') : t('vehicle.newVehicle')))
 const isClientLocked = computed(() => !isEditMode.value && Boolean(props.initialClientId))
 
 const clientSelectOptions = computed(() => [
-  { value: '', label: 'Без клиента' },
+  { value: '', label: t('vehicle.noClient') },
   ...clientOptions.value.map(client => ({
     value: client.id,
     label: client.details ? `${client.name} · ${client.details}` : client.name
@@ -102,7 +116,7 @@ const clientSelectOptions = computed(() => [
 ])
 const selectedClientLabel = computed(() => {
   const client = clientOptions.value.find(item => item.id === form.organizationClientId)
-  return client ? (client.details ? `${client.name} · ${client.details}` : client.name) : 'выбранный клиент'
+  return client ? (client.details ? `${client.name} · ${client.details}` : client.name) : t('vehicle.selectedClient')
 })
 const cancelHref = computed(() => {
   if (props.vehicleId) {
@@ -123,7 +137,7 @@ const catalogModeAvailable = computed(() => brandOptions.value.length > 0)
 const vehicleName = computed(() => {
   const brand = isManualIdentity.value ? form.manualBrandName : brandOptions.value.find(item => String(item.id) === selectedBrandId.value)?.name
   const model = isManualIdentity.value ? form.manualModelName : modelOptions.value.find(item => String(item.id) === selectedModelId.value)?.name
-  return [brand, model].filter(Boolean).join(' ') || form.name || (isFleetScenario.value ? 'Техника' : 'Автомобиль')
+  return [brand, model].filter(Boolean).join(' ') || form.name || (isFleetScenario.value ? t('vehicle.equipment') : t('vehicle.vehicle'))
 })
 const brandLogo = computed(() => !isManualIdentity.value && selectedBrandId.value === String(loadedVehicle.value?.brandId)
   ? getVehicleBrandLogo(loadedVehicle.value?.brandLogoKey) : null)
@@ -141,7 +155,7 @@ async function loadPhotos(request: number, vehicleId: string) {
     const result = await loadVehiclePhotoList(organizationId.value, vehicleId)
     if (request === latestRequest) photos.value = [...result].sort((left, right) => Number(right.isPrimary) - Number(left.isPrimary))
   } catch {
-    if (request === latestRequest) photoError.value = 'Не удалось загрузить фотографии.'
+    if (request === latestRequest) photoError.value = t('vehicle.photosLoadError')
   }
 }
 
@@ -152,17 +166,17 @@ function retryPhotos() {
 }
 
 const kindOptions = [
-  { value: '1', label: 'Легковой автомобиль' },
-  { value: '2', label: 'Грузовая техника' },
-  { value: '3', label: 'Мотоцикл' },
-  { value: '4', label: 'Квадроцикл' },
-  { value: '5', label: 'Багги / UTV' },
-  { value: '6', label: 'Снегоход' },
-  { value: '7', label: 'Гидроцикл' },
-  { value: '8', label: 'Лодка / катер' },
-  { value: '9', label: 'Спецтехника' },
-  { value: '10', label: 'Прицеп' },
-  { value: '99', label: 'Другая техника' }
+  { value: '1', label: t('vehicle.car') },
+  { value: '2', label: t('vehicle.truck') },
+  { value: '3', label: t('vehicle.motorcycle') },
+  { value: '4', label: t('vehicle.quad') },
+  { value: '5', label: t('vehicle.utv') },
+  { value: '6', label: t('vehicle.snowmobile') },
+  { value: '7', label: t('vehicle.jetSki') },
+  { value: '8', label: t('vehicle.boat') },
+  { value: '9', label: t('vehicle.special') },
+  { value: '10', label: t('vehicle.trailer') },
+  { value: '99', label: t('vehicle.otherEquipment') }
 ]
 
 function toNullableString(value: string | number | null | undefined) {
@@ -176,7 +190,7 @@ function toNullableNumber(value: string | number | null | undefined) {
 }
 
 function getVehicleYearValidationMessage() {
-  return `Год выпуска должен быть в диапазоне от ${vehicleYearMin} до ${vehicleYearMax}.`
+  return t('vehicle.yearRange', { min: vehicleYearMin, max: vehicleYearMax })
 }
 
 function validateYearIssue() {
@@ -219,6 +233,7 @@ function clearForm() {
   form.manualBrandName = ''
   form.manualModelName = ''
   form.registrationPlate = ''
+  form.registrationCountryCode = 'RU'
   form.allowOtherRegistrationPlateFormat = false
   form.yearIssue = ''
   form.color = ''
@@ -255,7 +270,7 @@ async function loadBrandsForKind() {
     selectedBrandId.value = ''
     selectedModelId.value = ''
     isManualIdentity.value = true
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить марки техники.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicle.brandsLoadError')
   } finally {
     if (request === latestBrandRequest) isLoadingBrands.value = false
   }
@@ -282,7 +297,7 @@ async function loadModelsForBrand(modelId = '') {
     if (request !== latestModelRequest) return
     modelOptions.value = []
     selectedModelId.value = ''
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить модели техники.'
+    errorMessage.value = error instanceof Error ? error.message : t('vehicle.modelsLoadError')
   } finally {
     if (request === latestModelRequest) isLoadingModels.value = false
   }
@@ -331,6 +346,7 @@ async function loadForm() {
       form.manualBrandName = vehicle.manualBrandName || vehicle.brandName || ''
       form.manualModelName = vehicle.manualModelName || vehicle.modelName || ''
       form.registrationPlate = vehicle.registrationPlate || ''
+      form.registrationCountryCode = vehicle.registrationCountryCode || 'RU'
       form.allowOtherRegistrationPlateFormat = Boolean(vehicle.registrationPlate && registrationPlateFormats.value &&
         validateRegistrationPlate(vehicle.registrationPlate, vehicle.kind || 1, registrationPlateFormats.value))
       form.yearIssue = vehicle.yearIssue ? String(vehicle.yearIssue) : ''
@@ -356,7 +372,7 @@ async function loadForm() {
       await loadBrandsForKind()
     }
   } catch (error) {
-    if (request === latestRequest) errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть форму автомобиля.'
+    if (request === latestRequest) errorMessage.value = error instanceof Error ? error.message : t('vehicle.formLoadError')
   } finally {
     if (request === latestRequest) {
       isApplyingLoadedVehicle = false
@@ -379,9 +395,11 @@ function buildPayload(): WorkspaceVehicleSaveRequest {
     vin: toNullableString(form.vin),
     registrationPlate: isRegistrationPlateUnchanged.value ? loadedVehicle.value?.registrationPlate ?? null : toNullableString(registrationPlateFormats.value
       ? normalizeRegistrationPlate(form.registrationPlate, registrationPlateFormats.value,
-        form.allowOtherRegistrationPlateFormat || !getVehicleRegistrationPlateFormat(form.kind, registrationPlateFormats.value))
+        isInternationalPlate.value || form.allowOtherRegistrationPlateFormat || !getVehicleRegistrationPlateFormat(form.kind, registrationPlateFormats.value))
       : form.registrationPlate),
     allowOtherRegistrationPlateFormat: form.allowOtherRegistrationPlateFormat,
+    registrationCountryCode: isEditMode.value && loadedVehicle.value?.registrationCountryCode == null && form.registrationCountryCode === 'RU'
+      ? null : form.registrationCountryCode,
     bodyNumber: toNullableString(form.bodyNumber),
     engineNumber: toNullableString(form.engineNumber),
     color: toNullableString(form.color),
@@ -407,7 +425,7 @@ async function saveVehicle() {
   }
 
   if (!hasVehicleIdentifier()) {
-    showFormError('Укажите хотя бы один идентификатор: госномер, VIN, номер кузова, номер двигателя, СТС или внутренний номер.')
+    showFormError(t('vehicle.identifierRequired'))
     return
   }
 
@@ -425,8 +443,12 @@ async function saveVehicle() {
     const plateFormats = registrationPlateFormats.value ?? await loadVehicleRegistrationPlateFormats()
     if (request !== latestRequest || requestOrganizationId !== organizationId.value || requestVehicleId !== props.vehicleId) return
     registrationPlateFormats.value = plateFormats
+    const internationalError = isInternationalPlate.value ? internationalRegistrationPlateError(form.registrationPlate) : ''
+    const internationalErrorMessages = { length: 'plateLength', characters: 'plateCharacters', short: 'plateShort' }
     const registrationPlateError = isRegistrationPlateUnchanged.value ? ''
-      : validateRegistrationPlate(form.registrationPlate, form.kind, registrationPlateFormats.value, form.allowOtherRegistrationPlateFormat)
+      : isInternationalPlate.value
+        ? internationalError ? t(`regional.${internationalErrorMessages[internationalError]}`) : ''
+        : validateRegistrationPlate(form.registrationPlate, form.kind, registrationPlateFormats.value, form.allowOtherRegistrationPlateFormat)
     if (registrationPlateError) {
       showFormError(registrationPlateError)
       return
@@ -446,7 +468,7 @@ async function saveVehicle() {
     }
   } catch (error) {
     if (request === latestRequest && requestOrganizationId === organizationId.value && requestVehicleId === props.vehicleId) {
-      showFormError(error instanceof Error ? error.message : 'Не удалось сохранить автомобиль.')
+      showFormError(error instanceof Error ? error.message : t('vehicle.saveError'))
     }
   } finally {
     if (request === latestRequest && requestOrganizationId === organizationId.value && requestVehicleId === props.vehicleId) {
@@ -461,7 +483,7 @@ onMounted(async () => {
   try {
     registrationPlateFormats.value = await loadVehicleRegistrationPlateFormats()
   } catch (error) {
-    formatsError = error instanceof Error ? error.message : 'Не удалось загрузить форматы госномеров.'
+    formatsError = error instanceof Error ? error.message : t('vehicle.formatsLoadError')
   }
 
   if (!isComponentMounted) return
@@ -511,7 +533,7 @@ watch(selectedBrandId, async () => {
       <template #actions>
         <WorkspacePageHelpButton section-code="vehicles" :entity-id="vehicleId ? vehicleId : 'new'" :action="vehicleId ? 'edit' : ''" :title="title" />
       </template>
-      <UiLoader v-if="isLoading" text="Открываем форму автомобиля..." />
+      <UiLoader v-if="isLoading" :text="t('vehicle.opening')" />
       <div v-else-if="errorMessage" class="detailing-state detailing-state-error">{{ errorMessage }}</div>
 
       <form v-if="!isLoading && (!isEditMode || loadedVehicle)" class="vehicle-editor" @submit.prevent="saveVehicle">
@@ -519,18 +541,20 @@ watch(selectedBrandId, async () => {
         <div class="vehicle-editor__layout">
           <div class="vehicle-editor__main">
             <section class="vehicle-editor__section">
-              <h3 class="ui-section-header">Основные данные</h3>
+              <h3 class="ui-section-header">{{ t('vehicle.mainDetails') }}</h3>
               <div class="vehicle-editor__fields">
-                <UiSelect v-model="form.kind" label="Тип техники" :options="kindOptions" :searchable="false" :disabled="isSaving || isReadOnly" />
+                <UiSelect v-model="form.kind" :label="t('vehicle.kind')" :options="kindOptions" :searchable="false" :disabled="isSaving || isReadOnly" />
+                <UiSelect v-model="form.registrationCountryCode" :label="t('regional.registrationCountry')" :options="countryOptions" :disabled="isSaving || isReadOnly" />
                 <VehicleRegistrationPlateInput
                   v-model="form.registrationPlate"
                   v-model:allow-other-format="form.allowOtherRegistrationPlateFormat"
                   :kind="form.kind"
+                  :country-code="form.registrationCountryCode"
                   :infer-other-format="isEditMode"
                   :disabled="isSaving || isReadOnly"
                 />
                 <div class="vehicle-editor__identity">
-                  <div class="entity-form-toggle" role="group" aria-label="Способ заполнения техники">
+                  <div class="entity-form-toggle" role="group" :aria-label="t('vehicle.identityMethod')">
                     <button
                       type="button"
                       class="entity-form-toggle__button"
@@ -539,7 +563,7 @@ watch(selectedBrandId, async () => {
                       :disabled="isSaving || isReadOnly || !catalogModeAvailable || isLoadingBrands"
                       @click="setManualIdentity(false)"
                     >
-                      Из справочника
+                      {{ t('vehicle.fromCatalog') }}
                     </button>
                     <button
                       type="button"
@@ -549,48 +573,48 @@ watch(selectedBrandId, async () => {
                       :disabled="isSaving || isReadOnly"
                       @click="setManualIdentity(true)"
                     >
-                      Ввести вручную
+                      {{ t('vehicle.manual') }}
                     </button>
                   </div>
                 </div>
                 <template v-if="!isManualIdentity">
                   <UiSelect
                     v-model="selectedBrandId"
-                    label="Марка"
+                    :label="t('vehicle.make')"
                     :options="brandSelectOptions"
                     :disabled="isSaving || isReadOnly || isLoadingBrands"
-                    :placeholder="isLoadingBrands ? 'Загружаем марки...' : 'Выберите марку'"
+                    :placeholder="isLoadingBrands ? t('vehicle.loadingMakes') : t('vehicle.chooseMake')"
                   />
                   <UiSelect
                     v-model="selectedModelId"
-                    label="Модель"
+                    :label="t('vehicle.model')"
                     :options="modelSelectOptions"
                     :disabled="isSaving || isReadOnly || isLoadingModels || !selectedBrandId"
-                    :placeholder="isLoadingModels ? 'Загружаем модели...' : 'Выберите модель'"
+                    :placeholder="isLoadingModels ? t('vehicle.loadingModels') : t('vehicle.chooseModel')"
                   />
                 </template>
                 <template v-else>
-                  <UiInput v-model="form.manualBrandName" label="Марка" :disabled="isSaving || isReadOnly" />
-                  <UiInput v-model="form.manualModelName" label="Модель" :disabled="isSaving || isReadOnly" />
+                  <UiInput v-model="form.manualBrandName" :label="t('vehicle.make')" :disabled="isSaving || isReadOnly" />
+                  <UiInput v-model="form.manualModelName" :label="t('vehicle.model')" :disabled="isSaving || isReadOnly" />
                 </template>
-                <UiNumberInput v-model="form.yearIssue" label="Год выпуска" :min="vehicleYearMin" :max="vehicleYearMax" :step="1" integer :disabled="isSaving || isReadOnly" />
-                <UiInput v-model="form.color" label="Цвет" :disabled="isSaving || isReadOnly" />
+                <UiNumberInput v-model="form.yearIssue" :label="t('vehicle.year')" :min="vehicleYearMin" :max="vehicleYearMax" :step="1" integer :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.color" :label="t('vehicle.color')" :disabled="isSaving || isReadOnly" />
               </div>
             </section>
             <section class="vehicle-editor__section">
-              <h3 class="ui-section-header">Идентификация</h3>
+              <h3 class="ui-section-header">{{ t('vehicle.identification') }}</h3>
               <div class="vehicle-editor__fields">
                 <UiInput v-model="form.vin" label="VIN" :disabled="isSaving || isReadOnly" />
-                <UiInput v-model="form.name" label="Имя / внутренний номер" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.name" :label="t('vehicle.internalName')" :disabled="isSaving || isReadOnly" />
               </div>
             </section>
             <details class="vehicle-editor__documents" :open="Boolean(form.bodyNumber || form.engineNumber || form.registrationCertificate || form.commissioningDate)">
-              <summary>Документы и дополнительные номера<span v-if="form.bodyNumber || form.engineNumber || form.registrationCertificate || form.commissioningDate">Есть данные</span></summary>
+              <summary>{{ t('vehicle.documents') }}<span v-if="form.bodyNumber || form.engineNumber || form.registrationCertificate || form.commissioningDate">{{ t('vehicle.hasDetails') }}</span></summary>
               <div class="vehicle-editor__fields">
-                <UiInput v-model="form.bodyNumber" label="Номер кузова" :disabled="isSaving || isReadOnly" />
-                <UiInput v-model="form.engineNumber" label="Номер двигателя" :disabled="isSaving || isReadOnly" />
-                <UiInput v-model="form.registrationCertificate" label="СТС" :disabled="isSaving || isReadOnly" />
-                <UiDatePicker v-model="form.commissioningDate" label="Ввод в эксплуатацию" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.bodyNumber" :label="t('vehicle.bodyNumber')" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.engineNumber" :label="t('vehicle.engineNumber')" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.registrationCertificate" :label="t('vehicle.certificate')" :disabled="isSaving || isReadOnly" />
+                <UiDatePicker v-model="form.commissioningDate" :label="t('vehicle.commissioning')" :disabled="isSaving || isReadOnly" />
               </div>
             </details>
           </div>
@@ -602,36 +626,36 @@ watch(selectedBrandId, async () => {
                 <span v-if="form.registrationPlate" class="vehicle-editor__plate">{{ form.registrationPlate }}</span>
               </header>
               <template v-if="currentPhotoUrl">
-                <button class="vehicle-editor__photo" type="button" aria-label="Увеличить фото автомобиля" @click="previewPhotoUrl = currentPhotoUrl"><img :src="currentPhotoUrl" :alt="vehicleName" @error="failedPhotos.add(currentPhotoUrl)" /></button>
-                <div v-if="availablePhotos.length > 1" class="vehicle-editor__thumbnails" role="group" aria-label="Фотографии автомобиля">
-                  <button v-for="(photo, index) in availablePhotos.slice(0, 4)" :key="photo.photoId" type="button" :aria-label="`Фото ${index + 1}`" :aria-pressed="currentPhotoUrl === photo.url" @click="selectedPhotoId = photo.photoId"><img :src="photo.url" alt="" @error="failedPhotos.add(photo.url)" /></button>
+                <button class="vehicle-editor__photo" type="button" :aria-label="t('vehicle.zoomPhoto')" @click="previewPhotoUrl = currentPhotoUrl"><img :src="currentPhotoUrl" :alt="vehicleName" @error="failedPhotos.add(currentPhotoUrl)" /></button>
+                <div v-if="availablePhotos.length > 1" class="vehicle-editor__thumbnails" role="group" :aria-label="t('vehicle.photos')">
+                  <button v-for="(photo, index) in availablePhotos.slice(0, 4)" :key="photo.photoId" type="button" :aria-label="t('vehicle.photoNumber', { number: index + 1 })" :aria-pressed="currentPhotoUrl === photo.url" @click="selectedPhotoId = photo.photoId"><img :src="photo.url" alt="" @error="failedPhotos.add(photo.url)" /></button>
                 </div>
               </template>
-              <div v-if="photoError" class="vehicle-editor__photo-error" role="status">{{ photoError }} <button type="button" @click="retryPhotos">Повторить</button></div>
-              <a v-if="photosHref" class="vehicle-editor__link" :href="photosHref" target="_blank" rel="noopener">Фотографии автомобиля ↗<span class="vehicle-editor__sr"> (новая вкладка)</span></a>
+              <div v-if="photoError" class="vehicle-editor__photo-error" role="status">{{ photoError }} <button type="button" @click="retryPhotos">{{ t('vehicle.retry') }}</button></div>
+              <a v-if="photosHref" class="vehicle-editor__link" :href="photosHref" target="_blank" rel="noopener">{{ t('vehicle.photosLink') }}<span class="vehicle-editor__sr">{{ t('vehicle.newTab') }}</span></a>
             </section>
             <section class="vehicle-editor__section">
-              <h3 class="ui-section-header">Владелец</h3>
-              <UiSelect v-model="form.organizationClientId" label="Клиент" :options="clientSelectOptions" :disabled="isSaving || isReadOnly || isClientLocked" />
-              <p v-if="isClientLocked" class="vehicle-editor__note">Из карточки клиента: <strong>{{ selectedClientLabel }}</strong></p>
-              <a v-if="clientHref" class="vehicle-editor__link" :href="clientHref" target="_blank" rel="noopener">Открыть карточку клиента ↗<span class="vehicle-editor__sr"> (новая вкладка)</span></a>
+              <h3 class="ui-section-header">{{ t('vehicle.owner') }}</h3>
+              <UiSelect v-model="form.organizationClientId" :label="t('vehicle.customer')" :options="clientSelectOptions" :disabled="isSaving || isReadOnly || isClientLocked" />
+              <p v-if="isClientLocked" class="vehicle-editor__note">{{ t('vehicle.fromCustomer') }}<strong>{{ selectedClientLabel }}</strong></p>
+              <a v-if="clientHref" class="vehicle-editor__link" :href="clientHref" target="_blank" rel="noopener">{{ t('vehicle.customerLink') }}<span class="vehicle-editor__sr">{{ t('vehicle.newTab') }}</span></a>
             </section>
             <section class="vehicle-editor__section">
-              <h3 class="ui-section-header">Описание</h3>
-              <UiTextarea v-model="form.description" label="Описание автомобиля" :rows="3" :disabled="isSaving || isReadOnly" />
+              <h3 class="ui-section-header">{{ t('vehicle.description') }}</h3>
+              <UiTextarea v-model="form.description" :label="t('vehicle.vehicleDescription')" :rows="3" :disabled="isSaving || isReadOnly" />
             </section>
           </aside>
         </div>
         <div class="vehicle-editor__actions">
-          <UiButton v-if="!isReadOnly" type="submit" :disabled="isSaving">{{ isSaving ? 'Сохраняем...' : isEditMode ? 'Сохранить изменения' : isFleetScenario ? 'Добавить технику' : 'Добавить автомобиль' }}</UiButton>
-          <UiButton variant="secondary" type="button" :disabled="isSaving" :href="cancelHref">Отмена</UiButton>
+          <UiButton v-if="!isReadOnly" type="submit" :disabled="isSaving">{{ isSaving ? t('vehicle.saving') : isEditMode ? t('vehicle.saveChanges') : isFleetScenario ? t('vehicle.addEquipment') : t('vehicle.addVehicle') }}</UiButton>
+          <UiButton variant="secondary" type="button" :disabled="isSaving" :href="cancelHref">{{ t('vehicle.cancel') }}</UiButton>
         </div>
       </form>
     </UiCard>
     <UiImagePreview :src="previewPhotoUrl" :title="vehicleName" @close="previewPhotoUrl = ''" />
     <UiAlertDialog
       :open="Boolean(errorDialogMessage)"
-      title="Не удалось сохранить автомобиль"
+      :title="t('vehicle.saveErrorTitle')"
       :message="errorDialogMessage"
       tone="danger"
       @close="errorDialogMessage = ''"

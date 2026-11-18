@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../proPreviewMessages'
 import { getProjectBrand } from '@opencrm/ui'
 import { computed } from 'vue'
 import { UiButton } from '@opencrm/ui'
@@ -6,6 +8,8 @@ import type { ProFeatureKey } from '../proFeatureDetails'
 import { proFeatureDetails } from '../proFeatureDetails'
 import { proFeatureLandingContent } from '../proFeatureLandingContent'
 import WorkspaceProFeatureVisual from './WorkspaceProFeatureVisual.vue'
+
+const { t } = useLocalization()
 
 const projectBrand = getProjectBrand()
 
@@ -30,30 +34,30 @@ const content = computed(() => proFeatureLandingContent[props.feature])
   <div class="pro-feature-landing" :class="`pro-feature-landing--${feature}`">
     <section class="pro-feature-landing__hero">
       <div class="pro-feature-landing__pitch">
-        <div class="pro-feature-landing__category"><span>{{ detail.title }} в PRO</span><span v-if="detail.beta" class="pro-feature-landing__beta">БЕТА</span></div>
+        <div class="pro-feature-landing__category"><span>{{ t('proPreview.titleInPro', { title: detail.title }) }}</span><span v-if="detail.beta" class="pro-feature-landing__beta">{{ t('proPreview.beta') }}</span></div>
         <h2 :id="titleId"><span v-for="line in content.headline" :key="line">{{ line }}</span></h2>
         <p>{{ detail.description }}</p>
-        <UiButton v-if="canManageBilling" href="#billing" @click="emit('billing')">Выбрать PRO →</UiButton>
-        <p v-if="detail.beta" class="pro-feature-landing__beta-note">Бета-версия: возможности дорабатываются.</p>
+        <UiButton v-if="canManageBilling" href="#billing" @click="emit('billing')">{{ t('proPreview.choosePro') }}</UiButton>
+        <p v-if="detail.beta" class="pro-feature-landing__beta-note">{{ t('proPreview.betaNote') }}</p>
       </div>
       <div class="pro-feature-landing__stage">
         <span class="pro-feature-landing__tags">{{ content.tags }}</span>
-        <button type="button" class="pro-feature-landing__visual" :aria-label="`Увеличить пример: ${detail.title}`" @click="emit('preview')">
+        <button type="button" class="pro-feature-landing__visual" :aria-label="t('proPreview.enlargeLabel', { title: detail.title })" @click="emit('preview')">
           <span class="pro-feature-landing__window" aria-hidden="true"><i></i><i></i><i></i><span>{{ projectBrand }}</span><b>↗</b></span>
           <span class="pro-feature-landing__example"><WorkspaceProFeatureVisual :feature="feature" /></span>
-          <span class="pro-feature-landing__enlarge">Увеличить пример ↗</span>
+          <span class="pro-feature-landing__enlarge">{{ t('proPreview.enlarge') }}</span>
         </button>
-        <span class="pro-feature-landing__caption">Демонстрационный пример</span>
+        <span class="pro-feature-landing__caption">{{ t('proPreview.demo') }}</span>
       </div>
     </section>
-    <section class="pro-feature-landing__benefits" :class="{ 'pro-feature-landing__benefits--four': detail.points.length === 4 }" aria-label="Возможности раздела">
+    <section class="pro-feature-landing__benefits" :class="{ 'pro-feature-landing__benefits--four': detail.points.length === 4 }" :aria-label="t('proPreview.sectionFeatures')">
       <article v-for="(point, index) in detail.points" :key="point">
         <span class="pro-feature-landing__number">0{{ index + 1 }}</span>
         <h3>{{ content.benefitTitles[index] }}</h3><p>{{ point }}</p>
       </article>
     </section>
-    <section class="pro-feature-landing__workflow" aria-label="Как это работает">
-      <div class="pro-feature-landing__workflow-heading"><span>В ВАШЕЙ РАБОТЕ</span><h3>От первого шага<br>до результата</h3></div>
+    <section class="pro-feature-landing__workflow" :aria-label="t('proPreview.howItWorks')">
+      <div class="pro-feature-landing__workflow-heading"><span>{{ t('proPreview.inYourWork') }}</span><h3>{{ t('proPreview.firstStep') }}<br>{{ t('proPreview.toResult') }}</h3></div>
       <ol>
         <li v-for="(step, index) in content.steps" :key="step.title"><span class="pro-feature-landing__step">{{ index + 1 }}</span><div><h4>{{ step.title }}</h4><p>{{ step.text }}</p></div></li>
       </ol>

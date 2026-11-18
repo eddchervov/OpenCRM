@@ -27,6 +27,8 @@ public static class OrganizationsServiceCollectionExtensions
         services.AddScoped<IOrganizationEmployeeService, OrganizationEmployeeService>();
         services.AddScoped<IOrganizationShiftService, OrganizationShiftService>();
         services.AddScoped<IOrganizationTimeZoneService, OrganizationTimeZoneService>();
+        services.AddScoped<IOrganizationCurrencyService, OrganizationCurrencyService>();
+        services.AddScoped<IUserCurrencyService, UserCurrencyService>();
         services.AddScoped<IOrganizationDetailingQuickBookingService, OrganizationDetailingQuickBookingService>();
         services.AddScoped<IOrganizationAutoServiceQuickBookingService, OrganizationAutoServiceQuickBookingService>();
         services.AddScoped<IOrganizationInquiryBookingService, OrganizationInquiryBookingService>();

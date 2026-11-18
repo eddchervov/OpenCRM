@@ -1,7 +1,10 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { renderSchedulerCalendarEvent, schedulerCalendarStatus, SchedulerDayRecords, SchedulerRecordPreview, getSchedulerDayInterval, getVehicleBrandLogo, scheduleBusinessHours, type WorkspaceWorkingDay } from '@opencrm/workspace'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { UiLoader, formatDateOnly, formatLocalDateTime } from '@opencrm/ui'
+import { UiLoader, formatDateOnly, formatLocalDateTime, useLocalization } from '@opencrm/ui'
+import { formatLocaleDate } from '@opencrm/ui/i18n'
+import { fullCalendarLocaleCode, getFullCalendarLocales } from '@opencrm/workspace/calendarLocale'
+import '@opencrm/workspace/schedulerMessages'
 import { loadMaintenanceCalendar, type AutoServiceMaintenanceCalendarItem } from '@/api/autoserviceBff'
 
 const props = withDefaults(defineProps<{
@@ -17,8 +20,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   includeAllStatuses: false,
   canCreate: false,
-  initialDate: '',
-  emptyText: 'Нет записей на выбранный период'
+  initialDate: ''
 })
 
 const emit = defineEmits<{
@@ -26,6 +28,7 @@ const emit = defineEmits<{
   navigate: [date: string]
   create: [slot: { date: string, start?: string, end?: string, endDate?: string, location?: string }]
 }>()
+const { t, locale } = useLocalization()
 
 const calendarElement = ref<HTMLElement | null>(null)
 const errorMessage = ref('')
@@ -38,6 +41,14 @@ watch(() => props.organizationId, () => { previewItem.value = null })
 let calendarRequest = 0
 const limitWarning = ref('')
 let calendar: InstanceType<NonNullable<typeof window.FullCalendar>['Calendar']> | null = null
+
+watch(locale, value => {
+  calendar?.setOption('locale', fullCalendarLocaleCode(value))
+  calendar?.setOption('noEventsText', props.emptyText || t('maintenanceCalendar.noRecords'))
+  limitWarning.value = calendarItems.value.length >= 500
+    ? t('maintenanceCalendar.limitWarning', { count: 500 })
+    : ''
+})
 
 watch(() => props.weeklySchedule, () => {
   calendar?.setOption('businessHours', scheduleBusinessHours(props.weeklySchedule))
@@ -115,7 +126,7 @@ function mapEvent(item: AutoServiceMaintenanceCalendarItem) {
   const endDate = normalizeDate(item.plannedEndDate || item.date)
   const startTime = normalizeTime(item.plannedStartTime)
   const endTime = normalizeTime(item.plannedEndTime)
-  const title = item.vehicleDisplayName || item.typeName || 'Запись'
+  const title = item.vehicleDisplayName || item.typeName || ''
 
   if (!startTime) {
     const exclusiveEnd = new Date(`${endDate}T00:00:00`)
@@ -169,13 +180,13 @@ function saveStoredView(viewName: string) {
 
 onMounted(() => {
   if (!calendarElement.value || !window.FullCalendar?.Calendar) {
-    errorMessage.value = 'Календарь не загружен.'
+    errorMessage.value = t('maintenanceCalendar.calendarUnavailable')
     return
   }
 
   calendar = new window.FullCalendar.Calendar(calendarElement.value, {
-    locale: 'ru',
-    allDayText: 'Без времени',
+    locale: fullCalendarLocaleCode(locale.value),
+    locales: getFullCalendarLocales(),
     firstDay: 1,
     initialDate: props.initialDate || formatDateOnly(undefined, props.timeZoneId || 'UTC'),
     // Календарь оперирует местными датами и часами записей.
@@ -204,7 +215,7 @@ onMounted(() => {
         arg.el.click()
       })
     },
-    moreLinkContent: (arg: { num: number }) => `+${arg.num} еще`,
+    moreLinkContent: (arg: { num: number }) => t('maintenanceCalendar.moreLink', { count: arg.num }),
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
@@ -222,13 +233,7 @@ onMounted(() => {
     businessHours: scheduleBusinessHours(props.weeklySchedule),
     slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
     eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-    buttonText: {
-      today: 'К текущей дате',
-      month: 'Месяц',
-      week: 'Неделя',
-      day: 'День'
-    },
-    noEventsContent: props.emptyText,
+    noEventsText: props.emptyText || t('maintenanceCalendar.noRecords'),
     events: async (
       range: { start: Date, end: Date },
       success: (events: ReturnType<typeof mapEvent>[]) => void,
@@ -250,10 +255,10 @@ onMounted(() => {
           return
         }
         calendarItems.value = items
-        limitWarning.value = items.length >= 500 ? 'Достигнут лимит 500 записей. Выберите меньший период, чтобы проверить все записи.' : ''
+        limitWarning.value = items.length >= 500 ? t('maintenanceCalendar.limitWarning', { count: 500 }) : ''
         success(items.map(mapEvent))
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Не удалось загрузить календарь.'
+        const message = error instanceof Error ? error.message : t('maintenanceCalendar.calendarLoadError')
         if (request === calendarRequest) errorMessage.value = message
         failure(new Error(message))
       } finally {
@@ -280,7 +285,7 @@ onMounted(() => {
     },
     dayCellDidMount: (arg: { date: Date, el: HTMLElement }) => {
       arg.el.tabIndex = 0
-      arg.el.setAttribute('aria-label', new Intl.DateTimeFormat('ru-RU', { dateStyle: 'full' }).format(arg.date))
+      arg.el.setAttribute('aria-label', formatLocaleDate(arg.date, { dateStyle: 'full' }))
       arg.el.addEventListener('keydown', event => {
         if (event.target !== arg.el || event.key !== 'Enter' && event.key !== ' ') return
         event.preventDefault()
@@ -330,14 +335,14 @@ onMounted(() => {
       root.className = 'autoservice-calendar-event'
       heading.className = 'autoservice-calendar-event__heading'
       title.className = 'autoservice-calendar-event__title'
-      title.textContent = arg.event.title || 'Запись'
+      title.textContent = arg.event.title || t('maintenanceCalendar.recordFallback')
       const logo = getVehicleBrandLogo(item.brandLogoKey)
 
       if (logo) {
         const image = document.createElement('img')
         image.className = 'autoservice-calendar-event__logo'
         image.src = logo.src
-        image.alt = `Логотип ${logo.name}`
+        image.alt = t('maintenanceCalendar.logoAlt', { name: logo.name })
         heading.appendChild(image)
       }
 
@@ -368,7 +373,7 @@ onBeforeUnmount(() => {
   <div class="autoservice-calendar-shell" :aria-busy="isLoading">
     <div v-if="errorMessage" class="autoservice-state autoservice-state-error">{{ errorMessage }}</div>
     <div v-if="isLoading" class="autoservice-calendar-loading">
-      <UiLoader text="Загружаем записи..." />
+      <UiLoader :text="t('maintenanceCalendar.loading')" />
     </div>
     <p v-if="limitWarning" role="status" class="autoservice-calendar__day-empty">{{ limitWarning }}</p>
     <div ref="calendarElement" class="autoservice-calendar crm-maintenance-calendar"></div>

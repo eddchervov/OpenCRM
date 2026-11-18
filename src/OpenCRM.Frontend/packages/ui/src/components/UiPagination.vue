@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { VueAwesomePaginate } from 'vue-awesome-paginate'
+import { useLocalization } from '../i18n'
 
 const model = defineModel<number>({ default: 1 })
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   totalItems: number
@@ -22,7 +24,7 @@ const shouldShow = computed(() => props.totalItems > props.itemsPerPage)
 </script>
 
 <template>
-  <nav v-if="shouldShow" class="ui-pagination" :aria-label="label || 'Pagination'">
+  <nav v-if="shouldShow" class="ui-pagination" :aria-label="label || t('common.pagination')">
     <VueAwesomePaginate
       v-model="model"
       :total-items="totalItems"

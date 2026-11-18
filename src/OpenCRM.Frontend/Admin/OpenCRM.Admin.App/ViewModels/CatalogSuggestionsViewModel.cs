@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -31,13 +32,13 @@ public partial class CatalogSuggestionsViewModel(AdminSessionClient sessionClien
     private bool _canManage = sessionClient.CurrentProfile?.IsSystem == true
         || sessionClient.CurrentProfile?.Permissions.Contains("Admin.Content.Manage") == true;
 
-    public IReadOnlyList<string> Tabs { get; } = ["На модерации", "Одобренные", "Отклонённые"];
+    public IReadOnlyList<string> Tabs { get; } = [AdminLocalization.Instance["native.catalogSuggestions.na.moderatsii"], AdminLocalization.Instance["native.catalogSuggestions.odobrennye"], AdminLocalization.Instance["native.catalogSuggestions.otklonyonnye"]];
 
     public string ListTitle => this.SelectedTabIndex switch
     {
-        1 => "Одобренные предложения",
-        2 => "Отклонённые предложения",
-        _ => "Очередь модерации"
+        1 => AdminLocalization.Instance["native.catalogSuggestions.odobrennye.predlozheniya"],
+        2 => AdminLocalization.Instance["native.catalogSuggestions.otklonyonnye.predlozheniya"],
+        _ => AdminLocalization.Instance["native.catalogSuggestions.ochered.moderatsii"]
     };
 
     public bool CanManage => this._canManage;
@@ -48,8 +49,16 @@ public partial class CatalogSuggestionsViewModel(AdminSessionClient sessionClien
     public bool CanReview => this.CanManage && this.SelectedSuggestion is { Status: 1 };
     public bool CanDelete => this.CanManage && this.CanLoad() && this.HasSelection;
     public string ConfirmationText => this.ApproveOnConfirm
-        ? "Одобрить предложение и добавить марку и модель в каталог?"
-        : "Отклонить выбранное предложение?";
+        ? AdminLocalization.Instance["native.catalogSuggestions.odobrit.predlozhenie.i.dobavit.marku.i.model.v.katalog"]
+        : AdminLocalization.Instance["native.catalogSuggestions.otklonit.vybrannoe.predlozhenie"];
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        this.OnPropertyChanged(nameof(this.Tabs));
+        this.OnPropertyChanged(nameof(this.ListTitle));
+        this.OnPropertyChanged(nameof(this.ConfirmationText));
+    }
 
     public void RefreshAccess()
     {

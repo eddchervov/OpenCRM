@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -11,8 +12,9 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
     private readonly List<SiteNotificationUserOption> _selectedUsers = [];
     private readonly IReadOnlyList<SiteNotificationAudienceOption> _audienceOptions =
     [
-        new("all", "Все пользователи", true), new("admins", "Администраторы"),
-        new("organization-owners", "Владельцы организаций")
+        SiteNotificationAudienceOption.Localized("all", "native.email.vse.polzovateli", true),
+        SiteNotificationAudienceOption.Localized("admins", "native.siteNotifications.administratory"),
+        SiteNotificationAudienceOption.Localized("organization-owners", "native.siteNotifications.vladeltsy.organizatsiy")
     ];
 
     public SiteNotificationsViewModel(AdminSessionClient sessionClient) : base(sessionClient)
@@ -29,6 +31,8 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
     private bool _isUpdatingAudiences;
     private bool _isSendAttempted;
     private bool _isSendCompleted;
+    private string? _noticeResourceKey;
+    private bool _isSettingLocalizedNotice;
 
     [ObservableProperty]
     private IReadOnlyList<AdminSiteNotification> _templates = [];
@@ -56,7 +60,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSelectedUsers))]
-    private CommunicationOption _recipientScope = new("all", "Все пользователи");
+    private CommunicationOption _recipientScope = CommunicationOption.Localized("all", "native.email.vse.polzovateli");
 
     [ObservableProperty]
     private IReadOnlyList<SiteNotificationUserOption> _foundUsers = [];
@@ -77,7 +81,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
     private AdminSiteNotification? _pendingDelete;
 
     public IReadOnlyList<CommunicationOption> RecipientScopes { get; } =
-    [new("all", "Все пользователи"), new("selected", "Выбранные пользователи")];
+    [CommunicationOption.Localized("all", "native.email.vse.polzovateli"), CommunicationOption.Localized("selected", "native.siteNotifications.vybrannye.polzovateli")];
 
     public IReadOnlyList<SiteNotificationAudienceOption> AudienceOptions => this._audienceOptions;
 
@@ -93,7 +97,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
 
     public string SendWarning => this._isSendAttempted
         && !this._isSendCompleted
-        ? "Запрос отправлен, но результат не подтверждён. Проверьте историю уведомлений перед повторной отправкой."
+        ? AdminLocalization.Instance["native.siteNotifications.zapros.otpravlen.no.rezultat.ne.podtverzhdyon.proverte.istoriyu."]
         : string.Empty;
 
     public bool IsSelectedUsers => this.RecipientScope.Code == "selected";
@@ -103,6 +107,25 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
 
     public bool IsEmpty => !this.IsBusy && this.SelectedTabIndex == 2 && this.Templates.Count == 0
         && string.IsNullOrWhiteSpace(this.ErrorMessage);
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        CommunicationsViewModel.RefreshLocalizedOptions(this.RecipientScopes);
+        foreach (var audience in this._audienceOptions)
+        {
+            audience.RefreshLocalizedValues();
+        }
+
+        this.OnPropertyChanged(nameof(this.SelectedAudiences));
+        this.OnPropertyChanged(nameof(this.SendWarning));
+        if (this._noticeResourceKey is not null)
+        {
+            this._isSettingLocalizedNotice = true;
+            this.Notice = AdminLocalization.Instance[this._noticeResourceKey];
+            this._isSettingLocalizedNotice = false;
+        }
+    }
 
     protected override async Task LoadPageAsync(CancellationToken cancellationToken)
     {
@@ -234,7 +257,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
         }, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         this.EditingTemplate = null;
-        this.Notice = "Шаблон сохранён.";
+        this.SetLocalizedNotice("native.siteNotifications.shablon.sokhranyon");
         await this.LoadPageAsync(cancellationToken);
     });
 
@@ -302,7 +325,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
         this.SendTitle = string.Empty;
         this.SendBody = string.Empty;
         this.IsSendConfirmationOpen = false;
-        this.Notice = "История уведомлений обновлена. Можно начать новое уведомление.";
+        this.SetLocalizedNotice("native.siteNotifications.istoriya.uvedomleniy.obnovlena.mozhno.nachat.novoe.uvedomlenie");
         this.NotifySendAttemptStateChanged();
     });
 
@@ -331,7 +354,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
             user.IsSelected = false;
         }
 
-        this.Notice = "Уведомление отправлено.";
+        this.SetLocalizedNotice("native.siteNotifications.uvedomlenie.otpravleno");
         if (this.SelectedTabIndex == 1)
         {
             await this.LoadHistoryPageAsync(this.Page, cancellationToken);
@@ -352,7 +375,7 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
         await this.SessionClient.DeleteSiteNotificationAsync(this.PendingDelete!.Id, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         this.PendingDelete = null;
-        this.Notice = "Уведомление удалено.";
+        this.SetLocalizedNotice("native.siteNotifications.uvedomlenie.udaleno");
         await this.LoadHistoryPageAsync(this.Page, cancellationToken);
     });
 
@@ -486,5 +509,21 @@ public partial class SiteNotificationsViewModel : CommunicationsViewModel
         }
 
         this.NotifySendCanExecuteChanged();
+    }
+
+    private void SetLocalizedNotice(string key)
+    {
+        this._noticeResourceKey = key;
+        this._isSettingLocalizedNotice = true;
+        this.Notice = AdminLocalization.Instance[key];
+        this._isSettingLocalizedNotice = false;
+    }
+
+    partial void OnNoticeChanged(string value)
+    {
+        if (!this._isSettingLocalizedNotice)
+        {
+            this._noticeResourceKey = null;
+        }
     }
 }

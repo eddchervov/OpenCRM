@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { UiButton, formatDateOnly } from '@opencrm/ui'
+import { UiButton, formatDateOnly, useLocalization } from '@opencrm/ui'
+import { formattingCulture } from '@opencrm/ui/i18n'
+import '../schedulerControlMessages'
 import type { WorkspaceWorkingDay } from '../api/setup'
 import { hasWorkingSchedule, nextWorkingDay } from '../workingHours'
 
@@ -11,19 +13,20 @@ const props = defineProps<{
   timeZoneId?: string | null
 }>()
 const emit = defineEmits<{ selectDate: [date: string] }>()
+const { t } = useLocalization()
 const next = computed(() => nextWorkingDay(props.date, props.schedule))
 const isScheduleMissing = computed(() => !hasWorkingSchedule(props.schedule))
 const title = computed(() => {
-  if (isScheduleMissing.value) return props.canManage ? 'Настройте график работы' : 'График работы не настроен'
+  if (isScheduleMissing.value) return props.canManage ? t('schedulerControl.setupSchedule') : t('schedulerControl.scheduleMissing')
 
-  return props.date === formatDateOnly(undefined, props.timeZoneId || 'UTC') ? 'Сегодня выходной' : 'В этот день выходной'
+  return props.date === formatDateOnly(undefined, props.timeZoneId || 'UTC') ? t('schedulerControl.todayClosed') : t('schedulerControl.selectedDayClosed')
 })
-const dateLabel = computed(() => new Date(props.date + 'T12:00:00').toLocaleDateString('ru-RU', {
+const dateLabel = computed(() => new Date(props.date + 'T12:00:00').toLocaleDateString(formattingCulture.value, {
   day: 'numeric', month: 'long', weekday: 'long'
 }))
 const nextLabel = computed(() => {
   if (!next.value) return ''
-  const date = new Date(next.value.date + 'T12:00:00').toLocaleDateString('ru-RU', {
+  const date = new Date(next.value.date + 'T12:00:00').toLocaleDateString(formattingCulture.value, {
     weekday: 'short', day: 'numeric', month: 'long'
   })
 
@@ -32,22 +35,22 @@ const nextLabel = computed(() => {
 </script>
 
 <template>
-  <section class="scheduler-closed" :aria-label="isScheduleMissing ? 'График работы не настроен' : 'Выходной день'">
+  <section class="scheduler-closed" :aria-label="t(isScheduleMissing ? 'schedulerControl.scheduleNotConfigured' : 'schedulerControl.closedDay')">
     <svg class="scheduler-closed__icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
       <path d="M10 3v6m12-6v6M5 13h22M17 28H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9" />
       <path d="M25 19a6 6 0 1 0 5 8 5 5 0 0 1-5-8Z" />
     </svg>
     <div class="scheduler-closed__body">
       <h3>{{ title }}</h3>
-      <p v-if="isScheduleMissing">{{ canManage ? 'Укажите рабочие дни и часы организации, чтобы планировать записи по графику.' : 'Попросите администратора организации указать рабочие дни и часы.' }}</p>
-      <p v-else>{{ dateLabel }} — выходной по графику организации.</p>
+      <p v-if="isScheduleMissing">{{ t(canManage ? 'schedulerControl.organizationHoursRequired' : 'schedulerControl.askAdministrator') }}</p>
+      <p v-else>{{ t('schedulerControl.closedOnDate', { date: dateLabel }) }}</p>
       <div v-if="next" class="scheduler-closed__next">
-        <UiButton @click="emit('selectDate', next!.date)">К ближайшему рабочему дню</UiButton>
+        <UiButton @click="emit('selectDate', next!.date)">{{ t('schedulerControl.nearestWorkDay') }}</UiButton>
         <span>{{ nextLabel }}</span>
       </div>
-      <p v-else-if="!isScheduleMissing">Ближайший рабочий день в графике не указан.</p>
+      <p v-else-if="!isScheduleMissing">{{ t('schedulerControl.nextWorkDayMissing') }}</p>
     </div>
-    <a v-if="canManage" class="scheduler-closed__settings" href="#settings?tab=workflow">Настроить график</a>
+    <a v-if="canManage" class="scheduler-closed__settings" href="#settings?tab=workflow">{{ t('schedulerControl.configureSchedule') }}</a>
   </section>
 </template>
 

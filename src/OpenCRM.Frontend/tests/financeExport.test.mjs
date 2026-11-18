@@ -4,6 +4,12 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import * as localization from '@opencrm/ui/i18n'
+
+const messageSource = readFileSync(new URL('../packages/workspace/src/exportMessages.ts', import.meta.url), 'utf8')
+const messageCode = ts.transpileModule(messageSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+new Function('require', 'exports', messageCode)(() => localization, {})
 
 const componentPath = new URL('../packages/workspace/src/components/Export1CSection.vue', import.meta.url)
 const source = readFileSync(componentPath, 'utf8')
@@ -26,6 +32,8 @@ function exportSection(props, api) {
   const onMounted = () => {}
   const onBeforeUnmount = callback => { unmount = callback }
   const resolve = id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../exportMessages') return {}
     if (id === 'vue') return { ...vue, onMounted, onBeforeUnmount }
     if (id === '@opencrm/ui') return { UiButton: {}, UiLoader: {}, formatDateOnly: () => '2026-10-29' }
     if (id === '../api/export1C') return api

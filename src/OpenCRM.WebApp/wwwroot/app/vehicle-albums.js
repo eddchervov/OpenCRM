@@ -1,3 +1,5 @@
+var vehicleAlbumsMessages = document.getElementById('vehicle-album-manager').dataset;
+
 new Vue({
     el: '#vehicle-album-manager',
     data: function () {
@@ -29,14 +31,14 @@ new Vue({
                 this.albums = response.data.albums || [];
                 this.albumLimit = response.data.limit || null;
             } catch (error) {
-                this.handleApiError(error, 'Не удалось загрузить альбомы');
+                this.handleApiError(error, vehicleAlbumsMessages.errorLoad);
             } finally {
                 this.albumsLoading = false;
             }
         },
         createAlbum: async function () {
             if (!this.canCreateAlbum) {
-                this.showError('На бесплатном тарифе и в демо можно создать только 1 альбом.');
+                this.showError(vehicleAlbumsMessages.errorFreeLimit);
                 return;
             }
 
@@ -46,7 +48,7 @@ new Vue({
                 this.newAlbumTitle = '';
                 await this.loadAlbums();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось создать альбом');
+                this.handleApiError(error, vehicleAlbumsMessages.errorCreate);
             } finally {
                 this.albumSaving = false;
             }

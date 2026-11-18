@@ -145,6 +145,36 @@ public sealed class MaintenanceDateRulesTests
             CreateMaintenance(date), TimeSpan.FromHours(10), TimeSpan.FromHours(10), null));
     }
 
+    [Theory]
+    [InlineData(2026, 3, 8, 1, 30, 2, 30)]
+    [InlineData(2026, 3, 8, 2, 30, 3, 30)]
+    [InlineData(2026, 11, 1, 0, 30, 1, 30)]
+    [InlineData(2026, 11, 1, 1, 30, 2, 30)]
+    public void ApplyPlannedTimeRejectsInvalidOrAmbiguousOrganizationLocalTimes(
+        int year,
+        int month,
+        int day,
+        int startHour,
+        int startMinute,
+        int endHour,
+        int endMinute)
+    {
+        var date = new DateTime(year, month, day);
+        var maintenance = CreateMaintenance(date);
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
+        var start = new TimeSpan(startHour, startMinute, 0);
+        var end = new TimeSpan(endHour, endMinute, 0);
+
+        var exception = Assert.Throws<InvalidOperationException>(() => MaintenanceDateRules.ApplyPlannedTime(
+            maintenance,
+            start,
+            end,
+            null,
+            timeZone));
+
+        Assert.Contains("пропущенный или повторяющийся час", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static MaintenanceEntity CreateMaintenance(DateTime? date = null) => new()
     {
         Date = date ?? new DateTime(2026, 10, 11),

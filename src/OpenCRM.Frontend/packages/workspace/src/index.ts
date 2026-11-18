@@ -1,5 +1,7 @@
 ﻿export { default as WorkspaceCrmShell } from './components/WorkspaceCrmShell.vue'
 export { default as ClientsSection } from './components/ClientsSection.vue'
+export { provideWorkspaceCurrency, useWorkspaceCurrency } from './workspaceCurrency'
+import './localization'
 export { default as ClientCardSection } from './components/ClientCardSection.vue'
 export { default as MaintenanceCardSection } from './components/MaintenanceCardSection.vue'
 export { default as MaintenanceFormSection } from './components/MaintenanceFormSection.vue'
@@ -19,6 +21,7 @@ export type { VehicleRegistrationPlateFormat, VehicleRegistrationPlateFormats } 
 export { default as VehicleMediaSection } from './components/VehicleMediaSection.vue'
 export { default as VehiclesSection } from './components/VehiclesSection.vue'
 export { default as WorkspaceBreadcrumbs } from './components/WorkspaceBreadcrumbs.vue'
+export { workspaceLabelKey, workspaceGroupKey } from './workspaceChromeMessages'
 export { default as WorkspaceAccessNotice } from './components/WorkspaceAccessNotice.vue'
 export { default as WorkspacePageHelpButton } from './components/WorkspacePageHelpButton.vue'
 export { default as WorkspaceCommonSection } from './components/WorkspaceCommonSection.vue'
@@ -205,3 +208,6 @@ export { default as InquiryBookingContext } from './components/InquiryBookingCon
 export { inquiryUtcTime as organizationUtcTime } from './utils/inquiryTime'
 
 export { default as QuickBookingClientPicker } from './components/QuickBookingClientPicker.vue'
+
+export { registrationCountryOptions } from './utils/registrationCountries'
+export { internationalRegistrationPlateError } from './internationalRegistrationPlate'

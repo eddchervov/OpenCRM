@@ -5,6 +5,16 @@ import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 import * as registrationPlates from '../packages/workspace/src/vehicleRegistrationPlate.ts'
+import * as internationalPlates from '../packages/workspace/src/internationalRegistrationPlate.ts'
+import { registrationCountryOptions } from '../packages/workspace/src/utils/registrationCountries.ts'
+
+const vehicleMessages = {}
+const messagesSource = readFileSync(new URL('../packages/workspace/src/vehicleMessages.ts', import.meta.url), 'utf8')
+new Function('require', 'exports', ts.transpileModule(messagesSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(() => ({
+  registerMessages(locale, messages) { if (locale === 'ru') Object.assign(vehicleMessages, messages.vehicle) }
+}), {})
+const translate = (key, parameters = {}) => (vehicleMessages[key.replace(/^vehicle\./, '')] ?? key)
+  .replace(/\{(\w+)\}/g, (_, name) => String(parameters[name] ?? ''))
 
 const filename = new URL('../packages/workspace/src/components/VehicleFormSection.vue', import.meta.url)
 const { descriptor } = parse(readFileSync(filename, 'utf8'))
@@ -30,7 +40,10 @@ function setup(api = {}, values = {}, registrationApi = {}, clientsApi = {}) {
       onBeforeUnmount: hook => unmountedHooks.push(hook),
       watch: (_, callback) => watchers.push(callback)
     }
-    if (id === '@opencrm/ui' || id.endsWith('.vue')) return {}
+    if (id === '@opencrm/ui') return { useLocalization: () => ({ t: translate, locale: vue.ref('ru') }) }
+    if (id.endsWith('.vue') || id === '../localization' || id === '../vehicleMessages') return {}
+    if (id === '../internationalRegistrationPlate') return internationalPlates
+    if (id === '../utils/registrationCountries') return { registrationCountryOptions }
     if (id === '../analytics') return { trackWorkspaceGoal() {} }
     if (id === '../vehicleRegistrationPlate') return { ...registrationPlates, ...registrationApi }
     if (id === '../utils/vehicleBrandLogo') return { getVehicleBrandLogo: key => key ? { name: key, src: key } : null }
@@ -55,6 +68,19 @@ function setup(api = {}, values = {}, registrationApi = {}, clientsApi = {}) {
   const state = module.exports.default.setup(props, { expose() {}, emit() {} })
   return { state, props, calls, navigation, mountedHooks, unmountedHooks, watchers }
 }
+
+test('Неизвестная страна использует свободный номер, а редактирование прежней машины не заменяет null на RU', async () => {
+  const { state } = setup()
+  await state.loadForm()
+  assert.equal(state.form.registrationCountryCode, 'RU')
+  assert.equal(state.buildPayload().registrationCountryCode, null)
+  state.form.registrationCountryCode = 'ZZ'
+  state.form.registrationPlate = ' 沪A·abc123 '
+  assert.equal(state.isInternationalPlate.value, true)
+  const payload = state.buildPayload()
+  assert.equal(payload.registrationCountryCode, 'ZZ')
+  assert.equal(payload.registrationPlate, '沪A·abc123')
+})
 
 test('Новая форма не запрашивает фото и сохраняет привязку к клиенту', async () => {
   const { state, calls } = setup({}, { vehicleId: undefined, initialClientId: 'client' })

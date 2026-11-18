@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiLoader, UiPagination } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
 import { loadInquiryHistory, type Inquiry, type InquiryHistory } from '../api/inquiries'
 import InquiryTimeline from './InquiryTimeline.vue'
 import InquiryNoteComposer from './InquiryNoteComposer.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext; inquiry: Inquiry }>()
 const emit = defineEmits<{ close: []; updated: [inquiry: Inquiry] }>()
@@ -27,7 +32,7 @@ async function loadHistory() {
     const result = await loadInquiryHistory(props.context.organization.id, props.inquiry.id, page.value, active.signal)
     if (!active.signal.aborted) history.value = result
   } catch (caught) {
-    if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить историю.'
+    if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('inquiries.historyError')
   } finally {
     if (request === active) loading.value = false
   }
@@ -60,17 +65,17 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <dialog ref="dialog" class="inquiry-history" aria-labelledby="inquiry-history-title" @cancel.prevent="close" @click="closeFromBackdrop">
       <header class="inquiry-history__header ui-form-header">
-        <div><h2 id="inquiry-history-title">История обращения</h2><p>{{ inquiry.contactName }}</p></div>
-        <button type="button" class="inquiry-history__close" aria-label="Закрыть историю" :disabled="saving" autofocus @click="close">×</button>
+        <div><h2 id="inquiry-history-title">{{ t('inquiries.historyTitle') }}</h2><p>{{ inquiry.contactName }}</p></div>
+        <button type="button" class="inquiry-history__close" :aria-label="t('inquiries.closeHistory')" :disabled="saving" autofocus @click="close">×</button>
       </header>
       <div class="inquiry-history__body">
-        <div class="inquiry-history__toolbar"><span>{{ history ? 'Событий: ' + history.totalCount : 'События и заметки' }}</span></div>
+        <div class="inquiry-history__toolbar"><span>{{ history ? t('inquiries.eventsCount', { count: history.totalCount }) : t('inquiries.eventsNotes') }}</span></div>
         <InquiryNoteComposer :context="context" :inquiry="inquiry" @busy="saving = $event" @updated="emit('updated', $event)" />
-        <div v-if="error" class="inquiry-history__error" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="loadHistory">Повторить</UiButton></div>
+        <div v-if="error" class="inquiry-history__error" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="loadHistory">{{ t('inquiries.retry') }}</UiButton></div>
         <UiLoader v-if="loading" />
         <InquiryTimeline v-else-if="history" :events="history.items" :time-zone-id="inquiry.timeZoneId" :members="context.organization.members" />
       </div>
-      <footer class="inquiry-history__footer"><UiPagination v-model="page" :total-items="history?.totalCount || 0" :items-per-page="10" :disabled="loading || saving" label="История обращения" @update:model-value="loadHistory" /><UiButton variant="secondary" :disabled="saving" @click="close">Закрыть</UiButton></footer>
+      <footer class="inquiry-history__footer"><UiPagination v-model="page" :total-items="history?.totalCount || 0" :items-per-page="10" :disabled="loading || saving" :label="t('inquiries.historyTitle')" @update:model-value="loadHistory" /><UiButton variant="secondary" :disabled="saving" @click="close">{{ t('inquiries.close') }}</UiButton></footer>
     </dialog>
   </Teleport>
 </template>

@@ -11,6 +11,13 @@ const code = ts.transpileModule(compileScript(descriptor, { id: 'notification-ch
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
+const notificationLabels = {
+  'notificationChannel.telegram': 'Telegram', 'notificationChannel.max': 'MAX',
+  'notificationChannel.loading': 'Загрузка', 'notificationChannel.loadError': 'Ошибка загрузки',
+  'notificationChannel.unavailable': 'Недоступен', 'notificationChannel.notConnected': 'Не подключён',
+  'notificationChannel.configured': 'Настроен', 'notificationChannel.disabled': 'Выключен'
+}
+
 function setup(channel = 'telegram', canWrite = true, organizationId = 'org-1') {
   const calls = []
   const events = []
@@ -39,7 +46,8 @@ function setup(channel = 'telegram', canWrite = true, organizationId = 'org-1') 
   let beforeUnmount
   const resolve = id => {
     if (id === 'vue') return { ...vue, onBeforeUnmount(callback) { beforeUnmount = callback } }
-    if (id === '@opencrm/ui') return { UiButton: {}, UiInput: {}, getProjectBrand }
+    if (id === '@opencrm/ui') return { UiButton: {}, UiInput: {}, getProjectBrand, useLocalization: () => ({ t: key => notificationLabels[key] ?? key }) }
+    if (id === '../notificationMessages') return {}
     if (id === '@opencrm/ui/projectBrand') return { getProjectBrand }
     if (id === '../api/telegramNotifications') return telegram
     if (id === '../api/maxNotifications') return max

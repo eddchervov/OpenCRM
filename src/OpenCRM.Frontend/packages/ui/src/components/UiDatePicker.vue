@@ -5,6 +5,11 @@ import 'v-calendar/style.css'
 import { formatDateOnly, parseDateOnly } from '../dateOnly'
 import { workspaceTheme } from '../workspaceTheme'
 import UiFieldLabel from './UiFieldLabel.vue'
+import { useLocalization, formattingCulture } from '../i18n'
+import { getDateInputMasks, isImpossibleDateInput } from '../dateInputFormat'
+
+const { t } = useLocalization()
+const inputMasks = computed(() => getDateInputMasks(formattingCulture.value))
 
 const model = defineModel<string>({ default: '' })
 const fieldId = useId()
@@ -22,9 +27,9 @@ const props = withDefaults(defineProps<{
   error?: string
 }>(), {
   id: undefined,
-  label: 'Дата',
+  label: '',
   labelHelp: '',
-  placeholder: 'Выберите дату',
+  placeholder: '',
   disabled: false,
   enableTimePicker: false,
   required: false,
@@ -52,21 +57,7 @@ function clearEmptyInput(event: Event) {
 }
 
 function hasImpossibleDate(value: string) {
-  const match = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[\s,]|$)/)
-  if (!match) {
-    return false
-  }
-
-  const day = Number(match[1])
-  const month = Number(match[2])
-  const year = Number(match[3])
-  const date = new Date(year < 100 ? 0 : year, month - 1, day)
-
-  if (year < 100) {
-    date.setFullYear(year)
-  }
-
-  return date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day
+  return isImpossibleDateInput(value, formattingCulture.value)
 }
 
 function guardImpossibleDateInput(inputEvents: Record<string, (event: Event) => void>) {
@@ -78,7 +69,7 @@ function guardImpossibleDateInput(inputEvents: Record<string, (event: Event) => 
     return [name, (event: Event) => {
       const input = event.target as HTMLInputElement
       if (hasImpossibleDate(input.value)) {
-        manualInputError.value = 'Введите существующую дату.'
+        manualInputError.value = t('common.invalidDate')
         input.setCustomValidity(manualInputError.value)
         model.value = ''
         return
@@ -113,25 +104,26 @@ const ariaDescribedBy = computed(() => [
 
 <template>
   <label class="ui-field ui-date-picker">
-    <UiFieldLabel :label="label" :required="required" :help="labelHelp" />
+    <UiFieldLabel :label="label || t('common.date')" :required="required" :help="labelHelp" />
     <DatePicker
       v-model="pickerValue"
       :is-dark="workspaceTheme === 'dark'"
       :mode="enableTimePicker ? 'dateTime' : 'date'"
       :disabled="disabled"
-      :locale="'ru'"
+      :locale="formattingCulture"
+      :masks="inputMasks"
       :is24hr="true"
       :input-debounce="0"
       color="orange"
       :popover="{ placement: 'bottom-start', visibility: 'click' }"
     >
       <template #header-prev-button>
-        <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Предыдущий месяц">
+        <svg width="24" height="24" viewBox="0 0 24 24" role="img" :aria-label="t('common.previousMonth')">
           <path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" />
         </svg>
       </template>
       <template #header-next-button>
-        <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Следующий месяц">
+        <svg width="24" height="24" viewBox="0 0 24 24" role="img" :aria-label="t('common.nextMonth')">
           <path d="m10 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" />
         </svg>
       </template>
@@ -144,7 +136,7 @@ const ariaDescribedBy = computed(() => [
           :aria-invalid="!!error || !!manualInputError || undefined"
           :aria-describedby="ariaDescribedBy"
           :value="inputValue"
-          :placeholder="placeholder"
+          :placeholder="placeholder || t('common.chooseDate')"
           :disabled="disabled"
           :required="required"
           @input="clearEmptyInput"

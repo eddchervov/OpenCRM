@@ -8,13 +8,14 @@
     const maximumFileSize = 10 * 1024 * 1024;
     const maximumTotalSize = 20 * 1024 * 1024;
     const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.txt', '.log']);
-    const sizeFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+    const messages = input.closest('.support-attachments').dataset;
+    const sizeFormatter = new Intl.NumberFormat(messages.formattingCulture, { maximumFractionDigits: 1 });
     let selectedFiles = [];
 
     function formatSize(size) {
-        if (size < 1024) return `${size} Б`;
-        if (size < 1024 * 1024) return `${sizeFormatter.format(size / 1024)} КБ`;
-        return `${sizeFormatter.format(size / 1024 / 1024)} МБ`;
+        if (size < 1024) return `${size} ${messages.bytes}`;
+        if (size < 1024 * 1024) return `${sizeFormatter.format(size / 1024)} ${messages.kilobytes}`;
+        return `${sizeFormatter.format(size / 1024 / 1024)} ${messages.megabytes}`;
     }
 
     function render() {
@@ -39,8 +40,8 @@
             remove.type = 'button';
             remove.className = 'support-attachments__remove';
             remove.textContent = '×';
-            remove.title = 'Удалить файл';
-            remove.setAttribute('aria-label', `Убрать файл ${file.name}`);
+            remove.title = messages.removeTitle;
+            remove.setAttribute('aria-label', messages.removeLabelTemplate.replace('{fileName}', file.name));
             remove.addEventListener('click', () => {
                 selectedFiles.splice(index, 1);
                 status.textContent = '';
@@ -61,19 +62,19 @@
         for (const file of incoming) {
             const extension = file.name.includes('.') ? `.${file.name.split('.').pop().toLowerCase()}` : '';
             if (!allowedExtensions.has(extension)) {
-                message = 'Выберите JPG, PNG, WebP, PDF, TXT или LOG.';
+                message = messages.errorExtension;
                 break;
             }
             if (file.size === 0 || file.size > maximumFileSize) {
-                message = `Файл «${file.name}» должен быть непустым и не больше 10 МБ.`;
+                message = messages.errorFileSize.replace('{fileName}', file.name);
                 break;
             }
             if (nextFiles.length >= maximumFiles) {
-                message = 'Можно прикрепить не больше пяти файлов.';
+                message = messages.errorFileCount;
                 break;
             }
             if (nextFiles.reduce((total, item) => total + item.size, 0) + file.size > maximumTotalSize) {
-                message = 'Общий размер файлов не должен превышать 20 МБ.';
+                message = messages.errorTotalSize;
                 break;
             }
             nextFiles.push(file);

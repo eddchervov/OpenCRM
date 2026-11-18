@@ -2,15 +2,15 @@
 @{
     Layout = "/Views/Personal/_PersonalLayout.cshtml";
     ViewData["PersonalVehiclePage"] = true;
-    ViewData["Title"] = "Добавить обслуживание";
+    ViewData["Title"] = Text["maintenance.legacy.form.createMaintenance"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "maintenance-create-page-body";
-    ViewData["BreadcrumbTitle"] = "Добавить обслуживание";
-    ViewData["PageTitle"] = "Добавить обслуживание";
-    ViewData["SubtitlePrefix"] = "Заполните информацию об обслуживании или ремонте ";
+    ViewData["BreadcrumbTitle"] = Text["maintenance.legacy.form.createMaintenance"].Value;
+    ViewData["PageTitle"] = Text["maintenance.legacy.form.createMaintenance"].Value;
+    ViewData["SubtitlePrefix"] = Text["maintenance.legacy.form.subtitleCreate"].Value;
     ViewData["FormId"] = "maintenanceCreateForm";
     ViewData["SaveAction"] = "save_createMaintenance";
-    ViewData["SaveButtonText"] = "Сохранить обслуживание";
+    ViewData["SaveButtonText"] = Text["maintenance.legacy.form.saveMaintenance"].Value;
     var breadcrumbVehicle = Model;
 
 }
@@ -26,7 +26,7 @@
             <form id="maintenanceCreateForm">
                 <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
                     <i class="fa fa-spinner fa-spin"></i>
-                    <span>Загружаем форму обслуживания...</span>
+                    <span>@Text["maintenance.legacy.form.loading"]</span>
                 </div>
                 <partial name="_MaintenanceSharedSteps" view-data="ViewData" />
 
@@ -35,21 +35,21 @@
                         <div class="card-header">
                             <h3 class="card-title">
                                 <i class="fa fa-camera me-2"></i>
-                                Загрузка фотографий
+                                @Text["maintenance.legacy.photos.uploadingPhotos"]
                             </h3>
                         </div>
                         <div class="card-body">
                             <div class="text-center mb-4">
                                 <i class="fa fa-check-circle text-success fa-3x mb-3"></i>
-                                <h4>Обслуживание успешно создано!</h4>
-                                <p class="text-muted">Теперь вы можете загрузить фотографии или завершить процесс</p>
+                                <h4>@Text["maintenance.legacy.photos.successCreate"]</h4>
+                                <p class="text-muted">@Text["maintenance.legacy.photos.finishHelpCreate"]</p>
                             </div>
 
                             <div v-if="photos.length > 0">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5>Выбранные фотографии ({{ photos.length }})</h5>
+                                    <h5>@(Text["maintenance.legacy.photos.selected"].Value.Replace("{0}", "{{ photos.length }}"))</h5>
                                     <button type="button" class="btn btn-sm btn-outline-danger" @@click="clearPhotoPreviews">
-                                        <i class="fa fa-trash me-1"></i>Очистить все
+                                        <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.clearAll"]
                                     </button>
                                 </div>
 
@@ -66,7 +66,7 @@
                                             </div>
                                             <div class="card-footer p-2">
                                                 <button type="button" class="btn btn-sm btn-danger w-100" @@click="removePhoto(index)">
-                                                    <i class="fa fa-trash me-1"></i>Удалить
+                                                    <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.remove"]
                                                 </button>
                                             </div>
                                         </div>
@@ -76,12 +76,12 @@
                             <div v-else>
                                 <div class="text-center py-4">
                                     <i class="fa fa-image fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">Фотографии не выбраны</p>
+                                    <p class="text-muted">@Text["maintenance.legacy.photos.empty"]</p>
                                 </div>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label">Добавить фотографии</label>
+                                <label class="form-label">@Text["maintenance.legacy.photos.add"]</label>
                                 <input type="file"
                                        class="form-control create-maintenance-input"
                                        id="photos"
@@ -89,14 +89,14 @@
                                        accept="image/*"
                                        @@change="changeFile($event)">
                                 <div class="form-text">
-                                    Можно загрузить до 10 фотографий (JPG, PNG).
-                                    <strong>Максимальный общий размер всех файлов: 100 МБ</strong>
+                                    @Text["maintenance.legacy.photos.uploadInstructions"]
+                                    <strong><strong>@Text["maintenance.legacy.photos.limits"]</strong></strong>
                                 </div>
                             </div>
 
                             <div v-if="isUploading" class="mt-4">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Загрузка...</span>
+                                    <span>@Text["maintenance.legacy.photos.uploading"]</span>
                                     <span>{{ uploadProgress }}%</span>
                                 </div>
                                 <div class="progress">
@@ -108,17 +108,17 @@
 
                     <div class="d-flex justify-content-between mt-4">
                         <button type="button" class="btn btn-outline-dark" @@click="skipPhotoUpload" :disabled="isUploading">
-                            Пропустить
+                            @Text["maintenance.legacy.photos.skip"]
                         </button>
 
                         <button type="button" class="btn btn-success"
                                 :disabled="isUploading || photos.length === 0"
                                 @@click="uploadPhotos">
                             <template v-if="!isUploading">
-                                <i class="fa fa-upload me-2"></i>Загрузить фото
+                                <i class="fa fa-upload me-2"></i>@Text["maintenance.legacy.form.create.uploadPhoto"]
                             </template>
                             <template v-else>
-                                <i class="fa fa-spinner fa-spin fa-fw"></i> Загрузка...
+                                <i class="fa fa-spinner fa-spin fa-fw"></i> @Text["maintenance.legacy.photos.uploading"]
                             </template>
                         </button>
                     </div>
@@ -161,11 +161,11 @@
 }
 
 @section Breadcrumbs {
-    <nav aria-label="Хлебные крошки">
+    <nav aria-label="@Text["maintenance.legacy.page.breadcrumb"]">
         <ol>
-            <li><a href="/vehicles">Личная техника</a></li>
-            <li><a href="/vehicle/@breadcrumbVehicle?.Id">@(breadcrumbVehicle?.DisplayName ?? "Техника")</a></li>
-            <li><h1 aria-current="page">Добавить обслуживание</h1></li>
+            <li><a href="/vehicles">@Text["maintenance.legacy.page.vehiclePersonal"]</a></li>
+            <li><a href="/vehicle/@breadcrumbVehicle?.Id">@(breadcrumbVehicle?.DisplayName ?? Text["maintenance.legacy.page.vehicle"].Value)</a></li>
+            <li><h1 aria-current="page">@Text["maintenance.legacy.form.createMaintenance"]</h1></li>
         </ol>
     </nav>
 }

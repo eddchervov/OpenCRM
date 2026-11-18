@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../proPreviewMessages'
 import { getProjectBrand } from '@opencrm/ui'
 import type { ProFeatureKey, ProFeatureVisual } from '../proFeatureDetails'
+
+const { t } = useLocalization()
 
 const projectBrand = getProjectBrand()
 
@@ -22,12 +26,12 @@ defineProps<{
     <header class="pro-workflow__topbar">
       <span class="pro-workflow__brand-mark" aria-hidden="true">O</span>
       <strong>{{ visual.heading }}</strong>
-      <span class="pro-workflow__example">Пример</span>
+      <span class="pro-workflow__example">{{ t('proPreview.example') }}</span>
     </header>
 
     <template v-if="feature === 'shifts'">
       <div class="pro-workflow__schedule">
-        <div class="pro-workflow__schedule-head"><span>Команда</span><span>План на день</span></div>
+        <div class="pro-workflow__schedule-head"><span>{{ t('proPreview.team') }}</span><span>{{ t('proPreview.dayPlan') }}</span></div>
         <div class="pro-workflow__time-ruler"><span></span><div><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span></div></div>
         <div v-for="(row, index) in visual.rows" :key="row.label" class="pro-workflow__shift-row">
           <div class="pro-workflow__person"><span class="pro-workflow__avatar">{{ row.label.slice(0, 1) }}</span><strong>{{ row.label }}</strong></div>
@@ -39,19 +43,19 @@ defineProps<{
           </div>
         </div>
       </div>
-      <footer class="pro-workflow__footnote"><span class="pro-workflow__legend-dot"></span> Рабочая смена <span>3 сотрудника</span></footer>
+      <footer class="pro-workflow__footnote"><span class="pro-workflow__legend-dot"></span> {{ t('proPreview.workingShift') }} <span>{{ t('proPreview.threeEmployees') }}</span></footer>
     </template>
 
     <template v-else-if="feature === 'selfAssignment' || feature === 'myWork'">
-      <div class="pro-workflow__work-head"><span>{{ feature === 'myWork' ? 'Мои задачи' : 'Назначения' }}</span><span>3 работы</span></div>
+      <div class="pro-workflow__work-head"><span>{{ feature === 'myWork' ? t('proPreview.myTasks') : t('proPreview.assignments') }}</span><span>{{ t('proPreview.threeJobs') }}</span></div>
       <div class="pro-workflow__work-list">
         <article v-for="(row, index) in visual.rows" :key="row.label" class="pro-workflow__work-card">
           <span class="pro-workflow__work-index">0{{ index + 1 }}</span>
           <div class="pro-workflow__work-info"><strong>{{ row.label }}</strong><small>{{ row.value }}</small></div>
-          <div class="pro-workflow__stage" :class="`pro-workflow__stage--${index}`"><span></span>{{ index === 0 ? (feature === 'myWork' ? 'В работе' : 'Ожидает') : index === 1 ? (feature === 'myWork' ? 'Следом' : 'Свободна') : (feature === 'myWork' ? 'В плане' : 'Назначена') }}</div>
+          <div class="pro-workflow__stage" :class="`pro-workflow__stage--${index}`"><span></span>{{ index === 0 ? (feature === 'myWork' ? t('proPreview.inProgress') : t('proPreview.waiting')) : index === 1 ? (feature === 'myWork' ? t('proPreview.next') : t('proPreview.available')) : (feature === 'myWork' ? t('proPreview.planned') : t('proPreview.assigned')) }}</div>
         </article>
       </div>
-      <footer class="pro-workflow__progress"><span><i></i></span><small>{{ feature === 'myWork' ? 'В работе' : 'Назначена вам' }}</small><strong>1 задача</strong><small v-if="feature === 'selfAssignment'">Доступность зависит от настроек и прав</small></footer>
+      <footer class="pro-workflow__progress"><span><i></i></span><small>{{ feature === 'myWork' ? t('proPreview.inProgress') : t('proPreview.assignedToYou') }}</small><strong>{{ t('proPreview.oneTask') }}</strong><small v-if="feature === 'selfAssignment'">{{ t('proPreview.availabilityHint') }}</small></footer>
     </template>
 
     <template v-else-if="feature === 'notifications' || feature === 'messageTemplates'">
@@ -63,9 +67,9 @@ defineProps<{
           </div>
         </aside>
         <div class="pro-workflow__message-detail">
-          <div class="pro-workflow__client"><span class="pro-workflow__avatar">АС</span><span><strong>Анна Соколова</strong><small>Клиент · Toyota Camry</small></span></div>
-          <div class="pro-workflow__bubble"><small>{{ feature === 'notifications' ? 'Напоминание о визите' : visual.rows[0].label }}</small><p>Анна, {{ feature === 'notifications' ? 'напоминаем о записи на полировку.' : 'ваша запись на полировку подтверждена.' }} Будем ждать вас!</p><span>Пример сообщения</span></div>
-          <div class="pro-workflow__message-meta"><span>{{ visual.rows[0].value }}</span><span class="pro-workflow__status">Результат отправки</span></div>
+          <div class="pro-workflow__client"><span class="pro-workflow__avatar">{{ t('proPreview.annaInitials') }}</span><span><strong>{{ t('proPreview.anna') }}</strong><small>{{ t('proPreview.clientVehicle') }}</small></span></div>
+          <div class="pro-workflow__bubble"><small>{{ feature === 'notifications' ? t('proPreview.reminder') : visual.rows[0].label }}</small><p>{{ feature === 'notifications' ? t('proPreview.reminderExample') : t('proPreview.confirmationExample') }}</p><span>{{ t('proPreview.messageExample') }}</span></div>
+          <div class="pro-workflow__message-meta"><span>{{ visual.rows[0].value }}</span><span class="pro-workflow__status">{{ t('proPreview.deliveryResult') }}</span></div>
         </div>
       </div>
     </template>
@@ -73,35 +77,35 @@ defineProps<{
     <template v-else-if="feature === 'documentStyling'">
       <div class="pro-workflow__paper-wrap">
         <article class="pro-workflow__paper">
-          <header class="pro-workflow__paper-brand"><span class="pro-workflow__paper-logo">O</span><span><strong>{{ projectBrand }}</strong><small>{{ visual.rows[0].value }}</small></span><span class="pro-workflow__paper-label">ДОКУМЕНТ</span></header>
-          <div class="pro-workflow__paper-title"><small>ЗАКАЗ-НАРЯД · ПРИМЕР</small><strong>Выполненные работы</strong></div>
-          <div class="pro-workflow__paper-row pro-workflow__paper-row--head"><span>Наименование работы</span><span>Статус</span></div>
-          <div class="pro-workflow__paper-row"><span>{{ visual.rows[1].value }}</span><span class="pro-workflow__status">Выполнено</span></div>
+          <header class="pro-workflow__paper-brand"><span class="pro-workflow__paper-logo">O</span><span><strong>{{ projectBrand }}</strong><small>{{ visual.rows[0].value }}</small></span><span class="pro-workflow__paper-label">{{ t('proPreview.document') }}</span></header>
+          <div class="pro-workflow__paper-title"><small>{{ t('proPreview.workOrderExample') }}</small><strong>{{ t('proPreview.completedWork') }}</strong></div>
+          <div class="pro-workflow__paper-row pro-workflow__paper-row--head"><span>{{ t('proPreview.workName') }}</span><span>{{ t('proPreview.status') }}</span></div>
+          <div class="pro-workflow__paper-row"><span>{{ visual.rows[1].value }}</span><span class="pro-workflow__status">{{ t('proPreview.completed') }}</span></div>
           <div class="pro-workflow__paper-total"><span>{{ visual.rows[2].label }}</span><strong>{{ visual.rows[2].value }}</strong></div>
         </article>
       </div>
     </template>
 
     <template v-else-if="feature === 'dataImport'">
-      <div class="pro-workflow__import-head"><span><i></i> clients_october.xlsx</span><span>3 колонки · пример</span></div>
+      <div class="pro-workflow__import-head"><span><i></i> clients_october.xlsx</span><span>{{ t('proPreview.threeColumns') }}</span></div>
       <div class="pro-workflow__mapping">
-        <div class="pro-workflow__mapping-caption"><span>Данные таблицы</span><span></span><span>Поле системы</span></div>
+        <div class="pro-workflow__mapping-caption"><span>{{ t('proPreview.tableData') }}</span><span></span><span>{{ t('proPreview.systemField') }}</span></div>
         <div v-for="(row, index) in visual.rows" :key="row.label" class="pro-workflow__mapping-row">
-          <span class="pro-workflow__column"><small>СТОЛБЕЦ {{ index + 1 }}</small><strong>{{ row.value }}</strong></span>
+          <span class="pro-workflow__column"><small>{{ t('proPreview.column', { number: index + 1 }) }}</small><strong>{{ row.value }}</strong></span>
           <span class="pro-workflow__map-line"><i></i></span>
-          <span class="pro-workflow__column pro-workflow__column--target"><small>СОПОСТАВЛЕНО</small><strong>{{ row.label }}</strong><b>✓</b></span>
+          <span class="pro-workflow__column pro-workflow__column--target"><small>{{ t('proPreview.matched') }}</small><strong>{{ row.label }}</strong><b>✓</b></span>
         </div>
       </div>
-      <footer class="pro-workflow__import-footer"><span><i></i> Сопоставление проверено</span><span>Демонстрация</span></footer>
+      <footer class="pro-workflow__import-footer"><span><i></i> {{ t('proPreview.mappingChecked') }}</span><span>{{ t('proPreview.demonstration') }}</span></footer>
     </template>
 
     <template v-else-if="feature === 'accountingExport'">
       <div class="pro-workflow__export">
-        <div class="pro-workflow__export-file"><span class="pro-workflow__file-icon">1C</span><span><strong>выгрузка.json</strong><small>{{ visual.rows[2].value }}</small></span><span class="pro-workflow__ready">ПРИМЕР</span></div>
+        <div class="pro-workflow__export-file"><span class="pro-workflow__file-icon">1C</span><span><strong>{{ t('proPreview.exportFilename') }}</strong><small>{{ visual.rows[2].value }}</small></span><span class="pro-workflow__ready">{{ t('proPreview.example') }}</span></div>
         <div class="pro-workflow__export-summary">
           <div v-for="row in visual.rows" :key="row.label"><small>{{ row.label }}</small><strong>{{ row.value }}</strong></div>
         </div>
-        <div class="pro-workflow__export-track"><span><i></i><i></i><i></i></span><small>Далее: .epf, ручная сверка и проведение в 1С</small></div>
+        <div class="pro-workflow__export-track"><span><i></i><i></i><i></i></span><small>{{ t('proPreview.exportNext') }}</small></div>
       </div>
     </template>
   </section>

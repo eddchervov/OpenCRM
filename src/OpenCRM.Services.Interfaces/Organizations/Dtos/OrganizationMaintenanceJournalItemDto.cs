@@ -47,6 +47,9 @@ public sealed class OrganizationMaintenanceJournalItemDto
     /// <summary> Номер акта, если он присвоен. </summary>
     public int? WorkActNumber { get; init; }
 
+    /// <summary> Валюта сохранённой записи обслуживания. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Сумма по записи обслуживания. </summary>
     public decimal Amount { get; init; }
 

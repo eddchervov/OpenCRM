@@ -14,6 +14,9 @@ using OpenCRM.WebApp.Navigation;
 using OpenCRM.WebApp.Product;
 using OpenCRM.WebApp.Models.Personal;
 using System.Text;
+using System.Globalization;
+using System.Resources;
+using OpenCRM.WebApp.Infrastructure.Localization;
 
 namespace OpenCRM.WebApp.Controllers.Personal;
 
@@ -29,6 +32,13 @@ public class PersonalController(
     IOrganizationInvitationQueryService invitationQueries,
     IOrganizationInvitationCommandService invitationCommands) : Controller
 {
+    private static readonly ResourceManager s_resources = new(
+        "OpenCRM.WebApp.Resources.Infrastructure.Localization.LocalizationStrings",
+        typeof(LocalizationStrings).Assembly);
+
+    private static string Localize(string key) =>
+        PersonalController.s_resources.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
     /// <summary> Отображает главную страницу личного кабинета. </summary>
     [HttpGet]
     public async Task<IActionResult> Index()
@@ -226,7 +236,7 @@ public class PersonalController(
 
         return RedirectToAction(nameof(ChangePassword), new
         {
-            statusMessage = "Ваш пароль установлен."
+            statusMessage = PersonalController.Localize("personal.password.setSuccess")
         });
     }
 
@@ -268,14 +278,14 @@ public class PersonalController(
 
         if (model.OldPassword == model.NewPassword)
         {
-            ModelState.AddModelError(string.Empty, "Старый и новый пароль совпадают.");
+            ModelState.AddModelError(string.Empty, PersonalController.Localize("personal.password.same"));
             return View(model);
         }
 
         var changePasswordResult = await userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
         if (!changePasswordResult.Succeeded)
         {
-            ModelState.AddModelError(string.Empty, "Неверный пароль.");
+            ModelState.AddModelError(string.Empty, PersonalController.Localize("personal.password.invalid"));
             return View(model);
         }
 
@@ -283,7 +293,7 @@ public class PersonalController(
 
         return RedirectToAction(nameof(ChangePassword), new
         {
-            statusMessage = "Ваш пароль был изменен."
+            statusMessage = PersonalController.Localize("personal.password.changeSuccess")
         });
     }
 

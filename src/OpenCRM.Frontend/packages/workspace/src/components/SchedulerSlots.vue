@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { UiButton, UiSelect } from '@opencrm/ui'
+import { translate as t } from '@opencrm/ui/i18n'
+import '../schedulerMessages'
+import '../schedulerControlMessages'
+import '../schedulerCalendarMessages'
 import { addSchedulerMinutes, getSchedulerFreeStarts, getSchedulerDayInterval, normalizeSchedulerLocation, type SchedulerCalendarItem } from '../utils/schedulerDay'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 
@@ -19,28 +23,35 @@ const emit = defineEmits<{
 const scrollContainer = ref<HTMLDivElement | null>(null)
 const duration = defineModel<number>('duration', { default: 60 })
 const durationSelection = computed({ get: () => String(duration.value), set: (value: string) => { duration.value = Number(value) } })
-const durationOptions = [
-  { value: '30', label: '30 минут' },
-  { value: '60', label: '1 час' },
-  { value: '90', label: '1 час 30 минут' },
-  { value: '120', label: '2 часа' },
-  { value: '180', label: '3 часа' },
-  { value: '240', label: '4 часа' }
-]
+const durationOptions = computed(() => [
+  { value: '30', label: t('schedulerCalendar.duration30') },
+  { value: '60', label: t('schedulerCalendar.duration60') },
+  { value: '90', label: t('schedulerCalendar.duration90') },
+  { value: '120', label: t('schedulerCalendar.duration120') },
+  { value: '180', label: t('schedulerCalendar.duration180') },
+  { value: '240', label: t('schedulerCalendar.duration240') }
+])
 const postFilter = defineModel<string>('postFilter', { default: '' })
-const postOptions = computed(() => [{ value: '', label: 'Все посты' }, ...props.posts.map(post => ({ value: post, label: post }))])
+const postOptions = computed(() => [{ value: '', label: t('schedulerControl.allLocations') }, ...props.posts.map(post => ({ value: post, label: post }))])
 const periods = [
-  { title: 'Утро', start: 0, end: 720 },
-  { title: 'День', start: 720, end: 960 },
-  { title: 'Вечер', start: 960, end: 1440 }
+  { title: 'morning', start: 0, end: 720 },
+  { title: 'day', start: 720, end: 960 },
+  { title: 'evening', start: 960, end: 1440 }
 ]
-const closedPostKeys = computed(() => new Set(props.closedPosts.map(normalizeSchedulerLocation)))
+function isPlaceholderPost(post?: string | null) {
+  return post === t('scheduler.noPost') || post === 'Без поста'
+}
+function normalizeLocation(post?: string | null) {
+  return normalizeSchedulerLocation(isPlaceholderPost(post) ? 'Без поста' : post)
+}
+const normalizedItems = computed(() => props.items.map(item => isPlaceholderPost(item.location) ? { ...item, location: 'Без поста' } : item))
+const closedPostKeys = computed(() => new Set(props.closedPosts.map(normalizeLocation)))
 const columns = computed(() => props.posts.filter(post => !postFilter.value || post === postFilter.value).map(location => ({
   location,
-  isClosed: closedPostKeys.value.has(normalizeSchedulerLocation(location)),
-  starts: closedPostKeys.value.has(normalizeSchedulerLocation(location)) ? [] : getSchedulerFreeStarts(props.items, props.date, location, props.intervals, duration.value),
+  isClosed: closedPostKeys.value.has(normalizeLocation(location)),
+  starts: closedPostKeys.value.has(normalizeLocation(location)) ? [] : getSchedulerFreeStarts(normalizedItems.value, props.date, isPlaceholderPost(location) ? 'Без поста' : location, props.intervals, duration.value),
   busy: props.items.flatMap(item => {
-    if (item.status !== 1 && item.status !== 2 || normalizeSchedulerLocation(item.location) !== normalizeSchedulerLocation(location)) return []
+    if (item.status !== 1 && item.status !== 2 || normalizeLocation(item.location) !== normalizeLocation(location)) return []
     const interval = getSchedulerDayInterval(item, props.date)
     return interval ? [{ item, ...interval }] : []
   }).sort((left, right) => left.start - right.start)
@@ -67,22 +78,22 @@ function create(location: string, minute: number) {
 </script>
 
 <template>
-  <section class="scheduler-free" aria-label="Свободное время по постам">
+  <section class="scheduler-free" :aria-label="t('schedulerCalendar.slotsAria')">
     <div class="scheduler-free__tools">
-      <UiSelect v-model="durationSelection" label="Длительность" aria-label="Длительность работы" :options="durationOptions" :searchable="false" required />
-      <UiSelect v-model="postFilter" label="Пост" aria-label="Показать пост" :options="postOptions" :searchable="false" />
-      <div v-if="intervals.length && columns.length > 1" class="scheduler-free__navigation" aria-label="Прокрутка постов">
-        <UiButton variant="secondary" aria-label="Показать посты слева" @click="scrollPosts(-1)">←</UiButton>
-        <UiButton variant="secondary" aria-label="Показать посты справа" @click="scrollPosts(1)">→</UiButton>
+      <UiSelect v-model="durationSelection" :label="t('schedulerCalendar.duration')" :aria-label="t('schedulerCalendar.workDuration')" :options="durationOptions" :searchable="false" required />
+      <UiSelect v-model="postFilter" :label="t('schedulerControl.posts')" :aria-label="t('schedulerCalendar.filterPostLabel')" :options="postOptions" :searchable="false" />
+      <div v-if="intervals.length && columns.length > 1" class="scheduler-free__navigation" :aria-label="t('schedulerCalendar.scrollPosts')">
+        <UiButton variant="secondary" :aria-label="t('schedulerCalendar.showPostsLeft')" @click="scrollPosts(-1)">←</UiButton>
+        <UiButton variant="secondary" :aria-label="t('schedulerCalendar.showPostsRight')" @click="scrollPosts(1)">→</UiButton>
       </div>
     </div>
-    <p v-if="!intervals.length" class="scheduler-free__empty">В этот день нет рабочих интервалов.</p>
-    <div v-else ref="scrollContainer" class="scheduler-free__scroll" tabindex="0" aria-label="Расписание по постам с прокруткой">
+    <p v-if="!intervals.length" class="scheduler-free__empty">{{ t('schedulerCalendar.noWorkingIntervals') }}</p>
+    <div v-else ref="scrollContainer" class="scheduler-free__scroll" tabindex="0" :aria-label="t('schedulerCalendar.slotsAria')">
       <div class="scheduler-free__grid" :style="{ '--post-count': columns.length }">
         <article v-for="column in columns" :key="column.location" class="scheduler-free__post">
-          <header class="ui-section-header"><h3>{{ column.location }}</h3><span>{{ column.isClosed ? 'Пост закрыт' : column.starts.length ? `Ближайшее: ${time(column.starts[0]!)}` : 'Свободного времени нет' }}</span></header>
+          <header class="ui-section-header"><h3>{{ column.location }}</h3><span>{{ column.isClosed ? t('schedulerCalendar.postClosed') : column.starts.length ? t('schedulerCalendar.nearest', { time: time(column.starts[0]!) }) : t('schedulerCalendar.noFreeTime') }}</span></header>
           <section v-for="period in periods" :key="period.title" class="scheduler-free__period">
-            <h4 class="ui-section-header">{{ period.title }}</h4>
+            <h4 class="ui-section-header">{{ t(`schedulerCalendar.${period.title}`) }}</h4>
             <div class="scheduler-free__times">
               <a v-for="entry in column.busy.filter(entry => entry.start >= period.start && entry.start < period.end)" :key="entry.item.id"
                 :href="entry.item.detailUrl || `#maintenance/${entry.item.id}`" class="scheduler-free__busy" :title="`${entry.item.vehicleDisplayName} · ${time(entry.start)}–${time(entry.end)}`">
@@ -90,19 +101,19 @@ function create(location: string, minute: number) {
                 <span>{{ time(entry.start) }}–{{ time(entry.end) }} · {{ entry.item.vehicleDisplayName }}</span>
               </a>
               <button v-for="minute in column.starts.filter(minute => minute >= period.start && minute < period.end)" :key="minute" type="button"
-                :aria-label="`Записать на ${column.location}, ${time(minute)}–${time(minute + duration)}`"
+                :aria-label="t('schedulerCalendar.slotAria', { post: column.location, time: `${time(minute)}–${time(minute + duration)}` })"
                 :disabled="!canCreate" @click="create(column.location, minute)">
                 {{ time(minute) }}–{{ time(minute + duration) }}
               </button>
-              <span v-if="!column.starts.some(minute => minute >= period.start && minute < period.end)" class="scheduler-free__empty">Нет свободных интервалов</span>
+              <span v-if="!column.starts.some(minute => minute >= period.start && minute < period.end)" class="scheduler-free__empty">{{ t('schedulerCalendar.noFreeIntervals') }}</span>
             </div>
           </section>
         </article>
       </div>
     </div>
     <footer class="scheduler-free__footer">
-      <span class="scheduler-free__empty">{{ canCreate ? 'Нажмите на свободный интервал, чтобы создать запись' : 'Расписание доступно для просмотра' }}</span>
-      <div class="scheduler-free__legend"><span>○ Свободно</span><span>● Занято</span></div>
+      <span class="scheduler-free__empty">{{ t(canCreate ? 'schedulerCalendar.createHint' : 'schedulerCalendar.viewOnly') }}</span>
+      <div class="scheduler-free__legend"><span>○ {{ t('schedulerCalendar.free') }}</span><span>● {{ t('schedulerCalendar.busy') }}</span></div>
     </footer>
   </section>
 </template>

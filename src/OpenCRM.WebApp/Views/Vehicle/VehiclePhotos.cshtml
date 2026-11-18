@@ -5,19 +5,19 @@
     var organizationId = ViewData["VehicleOrganizationId"] as string ?? string.Empty;
     var organizationName = ViewData["VehicleOrganizationName"] as string ?? string.Empty;
     var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
-    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? "Карточка техники";
+    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? Text["vehicle.card.detailsTitle"].Value;
     var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
         ? $"/vehicle/{vehicleId}"
         : $"/vehicle/{vehicleId}?organizationId={organizationId}";
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? vehicleScenario.BreadcrumbTitle
+        ? Text["vehicle.list.title"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
+            : Text["vehicle.journal.organization"].Value;
     var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
-    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? vehicleScenario.BreadcrumbTitle : "Техника";
-    ViewData["Title"] = "Фото машины";
+    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? Text["vehicle.list.title"].Value : Text["vehicle.journal.vehicle"].Value;
+    ViewData["Title"] = Text["vehicle.media.photos.title"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = string.IsNullOrWhiteSpace(organizationId)
         ? "vehicle-card-page-body"
@@ -29,66 +29,78 @@
 </style>
 
 <div id="vehicle-form" class="vehicle-photo-manager-page">
-    <div id="vehicle-photo-manager" class="vehicle-details-container vehicle-media-manager-container" v-cloak>
+    <div id="vehicle-photo-manager" class="vehicle-details-container vehicle-media-manager-container" v-cloak
+         data-error-load="@Text["vehicle.media.photos.error.load"]"
+         data-error-max-count="@Text["vehicle.media.photos.error.maxCount"]"
+         data-error-max-size="@Text["vehicle.media.photos.error.maxSize"]"
+         data-error-upload="@Text["vehicle.media.photos.error.upload"]"
+         data-error-primary="@Text["vehicle.media.photos.error.primary"]"
+         data-error-delete="@Text["vehicle.media.photos.error.delete"]"
+         data-open-photo-aria="@Text["vehicle.media.photos.openAria"]"
+         data-photo-alt="@Text["vehicle.media.photos.photoAlt"]"
+         data-primary-title="@Text["vehicle.media.photos.primary.title"]"
+         data-primary-set-title="@Text["vehicle.media.photos.primary.setTitle"]"
+         data-cover-label="@Text["vehicle.media.photos.cover"]"
+         data-set-cover-label="@Text["vehicle.media.photos.setCover"]">
 
 
         <div class="vehicle-details-card vehicle-details-card-primary mb-4">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="fa fa-camera"></i>
-                    Фото машины
+                    @Text["vehicle.media.photos.title"]
                 </h3>
                 @if (!string.IsNullOrWhiteSpace(organizationName))
                 {
-                    <div class="text-muted small mt-2">Рабочее пространство: @organizationName</div>
+                    <div class="text-muted small mt-2">@Text["vehicle.media.albums.workspace"] @organizationName</div>
                 }
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    Здесь управляются фото самой машины/техники: внешний вид, ракурсы и важные детали. Максимум 10 фото, за одну загрузку можно отправить до 100 МБ.
+                    @Text["vehicle.media.photos.description"]
                 </div>
 
                 <div class="d-flex flex-column flex-md-row gap-2 align-items-md-center justify-content-between mb-3">
-                    <div class="text-muted">Фото машины загружено: {{ photos.length }} / 10</div>
+                <div class="text-muted">@(Text["vehicle.media.photos.count"].Value.Replace("{0}", "{{ photos.length }}"))</div>
                     <label class="btn btn-dark mb-0" role="button" tabindex="0" :class="{ disabled: photos.length >= 10 || photosLoading || photosUploading }">
                         <i class="fa fa-spinner fa-spin me-2" v-if="photosUploading"></i>
                         <i class="fa fa-upload me-2" v-else></i>
-                        <span v-if="photosUploading">Загружаем...</span>
-                        <span v-else>Загрузить фото</span>
+                        <span v-if="photosUploading">@Text["vehicle.media.photos.uploading"]</span>
+                        <span v-else>@Text["vehicle.media.photos.upload"]</span>
                         <input type="file" class="visually-hidden" accept="image/*" multiple @@change="uploadVehiclePhotos" :disabled="photos.length >= 10 || photosLoading || photosUploading">
                     </label>
                 </div>
 
                 <div v-if="photosUploading" class="vehicle-upload-progress mb-3">
                     <i class="fa fa-spinner fa-spin me-2"></i>
-                    Загружаем фотографии. Это может занять несколько секунд.
+                    @Text["vehicle.media.photos.loadingHint"]
                 </div>
 
                 <div v-if="photosLoading" class="text-muted">
-                    <i class="fa fa-spinner fa-spin me-2"></i>Загружаем фотографии...
+                    <i class="fa fa-spinner fa-spin me-2"></i>@Text["vehicle.media.photos.loading"]
                 </div>
                 <div v-else-if="photos.length === 0" class="vehicle-photo-empty">
                     <i class="fa fa-image"></i>
-                    <div>Фото техники пока не загружены</div>
+                    <div>@Text["vehicle.media.photos.empty"]</div>
                 </div>
                 <div v-else class="vehicle-photo-grid">
                     <div class="vehicle-photo-tile"
                          :class="{ 'vehicle-photo-tile-primary': photo.isPrimary }"
                          v-for="(photo, photoIndex) in photos"
                          :key="photo.photoId">
-                            <button type="button" class="vehicle-photo-open" @@click="openPhotoViewer(photoIndex)" :aria-label="'Открыть фото: ' + (photo.originalFileName || 'Фото техники')">
-                        <img :src="photo.url" :alt="photo.originalFileName || 'Фото техники'">
-                        <span class="vehicle-photo-badge" v-if="photo.isPrimary">Главная</span>
+                            <button type="button" class="vehicle-photo-open" @@click="openPhotoViewer(photoIndex)" :aria-label="photoOpenAria + (photo.originalFileName || photoAlt)">
+                        <img :src="photo.url" :alt="photo.originalFileName || photoAlt">
+                        <span class="vehicle-photo-badge" v-if="photo.isPrimary">@Text["vehicle.media.photos.badge.primary"]</span>
                             </button>
                         <div class="vehicle-photo-actions">
                             <button class="btn btn-sm"
                                     :class="photo.isPrimary ? 'btn-warning vehicle-photo-primary-action' : 'btn-light'"
                                     @@click.stop="setPrimaryPhoto(photo)"
                                     :disabled="photo.isPrimary"
-                                    :title="photo.isPrimary ? 'Это главное фото' : 'Сделать главной'">
-                                <i class="fa fa-star" aria-hidden="true"></i><span>{{ photo.isPrimary ? 'Обложка' : 'На обложку' }}</span>
+                                    :title="photo.isPrimary ? primaryTitle : primarySetTitle">
+                                <i class="fa fa-star" aria-hidden="true"></i><span>{{ photo.isPrimary ? coverLabel : setCoverLabel }}</span>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" aria-label="Удалить фото" @@click.stop="openDeletePhotoModal(photo)" title="Удалить">
+                            <button class="btn btn-sm btn-outline-danger" aria-label="@Text["vehicle.media.photos.delete.aria"]" @@click.stop="openDeletePhotoModal(photo)" title="@Text["vehicle.media.photos.delete.title"]">
                                 <i class="fa fa-trash"></i>
                             </button>
                         </div>
@@ -101,12 +113,12 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">Ошибка</h5>
+                        <h5 class="modal-title">@Text["vehicle.media.error.title"]</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">{{ errorMessage }}</div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.media.button.close"]</button>
                     </div>
                 </div>
             </div>
@@ -116,17 +128,17 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Удалить фото?</h5>
+                        <h5 class="modal-title">@Text["vehicle.media.photos.delete.confirmTitle"]</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" :disabled="deleteSaving"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-0">Фото машины будет удалено из общей галереи техники.</p>
+                        <p class="mb-0">@Text["vehicle.media.photos.delete.confirmText"]</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="deleteSaving">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="deleteSaving">@Text["vehicle.media.button.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="confirmDeletePhoto" :disabled="deleteSaving">
                             <i class="fa fa-spinner fa-spin me-2" v-if="deleteSaving"></i>
-                            Удалить
+                            @Text["vehicle.media.button.delete"]
                         </button>
                     </div>
                 </div>
@@ -137,7 +149,7 @@
             <div class="modal-dialog modal-xl modal-dialog-centered">
                 <div class="modal-content vehicle-photo-viewer-modal">
                     <div class="modal-header">
-                        <h5 class="modal-title">Фото машины</h5>
+                        <h5 class="modal-title">@Text["vehicle.media.photos.viewer.title"]</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
@@ -146,15 +158,15 @@
                                     class="vehicle-photo-viewer-nav vehicle-photo-viewer-prev"
                                     @@click="showPreviousViewerPhoto"
                                     :disabled="!hasMultiplePhotos"
-                                    title="Предыдущее фото">
+                                    title="@Text["vehicle.media.photos.previous"]">
                                 <i class="fa fa-chevron-left"></i>
                             </button>
-                            <img :src="currentViewerPhoto.url" :alt="currentViewerPhoto.originalFileName || 'Фото машины'">
+                            <img :src="currentViewerPhoto.url" :alt="currentViewerPhoto.originalFileName || photoAlt">
                             <button type="button"
                                     class="vehicle-photo-viewer-nav vehicle-photo-viewer-next"
                                     @@click="showNextViewerPhoto"
                                     :disabled="!hasMultiplePhotos"
-                                    title="Следующее фото">
+                                    title="@Text["vehicle.media.photos.next"]">
                                 <i class="fa fa-chevron-right"></i>
                             </button>
                         </div>
@@ -167,9 +179,9 @@
                             <button type="button" class="btn btn-outline-dark" @@click="downloadCurrentPhoto" :disabled="!currentViewerPhoto || photoDownloading">
                                 <i class="fa fa-spinner fa-spin me-2" v-if="photoDownloading"></i>
                                 <i class="fa fa-download me-2" v-else></i>
-                                Скачать
+                                @Text["vehicle.media.photos.download"]
                             </button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.media.button.close"]</button>
                         </div>
                     </div>
                 </div>
@@ -207,7 +219,7 @@
                     <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@vehiclesBreadcrumbText</a></li>
                 }
                 <li class="breadcrumb-item"><a href="@vehicleUrl" class="text-decoration-none">@vehicleDisplayName</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><h1>Фото машины</h1></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>@Text["vehicle.media.photos.title"]</h1></li>
             </ol>
         </nav>
 }

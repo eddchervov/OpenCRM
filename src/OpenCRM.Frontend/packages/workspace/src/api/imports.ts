@@ -1,4 +1,5 @@
 import { getJson, sendJson } from './workspaceAdmin'
+import { importMessage } from '../importMessages'
 
 export type OrganizationImportKind = 'client' | 'vehicle' | 'order' | 'order-line' | 'payment' | 'history'
 export type OrganizationImportState = 'upload-queued' | 'mapping-queued' | 'validation-queued' | 'ready' | 'import-queued' | 'importing' | 'paused' | 'completed' | 'failed'
@@ -36,6 +37,10 @@ export type OrganizationImportCandidate = {
   model?: string
   vin?: string
   plate?: string
+  registrationCountryCode?: string | null
+  messageCode?: string | null
+  messageParameters?: Record<string, string> | null
+  messageDetails?: Array<{ message: string, messageCode?: string | null, messageParameters?: Record<string, string> | null }> | null
   year?: string
   existingClientId?: string | null
   createSeparateClient?: boolean
@@ -142,30 +147,30 @@ function root(organizationId: string) {
 }
 
 export function loadOrganizationImportAccess(organizationId: string) {
-  return getJson<OrganizationImportAccess>(`${root(organizationId)}/access`, 'Не удалось проверить доступ к импорту.')
+  return getJson<OrganizationImportAccess>(`${root(organizationId)}/access`, importMessage('apiCheckAccess'))
 }
 
 export function loadOrganizationImports(organizationId: string) {
-  return getJson<OrganizationImportSummary[]>(root(organizationId), 'Не удалось загрузить импорты организации.')
+  return getJson<OrganizationImportSummary[]>(root(organizationId), importMessage('apiLoadImports'))
 }
 
 export function loadOrganizationImportProfiles(organizationId: string) {
-  return getJson<OrganizationImportProfile[]>(`${root(organizationId)}/profiles`, 'Не удалось загрузить профили импорта.')
+  return getJson<OrganizationImportProfile[]>(`${root(organizationId)}/profiles`, importMessage('apiLoadProfiles'))
 }
 
 export function saveOrganizationImportProfile(
   organizationId: string,
   payload: { name: string, sourceKey: string, mappings: OrganizationImportMapping[], tables: OrganizationImportProfile['tables'] }
 ) {
-  return sendJson<OrganizationImportProfile>(`${root(organizationId)}/profiles`, 'POST', payload, 'Не удалось сохранить профиль импорта.')
+  return sendJson<OrganizationImportProfile>(`${root(organizationId)}/profiles`, 'POST', payload, importMessage('apiSaveProfile'))
 }
 
 export function deleteOrganizationImportProfile(organizationId: string, profileId: string) {
-  return sendJson<void>(`${root(organizationId)}/profiles/${encodeURIComponent(profileId)}`, 'DELETE', null, 'Не удалось удалить профиль импорта.')
+  return sendJson<void>(`${root(organizationId)}/profiles/${encodeURIComponent(profileId)}`, 'DELETE', null, importMessage('apiDeleteProfile'))
 }
 
 export function loadOrganizationImportDraft(organizationId: string, draftId: string) {
-  return getJson<OrganizationImportDraft>(`${root(organizationId)}/${encodeURIComponent(draftId)}`, 'Не удалось открыть черновик импорта.')
+  return getJson<OrganizationImportDraft>(`${root(organizationId)}/${encodeURIComponent(draftId)}`, importMessage('apiOpenDraft'))
 }
 
 export type OrganizationImportPageQuery = { page: number, pageSize: number, kind?: string, status?: string, search?: string }
@@ -175,7 +180,7 @@ export function loadOrganizationImportBatchPage(organizationId: string, draftId:
   if (query.kind && query.kind !== 'all') parameters.set('kind', query.kind)
   if (query.status && query.status !== 'all') parameters.set('status', query.status)
   if (query.search?.trim()) parameters.set('search', query.search.trim())
-  return getJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}?${parameters}`, 'Не удалось загрузить страницу импорта.')
+  return getJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}?${parameters}`, importMessage('apiLoadPage'))
 }
 
 export async function uploadOrganizationImport(organizationId: string, file: File) {
@@ -205,7 +210,7 @@ async function uploadTo(file: File, url: string) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить файл.')
+    throw new Error(error?.message ?? importMessage('apiUploadFile'))
   }
 
   return response.json() as Promise<OrganizationImportDraft>
@@ -216,11 +221,11 @@ export function queueOrganizationImportBatchMapping(
   draftId: string,
   payload: { revision: number, mappings: OrganizationImportMapping[] }
 ) {
-  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/mapping`, 'POST', payload, 'Не удалось поставить сопоставление в очередь.')
+  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/mapping`, 'POST', payload, importMessage('apiQueueMapping'))
 }
 
 export function saveOrganizationImportBatchSource(organizationId: string, draftId: string, payload: { revision: number, sourceKey: string }) {
-  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/source`, 'PUT', payload, 'Не удалось сохранить источник данных.')
+  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/source`, 'PUT', payload, importMessage('apiSaveSource'))
 }
 
 export function patchOrganizationImportBatchRows(
@@ -228,15 +233,15 @@ export function patchOrganizationImportBatchRows(
   draftId: string,
   payload: { revision: number, rows: OrganizationImportCandidate[] }
 ) {
-  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}`, 'PUT', payload, 'Не удалось поставить правки строк в очередь.')
+  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}`, 'PUT', payload, importMessage('apiQueueRows'))
 }
 
 export function startOrganizationImportBatch(organizationId: string, draftId: string, revision: number, resume = false) {
-  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/${resume ? 'resume' : 'confirm'}`, 'POST', { revision }, 'Не удалось запустить импорт.')
+  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/${resume ? 'resume' : 'confirm'}`, 'POST', { revision }, importMessage('apiStartImport'))
 }
 
 export function pauseOrganizationImportBatch(organizationId: string, draftId: string, revision: number) {
-  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/pause`, 'POST', { revision }, 'Не удалось приостановить импорт.')
+  return sendJson<OrganizationImportDraft>(`${root(organizationId)}/batches/${encodeURIComponent(draftId)}/pause`, 'POST', { revision }, importMessage('apiPauseImport'))
 }
 
 export function saveOrganizationImportMapping(
@@ -248,7 +253,7 @@ export function saveOrganizationImportMapping(
     `${root(organizationId)}/${encodeURIComponent(draftId)}/mapping`,
     'POST',
     payload,
-    'Не удалось сохранить сопоставление столбцов.'
+    importMessage('apiSaveMapping')
   )
 }
 
@@ -261,7 +266,7 @@ export function saveOrganizationImportRows(
     `${root(organizationId)}/${encodeURIComponent(draftId)}`,
     'PUT',
     payload,
-    'Не удалось сохранить и проверить строки импорта.'
+    importMessage('apiSaveRows')
   )
 }
 
@@ -270,7 +275,7 @@ export function confirmOrganizationImport(organizationId: string, draftId: strin
     `${root(organizationId)}/${encodeURIComponent(draftId)}/confirm`,
     'POST',
     { revision },
-    'Не удалось выполнить импорт.'
+    importMessage('apiExecuteImport')
   )
 }
 
@@ -282,7 +287,7 @@ export async function downloadOrganizationImportReport(organizationId: string, d
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось скачать отчёт импорта.')
+    throw new Error(error?.message ?? importMessage('apiDownloadReport'))
   }
 
   return response.blob()

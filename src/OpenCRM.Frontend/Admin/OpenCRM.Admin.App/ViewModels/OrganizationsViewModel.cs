@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -26,6 +27,10 @@ public partial class OrganizationsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
     private string _errorMessage = string.Empty;
+
+    private string? _listErrorTranslationKey;
+
+    partial void OnErrorMessageChanging(string value) => this._listErrorTranslationKey = null;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCardError))]
@@ -96,29 +101,46 @@ public partial class OrganizationsViewModel : ObservableObject
     public bool CanViewCommercial => this._commercialEnabled;
     public GridLength CommercialColumnWidth => this.CanViewCommercial ? new GridLength(170, GridUnitType.Star) : new GridLength(0);
     public double TableMinWidth => this.CanViewCommercial ? 1264 : 1094;
-    public string TotalLabel => $"Найдено: {this.TotalCount:N0}";
+    public string TotalLabel => string.Format(System.Globalization.CultureInfo.CurrentCulture,
+        AdminLocalization.Instance["core.organizations.total"], this.TotalCount);
     public string PageLabel => $"{this.Page} / {Math.Max(1, (int)Math.Ceiling((double)this.TotalCount / this.PageSize))}";
-    public string NameHeader => this.SortLabel("Организация", "name");
-    public string OwnerHeader => this.SortLabel("Владелец", "owner");
-    public string ScenarioHeader => this.SortLabel("Тип", "scenario");
-    public string StatusHeader => this.SortLabel("Статус", "status");
-    public string SubscriptionHeader => this.CanViewCommercial ? this.SortLabel("Тариф / срок", "subscription") : string.Empty;
-    public string MembersHeader => this.SortLabel("Участники", "members");
-    public string ClientsHeader => this.SortLabel("Клиенты", "clients");
-    public string VehiclesHeader => this.SortLabel("Техника", "vehicles");
-    public string OrdersHeader => this.SortLabel("Заказы", "orders");
-    public string CreatedHeader => this.SortLabel("Создана", "created");
+    public string NameHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.nameHeader"], "name");
+    public string OwnerHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.ownerHeader"], "owner");
+    public string ScenarioHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.scenarioHeader"], "scenario");
+    public string StatusHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.statusHeader"], "status");
+    public string SubscriptionHeader => this.CanViewCommercial ? this.SortLabel(AdminLocalization.Instance["core.organizations.subscriptionHeader"], "subscription") : string.Empty;
+    public string MembersHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.membersHeader"], "members");
+    public string ClientsHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.clientsHeader"], "clients");
+    public string VehiclesHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.vehiclesHeader"], "vehicles");
+    public string OrdersHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.ordersHeader"], "orders");
+    public string CreatedHeader => this.SortLabel(AdminLocalization.Instance["core.organizations.createdHeader"], "created");
     public string ActiveSubscriptionLabel => !this.CanViewCommercial ? string.Empty : string.IsNullOrWhiteSpace(this.Organization?.ActiveSubscriptionName)
-        ? "Нет активного тарифа"
+        ? AdminLocalization.Instance["core.organizations.noActivePlan"]
         : this.Organization.ActiveSubscriptionName;
     public string SubscriptionEndLabel => this.CanViewCommercial ? UserDisplayFormatting.Date(this.Organization?.ActiveSubscriptionEndDate) : string.Empty;
     public string CreatedAtLabel => UserDisplayFormatting.DateTime(this.Organization?.CreatedAt);
     public string UpdatedAtLabel => UserDisplayFormatting.DateTime(this.Organization?.UpdatedAt);
     public string ArchiveDateLabel => UserDisplayFormatting.DateTime(this.Organization?.ArchiveDate);
     public string DeletionDateLabel => UserDisplayFormatting.DateTime(this.Organization?.DeletionDate);
-    public string WorkOrdersTotalLabel => UserDisplayFormatting.Money(this.Organization?.WorkOrdersTotal ?? 0);
-    public string PaymentsTotalLabel => UserDisplayFormatting.Money(this.Organization?.PaymentsTotal ?? 0);
-    public string InventoryValueLabel => UserDisplayFormatting.Money(this.Organization?.InventoryValue ?? 0);
+    public string WorkOrdersTotalLabel => this.FormatOrganizationTotal(this.Organization?.WorkOrdersTotal ?? 0, total => total.WorkOrdersTotal);
+    public string PaymentsTotalLabel => this.FormatOrganizationTotal(this.Organization?.PaymentsTotal ?? 0, total => total.PaymentsTotal);
+    public string InventoryValueLabel => this.FormatOrganizationTotal(this.Organization?.InventoryValue ?? 0, total => total.InventoryValue);
+    public string OrganizationNameLabel => FormatLabel("organization.card.organization", this.Organization?.Name);
+    public string OrganizationScenarioLabel => this.Organization == null ? string.Empty
+        : AdminDisplayLabels.OrganizationScenario(this.Organization.PrimaryScenarioCode, this.Organization.ScenarioName);
+    public string OwnerLabel => FormatLabel("organization.card.owner", this.Organization?.Owner);
+    public string CreatedAtCaption => FormatLabel("organization.card.created", this.CreatedAtLabel);
+    public string UpdatedAtCaption => FormatLabel("organization.card.updated", this.UpdatedAtLabel);
+    public string InnCaption => FormatLabel("organization.card.inn", this.Organization?.Inn);
+    public string SubscriptionEndCaption => FormatLabel("organization.card.subscriptionEnd", this.SubscriptionEndLabel);
+    public string AdminsCountCaption => FormatLabel("organization.card.admins", this.Organization?.AdminsCount);
+    public string CompletedOrdersCaption => FormatLabel("organization.card.completedOrders", this.Organization?.CompletedWorkOrdersCount);
+    public string OverdueTasksCaption => FormatLabel("organization.card.overdueTasks", this.Organization?.OverdueTasksCount);
+    public string LowStockCaption => FormatLabel("organization.card.lowStock", this.Organization?.LowStockItemsCount);
+    public string ScenarioCodeCaption => FormatLabel("organization.card.scenarioCode", this.Organization?.PrimaryScenarioCode);
+    public string DocumentStyleCaption => FormatLabel("organization.card.documentStyle", this.Organization?.DocumentStyleCode);
+    public string ArchiveDateCaption => FormatLabel("organization.card.archived", this.ArchiveDateLabel);
+    public string DeletionDateCaption => FormatLabel("organization.card.deleted", this.DeletionDateLabel);
     public event Action? SessionExpired;
     public event Func<Task>? AccessDenied;
 
@@ -134,6 +156,36 @@ public partial class OrganizationsViewModel : ObservableObject
         var selectedOrganizationId = this.SelectedOrganization?.Id;
         this.Rows = this.Rows.Select(row => new AdminOrganizationRow(row.Organization, commercialEnabled)).ToArray();
         this.SelectedOrganization = this.Rows.FirstOrDefault(row => row.Id == selectedOrganizationId);
+    }
+
+    public void RefreshLocalizedValues()
+    {
+        this.OnPropertyChanged(nameof(this.TotalLabel));
+        this.OnPropertyChanged(nameof(this.NameHeader));
+        this.OnPropertyChanged(nameof(this.OwnerHeader));
+        this.OnPropertyChanged(nameof(this.ScenarioHeader));
+        this.OnPropertyChanged(nameof(this.StatusHeader));
+        this.OnPropertyChanged(nameof(this.SubscriptionHeader));
+        this.OnPropertyChanged(nameof(this.MembersHeader));
+        this.OnPropertyChanged(nameof(this.ClientsHeader));
+        this.OnPropertyChanged(nameof(this.VehiclesHeader));
+        this.OnPropertyChanged(nameof(this.OrdersHeader));
+        this.OnPropertyChanged(nameof(this.CreatedHeader));
+        this.OnPropertyChanged(nameof(this.StatusChangeWarning));
+        var selectedOrganizationId = this.SelectedOrganization?.Id;
+        this.Rows = this.Rows.Select(row => new AdminOrganizationRow(row.Organization, this.CanViewCommercial)).ToArray();
+        this.SelectedOrganization = this.Rows.FirstOrDefault(row => row.Id == selectedOrganizationId);
+        this.OnPropertyChanged(nameof(this.ActiveSubscriptionLabel));
+        this.NotifyLocalizedCardLabels();
+        if (this._cardErrorTranslationKey != null)
+        {
+            this.SetCardErrorKey(this._cardErrorTranslationKey);
+        }
+
+        if (this._listErrorTranslationKey != null)
+        {
+            this.SetListErrorKey(this._listErrorTranslationKey);
+        }
     }
 
     public async Task ActivateAsync()
@@ -340,7 +392,30 @@ public partial class OrganizationsViewModel : ObservableObject
         this.OnPropertyChanged(nameof(WorkOrdersTotalLabel));
         this.OnPropertyChanged(nameof(PaymentsTotalLabel));
         this.OnPropertyChanged(nameof(InventoryValueLabel));
+        this.NotifyLocalizedCardLabels();
     }
+
+    private void NotifyLocalizedCardLabels()
+    {
+        this.OnPropertyChanged(nameof(this.OrganizationNameLabel));
+        this.OnPropertyChanged(nameof(this.OrganizationScenarioLabel));
+        this.OnPropertyChanged(nameof(this.OwnerLabel));
+        this.OnPropertyChanged(nameof(this.CreatedAtCaption));
+        this.OnPropertyChanged(nameof(this.UpdatedAtCaption));
+        this.OnPropertyChanged(nameof(this.InnCaption));
+        this.OnPropertyChanged(nameof(this.SubscriptionEndCaption));
+        this.OnPropertyChanged(nameof(this.AdminsCountCaption));
+        this.OnPropertyChanged(nameof(this.CompletedOrdersCaption));
+        this.OnPropertyChanged(nameof(this.OverdueTasksCaption));
+        this.OnPropertyChanged(nameof(this.LowStockCaption));
+        this.OnPropertyChanged(nameof(this.ScenarioCodeCaption));
+        this.OnPropertyChanged(nameof(this.DocumentStyleCaption));
+        this.OnPropertyChanged(nameof(this.ArchiveDateCaption));
+        this.OnPropertyChanged(nameof(this.DeletionDateCaption));
+    }
+
+    private static string FormatLabel(string key, object? value) => string.Format(
+        System.Globalization.CultureInfo.CurrentCulture, AdminLocalization.Instance[key], value ?? string.Empty);
 
     partial void OnPageSizeChanged(int value)
     {
@@ -352,6 +427,17 @@ public partial class OrganizationsViewModel : ObservableObject
         this._appliedPageSize = value;
         this.Page = 1;
         this.RefreshCommand.Execute(null);
+    }
+
+    private string FormatOrganizationTotal(decimal currentAmount, Func<AdminOrganizationCurrencyTotal, decimal> getAmount)
+    {
+        var currencyCode = this.Organization?.CurrencyCode ?? "RUB";
+
+        var amounts = new[] { UserDisplayFormatting.Money(currentAmount, currencyCode) }
+            .Concat((this.Organization?.OtherCurrencyTotals ?? [])
+                .Select(total => UserDisplayFormatting.Money(getAmount(total), total.CurrencyCode)));
+
+        return string.Join(Environment.NewLine, amounts);
     }
 
     private string SortLabel(string title, string sort) => this._sort == sort ? title + (this._descending ? " ↓" : " ↑") : title;
@@ -389,13 +475,35 @@ public partial class OrganizationsViewModel : ObservableObject
             return;
         }
 
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportKey)
+        {
+            if (isCard)
+            {
+                this.SetCardErrorKey(transportKey);
+            }
+            else
+            {
+                this.SetListErrorKey(transportKey);
+            }
+
+            return;
+        }
+
         if (isCard)
         {
+            this._cardErrorTranslationKey = null;
             this.CardErrorMessage = exception.Message;
         }
         else
         {
+            this._listErrorTranslationKey = null;
             this.ErrorMessage = exception.Message;
         }
+    }
+
+    private void SetListErrorKey(string key)
+    {
+        this.ErrorMessage = AdminLocalization.Instance[key];
+        this._listErrorTranslationKey = key;
     }
 }

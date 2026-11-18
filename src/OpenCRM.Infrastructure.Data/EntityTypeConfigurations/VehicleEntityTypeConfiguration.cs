@@ -27,6 +27,9 @@ public class VehicleEntityTypeConfiguration : IEntityTypeConfiguration<Vehicle>
         builder.Property(x => x.RegistrationPlate)
             .HasMaxLength(24);
 
+        builder.Property(x => x.RegistrationCountryCode)
+            .HasMaxLength(2);
+
         builder.Property(x => x.BodyNumber)
             .HasMaxLength(64);
 

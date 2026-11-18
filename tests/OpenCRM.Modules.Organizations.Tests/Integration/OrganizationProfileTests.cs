@@ -15,9 +15,11 @@ namespace OpenCRM.Modules.Organizations.Tests.Integration;
 public sealed class OrganizationProfileTests(OrganizationsDatabaseFixture fixture)
 {
     [Theory]
-    [InlineData("detailing")]
-    [InlineData("service_station")]
-    public async Task CreatePersistsOwnerAndSetupState(string scenario)
+    [InlineData("detailing", "RUB", "Asia/Novosibirsk")]
+    [InlineData("detailing", "cny", "Asia/Shanghai")]
+    [InlineData("service_station", "USD", "America/New_York")]
+    [InlineData("service_station", "EUR", "Europe/Berlin")]
+    public async Task CreatePersistsOwnerAndSetupState(string scenario, string currencyCode, string timeZoneId)
     {
         await using var context = fixture.CreateContext();
         var owner = new ApplicationUser { Email = $"creator-{Guid.NewGuid():N}@example.test" };
@@ -25,9 +27,11 @@ public sealed class OrganizationProfileTests(OrganizationsDatabaseFixture fixtur
         await context.SaveChangesAsync();
         using var services = OrganizationCommandHarness.CreateServices(context);
         var id = await services.GetRequiredService<IOrganizationProfileCommandService>().CreateAsync(owner.Id,
-            new CreateOrganizationDto { Name = "  Студия  ", Description = "  Описание  ", PrimaryScenarioCode = scenario });
+            new CreateOrganizationDto { Name = "  Студия  ", Description = "  Описание  ", PrimaryScenarioCode = scenario, CurrencyCode = currencyCode, TimeZoneId = timeZoneId });
         var saved = await OrganizationCommandHarness.ReadAsync(context, id);
 
+        Assert.Equal(currencyCode.ToUpperInvariant(), saved.CurrencyCode);
+        Assert.Equal(timeZoneId, saved.ShiftTimeZoneId);
         Assert.Equal("Студия", saved.Name);
         Assert.Equal("Описание", saved.Description);
         Assert.Equal(scenario == "service_station" ? "service-station" : scenario, saved.PrimaryScenarioCode);
@@ -37,6 +41,51 @@ public sealed class OrganizationProfileTests(OrganizationsDatabaseFixture fixtur
         Assert.Equal(owner.Id, member.UserId);
         Assert.Equal(owner.Id, member.InvitedByUserId);
         Assert.Equal(OrganizationRoleCodes.Owner, member.RoleCode);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("Mars/Olympus")]
+    [InlineData("Russian Standard Time")]
+    public async Task UnsupportedTimeZoneDoesNotCreateOrganization(string timeZoneId)
+    {
+        await using var context = fixture.CreateContext();
+        var owner = new ApplicationUser();
+        context.Users.Add(owner);
+        await context.SaveChangesAsync();
+        using var services = OrganizationCommandHarness.CreateServices(context);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => services.GetRequiredService<IOrganizationProfileCommandService>()
+            .CreateAsync(owner.Id, new CreateOrganizationDto
+            {
+                Name = "Тестовая организация",
+                PrimaryScenarioCode = "detailing",
+                TimeZoneId = timeZoneId
+            }));
+
+        Assert.False(await context.Organizations.AsNoTracking().AnyAsync(item => item.OwnerUserId == owner.Id));
+    }
+
+    [Theory]
+    [InlineData("JPY")]
+    [InlineData("")]
+    public async Task UnsupportedCurrencyDoesNotCreateOrganization(string currencyCode)
+    {
+        await using var context = fixture.CreateContext();
+        var owner = new ApplicationUser();
+        context.Users.Add(owner);
+        await context.SaveChangesAsync();
+        using var services = OrganizationCommandHarness.CreateServices(context);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => services.GetRequiredService<IOrganizationProfileCommandService>()
+            .CreateAsync(owner.Id, new CreateOrganizationDto
+            {
+                Name = "Тестовая организация",
+                PrimaryScenarioCode = "detailing",
+                CurrencyCode = currencyCode
+            }));
+
+        Assert.False(await context.Organizations.AsNoTracking().AnyAsync(item => item.OwnerUserId == owner.Id));
     }
 
     [Fact]

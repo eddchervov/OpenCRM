@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workJournalMessages'
 import { computed, ref } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import { MaintenanceJournalSection, type WorkspaceContext } from '@opencrm/workspace'
@@ -9,9 +11,9 @@ const canViewMaintenances = computed(() => props.context.shell.menu?.some(item =
 </script>
 
 <template>
-  <div v-if="canViewMaintenances" class="journal-mode" role="group" aria-label="Раздел журнала">
-    <UiButton :variant="showEvents ? 'secondary' : 'primary'" :aria-pressed="!showEvents" @click="showEvents = false">Обслуживания</UiButton>
-    <UiButton :variant="showEvents ? 'primary' : 'secondary'" :aria-pressed="showEvents" @click="showEvents = true">События и календарь</UiButton>
+  <div v-if="canViewMaintenances" class="journal-mode" role="group" :aria-label="t('workJournal.section')">
+    <UiButton :variant="showEvents ? 'secondary' : 'primary'" :aria-pressed="!showEvents" @click="showEvents = false">{{ t('workJournal.maintenances') }}</UiButton>
+    <UiButton :variant="showEvents ? 'primary' : 'secondary'" :aria-pressed="showEvents" @click="showEvents = true">{{ t('workJournal.events') }}</UiButton>
   </div>
   <MaintenanceJournalSection v-if="canViewMaintenances && !showEvents" :context="context" />
   <WorkEventsSection v-else :context="context" />

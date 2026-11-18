@@ -1,21 +1,24 @@
+import { translate } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 export type InquiryStage = 'new' | 'clarifying' | 'proposal' | 'ready' | 'booked' | 'closed'
 
 export const inquiryStages: Array<{ value: InquiryStage; label: string }> = [
-  { value: 'new', label: 'Новое' },
-  { value: 'clarifying', label: 'Уточняем' },
-  { value: 'proposal', label: 'Предложение' },
-  { value: 'ready', label: 'Готовы к записи' },
-  { value: 'booked', label: 'Записан' },
-  { value: 'closed', label: 'Закрыто' }
+  { value: 'new', get label() { return translate('inquiries.stageNew') } },
+  { value: 'clarifying', get label() { return translate('inquiries.stageClarifying') } },
+  { value: 'proposal', get label() { return translate('inquiries.stageProposal') } },
+  { value: 'ready', get label() { return translate('inquiries.stageReady') } },
+  { value: 'booked', get label() { return translate('inquiries.stageBooked') } },
+  { value: 'closed', get label() { return translate('inquiries.stageClosed') } }
 ]
 
 export const inquirySources = [
-  { value: 'phone', label: 'Телефон' },
-  { value: 'visit', label: 'Личный визит' },
-  { value: 'website', label: 'Сайт' },
-  { value: 'messenger', label: 'Мессенджер' },
-  { value: 'recommendation', label: 'Рекомендация' },
-  { value: 'other', label: 'Другое' }
+  { value: 'phone', get label() { return translate('inquiries.phone') } },
+  { value: 'visit', get label() { return translate('inquiries.sourceVisit') } },
+  { value: 'website', get label() { return translate('inquiries.sourceWebsite') } },
+  { value: 'messenger', get label() { return translate('inquiries.sourceMessenger') } },
+  { value: 'recommendation', get label() { return translate('inquiries.sourceRecommendation') } },
+  { value: 'other', get label() { return translate('inquiries.sourceOther') } }
 ]
 
 export type InquiryInput = {
@@ -87,7 +90,7 @@ async function request<T>(organizationId: string, path: string, options: { metho
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new InquiryRequestError(error?.message ?? 'Не удалось выполнить действие с обращением.', response.status)
+    throw new InquiryRequestError(error?.message ?? translate('inquiries.requestError'), response.status)
   }
   return response.status === 204 ? undefined as T : response.json()
 }

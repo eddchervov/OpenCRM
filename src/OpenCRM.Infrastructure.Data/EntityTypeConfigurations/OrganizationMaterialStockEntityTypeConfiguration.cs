@@ -14,6 +14,7 @@ public class OrganizationMaterialStockEntityTypeConfiguration : IEntityTypeConfi
     /// </summary>
     public void Configure(EntityTypeBuilder<OrganizationMaterialStock> builder)
     {
+        builder.Property(stock => stock.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");
 

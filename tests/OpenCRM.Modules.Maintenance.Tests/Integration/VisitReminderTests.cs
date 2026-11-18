@@ -24,6 +24,11 @@ public sealed class VisitReminderTests(MaintenanceDatabaseFixture fixture) : ICl
         var work = VisitReminderTests.CreateWork();
         await VisitReminderTests.SaveWorkAsync(context, work);
         var service = VisitReminderTests.CreateService(context);
+        var scheduled = await service.GetAsync(work.User.Id, work.Vehicle.OrganizationId!.Value, work.Id);
+        Assert.Equal("scheduled", scheduled.StatusCode);
+        Assert.Equal("scheduled", scheduled.StatusDetailCode);
+        Assert.Equal("Asia/Novosibirsk", scheduled.TimeZoneId);
+        Assert.Equal(Now, scheduled.ScheduledAtUtc);
         await service.SendDueAsync(CancellationToken.None);
         await service.SendDueAsync(CancellationToken.None);
 
@@ -35,6 +40,7 @@ public sealed class VisitReminderTests(MaintenanceDatabaseFixture fixture) : ICl
         Assert.False(await context.MaxClientNotifications.AnyAsync(item => item.MaintenanceId == work.Id));
         var preview = await service.GetAsync(work.User.Id, work.Vehicle.OrganizationId!.Value, work.Id);
         Assert.Equal("queued", preview.StatusCode);
+        Assert.Equal("queued", preview.StatusDetailCode);
     }
 
     [Fact]
@@ -69,6 +75,7 @@ public sealed class VisitReminderTests(MaintenanceDatabaseFixture fixture) : ICl
         var version = work.Version;
         var response = await service.SetEnabledAsync(work.User.Id, organizationId, work.Id, false, version);
         Assert.False(response.Enabled);
+        Assert.Equal("disabled_record", response.StatusDetailCode);
         Assert.NotEqual(version, response.Version);
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => service.SetEnabledAsync(work.User.Id, organizationId, work.Id, true, version));
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAsync(work.User.Id, Guid.NewGuid(), work.Id));
@@ -90,6 +97,8 @@ public sealed class VisitReminderTests(MaintenanceDatabaseFixture fixture) : ICl
         await Assert.ThrowsAsync<ArgumentException>(() => service.SaveSettingsAsync(work.User.Id, organizationId, settings));
         settings.HoursBefore = null;
         await service.SaveSettingsAsync(work.User.Id, organizationId, settings);
+        var disabled = await service.GetAsync(work.User.Id, organizationId, work.Id);
+        Assert.Equal("disabled_organization", disabled.StatusDetailCode);
         settings.Template = "{password}";
         await Assert.ThrowsAsync<ArgumentException>(() => service.SaveSettingsAsync(work.User.Id, organizationId, settings));
         var denied = new Mock<IOrganizationSubscriptionService>();

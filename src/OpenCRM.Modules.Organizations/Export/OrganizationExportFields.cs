@@ -130,7 +130,7 @@ internal static class OrganizationExportFields
             """,
         [typeof(Vehicle)] = """
             Id Kind MileageUnit BrandId ModelId ManualBrandName ManualModelName YearIssue Name Vin
-            RegistrationPlate BodyNumber EngineNumber Color RegistrationCertificate CommissioningDate Description
+            RegistrationPlate RegistrationCountryCode BodyNumber EngineNumber Color RegistrationCertificate CommissioningDate Description
             CurrentMileage CurrentMileageUpdatedAt DateTimeCreation IsDeleted DeletionDate IsArchived ArchiveDate
             UserId OrganizationId OrganizationClientId
             """,

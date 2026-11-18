@@ -11,6 +11,7 @@ public sealed class AdminOrganization
     public string? Phone { get; init; }
     public string? Email { get; init; }
     public string PrimaryScenarioCode { get; init; } = string.Empty;
+    public string CurrencyCode { get; init; } = "RUB";
     public string ScenarioName { get; init; } = string.Empty;
     public string DocumentStyleCode { get; init; } = string.Empty;
     public string OwnerUserId { get; init; } = string.Empty;
@@ -42,6 +43,7 @@ public sealed class AdminOrganization
     public int StockItemsCount { get; init; }
     public int LowStockItemsCount { get; init; }
     public decimal InventoryValue { get; init; }
+    public IReadOnlyList<AdminOrganizationCurrencyTotal> OtherCurrencyTotals { get; init; } = [];
     public string? ActiveSubscriptionName { get; init; }
     public DateTime? ActiveSubscriptionEndDate { get; init; }
     public DateTime? LastAuditAt { get; init; }

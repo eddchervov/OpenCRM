@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../interactionMessages'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
@@ -24,7 +26,7 @@ async function load() {
     if (active.signal.aborted) return
     routes.value = result ?? null
     conversationId.value = result?.activeRoutes.length === 1 ? result.activeRoutes[0].conversationId : ''
-  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось открыть переписку.' }
+  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('interaction.openChatError') }
   finally { if (request === active) loading.value = false }
 }
 watch(() => [props.context.organization.id, props.clientId], () => { void load() }, { immediate: true })
@@ -32,16 +34,16 @@ onBeforeUnmount(() => request?.abort())
 </script>
 
 <template>
-  <UiLoader v-if="loading" text="Открываем переписку…" />
-  <div v-else-if="error" class="client-conversation-empty" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="load">Повторить</UiButton></div>
+  <UiLoader v-if="loading" :text="t('interaction.openingChat')" />
+  <div v-else-if="error" class="client-conversation-empty" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="load">{{ t('interaction.retry') }}</UiButton></div>
   <div v-else-if="routes && (routes.activeRoutes.length || routes.historyRoutes.length)">
-    <button v-if="showBack && !conversationId" type="button" class="client-conversation-back" @click="emit('back')">← К списку клиентов</button>
-    <nav v-if="routes.activeRoutes.length > 1" class="client-conversation-channels" aria-label="Мессенджер клиента"><button v-for="route in routes.activeRoutes" :key="route.conversationId" type="button" :aria-pressed="conversationId === route.conversationId" @click="conversationId = route.conversationId">{{ conversationChannelName(route.channelCode) }}<span v-if="route.unreadCount"> · {{ route.unreadCount }} новых</span></button></nav>
-    <p v-if="!conversationId" class="client-conversation-empty">Выберите мессенджер для ответа клиенту.</p>
+    <button v-if="showBack && !conversationId" type="button" class="client-conversation-back" @click="emit('back')">{{ t('interaction.backToClients') }}</button>
+    <nav v-if="routes.activeRoutes.length > 1" class="client-conversation-channels" :aria-label="t('interaction.clientMessenger')"><button v-for="route in routes.activeRoutes" :key="route.conversationId" type="button" :aria-pressed="conversationId === route.conversationId" @click="conversationId = route.conversationId">{{ conversationChannelName(route.channelCode) }}<span v-if="route.unreadCount"> · {{ t('interaction.unread', { count: route.unreadCount }) }}</span></button></nav>
+    <p v-if="!conversationId" class="client-conversation-empty">{{ t('interaction.chooseMessenger') }}</p>
     <ConversationThread v-if="conversationId" :key="context.organization.id + ':' + conversationId" :context="context" :conversation-id="conversationId" :maintenance-id="maintenanceId" :show-back="showBack || routes.activeRoutes.length > 1" @back="routes.activeRoutes.length > 1 ? conversationId = '' : emit('back')" />
-    <details v-if="routes.historyRoutes.length" class="client-conversation-history"><summary>История отключённых каналов</summary><button v-for="route in routes.historyRoutes" :key="route.conversationId" type="button" @click="conversationId = route.conversationId">{{ conversationChannelName(route.channelCode) }} · {{ route.displayName }} · Только просмотр</button></details>
+    <details v-if="routes.historyRoutes.length" class="client-conversation-history"><summary>{{ t('interaction.disconnectedHistory') }}</summary><button v-for="route in routes.historyRoutes" :key="route.conversationId" type="button" @click="conversationId = route.conversationId">{{ conversationChannelName(route.channelCode) }} · {{ route.displayName }} · {{ t('interaction.readOnly') }}</button></details>
   </div>
-  <div v-else class="client-conversation-empty"><h3>Нет подключённых мессенджеров</h3><p>Создайте приглашение в карточке клиента. После подключения Telegram или MAX здесь появится переписка со студией.</p><UiButton v-if="maintenanceId && context.shell.menu?.some(item => item.code === 'clients' && item.isVisible)" variant="secondary" :href="`#clients/${clientId}`">Открыть клиента</UiButton></div>
+  <div v-else class="client-conversation-empty"><h3>{{ t('interaction.noMessengers') }}</h3><p>{{ t('interaction.messengerHelp') }}</p><UiButton v-if="maintenanceId && context.shell.menu?.some(item => item.code === 'clients' && item.isVisible)" variant="secondary" :href="`#clients/${clientId}`">{{ t('interaction.openClient') }}</UiButton></div>
 </template>
 
 <style scoped>

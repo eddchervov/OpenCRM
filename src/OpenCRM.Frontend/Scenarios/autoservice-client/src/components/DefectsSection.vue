@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/defectMessages'
 import { getVehicleDisplayName } from '@opencrm/workspace'
 import { WorkspaceAccessNotice } from '@opencrm/workspace'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -20,6 +22,8 @@ import {
   type FleetDefectMaintenanceOption
 } from '@/api/defects'
 import type { AutoServiceWorkspaceContext } from '@/api/autoserviceBff'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   context: AutoServiceWorkspaceContext
@@ -62,7 +66,7 @@ const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly !== tr
 const readOnlyMessage = computed(() => props.context.workspaceAccess?.readOnlyMessage ?? '')
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
 const vehicleOptions = computed(() => [
-  { value: '', label: 'Вся техника' },
+  { value: '', get label() { return t('defects.allVehicles') } },
   ...vehicles.value.map(vehicle => ({
     value: vehicle.id,
     label: getVehicleDisplayName(vehicle, true)
@@ -70,27 +74,27 @@ const vehicleOptions = computed(() => [
 ])
 const formVehicleOptions = computed(() => vehicleOptions.value.filter(option => option.value))
 const statusOptions = [
-  { value: '', label: 'Все статусы' },
-  { value: 'new', label: 'Новые' },
-  { value: 'in_progress', label: 'В работе' },
-  { value: 'deferred', label: 'Отложены' },
-  { value: 'resolved', label: 'Закрыты' }
+  { value: '', get label() { return t('defects.allStatuses') } },
+  { value: 'new', get label() { return t('defects.newStatus') } },
+  { value: 'in_progress', get label() { return t('defects.inProgress') } },
+  { value: 'deferred', get label() { return t('defects.deferred') } },
+  { value: 'resolved', get label() { return t('defects.resolved') } }
 ]
 const formStatusOptions = statusOptions.filter(option => option.value)
 const severityOptions = [
-  { value: 'low', label: 'Низкая' },
-  { value: 'medium', label: 'Средняя' },
-  { value: 'high', label: 'Высокая' },
-  { value: 'critical', label: 'Критичная' }
+  { value: 'low', get label() { return t('defects.low') } },
+  { value: 'medium', get label() { return t('defects.medium') } },
+  { value: 'high', get label() { return t('defects.high') } },
+  { value: 'critical', get label() { return t('defects.critical') } }
 ]
 const sortOptions = [
-  { value: 'created_desc', label: 'Сначала новые' },
-  { value: 'created_asc', label: 'Сначала старые' },
-  { value: 'severity_desc', label: 'По критичности' },
-  { value: 'status_asc', label: 'По статусу' }
+  { value: 'created_desc', get label() { return t('defects.newest') } },
+  { value: 'created_asc', get label() { return t('defects.oldest') } },
+  { value: 'severity_desc', get label() { return t('defects.bySeverity') } },
+  { value: 'status_asc', get label() { return t('defects.byStatus') } }
 ]
 const maintenanceSelectOptions = computed(() => [
-  { value: '', label: 'Выберите обслуживание' },
+  { value: '', get label() { return t('defects.chooseMaintenance') } },
   ...maintenanceOptions.value.map(item => ({
     value: item.id,
     label: item.text
@@ -120,7 +124,7 @@ async function loadPage() {
     openCount.value = result.openCount
     resolvedCount.value = result.resolvedCount
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить неисправности.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.loadError')
   } finally {
     isLoading.value = false
   }
@@ -171,7 +175,7 @@ async function openDefect(defectId: string) {
     startEdit(defect)
     isEditing.value = false
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть неисправность.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.openError')
   } finally {
     isLoading.value = false
   }
@@ -184,7 +188,7 @@ async function saveDefect() {
   }
 
   if (!form.vehicleId || !form.title.trim()) {
-    errorMessage.value = 'Укажите технику и название неисправности.'
+    errorMessage.value = t('defects.vehicleTitleRequired')
     return
   }
 
@@ -203,18 +207,18 @@ async function saveDefect() {
 
     if (form.id) {
       await updateDefect(props.context.organization.id, form.id, payload)
-      successMessage.value = 'Неисправность сохранена.'
+      successMessage.value = t('defects.saved')
       await openDefect(form.id)
     } else {
       const result = await createDefect(props.context.organization.id, payload)
-      successMessage.value = 'Неисправность добавлена.'
+      successMessage.value = t('defects.created')
       await loadPage()
       await openDefect(result.id)
     }
 
     isEditing.value = false
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось сохранить неисправность.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.saveError')
   } finally {
     isSaving.value = false
   }
@@ -234,14 +238,14 @@ async function changeStatus(defect: FleetDefect, statusCode: string) {
     await loadPage()
     await openDefect(defect.id)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось изменить статус.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.statusError')
   } finally {
     isSaving.value = false
   }
 }
 
 async function removeDefect(defect: FleetDefect) {
-  if (!canWrite.value || !window.confirm('Удалить неисправность?')) {
+  if (!canWrite.value || !window.confirm(t('defects.deleteConfirm'))) {
     return
   }
 
@@ -254,7 +258,7 @@ async function removeDefect(defect: FleetDefect) {
     resetForm()
     await loadPage()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось удалить неисправность.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.deleteError')
   } finally {
     isSaving.value = false
   }
@@ -272,7 +276,7 @@ async function linkMaintenance() {
     await linkDefectMaintenance(props.context.organization.id, selectedDefect.value.id, selectedMaintenanceId.value)
     await openDefect(selectedDefect.value.id)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось привязать обслуживание.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.linkError')
   } finally {
     isSaving.value = false
   }
@@ -290,7 +294,7 @@ async function unlinkMaintenance(maintenanceId: string) {
     await unlinkDefectMaintenance(props.context.organization.id, selectedDefect.value.id, maintenanceId)
     await openDefect(selectedDefect.value.id)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось удалить связь.'
+    errorMessage.value = error instanceof Error ? error.message : t('defects.unlinkError')
   } finally {
     isSaving.value = false
   }
@@ -306,11 +310,22 @@ function goToPage(nextPage: number) {
   void loadPage()
 }
 
-function formatDate(value?: string | null) {
+function formatDate(value?: string | null, calendarDate = false) {
   if (!value) {
     return '-'
   }
-  return new Intl.DateTimeFormat('ru-RU').format(new Date(value))
+  const timeZone = calendarDate ? 'UTC' : props.context.organization.timeZoneId || 'UTC'
+  const date = calendarDate ? new Date(`${value.slice(0, 10)}T00:00:00Z`) : new Date(value)
+
+  return new Intl.DateTimeFormat(formattingCulture.value, { timeZone }).format(date)
+}
+
+function statusName(defect: FleetDefect) {
+  return statusOptions.find(option => option.value === defect.statusCode)?.label ?? defect.statusName
+}
+
+function severityName(defect: FleetDefect) {
+  return severityOptions.find(option => option.value === defect.severityCode)?.label ?? defect.severityName
 }
 
 function statusTone(defect: FleetDefect) {
@@ -337,31 +352,31 @@ onMounted(async () => {
 
 <template>
   <section class="fleet-entity-section workspace-operations">
-    <UiCard page title="Неисправности">
+    <UiCard page :title="t('defects.title')">
       <template #actions>
-        <WorkspacePageHelpButton section-code="defects" title="Неисправности" />
-        <UiButton :disabled="!canWrite || isSaving" @click="startCreate">Добавить</UiButton>
+        <WorkspacePageHelpButton section-code="defects" :title="t('defects.title')" />
+        <UiButton :disabled="!canWrite || isSaving" @click="startCreate">{{ t('defects.add') }}</UiButton>
       </template>
 
       <WorkspaceAccessNotice :can-manage-billing="context.organization.canManageBilling === true" v-if="readOnlyMessage" :message="readOnlyMessage" />
 
       <div class="fleet-toolbar">
-        <UiInput v-model="filters.searchQuery" label="Поиск" placeholder="Название, техника, описание" />
-        <UiSelect v-model="filters.statusCode" label="Статус" :options="statusOptions" />
-        <UiSelect v-model="filters.vehicleId" label="Техника" :options="vehicleOptions" />
-        <UiSelect v-model="filters.sort" label="Сортировка" :options="sortOptions" :searchable="false" />
-        <UiButton variant="secondary" :disabled="isLoading" @click="applyFilters">Показать</UiButton>
+        <UiInput v-model="filters.searchQuery" :label="t('defects.search')" :placeholder="t('defects.searchPlaceholder')" />
+        <UiSelect v-model="filters.statusCode" :label="t('defects.status')" :options="statusOptions" />
+        <UiSelect v-model="filters.vehicleId" :label="t('defects.vehicle')" :options="vehicleOptions" />
+        <UiSelect v-model="filters.sort" :label="t('defects.sort')" :options="sortOptions" :searchable="false" />
+        <UiButton variant="secondary" :disabled="isLoading" @click="applyFilters">{{ t('defects.show') }}</UiButton>
       </div>
 
       <div class="fleet-metrics">
-        <span>Всего: <strong>{{ totalCount }}</strong></span>
-        <span>Открыто: <strong>{{ openCount }}</strong></span>
-        <span>Закрыто: <strong>{{ resolvedCount }}</strong></span>
+        <span>{{ t('defects.total') }} <strong>{{ totalCount }}</strong></span>
+        <span>{{ t('defects.open') }} <strong>{{ openCount }}</strong></span>
+        <span>{{ t('defects.closed') }} <strong>{{ resolvedCount }}</strong></span>
       </div>
 
       <div v-if="successMessage" class="fleet-state fleet-state-success">{{ successMessage }}</div>
       <div v-if="errorMessage" class="fleet-state fleet-state-error">{{ errorMessage }}</div>
-      <UiLoader v-if="isLoading" text="Загружаем неисправности..." />
+      <UiLoader v-if="isLoading" :text="t('defects.loading')" />
 
       <div v-else class="fleet-split-grid">
         <div class="fleet-list">
@@ -372,68 +387,68 @@ onMounted(async () => {
             :class="{ active: selectedDefect?.id === defect.id }"
           >
             <button type="button" class="fleet-list-item__main" @click="openDefect(defect.id)">
-              <span class="fleet-badge" :class="statusTone(defect)">{{ defect.statusName }}</span>
+              <span class="fleet-badge" :class="statusTone(defect)">{{ statusName(defect) }}</span>
               <strong>{{ defect.title }}</strong>
               <small>{{ defect.vehicleDisplayName }}<span v-if="defect.vehicleSubtitle"> · {{ defect.vehicleSubtitle }}</span></small>
-              <span>{{ defect.severityName }} · {{ formatDate(defect.createdAt) }}</span>
+              <span>{{ severityName(defect) }} · {{ formatDate(defect.createdAt) }}</span>
             </button>
             <div class="fleet-list-item__actions">
-              <UiButton variant="secondary" :disabled="isSaving || !canWrite || defect.isClosed" @click="changeStatus(defect, 'resolved')">Закрыть</UiButton>
+              <UiButton variant="secondary" :disabled="isSaving || !canWrite || defect.isClosed" @click="changeStatus(defect, 'resolved')">{{ t('defects.close') }}</UiButton>
             </div>
           </article>
 
-          <div v-if="defects.length === 0" class="fleet-empty">Неисправности не найдены.</div>
+          <div v-if="defects.length === 0" class="fleet-empty">{{ t('defects.empty') }}</div>
 
           <div class="fleet-pagination">
-            <UiButton variant="secondary" :disabled="page <= 1 || isLoading" @click="goToPage(page - 1)">Назад</UiButton>
+            <UiButton variant="secondary" :disabled="page <= 1 || isLoading" @click="goToPage(page - 1)">{{ t('defects.back') }}</UiButton>
             <span>{{ page }} / {{ totalPages }}</span>
-            <UiButton variant="secondary" :disabled="page >= totalPages || isLoading" @click="goToPage(page + 1)">Вперед</UiButton>
+            <UiButton variant="secondary" :disabled="page >= totalPages || isLoading" @click="goToPage(page + 1)">{{ t('defects.next') }}</UiButton>
           </div>
         </div>
 
         <aside class="fleet-detail-panel">
           <form v-if="isEditing" class="fleet-form-grid" @submit.prevent="saveDefect">
-            <h3 class="fleet-form-wide">{{ form.id ? 'Редактирование неисправности' : 'Новая неисправность' }}</h3>
-            <UiSelect v-model="form.vehicleId" label="Техника" :options="formVehicleOptions" required :disabled="isSaving || !canWrite" />
-            <UiSelect v-model="form.severityCode" label="Критичность" :options="severityOptions" :searchable="false" :disabled="isSaving || !canWrite" />
-            <UiSelect v-model="form.statusCode" label="Статус" :options="formStatusOptions" :searchable="false" :disabled="isSaving || !canWrite" />
-            <UiInput v-model="form.title" class="fleet-form-wide" label="Название" required :disabled="isSaving || !canWrite" />
-            <UiTextarea v-model="form.description" class="fleet-form-wide" label="Описание" :rows="4" :disabled="isSaving || !canWrite" />
+            <h3 class="fleet-form-wide">{{ form.id ? t('defects.editTitle') : t('defects.newTitle') }}</h3>
+            <UiSelect v-model="form.vehicleId" :label="t('defects.vehicle')" :options="formVehicleOptions" required :disabled="isSaving || !canWrite" />
+            <UiSelect v-model="form.severityCode" :label="t('defects.severity')" :options="severityOptions" :searchable="false" :disabled="isSaving || !canWrite" />
+            <UiSelect v-model="form.statusCode" :label="t('defects.status')" :options="formStatusOptions" :searchable="false" :disabled="isSaving || !canWrite" />
+            <UiInput v-model="form.title" class="fleet-form-wide" :label="t('defects.name')" required :disabled="isSaving || !canWrite" />
+            <UiTextarea v-model="form.description" class="fleet-form-wide" :label="t('defects.description')" :rows="4" :disabled="isSaving || !canWrite" />
             <div class="fleet-form-actions">
-              <UiButton type="submit" :disabled="isSaving || !canWrite">Сохранить</UiButton>
-              <UiButton type="button" variant="secondary" :disabled="isSaving" @click="isEditing = false">Отмена</UiButton>
+              <UiButton type="submit" :disabled="isSaving || !canWrite">{{ t('defects.save') }}</UiButton>
+              <UiButton type="button" variant="secondary" :disabled="isSaving" @click="isEditing = false">{{ t('defects.cancel') }}</UiButton>
             </div>
           </form>
 
           <template v-else-if="selectedDefect">
             <div class="fleet-detail-head">
-              <span class="fleet-badge" :class="statusTone(selectedDefect)">{{ selectedDefect.statusName }}</span>
+              <span class="fleet-badge" :class="statusTone(selectedDefect)">{{ statusName(selectedDefect) }}</span>
               <h3>{{ selectedDefect.title }}</h3>
               <p>{{ selectedDefect.vehicleDisplayName }}<span v-if="selectedDefect.vehicleSubtitle"> · {{ selectedDefect.vehicleSubtitle }}</span></p>
             </div>
             <p v-if="selectedDefect.description" class="fleet-detail-text">{{ selectedDefect.description }}</p>
             <div class="fleet-detail-actions">
-              <UiButton variant="secondary" :disabled="isSaving || !canWrite" @click="startEdit(selectedDefect)">Редактировать</UiButton>
-              <UiButton variant="secondary" :disabled="isSaving || !canWrite" @click="changeStatus(selectedDefect, 'in_progress')">В работу</UiButton>
-              <UiButton variant="secondary" :disabled="isSaving || !canWrite" @click="changeStatus(selectedDefect, 'resolved')">Закрыть</UiButton>
-              <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="removeDefect(selectedDefect)">Удалить</UiButton>
+              <UiButton variant="secondary" :disabled="isSaving || !canWrite" @click="startEdit(selectedDefect)">{{ t('defects.edit') }}</UiButton>
+              <UiButton variant="secondary" :disabled="isSaving || !canWrite" @click="changeStatus(selectedDefect, 'in_progress')">{{ t('defects.start') }}</UiButton>
+              <UiButton variant="secondary" :disabled="isSaving || !canWrite" @click="changeStatus(selectedDefect, 'resolved')">{{ t('defects.close') }}</UiButton>
+              <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="removeDefect(selectedDefect)">{{ t('defects.delete') }}</UiButton>
             </div>
 
             <section class="fleet-subsection">
-              <h4>Связанные обслуживания</h4>
+              <h4>{{ t('defects.linkedMaintenance') }}</h4>
               <div v-for="maintenance in selectedDefect.linkedMaintenances" :key="maintenance.id" class="fleet-related-row">
-                <span>{{ formatDate(maintenance.date) }} · {{ maintenanceTitle(maintenance) }}</span>
-                <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="unlinkMaintenance(maintenance.id)">Отвязать</UiButton>
+                <span>{{ formatDate(maintenance.date, true) }} · {{ maintenanceTitle(maintenance) }}</span>
+                <UiButton variant="ghost" :disabled="isSaving || !canWrite" @click="unlinkMaintenance(maintenance.id)">{{ t('defects.unlink') }}</UiButton>
               </div>
-              <div v-if="selectedDefect.linkedMaintenances.length === 0" class="fleet-empty">Связей пока нет.</div>
+              <div v-if="selectedDefect.linkedMaintenances.length === 0" class="fleet-empty">{{ t('defects.noLinks') }}</div>
               <div class="fleet-inline-action">
-                <UiSelect v-model="selectedMaintenanceId" label="Обслуживание" :options="maintenanceSelectOptions" :disabled="isSaving || !canWrite" />
-                <UiButton variant="secondary" :disabled="!selectedMaintenanceId || isSaving || !canWrite" @click="linkMaintenance">Привязать</UiButton>
+                <UiSelect v-model="selectedMaintenanceId" :label="t('defects.maintenance')" :options="maintenanceSelectOptions" :disabled="isSaving || !canWrite" />
+                <UiButton variant="secondary" :disabled="!selectedMaintenanceId || isSaving || !canWrite" @click="linkMaintenance">{{ t('defects.link') }}</UiButton>
               </div>
             </section>
 
             <section class="fleet-subsection">
-              <h4>История</h4>
+              <h4>{{ t('defects.history') }}</h4>
               <div v-for="item in historyItems" :key="`${item.createdAt}-${item.title}`" class="fleet-history-row">
                 <strong>{{ item.title }}</strong>
                 <span>{{ item.description }}</span>
@@ -442,7 +457,7 @@ onMounted(async () => {
             </section>
           </template>
 
-          <div v-else class="fleet-empty">Выберите неисправность или создайте новую.</div>
+          <div v-else class="fleet-empty">{{ t('defects.chooseHint') }}</div>
         </aside>
       </div>
     </UiCard>

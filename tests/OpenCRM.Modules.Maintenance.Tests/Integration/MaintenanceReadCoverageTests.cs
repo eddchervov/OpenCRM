@@ -16,6 +16,32 @@ namespace OpenCRM.Modules.Maintenance.Tests.Integration;
 
 public sealed class MaintenanceReadCoverageTests(MaintenanceDatabaseFixture fixture) : IClassFixture<MaintenanceDatabaseFixture>
 {
+    [Theory]
+    [InlineData("RUB", "RUB", true)]
+    [InlineData("CNY", "CNY", true)]
+    [InlineData("RUB", "CNY", false)]
+    public async Task FinancialEditingRequiresMatchingWorkspaceCurrency(
+        string orderCurrency,
+        string workspaceCurrency,
+        bool canChangeFinancialData)
+    {
+        await using var context = fixture.CreateContext();
+        var vehicle = MaintenanceReadCoverageTests.CreateVehicle(organization: true);
+        vehicle.Organization!.CurrencyCode = workspaceCurrency;
+        var maintenance = MaintenanceReadCoverageTests.CreateMaintenance(vehicle, DateTime.UtcNow.Date);
+        maintenance.CurrencyCode = orderCurrency;
+        context.Maintenance.Add(maintenance);
+        await context.SaveChangesAsync();
+        var access = MaintenanceReadCoverageTests.CreateAccess(vehicle.User.Id, vehicle.Organization.Id);
+        var service = MaintenanceReadCoverageTests.CreateQueryService(context, access.Object);
+
+        var result = await service.GetById(vehicle.User.Id, vehicle.Organization.Id, maintenance.Id);
+
+        Assert.Equal(orderCurrency, result.CurrencyCode);
+        Assert.Equal(canChangeFinancialData, result.CanChangeFinancialData);
+        Assert.Equal(100m, result.GrossAmount);
+    }
+
     [Fact]
     public async Task GetByIdMapsFinanceDetailsPhotosAndOnlyActiveLinkedDefects()
     {

@@ -12,6 +12,20 @@ const compiled = ts.transpileModule(script.content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
+const messages = {
+  'vehicleOverview.kind1': 'Легковой автомобиль',
+  'vehicleOverview.kind99': 'Другая техника',
+  'vehicleOverview.notMaintained': 'Не обслуживалась',
+  'vehicleOverview.readyForHandover': 'Готово к выдаче',
+  'vehicleOverview.inProgress': 'В работе',
+  'vehicleOverview.planned': 'Запланировано',
+  'vehicleOverview.noActiveWork': 'Нет активных работ'
+}
+
+function translate(key, parameters = {}) {
+  return (messages[key] ?? key).replace(/\{([^}]+)\}/g, (_, name) => parameters[name] ?? `{${name}}`)
+}
+
 function component(api, workspaceAccess = { isReadOnly: false }, quickActions = []) {
   const module = { exports: {} }
   const dependencies = {
@@ -22,7 +36,9 @@ function component(api, workspaceAccess = { isReadOnly: false }, quickActions = 
     '../utils/vehicleBrandLogo': { getVehicleBrandLogo: () => null },
     './WorkspaceAccessNotice.vue': {},
     './WorkspacePageHelpButton.vue': {},
-    '@opencrm/ui': {}
+    '@opencrm/ui': { useLocalization: () => ({ t: translate }) },
+    '@opencrm/ui/i18n': { formattingCulture: vue.ref('ru-RU') },
+    '../vehicleOverviewMessages': {}
   }
   const resolve = id => {
     if (id === 'vue') {

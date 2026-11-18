@@ -1,4 +1,6 @@
-﻿if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-time-picker']) {
+﻿var maintenanceLegacyText = JSON.parse(document.getElementById('maintenance-legacy-messages').dataset.messages);
+
+if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-time-picker']) {
     Vue.component('vue-ctk-date-time-picker', window['vue-ctk-date-time-picker']);
 }
 
@@ -6,12 +8,14 @@ new Vue({
     el: '#maintenance-details-form',
     data: function () {
         return {
+            localizedText: maintenanceLegacyText,
+            regionalCurrencyCode: null,
             organizationId: typeof maintenanceOrganizationId !== 'undefined' && maintenanceOrganizationId ? maintenanceOrganizationId : null,
             formLoad: true,
             errorMessage: '',
             notificationType: 'error',
-            loadingTitle: 'Подготовка файла...',
-            loadingMessage: 'Пожалуйста, подождите',
+            loadingTitle: maintenanceLegacyText.loadingFileTitle,
+            loadingMessage: maintenanceLegacyText.loadingWait,
             maintenance: {
                 id: maintenanceId,
                 status: 3,
@@ -78,10 +82,10 @@ new Vue({
             return this.exportAccess.pdf || this.exportAccess.pdfWithPhotos || this.exportAccess.word || this.exportAccess.wordWithPhotos;
         },
         mileageUnitLabel: function () {
-            return this.vehicle.mileageUnit === 2 ? 'Моточасы' : 'Пробег';
+            return this.vehicle.mileageUnit === 2 ? maintenanceLegacyText.mileageHours : maintenanceLegacyText.mileageKilometers;
         },
         mileageUnitShortText: function () {
-            return this.vehicle.mileageUnit === 2 ? 'м/ч' : 'км';
+            return this.vehicle.mileageUnit === 2 ? maintenanceLegacyText.mileageUnitHours : maintenanceLegacyText.mileageUnitKilometers;
         }
     },
     methods: {
@@ -92,7 +96,7 @@ new Vue({
                 var raw = value.trim();
                 if (!raw) return null;
 
-                var ruDate = moment(raw, 'DD.MM.YYYY', true);
+                var ruDate = moment(raw, maintenanceLegacyText.dateCalendarFormat, true);
                 if (ruDate.isValid()) return ruDate.format('YYYY-MM-DD');
 
                 var isoDate = moment(raw.substring(0, 10), 'YYYY-MM-DD', true);
@@ -110,7 +114,7 @@ new Vue({
 
         formatDateForPicker: function (value) {
             var date = this.normalizeDateForServer(value);
-            return date ? moment(date, 'YYYY-MM-DD', true).format('DD.MM.YYYY') : null;
+            return date ? moment(date, 'YYYY-MM-DD', true).format(maintenanceLegacyText.dateCalendarFormat) : null;
         },
 
         getWorkspaceParams: function () {
@@ -149,13 +153,13 @@ new Vue({
         },
 
         showLoadingModal: function (title, message) {
-            this.loadingTitle = title || 'Подготовка файла...';
-            this.loadingMessage = message || 'Пожалуйста, подождите';
+            this.loadingTitle = title || maintenanceLegacyText.loadingFileTitle;
+            this.loadingMessage = message || maintenanceLegacyText.loadingWait;
             this.showModal('#loadingModal');
         },
 
         openDocument: function (url, loadingTitle, popupErrorMessage, fallbackApiErrorMessage) {
-            this.showLoadingModal(loadingTitle, 'Пожалуйста, подождите');
+            this.showLoadingModal(loadingTitle, maintenanceLegacyText.loadingWait);
 
             try {
                 var documentWindow = window.open(url, '_blank');
@@ -189,7 +193,7 @@ new Vue({
             try {
                 var response = await fetch('/api/v1/media/' + photoId + '/path');
                 if (!response.ok) {
-                    throw new Error('Не удалось загрузить фотографию');
+                    throw new Error(maintenanceLegacyText.validationUploadPhotoFailure);
                 }
 
                 return await response.text();
@@ -255,9 +259,9 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация Word...',
-                'Разрешите всплывающие окна для скачивания Word документа',
-                'Ошибка при генерации Word документа'
+                maintenanceLegacyText.loadingGeneratingWord,
+                maintenanceLegacyText.loadingPopupBlockedWord,
+                maintenanceLegacyText.loadingWordError
             );
         },
 
@@ -270,9 +274,9 @@ new Vue({
 
             this.openDocument(
                 url,
-                'Генерация PDF...',
-                'Разрешите всплывающие окна для скачивания PDF',
-                'Ошибка при генерации PDF'
+                maintenanceLegacyText.loadingGeneratingPdf,
+                maintenanceLegacyText.loadingPopupBlockedPdf,
+                maintenanceLegacyText.loadingPdfError
             );
         },
 
@@ -318,7 +322,7 @@ new Vue({
                 await this.loadFeatureAccess();
 
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка загрузки данных обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationLoadError);
             } finally {
                 this.formLoad = false;
             }
@@ -339,7 +343,7 @@ new Vue({
                 this.maintenanceHistoryEvents = response.data || [];
             } catch (error) {
                 this.maintenanceHistoryEvents = [];
-                this.handleApiError(error, 'Не удалось загрузить историю обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.validationHistoryLoadError);
             } finally {
                 this.maintenanceHistoryLoaded = true;
             }
@@ -365,22 +369,22 @@ new Vue({
 
         getMaintenanceTypeText: function (type) {
             var typeTexts = {
-                1: 'Ремонт и обслуживание',
-                2: 'Плановое ТО',
-                3: 'Заправка топливом',
-                100: 'Другое'
+                1: maintenanceLegacyText.typeRepair,
+                2: maintenanceLegacyText.typeScheduled,
+                3: maintenanceLegacyText.typeFuel,
+                100: maintenanceLegacyText.typeOther
             };
-            return typeTexts[type] || 'Обслуживание';
+            return typeTexts[type] || maintenanceLegacyText.typeUnknown;
         },
 
         getMaintenanceStatusText: function (status) {
             var statusTexts = {
-                1: 'Запланировано',
-                2: 'В работе',
-                3: 'Выполнено',
-                4: 'Отменено'
+                1: maintenanceLegacyText.statusPlanned,
+                2: maintenanceLegacyText.statusInProgress,
+                3: maintenanceLegacyText.statusCompleted,
+                4: maintenanceLegacyText.statusCancelled
             };
-            return statusTexts[status] || 'Неизвестно';
+            return statusTexts[status] || maintenanceLegacyText.statusUnknown;
         },
 
         normalizeDateForDisplay: function (dateString) {
@@ -390,7 +394,7 @@ new Vue({
                 var raw = dateString.trim();
                 if (!raw) return null;
 
-                var ruDate = moment(raw, 'DD.MM.YYYY', true);
+                var ruDate = moment(raw, maintenanceLegacyText.dateCalendarFormat, true);
                 if (ruDate.isValid()) return ruDate.format('YYYY-MM-DD');
 
                 var isoDate = moment(raw.substring(0, 10), 'YYYY-MM-DD', true);
@@ -439,7 +443,7 @@ new Vue({
         },
 
         getPrimaryMaintenanceDateLabel: function () {
-            return this.maintenance.status === 3 ? 'Дата выполнения' : 'Плановая дата';
+            return this.maintenance.status === 3 ? maintenanceLegacyText.dateCompleted : maintenanceLegacyText.datePlanned;
         },
 
         getPrimaryMaintenanceDateValue: function () {
@@ -449,16 +453,13 @@ new Vue({
         },
 
         formatDate: function (dateString) {
-            var date = this.normalizeDateForDisplay(dateString);
-            return date ? moment(date, 'YYYY-MM-DD', true).format('DD.MM.YYYY') : '—';
+            return dateString ? window.OpenCRMRegional.formatDate(dateString, { dateStyle: 'short' }) : '—';
         },
 
-        formatPrice: function (price) {
-            return new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                minimumFractionDigits: 0
-            }).format(price);
+        formatPrice: function (price, currencyCode) {
+            const selectedCurrency = currencyCode || this.maintenance?.currencyCode || this.selectedMaintenance?.currencyCode || this.regionalCurrencyCode;
+
+            return window.OpenCRMRegional.formatMoney(price, selectedCurrency);
         },
 
         openPhotoGallery: function (index) {
@@ -476,20 +477,20 @@ new Vue({
             this.workflowMileage = this.maintenance.mileage;
 
             if (action === 'complete') {
-                this.workflowModalTitle = 'Выполнить обслуживание';
-                this.workflowConfirmText = 'Выполнить';
+                this.workflowModalTitle = maintenanceLegacyText.workflowCompleteTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowCompleteAction;
                 this.workflowDate = this.maintenance.completedDate || moment().format('YYYY-MM-DD');
             } else if (action === 'cancel') {
-                this.workflowModalTitle = 'Отменить обслуживание';
-                this.workflowConfirmText = 'Отменить';
+                this.workflowModalTitle = maintenanceLegacyText.workflowCancelTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowCancelAction;
                 this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || moment().format('YYYY-MM-DD');
             } else if (action === 'reschedule') {
-                this.workflowModalTitle = 'Перенести обслуживание';
-                this.workflowConfirmText = 'Перенести';
+                this.workflowModalTitle = maintenanceLegacyText.workflowRescheduleTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowRescheduleAction;
                 this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || moment().format('YYYY-MM-DD');
             } else if (action === 'reopen') {
-                this.workflowModalTitle = 'Возобновить обслуживание';
-                this.workflowConfirmText = 'Возобновить';
+                this.workflowModalTitle = maintenanceLegacyText.workflowResumeTitle;
+                this.workflowConfirmText = maintenanceLegacyText.workflowResumeAction;
                 this.workflowDate = this.maintenance.plannedDate || this.maintenance.date || moment().format('YYYY-MM-DD');
             }
 
@@ -552,7 +553,7 @@ new Vue({
                     await this.loadMaintenanceHistoryEvents();
                 }
             } catch (error) {
-                this.handleApiError(error, 'Не удалось изменить состояние обслуживания');
+                this.handleApiError(error, maintenanceLegacyText.workflowChangeError);
             } finally {
                 this.workflowSaving = false;
             }
@@ -566,7 +567,7 @@ new Vue({
                 this.hideModal('#deleteMaintenanceModal');
                 this.redirectToVehicle();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось удалить обслуживание');
+                this.handleApiError(error, maintenanceLegacyText.deleteMaintenanceError);
                 this.hideModal('#deleteMaintenanceModal');
             }
         },
@@ -590,6 +591,7 @@ new Vue({
         }
     },
     mounted: function () {
+        window.OpenCRMRegional.initializeLegacyVm(this);
         this.loadMaintenanceData();
 
         var _this = this;

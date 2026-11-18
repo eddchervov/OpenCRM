@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '../exportMessages'
+
 export type Export1CCapabilities = {
   processingDownloadUrl?: string | null
   canExport: boolean
@@ -48,7 +51,7 @@ export async function loadExport1CPreview(
   const response = await fetch(url.toString(), { credentials: 'same-origin', headers: { Accept: 'application/json' }, signal })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось проверить данные для выгрузки.')
+    throw new Error(error?.message ?? translate('accountingExport.apiPreviewError'))
   }
   return response.json()
 }
@@ -61,7 +64,7 @@ export async function loadExport1CCapabilities(organizationId: string, signal?: 
   })
 
   if (!response.ok) {
-    throw new Error('Не удалось проверить доступ к выгрузке.')
+    throw new Error(translate('accountingExport.apiAccessError'))
   }
 
   return response.json()
@@ -81,7 +84,7 @@ export async function downloadExport1C(organizationId: string, options: Export1C
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сформировать выгрузку.')
+    throw new Error(error?.message ?? translate('accountingExport.exportError'))
   }
 
   const blob = await response.blob()

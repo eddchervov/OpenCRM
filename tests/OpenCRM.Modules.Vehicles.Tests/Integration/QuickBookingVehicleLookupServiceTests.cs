@@ -10,6 +10,59 @@ namespace OpenCRM.Modules.Vehicles.Tests.Integration;
 public sealed class QuickBookingVehicleLookupServiceTests(VehicleDatabaseFixture fixture) : IClassFixture<VehicleDatabaseFixture>
 {
     [Fact]
+    public async Task ExplicitCountryDoesNotMergeIdenticalPlatesFromDifferentCountries()
+    {
+        await using var context = fixture.CreateContext();
+        var organization = await this.CreateOrganizationAsync(context);
+        var client = this.CreateClient(organization, "Тестовый клиент");
+        context.OrganizationClients.Add(client);
+        var chinese = this.CreateVehicle(organization, client, "ABC123", VehicleKind.PassengerCar);
+        chinese.RegistrationCountryCode = "CN";
+        var american = this.CreateVehicle(organization, client, "ABC123", VehicleKind.PassengerCar);
+        american.RegistrationCountryCode = "US";
+        context.Vehicles.AddRange(chinese, american);
+        await context.SaveChangesAsync();
+        var lookup = new QuickBookingVehicleLookupService(context, this.CreateSubscriptions().Object);
+
+        var found = await lookup.FindByPlateAsync(
+            organization.OwnerUserId, organization.Id, "ABC123", client.Id, VehicleKind.PassengerCar, true, "CN");
+        var missing = await lookup.FindByPlateAsync(
+            organization.OwnerUserId, organization.Id, "ABC123", client.Id, VehicleKind.PassengerCar, true, "GB");
+
+        Assert.Equal(chinese.Id, found?.Id);
+        Assert.Null(missing);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => lookup.FindByPlateAsync(
+            organization.OwnerUserId, organization.Id, "ABC123", client.Id, VehicleKind.PassengerCar, true));
+    }
+
+    [Fact]
+    public async Task FindsForeignPlateWithoutRussianCharacterMappingAndRejectsAmbiguousMatches()
+    {
+        await using var context = fixture.CreateContext();
+        var organization = await this.CreateOrganizationAsync(context);
+        var client = this.CreateClient(organization, "Тестовый клиент");
+        context.OrganizationClients.Add(client);
+        var vehicle = this.CreateVehicle(organization, client, "沪A·12345", VehicleKind.PassengerCar);
+        vehicle.RegistrationCountryCode = "CN";
+        context.Vehicles.Add(vehicle);
+        await context.SaveChangesAsync();
+        var lookup = new QuickBookingVehicleLookupService(context, this.CreateSubscriptions().Object);
+
+        var found = await lookup.FindByPlateAsync(
+            organization.OwnerUserId, organization.Id, "沪A·12345", client.Id, VehicleKind.PassengerCar);
+
+        Assert.Equal(vehicle.Id, found?.Id);
+        Assert.Equal("CN", found?.RegistrationCountryCode);
+        var duplicate = this.CreateVehicle(organization, client, "沪A·12345", VehicleKind.PassengerCar);
+        duplicate.RegistrationCountryCode = "CN";
+        context.Vehicles.Add(duplicate);
+        await context.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => lookup.FindByPlateAsync(
+            organization.OwnerUserId, organization.Id, "沪A·12345", client.Id, VehicleKind.PassengerCar));
+    }
+
+    [Fact]
     public async Task FindsOnlyVehiclesMatchingOrganizationKindAndOptionalClientWithoutHidingArchivedVehicles()
     {
         await using var context = fixture.CreateContext();

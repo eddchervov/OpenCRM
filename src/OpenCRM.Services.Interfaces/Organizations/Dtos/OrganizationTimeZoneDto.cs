@@ -8,4 +8,7 @@ public sealed class OrganizationTimeZoneDto
 
     /// <summary> Может ли пользователь изменить часовой пояс организации. </summary>
     public bool CanManage { get; init; }
+
+    /// <summary> Можно ли изменить часовой пояс до появления расписаний с заданным временем. </summary>
+    public bool CanChange { get; init; } = true;
 }

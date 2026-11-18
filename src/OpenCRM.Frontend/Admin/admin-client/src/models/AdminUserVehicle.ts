@@ -1,6 +1,7 @@
 export interface AdminUserVehicle {
   id: string
   title: string
+  kind?: number
   kindName: string
   brand: string | null
   model: string | null

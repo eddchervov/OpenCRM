@@ -1,3 +1,7 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import * as localization from '@opencrm/ui/i18n'
+import '../packages/workspace/src/timeZoneMessages.ts'
+import { withPathBase } from '../packages/workspace/src/utils/pathBase.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -29,7 +33,12 @@ test('Time zone API sends the prior setting and shared antiforgery token to the 
   const module = { exports: {} }
   const source = readFileSync(new URL('../packages/workspace/src/api/organizationTimeZone.ts', import.meta.url), 'utf8')
   new Function('require', 'module', 'exports', 'fetch', transpile(source))(
-    id => { assert.equal(id, './maintenance'); return { getMutationHeaders: () => ({ RequestVerificationToken: 'token' }) } },
+    id => {
+      if (id === '@opencrm/ui/i18n') return localization
+      if (id === '@opencrm/workspace/timeZoneMessages') return {}
+      if (id === '../utils/pathBase.mjs') return { withPathBase: path => withPathBase(path, '') }
+      assert.equal(id, './maintenance'); return { getMutationHeaders: () => ({ RequestVerificationToken: 'token' }) }
+    },
     module, module.exports, async (...args) => { calls.push(args); return { ok: true, json: async () => ({ timeZoneId: 'Asia/Novosibirsk', canManage: true }) } }
   )
   await module.exports.saveOrganizationTimeZone('org one', 'Asia/Novosibirsk', null)
@@ -39,7 +48,7 @@ test('Time zone API sends the prior setting and shared antiforgery token to the 
   assert.deepEqual(JSON.parse(calls[0][1].body), { timeZoneId: 'Asia/Novosibirsk', expectedTimeZoneId: null })
 })
 
-async function timeZoneEditor({ canManage = true, disabled = false } = {}) {
+async function timeZoneEditor({ canManage = true, canChange = true, disabled = false } = {}) {
   const saves = []
   const events = []
   let failSave = true
@@ -48,14 +57,16 @@ async function timeZoneEditor({ canManage = true, disabled = false } = {}) {
   const code = transpile(compileScript(descriptor, { id: 'organization-time-zone-test' }).content)
   const module = { exports: {} }
   new Function('require', 'module', 'exports', code)(id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return {
       defineComponent: options => options, ref: value => ({ value }), computed: getter => ({ get value() { return getter() } }),
       watch(_source, callback, options) { if (options?.immediate) callback() }, onBeforeUnmount() {}
     }
-    if (id === '@opencrm/ui') return { UiButton: {}, UiSelect: {} }
+    if (id === '@opencrm/ui') return { UiButton: {}, UiSelect: {}, useLocalization: () => ({ t: key => key, locale: { value: 'ru' } }) }
+    if (id === '../timeZoneMessages') return {}
     if (id === '../utils/organizationTimeZone') return loadPure('../packages/workspace/src/utils/organizationTimeZone.ts')
     if (id === '../api/organizationTimeZone') return {
-      loadOrganizationTimeZone: async () => ({ timeZoneId: 'Asia/Novosibirsk', canManage }),
+      loadOrganizationTimeZone: async () => ({ timeZoneId: 'Asia/Novosibirsk', canManage, canChange }),
       saveOrganizationTimeZone: async (...args) => {
         saves.push(args)
         if (failSave) { failSave = false; throw new Error('Часовой пояс уже изменил другой сотрудник.') }
@@ -87,7 +98,7 @@ test('Time zone editor preserves the draft on conflict and refreshes the workspa
 })
 
 test('Time zone editor respects read-only access and cancellation never saves a setting', async () => {
-  for (const options of [{ canManage: false }, { disabled: true }]) {
+  for (const options of [{ canManage: false }, { canChange: false }, { disabled: true }]) {
     const { state, saves } = await timeZoneEditor(options)
     state.startEdit()
     await state.save()
@@ -116,8 +127,11 @@ test('Journal month and week start from the organization day when its month diff
   const { descriptor } = parse(readFileSync(filename, 'utf8'), { filename: filename.pathname })
   const module = { exports: {} }
   new Function('require', 'module', 'exports', 'Date', 'window', transpile(compileScript(descriptor, { id: 'journal-time-zone-test' }).content))(id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return { defineComponent: options => options, ref: value => ({ value }), computed: getter => ({ get value() { return getter() } }), watch() {}, onMounted() {}, onBeforeUnmount() {} }
-    if (id === '@opencrm/ui') return dateModule.exports
+    if (id === '@opencrm/ui') return { ...dateModule.exports, useLocalization: () => ({ t: key => key }) }
+    if (id === '@opencrm/ui/i18n') return { formattingCulture: { value: 'ru-RU' } }
+    if (id === '../schedulerMessages') return {}
     if (id.endsWith('.vue') || id === '../api/maintenanceJournal') return {}
     throw new Error('Unexpected module ' + id)
   }, module, module.exports, ClockDate, { sessionStorage: { getItem: () => null } })

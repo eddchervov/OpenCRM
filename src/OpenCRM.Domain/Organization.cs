@@ -26,6 +26,7 @@ public class Organization
     public int SetupRevision { get; set; }
     public DateTime? SetupCompletedAt { get; set; }
     public string? ShiftTimeZoneId { get; set; }
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
 
     public int? VisitReminderHoursBefore { get; set; }
 

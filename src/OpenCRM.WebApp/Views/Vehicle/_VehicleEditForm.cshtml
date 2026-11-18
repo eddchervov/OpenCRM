@@ -1,14 +1,34 @@
 @{
     var formMode = (ViewData["VehicleFormMode"] as string ?? "edit").ToLowerInvariant();
     var isCreateMode = formMode == "create";
-    var title = isCreateMode ? "Новая техника" : "Параметры техники";
+    var title = Text[isCreateMode ? "vehicle.edit.title.create" : "vehicle.edit.title.edit"].Value;
     var subtitle = isCreateMode
-        ? "Заполните основную карточку, а детали можно будет дополнять и позже."
-        : "Обновите основную информацию и реквизиты техники.";
+        ? Text["vehicle.edit.subtitle.create"].Value
+        : Text["vehicle.edit.subtitle.edit"].Value;
     var returnUrl = ViewData["VehicleEditReturnUrl"] as string ?? "/vehicles";
 }
 
-<div class="vehicle-edit-card card">
+<div class="vehicle-edit-card card"
+     data-kind-passenger="@Text["vehicle.edit.kind.passenger"]"
+     data-kind-truck="@Text["vehicle.edit.kind.truck"]"
+     data-kind-motorcycle="@Text["vehicle.edit.kind.motorcycle"]"
+     data-kind-atv="@Text["vehicle.edit.kind.atv"]"
+     data-kind-utv="@Text["vehicle.edit.kind.utv"]"
+     data-kind-snowmobile="@Text["vehicle.edit.kind.snowmobile"]"
+     data-kind-jetski="@Text["vehicle.edit.kind.jetski"]"
+     data-kind-boat="@Text["vehicle.edit.kind.boat"]"
+     data-kind-special="@Text["vehicle.edit.kind.special"]"
+     data-kind-trailer="@Text["vehicle.edit.kind.trailer"]"
+     data-kind-other="@Text["vehicle.edit.kind.other"]"
+     data-mileage-kilometers="@Text["vehicle.edit.mileage.kilometers"]"
+     data-mileage-engine-hours="@Text["vehicle.edit.mileage.engineHours"]"
+     data-error-clients="@Text["vehicle.edit.error.clients"]"
+     data-error-brands="@Text["vehicle.edit.error.brands"]"
+     data-error-models="@Text["vehicle.edit.error.models"]"
+     data-error-card="@Text["vehicle.edit.error.card"]"
+     data-error-prepare="@Text["vehicle.edit.error.prepare"]"
+     data-error-create="@Text["vehicle.edit.error.create"]"
+     data-error-save="@Text["vehicle.edit.error.save"]">
     <div class="card-header">
         <h1 class="h4 mb-1">@title</h1>
         <div class="text-muted small">@subtitle</div>
@@ -16,7 +36,7 @@
     <div class="card-body">
         <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
             <i class="fa fa-spinner fa-spin"></i>
-            <span>Загружаем данные техники…</span>
+            <span>@Text["vehicle.edit.loading"]</span>
         </div>
 
         <div v-if="errorMessage" class="alert alert-danger mb-4">
@@ -24,10 +44,10 @@
         </div>
 
         <div class="vehicle-edit-section" v-if="!formLoad">
-            <h2 class="vehicle-edit-section-title">Основное</h2>
+            <h2 class="vehicle-edit-section-title">@Text["vehicle.edit.section.main"]</h2>
 
             <div class="mb-3">
-                <label class="form-label" for="vehicle-kind">Тип техники <span class="text-danger">*</span></label>
+                <label class="form-label" for="vehicle-kind">@Text["vehicle.edit.kind.label"] <span class="text-danger">*</span></label>
                 <v-select :options="vehicleKindOptions"
                           input-id="vehicle-kind"
                           :reduce="option => option.value"
@@ -36,13 +56,13 @@
                           v-model="vehicle.kind"
                           @@input="changeVehicleKind">
                     <template slot="no-options">
-                        Нет доступных типов
+                        @Text["vehicle.edit.kind.none"]
                     </template>
                 </v-select>
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="vehicle-mileage-unit">Учет пробега / наработки <span class="text-danger">*</span></label>
+                <label class="form-label" for="vehicle-mileage-unit">@Text["vehicle.edit.mileage.label"] <span class="text-danger">*</span></label>
                 <v-select :options="mileageUnitOptions"
                           input-id="vehicle-mileage-unit"
                           :reduce="option => option.value"
@@ -50,37 +70,37 @@
                           :clearable="false"
                           v-model="vehicle.mileageUnit">
                     <template slot="no-options">
-                        Нет доступных единиц
+                        @Text["vehicle.edit.mileage.none"]
                     </template>
                 </v-select>
                 <small class="text-muted d-block mt-2">
-                    В истории обслуживания и показаний поле будет автоматически подписано как километры или моточасы.
+                    @Text["vehicle.edit.mileage.help"]
                 </small>
             </div>
 
             <div class="mb-3">
-                <div class="btn-group w-100" role="group" aria-label="Способ заполнения техники" v-if="catalogModeAvailable">
+                <div class="btn-group w-100" role="group" aria-label="@Text["vehicle.edit.identityMode.aria"]" v-if="catalogModeAvailable">
                     <button type="button"
                             class="btn"
                             :class="!isManualIdentity ? 'btn-dark' : 'btn-outline-dark'"
                             @@click="toggleIdentityMode(false)">
-                        Из справочника
+                        @Text["vehicle.edit.identityMode.catalog"]
                     </button>
                     <button type="button"
                             class="btn"
                             :class="isManualIdentity ? 'btn-dark' : 'btn-outline-dark'"
                             @@click="toggleIdentityMode(true)">
-                        Ввести вручную
+                        @Text["vehicle.edit.identityMode.manual"]
                     </button>
                 </div>
                 <button type="button" class="btn btn-dark w-100" v-else disabled>
-                    Ручной режим
+                    @Text["vehicle.edit.identityMode.manualOnly"]
                 </button>
             </div>
 
             <template v-if="!isManualIdentity">
                 <div class="mb-3">
-                    <label class="form-label" for="vehicle-brand">Марка</label>
+                    <label class="form-label" for="vehicle-brand">@Text["vehicle.edit.brand"]</label>
                     <v-select :options="brands"
                               input-id="vehicle-brand"
                               :reduce="brand => brand.id"
@@ -89,17 +109,17 @@
                               @@input="getModelOptions(null)"
                               v-model="selectedBrandId">
                         <template slot="no-options">
-                            Не найдено марок
+                            @Text["vehicle.edit.brand.none"]
                         </template>
                     </v-select>
                 </div>
 
                 <div class="mb-3" v-if="selectedBrandId">
-                    <label class="form-label" for="vehicle-model">Модель</label>
+                    <label class="form-label" for="vehicle-model">@Text["vehicle.edit.model"]</label>
                     <template v-if="loadModels">
                         <div class="text-center text-muted py-2">
                             <i class="fa fa-spinner fa-spin fa-fw"></i>
-                            <span>Загрузка моделей...</span>
+                            <span>@Text["vehicle.edit.models.loading"]</span>
                         </div>
                     </template>
                     <template v-else>
@@ -110,7 +130,7 @@
                                   :clearable="false"
                                   v-model="vehicle.modelId">
                             <template slot="no-options">
-                                Не найдено моделей
+                                @Text["vehicle.edit.models.none"]
                             </template>
                         </v-select>
                     </template>
@@ -119,57 +139,57 @@
 
             <template v-else>
                 <div class="mb-3">
-                    <label class="form-label" for="vehicle-manual-brand">Бренд / производитель</label>
+                    <label class="form-label" for="vehicle-manual-brand">@Text["vehicle.edit.manualBrand"]</label>
                     <input type="text" id="vehicle-manual-brand"
                            class="form-control"
                            v-model.trim="vehicle.manualBrandName"
-                           placeholder="Например: Yamaha, Polaris, КамАЗ">
+                           placeholder="@Text["vehicle.edit.manualBrand.placeholder"]">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" for="vehicle-manual-model">Модель</label>
+                    <label class="form-label" for="vehicle-manual-model">@Text["vehicle.edit.model"]</label>
                     <input type="text" id="vehicle-manual-model"
                            class="form-control"
                            v-model.trim="vehicle.manualModelName"
-                           placeholder="Например: Grizzly 700, Ranger XP 1000, 65115">
+                           placeholder="@Text["vehicle.edit.manualModel.placeholder"]">
                 </div>
             </template>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-plate">Госномер</label>
+                    <label class="form-label" for="vehicle-plate">@Text["vehicle.edit.plate"]</label>
                     <input type="text" id="vehicle-plate"
                            class="form-control"
                            v-model.trim="vehicle.registrationPlate"
                            v-registration-plate="vehicle"
                            maxlength="24"
-                           placeholder="Например: A123BC154">
+                           placeholder="@Text["vehicle.edit.plate.placeholder"]">
                 </div>
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-year">Год выпуска</label>
+                    <label class="form-label" for="vehicle-year">@Text["vehicle.edit.year"]</label>
                     <input type="number" id="vehicle-year"
                            class="form-control"
                            v-model.number="vehicle.yearIssue"
                            @@input="changeYearIssue"
                            min="1900"
                            :max="new Date().getFullYear()"
-                           placeholder="Укажите год выпуска">
+                           placeholder="@Text["vehicle.edit.year.placeholder"]">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-name">Имя / номер техники</label>
+                    <label class="form-label" for="vehicle-name">@Text["vehicle.edit.name"]</label>
                     <input type="text" id="vehicle-name"
                            class="form-control"
                            v-model.trim="vehicle.name"
-                           placeholder="Например: Рабочий квадроцикл или A123BC">
+                           placeholder="@Text["vehicle.edit.name.placeholder"]">
                 </div>
             </div>
         </div>
 
         <details class="vehicle-edit-section vehicle-edit-identifiers" v-if="!formLoad">
-            <summary class="vehicle-edit-section-title">Реквизиты техники</summary>
+            <summary class="vehicle-edit-section-title">@Text["vehicle.edit.section.identifiers"]</summary>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
@@ -178,51 +198,51 @@
                            class="form-control"
                            v-model.trim="vehicle.vin"
                            maxlength="32"
-                           placeholder="Например: XTA210990Y1234567">
+                           placeholder="@Text["vehicle.edit.vin.placeholder"]">
                 </div>
 
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-body">Номер кузова</label>
+                    <label class="form-label" for="vehicle-body">@Text["vehicle.edit.bodyNumber"]</label>
                     <input type="text" id="vehicle-body"
                            class="form-control"
                            v-model.trim="vehicle.bodyNumber"
                            maxlength="64"
-                           placeholder="Если нужен отдельный номер кузова или рамы">
+                           placeholder="@Text["vehicle.edit.bodyNumber.placeholder"]">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-engine">Номер двигателя</label>
+                    <label class="form-label" for="vehicle-engine">@Text["vehicle.edit.engineNumber"]</label>
                     <input type="text" id="vehicle-engine"
                            class="form-control"
                            v-model.trim="vehicle.engineNumber"
                            maxlength="64"
-                           placeholder="Если нужно хранить номер двигателя">
+                           placeholder="@Text["vehicle.edit.engineNumber.placeholder"]">
                 </div>
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-color">Цвет</label>
+                    <label class="form-label" for="vehicle-color">@Text["vehicle.edit.color"]</label>
                     <input type="text" id="vehicle-color"
                            class="form-control"
                            v-model.trim="vehicle.color"
                            maxlength="32"
-                           placeholder="Например: Белый">
+                           placeholder="@Text["vehicle.edit.color.placeholder"]">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label" for="vehicle-certificate">СТС</label>
+                    <label class="form-label" for="vehicle-certificate">@Text["vehicle.edit.certificate"]</label>
                     <input type="text" id="vehicle-certificate"
                            class="form-control"
                            v-model.trim="vehicle.registrationCertificate"
                            maxlength="64"
-                           placeholder="Например: 99 ХХ 123456">
+                           placeholder="@Text["vehicle.edit.certificate.placeholder"]">
                 </div>
             </div>
 
             <div class="mb-3 vehicle-edit-inline-field vehicle-edit-inline-field-date">
-                <label class="form-label mb-0" for="vehicle-commissioning-input">Дата ввода в эксплуатацию</label>
+                <label class="form-label mb-0" for="vehicle-commissioning-input">@Text["vehicle.edit.commissioningDate"]</label>
                 <div class="vehicle-edit-inline-field-control">
                     <vue-ctk-date-time-picker class="vehicle-edit-date-picker"
                                               id="vehicle-commissioning"
@@ -234,7 +254,7 @@
                                               formatted="DD.MM.YYYY"
                                               output-format="DD.MM.YYYY"
                                               only-date="true"
-                                              locale="ru"
+                                              locale="@Text["vehicle.edit.datePickerLocale"]"
                                               first-day-of-week="1"
                                               :auto-close="true"
                                               :no-button-now="true"
@@ -249,10 +269,10 @@
         </details>
 
         <div class="vehicle-edit-section" v-if="!formLoad">
-            <h2 class="vehicle-edit-section-title">Дополнительно</h2>
+            <h2 class="vehicle-edit-section-title">@Text["vehicle.edit.section.additional"]</h2>
 
             <div class="mb-3" v-if="vehicle.organizationId && organizationClientsEnabled">
-                <label class="form-label" for="vehicle-client">Клиент</label>
+                <label class="form-label" for="vehicle-client">@Text["vehicle.edit.client"]</label>
                 <input v-if="lockOrganizationClient"
                        id="vehicle-client"
                        type="text"
@@ -268,32 +288,32 @@
                           v-model="vehicle.organizationClientId"
                           :disabled="loadOrganizationClients">
                     <template slot="no-options">
-                        Нет доступных клиентов
+                        @Text["vehicle.edit.client.none"]
                     </template>
                 </v-select>
             </div>
 
             <div class="mb-0">
-                <label class="form-label" for="vehicle-description">Описание</label>
+                <label class="form-label" for="vehicle-description">@Text["vehicle.edit.description"]</label>
                 <textarea class="form-control" id="vehicle-description"
                           v-model.trim="vehicle.description"
                           rows="4"
-                          placeholder="Дополнительная информация о технике"></textarea>
+                          placeholder="@Text["vehicle.edit.description.placeholder"]"></textarea>
             </div>
         </div>
     </div>
     <div class="card-footer vehicle-edit-footer" v-if="!formLoad">
-        <a class="btn btn-outline-secondary" href="@returnUrl">Отмена</a>
+        <a class="btn btn-outline-secondary" href="@returnUrl">@Text["vehicle.edit.cancel"]</a>
         <button type="button"
                 class="btn btn-dark"
                 @@click="saveVehicle"
                 :disabled="!canSaveVehicle || saveInProgress">
             <template v-if="saveInProgress">
                 <i class="fa fa-spinner fa-spin me-2"></i>
-                Сохраняем…
+                @Text["vehicle.edit.saving"]
             </template>
             <template v-else>
-                @(isCreateMode ? "Добавить технику" : "Сохранить изменения")
+                @Text[isCreateMode ? "vehicle.edit.submit.create" : "vehicle.edit.submit.save"]
             </template>
         </button>
     </div>

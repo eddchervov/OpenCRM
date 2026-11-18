@@ -14,7 +14,7 @@ public sealed partial class OrganizationImportService
     private static readonly string[] s_pendingStates = ["upload-queued", "mapping-queued", "validation-queued", "import-queued", "importing"];
     private static readonly HashSet<string> s_editableFields =
     [
-        "Name", "Excluded", "ExternalId", "ClientExternalId", "ClientPhone", "Phone", "Comment", "Brand", "Model", "Vin", "Plate", "Year",
+        "Name", "Excluded", "ExternalId", "ClientExternalId", "ClientPhone", "Phone", "Comment", "Brand", "Model", "Vin", "Plate", "RegistrationCountryCode", "Year",
         "ExistingClientId", "CreateSeparateClient", "PartyName", "VehicleExternalId", "OrderExternalId", "OccurredAt", "OrderStatus", "OrderType",
         "DetailDescription", "Quantity", "UnitPrice", "Amount", "DiscountAmount", "PaymentMethod", "CancelledAt", "ActorName", "EventType", "OrderComment", "HistoryComment"
     ];

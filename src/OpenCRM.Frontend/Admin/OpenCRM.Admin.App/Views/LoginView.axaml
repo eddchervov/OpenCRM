@@ -1,19 +1,27 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
+             xmlns:api="using:OpenCRM.Admin.Api"
              x:Class="OpenCRM.Admin.App.Views.LoginView"
              x:DataType="vm:MainWindowViewModel">
   <StackPanel Width="340" Spacing="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
-    <TextBox Text="{Binding Email}" PlaceholderText="Email" IsEnabled="{Binding !IsBusy}"
-             AutomationProperties.AutomationId="EmailInput" AutomationProperties.Name="Email" />
-    <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="Пароль" IsEnabled="{Binding !IsBusy}"
-             AutomationProperties.AutomationId="PasswordInput" AutomationProperties.Name="Пароль" />
+    <TextBlock Text="{loc:LocalizedText Key=login.title}" FontSize="22" FontWeight="Bold" />
+    <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}">
+      <ComboBox.ItemTemplate>
+        <DataTemplate x:DataType="api:AdminUiLanguageOption"><TextBlock Text="{Binding NativeName}" /></DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+    <TextBox Text="{Binding Email}" PlaceholderText="{loc:LocalizedText Key=login.email}" IsEnabled="{Binding !IsBusy}"
+             AutomationProperties.AutomationId="EmailInput" AutomationProperties.Name="{loc:LocalizedText Key=login.email}" />
+    <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="{loc:LocalizedText Key=login.password}" IsEnabled="{Binding !IsBusy}"
+             AutomationProperties.AutomationId="PasswordInput" AutomationProperties.Name="{loc:LocalizedText Key=login.password}" />
     <Border IsVisible="{Binding HasError}" Background="#261A1A" BorderBrush="#594040"
             BorderThickness="1" CornerRadius="7" Padding="14,12">
       <TextBlock Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap"
                  AutomationProperties.AutomationId="LoginError" />
     </Border>
-    <Button Content="Войти" Classes="primary" Command="{Binding LoginCommand}" IsDefault="True"
+    <Button Content="{loc:LocalizedText Key=login.submit}" Classes="primary" Command="{Binding LoginCommand}" IsDefault="True"
             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="44"
             AutomationProperties.AutomationId="LoginButton" />
   </StackPanel>

@@ -27,6 +27,9 @@ public sealed class AdminOrganizationDto
     /// <summary> Код основного сценария. </summary>
     public string PrimaryScenarioCode { get; init; } = string.Empty;
 
+    /// <summary> Код валюты организации, используемый для основных финансовых итогов. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Название сценария. </summary>
     public string ScenarioName { get; init; } = string.Empty;
 
@@ -96,10 +99,10 @@ public sealed class AdminOrganizationDto
     /// <summary> Количество выполненных заказов. </summary>
     public int CompletedWorkOrdersCount { get; init; }
 
-    /// <summary> Стоимость заказов после скидок. </summary>
+    /// <summary> Стоимость заказов после скидок только в валюте организации; итоги в других валютах перечислены отдельно. </summary>
     public decimal WorkOrdersTotal { get; init; }
 
-    /// <summary> Оплаченная сумма по заказам. </summary>
+    /// <summary> Оплаченная сумма по заказам только в валюте организации; итоги в других валютах перечислены отдельно. </summary>
     public decimal PaymentsTotal { get; init; }
 
     /// <summary> Количество открытых дефектов. </summary>
@@ -117,8 +120,11 @@ public sealed class AdminOrganizationDto
     /// <summary> Количество позиций с низким запасом. </summary>
     public int LowStockItemsCount { get; init; }
 
-    /// <summary> Стоимость запасов. </summary>
+    /// <summary> Стоимость запасов только в валюте организации; итоги в других валютах перечислены отдельно. </summary>
     public decimal InventoryValue { get; init; }
+
+    /// <summary> Финансовые итоги по историческим записям в валютах, отличных от валюты организации. </summary>
+    public IReadOnlyList<AdminOrganizationCurrencyTotalDto> OtherCurrencyTotals { get; init; } = [];
 
     /// <summary> Название активной подписки. </summary>
     public string? ActiveSubscriptionName { get; init; }

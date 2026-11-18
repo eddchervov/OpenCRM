@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -22,6 +23,7 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
     private ActivityFilters? _appliedFilters;
     private CancellationTokenSource? _userSearchCancellation;
     private int _userSearchVersion;
+    private string? _errorMessageTranslationKey;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
@@ -49,11 +51,8 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
     [ObservableProperty]
     private string _search = string.Empty;
 
-    [ObservableProperty]
-    private string _kind = "Все типы";
-
-    [ObservableProperty]
-    private string _scenario = "Все";
+    private string _kindCode = "all";
+    private string _scenarioCode = "all";
 
     [ObservableProperty]
     private string _fromDate = string.Empty;
@@ -76,11 +75,52 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
     [NotifyPropertyChangedFor(nameof(HasMore))]
     private IReadOnlyList<UserActivityRow> _items = [];
 
-    public IReadOnlyList<string> KindOptions { get; } = ["Все типы", "Переход", "Нажатие", "Цель", "Операция"];
+    public IReadOnlyList<AdminLocalizedOption> KindOptions { get; } =
+    [
+        new("all", "core.activity.kind.all", "Все типы"),
+        new("page", "core.activity.kind.page", "Переход"),
+        new("click", "core.activity.kind.click", "Нажатие"),
+        new("goal", "core.activity.kind.goal", "Цель"),
+        new("operation", "core.activity.kind.operation", "Операция")
+    ];
 
-    public IReadOnlyList<string> ScenarioOptions { get; } = ["Все", "Детейлинг", "Автосервис", "Личный кабинет", "Аккаунт", "Автопарк"];
+    public IReadOnlyList<AdminLocalizedOption> ScenarioOptions { get; } =
+    [
+        new("all", "core.activity.scenario.all", "Все"),
+        new("detailing", "activity.scenario.detailing", "Детейлинг"),
+        new("autoservice", "activity.scenario.autoservice", "Автосервис"),
+        new("personal", "activity.scenario.personal", "Личный кабинет"),
+        new("account", "activity.scenario.account", "Аккаунт"),
+        new("fleet", "activity.scenario.fleet", "Автопарк")
+    ];
 
-    public string Title => string.IsNullOrEmpty(this._fixedUserId) ? "Активность" : "Активность пользователя";
+    public string Kind
+    {
+        get => this.KindOptions.First(option => option.Code == this._kindCode).Title;
+        set => this.SetSelectedOption(value, this.KindOptions, isScenario: false);
+    }
+
+    public AdminLocalizedOption SelectedKindOption
+    {
+        get => this.KindOptions.First(option => option.Code == this._kindCode);
+        set => this.Kind = value.Code;
+    }
+
+    public string Scenario
+    {
+        get => this.ScenarioOptions.First(option => option.Code == this._scenarioCode).Title;
+        set => this.SetSelectedOption(value, this.ScenarioOptions, isScenario: true);
+    }
+
+    public AdminLocalizedOption SelectedScenarioOption
+    {
+        get => this.ScenarioOptions.First(option => option.Code == this._scenarioCode);
+        set => this.Scenario = value.Code;
+    }
+
+    public string Title => string.IsNullOrEmpty(this._fixedUserId)
+        ? AdminLocalization.Instance["activity.title"]
+        : AdminLocalization.Instance["activity.userTitle"];
 
     public Func<string, CancellationToken, Task<IEnumerable<object>>> PopulateUsers => this.PopulateUsersAsync;
 
@@ -97,8 +137,40 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
     public bool IsDisabled => !this.Enabled;
 
     public string StatusLabel => this.Enabled
-        ? $"Страница {this._previousCursors.Count + 1}"
-        : "Сбор отключён: новые события не поступают, ранее записанные доступны в пределах срока хранения.";
+        ? string.Format(System.Globalization.CultureInfo.CurrentCulture, AdminLocalization.Instance["activity.pageNumber"], this._previousCursors.Count + 1)
+        : AdminLocalization.Instance["core.activity.collectionDisabled"];
+
+    public void RefreshLocalizedValues()
+    {
+        foreach (var option in this.KindOptions.Concat(this.ScenarioOptions))
+        {
+            option.RefreshTitle();
+        }
+
+        if (this._fixedUserId != null && this.SelectedUser is { } selectedUser)
+        {
+            var previousLabel = selectedUser.Label;
+            var localizedLabel = AdminLocalization.Instance["activity.selectedUser"];
+            this.SelectedUser = new ActivityUserOption(selectedUser.Id, localizedLabel);
+            this.Users = [this.SelectedUser];
+            if (this.UserSearch == previousLabel)
+            {
+                this.UserSearch = localizedLabel;
+            }
+        }
+
+        this.Items = this.Items.Select(item => new UserActivityRow(item.Item)).ToArray();
+        this.OnPropertyChanged(nameof(this.Kind));
+        this.OnPropertyChanged(nameof(this.SelectedKindOption));
+        this.OnPropertyChanged(nameof(this.Scenario));
+        this.OnPropertyChanged(nameof(this.SelectedScenarioOption));
+        this.OnPropertyChanged(nameof(this.Title));
+        this.OnPropertyChanged(nameof(this.StatusLabel));
+        if (this._errorMessageTranslationKey is { } errorKey)
+        {
+            this.ErrorMessage = AdminLocalization.Instance[errorKey];
+        }
+    }
 
     public event Action? SessionExpired;
     public event Func<Task>? AccessDenied;
@@ -108,7 +180,7 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
         await this.DeactivateAsync();
         this._isActive = true;
         this._fixedUserId = string.IsNullOrWhiteSpace(userId) ? null : userId;
-        this.SelectedUser = this._fixedUserId == null ? null : new ActivityUserOption(this._fixedUserId, "Выбранный пользователь");
+        this.SelectedUser = this._fixedUserId == null ? null : new ActivityUserOption(this._fixedUserId, AdminLocalization.Instance["activity.selectedUser"]);
         this.UserSearch = this.SelectedUser?.Label ?? string.Empty;
         this.Users = this.SelectedUser == null ? [] : [this.SelectedUser];
         this.OnPropertyChanged(nameof(Title));
@@ -137,10 +209,11 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
         this.UserSearch = string.Empty;
         this.Users = [];
         this.Search = string.Empty;
-        this.Kind = "Все типы";
-        this.Scenario = "Все";
+        this.Kind = "all";
+        this.Scenario = "all";
         this.FromDate = string.Empty;
         this.ToDate = string.Empty;
+        this._errorMessageTranslationKey = null;
         this.ErrorMessage = string.Empty;
         this.Enabled = true;
         this.RetentionDays = 0;
@@ -188,7 +261,7 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
             }
 
             var users = page.Users.Select(user => new ActivityUserOption(
-                user.Id, user.Email ?? user.Phone ?? "Пользователь без email")).ToArray();
+                user.Id, user.Email ?? user.Phone ?? AdminLocalization.Instance["activity.userMissingEmail"])).ToArray();
             this.Users = this.SelectedUser is { } selected && users.All(user => user.Id != selected.Id)
                 ? [selected, .. users]
                 : users;
@@ -203,9 +276,15 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
         {
             if (this._isActive && version == this._userSearchVersion)
             {
-                this.ErrorMessage = exception is ApiException apiException
-                    ? apiException.Message
-                    : "Не удалось загрузить пользователей. Повторите поиск.";
+                if (exception is ApiException apiException)
+                {
+                    this._errorMessageTranslationKey = null;
+                    this.ErrorMessage = apiException.Message;
+                }
+                else
+                {
+                    this.SetLocalizedError("activity.loadUsersFailed");
+                }
                 if (exception is ApiException { StatusCode: HttpStatusCode.Unauthorized })
                 {
                     this.SessionExpired?.Invoke();
@@ -264,30 +343,31 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
     {
         if (this._fixedUserId == null && this.SelectedUser == null && !string.IsNullOrWhiteSpace(this.UserSearch))
         {
-            this.ErrorMessage = "Выберите пользователя из списка или очистите поле, чтобы показать всех.";
+            this.SetLocalizedError("activity.chooseUser");
             return;
         }
 
         if (!DateTime.TryParseExact(this.FromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out var fromDate) && !string.IsNullOrWhiteSpace(this.FromDate))
         {
-            this.ErrorMessage = "Дата начала должна быть в формате ГГГГ-ММ-ДД.";
+            this.SetLocalizedError("activity.invalidFromDate");
             return;
         }
 
         if (!DateTime.TryParseExact(this.ToDate, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out var toDate) && !string.IsNullOrWhiteSpace(this.ToDate))
         {
-            this.ErrorMessage = "Дата окончания должна быть в формате ГГГГ-ММ-ДД.";
+            this.SetLocalizedError("activity.invalidToDate");
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(this.FromDate) && !string.IsNullOrWhiteSpace(this.ToDate) && fromDate > toDate)
         {
-            this.ErrorMessage = "Дата начала не может быть позже даты окончания.";
+            this.SetLocalizedError("activity.dateRangeInvalid");
             return;
         }
 
+        this._errorMessageTranslationKey = null;
         this.ErrorMessage = string.Empty;
         var version = this._requestVersion;
         var filters = this.CreateFilters();
@@ -332,11 +412,17 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
         }
         catch (OperationCanceledException) when (this._isActive && version == this._requestVersion)
         {
-            this.ErrorMessage = "Превышено время ожидания ответа сервера. Повторите попытку.";
+            this.SetLocalizedError("activity.timeout");
         }
         catch (ApiException exception) when (this._isActive && version == this._requestVersion)
         {
+            this._errorMessageTranslationKey = null;
             this.ErrorMessage = exception.Message;
+            if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportKey)
+            {
+                this.SetLocalizedError(transportKey);
+            }
+
             if (exception.StatusCode == HttpStatusCode.Unauthorized)
             {
                 this.SessionExpired?.Invoke();
@@ -348,7 +434,7 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
         }
         catch (HttpRequestException) when (this._isActive && version == this._requestVersion)
         {
-            this.ErrorMessage = "Не удалось связаться с сервером. Проверьте подключение.";
+            this.SetLocalizedError("activity.network");
         }
     }
 
@@ -471,26 +557,51 @@ public partial class UserActivityViewModel(AdminSessionClient sessionClient) : O
         }
     }
 
+    private void SetSelectedOption(string value, IReadOnlyList<AdminLocalizedOption> options, bool isScenario)
+    {
+        var option = options.FirstOrDefault(candidate => candidate.Code == value || candidate.LegacyTitle == value || candidate.Title == value);
+        if (option == null)
+        {
+            return;
+        }
+
+        if (isScenario)
+        {
+            if (this._scenarioCode == option.Code)
+            {
+                return;
+            }
+
+            this._scenarioCode = option.Code;
+            this.OnPropertyChanged(nameof(this.Scenario));
+            this.OnPropertyChanged(nameof(this.SelectedScenarioOption));
+        }
+        else
+        {
+            if (this._kindCode == option.Code)
+            {
+                return;
+            }
+
+            this._kindCode = option.Code;
+            this.OnPropertyChanged(nameof(this.Kind));
+            this.OnPropertyChanged(nameof(this.SelectedKindOption));
+        }
+
+        this.ApplyFiltersCommand.NotifyCanExecuteChanged();
+    }
+
+    private void SetLocalizedError(string key)
+    {
+        this._errorMessageTranslationKey = key;
+        this.ErrorMessage = AdminLocalization.Instance[key];
+    }
+
     private ActivityFilters CreateFilters() => new(
         this._fixedUserId ?? this.SelectedUser?.Id ?? string.Empty,
         this.Search.Trim(),
-        this.Kind switch
-        {
-            "Переход" => "page",
-            "Нажатие" => "click",
-            "Цель" => "goal",
-            "Операция" => "operation",
-            _ => null
-        },
-        this.Scenario switch
-        {
-            "Детейлинг" => "detailing",
-            "Автосервис" => "autoservice",
-            "Личный кабинет" => "personal",
-            "Аккаунт" => "account",
-            "Автопарк" => "fleet",
-            _ => null
-        },
+        this._kindCode == "all" ? null : this._kindCode,
+        this._scenarioCode == "all" ? null : this._scenarioCode,
         this.FromDate.Trim(),
         this.ToDate.Trim());
 

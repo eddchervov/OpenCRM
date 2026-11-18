@@ -1,10 +1,33 @@
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 
 namespace OpenCRM.Admin.App.Tests.Unit;
 
-public sealed class UserCardViewModelTests
+[Collection("Admin localization")]
+public sealed class UserCardViewModelTests : IDisposable
 {
+    private readonly string _preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-admin-card-language-{Guid.NewGuid():N}.txt");
+    private readonly IDisposable _preferenceScope;
+    private readonly string _previousLanguage;
+
+    public UserCardViewModelTests()
+    {
+        this._preferenceScope = AdminLocalization.Instance.UsePreferencePath(this._preferencePath);
+        this._previousLanguage = AdminLocalization.Instance.Language;
+        AdminLocalization.Instance.Language = "ru";
+    }
+
+    public void Dispose()
+    {
+        AdminLocalization.Instance.Language = this._previousLanguage;
+        this._preferenceScope.Dispose();
+        if (File.Exists(this._preferencePath))
+        {
+            File.Delete(this._preferencePath);
+        }
+    }
+
     [Theory]
     [InlineData(true, false, false, true)]
     [InlineData(false, false, false, false)]
@@ -85,7 +108,8 @@ public sealed class UserCardViewModelTests
 
         Assert.DoesNotContain(card.HeaderMetrics, metric => metric.Title == "Последний вход");
         var payment = Assert.Single(card.Tabs.Single(tab => GetBaseTitle(tab.Title) == "Платежи").Items);
-        Assert.Contains(",25", payment.Fields.Single(field => field.Title == "Сумма").Value);
+        Assert.Contains(1000.25m.ToString("N2", System.Globalization.CultureInfo.CurrentCulture),
+            payment.Fields.Single(field => field.Title == "Сумма").Value);
     }
 
     [Fact]
@@ -137,7 +161,7 @@ public sealed class UserCardViewModelTests
         var organization = Assert.Single(model.Tabs.Single(tab => GetBaseTitle(tab.Title) == "Организации").Items);
         Assert.DoesNotContain(organization.Fields, field => field.Title == "Тариф");
         Assert.Single(model.Timeline);
-        Assert.Equal("Вход", model.Timeline[0].Title);
+        Assert.Equal("Последний вход пользователя", model.Timeline[0].Title);
         Assert.DoesNotContain(model.HeaderMetrics, metric => metric.Title is "Платежи" or "Активные подписки");
     }
 
@@ -160,7 +184,7 @@ public sealed class UserCardViewModelTests
         Assert.DoesNotContain(organization.Fields, field => field.Title == "Тариф");
         var paidAmount = Assert.Single(card.Tabs.Single(tab => tab.DisplayTitle == "Личная техника и ТО").Items.Last().Fields,
             field => field.Title == "Оплачено");
-        Assert.Equal(1250.50m.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("ru-RU")), paidAmount.Value);
+        Assert.Equal($"{1250.50m.ToString("N2", System.Globalization.CultureInfo.CurrentCulture)} RUB", paidAmount.Value);
     }
 
     [Fact]
@@ -322,6 +346,112 @@ public sealed class UserCardViewModelTests
         }, false);
         var tab = card.Tabs.Single(tab => tab.DisplayTitle == "Личная техника и ТО");
         Assert.Equal(new[] { "Личная машина", "ТО · Личная машина" }, tab.Items.Select(item => item.Title));
+    }
+
+    [Fact]
+    public void LocaleSwitchPreservesCardTabAndFiltersWhileRebuildingDisplayProjection()
+    {
+        var overview = new AdminUserOverview
+        {
+            Profile = new() { Email = "kept@example.invalid" },
+            Organizations = [
+                new() { OrganizationName = "Active workspace", IsActive = true },
+                new() { OrganizationName = "Archived workspace", IsActive = true, IsArchived = true }
+            ],
+            Subscriptions = new()
+            {
+                Organizations = [
+                    new() { OrganizationName = "Active workspace", PlanName = "Stored plan", IsActive = true },
+                    new() { OrganizationName = "Archived workspace", PlanName = "Stored plan", IsActive = false }
+                ]
+            }
+        };
+        var card = new UserCardViewModel(overview, true);
+        card.OrganizationStatus = "Архивированные";
+        card.SelectedTab = card.Tabs.Single(tab => tab.Id == "organizations");
+
+        AdminLocalization.Instance.Language = "en";
+        card.RefreshLocalizedValues();
+
+        Assert.Equal("organizations", card.SelectedTab.Id);
+        Assert.Equal("Archived workspace", Assert.Single(card.SelectedTab.Items).Title);
+        Assert.Equal("Archived", card.OrganizationStatus);
+        Assert.Equal("Organizations", card.SelectedTab.DisplayTitle);
+        Assert.Equal("kept@example.invalid", card.Title);
+
+        AdminLocalization.Instance.Language = "zh-Hans";
+        card.RefreshLocalizedValues();
+
+        Assert.Equal("organizations", card.SelectedTab.Id);
+        Assert.Equal("Archived workspace", Assert.Single(card.SelectedTab.Items).Title);
+        Assert.Equal("已归档", card.OrganizationStatus);
+        Assert.Equal("组织", card.SelectedTab.DisplayTitle);
+        Assert.Equal("kept@example.invalid", card.Title);
+    }
+
+    [Fact]
+    public void TimelineAndCodedLabelsLocalizeWhileUserTitlesAndUnknownValuesStayRaw()
+    {
+        var vehicleId = Guid.NewGuid();
+        var organizationId = Guid.NewGuid();
+        var joinedAt = DateTime.UtcNow;
+        var card = new UserCardViewModel(new AdminUserOverview
+        {
+            Timeline = [
+                new() { Type = "registration", Label = "Регистрация", Title = "Пользователь зарегистрировался" },
+                new() { Type = "login", Label = "Вход", Title = "Последний вход пользователя" },
+                new() { Type = "vehicle", Label = "Техника", Title = "My vehicle" },
+                new() { Type = "future_event", Label = "Stored label", Title = "Stored title" }
+            ],
+            Profile = new() { Email = "coded@example.invalid" },
+            Organizations = [new() { OrganizationId = organizationId, OrganizationName = "Stored organization", PrimaryScenarioCode = "detailing", ScenarioName = "Детейлинг", RoleCode = "admin", RoleName = "Администратор", JoinedAt = joinedAt, IsActive = true }],
+            Invitations = [new() { OrganizationId = organizationId, Email = "coded@example.invalid", StatusCode = "accepted", RoleCode = "admin", RoleName = "Администратор", AcceptedAt = joinedAt, InvitedBy = "inviter@example.invalid" }],
+            Vehicles = [
+                new() { Id = vehicleId, Kind = 1, KindName = "PassengerCar", MileageUnit = 1, MileageUnitName = "Kilometers", CurrentMileage = 1200, Title = "My vehicle" },
+                new() { Id = Guid.NewGuid(), Kind = 500, KindName = "Vendor kind", MileageUnit = 99, MileageUnitName = "Vendor unit", CurrentMileage = 8, Title = "Unknown vehicle" }
+            ],
+            Maintenances = [new() { VehicleId = vehicleId, VehicleTitle = "My vehicle", Status = 3, StatusName = "Completed", Type = 2, TypeName = "Repair" }],
+            SupportMessages = [new() { TypeCode = "question", TypeName = "Вопрос", StatusCode = "in_progress", StatusName = "В работе" }],
+            Payments = [new() { PaymentStatus = "completed", PaymentStatusName = "Оплачено", PaymentMethod = "workspace_purchase:code", PaymentMethodName = "Покупка организации" }]
+        }, true);
+        var timeline = card.Timeline.ToDictionary(item => item.Title);
+        var vehicle = card.Tabs.Single(tab => tab.Id == "vehicles").Items.Single(item => item.Title == "My vehicle");
+        var maintenance = card.Tabs.Single(tab => tab.Id == "vehicles").Items.Single(item => item.Title.StartsWith("ТО", StringComparison.Ordinal));
+
+        Assert.Equal("Пользователь зарегистрировался", timeline["Пользователь зарегистрировался"].Title);
+        Assert.Equal("My vehicle", timeline["My vehicle"].Title);
+        Assert.Equal("Stored label", timeline["Stored title"].Subtitle.Split(" · ")[0]);
+        Assert.Contains("Легковой автомобиль", vehicle.Subtitle);
+        Assert.Contains("Завершено", maintenance.Subtitle);
+        Assert.Equal("Вопрос", card.Tabs.Single(tab => tab.Id == "support").Items[0].Subtitle.Split(" · ")[0]);
+        Assert.Equal("Оплачено", card.Tabs.Single(tab => tab.Id == "payments").Items[0].Subtitle.Split(" · ")[1]);
+        var organizationItem = Assert.Single(card.Tabs.Single(tab => tab.Id == "organizations").Items);
+        Assert.Equal("Детейлинг · Администратор", organizationItem.Subtitle);
+        Assert.Contains(organizationItem.Fields, field => field.Title == "Роль приглашения" && field.Value == "Администратор");
+
+        AdminLocalization.Instance.Language = "en";
+        card.RefreshLocalizedValues();
+
+        var englishTimeline = card.Timeline.ToDictionary(item => item.Title);
+        var englishVehicle = card.Tabs.Single(tab => tab.Id == "vehicles").Items.Single(item => item.Title == "My vehicle");
+        var englishMaintenance = card.Tabs.Single(tab => tab.Id == "vehicles").Items.Single(item => item.Title.StartsWith("Maintenance", StringComparison.Ordinal));
+        Assert.Equal("Registered user", englishTimeline["Registered user"].Title);
+        Assert.Equal("Last user sign-in", englishTimeline["Last user sign-in"].Title);
+        Assert.Equal("My vehicle", englishTimeline["My vehicle"].Title);
+        Assert.Equal("Stored label", englishTimeline["Stored title"].Subtitle.Split(" · ")[0]);
+        Assert.Contains("Passenger car", englishVehicle.Subtitle);
+        Assert.Contains("Vendor kind", card.Tabs.Single(tab => tab.Id == "vehicles").Items.Single(item => item.Title == "Unknown vehicle").Subtitle);
+        Assert.Contains("Vendor unit", card.Tabs.Single(tab => tab.Id == "vehicles").Items.Single(item => item.Title == "Unknown vehicle").Fields.Single(field => field.Title == "Mileage").Value);
+        Assert.Contains("Completed", englishMaintenance.Subtitle);
+        Assert.Equal("Question", card.Tabs.Single(tab => tab.Id == "support").Items[0].Subtitle.Split(" · ")[0]);
+        Assert.Equal("Paid", card.Tabs.Single(tab => tab.Id == "payments").Items[0].Subtitle.Split(" · ")[1]);
+        var englishOrganization = Assert.Single(card.Tabs.Single(tab => tab.Id == "organizations").Items);
+        Assert.Equal("Detailing · Administrator", englishOrganization.Subtitle);
+        Assert.Contains(englishOrganization.Fields, field => field.Title == "Invitation role" && field.Value == "Administrator");
+
+        AdminLocalization.Instance.Language = "zh-Hans";
+        card.RefreshLocalizedValues();
+        Assert.Contains("乘用车", card.Tabs.Single(tab => tab.Id == "vehicles").Items[0].Subtitle);
     }
 
     [Fact]

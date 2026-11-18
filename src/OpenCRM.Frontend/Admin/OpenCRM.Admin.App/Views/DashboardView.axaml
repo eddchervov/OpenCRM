@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.DashboardView"
@@ -56,33 +56,33 @@
   </UserControl.Resources>
   <StackPanel Spacing="14">
     <Grid ColumnDefinitions="Auto,*">
-      <TextBlock Text="Дашборд" Classes="heading" Margin="0,0,24,8" AutomationProperties.AutomationId="DashboardHeading" />
+      <TextBlock Text="{loc:LocalizedText Key=core.dashboard.title}" Classes="heading" Margin="0,0,24,8" AutomationProperties.AutomationId="DashboardHeading" />
       <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AutomationId="DashboardRefreshControls">
         <TextBlock Text="{Binding UpdatedLabel}" Classes="caption" VerticalAlignment="Center" Margin="0,0,16,8" />
-        <TextBlock Text="Автообновление, сек" Classes="caption" VerticalAlignment="Center" Margin="0,0,8,8" />
+        <TextBlock Text="{loc:LocalizedText Key=core.dashboard.autoRefresh}" Classes="caption" VerticalAlignment="Center" Margin="0,0,8,8" />
         <ComboBox ItemsSource="{Binding RefreshIntervals}" SelectedItem="{Binding RefreshSeconds}" Width="80" Margin="0,0,8,8"
                   AutomationProperties.AutomationId="DashboardRefreshInterval" />
-        <Button Content="Обновить" Command="{Binding RefreshCommand}" Margin="0,0,0,8" AutomationProperties.AutomationId="DashboardRefresh" />
+        <Button Content="{loc:LocalizedText Key=core.refresh}" Command="{Binding RefreshCommand}" Margin="0,0,0,8" AutomationProperties.AutomationId="DashboardRefresh" />
       </WrapPanel>
     </Grid>
     <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
     <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Height="3" />
     <WrapPanel AutomationProperties.AutomationId="DashboardPeriodSwitcher">
-      <TextBlock Text="Период" Classes="caption" VerticalAlignment="Center" Margin="0,0,16,6" />
-      <Button Content="Сегодня" Classes.primary="{Binding IsToday}" Command="{Binding SetPeriodCommand}" Margin="0,0,6,6">
+      <TextBlock Text="{loc:LocalizedText Key=core.period}" Classes="caption" VerticalAlignment="Center" Margin="0,0,16,6" />
+      <Button Content="{loc:LocalizedText Key=core.today}" Classes.primary="{Binding IsToday}" Command="{Binding SetPeriodCommand}" Margin="0,0,6,6">
         <Button.CommandParameter><x:Int32>1</x:Int32></Button.CommandParameter>
       </Button>
-      <Button Content="7 дней" Classes.primary="{Binding IsWeek}" Command="{Binding SetPeriodCommand}" Margin="0,0,6,6">
+      <Button Content="{loc:LocalizedText Key=core.sevenDays}" Classes.primary="{Binding IsWeek}" Command="{Binding SetPeriodCommand}" Margin="0,0,6,6">
         <Button.CommandParameter><x:Int32>7</x:Int32></Button.CommandParameter>
       </Button>
-      <Button Content="Месяц" Classes.primary="{Binding IsMonth}" Command="{Binding SetPeriodCommand}" Margin="0,0,0,6">
+      <Button Content="{loc:LocalizedText Key=core.month}" Classes.primary="{Binding IsMonth}" Command="{Binding SetPeriodCommand}" Margin="0,0,0,6">
         <Button.CommandParameter><x:Int32>30</x:Int32></Button.CommandParameter>
       </Button>
     </WrapPanel>
     <Border IsVisible="{Binding HasUrgentPayments}" Background="#401A1A" BorderBrush="#C24F4F" BorderThickness="1"
             CornerRadius="8" Padding="16" AutomationProperties.AutomationId="DashboardUrgentPayments">
       <StackPanel Spacing="6">
-        <TextBlock Text="Срочно: ошибка активации подписки" Foreground="#FFD0D0" FontSize="18" FontWeight="Bold" />
+        <TextBlock Text="{loc:LocalizedText Key=core.dashboard.activationAlert}" Foreground="#FFD0D0" FontSize="18" FontWeight="Bold" />
         <TextBlock Text="{Binding UrgentPaymentMessage}" Foreground="#FFD0D0" TextWrapping="Wrap" />
       </StackPanel>
     </Border>
@@ -90,7 +90,7 @@
       <Border Classes="card" Padding="14" IsVisible="{Binding CanViewBilling}" AutomationProperties.AutomationId="DashboardPaymentsSection">
         <StackPanel Spacing="10">
           <StackPanel Orientation="Horizontal" Spacing="12">
-            <TextBlock Text="Платежи" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{loc:LocalizedText Key=core.payments}" FontSize="18" FontWeight="SemiBold" />
             <TextBlock Text="{Binding PeriodLabel}" Classes="caption" VerticalAlignment="Center" />
           </StackPanel>
           <TextBlock IsVisible="{Binding HasBillingError}" Text="{Binding BillingErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -103,7 +103,7 @@
       </Border>
       <Border Classes="card" Padding="14" AutomationProperties.AutomationId="DashboardRegistrationsSection">
         <StackPanel Spacing="10">
-          <TextBlock Text="Регистрации и организации" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:LocalizedText Key=core.dashboard.registrationsAndOrganizations}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Text="{Binding PeriodLabel}" Classes="caption" />
           <ItemsControl ItemsSource="{Binding RegistrationMetrics}" ItemTemplate="{StaticResource MetricTemplate}">
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -115,11 +115,11 @@
     <Border Classes="card" Padding="14" AutomationProperties.AutomationId="DashboardStatisticsSection">
       <StackPanel Spacing="12">
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Text="Общая статистика" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,8" TextWrapping="Wrap" />
+          <TextBlock Text="{loc:LocalizedText Key=core.dashboard.overview}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,8" TextWrapping="Wrap" />
           <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
             <TextBlock Text="{Binding StatisticsUpdatedLabel}" Classes="caption" VerticalAlignment="Center" Margin="0,0,12,8" />
-            <Button Content="Загрузить статистику" Command="{Binding LoadStatisticsCommand}" Margin="0,0,0,8"
-                    ToolTip.Tip="Общая статистика обновляется по этой кнопке" AutomationProperties.AutomationId="DashboardLoadStatistics" />
+            <Button Content="{loc:LocalizedText Key=core.dashboard.loadOverview}" Command="{Binding LoadStatisticsCommand}" Margin="0,0,0,8"
+                    ToolTip.Tip="{loc:LocalizedText Key=core.dashboard.overviewHelp}" AutomationProperties.AutomationId="DashboardLoadStatistics" />
           </WrapPanel>
         </Grid>
         <TextBlock IsVisible="{Binding HasStatisticsError}" Text="{Binding StatisticsErrorMessage}" Foreground="#F4CACA" TextWrapping="Wrap" />

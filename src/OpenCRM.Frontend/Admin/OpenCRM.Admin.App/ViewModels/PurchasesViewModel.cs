@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -17,6 +18,11 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
     private AdminBillingPurchase? _pendingPurchase;
     private string _pendingReason = string.Empty;
     private bool _resetting;
+    private int _summaryPurchaseCount;
+    private decimal _summaryPaidAmount;
+    private decimal _summaryRefundAmount;
+    private decimal _summaryTotalAmount;
+    private int _summaryAttentionCount;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
@@ -54,26 +60,47 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
     private bool _isConfirmationOpen;
 
     [ObservableProperty]
-    private CommunicationOption _selectedBuyer = new("", "Все покупатели");
+    private CommunicationOption _selectedBuyer = CommunicationOption.Localized("", "native.billing.vse.pokupateli");
 
     [ObservableProperty]
-    private CommunicationOption _selectedReceipt = new("", "Все чеки");
+    private CommunicationOption _selectedReceipt = CommunicationOption.Localized("", "native.billing.vse.cheki");
 
     [ObservableProperty]
-    private CommunicationOption _selectedQueue = new("", "Вся очередь");
+    private CommunicationOption _selectedQueue = CommunicationOption.Localized("", "native.billing.vsya.ochered");
 
     [ObservableProperty]
-    private CommunicationOption _selectedPeriod = new("", "Весь период");
+    private CommunicationOption _selectedPeriod = CommunicationOption.Localized("", "native.billing.ves.period");
 
-    public IReadOnlyList<CommunicationOption> BuyerOptions { get; } = [new("", "Все покупатели"), new("individual", "Физические лица"), new("business", "Организации / ИП"), new("unknown", "Тип не указан")];
-    public IReadOnlyList<CommunicationOption> ReceiptOptions { get; } = [new("", "Все чеки"), new("pending", "Без отметки"), new("issued", "Выданные")];
-    public IReadOnlyList<CommunicationOption> QueueOptions { get; } = [new("", "Вся очередь"), new("attention", "Требуют внимания"), new("overdue", "Без отметки >24 ч"), new("failed", "Ошибка отправки"), new("queued", "В очереди отправки"), new("sent", "Отправленные"), new("refunded", "С возвратом")];
-    public IReadOnlyList<CommunicationOption> PeriodOptions { get; } = [new("", "Весь период"), new("7", "За 7 дней"), new("30", "За 30 дней"), new("90", "За 90 дней")];
+    public IReadOnlyList<CommunicationOption> BuyerOptions { get; } = [CommunicationOption.Localized("", "native.billing.vse.pokupateli"), CommunicationOption.Localized("individual", "native.billing.fizicheskie.litsa"), CommunicationOption.Localized("business", "native.billing.organizatsii.ip"), CommunicationOption.Localized("unknown", "native.billing.tip.ne.ukazan")];
+    public IReadOnlyList<CommunicationOption> ReceiptOptions { get; } = [CommunicationOption.Localized("", "native.billing.vse.cheki"), CommunicationOption.Localized("pending", "native.billing.bez.otmetki"), CommunicationOption.Localized("issued", "native.billing.vydannye")];
+    public IReadOnlyList<CommunicationOption> QueueOptions { get; } = [CommunicationOption.Localized("", "native.billing.vsya.ochered"), CommunicationOption.Localized("attention", "native.billing.trebuyut.vnimaniya"), CommunicationOption.Localized("overdue", "native.billing.bez.otmetki.24.ch"), CommunicationOption.Localized("failed", "native.billing.oshibka.otpravki"), CommunicationOption.Localized("queued", "native.billing.v.ocheredi.otpravki"), CommunicationOption.Localized("sent", "native.billing.otpravlennye"), CommunicationOption.Localized("refunded", "native.billing.s.vozvratom")];
+    public IReadOnlyList<CommunicationOption> PeriodOptions { get; } = [CommunicationOption.Localized("", "native.billing.ves.period"), CommunicationOption.Localized("7", "native.billing.za.7.dney"), CommunicationOption.Localized("30", "native.billing.za.30.dney"), CommunicationOption.Localized("90", "native.billing.za.90.dney")];
     public bool CanManage => this.SessionClient.CurrentProfile is { } profile && (profile.IsSystem || profile.Permissions.Contains("Admin.Billing.Manage", StringComparer.Ordinal));
     public bool CanUpload => this.CanEdit();
     public bool CanDownload => this.CanLoad() && this.HasFile && !this.IsConfirmationOpen;
     public bool HasFile => !string.IsNullOrWhiteSpace(this.Detail?.Purchase.NpdReceiptFileName) || !string.IsNullOrWhiteSpace(this.Detail?.Purchase.NpdReceiptFileUrl);
     public bool IsEmpty => !this.IsBusy && this.Rows.Count == 0 && string.IsNullOrWhiteSpace(this.ErrorMessage);
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        foreach (var option in this.BuyerOptions.Concat(this.ReceiptOptions).Concat(this.QueueOptions).Concat(this.PeriodOptions))
+        {
+            option.RefreshLocalizedValues();
+        }
+
+        foreach (var row in this.Rows)
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        this.Detail?.RefreshLocalizedValues();
+        this.UpdateSummary();
+        if (this.IsConfirmationOpen && this._pendingPurchase != null)
+        {
+            this.UpdateConfirmationMessage();
+        }
+    }
 
     public void RefreshAccess()
     {
@@ -99,7 +126,12 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
         this.Page = Math.Clamp(this.Page, 1, Math.Max(1, (filtered.Length + this.PageSize - 1) / this.PageSize));
         this.Rows = filtered.Skip((this.Page - 1) * this.PageSize).Take(this.PageSize).ToArray();
         this.SelectedRow = null;
-        this.Summary = $"Покупок: {allRows.Length} · Оплачено: {allRows.Sum(row => row.Purchase.Amount):N2} ₽ · Возвраты: {allRows.Sum(row => row.Refund):N2} ₽ · Итого: {allRows.Sum(row => row.Purchase.Amount - row.Refund):N2} ₽ · Требуют внимания: {allRows.Count(row => row.NeedsAttention)}";
+        this._summaryPurchaseCount = allRows.Length;
+        this._summaryPaidAmount = allRows.Sum(row => row.Purchase.Amount);
+        this._summaryRefundAmount = allRows.Sum(row => row.Refund);
+        this._summaryTotalAmount = allRows.Sum(row => row.Purchase.Amount - row.Refund);
+        this._summaryAttentionCount = allRows.Count(row => row.NeedsAttention);
+        this.UpdateSummary();
         if (this.IsDetailOpen && this.Detail is { } detail)
         {
             var updated = allRows.FirstOrDefault(row => row.Id == detail.Id);
@@ -242,14 +274,14 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
         if (url.Length > 0 && (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps
             || !string.IsNullOrEmpty(uri.UserInfo) || !(uri.Host.Equals("nalog.ru", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith(".nalog.ru", StringComparison.OrdinalIgnoreCase))))
         {
-            this.ErrorMessage = "Укажите HTTPS-ссылку на nalog.ru или его поддомен.";
+            this.SetLocalizedErrorMessage("native.billing.ukazhite.https.ssylku.na.nalog.ru.ili.ego.poddomen");
 
             return Task.CompletedTask;
         }
 
         if (this.ReceiptComment.Length > 1000)
         {
-            this.ErrorMessage = "Комментарий не должен превышать 1000 символов.";
+            this.SetLocalizedErrorMessage("native.billing.kommentariy.ne.dolzhen.prevyshat.1000.simvolov");
 
             return Task.CompletedTask;
         }
@@ -258,26 +290,20 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
     }
 
     [RelayCommand(CanExecute = nameof(CanToggle))]
-    private void RequestToggleIssued() => this.RequestConfirmation("issued", this.Detail!.Purchase.NpdReceiptIssued
-        ? "Снять отметку о выдаче чека? Изменение с указанной причиной будет сохранено в журнале."
-        : "Отметить чек выданным? Подтвердите, что он создан в «Моём налоге» и передан покупателю. Отметка не создаёт и не отправляет чек.");
+    private void RequestToggleIssued() => this.RequestConfirmation("issued");
 
     [RelayCommand(CanExecute = nameof(CanDelete))]
-    private void RequestDeleteFile() => this.RequestConfirmation("delete", "Открепить файл чека? Ранее выданные ссылки на этот файл станут недействительными.");
+    private void RequestDeleteFile() => this.RequestConfirmation("delete");
 
     [RelayCommand(CanExecute = nameof(CanSend))]
-    private void RequestSend() => this.RequestConfirmation("send", $"Поставить чек в очередь отправки на {this.Detail!.Purchase.UserEmail}? Будут отправлены сохранённые на сервере файл или ссылка.");
+    private void RequestSend() => this.RequestConfirmation("send");
 
-    private void RequestConfirmation(string action, string message)
+    private void RequestConfirmation(string action)
     {
         this._confirmationAction = action;
         this._pendingPurchase = this.Detail!.Purchase;
         this._pendingReason = this.ChangeReason.Trim();
-        this.ConfirmationMessage = $"Покупка #{this._pendingPurchase.PaymentId} · {this._pendingPurchase.User}\n{message}";
-        if (action == "issued")
-        {
-            this.ConfirmationMessage += $"\nТекущее состояние: {(this._pendingPurchase.NpdReceiptIssued ? "выдан" : "без отметки")}. Причина: {this._pendingReason}";
-        }
+        this.UpdateConfirmationMessage();
 
         this.IsConfirmationOpen = true;
         this.NotifyCommands();
@@ -293,6 +319,49 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
         this.ConfirmationMessage = string.Empty;
         this.NotifyCommands();
     }
+
+    private void UpdateConfirmationMessage()
+    {
+        if (this._pendingPurchase == null)
+        {
+            this.ConfirmationMessage = string.Empty;
+
+            return;
+        }
+
+        var message = this._confirmationAction switch
+        {
+            "issued" => this._pendingPurchase.NpdReceiptIssued
+                ? AdminLocalization.Instance["native.billing.snyat.otmetku.o.vydache.cheka.izmenenie.s.ukazannoy.prichinoy.bu"]
+                : AdminLocalization.Instance["native.billing.otmetit.chek.vydannym.podtverdite.chto.on.sozdan.v.moyom.naloge."],
+            "delete" => AdminLocalization.Instance["native.billing.otkrepit.fayl.cheka.ranee.vydannye.ssylki.na.etot.fayl.stanut.ne"],
+            "send" => AdminLocalization.Instance.Format("native.billing.postavit.chek.v.ochered.otpravki.na.this.detail.purchase.userema", this._pendingPurchase.UserEmail),
+            _ => string.Empty
+        };
+        this.ConfirmationMessage = AdminLocalization.Instance.Format(
+            "native.billing.pokupka.this.pendingpurchase.paymentid.this.pendingpurchase.user",
+            this._pendingPurchase.PaymentId,
+            this._pendingPurchase.User,
+            message);
+        if (this._confirmationAction == "issued")
+        {
+            var receiptState = this._pendingPurchase.NpdReceiptIssued
+                ? AdminLocalization.Instance["native.billing.vydan"]
+                : AdminLocalization.Instance["native.billing.bez.otmetki"];
+            this.ConfirmationMessage += AdminLocalization.Instance.Format(
+                "native.billing.ntekushchee.sostoyanie.this.pendingpurchase.npdreceiptissued.pri",
+                receiptState,
+                this._pendingReason);
+        }
+    }
+
+    private void UpdateSummary() => this.Summary = AdminLocalization.Instance.Format(
+        "native.billing.pokupok.allrows.length.oplacheno.allrows.sum.row.row.purchase.am",
+        this._summaryPurchaseCount,
+        this._summaryPaidAmount,
+        this._summaryRefundAmount,
+        this._summaryTotalAmount,
+        this._summaryAttentionCount);
 
     [RelayCommand(CanExecute = nameof(CanConfirm))]
     private Task ConfirmAsync()
@@ -334,7 +403,7 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         if (extension is not (".pdf" or ".png" or ".jpg" or ".jpeg") || contentType is not ("application/pdf" or "image/png" or "image/jpeg"))
         {
-            this.ErrorMessage = "Выберите PDF, PNG или JPG размером до 5 МБ.";
+            this.SetLocalizedErrorMessage("native.billing.vyberite.pdf.png.ili.jpg.razmerom.do.5.mb");
 
             return Task.CompletedTask;
         }
@@ -348,7 +417,7 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
             {
                 if (buffer.Length + read > 5_242_880)
                 {
-                    this.ErrorMessage = "Размер файла не должен превышать 5 МБ.";
+                    this.SetLocalizedErrorMessage("native.billing.razmer.fayla.ne.dolzhen.prevyshat.5.mb");
 
                     return;
                 }
@@ -359,7 +428,7 @@ public partial class PurchasesViewModel(AdminSessionClient sessionClient) : Comm
             token.ThrowIfCancellationRequested();
             if (buffer.Length == 0)
             {
-                this.ErrorMessage = "Файл пуст.";
+                this.SetLocalizedErrorMessage("native.billing.fayl.pust");
 
                 return;
             }

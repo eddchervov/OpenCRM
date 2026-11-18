@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiConfirmDialog, UiModal } from '@opencrm/ui'
+import { useLocalization } from '@opencrm/ui'
+import '../maintenanceMediaMessages'
 import { getIntakeDiagram } from './intakeDiagramRegistry'
 import {
   deleteIntakeDamage,
@@ -27,6 +29,7 @@ const props = defineProps<{
   readOnly: boolean
   previewOnly?: boolean
 }>()
+const { t } = useLocalization()
 
 const emit = defineEmits<{
   changed: []
@@ -34,34 +37,36 @@ const emit = defineEmits<{
   photosChanged: [organizationId: string, maintenanceId: string, photos: WorkspaceMaintenancePhoto[]]
 }>()
 
-const views: { code: IntakeDamageView; label: string }[] = [
-  { code: 'front', label: 'Спереди' },
-  { code: 'rear', label: 'Сзади' },
-  { code: 'left', label: 'Левый борт' },
-  { code: 'right', label: 'Правый борт' }
-]
-const damageTypes: { code: IntakeDamageType; label: string }[] = [
-  { code: 'scratch', label: 'Царапина' },
-  { code: 'chip', label: 'Скол' },
-  { code: 'dent', label: 'Вмятина' },
-  { code: 'other', label: 'Другое' }
-]
+const views = computed<{ code: IntakeDamageView; label: string }[]>(() => [
+  { code: 'front', label: t('intakeDamage.front') },
+  { code: 'rear', label: t('intakeDamage.rear') },
+  { code: 'left', label: t('intakeDamage.left') },
+  { code: 'right', label: t('intakeDamage.right') }
+])
+const damageTypes = computed<{ code: IntakeDamageType; label: string }[]>(() => [
+  { code: 'scratch', label: t('intakeDamage.scratch') },
+  { code: 'chip', label: t('intakeDamage.chip') },
+  { code: 'dent', label: t('intakeDamage.dent') },
+  { code: 'other', label: t('intakeDamage.other') }
+])
 const activeView = ref<IntakeDamageView>('front')
 const projectionView = ref<IntakeDamageView | null>(null)
-const projectionTitle = computed(() => views.find(view => view.code === projectionView.value)?.label ?? '')
+const projectionTitle = computed(() => views.value.find(view => view.code === projectionView.value)?.label ?? '')
 const damages = ref<IntakeDamage[]>([])
 const displayedDamages = computed(() => numberDamages(damages.value))
 const editingDamageNumber = computed(() => displayedDamages.value.find(damage => damage.id === editingId.value)?.displayNumber ?? null)
 const editorTitle = computed(() => editingId.value
-  ? `Повреждение${editingDamageNumber.value ? ` №${editingDamageNumber.value}` : ''}`
-  : 'Новое повреждение')
+  ? editingDamageNumber.value
+    ? t('intakeDamage.damageTitle', { number: editingDamageNumber.value })
+    : t('intakeDamage.existingDamage')
+  : t('intakeDamage.newDamage'))
 const version = ref(0)
 const loadError = ref('')
 const diagramVersion = ref<string | null>(null)
 const diagramDefinition = computed(() => getIntakeDiagram(diagramVersion.value))
 const diagramImageStates = ref<Record<string, { status: 'loading' | 'loaded' | 'error'; attempt: number }>>({})
 const diagramError = computed(() => {
-  if (!diagramDefinition.value) return 'Схема автомобиля недоступна. Сохранённые повреждения доступны в списке. Повторите загрузку.'
+  if (!diagramDefinition.value) return t('intakeDamage.unavailableDiagram')
 
   return ''
 })
@@ -144,7 +149,7 @@ async function loadDamages() {
     emit('linkedPhotoIdsChanged', organizationId, maintenanceId, linkedPhotoIds.value)
   } catch (error) {
     if (sequence !== requestSequence || controller.signal.aborted) return
-    loadError.value = error instanceof Error ? error.message : 'Не удалось загрузить повреждения.'
+    loadError.value = error instanceof Error ? error.message : t('intakeDamage.loadError')
   } finally {
     if (sequence === requestSequence) isLoading.value = false
   }
@@ -414,7 +419,7 @@ async function uploadDraftPhotos(event: Event) {
   input.value = ''
   if (!files.length || isUploading.value || !draft.value) return
   if (files.length > 10) {
-    editorError.value = 'За одну загрузку можно добавить не более 10 фото.'
+    editorError.value = t('intakeDamage.uploadLimit', { count: 10 })
     return
   }
 
@@ -430,7 +435,7 @@ async function uploadDraftPhotos(event: Event) {
     await reloadPhotos()
   } catch (error) {
     if (sequence === uploadSequence && organizationId === props.organizationId && maintenanceId === props.maintenanceId && draft.value === currentDraft) {
-      editorError.value = error instanceof Error ? error.message : 'Не удалось загрузить фото.'
+      editorError.value = error instanceof Error ? error.message : t('intakeDamage.uploadError')
     }
   } finally {
     if (sequence === uploadSequence) isUploading.value = false
@@ -471,17 +476,17 @@ async function saveDamage() {
     projectionView.value = null
     emit('changed')
     await loadDamages()
-    if (loadError.value) loadError.value = 'Повреждение сохранено, но список не удалось обновить. Повторите загрузку.'
+    if (loadError.value) loadError.value = t('intakeDamage.savedRefreshError')
   } catch (error) {
     if (organizationId !== props.organizationId || maintenanceId !== props.maintenanceId) return
-    editorError.value = error instanceof Error ? error.message : 'Не удалось сохранить повреждение.'
+    editorError.value = error instanceof Error ? error.message : t('intakeDamage.saveError')
     if (error instanceof IntakeDamageApiError && error.status === 409) {
       editorError.value = ''
       saveNeedsReview.value = true
-      conflictMessage.value = 'Осмотр обновлён после открытия. Ваши изменения не потеряны. Сравните их с сохранёнными данными перед продолжением.'
+      conflictMessage.value = t('intakeDamage.conflictChanged')
       await fetchConflictSnapshot(organizationId, maintenanceId)
     } else if (error instanceof TypeError || (error instanceof IntakeDamageApiError && error.status >= 500)) {
-      conflictMessage.value = 'Не удалось проверить, сохранилось ли повреждение. Ваши изменения не потеряны. Обновите сохранённые данные перед повторной попыткой.'
+      conflictMessage.value = t('intakeDamage.conflictUnknown')
       const snapshot = await fetchConflictSnapshot(organizationId, maintenanceId)
       const savedDamage = snapshot?.damages.find(damage => damage.id === damageId)
       if (snapshot?.diagramVersion === diagramVersion.value && savedDamage && payloadMatchesDamage(payload, savedDamage)) {
@@ -499,11 +504,11 @@ async function saveDamage() {
         conflictSnapshot.value = null
         conflictMessage.value = ''
         saveNeedsReview.value = false
-        editorError.value = 'Сервер подтвердил, что запись не изменилась. Проверьте черновик и повторите сохранение.'
+        editorError.value = t('intakeDamage.conflictUnchanged')
       } else {
         saveNeedsReview.value = true
         if (snapshot && snapshot.diagramVersion !== diagramVersion.value) {
-          conflictMessage.value = 'Схема автомобиля обновлена. Ваши изменения относятся к прежней схеме. Откройте актуальный осмотр и отметьте повреждение заново.'
+          conflictMessage.value = t('intakeDamage.diagramChanged')
         }
       }
     }
@@ -542,12 +547,12 @@ async function fetchConflictSnapshot(organizationId = props.organizationId, main
     if (organizationId !== props.organizationId || maintenanceId !== props.maintenanceId) return null
     conflictSnapshot.value = snapshot
     if (snapshot.diagramVersion !== diagramVersion.value) {
-      conflictMessage.value = 'Схема автомобиля обновлена. Ваши изменения относятся к прежней схеме. Откройте актуальный осмотр и отметьте повреждение заново.'
+      conflictMessage.value = t('intakeDamage.diagramChanged')
     }
     return snapshot
   } catch {
     if (organizationId !== props.organizationId || maintenanceId !== props.maintenanceId) return null
-    conflictMessage.value = 'Не удалось загрузить сохранённый осмотр. Ваши изменения не потеряны. Повторите загрузку.'
+    conflictMessage.value = t('intakeDamage.savedLoadError')
     return null
   }
 }
@@ -605,125 +610,125 @@ async function confirmDelete() {
       deleteCandidate.value = null
       if (editingId.value === damage.id && draft.value) {
         saveNeedsReview.value = true
-        editorError.value = 'Отметка обновлена после открытия. Удаление не выполнено.'
-        conflictMessage.value = 'Сравните изменения перед сохранением. Для удаления откройте актуальное повреждение заново.'
+        editorError.value = t('intakeDamage.deleteConflict')
+        conflictMessage.value = t('intakeDamage.deleteConflictAdvice')
         await fetchConflictSnapshot(organizationId, maintenanceId)
         return
       }
       await loadDamages()
       if (organizationId === props.organizationId && maintenanceId === props.maintenanceId) {
-        deleteError.value = 'Запись изменилась. Проверьте повреждение и повторите удаление.'
+        deleteError.value = t('intakeDamage.deleteChanged')
       }
       return
     }
-    deleteError.value = error instanceof Error ? error.message : 'Не удалось удалить повреждение.'
+    deleteError.value = error instanceof Error ? error.message : t('intakeDamage.deleteError')
   } finally {
     isSaving.value = false
   }
 }
 
 function damageTypeLabel(type: IntakeDamageType) {
-  return damageTypes.find(item => item.code === type)?.label ?? 'Другое'
+  return damageTypes.value.find(item => item.code === type)?.label ?? t('intakeDamage.other')
 }
 
 function damageSummary(damage: IntakeDamage | IntakeDamagePayload) {
-  const viewLabel = views.find(view => view.code === damage.viewCode)?.label ?? ''
-  const description = normalizeDescription(damage.description) ?? 'Без описания'
+  const viewLabel = views.value.find(view => view.code === damage.viewCode)?.label ?? ''
+  const description = normalizeDescription(damage.description) ?? t('intakeDamage.noDescription')
   const number = 'displayNumber' in damage && typeof damage.displayNumber === 'number'
     ? damage.displayNumber
     : 'id' in damage
       ? displayedDamages.value.find(item => item.id === damage.id)?.displayNumber
       : editingDamageNumber.value
-  const numberLabel = number ? `№${number}, ` : ''
-  return `${numberLabel}${damageTypeLabel(damage.damageType)}, ${viewLabel}: ${description}; фото: ${damage.photoIds.length}`
+  const numberLabel = number ? t('intakeDamage.numberPrefix', { number }) : ''
+  return t('intakeDamage.summary', { number: numberLabel, type: damageTypeLabel(damage.damageType), view: viewLabel, description, count: damage.photoIds.length })
 }
 </script>
 
 <template>
   <section class="intake-damage" aria-labelledby="intake-damage-title">
     <div class="intake-damage__heading ui-section-header">
-      <h3 id="intake-damage-title">Повреждения на схеме <span class="intake-damage__count">{{ damages.length }}</span></h3>
+      <h3 id="intake-damage-title">{{ t('intakeDamage.mapTitle') }} <span class="intake-damage__count">{{ damages.length }}</span></h3>
       <UiButton v-if="loadError || diagramError" variant="secondary" :disabled="isLoading" @click="loadDamages">
-        {{ isLoading ? 'Загружаем…' : 'Проверить схему' }}
+        {{ isLoading ? t('intakeDamage.loading') : t('intakeDamage.refresh') }}
       </UiButton>
     </div>
 
     <p v-if="loadError" class="intake-damage__error" role="alert">{{ loadError }}</p>
     <p v-else-if="diagramError" class="intake-damage__error" role="alert">{{ diagramError }}</p>
-    <p v-if="isLoading" class="intake-damage__muted" role="status">Загружаем повреждения…</p>
+    <p v-if="isLoading" class="intake-damage__muted" role="status">{{ t('intakeDamage.loadingDamages') }}</p>
 
     <div class="intake-damage__layout">
       <div class="intake-damage__map-area">
         <p v-if="isRepositioning" class="intake-damage__hint" role="status">
-          Выберите ракурс для нового места повреждения
-          <UiButton type="button" variant="secondary" @click="cancelRepositioning">Отмена</UiButton>
+          {{ t('intakeDamage.repositionHint') }}
+          <UiButton type="button" variant="secondary" @click="cancelRepositioning">{{ t('intakeDamage.cancel') }}</UiButton>
         </p>
-        <div v-if="diagramDefinition" class="intake-damage__map-grid" aria-label="Проекции автомобиля">
+        <div v-if="diagramDefinition" class="intake-damage__map-grid" :aria-label="t('intakeDamage.projections')">
         <section v-for="view in views" :key="view.code" class="intake-damage__map-panel">
           <h4>{{ view.label }}</h4>
           <div class="intake-damage__map"
-            :style="{ aspectRatio: diagramDefinition.aspectRatio }" :aria-label="`Схема автомобиля: ${view.label}`">
+            :style="{ aspectRatio: diagramDefinition.aspectRatio }" :aria-label="t('intakeDamage.vehicleDiagram', { view: view.label })">
             <button type="button" class="intake-damage__projection" :class="`intake-damage__projection--${view.code}`"
               :disabled="isLoading || isSaving || isUploading || Boolean(loadError) || !isDiagramViewReady(view.code)"
-              :aria-label="`Открыть ракурс: ${view.label}`" @click="openProjection(view.code)">
+              :aria-label="t('intakeDamage.openView', { view: view.label })" @click="openProjection(view.code)">
               <img v-if="diagramImageUrl(view.code)" :key="diagramImageKey(view.code)" class="intake-damage__diagram-image"
-                :src="diagramImageUrl(view.code)!" :alt="`Проекция автомобиля: ${view.label}`" draggable="false"
+                :src="diagramImageUrl(view.code)!" :alt="t('intakeDamage.vehicleProjection', { view: view.label })" draggable="false"
                 @load="handleDiagramImageLoad(view.code, diagramVersion, diagramImageAttempt(view.code))"
                 @error="handleDiagramImageError(view.code, diagramVersion, diagramImageAttempt(view.code))">
               <span v-if="diagramImageUrl(view.code) && diagramImageStatus(view.code) !== 'loaded'"
                 class="intake-damage__diagram-status" role="status">
-                {{ diagramImageStatus(view.code) === 'error' ? 'Схема не загрузилась' : 'Загружаем схему…' }}
+                {{ diagramImageStatus(view.code) === 'error' ? t('intakeDamage.diagramLoadError') : t('intakeDamage.loadingDiagram') }}
               </span>
             </button>
             <button v-if="diagramImageStatus(view.code) === 'error'" type="button" class="intake-damage__diagram-retry"
-              @click.stop="retryDiagramImage(view.code)">Повторить загрузку</button>
+              @click.stop="retryDiagramImage(view.code)">{{ t('intakeDamage.retryDiagram') }}</button>
             <button v-for="damage in (isDiagramViewReady(view.code) ? damagesForView(view.code) : [])" :key="damage.id" type="button"
               class="intake-damage__marker" :class="[`intake-damage__type--${damage.damageType}`, { 'intake-damage__marker--repositioning': isRepositioning }]"
               :style="{ left: `${damage.x * 100}%`, top: `${damage.y * 100}%` }"
-              :aria-label="`Повреждение ${damage.displayNumber}: ${damageTypeLabel(damage.damageType)}`"
+              :aria-label="t('intakeDamage.damageMarker', { number: damage.displayNumber, type: damageTypeLabel(damage.damageType) })"
               @click.stop="openProjection(view.code)">{{ damage.displayNumber }}</button>
           </div>
         </section>
         </div>
-        <p v-if="canEdit && !isRepositioning" class="intake-damage__hint">Нажмите на нужное место на одной из проекций</p>
+        <p v-if="canEdit && !isRepositioning" class="intake-damage__hint">{{ t('intakeDamage.mapHint') }}</p>
       </div>
 
-      <ol v-if="damages.length" class="intake-damage__list" aria-label="Список повреждений">
+      <ol v-if="damages.length" class="intake-damage__list" :aria-label="t('intakeDamage.damageList')">
         <li v-for="damage in displayedDamages" :key="damage.id">
           <button type="button" :disabled="isRepositioning || isLoading || isSaving" @click="editDamage(damage)">
             <span class="intake-damage__number" :class="`intake-damage__type--${damage.damageType}`">{{ damage.displayNumber }}</span>
             <span><strong>{{ damageTypeLabel(damage.damageType) }}</strong><small>{{ views.find(view => view.code === damage.viewCode)?.label }}<template v-if="damage.description"> · {{ damage.description }}</template></small></span>
-            <span v-if="damage.photoIds.length" class="intake-damage__photo-count">Фото: {{ damage.photoIds.length }}</span>
+            <span v-if="damage.photoIds.length" class="intake-damage__photo-count">{{ t('intakeDamage.photoCount', { count: damage.photoIds.length }) }}</span>
           </button>
         </li>
       </ol>
-      <p v-else class="intake-damage__empty">Пока нет отмеченных повреждений.</p>
+      <p v-else class="intake-damage__empty">{{ t('intakeDamage.empty') }}</p>
     </div>
   </section>
 
   <UiModal :open="Boolean(projectionView) && !isEditorOpen" :title="projectionTitle" @close="closeProjection">
     <div v-if="projectionView && diagramDefinition" class="intake-damage__projection-dialog" @keydown.esc.prevent="closeProjection">
-      <p class="intake-damage__hint">{{ isReadOnly ? 'Выберите метку для просмотра повреждения.' : 'Нажмите на место повреждения.' }}</p>
+      <p class="intake-damage__hint">{{ isReadOnly ? t('intakeDamage.selectDamage') : t('intakeDamage.clickDamage') }}</p>
       <span id="intake-damage-keyboard-help" class="intake-damage__sr-only">
-        Стрелками перемещайте метку, Enter выбирает место. Shift увеличивает шаг перемещения.
+        {{ t('intakeDamage.keyboardHint') }}
       </span>
       <div class="intake-damage__map intake-damage__map--enlarged"
-        :style="{ aspectRatio: diagramDefinition.aspectRatio }" :aria-label="`Увеличенная схема: ${projectionTitle}`">
+        :style="{ aspectRatio: diagramDefinition.aspectRatio }" :aria-label="t('intakeDamage.enlargedDiagram', { view: projectionTitle })">
         <div class="intake-damage__projection intake-damage__projection--picker"
           :class="`intake-damage__projection--${projectionView}`"
           :role="isReadOnly ? 'img' : 'button'" :tabindex="isReadOnly ? undefined : 0"
-          :aria-label="`Место повреждения: ${projectionTitle}`"
+          :aria-label="t('intakeDamage.damageLocation', { view: projectionTitle })"
           :aria-describedby="isReadOnly ? undefined : 'intake-damage-keyboard-help'"
           aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Enter"
           @focus="handleProjectionFocus(projectionView)" @keydown="handleProjectionKeydown($event, projectionView)"
           @click="handleProjectionClick($event, projectionView)">
           <img v-if="diagramImageUrl(projectionView)" :key="diagramImageKey(projectionView)" class="intake-damage__diagram-image"
-            :src="diagramImageUrl(projectionView)!" :alt="`Проекция автомобиля: ${projectionTitle}`" draggable="false"
+            :src="diagramImageUrl(projectionView)!" :alt="t('intakeDamage.vehicleProjection', { view: projectionTitle })" draggable="false"
             @load="handleDiagramImageLoad(projectionView, diagramVersion, diagramImageAttempt(projectionView))"
             @error="handleDiagramImageError(projectionView, diagramVersion, diagramImageAttempt(projectionView))">
           <span v-if="diagramImageUrl(projectionView) && diagramImageStatus(projectionView) !== 'loaded'"
             class="intake-damage__diagram-status" role="status">
-            {{ diagramImageStatus(projectionView) === 'error' ? 'Схема не загрузилась' : 'Загружаем схему…' }}
+            {{ diagramImageStatus(projectionView) === 'error' ? t('intakeDamage.diagramLoadError') : t('intakeDamage.loadingDiagram') }}
           </span>
           <span v-if="!isReadOnly && keyboardProjection === projectionView" class="intake-damage__keyboard-marker"
             :style="{ left: `${keyboardPoint.x * 100}%`, top: `${keyboardPoint.y * 100}%` }" aria-hidden="true" />
@@ -731,40 +736,40 @@ function damageSummary(damage: IntakeDamage | IntakeDamagePayload) {
         <button v-for="damage in (isDiagramViewReady(projectionView) ? damagesForView(projectionView) : [])" :key="damage.id" type="button"
           class="intake-damage__marker" :class="[`intake-damage__type--${damage.damageType}`, { 'intake-damage__marker--repositioning': isRepositioning }]"
           :style="{ left: `${damage.x * 100}%`, top: `${damage.y * 100}%` }"
-          :aria-label="`Повреждение ${damage.displayNumber}: ${damageTypeLabel(damage.damageType)}`"
+          :aria-label="t('intakeDamage.damageMarker', { number: damage.displayNumber, type: damageTypeLabel(damage.damageType) })"
           @click.stop="editDamage(damage)">{{ damage.displayNumber }}</button>
       </div>
       <button v-if="diagramImageStatus(projectionView) === 'error'" type="button" class="intake-damage__diagram-retry"
-        @click.stop="retryDiagramImage(projectionView)">Повторить загрузку схемы</button>
+        @click.stop="retryDiagramImage(projectionView)">{{ t('intakeDamage.retryDiagram') }}</button>
       <div class="intake-damage__actions">
-        <UiButton v-if="isRepositioning" variant="secondary" @click="projectionView = null">Другой ракурс</UiButton>
-        <UiButton variant="secondary" @click="closeProjection">{{ isRepositioning ? 'Отмена' : 'Закрыть' }}</UiButton>
+        <UiButton v-if="isRepositioning" variant="secondary" @click="projectionView = null">{{ t('intakeDamage.anotherView') }}</UiButton>
+        <UiButton variant="secondary" @click="closeProjection">{{ isRepositioning ? t('intakeDamage.cancel') : t('intakeDamage.closeMap') }}</UiButton>
       </div>
     </div>
   </UiModal>
 
   <UiModal :open="Boolean(draft) && isEditorOpen && !deleteCandidate && !showConflictConfirmation" :title="editorTitle" @close="closeEditor">
     <form v-if="draft" class="intake-damage__form" @submit.prevent="saveDamage" @keydown.esc.prevent="closeEditor">
-      <label for="intake-damage-type">Тип повреждения</label>
+      <label for="intake-damage-type">{{ t('intakeDamage.damageType') }}</label>
       <select id="intake-damage-type" v-model="draft.damageType" :disabled="isReadOnly || isSaving || isUploading">
         <option v-for="type in damageTypes" :key="type.code" :value="type.code">{{ type.label }}</option>
       </select>
 
-      <p><strong>Ракурс:</strong> {{ views.find(view => view.code === draft?.viewCode)?.label }}</p>
+      <p><strong>{{ t('intakeDamage.viewLabel') }}</strong> {{ views.find(view => view.code === draft?.viewCode)?.label }}</p>
       <UiButton v-if="canEdit" type="button" variant="secondary" :disabled="isSaving || isUploading"
-        @click="startRepositioning">Изменить место</UiButton>
+        @click="startRepositioning">{{ t('intakeDamage.changeLocation') }}</UiButton>
 
-      <label for="intake-damage-description">Описание</label>
+      <label for="intake-damage-description">{{ t('intakeDamage.description') }}</label>
       <textarea id="intake-damage-description" v-model="draft.description" rows="3" maxlength="1000"
-        :disabled="isReadOnly || isSaving || isUploading" placeholder="Например, царапина на переднем бампере" />
+        :disabled="isReadOnly || isSaving || isUploading" :placeholder="t('intakeDamage.descriptionPlaceholder')" />
 
       <fieldset class="intake-damage__photos">
-        <legend>Фото до работы</legend>
+        <legend>{{ t('intakeDamage.beforeWork') }}</legend>
         <template v-if="isReadOnly">
           <a v-for="photo in displayedPhotos" :key="photo.photoId" class="intake-damage__photo-preview"
-            :href="photo.url" target="_blank" rel="noopener noreferrer" :aria-label="`Открыть фото повреждения ${photo.photoId}`">
-            <img :src="photo.url" alt="Фото повреждения">
-            <span>Открыть фото</span>
+            :href="photo.url" target="_blank" rel="noopener noreferrer" :aria-label="t('intakeDamage.openDamagePhoto', { id: photo.photoId })">
+            <img :src="photo.url" :alt="t('intakeDamage.damagePhotoAlt')">
+            <span>{{ t('intakeDamage.openPhoto') }}</span>
           </a>
         </template>
         <template v-else>
@@ -775,44 +780,44 @@ function damageSummary(damage: IntakeDamage | IntakeDamagePayload) {
           </label>
         </template>
         <label v-if="canEdit" class="intake-damage__upload">
-          {{ isUploading ? 'Загружаем…' : '＋ Загрузить фото до работы' }}
+          {{ isUploading ? t('intakeDamage.uploading') : t('intakeDamage.uploadBeforeWork') }}
           <input type="file" accept="image/*" multiple :disabled="isSaving || isUploading" @change="uploadDraftPhotos">
         </label>
         <p v-if="!displayedPhotos.length" class="intake-damage__muted">
-          {{ isReadOnly ? 'К этому повреждению фото не прикреплены.' : 'Фото до работы пока не добавлены.' }}
+          {{ isReadOnly ? t('intakeDamage.attachedPhotos') : t('intakeDamage.noBeforePhotos') }}
         </p>
       </fieldset>
 
       <p v-if="editorError" class="intake-damage__error" role="alert">{{ editorError }}</p>
       <div v-if="saveNeedsReview" class="intake-damage__conflict" role="alert">
         <p>{{ conflictMessage }}</p>
-        <p v-if="conflictSnapshot">Сохранено: {{ conflictDamage ? damageSummary(conflictDamage) : editingId ? 'эта отметка удалена' : 'отметка ещё не добавлена' }}.</p>
-        <p v-if="draft">Ваши изменения: {{ damageSummary(draft) }}.</p>
+        <p v-if="conflictSnapshot">{{ t('intakeDamage.saved', { summary: conflictDamage ? damageSummary(conflictDamage) : editingId ? t('intakeDamage.deletedMark') : t('intakeDamage.notAddedMark') }) }}</p>
+        <p v-if="draft">{{ t('intakeDamage.yourChanges', { summary: damageSummary(draft) }) }}</p>
         <UiButton type="button" variant="secondary" :disabled="isSaving" @click="fetchConflictSnapshot()">
-          Обновить сохранённые данные
+          {{ t('intakeDamage.refreshSaved') }}
         </UiButton>
         <UiButton v-if="conflictSnapshot" type="button" variant="secondary" :disabled="isSaving"
-          @click="showConflictConfirmation = 'discard'">Открыть сохранённый осмотр</UiButton>
+          @click="showConflictConfirmation = 'discard'">{{ t('intakeDamage.openSavedInspection') }}</UiButton>
         <UiButton v-if="conflictSnapshot && canOverwriteConflict" type="button" variant="secondary" :disabled="isSaving"
-          @click="showConflictConfirmation = 'overwrite'">Сохранить мой вариант</UiButton>
+          @click="showConflictConfirmation = 'overwrite'">{{ t('intakeDamage.saveMyVersion') }}</UiButton>
       </div>
       <div class="intake-damage__actions">
-        <UiButton v-if="canEdit" type="submit" :disabled="isSaving || isUploading || Boolean(loadError) || saveNeedsReview">{{ isSaving ? 'Сохраняем…' : 'Сохранить' }}</UiButton>
-        <UiButton type="button" variant="secondary" :disabled="isSaving || isUploading" @click="closeEditor">{{ isReadOnly ? 'Закрыть' : 'Отмена' }}</UiButton>
+        <UiButton v-if="canEdit" type="submit" :disabled="isSaving || isUploading || Boolean(loadError) || saveNeedsReview">{{ isSaving ? t('intakeDamage.saving') : t('intakeDamage.save') }}</UiButton>
+        <UiButton type="button" variant="secondary" :disabled="isSaving || isUploading" @click="closeEditor">{{ isReadOnly ? t('intakeDamage.closeEditor') : t('intakeDamage.cancel') }}</UiButton>
         <button v-if="editingId && canEdit" type="button" class="intake-damage__delete" :disabled="isSaving || isUploading || saveNeedsReview"
-          @click="askDelete(damages.find(damage => damage.id === editingId)!)">Удалить</button>
+          @click="askDelete(damages.find(damage => damage.id === editingId)!)">{{ t('intakeDamage.delete') }}</button>
       </div>
     </form>
   </UiModal>
 
-  <UiConfirmDialog :open="Boolean(deleteCandidate)" title="Удалить повреждение?"
-    :message="deleteError || 'Отметка будет удалена. Фотографии останутся в галерее заказа.'"
-    confirm-text="Удалить" :busy="isSaving" tone="danger"
+  <UiConfirmDialog :open="Boolean(deleteCandidate)" :title="t('intakeDamage.deleteTitle')"
+    :message="deleteError || t('intakeDamage.deleteMessage')"
+    :confirm-text="t('intakeDamage.delete')" :busy="isSaving" tone="danger"
     @close="!isSaving && (deleteCandidate = null)" @confirm="confirmDelete" />
   <UiConfirmDialog :open="Boolean(showConflictConfirmation)"
-    :title="showConflictConfirmation === 'overwrite' ? 'Сохранить ваши изменения?' : 'Открыть сохранённый осмотр?'"
-    :message="showConflictConfirmation === 'overwrite' ? 'Сохранённые данные этой отметки будут заменены вашими изменениями.' : 'Ваши несохранённые изменения будут потеряны. Открыть сохранённые данные?'"
-    :confirm-text="showConflictConfirmation === 'overwrite' ? 'Сохранить мой вариант' : 'Открыть осмотр'"
+    :title="showConflictConfirmation === 'overwrite' ? t('intakeDamage.overwriteTitle') : t('intakeDamage.discardTitle')"
+    :message="showConflictConfirmation === 'overwrite' ? t('intakeDamage.overwriteMessage') : t('intakeDamage.discardMessage')"
+    :confirm-text="showConflictConfirmation === 'overwrite' ? t('intakeDamage.overwriteConfirm') : t('intakeDamage.discardConfirm')"
     :busy="isSaving" @close="showConflictConfirmation = false"
     @confirm="showConflictConfirmation === 'overwrite' ? confirmConflictOverwrite() : confirmConflictRefresh()" />
   <p v-if="deleteError && !deleteCandidate" class="intake-damage__error" role="alert">{{ deleteError }}</p>

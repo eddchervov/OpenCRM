@@ -1,6 +1,6 @@
 @model EmailVerificationModel
 @{
-    ViewData["Title"] = "Подтвердите email";
+    ViewData["Title"] = Text["auth.confirmEmailTitle"].Value;
 }
 
 <div class="auth-page">
@@ -9,9 +9,9 @@
             <div class="auth-container extra-narrow-form">
                 <div class="auth-form-wrapper text-center">
                     <div class="mb-3 text-muted" aria-hidden="true"><i class="fa fa-envelope-o fa-3x"></i></div>
-                    <h1 class="auth-title">Подтвердите email, чтобы продолжить</h1>
-                    <p>Откройте почту <strong class="text-break">@Model.Email</strong> и перейдите по ссылке в письме от <span class="text-nowrap">@Brand.DisplayName</span>.</p>
-                    <p class="text-muted">До подтверждения email работа в приложении недоступна. После подтверждения вы сможете продолжить работу или создать свою организацию.</p>
+                    <h1 class="auth-title">@Text["auth.verifyEmailTitle"]</h1>
+                    <p>@Text["auth.verifyEmailInstructions", Model.Email, Brand.DisplayName]</p>
+                    <p class="text-muted">@Text["auth.verifyEmailRequired"]</p>
 
                     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
                     {
@@ -22,20 +22,20 @@
                         <div class="alert alert-warning auth-alert-message" role="alert">@Model.ErrorMessage</div>
                     }
 
-                    <p class="small text-muted">Не нашли письмо? Проверьте папку «Спам» или отправьте его повторно.</p>
+                    <p class="small text-muted">@Text["auth.emailNotFound"]</p>
                     <form asp-controller="EmailVerification" asp-action="Resend" method="post" class="mb-3" data-email-resend data-disable-submit-loader>
                         <button type="submit" class="btn btn-dark auth-btn w-100"
                                 data-retry-after="@Model.RetryAfterSeconds" disabled="@(Model.RetryAfterSeconds > 0)">
-                            @(Model.RetryAfterSeconds > 0 ? $"Отправить повторно через {Model.RetryAfterSeconds} с" : "Отправить письмо повторно")
+                            @(Model.RetryAfterSeconds > 0 ? Text["auth.resendAfter", Model.RetryAfterSeconds] : Text["auth.resend"])
                         </button>
                     </form>
-                    <a asp-controller="EmailVerification" asp-action="Index" class="btn btn-outline-dark auth-btn w-100 d-flex align-items-center justify-content-center">Я подтвердил email — продолжить</a>
+                    <a asp-controller="EmailVerification" asp-action="Index" class="btn btn-outline-dark auth-btn w-100 d-flex align-items-center justify-content-center">@Text["auth.verifiedContinue"]</a>
 
                     <div class="auth-links mt-4">
-                        <a href="~/personal/support">Нужна помощь? Напишите в поддержку</a>
+                        <a href="~/personal/support">@Text["auth.needHelp"]</a>
                     </div>
                     <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-3">
-                        <button type="submit" class="btn btn-link text-muted">Выйти из аккаунта</button>
+                        <button type="submit" class="btn btn-link text-muted">@Text["auth.signOut"]</button>
                     </form>
                 </div>
             </div>

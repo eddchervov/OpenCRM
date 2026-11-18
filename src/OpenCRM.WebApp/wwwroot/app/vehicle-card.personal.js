@@ -8,10 +8,13 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
     Vue.component('vue-ctk-date-time-picker', window['vue-ctk-date-time-picker']);
 }
 
+var vehicleText = document.getElementById('vehicle-form').dataset;
+
 new Vue({
     el: '#vehicle-form',
     data: function () {
         return {
+            regionalCurrencyCode: null,
             formLoad: true,
             errorMessage: '',
             vehicle: {
@@ -25,6 +28,7 @@ new Vue({
                 name: '',
                 vin: '',
                 registrationPlate: '',
+                registrationCountryCode: '',
                 bodyNumber: '',
                 engineNumber: '',
                 color: '',
@@ -102,41 +106,41 @@ new Vue({
                 isLoading: false
             },
             vehicleKindOptions: [
-                { value: 1, text: 'Легковой автомобиль' },
-                { value: 2, text: 'Грузовая техника' },
-                { value: 3, text: 'Мотоцикл' },
-                { value: 4, text: 'Квадроцикл' },
-                { value: 5, text: 'Багги / UTV' },
-                { value: 6, text: 'Снегоход' },
-                { value: 7, text: 'Гидроцикл' },
-                { value: 8, text: 'Лодка / катер' },
-                { value: 9, text: 'Спецтехника' },
-                { value: 10, text: 'Прицеп' },
-                { value: 99, text: 'Другая техника' }
+                { value: 1, text: vehicleText.cardKindPassenger },
+                { value: 2, text: vehicleText.cardKindTruck },
+                { value: 3, text: vehicleText.cardKindMotorcycle },
+                { value: 4, text: vehicleText.cardKindAtv },
+                { value: 5, text: vehicleText.cardKindUtv },
+                { value: 6, text: vehicleText.cardKindSnowmobile },
+                { value: 7, text: vehicleText.cardKindJetski },
+                { value: 8, text: vehicleText.cardKindBoat },
+                { value: 9, text: vehicleText.cardKindSpecial },
+                { value: 10, text: vehicleText.cardKindTrailer },
+                { value: 99, text: vehicleText.cardKindOther }
             ],
             mileageUnitOptions: [
-                { value: 1, text: 'Километры' },
-                { value: 2, text: 'Моточасы' }
+                { value: 1, text: vehicleText.cardMileageKilometers },
+                { value: 2, text: vehicleText.cardMileageEngineHours }
             ],
             maintenanceSortOptions: [
-                { value: 'mileage_desc', text: 'Пробег / наработка: больше' },
-                { value: 'mileage_asc', text: 'Пробег / наработка: меньше' },
-                { value: 'date_desc', text: 'По дате: новые' },
-                { value: 'date_asc', text: 'По дате: старые' }
+                { value: 'mileage_desc', text: vehicleText.cardSortMileageDesc },
+                { value: 'mileage_asc', text: vehicleText.cardSortMileageAsc },
+                { value: 'date_desc', text: vehicleText.cardSortDateNewest },
+                { value: 'date_asc', text: vehicleText.cardSortDateOldest }
             ],
             maintenanceTypeFilterOptions: [
-                { value: 'all', text: 'Все типы' },
-                { value: 1, text: 'Ремонт и обслуживание' },
-                { value: 2, text: 'Плановое ТО' },
-                { value: 3, text: 'Заправка топливом' },
-                { value: 100, text: 'Другое' }
+                { value: 'all', text: vehicleText.cardFilterAllTypes },
+                { value: 1, text: vehicleText.cardMaintenanceRepair },
+                { value: 2, text: vehicleText.cardMaintenancePlannedService },
+                { value: 3, text: vehicleText.cardMaintenanceFuel },
+                { value: 100, text: vehicleText.cardOther }
             ],
             maintenanceStatusFilterOptions: [
-                { value: 'all', text: 'Все состояния' },
-                { value: 1, text: 'Запланировано' },
-                { value: 2, text: 'В работе' },
-                { value: 3, text: 'Выполнено' },
-                { value: 4, text: 'Отменено' }
+                { value: 'all', text: vehicleText.cardFilterAllStatuses },
+                { value: 1, text: vehicleText.cardStatusPlanned },
+                { value: 2, text: vehicleText.cardStatusInProgress },
+                { value: 3, text: vehicleText.cardStatusCompleted },
+                { value: 4, text: vehicleText.cardStatusCancelled }
             ],
             maintenanceTotalCount: 0
             ,
@@ -202,27 +206,27 @@ new Vue({
                 .some(function (value) { return value && String(value).trim(); });
         },
         mileageUnitShortText: function () {
-            return this.vehicle.mileageUnit === 2 ? 'м/ч' : 'км';
+            return this.vehicle.mileageUnit === 2 ? vehicleText.cardUnitShortHours : vehicleText.cardUnitShortKilometers;
         },
         personalCounterUnitLabel: function () {
-            return this.vehicle.mileageUnit === 2 ? 'Моточасы' : 'Километры';
+            return this.vehicle.mileageUnit === 2 ? vehicleText.cardMileageEngineHours : vehicleText.cardMileageKilometers;
         },
         personalCounterButtonText: function () {
-            return this.vehicle.mileageUnit === 2 ? 'Добавить наработку' : 'Добавить пробег';
+            return this.vehicle.mileageUnit === 2 ? vehicleText.cardCounterAddHours : vehicleText.cardCounterAddKilometers;
         },
         personalCounterTitle: function () {
             if (this.personalCounterLookup && this.personalCounterLookup.hasEntry) {
                 return this.personalCounterLookup.sourceType === 'maintenance'
-                    ? (this.vehicle.mileageUnit === 2 ? 'Добавить наработку на дату' : 'Добавить пробег на дату')
-                    : 'Редактировать запись';
+                    ? (this.vehicle.mileageUnit === 2 ? vehicleText.cardCounterAddHoursOnDate : vehicleText.cardCounterAddKilometersOnDate)
+                    : vehicleText.cardCounterEditEntry;
             }
 
-            return this.vehicle.mileageUnit === 2 ? 'Добавить наработку' : 'Добавить пробег';
+            return this.vehicle.mileageUnit === 2 ? vehicleText.cardCounterAddHours : vehicleText.cardCounterAddKilometers;
         },
         personalCounterSubmitText: function () {
             return this.personalCounterLookup && this.personalCounterLookup.hasEntry && this.personalCounterLookup.sourceType !== 'maintenance'
-                ? 'Сохранить изменения'
-                : 'Сохранить запись';
+                ? vehicleText.cardCounterSaveChanges
+                : vehicleText.cardCounterSaveEntry;
         },
         personalCounterLookupMessage: function () {
             if (!this.personalCounterLookup || !this.personalCounterLookup.hasEntry) {
@@ -230,8 +234,8 @@ new Vue({
             }
 
             return this.personalCounterLookup.sourceType === 'maintenance'
-                ? 'На эту дату уже есть значение из обслуживания. Мы подставили его в форму, чтобы можно было быстро сохранить свою запись.'
-                : 'На эту дату уже сохранена ручная запись. Вы редактируете существующее значение.';
+                ? vehicleText.cardCounterFromMaintenance
+                : vehicleText.cardCounterManualEntry;
         },
         personalCounterLookupAlertClass: function () {
             if (!this.personalCounterLookup || !this.personalCounterLookup.hasEntry) {
@@ -287,7 +291,7 @@ new Vue({
                 .sort(function (a, b) { return new Date(a.recordedAt) - new Date(b.recordedAt); });
         },
         vehicleTimelineSeries: function () {
-            var counterLabel = this.vehicle.mileageUnit === 2 ? 'Наработка' : 'Пробег';
+            var counterLabel = this.vehicle.mileageUnit === 2 ? vehicleText.cardCounterHoursLabel : vehicleText.cardCounterMileageLabel;
 
             var counterItems = this.manualCounterChartRecords.map(function (item) {
                 return {
@@ -298,7 +302,7 @@ new Vue({
                     value: item.value,
                     title: counterLabel,
                     subtitle: item.comment || '',
-                    tooltip: 'Тип: ' + counterLabel + '\nДата: ' + this.formatDate(item.recordedAt) + '\nЗначение: ' + this.formatCounterValue(item.value, this.vehicle.mileageUnit) + (item.comment ? '\nКомментарий: ' + item.comment : '')
+                    tooltip: vehicleText.cardChartType + ': ' + counterLabel + '\n' + vehicleText.cardChartDate + ': ' + this.formatDate(item.recordedAt) + '\n' + vehicleText.cardChartValue + ': ' + this.formatCounterValue(item.value, this.vehicle.mileageUnit) + (item.comment ? '\n' + vehicleText.cardChartComment + ': ' + item.comment : '')
                 };
             }, this);
 
@@ -312,9 +316,9 @@ new Vue({
                         colorClass: 'counter-chart-point-maintenance',
                         date: item.date,
                         value: item.mileage,
-                        title: 'Обслуживание',
+                        title: vehicleText.cardChartMaintenance,
                         subtitle: maintenanceTypeText,
-                        tooltip: 'Тип: обслуживание' + '\nВид: ' + maintenanceTypeText + '\nДата: ' + this.formatDate(item.date) + '\nЗначение: ' + this.formatCounterValue(item.mileage, this.vehicle.mileageUnit)
+                        tooltip: vehicleText.cardChartType + ': ' + vehicleText.cardChartMaintenance + '\n' + vehicleText.cardChartKind + ': ' + maintenanceTypeText + '\n' + vehicleText.cardChartDate + ': ' + this.formatDate(item.date) + '\n' + vehicleText.cardChartValue + ': ' + this.formatCounterValue(item.mileage, this.vehicle.mileageUnit)
                     };
                 }, this);
 
@@ -382,7 +386,7 @@ new Vue({
                 return Object.assign({}, item, {
                     x: Math.round(x * 100) / 100,
                     y: Math.round(y * 100) / 100,
-                    shortDate: moment(item.date).locale('ru').format('MMM YY')
+                    shortDate: window.OpenCRMRegional.formatDate(item.date, { month: 'short', year: '2-digit' })
                 });
             });
         },
@@ -408,7 +412,7 @@ new Vue({
                 lines.push({
                     value: i,
                     y: Math.round(y * 100) / 100,
-                    label: Number(displayValue).toLocaleString('ru-RU', useIntegerScale
+                    label: Number(displayValue).toLocaleString(window.OpenCRMRegional.culture, useIntegerScale
                         ? { maximumFractionDigits: 0 }
                         : { maximumFractionDigits: 2 })
                 });
@@ -457,7 +461,7 @@ new Vue({
 
             if (mileageDiffs.length > 0) {
                 var mileageAverage = Math.round(mileageDiffs.reduce(function (sum, value) { return sum + value; }, 0) / mileageDiffs.length);
-                return mileageAverage.toLocaleString('ru-RU') + ' ' + this.mileageUnitShortText;
+                return mileageAverage.toLocaleString(window.OpenCRMRegional.culture) + ' ' + this.mileageUnitShortText;
             }
 
             var dateItems = this.serviceChartRecords
@@ -473,11 +477,11 @@ new Vue({
             }
 
             if (dayDiffs.length === 0) {
-                return 'Нет данных';
+                return vehicleText.cardNoData;
             }
 
             var dayAverage = Math.round(dayDiffs.reduce(function (sum, value) { return sum + value; }, 0) / dayDiffs.length);
-            return dayAverage + ' дн.';
+            return dayAverage + ' ' + vehicleText.cardDaysShort;
         }
     },
     methods: {
@@ -493,7 +497,7 @@ new Vue({
         loadPhoto: async function (photoId) {
             var response = await fetch('/api/v1/media/' + photoId + '/path');
             if (!response.ok) {
-                throw new Error('Не удалось загрузить фотографию');
+                throw new Error(vehicleText.cardErrorPhoto);
             }
 
             return await response.text();
@@ -659,7 +663,7 @@ new Vue({
         },
 
         handleDocumentDownloadError: async function (error, fallbackMessage) {
-            var message = fallbackMessage || 'Не удалось скачать отчет';
+            var message = fallbackMessage || vehicleText.cardErrorDownloadReport;
 
             if (error && error.response && error.response.data instanceof Blob) {
                 try {
@@ -763,7 +767,7 @@ new Vue({
                         ? _this.vehicle.currentMileage
                         : null;
                     _this.personalCounterForm.comment = '';
-                    _this.handleApiError(error, 'Не удалось проверить запись на выбранную дату.');
+                    _this.handleApiError(error, vehicleText.cardErrorCheckCounterDate);
                 })
                 .finally(function () {
                     _this.personalCounterLookupLoading = false;
@@ -775,18 +779,18 @@ new Vue({
             }
 
             if (!this.personalCounterForm.recordedAt) {
-                this.showError('Заполните поле "Дата".');
+                this.showError(vehicleText.cardErrorCounterDateRequired);
                 return;
             }
 
             if (this.personalCounterForm.value === null || this.personalCounterForm.value === undefined || this.personalCounterForm.value === '') {
-                this.showError('Укажите значение для записи.');
+                this.showError(vehicleText.cardErrorCounterValueRequired);
                 return;
             }
 
             var value = Number(this.personalCounterForm.value);
             if (Number.isNaN(value) || value < 0) {
-                this.showError('Значение не может быть отрицательным.');
+                this.showError(vehicleText.cardErrorCounterNegative);
                 return;
             }
 
@@ -808,7 +812,7 @@ new Vue({
                     _this.loadVehicleData();
                 })
                 .catch(function (error) {
-                    _this.handleApiError(error, 'Не удалось сохранить запись.');
+                    _this.handleApiError(error, vehicleText.cardErrorCounterSave);
                 })
                 .finally(function () {
                     _this.personalCounterSaveInProgress = false;
@@ -865,7 +869,7 @@ new Vue({
                     vm.organizationClients = [];
                     vm.organizationClientsEnabled = false;
                     if (!error.response || error.response.status !== 403) {
-                        vm.handleApiError(error, 'Произошла ошибка получения клиентов');
+                        vm.handleApiError(error, vehicleText.cardErrorClients);
                         throw error;
                     }
 
@@ -930,11 +934,11 @@ new Vue({
         },
         getVehicleKindText: function (kind) {
             var item = this.vehicleKindOptions.find(function (option) { return option.value === kind; });
-            return item ? item.text : 'Другая техника';
+            return item ? item.text : vehicleText.cardKindOther;
         },
         generateVehicleWord: async function (includePhotos = false) {
             if (!this.hasMaintenanceRecordsForExport) {
-                this.showError('Добавьте хотя бы одну запись обслуживания, чтобы экспортировать отчет.');
+                this.showError(vehicleText.cardErrorMaintenanceRequired);
                 return;
             }
 
@@ -949,14 +953,14 @@ new Vue({
 
                 await this.downloadBlobFromUrl(url, 'vehicle-report.docx');
             } catch (error) {
-                await this.handleDocumentDownloadError(error, 'Ошибка при генерации Word документа');
+                await this.handleDocumentDownloadError(error, vehicleText.cardErrorWord);
             } finally {
                 this.hideModal('#loadingModal');
             }
         },
         generateVehiclePdf: async function (includePhotos = true) {
             if (!this.hasMaintenanceRecordsForExport) {
-                this.showError('Добавьте хотя бы одну запись обслуживания, чтобы экспортировать отчет.');
+                this.showError(vehicleText.cardErrorMaintenanceRequired);
                 return;
             }
 
@@ -966,7 +970,7 @@ new Vue({
                 var url = this.appendOrganizationId('/api/v1/documents/pdf/vehicle/' + this.vehicle.id + '?includePhotos=' + includePhotos);
                 await this.downloadBlobFromUrl(url, 'vehicle-report.pdf');
             } catch (error) {
-                await this.handleDocumentDownloadError(error, 'Ошибка при генерации PDF');
+                await this.handleDocumentDownloadError(error, vehicleText.cardErrorPdf);
             } finally {
                 this.hideModal('#loadingModal');
             }
@@ -990,6 +994,7 @@ new Vue({
                 this.vehicle.name = data.name;
                 this.vehicle.vin = data.vin || '';
                 this.vehicle.registrationPlate = data.registrationPlate || '';
+                this.vehicle.registrationCountryCode = data.registrationCountryCode || '';
                 this.vehicle.bodyNumber = data.bodyNumber || '';
                 this.vehicle.engineNumber = data.engineNumber || '';
                 this.vehicle.color = data.color || '';
@@ -1026,6 +1031,7 @@ new Vue({
                     name: data.name,
                     vin: data.vin || '',
                     registrationPlate: data.registrationPlate || '',
+                    registrationCountryCode: data.registrationCountryCode || '',
                     bodyNumber: data.bodyNumber || '',
                     engineNumber: data.engineNumber || '',
                     color: data.color || '',
@@ -1060,7 +1066,7 @@ new Vue({
                 this.loadMaintenanceAnalytics();
                 this.loadCounterHistoryChartData();
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка загрузки данных техники');
+                this.handleApiError(error, vehicleText.cardErrorVehicleLoad);
             } finally {
                 this.formLoad = false;
             }
@@ -1080,7 +1086,7 @@ new Vue({
                 })
                 .catch(function (error) {
                     _this.maintenanceAnalytics = [];
-                    _this.handleApiError(error, 'Ошибка загрузки аналитики обслуживания');
+                    _this.handleApiError(error, vehicleText.cardErrorAnalytics);
                 })
                 .finally(function () {
                     _this.maintenanceAnalyticsLoaded = true;
@@ -1109,7 +1115,7 @@ new Vue({
                 })
                 .catch(function (error) {
                     _this.vehicleHistory = [];
-                    _this.handleApiError(error, 'Ошибка загрузки журнала техники');
+                    _this.handleApiError(error, vehicleText.cardErrorJournal);
                 })
                 .finally(function () {
                     _this.vehicleHistoryLoading = false;
@@ -1138,7 +1144,7 @@ new Vue({
                 })
                 .catch(function (error) {
                     _this.counterHistoryChartEntries = [];
-                    _this.handleApiError(error, 'Ошибка загрузки записей пробега и наработки');
+                    _this.handleApiError(error, vehicleText.cardErrorCounterHistory);
                 })
                 .finally(function () {
                     _this.counterHistoryLoaded = true;
@@ -1183,7 +1189,7 @@ new Vue({
                     _this.pagination.page++;
                 })
                 .catch(function (error) {
-                    _this.handleApiError(error, 'Ошибка загрузки истории обслуживания');
+                    _this.handleApiError(error, vehicleText.cardErrorMaintenanceHistory);
                 })
                 .finally(function () {
                     _this.pagination.isLoading = false;
@@ -1252,7 +1258,7 @@ new Vue({
                     }
 
                     _this.deletedPagination.hasMore = false;
-                    _this.handleApiError(error, 'Ошибка загрузки удаленных обслуживаний');
+                    _this.handleApiError(error, vehicleText.cardErrorDeletedMaintenance);
                 })
                 .finally(function () {
                     _this.deletedMaintenanceLoading = false;
@@ -1309,6 +1315,7 @@ new Vue({
                 this.vehicle.name = this.originalVehicleData.name;
                 this.vehicle.vin = this.originalVehicleData.vin || '';
                 this.vehicle.registrationPlate = this.originalVehicleData.registrationPlate || '';
+                this.vehicle.registrationCountryCode = this.originalVehicleData.registrationCountryCode || '';
                 this.vehicle.bodyNumber = this.originalVehicleData.bodyNumber || '';
                 this.vehicle.engineNumber = this.originalVehicleData.engineNumber || '';
                 this.vehicle.color = this.originalVehicleData.color || '';
@@ -1364,6 +1371,7 @@ new Vue({
                 Name: this.vehicle.name,
                 Vin: this.vehicle.vin,
                 RegistrationPlate: this.vehicle.registrationPlate,
+                RegistrationCountryCode: this.vehicle.registrationCountryCode,
                 AllowOtherRegistrationPlateFormat: this.vehicle.allowOtherRegistrationPlateFormat === true,
                 BodyNumber: this.vehicle.bodyNumber,
                 EngineNumber: this.vehicle.engineNumber,
@@ -1385,6 +1393,7 @@ new Vue({
                         name: _this.vehicle.name,
                         vin: _this.vehicle.vin,
                         registrationPlate: _this.vehicle.registrationPlate,
+                        registrationCountryCode: _this.vehicle.registrationCountryCode,
                         bodyNumber: _this.vehicle.bodyNumber,
                         engineNumber: _this.vehicle.engineNumber,
                         color: _this.vehicle.color,
@@ -1413,7 +1422,7 @@ new Vue({
                     _this.loadVehicleData();
                 })
                 .catch(function (error) {
-                    _this.handleApiError(error, 'Произошла ошибка изменения техники');
+                    _this.handleApiError(error, vehicleText.cardErrorVehicleUpdate);
                 })
                 .finally(function () {
                     _this.saveModal = false;
@@ -1450,7 +1459,7 @@ new Vue({
                     _this.models = response.data;
                 })
                 .catch(function (error) {
-                    _this.handleApiError(error, 'Произошла ошибка получения моделей техники');
+                    _this.handleApiError(error, vehicleText.cardErrorModels);
                 })
                 .finally(function () {
                     _this.loadModels = false;
@@ -1472,7 +1481,7 @@ new Vue({
                 .catch(function (error) {
                     _this.brands = [];
                     _this.applyCatalogModeAvailability();
-                    _this.handleApiError(error, 'Произошла ошибка получения марок техники');
+                    _this.handleApiError(error, vehicleText.cardErrorBrands);
                 });
         },
 
@@ -1528,7 +1537,7 @@ new Vue({
                 this.vehicle.photoId = originalPhotoId;
                 this.vehicle.photoUrl = originalPhotoUrl;
                 this.vehicle.photoLoadFailed = originalPhotoLoadFailed;
-                this.handleApiError(error, 'Произошла ошибка загрузки фотографии техники');
+                this.handleApiError(error, vehicleText.cardErrorPhotoUpload);
             } finally {
                 this.vehicle.isUploading = false;
                 event.target.value = '';
@@ -1558,7 +1567,7 @@ new Vue({
 
                 this.hideModal('#deletePhotoModal');
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка удаления фотографии техники');
+                this.handleApiError(error, vehicleText.cardErrorPhotoDelete);
             }
         },
 
@@ -1590,7 +1599,7 @@ new Vue({
                 this.hideModal('#transferVehicleModal');
                 window.location.href = '/organizations/' + this.selectedTransferOrganizationId;
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка переноса техники');
+                this.handleApiError(error, vehicleText.cardErrorTransfer);
             } finally {
                 this.transferSaveInProgress = false;
             }
@@ -1613,7 +1622,7 @@ new Vue({
                 this.hideModal('#deleteVehicleModal');
                 window.location.href = this.getVehicleListUrl();
             } catch (error) {
-                this.handleApiError(error, 'Произошла ошибка удаления техники');
+                this.handleApiError(error, vehicleText.cardErrorVehicleDelete);
             } finally {
                 this.saveModal = false;
             }
@@ -1635,12 +1644,12 @@ new Vue({
 
         getMaintenanceStatusText: function (status) {
             var statusTexts = {
-                1: 'Запланировано',
-                2: 'В работе',
-                3: 'Выполнено',
-                4: 'Отменено'
+                1: vehicleText.cardStatusPlanned,
+                2: vehicleText.cardStatusInProgress,
+                3: vehicleText.cardStatusCompleted,
+                4: vehicleText.cardStatusCancelled
             };
-            return statusTexts[status] || 'Неизвестно';
+            return statusTexts[status] || vehicleText.cardStatusUnknown;
         },
 
         getMaintenanceDateDay: function (dateString) {
@@ -1673,7 +1682,7 @@ new Vue({
             }
 
             var targetDay = this.getMaintenanceDateDay(targetDate);
-            return targetDay ? targetDay.isBefore(moment().startOf('day'), 'day') : false;
+            return targetDay ? targetDay.format('YYYY-MM-DD') < window.OpenCRMRegional.today() : false;
         },
 
         getMaintenanceStatusDisplayText: function (maintenance) {
@@ -1695,7 +1704,7 @@ new Vue({
         },
 
         getMaintenancePrimaryDateLabel: function (maintenance) {
-            return maintenance.status === 3 ? 'Дата выполнения' : 'Плановая дата';
+            return maintenance.status === 3 ? vehicleText.cardMaintenanceCompletionDate : vehicleText.cardMaintenancePlannedDate;
         },
 
         getMaintenancePrimaryDateValue: function (maintenance) {
@@ -1708,54 +1717,45 @@ new Vue({
 
         getMaintenanceTypeText: function (type) {
             var typeTexts = {
-                1: 'Ремонт и обслуживание',
-                2: 'Плановое ТО',
-                3: 'Заправка топливом',
-                100: 'Другое'
+                1: vehicleText.cardMaintenanceRepair,
+                2: vehicleText.cardMaintenancePlannedService,
+                3: vehicleText.cardMaintenanceFuel,
+                100: vehicleText.cardOther
             };
-            return typeTexts[type] || 'Обслуживание';
+            return typeTexts[type] || vehicleText.cardChartMaintenance;
         },
 
         formatDate: function (dateString) {
-            var date = new Date(dateString);
-            var day = date.getDate().toString().padStart(2, '0');
-            var month = (date.getMonth() + 1).toString().padStart(2, '0');
-            var year = date.getFullYear();
-            return day + '.' + month + '.' + year;
+            return window.OpenCRMRegional.formatDate(dateString);
         },
 
         formatCounterValue: function (value, mileageUnit) {
-            if (value === null || value === undefined) return 'Не указано';
+            if (value === null || value === undefined) return vehicleText.cardUnspecified;
 
-            return Number(value).toLocaleString('ru-RU') + ' ' + (mileageUnit === 2 ? 'м/ч' : 'км');
+            return Number(value).toLocaleString(window.OpenCRMRegional.culture) + ' ' + (mileageUnit === 2 ? vehicleText.cardUnitShortHours : vehicleText.cardUnitShortKilometers);
         },
 
-        formatPrice: function (price) {
-            if (typeof price !== 'number') return '0 руб.';
+        formatPrice: function (price, currencyCode) {
+            const selectedCurrency = currencyCode || this.maintenance?.currencyCode || this.selectedMaintenance?.currencyCode || this.regionalCurrencyCode;
 
-            const formattedNumber = price.toLocaleString('ru-RU', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-            });
-
-            return formattedNumber + ' руб.';
+            return window.OpenCRMRegional.formatMoney(price, selectedCurrency);
         },
 
         formatCompactPrice: function (price) {
             if (typeof price !== 'number' || price <= 0) return '0';
 
             if (price >= 1000000) {
-                return (price / 1000000).toLocaleString('ru-RU', {
+                return (price / 1000000).toLocaleString(window.OpenCRMRegional.culture, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 1
-                }) + ' млн';
+                }) + ' ' + vehicleText.cardPriceMillion;
             }
 
             if (price >= 1000) {
-                return Math.round(price / 1000).toLocaleString('ru-RU') + ' тыс.';
+                return Math.round(price / 1000).toLocaleString(window.OpenCRMRegional.culture) + ' ' + vehicleText.cardPriceThousand;
             }
 
-            return Math.round(price).toLocaleString('ru-RU');
+            return Math.round(price).toLocaleString(window.OpenCRMRegional.culture);
         },
 
         openPhotoGallery: function (photos, index) {
@@ -1800,12 +1800,13 @@ new Vue({
                     _this.loadMaintenanceAnalytics();
                 })
                 .catch(function (error) {
-                    _this.handleApiError(error, 'Не удалось удалить обслуживание');
+                    _this.handleApiError(error, vehicleText.cardErrorMaintenanceDelete);
                     _this.hideModal('#deleteMaintenanceModal');
                 });
         }
     },
     mounted: function () {
+        window.OpenCRMRegional.initializeLegacyVm(this);
         this.loadVehicleData();
         this.loadAlbumPreview();
         this.getBrandOptions();

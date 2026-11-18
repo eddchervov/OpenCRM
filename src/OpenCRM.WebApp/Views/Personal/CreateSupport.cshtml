@@ -2,9 +2,9 @@
 @inject Microsoft.Extensions.Configuration.IConfiguration PlatformConfiguration
 @model OpenCRM.WebApp.Models.Personal.CreateSupportViewModel
 @{
-    ViewData["Title"] = "Новое обращение";
+    ViewData["Title"] = Text["personal.support.createTitle"];
     ViewData["ActivePage"] = "Support";
-    ViewData["BreadcrumbLinks"] = new[] { ("/personal", "Профиль"), ("/personal/support", "Обращения") };
+    ViewData["BreadcrumbLinks"] = new[] { ("/personal", Text["personal.support.profile"].Value), ("/personal/support", Text["personal.support.title"].Value) };
     Layout = "_PersonalLayout.cshtml";
 }
 
@@ -13,41 +13,41 @@
 }
 
 <section class="profile-card support-new">
-    <h2>Новое обращение</h2>
+    <h2>@Text["personal.support.createTitle"]</h2>
     @if (Model.Error != null)
     {
         <p class="support-error" role="alert">@Model.Error</p>
     }
     <form action="/personal/support/create" method="post" enctype="multipart/form-data" class="support-form">
         @Html.AntiForgeryToken()
-        <label>Тип обращения
+        <label>@Text["personal.support.type"]
             <select name="TypeCode" required>
-                <option value="question" selected="@(Model.Request.TypeCode == "question")">Вопрос или консультация</option>
-                <option value="bug" selected="@(Model.Request.TypeCode == "bug")">Ошибка на сайте</option>
+                <option value="question" selected="@(Model.Request.TypeCode == "question")">@Text["personal.support.type.question"]</option>
+                <option value="bug" selected="@(Model.Request.TypeCode == "bug")">@Text["personal.support.type.bug"]</option>
                 @if (PlatformConfiguration.GetValue("PlatformPolicy:Commercial:Enabled", false))
                 {
-                    <option value="billing" selected="@(Model.Request.TypeCode == "billing")">Тарифы и оплата</option>
+                    <option value="billing" selected="@(Model.Request.TypeCode == "billing")">@Text["personal.support.type.billing"]</option>
                 }
-                <option value="suggestion" selected="@(Model.Request.TypeCode == "suggestion")">Предложение</option>
-                <option value="cooperation" selected="@(Model.Request.TypeCode == "cooperation")">Реклама и сотрудничество</option>
+                <option value="suggestion" selected="@(Model.Request.TypeCode == "suggestion")">@Text["personal.support.type.suggestion"]</option>
+                <option value="cooperation" selected="@(Model.Request.TypeCode == "cooperation")">@Text["personal.support.type.cooperation"]</option>
             </select>
         </label>
-        <label class="support-check"><input type="checkbox" name="IsOrganizationQuestion" value="true" id="support-organization-question" checked="@Model.Request.IsOrganizationQuestion"> Вопрос по организации</label>
-        <label id="support-organization-field" hidden="@(!Model.Request.IsOrganizationQuestion)">Организация
+        <label class="support-check"><input type="checkbox" name="IsOrganizationQuestion" value="true" id="support-organization-question" checked="@Model.Request.IsOrganizationQuestion"> @Text["personal.support.organizationQuestion"]</label>
+        <label id="support-organization-field" hidden="@(!Model.Request.IsOrganizationQuestion)">@Text["personal.support.organization"]
             <select name="OrganizationId" id="support-organization-select" required="@Model.Request.IsOrganizationQuestion">
-                <option value="">Выберите организацию</option>
+                <option value="">@Text["personal.support.selectOrganization"]</option>
                 @foreach (var organization in Model.Organizations)
                 {
                     <option value="@organization.Id" selected="@(Model.Request.OrganizationId == organization.Id)">@organization.Name</option>
                 }
             </select>
         </label>
-        <label>Тема <input name="Topic" maxlength="180" required value="@Model.Request.Topic"></label>
-        <label>Сообщение <textarea name="Text" maxlength="4000" rows="6" required>@Model.Request.Text</textarea></label>
+        <label>@Text["personal.support.topic"] <input name="Topic" maxlength="180" required value="@Model.Request.Topic"></label>
+        <label>@Text["personal.support.message"] <textarea name="Text" maxlength="4000" rows="6" required>@Model.Request.Text</textarea></label>
         <partial name="_SupportAttachments" />
         <div class="support-actions">
-            <button class="btn entry-primary" type="submit">Отправить</button>
-            <a class="btn entry-secondary" href="/personal/support">Отмена</a>
+            <button class="btn entry-primary" type="submit">@Text["personal.support.send"]</button>
+            <a class="btn entry-secondary" href="/personal/support">@Text["personal.support.cancel"]</a>
         </div>
     </form>
 </section>

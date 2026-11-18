@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using OpenCRM.Admin.App.ViewModels;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.Views;
 
@@ -67,8 +68,8 @@ public partial class PurchasesView : UserControl
         {
             var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Выбрать чек НПД", AllowMultiple = false,
-                FileTypeFilter = [new FilePickerFileType("Чек PDF / PNG / JPG") { Patterns = ["*.pdf", "*.png", "*.jpg", "*.jpeg"] }]
+                Title = AdminLocalization.Instance["native.billing.vybrat.chek.npd"], AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType(AdminLocalization.Instance["native.billing.chek.pdf.png.jpg"]) { Patterns = ["*.pdf", "*.png", "*.jpg", "*.jpeg"] }]
             });
 
             if (files.Count == 0)
@@ -94,7 +95,7 @@ public partial class PurchasesView : UserControl
         {
             if (ReferenceEquals(model.Detail, selectedPurchase))
             {
-                model.ErrorMessage = "Не удалось прочитать файл. Проверьте доступ и повторите попытку.";
+                model.ErrorMessage = AdminLocalization.Instance["native.billing.ne.udalos.prochitat.fayl.proverte.dostup.i.povtorite.popytku"];
             }
         }
     }
@@ -117,7 +118,7 @@ public partial class PurchasesView : UserControl
 
             using var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Сохранить чек НПД", SuggestedFileName = Path.GetFileName(receipt.FileName), ShowOverwritePrompt = true
+                Title = AdminLocalization.Instance["native.billing.sokhranit.chek.npd"], SuggestedFileName = Path.GetFileName(receipt.FileName), ShowOverwritePrompt = true
             });
 
             if (file == null || !model.CanDownload || !ReferenceEquals(model.Detail, selectedPurchase))
@@ -133,7 +134,7 @@ public partial class PurchasesView : UserControl
         {
             if (ReferenceEquals(model.Detail, selectedPurchase))
             {
-                model.ErrorMessage = "Не удалось сохранить файл. Проверьте доступ и повторите попытку.";
+                model.ErrorMessage = AdminLocalization.Instance["native.billing.ne.udalos.sokhranit.fayl.proverte.dostup.i.povtorite.popytku"];
             }
         }
     }

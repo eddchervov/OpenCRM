@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formattingCulture, translate as t } from '@opencrm/ui/i18n'
+import '../accessMessages'
 import { computed } from 'vue'
 import type { WorkspaceContext } from '../types'
 
@@ -36,7 +38,8 @@ const isVisible = computed(() =>
   && daysRemaining.value <= 7
 )
 const formattedExpiryDate = computed(() =>
-  expiryDate.value?.toLocaleDateString('ru-RU', {
+  expiryDate.value?.toLocaleDateString(formattingCulture.value, {
+    timeZone: props.context.organization.timeZoneId || 'UTC',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
@@ -44,19 +47,7 @@ const formattedExpiryDate = computed(() =>
 )
 const remainingText = computed(() => {
   const days = daysRemaining.value ?? 0
-  if (days === 0) {
-    return 'Оплаченный период заканчивается сегодня.'
-  }
-
-  if (days === 1) {
-    return 'Остался 1 день.'
-  }
-
-  if (days >= 2 && days <= 4) {
-    return `Осталось ${days} дня.`
-  }
-
-  return `Осталось ${days} дней.`
+  return days === 0 ? t('access.expiresToday') : t('access.daysRemaining', { count: days })
 })
 </script>
 
@@ -64,12 +55,12 @@ const remainingText = computed(() => {
   <aside v-if="isVisible" class="workspace-tariff-expiry" role="status">
     <div class="workspace-tariff-expiry__icon" aria-hidden="true">!</div>
     <div class="workspace-tariff-expiry__content">
-      <strong>Срок тарифа заканчивается</strong>
+      <strong>{{ t('access.expiresTitle') }}</strong>
       <span>
-        {{ plan?.name }} действует до {{ formattedExpiryDate }}. {{ remainingText }}
-        После этой даты рабочее пространство перейдёт в базовый режим.
+        {{ t('access.expires', { name: plan?.name ?? '', date: formattedExpiryDate }) }} {{ remainingText }}
+        {{ t('access.baseMode') }}
       </span>
     </div>
-    <a class="workspace-tariff-expiry__action" href="#billing">Продлить тариф</a>
+    <a class="workspace-tariff-expiry__action" href="#billing">{{ t('access.renew') }}</a>
   </aside>
 </template>

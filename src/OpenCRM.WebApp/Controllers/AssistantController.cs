@@ -54,6 +54,7 @@ public sealed class AssistantController(
         this.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=()";
         this.ViewData["OrganizationId"] = organizationId;
         this.ViewData["AssistantOrganizationName"] = organization.Name;
+        this.ViewData["OrganizationTimeZoneId"] = organization.TimeZoneId;
         this.ViewData["AssistantWorkspaceUrl"] = workspaceUrl.Split('#')[0];
         this.ViewData["AssistantPreviewOnly"] = true;
 
@@ -84,6 +85,7 @@ public sealed class AssistantController(
         this.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(self)";
         this.ViewData["OrganizationId"] = organizationId;
         this.ViewData["AssistantEmbedded"] = true;
+        this.ViewData["OrganizationTimeZoneId"] = organization.TimeZoneId;
 
         return this.View("~/Views/AiPilot/Index.cshtml");
     }

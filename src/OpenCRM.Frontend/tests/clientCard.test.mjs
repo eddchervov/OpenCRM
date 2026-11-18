@@ -163,11 +163,24 @@ function setupComponent(name, props, api = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
   }).outputText
   const module = { exports: {} }
+  const clientMessages = {
+    'clients.noResponsible': 'Без ответственного',
+    'clients.cancelled': 'Отменено',
+    'clients.commentLimit': 'Комментарий не должен превышать 4000 символов.',
+    'clients.rangeOf': '{from}–{to} из {total}',
+    'clients.validation.kppLength': 'КПП: нужно 9 знаков.',
+    'clients.validation.nameLength': '{label}: не более {limit} символов.',
+    'clients.validation.innDigits': 'ИНН: нужно {count} цифр.'
+  }
+  const translate = (key, params = {}) => (clientMessages[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? ''))
   const resolve = id => {
     if (id === '../utils/clientForm') return clientForm
     if (id === '../utils/memberSelectOptions') return { createMemberSelectOptions }
     if (id === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {}, watch() {}, useId: () => 'test-tags' }
-    if (id === '@opencrm/ui' || id.endsWith('.vue')) return {}
+    if (id === '@opencrm/ui') return { useLocalization: () => ({ t: translate, locale: { value: 'en' } }) }
+    if (id === '@opencrm/ui/i18n') return { formatLocaleCurrency: (value, currency) => `${value} ${currency}`, formatLocaleDate: value => String(value) }
+    if (id === '../clientMessages') return {}
+    if (id.endsWith('.vue')) return {}
     if (id === '../api/clients') return api
     if (id === '../analytics') return { trackWorkspaceGoal() {} }
     if (id === '../utils/vehicleBrandLogo') return { getVehicleBrandLogo: () => null }

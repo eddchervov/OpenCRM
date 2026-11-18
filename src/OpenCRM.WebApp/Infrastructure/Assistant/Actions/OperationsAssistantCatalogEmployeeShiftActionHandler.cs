@@ -432,7 +432,7 @@ public sealed class OperationsAssistantCatalogEmployeeShiftActionHandler(
             throw new AssistantClarificationException(
                 $"Найдено несколько активных услуг «{name}». Выберите нужную.",
                 field,
-                OperationsAssistantLimits.Choices(options, matches.Select(item => new AssistantChoice(item.Id.ToString(), $"{item.Name} · {item.UnitPrice?.ToString("0.##", CultureInfo.InvariantCulture) ?? "цена не указана"} ₽"))));
+                OperationsAssistantLimits.Choices(options, matches.Select(item => new AssistantChoice(item.Id.ToString(), $"{item.Name} · {FormatMoney(item.UnitPrice, item.CurrencyCode)}"))));
         }
 
         return matches[0].Id;
@@ -457,6 +457,10 @@ public sealed class OperationsAssistantCatalogEmployeeShiftActionHandler(
 
         return date.ToDateTime(parsedTime, DateTimeKind.Unspecified);
     }
+
+    private static string FormatMoney(decimal? amount, string currencyCode) => amount.HasValue
+        ? $"{amount.Value.ToString("0.##", CultureInfo.InvariantCulture)} {currencyCode}"
+        : "цена не указана";
 
     private static void EnsureValidShift(DateTime start, DateTime end, IEnumerable<OrganizationShiftDto> shifts, Guid employeeId, Guid? exceptShiftId)
     {

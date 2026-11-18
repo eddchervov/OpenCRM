@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { formattingCulture, translate as t } from '@opencrm/ui/i18n'
+import '../financeMessages'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Chart from 'chart.js/auto'
 import { workspaceChartColors, workspaceTheme } from '@opencrm/ui'
@@ -9,6 +13,8 @@ import { loadExport1CCapabilities, type Export1CCapabilities } from '../api/expo
 import type { WorkspaceContext } from '../types'
 import WorkspacePageHelpButton from './WorkspacePageHelpButton.vue'
 import Export1CSection from './Export1CSection.vue'
+
+const workspaceCurrency = useWorkspaceCurrency()
 
 const props = defineProps<{
   context: WorkspaceContext
@@ -41,12 +47,18 @@ const isFleetScenario = computed(() =>
   (props.context.organization.primaryScenarioCode ?? props.context.shell.scenario?.code ?? '').toLowerCase() === 'fleet'
 )
 const kpis = computed(() => finance.value?.kpis)
+const breakdownKeys: Record<string, string> = { materials: 'materials', labor: 'labor', discount: 'discounts', paid: 'paid', debt: 'debt' }
+const paymentStatusKeys: Record<string, string> = {
+  unpaid: 'statusUnpaid', partial: 'statusPartial', paid: 'paid', overpaid: 'statusOverpaid', no_payment_required: 'statusNoPayment'
+}
+const breakdownLabel = (code: string, fallback: string) => breakdownKeys[code] ? t(`finance.${breakdownKeys[code]}`) : fallback
+const paymentStatusLabel = (code: string) => t(`finance.${paymentStatusKeys[code] ?? 'unknownStatus'}`)
 const paymentBreakdown = computed(() => finance.value?.paymentBreakdown ?? [])
 const costBreakdown = computed(() => finance.value?.costBreakdown ?? [])
-const title = computed(() => isFleetScenario.value ? 'Расходы и стоимость владения' : 'Финансы')
-const revenueLabel = computed(() => isFleetScenario.value ? 'Оплачено за период' : 'Выручка')
-const netLabel = computed(() => isFleetScenario.value ? 'Начислено расходов' : 'Начислено')
-const profitLabel = computed(() => isFleetScenario.value ? 'Остаток после затрат' : 'Прибыль')
+const title = computed(() => isFleetScenario.value ? t('finance.fleetTitle') : t('finance.title'))
+const revenueLabel = computed(() => isFleetScenario.value ? t('finance.paidPeriod') : t('finance.revenue'))
+const netLabel = computed(() => isFleetScenario.value ? t('finance.expensesAccrued') : t('finance.accrued'))
+const profitLabel = computed(() => isFleetScenario.value ? t('finance.remainingAfterCosts') : t('finance.profit'))
 const exportHref = computed(() => `#finance/export?dateFrom=${filters.dateFrom}&dateTo=${filters.dateTo}`)
 
 function filtersDate(value: string | undefined, fallback: string) {
@@ -58,13 +70,13 @@ async function loadFinance() {
   const organizationId = props.context.organization.id
   errorMessage.value = ''
   if (!isDate(filters.dateFrom) || !isDate(filters.dateTo)) {
-    errorMessage.value = 'Укажите начало и окончание периода.'
+    errorMessage.value = t('finance.periodRequired')
     isLoading.value = false
     return
   }
 
   if (filters.dateFrom > filters.dateTo) {
-    errorMessage.value = 'Дата начала не может быть позже даты окончания.'
+    errorMessage.value = t('finance.periodOrder')
     isLoading.value = false
     return
   }
@@ -77,7 +89,7 @@ async function loadFinance() {
     finance.value = result
   } catch (error) {
     if (request === financeRequest && props.context.organization.id === organizationId) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить финансы.'
+      errorMessage.value = error instanceof Error ? error.message : t('finance.loadError')
     }
   } finally {
     if (request === financeRequest) isLoading.value = false
@@ -171,16 +183,16 @@ function getBreakdownWidth(value: number) {
   return `${Math.max(4, Math.round(value * 100 / maxValue))}%`
 }
 
-function formatMoney(value: number | undefined) {
-  return new Intl.NumberFormat('ru-RU', {
+function formatMoney(value: number | undefined, currencyCode = finance.value?.currencyCode ?? workspaceCurrency.value) {
+  return new Intl.NumberFormat(formattingCulture.value, {
     style: 'currency',
-    currency: 'RUB',
+    currency: currencyCode,
     maximumFractionDigits: 2
   }).format(value ?? 0)
 }
 
 function formatNumber(value: number | undefined) {
-  return new Intl.NumberFormat('ru-RU').format(value ?? 0)
+  return new Intl.NumberFormat(formattingCulture.value).format(value ?? 0)
 }
 
 function formatDate(value: string) {
@@ -226,7 +238,7 @@ function renderRevenueChart() {
       datasets: [
         {
           type: 'bar',
-          label: 'Начислено',
+          label: t('finance.accrued'),
           data: labels.map(label => accruedByLabel.get(label) ?? 0),
           backgroundColor: 'rgba(245, 158, 11, 0.72)',
           borderColor: '#d97706',
@@ -236,7 +248,7 @@ function renderRevenueChart() {
         },
         {
           type: 'line',
-          label: 'Оплачено',
+          label: t('finance.paid'),
           data: data.revenueSeries.map(point => point.value),
           borderColor: '#0f766e',
           backgroundColor: 'rgba(15, 118, 110, 0.14)',
@@ -325,25 +337,25 @@ onBeforeUnmount(destroyRevenueChart)
 <template>
   <UiCard page :title="title" class="workspace-finance">
     <template #actions>
-      <a v-if="exportCapabilities?.canExport" class="finance-export-open" :href="exportHref" @click.prevent="openExport">Выгрузка</a>
+      <a v-if="exportCapabilities?.canExport" class="finance-export-open" :href="exportHref" @click.prevent="openExport">{{ t('finance.export') }}</a>
       <WorkspacePageHelpButton section-code="statistics" :title="title" />
     </template>
 
     <section class="finance-toolbar">
       <div class="finance-presets">
-        <UiButton variant="secondary" :class="{ active: isPreset(7) }" :aria-pressed="isPreset(7)" @click="setPreset(7)">7 дней</UiButton>
-        <UiButton variant="secondary" :class="{ active: isPreset(30) }" :aria-pressed="isPreset(30)" @click="setPreset(30)">30 дней</UiButton>
-        <UiButton variant="secondary" :class="{ active: isPreset(90) }" :aria-pressed="isPreset(90)" @click="setPreset(90)">90 дней</UiButton>
+        <UiButton variant="secondary" :class="{ active: isPreset(7) }" :aria-pressed="isPreset(7)" @click="setPreset(7)">{{ t('finance.week') }}</UiButton>
+        <UiButton variant="secondary" :class="{ active: isPreset(30) }" :aria-pressed="isPreset(30)" @click="setPreset(30)">{{ t('finance.month') }}</UiButton>
+        <UiButton variant="secondary" :class="{ active: isPreset(90) }" :aria-pressed="isPreset(90)" @click="setPreset(90)">{{ t('finance.quarter') }}</UiButton>
       </div>
       <form class="finance-date-form" @submit.prevent="loadFinance">
-        <UiDatePicker v-model="filters.dateFrom" label="С" required />
-        <UiDatePicker v-model="filters.dateTo" label="По" required />
-        <UiButton type="submit">Показать</UiButton>
+        <UiDatePicker v-model="filters.dateFrom" :label="t('finance.from')" required />
+        <UiDatePicker v-model="filters.dateTo" :label="t('finance.to')" required />
+        <UiButton type="submit">{{ t('finance.show') }}</UiButton>
       </form>
     </section>
 
     <section v-if="isLoading" class="finance-state">
-      <UiLoader text="Собираем финансовую сводку..." />
+      <UiLoader :text="t('finance.loading')" />
     </section>
 
     <section v-else-if="errorMessage" class="finance-state finance-state--error">
@@ -351,44 +363,59 @@ onBeforeUnmount(destroyRevenueChart)
     </section>
 
     <section v-else-if="finance" class="finance-section">
+      <p class="finance-currency-note">{{ t('finance.primaryCurrency', { currency: finance.currencyCode ?? workspaceCurrency }) }}</p>
+      <section v-if="finance.otherCurrencyTotals?.length" class="finance-panel">
+        <h3 class="ui-section-header">{{ t('finance.otherCurrencies') }}</h3>
+        <p>{{ t('finance.separateTotals') }}</p>
+        <div class="finance-currency-totals">
+          <table>
+            <thead><tr><th>{{ t('finance.currency') }}</th><th>{{ t('finance.accrued') }}</th><th>{{ t('finance.paid') }}</th><th>{{ t('finance.debt') }}</th><th>{{ t('finance.cost') }}</th><th>{{ t('finance.profit') }}</th></tr></thead>
+            <tbody><tr v-for="total in finance.otherCurrencyTotals" :key="total.currencyCode">
+              <th scope="row">{{ total.currencyCode }}</th>
+              <td>{{ formatMoney(total.netAmount, total.currencyCode) }}</td><td>{{ formatMoney(total.paidAmount, total.currencyCode) }}</td>
+              <td>{{ formatMoney(total.debtAmount, total.currencyCode) }}</td><td>{{ formatMoney(total.costAmount, total.currencyCode) }}</td><td>{{ formatMoney(total.profitAmount, total.currencyCode) }}</td>
+            </tr></tbody>
+          </table>
+        </div>
+      </section>
       <div class="finance-kpi-grid">
         <article class="finance-kpi finance-kpi--strong">
           <span>{{ revenueLabel }}</span>
           <strong>{{ formatMoney(kpis?.paidAmount) }}</strong>
-          <small>Заказов: {{ formatNumber(kpis?.ordersCount) }}</small>
+          <small>{{ t('finance.orderCount', { count: formatNumber(kpis?.ordersCount) }) }}</small>
         </article>
         <article class="finance-kpi">
           <span>{{ netLabel }}</span>
           <strong>{{ formatMoney(kpis?.netAmount) }}</strong>
-          <small>после скидок</small>
+          <small>{{ t('finance.afterDiscounts') }}</small>
         </article>
         <article class="finance-kpi finance-kpi--debt">
-          <span>Долг</span>
+          <span>{{ t('finance.debt') }}</span>
           <strong>{{ formatMoney(kpis?.debtAmount) }}</strong>
-          <small>к доплате</small>
+          <small>{{ t('finance.balanceDue') }}</small>
         </article>
         <article class="finance-kpi">
-          <span>Себестоимость</span>
+          <span>{{ t('finance.cost') }}</span>
           <strong>{{ formatMoney(kpis?.costAmount) }}</strong>
-          <small>материалы и труд</small>
+          <small>{{ t('finance.materialsAndLabor') }}</small>
         </article>
         <article class="finance-kpi">
           <span>{{ profitLabel }}</span>
           <strong>{{ formatMoney(kpis?.profitAmount) }}</strong>
-          <small>управленческий расчет</small>
+          <small>{{ t('finance.managementCalculation') }}</small>
         </article>
         <article class="finance-kpi">
-          <span>Средний чек</span>
+          <span>{{ t('finance.averageCheck') }}</span>
           <strong>{{ formatMoney(kpis?.averageCheckAmount) }}</strong>
-          <small>по заказам периода</small>
+          <small>{{ t('finance.periodOrders') }}</small>
         </article>
       </div>
 
       <div class="finance-grid">
         <article class="finance-panel finance-panel--wide">
           <div class="finance-panel__head">
-            <h3 class="ui-section-header">Динамика денег</h3>
-            <p>начислено и оплачено по дням</p>
+            <h3 class="ui-section-header">{{ t('finance.moneyTrend') }}</h3>
+            <p>{{ t('finance.accruedPaidDays') }}</p>
           </div>
           <div class="finance-chart">
             <canvas ref="revenueChartCanvas" aria-label="Revenue chart" role="img"></canvas>
@@ -397,13 +424,13 @@ onBeforeUnmount(destroyRevenueChart)
 
         <article class="finance-panel">
           <div class="finance-panel__head">
-            <h3 class="ui-section-header">Оплата</h3>
-            <p>что уже закрыто деньгами</p>
+            <h3 class="ui-section-header">{{ t('finance.payment') }}</h3>
+            <p>{{ t('finance.coveredByPayments') }}</p>
           </div>
           <div class="finance-breakdown">
             <div v-for="item in paymentBreakdown" :key="item.code" class="finance-breakdown__item">
               <div>
-                <strong>{{ item.label }}</strong>
+                <strong>{{ breakdownLabel(item.code, item.label) }}</strong>
                 <span>{{ formatMoney(item.value) }}</span>
               </div>
               <div class="finance-breakdown__track">
@@ -415,13 +442,13 @@ onBeforeUnmount(destroyRevenueChart)
 
         <article class="finance-panel">
           <div class="finance-panel__head">
-            <h3 class="ui-section-header">Затраты</h3>
-            <p>что съедает маржу</p>
+            <h3 class="ui-section-header">{{ t('finance.costs') }}</h3>
+            <p>{{ t('finance.marginCosts') }}</p>
           </div>
           <div v-if="costBreakdown.length" class="finance-breakdown">
             <div v-for="item in costBreakdown" :key="item.code" class="finance-breakdown__item">
               <div>
-                <strong>{{ item.label }}</strong>
+                <strong>{{ breakdownLabel(item.code, item.label) }}</strong>
                 <span>{{ formatMoney(item.value) }}</span>
               </div>
               <div class="finance-breakdown__track finance-breakdown__track--cost">
@@ -429,85 +456,85 @@ onBeforeUnmount(destroyRevenueChart)
               </div>
             </div>
           </div>
-          <div v-else class="finance-empty">Затраты за период не указаны.</div>
+          <div v-else class="finance-empty">{{ t('finance.noCosts') }}</div>
         </article>
       </div>
 
       <div class="finance-grid finance-grid--lists">
         <article class="finance-panel">
           <div class="finance-panel__head">
-            <h3 class="ui-section-header">Популярные услуги</h3>
-            <p>по сумме строк заказа</p>
+            <h3 class="ui-section-header">{{ t('finance.topServices') }}</h3>
+            <p>{{ t('finance.byOrderLines') }}</p>
           </div>
           <div v-if="finance.topServices.length" class="finance-list">
             <div v-for="item in finance.topServices" :key="item.name" class="finance-list__row">
               <div>
                 <strong>{{ item.name }}</strong>
-                <small>Строк: {{ formatNumber(item.count) }}</small>
+                <small>{{ t('finance.lineCount', { count: formatNumber(item.count) }) }}</small>
               </div>
               <span>{{ formatMoney(item.amount) }}</span>
             </div>
           </div>
-          <div v-else class="finance-empty">Пока нет услуг с суммой.</div>
+          <div v-else class="finance-empty">{{ t('finance.noServices') }}</div>
         </article>
 
         <article class="finance-panel">
           <div class="finance-panel__head">
-            <h3 class="ui-section-header">Долги клиентов</h3>
-            <p>кому стоит напомнить об оплате</p>
+            <h3 class="ui-section-header">{{ t('finance.clientDebts') }}</h3>
+            <p>{{ t('finance.paymentReminder') }}</p>
           </div>
           <div v-if="finance.topDebtors.length" class="finance-list">
             <div v-for="item in finance.topDebtors" :key="item.clientId ?? item.clientName" class="finance-list__row">
               <div>
                 <strong>{{ item.clientName }}</strong>
-                <small>Заказов: {{ formatNumber(item.ordersCount) }}</small>
+                <small>{{ t('finance.orderCount', { count: formatNumber(item.ordersCount) }) }}</small>
               </div>
               <span>{{ formatMoney(item.debtAmount) }}</span>
             </div>
           </div>
-          <div v-else class="finance-empty">Долгов за период нет.</div>
+          <div v-else class="finance-empty">{{ t('finance.noDebts') }}</div>
         </article>
       </div>
 
       <article class="finance-panel">
         <div class="finance-panel__head">
-          <h3 class="ui-section-header">Заказы периода</h3>
+          <h3 class="ui-section-header">{{ t('finance.orders') }}</h3>
           <p>{{ formatDate(finance.dateFrom) }} - {{ formatDate(finance.dateTo) }}</p>
         </div>
         <div v-if="finance.orders.length" class="finance-table">
           <div class="finance-table__head">
-            <span>Дата и заказ</span>
-            <span>Начислено</span>
-            <span>Оплачено</span>
-            <span>Долг</span>
-            <span>Прибыль</span>
-            <span>Статус</span>
+            <span>{{ t('finance.dateOrder') }}</span>
+            <span>{{ t('finance.accrued') }}</span>
+            <span>{{ t('finance.paid') }}</span>
+            <span>{{ t('finance.debt') }}</span>
+            <span>{{ t('finance.profit') }}</span>
+            <span>{{ t('finance.status') }}</span>
           </div>
           <a v-for="order in finance.orders" :key="order.id" class="finance-table__row" :href="order.detailUrl">
             <div>
               <strong>{{ formatDate(order.date) }}</strong>
               <span>{{ order.vehicleDisplayName }}</span>
-              <small>{{ order.vehicleSubtitle ? `${order.vehicleSubtitle} · ` : '' }}Покупатель: {{ order.clientName ?? 'не указан' }}</small>
+              <small>{{ order.vehicleSubtitle ? `${order.vehicleSubtitle} · ` : '' }}{{ t('finance.buyer', { name: order.clientName ?? t('finance.noBuyer') }) }}</small>
             </div>
-            <span data-label="Начислено">{{ formatMoney(order.netAmount) }}</span>
-            <span data-label="Оплачено">{{ formatMoney(order.paidAmount) }}</span>
-            <span data-label="Долг" :class="{ 'finance-money-danger': order.debtAmount > 0 }">{{ formatMoney(order.debtAmount) }}</span>
-            <span data-label="Прибыль" :class="{ 'finance-money-danger': order.profitAmount < 0 }">{{ formatMoney(order.profitAmount) }}</span>
+            <span :data-label="t('finance.accrued')">{{ formatMoney(order.netAmount, order.currencyCode) }}</span>
+            <span :data-label="t('finance.paid')">{{ formatMoney(order.paidAmount, order.currencyCode) }}</span>
+            <span :data-label="t('finance.debt')" :class="{ 'finance-money-danger': order.debtAmount > 0 }">{{ formatMoney(order.debtAmount, order.currencyCode) }}</span>
+            <span :data-label="t('finance.profit')" :class="{ 'finance-money-danger': order.profitAmount < 0 }">{{ formatMoney(order.profitAmount, order.currencyCode) }}</span>
             <span>
-              <em v-if="order.isCancelled" class="finance-status">Отменено</em>
-              <em :class="`finance-status finance-status--${order.paymentStatus}`">{{ order.paymentStatusName }}</em>
+              <em v-if="order.isCancelled" class="finance-status">{{ t('finance.cancelled') }}</em>
+              <em :class="`finance-status finance-status--${order.paymentStatus}`">{{ paymentStatusLabel(order.paymentStatus) }}</em>
             </span>
           </a>
         </div>
-        <div v-else class="finance-empty">За выбранный период заказов нет.</div>
+        <div v-else class="finance-empty">{{ t('finance.noOrders') }}</div>
       </article>
     </section>
   </UiCard>
 
   <dialog ref="exportDialog" class="finance-export-dialog" aria-labelledby="finance-export-dialog-title" @close="handleExportDialogClose" @click.self="closeExport">
     <header class="finance-export-dialog__header">
-      <h2 id="finance-export-dialog-title">Выгрузка данных</h2>
-      <button type="button" aria-label="Закрыть окно" @click="closeExport">×</button>
+      <h2 id="finance-export-dialog-title">{{ t('finance.exportTitle') }}</h2>
+      <button type="button" :aria-label="t('finance.close')" @click="closeExport">×</button>
     </header>
     <div class="finance-export-dialog__body">
       <Export1CSection
@@ -523,6 +550,10 @@ onBeforeUnmount(destroyRevenueChart)
 </template>
 
 <style scoped>
+.finance-currency-note { color: var(--crm-text-muted); font-size: 13px; }
+.finance-currency-totals { overflow-x: auto; }
+.finance-currency-totals table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.finance-currency-totals th, .finance-currency-totals td { padding: 10px; border-bottom: 1px solid var(--crm-line); text-align: start; white-space: nowrap; }
 .finance-export-dialog {
   width: min(920px, calc(100vw - 32px));
   max-width: none;

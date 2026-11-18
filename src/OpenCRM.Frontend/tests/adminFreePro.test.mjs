@@ -4,6 +4,12 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { formattingCulture, i18n, translate } from '@opencrm/ui/i18n'
+import * as adminSystemLabels from '../Admin/admin-client/src/utils/adminSystemLabels.ts'
+import * as adminRecordLabels from '../Admin/admin-client/src/utils/adminRecordLabels.ts'
+import '../Admin/admin-client/src/adminUsersMessages.ts'
+import '../Admin/admin-client/src/adminCatalogMessages.ts'
+import '../Admin/admin-client/src/adminOperationsMessages.ts'
 
 const root = new URL('../Admin/admin-client/src/', import.meta.url)
 
@@ -22,11 +28,20 @@ function evaluate(source, dependencies = {}) {
 
 const policy = evaluate(readFileSync(new URL('utils/subscriptionPolicy.ts', root), 'utf8'))
 const ApiError = class extends Error {}
+const localization = { useLocalization: () => ({ t: translate, locale: i18n.global.locale }), formattingCulture }
 
 function setup(view, apis = {}) {
   const { descriptor } = parse(readFileSync(new URL(`views/${view}.vue`, root), 'utf8'))
   const dependencies = {
     '@/utils/subscriptionPolicy': policy,
+    '@/utils/adminSystemLabels': adminSystemLabels,
+    '@/utils/adminRecordLabels': adminRecordLabels,
+    '@opencrm/ui/i18n': localization,
+    '@opencrm/ui': localization,
+    '../adminCatalogMessages': {},
+    '../adminOperationsMessages': {},
+    '../adminUsersMessages': {},
+    '../adminBillingMessages': {},
     '@/api/ApiError': { ApiError },
     '@/stores/adminCurrentUserStore': { useAdminCurrentUserStore: () => ({ isSystem: true, currentUser: { commercialEnabled: true, permissions: [] } }) },
     'vue-router': { useRoute: () => ({ params: {}, query: {} }), useRouter: () => ({ replace() {} }) },

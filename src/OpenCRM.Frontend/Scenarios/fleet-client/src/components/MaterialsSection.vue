@@ -1,7 +1,11 @@
 ﻿<script setup lang="ts">
+import { formattingCulture, formatLocaleCurrency, formatLocaleDate } from '@opencrm/ui/i18n'
+import { useLocalization } from '@opencrm/ui'
+import { useWorkspaceCurrency } from '@opencrm/workspace'
+
 import { WorkspaceAccessNotice } from '@opencrm/workspace'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { UiAlertDialog, UiButton, UiCard, UiDatePicker, UiInput, UiLoader, UiPagination, UiSearchInput, UiSelect, UiTimePicker, formatDateOnly, parseDateOnly } from '@opencrm/ui'
+import { UiAlertDialog, UiButton, UiCard, UiDatePicker, UiInput, UiLoader, UiPagination, UiSearchInput, UiSelect, UiTimePicker, formatDateOnly } from '@opencrm/ui'
 import { organizationUtcTime, WorkspacePageHelpButton, createMaterialNumberMask, isDiscreteMaterialUnit, materialUnitOptions, normalizeMaterialUnit } from '@opencrm/workspace'
 import { loadScenarioCatalog, type FleetCatalogItem, type FleetWorkspaceContext } from '@/api/fleetBff'
 import {
@@ -13,6 +17,11 @@ import {
   type MaterialMovement,
   type MaterialStock
 } from '@/api/materials'
+
+import '@opencrm/workspace/materialMessages'
+
+const workspaceCurrency = useWorkspaceCurrency()
+const { t } = useLocalization()
 
 const props = defineProps<{
   context: FleetWorkspaceContext
@@ -80,71 +89,59 @@ const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly !== tr
 const readOnlyMessage = computed(() => props.context.workspaceAccess?.readOnlyMessage ?? '')
 const billingHref = computed(() => '#billing')
 const currentTitle = computed(() => {
-  switch (activeView.value) {
-    case 'adjustment':
-      return 'Корректировка склада'
-    case 'receipt':
-      return 'Приход'
-    case 'issue':
-      return 'Списание'
-    case 'movements':
-      return 'Движения'
-    case 'movement-detail':
-      return 'Движение склада'
-    case 'stock-detail':
-      return 'Материал'
-    case 'snapshot':
-      return 'Остатки на время'
-    default:
-      return 'Склад'
+  const keys: Record<typeof activeView.value, string> = {
+    adjustment: 'adjustmentTitle', stocks: 'title', receipt: 'receipt', issue: 'issue',
+    movements: 'movements', 'movement-detail': 'movement', 'stock-detail': 'material', snapshot: 'snapshot'
   }
+  return t(`materials.${keys[activeView.value]}`)
 })
 const materialBreadcrumbs = computed(() => {
   if (activeView.value === 'stocks') return []
 
-  const items = [{ title: 'Склад', href: '#materials', onClick: () => openView('stocks') }]
+  const items = [{ title: t('materials.title'), href: '#materials', onClick: () => openView('stocks') }]
   if (activeView.value === 'adjustment' || (activeView.value === 'issue' && issueStockLocked.value)
     || (activeView.value === 'movement-detail' && movementReturnView.value === 'stock-detail')) {
-    items.push({ title: 'Материал', href: '#materials', onClick: () => openView('stock-detail') })
+    items.push({ title: t('materials.material'), href: '#materials', onClick: () => openView('stock-detail') })
   } else if (activeView.value === 'movement-detail') {
-    items.push({ title: 'Движения', href: '#materials', onClick: () => openView('movements') })
+    items.push({ title: t('materials.movements'), href: '#materials', onClick: () => openView('movements') })
   }
 
   return items
 })
-const movementTypeOptions = [
-  { value: '', label: 'Все типы' },
-  { value: 'receipt', label: 'Приход' },
-  { value: 'issue', label: 'Ручный расход' },
-  { value: 'maintenance_issue', label: 'Расход по работе' },
-  { value: 'adjustment', label: 'Корректировка' }
-]
-const stockFilterOptions = [
-  { value: '', label: 'Все остатки' },
-  { value: 'out', label: 'Нет в наличии' },
-  { value: 'low', label: 'Ниже минимума' },
-  { value: 'ok', label: 'В норме' }
-]
+const movementTypeOptions = computed(() => [
+  { value: '', label: t('materials.allTypes') },
+  { value: 'receipt', label: t('materials.receipt') },
+  { value: 'issue', label: t('materials.manualIssue') },
+  { value: 'maintenance_issue', label: t('materials.workIssue') },
+  { value: 'adjustment', label: t('materials.adjustment') }
+])
+const stockFilterOptions = computed(() => [
+  { value: '', label: t('materials.allStocks') },
+  { value: 'out', label: t('materials.outOfStock') },
+  { value: 'low', label: t('materials.belowMinimum') },
+  { value: 'ok', label: t('materials.inRange') }
+])
 const materialOptions = computed(() => [
-  { value: '', label: 'Новая позиция склада' },
+  { value: '', label: t('materials.newStockItem') },
   ...catalogMaterials.value
     .filter(item => item.isActive !== false && item.name?.trim())
     .map(item => ({ value: item.id, label: item.name.trim() }))
 ])
 const stockOptions = computed(() => [
-  { value: '', label: 'Выберите позицию' },
+  { value: '', label: t('materials.chooseStock') },
   ...(inventory.value?.stocks ?? []).map(stock => ({
     value: stock.id,
-    label: `${stock.name} · ${formatQuantity(stock.quantityOnHand)} ${stock.unit}`
+    label: `${stock.name} · ${formatQuantity(stock.quantityOnHand)} ${formatUnit(stock.unit)}`
   }))
 ])
 const selectedIssueStock = computed(() => inventory.value?.stocks.find(stock => stock.id === issueForm.stockId) ?? null)
 const snapshotDateTimeIso = computed(() => toLocalIso(snapshotForm.date, snapshotForm.time || '23:59'))
 const receiptUnitLabel = computed(() => normalizeMaterialUnit(receiptForm.unit || 'шт'))
+const localizedMaterialUnitOptions = computed(() => materialUnitOptions.map(option => ({ ...option, label: formatUnit(option.value) })))
 const receiptBaseUnitLabel = computed(() => receiptUnitLabel.value === 'кг' ? 'г' : receiptUnitLabel.value === 'л' ? 'мл' : receiptUnitLabel.value)
-const receiptUnitCostLabel = computed(() => `Цена за ${receiptUnitLabel.value}`)
+const receiptUnitCostLabel = computed(() => t('materials.unitCostLabel', { unit: formatUnit(receiptUnitLabel.value) }))
 const receiptTotalCost = computed(() => calculateLineTotal(receiptForm.quantity, receiptForm.unitCost))
-const issueUnitLabel = computed(() => selectedIssueStock.value?.unit || 'ед.')
+const issueUnitLabel = computed(() => selectedIssueStock.value ? formatUnit(selectedIssueStock.value.unit) : t('materials.unit'))
 const issueTotalCost = computed(() => selectedIssueStock.value && !issueErrors.value.quantity ? Number(issueForm.quantity) * selectedIssueStock.value.averageUnitCost : null)
 const isReceiptDiscrete = computed(() => isDiscreteMaterialUnit(receiptUnitLabel.value))
 const isIssueDiscrete = computed(() => selectedIssueStock.value ? isDiscreteMaterialUnit(selectedIssueStock.value.unit) : false)
@@ -162,8 +159,8 @@ const maxMaterialQuantity = 999999999
 
 const validationAttempted = ref(false)
 const receiptErrors = computed(() => ({
-  name: receiptForm.catalogItemId ? '' : !receiptForm.name.trim() ? 'Укажите название материала.' : textError(receiptForm.name, 160),
-  unit: receiptForm.unit ? '' : 'Выберите единицу измерения.',
+  name: receiptForm.catalogItemId ? '' : !receiptForm.name.trim() ? t('materials.enterMaterialName') : textError(receiptForm.name, 160),
+  unit: receiptForm.unit ? '' : t('materials.chooseReceiptUnit'),
   quantity: numberError(receiptForm.quantity, isReceiptDiscrete.value ? 1 : 0.001, isReceiptDiscrete.value ? 0 : 3),
   packageQuantity: numberError(receiptForm.packageQuantity, isDiscreteMaterialUnit(receiptBaseUnitLabel.value) ? 1 : 0.001, isDiscreteMaterialUnit(receiptBaseUnitLabel.value) ? 0 : 3, false),
   unitCost: numberError(receiptForm.unitCost, 0, 4, false),
@@ -173,9 +170,9 @@ const issueErrors = computed(() => {
   const stock = selectedIssueStock.value
   const quantityError = numberError(issueForm.quantity, isIssueDiscrete.value ? 1 : 0.001, isIssueDiscrete.value ? 0 : 3)
   return {
-    stockId: stock ? '' : 'Выберите материал для списания.',
+    stockId: stock ? '' : t('materials.chooseIssueMaterial'),
     quantity: quantityError || (stock && Number(issueForm.quantity) > stock.availableQuantity
-      ? `Доступно для списания: ${formatQuantity(stock.availableQuantity)} ${stock.unit}.` : ''),
+      ? t('materials.availableToIssue', { quantity: formatQuantity(stock.availableQuantity), unit: formatUnit(stock.unit) }) : ''),
     comment: textError(issueForm.comment, 1000)
   }
 })
@@ -184,9 +181,9 @@ const adjustmentErrors = computed(() => {
   const quantityError = numberError(adjustmentForm.quantity, 0, stock && isDiscreteMaterialUnit(stock.unit) ? 0 : 3)
   return {
     quantity: quantityError || (stock && Number(adjustmentForm.quantity) < stock.reservedQuantity
-      ? `Остаток не может быть меньше резерва: ${formatQuantity(stock.reservedQuantity)} ${stock.unit}.` : ''),
+      ? t('materials.reservedMinimum', { quantity: formatQuantity(stock.reservedQuantity), unit: formatUnit(stock.unit) }) : ''),
     unitCost: adjustmentCostError(),
-    reason: adjustmentForm.reason.trim() ? textError(adjustmentForm.reason, 800) : 'Укажите причину корректировки.'
+    reason: adjustmentForm.reason.trim() ? textError(adjustmentForm.reason, 800) : t('materials.enterAdjustmentReason')
   }
 })
 
@@ -195,26 +192,26 @@ watch(activeView, () => { validationAttempted.value = false })
 function adjustmentCostError() {
   const value = String(adjustmentForm.unitCost).trim().replace(',', '.')
   if (value === String(selectedStock.value?.averageUnitCost)) return ''
-  if (!/^\d+(?:\.\d+)?$/.test(value)) return 'Введите неотрицательную себестоимость.'
+  if (!/^\d+(?:\.\d+)?$/.test(value)) return t('materials.nonnegativeCost')
   const fraction = value.split('.')[1]?.replace(/0+$/, '') ?? ''
-  if (fraction.length > 8) return 'Не больше 8 знаков после запятой.'
-  if (Number(value) === maxMaterialQuantity && fraction) return 'Не больше 999 999 999.'
+  if (fraction.length > 8) return t('materials.maxFraction', { digits: 8 })
+  if (Number(value) === maxMaterialQuantity && fraction) return t('materials.maxValue')
 
   return numberError(value, 0, 8)
 }
 
 function textError(value: string, maximum: number) {
-  return value.trim().length > maximum ? `Не больше ${maximum} символов.` : ''
+  return value.trim().length > maximum ? t('materials.maxCharacters', { maximum }) : ''
 }
 
 function numberError(value: string | number, minimum: number, decimals: number, required = true) {
-  if (!String(value ?? '').trim()) return required ? 'Заполните поле.' : ''
+  if (!String(value ?? '').trim()) return required ? t('materials.required') : ''
 
   const number = Number(String(value).replace(',', '.'))
-  if (!Number.isFinite(number)) return 'Введите число.'
-  if (number < minimum) return minimum > 0 ? 'Количество должно быть больше нуля.' : 'Значение не может быть отрицательным.'
-  if (number > maxMaterialQuantity) return 'Не больше 999 999 999.'
-  if (number !== Number(number.toFixed(decimals))) return decimals === 0 ? 'Введите целое количество.' : `Не больше ${decimals} знаков после запятой.`
+  if (!Number.isFinite(number)) return t('materials.enterNumber')
+  if (number < minimum) return minimum > 0 ? t('materials.positiveQuantity') : t('materials.nonnegativeValue')
+  if (number > maxMaterialQuantity) return t('materials.maxValue')
+  if (number !== Number(number.toFixed(decimals))) return decimals === 0 ? t('materials.integerQuantity') : t('materials.maxFraction', { digits: decimals })
 
   return ''
 }
@@ -224,7 +221,7 @@ function getTodayDate() {
 }
 
 function getCurrentTime() {
-  return new Intl.DateTimeFormat('en-GB', { timeZone: props.context.organization.timeZoneId || 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date())
+  return formatLocaleDate(new Date(), { timeZone: props.context.organization.timeZoneId || 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 }
 
 function toLocalIso(date: string, time = '00:00') {
@@ -251,44 +248,51 @@ function calculateLineTotal(quantityValue: string | number | null | undefined, u
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ru-RU').format(parseDateOnly(value) ?? new Date(value))
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value)
+  return formatLocaleDate(isDateOnly ? `${value}T00:00:00Z` : value, { timeZone: isDateOnly ? 'UTC' : props.context.organization.timeZoneId || 'UTC' })
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return formatLocaleDate(value, {
     timeZone: props.context.organization.timeZoneId || 'UTC',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  }).format(new Date(value))
+  })
+}
+
+function formatUnit(unit: string) {
+  const keys: Record<string, string> = { шт: 'piece', л: 'liter', мл: 'milliliter', кг: 'kilogram', г: 'gram', м: 'meter', м2: 'squareMeter', компл: 'set', уп: 'package' }
+  const key = keys[unit]
+  return key ? t(`materials.units.${key}`) : unit
 }
 
 function formatQuantity(value: number) {
-  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 3 }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { maximumFractionDigits: 3 }).format(value)
 }
 
 function formatMoney(value?: number | null, maximumFractionDigits = 2) {
   if (value === null || value === undefined) {
-    return '0 ₽'
+    return formatLocaleCurrency(0, workspaceCurrency.value)
   }
 
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: workspaceCurrency.value, maximumFractionDigits }).format(value)
 }
 
 function getMovementTypeName(typeCode: string) {
   switch (typeCode) {
     case 'receipt':
-      return 'Приход'
+      return t('materials.receipt')
     case 'issue':
-      return 'Списание'
+      return t('materials.issue')
     case 'maintenance_issue':
-      return 'Работа'
+      return t('materials.work')
     case 'adjustment':
-      return 'Корректировка'
+      return t('materials.adjustment')
     default:
-      return 'Движение'
+      return t('materials.movementDefault')
   }
 }
 
@@ -309,27 +313,27 @@ function getMovementTone(typeCode: string) {
 function getMovementQuantityLabel(typeCode: string) {
   switch (typeCode) {
     case 'receipt':
-      return 'Приход'
+      return t('materials.receipt')
     case 'issue':
     case 'maintenance_issue':
-      return 'Расход'
+      return t('materials.expense')
     case 'adjustment':
-      return 'Разница'
+      return t('materials.difference')
     default:
-      return 'Изменение'
+      return t('materials.change')
   }
 }
 
 function getMovementSourceKindName(movement: MaterialMovement) {
   if (movement.maintenanceId || movement.sourceEntityType === 'maintenance') {
-    return 'Работа'
+    return t('materials.work')
   }
 
   if (movement.sourceEntityType === 'manual') {
-    return 'Ручная операция'
+    return t('materials.manualOperation')
   }
 
-  return movement.sourceEntityType || 'Склад'
+  return movement.sourceEntityType || t('materials.warehouse')
 }
 
 function getMovementReason(movement: MaterialMovement) {
@@ -339,15 +343,15 @@ function getMovementReason(movement: MaterialMovement) {
 
   switch (movement.typeCode) {
     case 'receipt':
-      return 'Материал добавили на склад.'
+      return t('materials.receiptReason')
     case 'issue':
-      return 'Материал списали вручную.'
+      return t('materials.issueReason')
     case 'maintenance_issue':
-      return 'Материал списался автоматически из карточки работы.'
+      return t('materials.autoWorkIssueReason')
     case 'adjustment':
-      return 'Остаток изменили корректировкой.'
+      return t('materials.adjustmentReason')
     default:
-      return 'Движение изменило складской остаток.'
+      return t('materials.balanceMovementReason')
   }
 }
 
@@ -433,9 +437,9 @@ async function saveAdjustment() {
     })
     activeView.value = 'stock-detail'
     await loadSection()
-    successMessage.value = 'Корректировка сохранена.'
+    successMessage.value = t('materials.adjustmentSaved')
   } catch (error) {
-    showError(error instanceof Error ? error.message : 'Не удалось сохранить корректировку.')
+    showError(error instanceof Error ? error.message : t('materials.saveAdjustmentError'))
   } finally {
     isSaving.value = false
   }
@@ -500,7 +504,7 @@ async function loadSection() {
   } catch (error) {
     if (request !== latestRequest) return
 
-    const message = error instanceof Error ? error.message : 'Не удалось загрузить склад.'
+    const message = error instanceof Error ? error.message : t('materials.loadError')
     if (!inventory.value) errorMessage.value = message
     else showError(message)
   } finally {
@@ -577,7 +581,7 @@ async function changeStocksPage(nextPage: number) {
 
 async function loadSnapshot() {
   if (!snapshotDateTimeIso.value) {
-    showError('Выберите дату и время отчета.')
+    showError(t('materials.chooseSnapshotTime'))
     return
   }
 
@@ -609,11 +613,11 @@ async function addReceipt() {
       comment: receiptForm.comment || null
     })
     resetReceiptForm()
-    successMessage.value = 'Приход добавлен.'
+    successMessage.value = t('materials.receiptAdded')
     activeView.value = 'stocks'
     await loadSection()
   } catch (error) {
-    showError(error instanceof Error ? error.message : 'Не удалось добавить приход.')
+    showError(error instanceof Error ? error.message : t('materials.addReceiptError'))
   } finally {
     isSaving.value = false
   }
@@ -640,11 +644,11 @@ async function issueMaterial() {
       comment: issueForm.comment || null
     })
     resetIssueForm()
-    successMessage.value = 'Материал списан.'
+    successMessage.value = t('materials.materialIssued')
     activeView.value = 'stocks'
     await loadSection()
   } catch (error) {
-    showError(error instanceof Error ? error.message : 'Не удалось списать материал.')
+    showError(error instanceof Error ? error.message : t('materials.issueError'))
   } finally {
     isSaving.value = false
   }
@@ -664,70 +668,70 @@ onBeforeUnmount(() => {
       <WorkspacePageHelpButton section-code="materials" :title="currentTitle" />
     </template>
 
-    <UiLoader v-if="isLoading && (!inventory || !hasInlineLoading)" text="Загружаем склад..." />
+    <UiLoader v-if="isLoading && (!inventory || !hasInlineLoading)" :text="t('materials.loadingWarehouse')" />
     <div v-else-if="errorMessage" class="fleet-state fleet-state-error">{{ errorMessage }}</div>
 
     <template v-if="inventory && (!isLoading || hasInlineLoading)">
       <div v-if="successMessage" class="materials-notice" role="status">
         <span class="materials-notice__icon" aria-hidden="true">✓</span>
         <span>{{ successMessage }}</span>
-        <button type="button" aria-label="Закрыть уведомление" @click="successMessage = ''">×</button>
+        <button type="button" :aria-label="t('materials.closeNotification')" @click="successMessage = ''">×</button>
       </div>
       <WorkspaceAccessNotice :can-manage-billing="context.organization.canManageBilling === true" v-if="readOnlyMessage" :message="readOnlyMessage" :href="billingHref" />
       <div v-if="activeView === 'stocks'" class="materials-overview">
-        <div class="materials-stock-filters" role="group" aria-label="Состояние остатков">
-          <button type="button" :aria-pressed="!stockFilters.filter && !stockFilters.search" @click="selectStockFilter('')">Все позиции <b>{{ inventory.allStocksCount ?? inventory.stocksTotalCount }}</b></button>
-          <button type="button" class="materials-stock-filters__low" :aria-pressed="stockFilters.filter === 'low'" @click="selectStockFilter('low')">Ниже минимума <b>{{ inventory.lowStockCount }}</b></button>
-          <button type="button" class="materials-stock-filters__out" :aria-pressed="stockFilters.filter === 'out'" @click="selectStockFilter('out')">Нет в наличии <b>{{ inventory.outOfStockCount }}</b></button>
+        <div class="materials-stock-filters" role="group" :aria-label="t('materials.stockState')">
+          <button type="button" :aria-pressed="!stockFilters.filter && !stockFilters.search" @click="selectStockFilter('')">{{ t('materials.allItems') }} <b>{{ inventory.allStocksCount ?? inventory.stocksTotalCount }}</b></button>
+          <button type="button" class="materials-stock-filters__low" :aria-pressed="stockFilters.filter === 'low'" @click="selectStockFilter('low')">{{ t('materials.belowMinimumStatus') }} <b>{{ inventory.lowStockCount }}</b></button>
+          <button type="button" class="materials-stock-filters__out" :aria-pressed="stockFilters.filter === 'out'" @click="selectStockFilter('out')">{{ t('materials.noStock') }} <b>{{ inventory.outOfStockCount }}</b></button>
         </div>
-        <div class="materials-total-value"><span>Стоимость склада</span><strong>{{ formatMoney(inventory.totalInventoryValue) }}</strong></div>
+        <div class="materials-total-value"><span>{{ t('materials.warehouseCost') }}</span><strong>{{ formatMoney(inventory.totalInventoryValue) }}</strong></div>
       </div>
       <div class="materials-toolbar" :class="{ 'materials-toolbar--stocks': activeView === 'stocks' }">
-        <UiButton v-if="activeView !== 'stocks'" variant="secondary" @click="openView(activeView === 'movement-detail' ? movementReturnView : 'stocks')">Назад</UiButton>
+        <UiButton v-if="activeView !== 'stocks'" variant="secondary" @click="openView(activeView === 'movement-detail' ? movementReturnView : 'stocks')">{{ t('materials.back') }}</UiButton>
         <template v-if="activeView === 'stocks'">
-          <UiButton variant="secondary" @click="openView('movements')">Движения</UiButton>
-          <UiButton variant="secondary" @click="openView('snapshot')">Остатки на время</UiButton>
-          <UiButton v-if="canWrite" variant="secondary" @click="openIssue()">Списание</UiButton>
-          <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else :href="billingHref" variant="secondary">Списание</UiButton>
-          <UiButton v-if="canWrite" class="materials-receipt" @click="openView('receipt')">＋ Приход</UiButton>
-          <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else class="materials-receipt" :href="billingHref" variant="secondary">＋ Приход</UiButton>
+          <UiButton variant="secondary" @click="openView('movements')">{{ t('materials.movements') }}</UiButton>
+          <UiButton variant="secondary" @click="openView('snapshot')">{{ t('materials.snapshot') }}</UiButton>
+          <UiButton v-if="canWrite" variant="secondary" @click="openIssue()">{{ t('materials.issue') }}</UiButton>
+          <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else :href="billingHref" variant="secondary">{{ t('materials.issue') }}</UiButton>
+          <UiButton v-if="canWrite" class="materials-receipt" @click="openView('receipt')">{{ t('materials.addReceiptAction') }}</UiButton>
+          <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else class="materials-receipt" :href="billingHref" variant="secondary">{{ t('materials.addReceiptAction') }}</UiButton>
         </template>
       </div>
 
       <section v-if="activeView === 'receipt'" class="materials-screen">
         <form novalidate class="materials-action-form materials-action-form--receipt" @submit.prevent="addReceipt">
           <div class="catalog-linked-field materials-form-wide">
-            <UiSelect v-model="receiptForm.catalogItemId" label="Материал" :options="materialOptions" :disabled="isSaving || !canWrite" />
-            <UiButton variant="secondary" href="#catalog?catalog=material" :disabled="isSaving">Справочник</UiButton>
+            <UiSelect v-model="receiptForm.catalogItemId" :label="t('materials.material')" :options="materialOptions" :disabled="isSaving || !canWrite" />
+            <UiButton variant="secondary" href="#catalog?catalog=material" :disabled="isSaving">{{ t('materials.catalog') }}</UiButton>
           </div>
-          <UiInput v-if="!receiptForm.catalogItemId" v-model="receiptForm.name" :maxlength="160" required label-help="До 160 символов" :error="validationAttempted ? receiptErrors.name : ''" label="Название нового материала" :disabled="isSaving || !canWrite" />
-          <UiInput v-model="receiptForm.quantity" inputmode="decimal" :mask="receiptQuantityMask" required :label-help="isReceiptDiscrete ? 'Целое число больше 0' : 'Больше 0, до 3 знаков после запятой'" :error="validationAttempted ? receiptErrors.quantity : ''" label="Количество" :disabled="isSaving || !canWrite" />
-          <UiSelect v-model="receiptForm.unit" required :error="validationAttempted ? receiptErrors.unit : ''" label="Единица измерения" :options="materialUnitOptions" :searchable="false" :disabled="isSaving || !canWrite" />
-          <UiInput v-model="receiptForm.packageQuantity" inputmode="decimal" :mask="receiptPackageMask" :label-help="`Количество ${receiptBaseUnitLabel} в одной упаковке`" :error="validationAttempted ? receiptErrors.packageQuantity : ''" :label="`Единиц в упаковке (${receiptBaseUnitLabel})`" :disabled="isSaving || !canWrite" />
-          <UiInput v-model="receiptForm.unitCost" inputmode="decimal" :mask="receiptCostMask" label-help="От 0 до 999 999 999 ₽, до 4 знаков после запятой" :error="validationAttempted ? receiptErrors.unitCost : ''" :label="receiptUnitCostLabel" :disabled="isSaving || !canWrite" />
+          <UiInput v-if="!receiptForm.catalogItemId" v-model="receiptForm.name" :maxlength="160" required :label-help="t('materials.until160Characters')" :error="validationAttempted ? receiptErrors.name : ''" :label="t('materials.newMaterialName')" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="receiptForm.quantity" inputmode="decimal" :mask="receiptQuantityMask" required :label-help="isReceiptDiscrete ? t('materials.discreteQuantityHint') : t('materials.quantityHint')" :error="validationAttempted ? receiptErrors.quantity : ''" :label="t('materials.quantity')" :disabled="isSaving || !canWrite" />
+          <UiSelect v-model="receiptForm.unit" required :error="validationAttempted ? receiptErrors.unit : ''" :label="t('materials.unit')" :options="localizedMaterialUnitOptions" :searchable="false" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="receiptForm.packageQuantity" inputmode="decimal" :mask="receiptPackageMask" :label-help="t('materials.packageQuantity', { unit: formatUnit(receiptBaseUnitLabel) })" :error="validationAttempted ? receiptErrors.packageQuantity : ''" :label="t('materials.unitsPerPackage', { unit: formatUnit(receiptBaseUnitLabel) })" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="receiptForm.unitCost" inputmode="decimal" :mask="receiptCostMask" :label-help="t('materials.costLimitHint', { currency: workspaceCurrency, digits: 4 })" :error="validationAttempted ? receiptErrors.unitCost : ''" :label="receiptUnitCostLabel" :disabled="isSaving || !canWrite" />
           <div v-if="receiptTotalCost" class="materials-form-summary">
-            <span>Сумма партии</span>
+            <span>{{ t('materials.batchTotal') }}</span>
             <strong>{{ formatMoney(receiptTotalCost) }}</strong>
-            <small>{{ formatQuantity(Number(receiptForm.quantity)) }} {{ receiptUnitLabel }} × {{ formatMoney(Number(receiptForm.unitCost), 4) }}</small>
+            <small>{{ formatQuantity(Number(receiptForm.quantity)) }} {{ formatUnit(receiptUnitLabel) }} × {{ formatMoney(Number(receiptForm.unitCost), 4) }}</small>
           </div>
-          <UiInput v-model="receiptForm.comment" :maxlength="1000" label-help="До 1000 символов" :error="validationAttempted ? receiptErrors.comment : ''" class="materials-form-wide" label="Комментарий" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="receiptForm.comment" :maxlength="1000" :label-help="t('materials.maxCharacters', { maximum: 1000 })" :error="validationAttempted ? receiptErrors.comment : ''" class="materials-form-wide" :label="t('materials.comment')" :disabled="isSaving || !canWrite" />
           <div class="materials-form-actions">
-            <UiButton variant="secondary" @click="openView('stocks')">Отмена</UiButton>
-            <UiButton v-if="canWrite" type="submit" :disabled="isSaving">Добавить приход</UiButton>
-            <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else :href="billingHref" variant="secondary">Добавить приход</UiButton>
+            <UiButton variant="secondary" @click="openView('stocks')">{{ t('materials.cancel') }}</UiButton>
+            <UiButton v-if="canWrite" type="submit" :disabled="isSaving">{{ t('materials.addReceipt') }}</UiButton>
+            <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else :href="billingHref" variant="secondary">{{ t('materials.addReceipt') }}</UiButton>
           </div>
         </form>
       </section>
 
       <section v-else-if="activeView === 'adjustment' && selectedStock" class="materials-screen">
         <form novalidate class="materials-action-form" @submit.prevent="saveAdjustment">
-          <div class="materials-selected-stock"><strong>{{ selectedStock.name }}</strong><span>Сейчас: {{ formatQuantity(selectedStock.quantityOnHand) }} {{ selectedStock.unit }} · {{ formatMoney(selectedStock.averageUnitCost, 8) }} за единицу</span></div>
-          <UiInput v-model="adjustmentForm.quantity" inputmode="decimal" :mask="adjustmentQuantityMask" required :label-help="`Не меньше резерва: ${formatQuantity(selectedStock.reservedQuantity)} ${selectedStock.unit}`" :error="validationAttempted ? adjustmentErrors.quantity : ''" label="Фактический остаток" :disabled="isSaving || !canWrite" />
-          <UiInput v-model="adjustmentForm.unitCost" inputmode="decimal" :mask="adjustmentCostMask" required label-help="От 0 до 999 999 999 ₽, до 8 знаков после запятой" :error="validationAttempted ? adjustmentErrors.unitCost : ''" label="Себестоимость единицы" :disabled="isSaving || !canWrite" />
-          <UiInput v-model="adjustmentForm.reason" :maxlength="800" required label-help="До 800 символов" :error="validationAttempted ? adjustmentErrors.reason : ''" class="materials-form-wide" label="Причина корректировки" :disabled="isSaving || !canWrite" />
+          <div class="materials-selected-stock"><strong>{{ selectedStock.name }}</strong><span>{{ t('materials.now', { quantity: formatQuantity(selectedStock.quantityOnHand), unit: formatUnit(selectedStock.unit), cost: formatMoney(selectedStock.averageUnitCost, 8) }) }}</span></div>
+          <UiInput v-model="adjustmentForm.quantity" inputmode="decimal" :mask="adjustmentQuantityMask" required :label-help="t('materials.reserveLimit', { quantity: formatQuantity(selectedStock.reservedQuantity), unit: formatUnit(selectedStock.unit) })" :error="validationAttempted ? adjustmentErrors.quantity : ''" :label="t('materials.onHand')" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="adjustmentForm.unitCost" inputmode="decimal" :mask="adjustmentCostMask" required :label-help="t('materials.costLimitHint', { currency: workspaceCurrency, digits: 8 })" :error="validationAttempted ? adjustmentErrors.unitCost : ''" :label="t('materials.unitCost')" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="adjustmentForm.reason" :maxlength="800" required :label-help="t('materials.maxCharacters', { maximum: 800 })" :error="validationAttempted ? adjustmentErrors.reason : ''" class="materials-form-wide" :label="t('materials.adjustmentReasonLabel')" :disabled="isSaving || !canWrite" />
           <div class="materials-form-actions">
-            <UiButton variant="secondary" :disabled="isSaving" @click="openView('stock-detail')">Отмена</UiButton>
-            <UiButton v-if="canWrite" type="submit" :disabled="isSaving">Сохранить корректировку</UiButton>
+            <UiButton variant="secondary" :disabled="isSaving" @click="openView('stock-detail')">{{ t('materials.cancel') }}</UiButton>
+            <UiButton v-if="canWrite" type="submit" :disabled="isSaving">{{ t('materials.saveAdjustment') }}</UiButton>
           </div>
         </form>
       </section>
@@ -735,81 +739,81 @@ onBeforeUnmount(() => {
       <section v-else-if="activeView === 'issue'" class="materials-screen">
         <form novalidate class="materials-action-form materials-action-form--issue" @submit.prevent="issueMaterial">
           <template v-if="!issueStockLocked">
-            <UiInput v-model="issueFilters.search" type="search" label="Поиск материала" placeholder="Название материала" :disabled="isSaving || !canWrite" />
-            <UiSelect v-model="issueForm.stockId" required :error="validationAttempted ? issueErrors.stockId : ''" label="Позиция" :options="stockOptions" :searchable="false" :disabled="isSaving || isLoading || !canWrite" />
-            <UiLoader v-if="isLoading" compact text="Обновляем позиции…" />
-            <UiPagination class="materials-form-wide" :model-value="issueFilters.page" :total-items="inventory.stocksTotalCount" :items-per-page="issueFilters.pageSize" :max-pages-shown="3" :disabled="isLoading" label="Страницы позиций для списания" @update:model-value="changeIssuePage" />
+            <UiInput v-model="issueFilters.search" type="search" :label="t('materials.searchMaterial')" :placeholder="t('materials.materialName')" :disabled="isSaving || !canWrite" />
+            <UiSelect v-model="issueForm.stockId" required :error="validationAttempted ? issueErrors.stockId : ''" :label="t('materials.item')" :options="stockOptions" :searchable="false" :disabled="isSaving || isLoading || !canWrite" />
+            <UiLoader v-if="isLoading" compact :text="t('materials.refreshingStocks')" />
+            <UiPagination class="materials-form-wide" :model-value="issueFilters.page" :total-items="inventory.stocksTotalCount" :items-per-page="issueFilters.pageSize" :max-pages-shown="3" :disabled="isLoading" :label="t('materials.issuePages')" @update:model-value="changeIssuePage" />
           </template>
           <div v-if="selectedIssueStock" class="materials-selected-stock">
             <strong v-if="issueStockLocked">{{ selectedIssueStock.name }}</strong>
-            <span>На складе: {{ formatQuantity(selectedIssueStock.quantityOnHand) }} {{ selectedIssueStock.unit }} · Доступно: {{ formatQuantity(selectedIssueStock.availableQuantity) }} {{ selectedIssueStock.unit }}</span>
+            <span>{{ t('materials.onHandAvailable', { onHand: formatQuantity(selectedIssueStock.quantityOnHand), available: formatQuantity(selectedIssueStock.availableQuantity), unit: formatUnit(selectedIssueStock.unit) }) }}</span>
           </div>
-          <UiInput v-model="issueForm.quantity" inputmode="decimal" :mask="issueQuantityMask" required :label-help="isIssueDiscrete ? 'Целое число, не больше доступного остатка' : 'До 3 знаков после запятой, не больше доступного остатка'" :error="validationAttempted ? issueErrors.quantity : ''" :label="`Количество, ${issueUnitLabel}`" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="issueForm.quantity" inputmode="decimal" :mask="issueQuantityMask" required :label-help="isIssueDiscrete ? t('materials.discreteIssueHint') : t('materials.issueQuantityHint')" :error="validationAttempted ? issueErrors.quantity : ''" :label="t('materials.quantityWithUnit', { unit: issueUnitLabel })" :disabled="isSaving || !canWrite" />
           <div v-if="selectedIssueStock" class="materials-issue-cost">
-            <span>Себестоимость за {{ issueUnitLabel }}</span>
+            <span>{{ t('materials.costPerUnit', { unit: issueUnitLabel }) }}</span>
             <strong>{{ formatMoney(selectedIssueStock.averageUnitCost, 8) }}</strong>
-            <small v-if="issueTotalCost">К списанию: <b>{{ formatMoney(issueTotalCost, 2) }}</b></small>
+            <small v-if="issueTotalCost">{{ t('materials.toIssue') }} <b>{{ formatMoney(issueTotalCost, 2) }}</b></small>
           </div>
-          <UiInput v-model="issueForm.comment" :maxlength="1000" label-help="До 1000 символов" :error="validationAttempted ? issueErrors.comment : ''" class="materials-form-wide" label="Причина" :disabled="isSaving || !canWrite" />
+          <UiInput v-model="issueForm.comment" :maxlength="1000" :label-help="t('materials.maxCharacters', { maximum: 1000 })" :error="validationAttempted ? issueErrors.comment : ''" class="materials-form-wide" :label="t('materials.issueReasonLabel')" :disabled="isSaving || !canWrite" />
           <div class="materials-form-actions">
-            <UiButton variant="secondary" @click="openView('stocks')">Отмена</UiButton>
-            <UiButton v-if="canWrite" type="submit" :disabled="isSaving || isLoading">Списать</UiButton>
-            <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else :href="billingHref" variant="secondary">Списать</UiButton>
+            <UiButton variant="secondary" @click="openView('stocks')">{{ t('materials.cancel') }}</UiButton>
+            <UiButton v-if="canWrite" type="submit" :disabled="isSaving || isLoading">{{ t('materials.writeOff') }}</UiButton>
+            <UiButton :disabled="context.workspaceAccess?.isReadOnly === true && !context.organization.canManageBilling" v-else :href="billingHref" variant="secondary">{{ t('materials.writeOff') }}</UiButton>
           </div>
         </form>
       </section>
 
       <section v-else-if="activeView === 'stocks'" class="materials-screen" :aria-busy="isLoading">
         <form class="materials-filterbar materials-filterbar--stocks" @submit.prevent="applyStockFilters">
-          <UiSearchInput v-model="stockFilters.search" class="materials-stock-search" id="material-stock-search" placeholder="Название материала" />
-          <label class="materials-sr-only" for="material-stock-search">Поиск материалов</label>
-          <UiSelect v-model="stockFilters.filter" aria-label="Остаток" :options="stockFilterOptions" :searchable="false" />
-          <UiButton type="button" variant="secondary" :disabled="!stockFilters.search && !stockFilters.filter" @click="resetStockFilters">Сбросить</UiButton>
-          <UiLoader v-if="isLoading" compact text="Обновляем остатки…" />
+          <UiSearchInput v-model="stockFilters.search" class="materials-stock-search" id="material-stock-search" :placeholder="t('materials.materialName')" />
+          <label class="materials-sr-only" for="material-stock-search">{{ t('materials.warehouseSearchLabel') }}</label>
+          <UiSelect v-model="stockFilters.filter" :aria-label="t('materials.stock')" :options="stockFilterOptions" :searchable="false" />
+          <UiButton type="button" variant="secondary" :disabled="!stockFilters.search && !stockFilters.filter" @click="resetStockFilters">{{ t('materials.reset') }}</UiButton>
+          <UiLoader v-if="isLoading" compact :text="t('materials.refreshingBalance')" />
         </form>
-        <div v-if="!inventory.stocks.length" class="autoservice-empty">По выбранным условиям позиций нет.</div>
+        <div v-if="!inventory.stocks.length" class="autoservice-empty">{{ t('materials.noItemsForFilters') }}</div>
         <div v-else class="materials-table materials-table--stocks">
           <div class="materials-table__head">
-            <span>Материал</span><span>На складе</span><span>Доступно</span><span>Себестоимость за ед.</span><span>Стоимость остатка</span><span></span>
+            <span>{{ t('materials.material') }}</span><span>{{ t('materials.onHand') }}</span><span>{{ t('materials.available') }}</span><span>{{ t('materials.unitCostShort') }}</span><span>{{ t('materials.remainingValue') }}</span><span></span>
           </div>
           <article v-for="stock in inventory.stocks" :key="stock.id" class="materials-table__row" :class="{ 'materials-table__row--warning': stock.isLowStock, 'materials-table__row--danger': stock.isOutOfStock }">
             <div class="materials-stock-name">
               <strong>{{ stock.name }}</strong>
-              <span v-if="stock.isOutOfStock" class="materials-stock-status materials-stock-status--out">Нет в наличии</span>
-              <span v-else-if="stock.isLowStock" class="materials-stock-status materials-stock-status--low">Ниже минимума</span>
-              <span>Минимум: {{ formatQuantity(stock.minQuantity) }} {{ stock.unit }}</span>
+              <span v-if="stock.isOutOfStock" class="materials-stock-status materials-stock-status--out">{{ t('materials.noStock') }}</span>
+              <span v-else-if="stock.isLowStock" class="materials-stock-status materials-stock-status--low">{{ t('materials.belowMinimumStatus') }}</span>
+              <span>{{ t('materials.minimum', { quantity: formatQuantity(stock.minQuantity), unit: formatUnit(stock.unit) }) }}</span>
             </div>
-            <div data-label="На складе"><strong>{{ formatQuantity(stock.quantityOnHand) }} {{ stock.unit }}</strong></div>
-            <div data-label="Доступно">
-              <strong>{{ formatQuantity(stock.availableQuantity) }} {{ stock.unit }}</strong>
-              <span>В резерве: {{ formatQuantity(stock.reservedQuantity) }} {{ stock.unit }}</span>
+            <div :data-label="t('materials.onHand')"><strong>{{ formatQuantity(stock.quantityOnHand) }} {{ formatUnit(stock.unit) }}</strong></div>
+            <div :data-label="t('materials.available')">
+              <strong>{{ formatQuantity(stock.availableQuantity) }} {{ formatUnit(stock.unit) }}</strong>
+              <span>{{ t('materials.reserved', { quantity: formatQuantity(stock.reservedQuantity), unit: formatUnit(stock.unit) }) }}</span>
             </div>
-            <div data-label="Себестоимость за ед."><strong>{{ formatMoney(stock.averageUnitCost, 8) }} / {{ stock.unit }}</strong></div>
-            <div data-label="Стоимость остатка"><strong>{{ formatMoney(stock.inventoryValue) }}</strong></div>
+            <div :data-label="t('materials.unitCostShort')"><strong>{{ formatMoney(stock.averageUnitCost, 8) }} / {{ formatUnit(stock.unit) }}</strong></div>
+            <div :data-label="t('materials.remainingValue')"><strong>{{ formatMoney(stock.inventoryValue) }}</strong></div>
             <div class="materials-row-actions">
-              <UiButton variant="secondary" :disabled="isLoading" @click="openStock(stock)">История</UiButton>
-              <UiButton v-if="canWrite" variant="secondary" :disabled="isSaving || isLoading || stock.availableQuantity <= 0" @click="openIssue(stock)">Списать</UiButton>
-              <UiButton v-else :disabled="!context.organization.canManageBilling || stock.availableQuantity <= 0" :href="billingHref" variant="secondary">Списать</UiButton>
+              <UiButton variant="secondary" :disabled="isLoading" @click="openStock(stock)">{{ t('materials.history') }}</UiButton>
+              <UiButton v-if="canWrite" variant="secondary" :disabled="isSaving || isLoading || stock.availableQuantity <= 0" @click="openIssue(stock)">{{ t('materials.writeOff') }}</UiButton>
+              <UiButton v-else :disabled="!context.organization.canManageBilling || stock.availableQuantity <= 0" :href="billingHref" variant="secondary">{{ t('materials.writeOff') }}</UiButton>
             </div>
           </article>
         </div>
         <div v-if="inventory.stocksTotalCount" class="materials-pagination materials-pagination--stocks">
           <div class="materials-pagination__summary">
-            <span aria-live="polite">{{ stocksFirstItem }}-{{ stocksLastItem }} из {{ inventory.stocksTotalCount }}</span>
-            <div class="materials-page-size"><span>На странице</span><UiSelect v-model="selectedPageSize" :options="stockPageSizeOptions" :searchable="false" aria-label="Размер страницы" /></div>
+            <span aria-live="polite">{{ t('materials.pageRange', { first: stocksFirstItem, last: stocksLastItem, total: inventory.stocksTotalCount }) }}</span>
+            <div class="materials-page-size"><span>{{ t('materials.perPage') }}</span><UiSelect v-model="selectedPageSize" :options="stockPageSizeOptions" :searchable="false" :aria-label="t('materials.pageSize')" /></div>
           </div>
-          <UiPagination :model-value="stockFilters.page" :total-items="inventory.stocksTotalCount" :items-per-page="stockFilters.pageSize" :max-pages-shown="3" :disabled="isLoading" label="Навигация по страницам склада" @update:model-value="changeStocksPage" />
+          <UiPagination :model-value="stockFilters.page" :total-items="inventory.stocksTotalCount" :items-per-page="stockFilters.pageSize" :max-pages-shown="3" :disabled="isLoading" :label="t('materials.warehousePagination')" @update:model-value="changeStocksPage" />
         </div>
       </section>
 
       <section v-else-if="activeView === 'movements'" class="materials-screen">
         <div class="materials-filterbar">
-          <UiDatePicker v-model="movementFilters.date" label="Дата движений" placeholder="Все даты" />
-          <UiSelect v-model="movementFilters.type" label="Тип движения" :options="movementTypeOptions" :searchable="false" />
-          <UiButton variant="secondary" :disabled="isLoading" @click="applyMovementFilters">Показать</UiButton>
+          <UiDatePicker v-model="movementFilters.date" :label="t('materials.movementDate')" :placeholder="t('materials.allDates')" />
+          <UiSelect v-model="movementFilters.type" :label="t('materials.movementType')" :options="movementTypeOptions" :searchable="false" />
+          <UiButton variant="secondary" :disabled="isLoading" @click="applyMovementFilters">{{ t('materials.show') }}</UiButton>
         </div>
         <div class="materials-movement-list">
-          <div v-if="!inventory.recentMovements.length" class="materials-empty">Движений по выбранным условиям нет.</div>
+          <div v-if="!inventory.recentMovements.length" class="materials-empty">{{ t('materials.noMovementsForFilters') }}</div>
           <article
             v-for="movement in inventory.recentMovements"
             :key="movement.id"
@@ -831,12 +835,12 @@ onBeforeUnmount(() => {
               <small v-if="movement.comment">{{ movement.comment }}</small>
             </div>
             <div>
-              <strong>{{ formatQuantity(movement.quantity) }} {{ movement.unit }}</strong>
+              <strong>{{ formatQuantity(movement.quantity) }} {{ formatUnit(movement.unit) }}</strong>
               <span>{{ getMovementQuantityLabel(movement.typeCode) }} · {{ formatMoney(movement.totalCost) }}</span>
             </div>
             <div>
               <strong>{{ formatQuantity(movement.balanceAfter) }}</strong>
-              <span>остаток после · {{ formatMoney(movement.costBalanceAfter) }}</span>
+              <span>{{ t('materials.balanceAfter', { cost: formatMoney(movement.costBalanceAfter) }) }}</span>
             </div>
           </article>
         </div>
@@ -855,62 +859,62 @@ onBeforeUnmount(() => {
           </div>
           <div class="materials-movement-card__grid">
             <div>
-              <span>Изменение</span>
-              <strong>{{ formatQuantity(selectedMovement.quantity) }} {{ selectedMovement.unit }}</strong>
+              <span>{{ t('materials.movementChange') }}</span>
+              <strong>{{ formatQuantity(selectedMovement.quantity) }} {{ formatUnit(selectedMovement.unit) }}</strong>
               <small>{{ getMovementQuantityLabel(selectedMovement.typeCode) }} · {{ formatMoney(selectedMovement.totalCost) }}</small>
             </div>
             <div>
-              <span>Себестоимость единицы</span>
+              <span>{{ t('materials.unitCostAtOperation') }}</span>
               <strong>{{ formatMoney(selectedMovement.unitCost, 8) }}</strong>
-              <small>на момент операции · {{ selectedMovement.unit }}</small>
+              <small>{{ t('materials.atOperation', { unit: formatUnit(selectedMovement.unit) }) }}</small>
             </div>
             <div>
-              <span>Остаток после</span>
-              <strong>{{ formatQuantity(selectedMovement.balanceAfter) }} {{ selectedMovement.unit }}</strong>
+              <span>{{ t('materials.remaining') }}</span>
+              <strong>{{ formatQuantity(selectedMovement.balanceAfter) }} {{ formatUnit(selectedMovement.unit) }}</strong>
               <small>{{ formatMoney(selectedMovement.costBalanceAfter) }}</small>
             </div>
             <div>
-              <span>Кто создал</span>
-              <strong>{{ selectedMovement.createdByDisplayName || 'Не указан' }}</strong>
-              <small>{{ selectedMovement.createdByUserId || 'старое или системное движение' }}</small>
+              <span>{{ t('materials.whoCreated') }}</span>
+              <strong>{{ selectedMovement.createdByDisplayName || t('materials.notSpecified') }}</strong>
+              <small>{{ selectedMovement.createdByUserId || t('materials.oldOrSystemMovement') }}</small>
             </div>
           </div>
           <div class="materials-movement-card__source">
-            <span>Источник</span>
+            <span>{{ t('materials.source') }}</span>
             <strong>{{ selectedMovement.sourceTitle || getMovementSourceKindName(selectedMovement) }}</strong>
             <small>{{ getMovementReason(selectedMovement) }}</small>
-            <UiButton v-if="selectedMovement.sourceUrl" variant="secondary" :href="normalizeWorkspaceUrl(selectedMovement.sourceUrl)">Открыть источник</UiButton>
+            <UiButton v-if="selectedMovement.sourceUrl" variant="secondary" :href="normalizeWorkspaceUrl(selectedMovement.sourceUrl)">{{ t('materials.openSource') }}</UiButton>
           </div>
         </div>
       </section>
 
       <section v-else-if="activeView === 'stock-detail' && selectedStock" class="materials-screen">
-        <UiCard title="Остатки" class="materials-stock-card">
+        <UiCard :title="t('materials.allStocks')" class="materials-stock-card">
           <div class="materials-stock-heading">
             <h3>{{ selectedStock.name }}</h3>
             <span class="materials-stock-status" :class="selectedStock.isOutOfStock ? 'materials-stock-status--out' : selectedStock.isLowStock ? 'materials-stock-status--low' : 'materials-stock-status--available'">
-              {{ selectedStock.isOutOfStock ? 'Нет в наличии' : selectedStock.isLowStock ? 'Ниже минимума' : 'В наличии' }}
+              {{ selectedStock.isOutOfStock ? t('materials.noStock') : selectedStock.isLowStock ? t('materials.belowMinimumStatus') : t('materials.availableStatus') }}
             </span>
           </div>
           <div class="materials-stock-meta">
-            <span>Обновлено {{ formatDate(selectedStock.updatedAt) }}</span>
-            <span v-if="selectedStock.packageQuantity">Упаковка: {{ formatQuantity(selectedStock.packageQuantity) }} {{ selectedStock.unit }}</span>
+            <span>{{ t('materials.updatedAt', { date: formatDate(selectedStock.updatedAt) }) }}</span>
+            <span v-if="selectedStock.packageQuantity">{{ t('materials.package', { quantity: formatQuantity(selectedStock.packageQuantity), unit: formatUnit(selectedStock.unit) }) }}</span>
           </div>
           <dl class="materials-stock-metrics">
-            <div><dt>На складе</dt><dd>{{ formatQuantity(selectedStock.quantityOnHand) }} {{ selectedStock.unit }}</dd></div>
-            <div><dt>Доступно</dt><dd>{{ formatQuantity(selectedStock.availableQuantity) }} {{ selectedStock.unit }}</dd></div>
-            <div><dt>В резерве</dt><dd>{{ formatQuantity(selectedStock.reservedQuantity) }} {{ selectedStock.unit }}</dd></div>
-            <div><dt>Минимум</dt><dd>{{ formatQuantity(selectedStock.minQuantity) }} {{ selectedStock.unit }}</dd></div>
-            <div><dt>Себестоимость за {{ selectedStock.unit }}</dt><dd>{{ formatMoney(selectedStock.averageUnitCost, 8) }}</dd></div>
-            <div><dt>Стоимость остатка</dt><dd>{{ formatMoney(selectedStock.inventoryValue) }}</dd></div>
+            <div><dt>{{ t('materials.onHand') }}</dt><dd>{{ formatQuantity(selectedStock.quantityOnHand) }} {{ formatUnit(selectedStock.unit) }}</dd></div>
+            <div><dt>{{ t('materials.available') }}</dt><dd>{{ formatQuantity(selectedStock.availableQuantity) }} {{ formatUnit(selectedStock.unit) }}</dd></div>
+            <div><dt>{{ t('materials.reserved', { quantity: formatQuantity(selectedStock.reservedQuantity), unit: formatUnit(selectedStock.unit) }) }}</dt><dd>{{ formatQuantity(selectedStock.reservedQuantity) }} {{ formatUnit(selectedStock.unit) }}</dd></div>
+            <div><dt>{{ t('materials.minimum', { quantity: formatQuantity(selectedStock.minQuantity), unit: formatUnit(selectedStock.unit) }) }}</dt><dd>{{ formatQuantity(selectedStock.minQuantity) }} {{ formatUnit(selectedStock.unit) }}</dd></div>
+            <div><dt>{{ t('materials.costPerUnit', { unit: formatUnit(selectedStock.unit) }) }}</dt><dd>{{ formatMoney(selectedStock.averageUnitCost, 8) }}</dd></div>
+            <div><dt>{{ t('materials.remainingValue') }}</dt><dd>{{ formatMoney(selectedStock.inventoryValue) }}</dd></div>
           </dl>
           <div v-if="canWrite" class="materials-stock-actions">
-            <UiButton :disabled="isSaving || selectedStock.availableQuantity <= 0" @click="openIssue(selectedStock)">Списать</UiButton>
-            <UiButton variant="secondary" :disabled="isSaving" @click="openAdjustment">Корректировать остаток</UiButton>
+            <UiButton :disabled="isSaving || selectedStock.availableQuantity <= 0" @click="openIssue(selectedStock)">{{ t('materials.writeOff') }}</UiButton>
+            <UiButton variant="secondary" :disabled="isSaving" @click="openAdjustment">{{ t('materials.adjustment') }}</UiButton>
           </div>
         </UiCard>
 
-        <UiCard title="История движений" class="materials-stock-history">
+        <UiCard :title="t('materials.movementHistory')" class="materials-stock-history">
           <div class="materials-movement-list">
             <article
               v-for="movement in selectedStockMovements"
@@ -933,53 +937,53 @@ onBeforeUnmount(() => {
                 <small v-if="movement.comment">{{ movement.comment }}</small>
               </div>
               <div>
-                <strong>{{ formatQuantity(movement.quantity) }} {{ movement.unit }}</strong>
+                <strong>{{ formatQuantity(movement.quantity) }} {{ formatUnit(movement.unit) }}</strong>
                 <span>{{ getMovementQuantityLabel(movement.typeCode) }} · {{ formatMoney(movement.totalCost) }}</span>
               </div>
               <div>
-                <strong>{{ formatQuantity(movement.balanceAfter) }} {{ movement.unit }}</strong>
-                <span>Остаток после · {{ formatMoney(movement.costBalanceAfter) }}</span>
+                <strong>{{ formatQuantity(movement.balanceAfter) }} {{ formatUnit(movement.unit) }}</strong>
+                <span>{{ t('materials.balanceAfter', { cost: formatMoney(movement.costBalanceAfter) }) }}</span>
               </div>
             </article>
-            <div v-if="selectedStockMovements.length === 0" class="autoservice-empty">По этому материалу пока нет движений.</div>
+            <div v-if="selectedStockMovements.length === 0" class="autoservice-empty">{{ t('materials.noStockMovements') }}</div>
           </div>
         </UiCard>
       </section>
 
       <section v-else class="materials-screen">
         <div class="materials-filterbar materials-filterbar--snapshot">
-          <UiDatePicker v-model="snapshotForm.date" label="Дата отчета" required />
-          <UiTimePicker v-model="snapshotForm.time" label="Время" required />
-          <UiButton variant="secondary" :disabled="isLoading" @click="loadSnapshot">Показать остатки</UiButton>
+          <UiDatePicker v-model="snapshotForm.date" :label="t('materials.reportDate')" required />
+          <UiTimePicker v-model="snapshotForm.time" :label="t('materials.time')" required />
+          <UiButton variant="secondary" :disabled="isLoading" @click="loadSnapshot">{{ t('materials.showSnapshot') }}</UiButton>
         </div>
         <div class="scheduler-summary">
-          <span><b>{{ inventory.snapshotStocks.length }}</b> позиций</span>
-          <span><b>{{ formatMoney(inventory.snapshotTotalInventoryValue) }}</b> стоимость</span>
-          <span v-if="inventory.snapshotAt"><b>{{ formatDateTime(inventory.snapshotAt) }}</b> момент</span>
+          <span><b>{{ inventory.snapshotStocks.length }}</b> {{ t('materials.positions') }}</span>
+          <span><b>{{ formatMoney(inventory.snapshotTotalInventoryValue) }}</b> {{ t('materials.snapshotTotal') }}</span>
+          <span v-if="inventory.snapshotAt"><b>{{ formatDateTime(inventory.snapshotAt) }}</b> {{ t('materials.snapshotMoment') }}</span>
         </div>
         <div class="materials-table">
           <div class="materials-table__head materials-table__head--snapshot">
-            <span>Позиция</span>
-            <span>Остаток на момент</span>
-            <span>Себестоимость</span>
-            <span>Стоимость</span>
+            <span>{{ t('materials.item') }}</span>
+            <span>{{ t('materials.snapshotBalance') }}</span>
+            <span>{{ t('materials.cost') }}</span>
+            <span>{{ t('materials.value') }}</span>
           </div>
           <article v-for="stock in inventory.snapshotStocks" :key="stock.stockId" class="materials-table__row materials-table__row--snapshot">
             <div class="materials-stock-name">
               <strong>{{ stock.name }}</strong>
-              <span>{{ stock.unit }}</span>
+              <span>{{ formatUnit(stock.unit) }}</span>
             </div>
             <div>
-              <strong>{{ formatQuantity(stock.quantityOnHand) }} {{ stock.unit }}</strong>
-              <span>на выбранный момент</span>
+              <strong>{{ formatQuantity(stock.quantityOnHand) }} {{ formatUnit(stock.unit) }}</strong>
+              <span>{{ t('materials.atSelectedTime') }}</span>
             </div>
             <div>
               <strong>{{ formatMoney(stock.averageUnitCost, 8) }}</strong>
-              <span>за единицу</span>
+              <span>{{ t('materials.perUnit') }}</span>
             </div>
             <div>
               <strong>{{ formatMoney(stock.inventoryValue) }}</strong>
-              <span>остаток</span>
+              <span>{{ t('materials.remaining') }}</span>
             </div>
           </article>
         </div>
@@ -987,7 +991,7 @@ onBeforeUnmount(() => {
     </template>
     <UiAlertDialog
       :open="Boolean(errorDialogMessage)"
-      title="Склад"
+      :title="t('materials.title')"
       :message="errorDialogMessage"
       tone="danger"
       @close="errorDialogMessage = ''"

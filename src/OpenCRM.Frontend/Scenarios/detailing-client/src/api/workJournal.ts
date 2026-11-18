@@ -1,4 +1,6 @@
-﻿export type WorkJournalItem = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
+export type WorkJournalItem = {
   id: string
   vehicleDisplayName: string
   registrationPlate?: string | null
@@ -40,7 +42,7 @@ export async function loadWorkJournal(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить журнал услуг.')
+    throw new Error(error?.message ?? translate('workspaceApi.loadDetailingJournal'))
   }
 
   return response.json()

@@ -36,6 +36,9 @@ public sealed class OrganizationWorkJournalWorkItemDto
     /// <summary> Дополнительный текст записи. </summary>
     public string? MetaText { get; init; }
 
+    /// <summary> Валюта сохранённого обслуживания. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Стоимость работы, если задана. </summary>
     public decimal? Price { get; init; }
 

@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/proOverviewMessages.ts'
 
 const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/WorkspaceProOverview.vue', import.meta.url), 'utf8'))
 const code = ts.transpileModule(compileScript(descriptor, { id: 'workspace-pro-overview-test' }).content, {
@@ -14,6 +16,8 @@ function setup(plan, overrides = {}) {
   const events = []
   const module = { exports: {} }
   new Function('require', 'module', 'exports', code)(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../proOverviewMessages') return {}
     if (id === 'vue') return { ...vue, watch() {}, onMounted() {}, onBeforeUnmount() {} }
     if (id === '@opencrm/ui') return { UiButton: {} }
     if (id.endsWith('/intake.png')) return 'intake.png'
@@ -67,7 +71,7 @@ test('Обзор показывает только явно включённые
     { label: 'Клиенты', value: '300' },
     { label: 'Автомобили', value: '80' }
   ])
-  assert.equal(state.formattedPrice.value, '1 250 ₽')
+  assert.equal(state.formattedPrice.value, '1 250 RUB')
   assert.equal(state.durationText.value, 'за 90 дн.')
 })
 

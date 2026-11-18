@@ -20,7 +20,7 @@ public interface IOrganizationShiftService
         string endLocal);
 
     /// <summary> Задаёт часовой пояс организации для смен. </summary>
-    Task SetTimeZoneAsync(string userId, Guid organizationId, string timeZoneId);
+    Task SetTimeZoneAsync(string userId, Guid organizationId, string timeZoneId, string? expectedTimeZoneId = null);
 
     /// <summary> Сохраняет смену организации, создавая или обновляя запись. </summary>
     Task<Guid> SaveAsync(string userId, Guid organizationId, Guid? shiftId, SaveOrganizationShiftDto dto);

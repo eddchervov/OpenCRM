@@ -186,9 +186,13 @@ internal sealed class OrganizationClientPageReader(
                 userId, organizationId, OrganizationPermissionCodes.FinanceView)
             || await this._permissions.HasPermissionAsync(
                 userId, organizationId, OrganizationPermissionCodes.FinanceManage);
+        var currencyCode = await this._context.Organizations.AsNoTracking()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
         var financeByClient = canViewFinance
-            ? await this.LoadFinanceTotalsAsync(organizationId, clientIds)
-            : new Dictionary<Guid, (decimal Paid, decimal Debt)>();
+            ? await this.LoadFinanceTotalsAsync(organizationId, clientIds, currencyCode)
+            : new Dictionary<Guid, ClientFinanceTotals>();
 
         var responsibleDisplayNames = await this._readData.LoadResponsibleDisplayNamesAsync(
             organizationId, pagedClientRows.Select(x => x.ResponsibleUserId));
@@ -231,8 +235,10 @@ internal sealed class OrganizationClientPageReader(
                 VehiclesCount = client.VehiclesCount,
                 MaintenanceCount = client.MaintenanceCount,
                 LastMaintenanceDate = client.LastMaintenanceDate,
-                TotalPaidAmount = canViewFinance ? finance.Paid : null,
-                TotalDebtAmount = canViewFinance ? finance.Debt : null
+                TotalPaidAmount = canViewFinance ? finance?.Paid : null,
+                TotalDebtAmount = canViewFinance ? finance?.Debt : null,
+                CurrencyCode = currencyCode,
+                OtherCurrencyTotals = finance?.OtherCurrencyTotals ?? []
             };
         }).ToList();
 
@@ -251,9 +257,10 @@ internal sealed class OrganizationClientPageReader(
     }
 
     /// <summary> Загружает суммы оплат и долгов для клиентов текущей страницы. </summary>
-    private async Task<Dictionary<Guid, (decimal Paid, decimal Debt)>> LoadFinanceTotalsAsync(
+    private async Task<Dictionary<Guid, ClientFinanceTotals>> LoadFinanceTotalsAsync(
         Guid organizationId,
-        IReadOnlyCollection<Guid> clientIds)
+        IReadOnlyCollection<Guid> clientIds,
+        string currencyCode)
     {
         if (clientIds.Count == 0)
         {
@@ -270,6 +277,7 @@ internal sealed class OrganizationClientPageReader(
             .Select(maintenance => new
             {
                 ClientId = maintenance.BuyerClientId!.Value,
+                maintenance.CurrencyCode,
                 maintenance.Status,
                 maintenance.PaidAmount,
                 maintenance.DiscountAmount,
@@ -284,21 +292,49 @@ internal sealed class OrganizationClientPageReader(
                 && payment.Maintenance.Vehicle.OrganizationId == organizationId
                 && payment.Maintenance.BuyerClientId.HasValue
                 && clientIds.Contains(payment.Maintenance.BuyerClientId.Value))
-            .GroupBy(payment => payment.Maintenance.BuyerClientId!.Value)
-            .Select(group => new { ClientId = group.Key, Amount = group.Sum(payment => payment.Amount) })
-            .ToDictionaryAsync(item => item.ClientId, item => item.Amount);
+            .GroupBy(payment => new { ClientId = payment.Maintenance.BuyerClientId!.Value, payment.CurrencyCode })
+            .Select(group => new { group.Key.ClientId, group.Key.CurrencyCode, Amount = group.Sum(payment => payment.Amount) })
+            .ToDictionaryAsync(item => (item.ClientId, item.CurrencyCode), item => item.Amount);
 
         return maintenanceRows
             .GroupBy(maintenance => maintenance.ClientId)
-            .ToDictionary(
-                group => group.Key,
-                group => (
-                    Paid: Math.Round(paidByClient.GetValueOrDefault(group.Key), 2, MidpointRounding.AwayFromZero),
-                    Debt: Math.Round(group.Where(maintenance => maintenance.Status != MaintenanceStatus.Cancelled).Sum(maintenance => Math.Max(
-                        0,
-                        Math.Round(maintenance.GrossAmount, 2, MidpointRounding.AwayFromZero)
-                            - maintenance.DiscountAmount
-                            - maintenance.PaidAmount)), 2, MidpointRounding.AwayFromZero)));
+            .ToDictionary(group => group.Key, group =>
+            {
+                var currencyGroups = group.GroupBy(maintenance => maintenance.CurrencyCode).Select(currencyGroup => new
+                {
+                    CurrencyCode = currencyGroup.Key,
+                    Paid = Math.Round(paidByClient.GetValueOrDefault((group.Key, currencyGroup.Key)), 2, MidpointRounding.AwayFromZero),
+                    Debt = Math.Round(currencyGroup.Where(maintenance => maintenance.Status != MaintenanceStatus.Cancelled)
+                        .Sum(maintenance => Math.Max(0,
+                            Math.Round(maintenance.GrossAmount, 2, MidpointRounding.AwayFromZero)
+                                - maintenance.DiscountAmount - maintenance.PaidAmount)), 2, MidpointRounding.AwayFromZero)
+                }).ToList();
+                var primary = currencyGroups.FirstOrDefault(item => item.CurrencyCode == currencyCode);
+
+                return new ClientFinanceTotals
+                {
+                    Paid = primary?.Paid ?? 0,
+                    Debt = primary?.Debt ?? 0,
+                    OtherCurrencyTotals = currencyGroups.Where(item => item.CurrencyCode != currencyCode)
+                        .Select(item => new OrganizationClientCurrencyTotalsDto
+                        {
+                            CurrencyCode = item.CurrencyCode,
+                            TotalPaidAmount = item.Paid,
+                            TotalDebtAmount = item.Debt
+                        })
+                        .OrderBy(item => item.CurrencyCode)
+                        .ToList()
+                };
+            });
+    }
+
+    private sealed class ClientFinanceTotals
+    {
+        public decimal Paid { get; init; }
+
+        public decimal Debt { get; init; }
+
+        public IReadOnlyList<OrganizationClientCurrencyTotalsDto> OtherCurrencyTotals { get; init; } = [];
     }
 
     /// <summary> Применяет сортировку клиентов к запросу. </summary>

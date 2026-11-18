@@ -74,6 +74,10 @@ public class OrganizationClientDto
     /// <summary> Сумма оплат клиента, если пользователю разрешено просматривать финансы. </summary>
     public decimal? TotalPaidAmount { get; set; }
 
+    public string CurrencyCode { get; set; } = "RUB";
+
+    public IReadOnlyList<OrganizationClientCurrencyTotalsDto> OtherCurrencyTotals { get; set; } = [];
+
     /// <summary> Общий долг клиента, если пользователю разрешено просматривать финансы. </summary>
     public decimal? TotalDebtAmount { get; set; }
 

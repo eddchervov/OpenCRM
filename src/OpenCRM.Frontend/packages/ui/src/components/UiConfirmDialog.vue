@@ -1,6 +1,9 @@
 ﻿<script setup lang="ts">
 import UiButton from './UiButton.vue'
 import UiModal from './UiModal.vue'
+import { useLocalization } from '../i18n'
+
+const { t } = useLocalization()
 
 withDefaults(defineProps<{
   open?: boolean
@@ -12,10 +15,10 @@ withDefaults(defineProps<{
   tone?: 'danger' | 'default'
 }>(), {
   open: false,
-  title: 'Подтверждение',
+  title: '',
   message: '',
-  confirmText: 'Подтвердить',
-  cancelText: 'Отмена',
+  confirmText: '',
+  cancelText: '',
   busy: false,
   tone: 'default'
 })
@@ -27,17 +30,17 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UiModal :open="open" :title="title" @close="emit('close')">
+  <UiModal :open="open" :title="title || t('common.confirmation')" @close="emit('close')">
     <p class="ui-confirm-dialog__message">{{ message }}</p>
 
     <template #footer>
-      <UiButton variant="secondary" :disabled="busy" @click="emit('close')">{{ cancelText }}</UiButton>
+      <UiButton variant="secondary" :disabled="busy" @click="emit('close')">{{ cancelText || t('common.cancel') }}</UiButton>
       <UiButton
         :class="{ 'ui-confirm-dialog__danger': tone === 'danger' }"
         :disabled="busy"
         @click="emit('confirm')"
       >
-        {{ busy ? 'Выполняем...' : confirmText }}
+        {{ busy ? t('common.saving') : confirmText || t('common.confirm') }}
       </UiButton>
     </template>
   </UiModal>

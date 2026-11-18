@@ -132,10 +132,10 @@ public sealed partial class AdminSessionClient
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
 
-        var fileBytes = await AdminSessionClient.ReadReceiptFileAsync(content, cancellationToken);
+        var fileBytes = await this.ReadReceiptFileAsync(content, cancellationToken);
         if (fileBytes.Length == 0)
         {
-            throw new ArgumentException("Файл чека не может быть пустым.", nameof(content));
+            throw new ArgumentException(this.LocalizeFallback("Файл чека не может быть пустым."), nameof(content));
         }
 
         return await this.SendAuthorizedContentRequestAsync<AdminOperationResponse>(
@@ -284,7 +284,7 @@ public sealed partial class AdminSessionClient
 
             var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
                 ?? response.Content.Headers.ContentDisposition?.FileName
-                ?? "чек-нпд";
+                ?? this.LocalizeFallback("чек-нпд");
 
             return new AdminNpdReceiptFile(
                 await response.Content.ReadAsByteArrayAsync(cancellationToken),
@@ -297,7 +297,7 @@ public sealed partial class AdminSessionClient
         }
     }
 
-    private static async Task<byte[]> ReadReceiptFileAsync(Stream content, CancellationToken cancellationToken)
+    private async Task<byte[]> ReadReceiptFileAsync(Stream content, CancellationToken cancellationToken)
     {
         using var buffer = new MemoryStream();
         var chunk = new byte[81920];
@@ -311,7 +311,7 @@ public sealed partial class AdminSessionClient
 
             if (buffer.Length + bytesRead > 5_242_880)
             {
-                throw new ArgumentException("Размер файла должен быть не больше 5 МБ.", nameof(content));
+                throw new ArgumentException(this.LocalizeFallback("Размер файла должен быть не больше 5 МБ."), nameof(content));
             }
 
             await buffer.WriteAsync(chunk.AsMemory(0, bytesRead), cancellationToken);

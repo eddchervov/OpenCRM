@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { nextTick } from 'vue'
 import { UiButton } from '@opencrm/ui'
+import { formatLocaleDate, translate as t } from '@opencrm/ui/i18n'
+import '../schedulerCalendarMessages'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
 import SchedulerList from './SchedulerList.vue'
 import type { SchedulerCalendarItem } from '../utils/schedulerDay'
@@ -23,15 +25,19 @@ async function create() {
   await nextTick()
   emit('create', { date: props.date })
 }
+
+function formatDate(date: string) {
+  return formatLocaleDate(new Date(`${date.slice(0, 10)}T12:00:00Z`), { dateStyle: 'long', timeZone: 'UTC' })
+}
 </script>
 
 <template>
-  <SchedulerBookingDialog :open="open" :title="`Записи на ${new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(new Date(`${date}T12:00:00`))}`" @close="emit('close')">
+  <SchedulerBookingDialog :open="open" :title="t('schedulerCalendar.dayRecordsTitle', { date: formatDate(date) })" @close="emit('close')">
     <div class="scheduler-day-records">
       <SchedulerList :items="items" :organization-id="organizationId" :can-write="false" />
       <footer>
-        <UiButton variant="secondary" @click="openDay">Открыть день по постам</UiButton>
-        <UiButton v-if="canCreate" variant="primary" @click="create">Новая запись</UiButton>
+        <UiButton variant="secondary" @click="openDay">{{ t('schedulerCalendar.openDay') }}</UiButton>
+        <UiButton v-if="canCreate" variant="primary" @click="create">{{ t('schedulerCalendar.newRecord') }}</UiButton>
       </footer>
     </div>
   </SchedulerBookingDialog>

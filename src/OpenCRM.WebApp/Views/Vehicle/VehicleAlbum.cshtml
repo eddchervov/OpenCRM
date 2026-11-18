@@ -6,7 +6,7 @@
     var organizationId = ViewData["VehicleOrganizationId"] as string ?? string.Empty;
     var organizationName = ViewData["VehicleOrganizationName"] as string ?? string.Empty;
     var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
-    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? "Карточка техники";
+    var vehicleDisplayName = ViewData["VehicleDisplayName"] as string ?? Text["vehicle.card.detailsTitle"].Value;
     var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
         ? $"/vehicle/{vehicleId}"
         : $"/vehicle/{vehicleId}?organizationId={organizationId}";
@@ -15,13 +15,13 @@
         : $"/vehicle/{vehicleId}/albums?organizationId={organizationId}";
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? vehicleScenario.BreadcrumbTitle
+        ? Text["vehicle.list.title"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
+            : Text["vehicle.journal.organization"].Value;
     var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
-    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? vehicleScenario.BreadcrumbTitle : "Техника";
-    ViewData["Title"] = "Альбом техники";
+    var vehiclesBreadcrumbText = string.IsNullOrWhiteSpace(organizationId) ? Text["vehicle.list.title"].Value : Text["vehicle.journal.vehicle"].Value;
+    ViewData["Title"] = Text["vehicle.media.album.title"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = string.IsNullOrWhiteSpace(organizationId)
         ? "vehicle-card-page-body"
@@ -33,7 +33,24 @@
 </style>
 
 <div id="vehicle-form" class="vehicle-photo-manager-page">
-    <div id="vehicle-album-detail" class="vehicle-details-container vehicle-media-manager-container" v-cloak>
+    <div id="vehicle-album-detail" class="vehicle-details-container vehicle-media-manager-container" v-cloak
+         data-album-fallback-title="@Text["vehicle.media.album.defaultTitle"]"
+         data-delete-title-album="@Text["vehicle.media.album.deleteTitle.album"]"
+         data-delete-title-photo="@Text["vehicle.media.album.deleteTitle.photo"]"
+         data-delete-text-album="@Text["vehicle.media.album.deleteText.album"]"
+         data-delete-text-photo="@Text["vehicle.media.album.deleteText.photo"]"
+         data-error-load="@Text["vehicle.media.album.error.load"]"
+         data-error-max-size="@Text["vehicle.media.album.error.maxSize"]"
+         data-error-upload="@Text["vehicle.media.album.error.upload"]"
+         data-error-delete="@Text["vehicle.media.album.error.delete"]"
+         data-error-primary="@Text["vehicle.media.album.error.primary"]"
+         data-error-delete-photo="@Text["vehicle.media.album.error.deletePhoto"]"
+         data-open-photo-aria="@Text["vehicle.media.photos.openAria"]"
+         data-photo-alt="@Text["vehicle.media.album.photoAlt"]"
+         data-primary-title="@Text["vehicle.media.album.primary.title"]"
+         data-primary-set-title="@Text["vehicle.media.album.primary.setTitle"]"
+         data-cover-label="@Text["vehicle.media.album.cover"]"
+         data-set-cover-label="@Text["vehicle.media.album.setCover"]">
 
 
         <div class="vehicle-details-card vehicle-details-card-primary mb-4">
@@ -44,41 +61,41 @@
                             <i class="fa fa-folder-open"></i>
                             {{ albumTitle }}
                         </h3>
-                        <div class="text-muted small" v-if="album">{{ album.photoCount }} фото</div>
+                        <div class="text-muted small" v-if="album">@(Text["vehicle.media.album.photoCount"].Value.Replace("{0}", "{{ album.photoCount }}"))</div>
                         @if (!string.IsNullOrWhiteSpace(organizationName))
                         {
-                            <div class="text-muted small mt-2">Рабочее пространство: @organizationName</div>
+                            <div class="text-muted small mt-2">@Text["vehicle.media.albums.workspace"] @organizationName</div>
                         }
                     </div>
                     <button class="btn btn-outline-danger btn-sm" v-if="album" @@click="openDeleteAlbumModal">
                         <i class="fa fa-trash me-1"></i>
-                        Удалить альбом
+                        @Text["vehicle.media.album.delete"]
                     </button>
                 </div>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    Здесь загружаются фото внутри выбранного альбома техники. Загрузка фото в альбом: до 100 МБ за раз.
+                    @Text["vehicle.media.album.description"]
                 </div>
 
                 <div v-if="albumLoading" class="text-muted">
-                    <i class="fa fa-spinner fa-spin me-2"></i>Загружаем альбом...
+                    <i class="fa fa-spinner fa-spin me-2"></i>@Text["vehicle.media.album.loading"]
                 </div>
                 <template v-else-if="album">
                     <div class="d-flex flex-column flex-md-row gap-2 align-items-md-center justify-content-between mb-3">
-                        <div class="text-muted">Фото в альбоме: {{ album.photos.length }}</div>
+                        <div class="text-muted">@(Text["vehicle.media.album.photoCount"].Value.Replace("{0}", "{{ album.photos.length }}"))</div>
                         <label class="btn btn-dark mb-0" role="button" tabindex="0" :class="{ disabled: albumPhotoUploading }">
                             <i class="fa fa-spinner fa-spin me-2" v-if="albumPhotoUploading"></i>
                             <i class="fa fa-upload me-2" v-else></i>
-                            <span v-if="albumPhotoUploading">Загружаем...</span>
-                            <span v-else>Загрузить фото</span>
+                            <span v-if="albumPhotoUploading">@Text["vehicle.media.album.uploading"]</span>
+                            <span v-else>@Text["vehicle.media.album.upload"]</span>
                             <input type="file" class="visually-hidden" accept="image/*" multiple @@change="uploadAlbumPhotos" :disabled="albumPhotoUploading">
                         </label>
                     </div>
 
                     <div v-if="albumPhotoUploading" class="vehicle-upload-progress mb-3">
                         <i class="fa fa-spinner fa-spin me-2"></i>
-                        Загружаем фотографии в альбом. Это может занять несколько секунд.
+                        @Text["vehicle.media.album.loadingPhotos"]
                     </div>
 
                     <div class="vehicle-photo-grid vehicle-photo-grid-small" v-if="album.photos.length">
@@ -86,19 +103,19 @@
                              :class="{ 'vehicle-photo-tile-primary': photo.isPrimary }"
                              v-for="(photo, photoIndex) in album.photos"
                              :key="photo.photoId">
-                            <button type="button" class="vehicle-photo-open" @@click="openPhotoViewer(photoIndex)" :aria-label="'Открыть фото: ' + (photo.originalFileName || 'Фото техники')">
-                            <img :src="photo.url" :alt="photo.originalFileName || 'Фото альбома'">
-                            <span class="vehicle-photo-badge" v-if="photo.isPrimary">Главная альбома</span>
+                            <button type="button" class="vehicle-photo-open" @@click="openPhotoViewer(photoIndex)" :aria-label="photoOpenAria + (photo.originalFileName || photoAlt)">
+                            <img :src="photo.url" :alt="photo.originalFileName || photoAlt">
+                            <span class="vehicle-photo-badge" v-if="photo.isPrimary">@Text["vehicle.media.album.badge.primary"]</span>
                             </button>
                             <div class="vehicle-photo-actions">
                                 <button class="btn btn-sm"
                                         :class="photo.isPrimary ? 'btn-warning vehicle-photo-primary-action' : 'btn-light'"
                                         @@click.stop="setPrimaryAlbumPhoto(photo)"
                                         :disabled="photo.isPrimary"
-                                        :title="photo.isPrimary ? 'Это обложка альбома' : 'Сделать обложкой'">
-                                    <i class="fa fa-star" aria-hidden="true"></i><span>{{ photo.isPrimary ? 'Обложка' : 'На обложку' }}</span>
+                                        :title="photo.isPrimary ? primaryTitle : primarySetTitle">
+                                    <i class="fa fa-star" aria-hidden="true"></i><span>{{ photo.isPrimary ? coverLabel : setCoverLabel }}</span>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" aria-label="Удалить фото" @@click.stop="openDeleteAlbumPhotoModal(photo)" title="Удалить фото">
+                                <button class="btn btn-sm btn-outline-danger" aria-label="@Text["vehicle.media.album.deletePhoto.aria"]" @@click.stop="openDeleteAlbumPhotoModal(photo)" title="@Text["vehicle.media.album.deletePhoto.title"]">
                                     <i class="fa fa-trash"></i>
                                 </button>
                             </div>
@@ -106,12 +123,12 @@
                     </div>
                     <div v-else class="vehicle-photo-empty">
                         <i class="fa fa-image"></i>
-                        <div>В альбом еще не загружены фото</div>
+                        <div>@Text["vehicle.media.album.emptyPhotos"]</div>
                     </div>
                 </template>
                 <div v-else class="vehicle-photo-empty">
                     <i class="fa fa-exclamation-circle"></i>
-                    <div>Альбом не найден</div>
+                    <div>@Text["vehicle.media.album.notFound"]</div>
                 </div>
             </div>
         </div>
@@ -120,12 +137,12 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">Ошибка</h5>
+                        <h5 class="modal-title">@Text["vehicle.media.error.title"]</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">{{ errorMessage }}</div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.media.button.close"]</button>
                     </div>
                 </div>
             </div>
@@ -142,10 +159,10 @@
                         <p class="mb-0">{{ deleteModalText }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="deleteSaving">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="deleteSaving">@Text["vehicle.media.button.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="confirmDelete" :disabled="deleteSaving">
                             <i class="fa fa-spinner fa-spin me-2" v-if="deleteSaving"></i>
-                            Удалить
+                            @Text["vehicle.media.button.delete"]
                         </button>
                     </div>
                 </div>
@@ -165,15 +182,15 @@
                                     class="vehicle-photo-viewer-nav vehicle-photo-viewer-prev"
                                     @@click="showPreviousViewerPhoto"
                                     :disabled="!hasMultiplePhotos"
-                                    title="Предыдущее фото">
+                                    title="@Text["vehicle.media.album.previous"]">
                                 <i class="fa fa-chevron-left"></i>
                             </button>
-                            <img :src="currentViewerPhoto.url" :alt="currentViewerPhoto.originalFileName || 'Фото альбома'">
+                            <img :src="currentViewerPhoto.url" :alt="currentViewerPhoto.originalFileName || photoAlt">
                             <button type="button"
                                     class="vehicle-photo-viewer-nav vehicle-photo-viewer-next"
                                     @@click="showNextViewerPhoto"
                                     :disabled="!hasMultiplePhotos"
-                                    title="Следующее фото">
+                                    title="@Text["vehicle.media.album.next"]">
                                 <i class="fa fa-chevron-right"></i>
                             </button>
                         </div>
@@ -186,9 +203,9 @@
                             <button type="button" class="btn btn-outline-dark" @@click="downloadCurrentPhoto" :disabled="!currentViewerPhoto || photoDownloading">
                                 <i class="fa fa-spinner fa-spin me-2" v-if="photoDownloading"></i>
                                 <i class="fa fa-download me-2" v-else></i>
-                                Скачать
+                                @Text["vehicle.media.album.download"]
                             </button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.media.button.close"]</button>
                         </div>
                     </div>
                 </div>
@@ -227,8 +244,8 @@
                     <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@vehiclesBreadcrumbText</a></li>
                 }
                 <li class="breadcrumb-item"><a href="@vehicleUrl" class="text-decoration-none">@vehicleDisplayName</a></li>
-                <li class="breadcrumb-item"><a href="@albumsUrl" class="text-decoration-none">Альбомы</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><h1>Альбом</h1></li>
+                <li class="breadcrumb-item"><a href="@albumsUrl" class="text-decoration-none">@Text["vehicle.media.albums.title"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><h1>@Text["vehicle.media.album.title"]</h1></li>
             </ol>
         </nav>
 }

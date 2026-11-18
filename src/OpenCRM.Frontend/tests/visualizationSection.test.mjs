@@ -1,4 +1,6 @@
 import test from 'node:test'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import * as localization from '@opencrm/ui/i18n'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
@@ -57,12 +59,18 @@ function deferred() {
   return { promise, resolve }
 }
 
+const messageSource = readFileSync(new URL('../packages/workspace/src/visualizationMessages.ts', import.meta.url), 'utf8')
+const messageCode = ts.transpileModule(messageSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+new Function('require', 'exports', messageCode)(() => localization, {})
+
 function visualization({ loadDay, loadCatalog } = {}) {
   const watchers = []
   const lifecycle = []
   const calls = []
   const module = { exports: {} }
   const resolve = id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../visualizationMessages') return {}
     if (id === 'vue') return {
       ...vue,
       defineAsyncComponent: loader => loader,

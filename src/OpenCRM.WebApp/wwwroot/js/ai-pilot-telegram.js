@@ -1,6 +1,14 @@
 (function () {
     window.OpenCRMAssistantTelegram = {
         create: function (root, request) {
+
+            var uiMessages = JSON.parse(root.dataset.uiMessages || '{}');
+            function uiText(key, parameters) {
+                return (uiMessages[key] || key).replace(/\{(\w+)\}/g, function (_, name) {
+                    return parameters && parameters[name] !== undefined ? parameters[name] : '{' + name + '}';
+                });
+            }
+
             var dialog = root.querySelector('[data-telegram-dialog]');
             var openButton = root.querySelector('[data-telegram-connect]');
             var organizationId = root.dataset.organizationId;
@@ -27,17 +35,19 @@
             function formatDate(value) {
                 if (!value) return '—';
                 var date = new Date(value);
-                return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+                return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat(root.dataset.formatCulture || 'ru-RU', {
+                    dateStyle: 'short', timeStyle: 'short', timeZone: root.dataset.timeZoneId || 'UTC'
+                }).format(date);
             }
 
             function updateControls() {
                 openButton.disabled = !enabled || mutating;
-                openButton.textContent = status && status.isBound ? 'Telegram · подключён' : 'Telegram';
+                openButton.textContent = status && status.isBound ? uiText('telegramConnected') : 'Telegram';
                 root.querySelector('[data-telegram-close]').disabled = mutating;
                 root.querySelector('[data-telegram-refresh]').disabled = loading || mutating;
                 var linkButton = root.querySelector('[data-telegram-create-link]');
                 linkButton.disabled = loading || mutating || !canConnect || !status || !status.isConfigured;
-                linkButton.textContent = status && status.isBound ? 'Подключить другой аккаунт' : 'Подключить Telegram';
+                linkButton.textContent = status && status.isBound ? uiText('connectOther') : uiText('connectTelegram');
                 root.querySelector('[data-telegram-disconnect]').disabled = loading || mutating || !status || !status.isBound
                     || !root.querySelector('[data-telegram-disconnect-confirm]').checked;
                 root.querySelector('[data-telegram-disconnect-confirm]').disabled = loading || mutating;
@@ -48,17 +58,17 @@
             function renderStatus(value) {
                 var changed = !status || status.telegramUserId !== value.telegramUserId || status.connectedAt !== value.connectedAt;
                 status = value;
-                var statusText = value.isBound ? 'Аккаунт подключён' : 'Telegram не подключён';
+                var statusText = value.isBound ? uiText('accountConnected') : uiText('telegramNotConnected');
                 root.querySelector('[data-telegram-status]').textContent = statusText;
                 root.querySelector('[data-telegram-binding]').hidden = !value.isBound;
                 root.querySelector('[data-telegram-user-id]').textContent = value.telegramUserId || '—';
                 root.querySelector('[data-telegram-connected-at]').textContent = formatDate(value.connectedAt);
-                root.querySelector('[data-telegram-bot]').textContent = value.botUsername ? '@' + value.botUsername : 'Бот не настроен';
+                root.querySelector('[data-telegram-bot]').textContent = value.botUsername ? '@' + value.botUsername : uiText('botNotConfigured');
                 var selection = root.querySelector('[data-telegram-selection]');
                 selection.hidden = !value.isBound || value.isConnected;
                 selection.textContent = value.organizationId
-                    ? 'В боте сейчас выбрана другая организация. Сменить её можно командой /organizations в Telegram.'
-                    : 'В боте ещё не выбрана организация. Используйте команду /organizations в Telegram.';
+                    ? uiText('otherOrganization')
+                    : uiText('noOrganization');
                 root.querySelector('[data-telegram-unavailable]').hidden = canConnect && value.isConfigured;
                 root.querySelector('[data-telegram-disconnect-section]').hidden = !value.isBound;
                 root.querySelector('[data-telegram-team]').hidden = !value.canViewOrganizationConnections;
@@ -67,7 +77,7 @@
                     root.querySelector('[data-telegram-link-panel]').hidden = true;
                     root.querySelector('[data-telegram-link]').removeAttribute('href');
                     linkBaseline = null;
-                    message('Telegram подключён. Можно отправлять сообщения боту.', false);
+                    message(uiText('telegramReady'), false);
                 }
             }
 
@@ -82,30 +92,30 @@
                 (result.items || []).forEach(function (item) {
                     var row = document.createElement('li');
                     var name = document.createElement('strong');
-                    name.textContent = (item.userName || 'Сотрудник') + (item.isCurrentUser ? ' · Вы' : '');
+                    name.textContent = (item.userName || uiText('employee')) + (item.isCurrentUser ? uiText('youSuffix') : '');
                     var identity = document.createElement('span');
                     identity.textContent = 'Telegram ID: ' + item.telegramUserId;
                     var date = document.createElement('small');
-                    date.textContent = 'Подключён: ' + formatDate(item.connectedAt);
+                    date.textContent = uiText('connectedAt', { date: formatDate(item.connectedAt) });
                     row.append(name, identity, date);
                     list.appendChild(row);
                 });
                 root.querySelector('[data-telegram-team-empty]').hidden = result.items.length > 0;
-                root.querySelector('[data-telegram-team-page]').textContent = 'Страница ' + teamPage + ' из ' + teamPages;
+                root.querySelector('[data-telegram-team-page]').textContent = uiText('pageOf', { number: teamPage, total: teamPages });
                 root.querySelector('[data-telegram-team-pagination]').hidden = teamPages <= 1;
             }
 
             async function refresh(silent) {
                 if (loading || mutating) return;
                 loading = true;
-                if (!silent) message('Проверяем подключения…', false);
+                if (!silent) message(uiText('checkingConnections'), false);
                 updateControls();
                 try {
                     renderStatus(await request('telegram/status?' + query()));
                     if (dialog.open && status.canViewOrganizationConnections) await loadTeam();
                     if (!silent) message('', false);
                 } catch (error) {
-                    message(error.message || 'Не удалось проверить подключение Telegram.', true);
+                    message(error.message || uiText('checkTelegramFailed'), true);
                 } finally {
                     loading = false;
                     updateControls();
@@ -132,19 +142,19 @@
                 root.querySelector('[data-telegram-link-panel]').hidden = true;
                 root.querySelector('[data-telegram-link]').removeAttribute('href');
                 linkBaseline = null;
-                message('Создаём одноразовую ссылку…', false);
+                message(uiText('creatingLink'), false);
                 updateControls();
                 try {
                     var link = await request('telegram/link', { method: 'POST', body: { organizationId: organizationId } });
                     var url = new URL(link.url);
-                    if (url.protocol !== 'https:' || url.hostname !== 't.me') throw new Error('Сервер вернул некорректную ссылку Telegram.');
+                    if (url.protocol !== 'https:' || url.hostname !== 't.me') throw new Error(uiText('invalidLink'));
                     linkBaseline = { id: status.telegramUserId, connectedAt: status.connectedAt };
                     root.querySelector('[data-telegram-link]').href = url.href;
-                    root.querySelector('[data-telegram-link-expiry]').textContent = 'Ссылка действует до ' + formatDate(link.expiresAt);
+                    root.querySelector('[data-telegram-link-expiry]').textContent = uiText('linkExpiry', { date: formatDate(link.expiresAt) });
                     root.querySelector('[data-telegram-link-panel]').hidden = false;
-                    message('Откройте Telegram по ссылке и нажмите «Начать». После подключения вернитесь сюда.', false);
+                    message(uiText('telegramLinkHelp'), false);
                 } catch (error) {
-                    message(error.message || 'Не удалось создать ссылку подключения.', true);
+                    message(error.message || uiText('createLinkFailed'), true);
                 } finally {
                     mutating = false;
                     updateControls();
@@ -154,7 +164,7 @@
             root.querySelector('[data-telegram-disconnect]').addEventListener('click', async function () {
                 if (loading || mutating || !status || !status.isBound || !root.querySelector('[data-telegram-disconnect-confirm]').checked) return;
                 mutating = true;
-                message('Отключаем Telegram…', false);
+                message(uiText('disconnectingTelegram'), false);
                 updateControls();
                 try {
                     await request('telegram/binding?' + query(), { method: 'DELETE' });
@@ -163,9 +173,9 @@
                     linkBaseline = null;
                     renderStatus(await request('telegram/status?' + query()));
                     if (status.canViewOrganizationConnections) await loadTeam();
-                    message('Telegram отключён для вашего аккаунта. История разговоров сохранена.', false);
+                    message(uiText('telegramDisconnected'), false);
                 } catch (error) {
-                    message(error.message || 'Не удалось подтвердить отключение. Обновите состояние перед повтором.', true);
+                    message(error.message || uiText('disconnectFailed'), true);
                 } finally {
                     mutating = false;
                     updateControls();

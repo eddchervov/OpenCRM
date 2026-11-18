@@ -1,11 +1,18 @@
 <script setup lang="ts">
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import EmployeePicker from './EmployeePicker.vue'
 import { loadEmployees, type OrganizationEmployee } from '../api/employees'
 import { computed, nextTick, onMounted, ref, useId, watch } from 'vue'
-import { UiButton, UiInput } from '@opencrm/ui'
+import { UiButton, UiInput, useLocalization } from '@opencrm/ui'
+import '../maintenanceWorkMessages'
 import { loadScenarioCatalog, type WorkspaceScenarioCatalogItem } from '../api/scenarioCatalog'
 import { calculateServiceDuration, formatServiceDuration, type SelectedServiceBundle } from '../serviceDuration'
 import type { WorkspaceMaintenanceDetail } from '../api/maintenance'
+
+const workspaceCurrency = useWorkspaceCurrency()
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string; modelValue: WorkspaceMaintenanceDetail[]; disabled?: boolean; canAssignEmployees?: boolean; canOpenCatalog?: boolean; defaultVatRateCode?: string; plannedStartLocal?: string; plannedEndLocal?: string; appendTo?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: WorkspaceMaintenanceDetail[]], 'duration-change': [value: number | null | undefined], 'validation-cleared': [] }>()
@@ -54,14 +61,14 @@ const selectedPrice = computed(() => selectedServices.value.some(item => item.un
   ? null : selectedServices.value.reduce((sum, item) => sum + item.unitPrice!, 0))
 const selectedDuration = computed(() => calculateServiceDuration(
   selectedServices.value.map(item => ({ catalogItemId: item.id, name: item.name, quantity: 1 })), services.value, selectedBundles.value))
-const money = (value: number) => value.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' })
+const money = (value: number) => value.toLocaleString(formattingCulture.value, { style: 'currency', currency: workspaceCurrency.value })
 const unitPrice = (item: WorkspaceMaintenanceDetail) => item.price == null ? '' : String(Math.round(item.price / (item.quantity || 1) * 100) / 100)
 
 async function loadEmployeeOptions() {
   if (props.canAssignEmployees === false) return
   employeeError.value = ''
   try { employees.value = (await loadEmployees(props.organizationId)).items }
-  catch (e) { employeeError.value = e instanceof Error ? e.message : 'Не удалось загрузить сотрудников.' }
+  catch (e) { employeeError.value = e instanceof Error ? e.message : t('maintenanceWork.employeeLoadError') }
 }
 async function loadCatalog() {
   loading.value = true
@@ -70,7 +77,7 @@ async function loadCatalog() {
     const result = await loadScenarioCatalog(props.organizationId)
     services.value = result.services
     bundles.value = result.serviceBundles ?? []
-  } catch (e) { error.value = e instanceof Error ? e.message : 'Не удалось загрузить услуги.' }
+  } catch (e) { error.value = e instanceof Error ? e.message : t('maintenanceWork.catalogLoadError') }
   finally { loading.value = false }
 }
 function openMenu() {
@@ -225,7 +232,7 @@ function updatePriceDraft(index: number, event: Event) {
 }
 function serviceLabel(item?: WorkspaceMaintenanceDetail) {
   const name = item?.name.trim()
-  return name ? `услуги «${name}»` : 'работы'
+  return name ? t('maintenanceWork.namedService', { name }) : t('maintenanceWork.work')
 }
 function hasInvalidPrice(item: WorkspaceMaintenanceDetail) {
   return item.price == null || !Number.isFinite(item.price) || item.price < 0
@@ -238,22 +245,22 @@ function validate() {
     const index = row ? [...(root.value?.querySelectorAll('.service-editor__row') ?? [])].indexOf(row) : -1
     const item = index >= 0 ? props.modelValue[index] : undefined
     let field: 'name' | 'quantity' | 'price' | 'vat' | null = null
-    let message = 'Проверьте данные работы'
+    let message = t('maintenanceWork.checkWorkData')
     if (invalid.closest('.service-editor__name')) {
       field = 'name'
-      message = 'Укажите название работы'
+      message = t('maintenanceWork.nameRequired')
     }
     if (invalid.closest('.service-editor__quantity')) {
       field = 'quantity'
-      message = `Укажите корректное количество для ${serviceLabel(item)}`
+      message = t('maintenanceWork.quantityInvalid', { service: serviceLabel(item) })
     }
     if (invalid.closest('.service-editor__price')) {
       field = 'price'
-      message = `Укажите корректную цену ${serviceLabel(item)}`
+      message = t('maintenanceWork.priceInvalid', { service: serviceLabel(item) })
     }
     if (invalid.closest('.service-editor__vat')) {
       field = 'vat'
-      message = `Выберите ставку НДС для ${serviceLabel(item)}`
+      message = t('maintenanceWork.vatRequired', { service: serviceLabel(item) })
     }
     if (index >= 0 && field) {
       const errors = field === 'name' ? nameErrors : field === 'quantity' ? quantityErrors : field === 'price' ? priceErrors : vatErrors
@@ -265,7 +272,7 @@ function validate() {
     return `${message}.`
   }
 
-  if (!props.modelValue.length) return 'Добавьте хотя бы одну работу.'
+  if (!props.modelValue.length) return t('maintenanceWork.addAtLeastOne')
 
   const priceInputs = root.value?.querySelectorAll<HTMLInputElement>('.service-editor__price input') ?? []
   const quantityInputs = root.value?.querySelectorAll<HTMLInputElement>('.service-editor__quantity input') ?? []
@@ -291,7 +298,7 @@ function validate() {
   if (invalidLine >= 0) {
     const item = nextItems[invalidLine]
     const field = !item.name.trim() ? 'name' : !Number.isFinite(item.quantity ?? 1) || (item.quantity ?? 1) < 1 ? 'quantity' : hasInvalidPrice(item) ? 'price' : 'vat'
-    const message = field === 'name' ? 'Укажите название работы' : field === 'quantity' ? `Укажите корректное количество для ${serviceLabel(item)}` : field === 'price' ? `Укажите цену ${serviceLabel(item)}` : `Выберите ставку НДС для ${serviceLabel(item)}`
+    const message = field === 'name' ? t('maintenanceWork.nameRequired') : field === 'quantity' ? t('maintenanceWork.quantityInvalid', { service: serviceLabel(item) }) : field === 'price' ? t('maintenanceWork.priceInvalidShort', { service: serviceLabel(item) }) : t('maintenanceWork.vatRequired', { service: serviceLabel(item) })
     const errors = field === 'name' ? nameErrors : field === 'quantity' ? quantityErrors : field === 'price' ? priceErrors : vatErrors
     errors.value = { [invalidLine]: message }
     const selector = field === 'name' ? '.service-editor__name input' : field === 'quantity' ? '.service-editor__quantity input' : field === 'price' ? '.service-editor__price input' : '.service-editor__vat select'
@@ -346,108 +353,108 @@ onMounted(() => { void loadCatalog(); void loadEmployeeOptions() })
 <template>
   <div ref="root" class="service-editor">
     <div v-if="!disabled && modelValue.length > 1" class="service-editor__toolbar">
-      <UiButton variant="secondary" aria-haspopup="dialog" @click="openVatDialog">Изменить НДС для всех работ</UiButton>
+      <UiButton variant="secondary" aria-haspopup="dialog" @click="openVatDialog">{{ t('maintenanceWork.changeVatForAll') }}</UiButton>
     </div>
     <div v-for="(item, index) in modelValue" :key="index" class="service-editor__row">
       <div class="service-editor__heading">
-        <div class="service-editor__name" :tabindex="nameErrors[index] ? -1 : undefined" :aria-invalid="nameErrors[index] ? 'true' : undefined" :aria-describedby="nameErrors[index] ? `${componentId}-name-error-${index}` : undefined"><span v-if="item.catalogItemId"><small>Услуга</small><strong>{{ item.name }}</strong></span>
-          <label v-else>Название работы<input :id="`${componentId}-name-${index}`" :value="item.name" type="text" required :disabled="disabled" placeholder="Например, удаление следов клея" :aria-invalid="nameErrors[index] ? 'true' : undefined" :aria-describedby="nameErrors[index] ? `${componentId}-name-error-${index}` : undefined" @input="clearFieldError(index, 'name'); patch(index, { name: ($event.target as HTMLInputElement).value })" /></label>
+        <div class="service-editor__name" :tabindex="nameErrors[index] ? -1 : undefined" :aria-invalid="nameErrors[index] ? 'true' : undefined" :aria-describedby="nameErrors[index] ? `${componentId}-name-error-${index}` : undefined"><span v-if="item.catalogItemId"><small>{{ t('maintenanceWork.service') }}</small><strong>{{ item.name }}</strong></span>
+          <label v-else>{{ t('maintenanceWork.workName') }}<input :id="`${componentId}-name-${index}`" :value="item.name" type="text" required :disabled="disabled" :placeholder="t('maintenanceWork.workNamePlaceholder')" :aria-invalid="nameErrors[index] ? 'true' : undefined" :aria-describedby="nameErrors[index] ? `${componentId}-name-error-${index}` : undefined" @input="clearFieldError(index, 'name'); patch(index, { name: ($event.target as HTMLInputElement).value })" /></label>
           <span v-if="nameErrors[index]" :id="`${componentId}-name-error-${index}`" class="service-editor__field-error" role="alert">{{ nameErrors[index] }}</span>
         </div>
-        <div class="service-editor__sum"><small>Сумма</small><strong>{{ item.price == null ? '—' : money(item.price) }}</strong></div>
-        <button v-if="!disabled" type="button" class="service-editor__remove" :aria-label="`Удалить ${item.name}`"
+        <div class="service-editor__sum"><small>{{ t('maintenanceWork.amount') }}</small><strong>{{ item.price == null ? '—' : money(item.price) }}</strong></div>
+        <button v-if="!disabled" type="button" class="service-editor__remove" :aria-label="t('maintenanceWork.removeWork', { name: item.name })"
           @click="removeItem(index)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" /></svg></button>
       </div>
       <div class="service-editor__fields" :class="{ 'service-editor__fields--without-employee': canAssignEmployees === false }">
-        <EmployeePicker v-if="canAssignEmployees !== false" class="service-editor__employee" :organization-id="organizationId" :items="employees" :model-value="item.employeeId" :current-name="item.employeeName" :planned-start-local="plannedStartLocal" :planned-end-local="plannedEndLocal" :append-to="appendTo" empty-label="Как в записи" :disabled="disabled || !!employeeError" @update:model-value="patch(index, { employeeId: $event || null, employeeName: employees.find(employee => employee.id === $event)?.name ?? null })" />
+        <EmployeePicker v-if="canAssignEmployees !== false" class="service-editor__employee" :organization-id="organizationId" :items="employees" :model-value="item.employeeId" :current-name="item.employeeName" :planned-start-local="plannedStartLocal" :planned-end-local="plannedEndLocal" :append-to="appendTo" :empty-label="t('maintenanceWork.asScheduled')" :disabled="disabled || !!employeeError" @update:model-value="patch(index, { employeeId: $event || null, employeeName: employees.find(employee => employee.id === $event)?.name ?? null })" />
         <div v-else-if="item.employeeId || item.employeeName" class="service-editor__saved-employee">
-          <span>Сохранённое назначение</span>
-          <strong>{{ item.employeeName || 'Ранее назначенный сотрудник' }}</strong>
+          <span>{{ t('maintenanceWork.savedAssignment') }}</span>
+          <strong>{{ item.employeeName || t('maintenanceWork.previouslyAssigned') }}</strong>
         </div>
-        <label class="service-editor__quantity">Кол-во<input :id="`${componentId}-quantity-${index}`" :value="quantityDrafts.get(item) ?? item.quantity ?? 1" type="number" min="1" max="10000" step="1" required :disabled="disabled" :aria-invalid="quantityErrors[index] ? 'true' : undefined" :aria-describedby="quantityErrors[index] ? `${componentId}-quantity-error-${index}` : undefined" @input="updateQuantityDraft(index, $event)" @change="setQuantity(index, $event)" /><span v-if="quantityErrors[index]" :id="`${componentId}-quantity-error-${index}`" class="service-editor__field-error" role="alert">{{ quantityErrors[index] }}</span></label>
-        <label class="service-editor__price">Цена, ₽<input :id="`${componentId}-price-${index}`" :value="priceDrafts.get(item) ?? unitPrice(item)" type="number" min="0" max="999999999" step="0.01" required :disabled="disabled" :aria-invalid="priceErrors[index] ? 'true' : undefined" :aria-describedby="priceErrors[index] ? `${componentId}-price-error-${index}` : undefined" @input="updatePriceDraft(index, $event)" @change="setPrice(index, $event)" /><span v-if="priceErrors[index]" :id="`${componentId}-price-error-${index}`" class="service-editor__field-error" role="alert">{{ priceErrors[index] }}</span></label>
-        <label class="service-editor__vat">НДС<select :id="`${componentId}-vat-${index}`" :value="item.vatRateCode || defaultVatRateCode || ''" :required="!defaultVatRateCode" :disabled="disabled" :aria-invalid="vatErrors[index] ? 'true' : undefined" :aria-describedby="vatErrors[index] ? `${componentId}-vat-error-${index}` : undefined" @change="clearFieldError(index, 'vat'); patch(index, { vatRateCode: ($event.target as HTMLSelectElement).value || null })">
-          <option value="">Выберите</option><option value="without_vat">Без НДС</option><option value="0">0 %</option><option value="5">5 %</option><option value="7">7 %</option><option value="10">10 %</option><option value="20">20 %</option><option value="22">22 %</option>
+        <label class="service-editor__quantity">{{ t('maintenanceWork.quantity') }}<input :id="`${componentId}-quantity-${index}`" :value="quantityDrafts.get(item) ?? item.quantity ?? 1" type="number" min="1" max="10000" step="1" required :disabled="disabled" :aria-invalid="quantityErrors[index] ? 'true' : undefined" :aria-describedby="quantityErrors[index] ? `${componentId}-quantity-error-${index}` : undefined" @input="updateQuantityDraft(index, $event)" @change="setQuantity(index, $event)" /><span v-if="quantityErrors[index]" :id="`${componentId}-quantity-error-${index}`" class="service-editor__field-error" role="alert">{{ quantityErrors[index] }}</span></label>
+        <label class="service-editor__price">{{ t('maintenanceWork.price') }}, {{ workspaceCurrency }}<input :id="`${componentId}-price-${index}`" :value="priceDrafts.get(item) ?? unitPrice(item)" type="number" min="0" max="999999999" step="0.01" required :disabled="disabled" :aria-invalid="priceErrors[index] ? 'true' : undefined" :aria-describedby="priceErrors[index] ? `${componentId}-price-error-${index}` : undefined" @input="updatePriceDraft(index, $event)" @change="setPrice(index, $event)" /><span v-if="priceErrors[index]" :id="`${componentId}-price-error-${index}`" class="service-editor__field-error" role="alert">{{ priceErrors[index] }}</span></label>
+        <label class="service-editor__vat">{{ t('maintenanceWork.vat') }}<select :id="`${componentId}-vat-${index}`" :value="item.vatRateCode || defaultVatRateCode || ''" :required="!defaultVatRateCode" :disabled="disabled" :aria-invalid="vatErrors[index] ? 'true' : undefined" :aria-describedby="vatErrors[index] ? `${componentId}-vat-error-${index}` : undefined" @change="clearFieldError(index, 'vat'); patch(index, { vatRateCode: ($event.target as HTMLSelectElement).value || null })">
+          <option value="">{{ t('maintenanceWork.select') }}</option><option value="without_vat">{{ t('maintenanceWork.withoutVat') }}</option><option value="0">0 %</option><option value="5">5 %</option><option value="7">7 %</option><option value="10">10 %</option><option value="20">20 %</option><option value="22">22 %</option>
         </select><span v-if="vatErrors[index]" :id="`${componentId}-vat-error-${index}`" class="service-editor__field-error" role="alert">{{ vatErrors[index] }}</span></label>
       </div>
-      <details v-if="!disabled || item.description" class="service-description"><summary>Описание услуги</summary>
-        <textarea :value="item.description ?? ''" :disabled="disabled" rows="2" aria-label="Описание услуги" @change="patch(index, { description: ($event.target as HTMLTextAreaElement).value })" /></details>
+      <details v-if="!disabled || item.description" class="service-description"><summary>{{ t('maintenanceWork.serviceDescription') }}</summary>
+        <textarea :value="item.description ?? ''" :disabled="disabled" rows="2" :aria-label="t('maintenanceWork.serviceDescription')" @change="patch(index, { description: ($event.target as HTMLTextAreaElement).value })" /></details>
     </div>
-    <p v-if="employeeError" role="alert">{{ employeeError }} <button type="button" @click="loadEmployeeOptions">Повторить</button></p>
+    <p v-if="employeeError" role="alert">{{ employeeError }} <button type="button" @click="loadEmployeeOptions">{{ t('maintenanceWork.retry') }}</button></p>
     <div v-if="!disabled" class="service-editor__buttons">
-      <UiButton variant="secondary" @click="openMenu">＋ Выбрать услуги</UiButton>
-      <UiButton variant="secondary" @click="addCustom">＋ Произвольная работа</UiButton>
+      <UiButton variant="secondary" @click="openMenu">＋ {{ t('maintenanceWork.selectServices') }}</UiButton>
+      <UiButton variant="secondary" @click="addCustom">＋ {{ t('maintenanceWork.customWork') }}</UiButton>
     </div>
-    <dialog ref="vatDialog" class="service-vat-dialog" aria-label="НДС для всех работ" @close="allVatRate = ''" @click="($event.target === vatDialog) && vatDialog?.close()">
+    <dialog ref="vatDialog" class="service-vat-dialog" :aria-label="t('maintenanceWork.vatForAll')" @close="allVatRate = ''" @click="($event.target === vatDialog) && vatDialog?.close()">
       <header class="ui-form-header">
-        <h3>НДС для всех работ</h3>
-        <button type="button" aria-label="Закрыть настройку НДС" @click="vatDialog?.close()">×</button>
+        <h3>{{ t('maintenanceWork.vatForAll') }}</h3>
+        <button type="button" :aria-label="t('maintenanceWork.closeVatSettings')" @click="vatDialog?.close()">×</button>
       </header>
       <div class="service-vat-dialog__body">
-        <p>Выбранная ставка будет применена ко всем работам в записи: {{ modelValue.length }}.</p>
-        <label>Ставка НДС
+        <p>{{ t('maintenanceWork.vatApplied', { count: modelValue.length }) }}</p>
+        <label>{{ t('maintenanceWork.vatRate') }}
           <select v-model="allVatRate" autofocus :disabled="disabled">
-            <option disabled value="">Выберите ставку</option><option value="without_vat">Без НДС</option><option value="0">0 %</option><option value="5">5 %</option><option value="7">7 %</option><option value="10">10 %</option><option value="20">20 %</option><option value="22">22 %</option>
+            <option disabled value="">{{ t('maintenanceWork.selectVatRate') }}</option><option value="without_vat">{{ t('maintenanceWork.withoutVat') }}</option><option value="0">0 %</option><option value="5">5 %</option><option value="7">7 %</option><option value="10">10 %</option><option value="20">20 %</option><option value="22">22 %</option>
           </select>
         </label>
       </div>
       <footer>
-        <UiButton variant="secondary" @click="vatDialog?.close()">Отмена</UiButton>
-        <UiButton :disabled="disabled || !allVatRate || modelValue.length < 2" @click="setAllVat">Применить ко всем</UiButton>
+        <UiButton variant="secondary" @click="vatDialog?.close()">{{ t('maintenanceWork.cancel') }}</UiButton>
+        <UiButton :disabled="disabled || !allVatRate || modelValue.length < 2" @click="setAllVat">{{ t('maintenanceWork.applyToAll') }}</UiButton>
       </footer>
     </dialog>
-    <dialog ref="dialog" class="service-menu" aria-label="Услуги и наборы">
-      <header class="ui-form-header"><h3>Услуги и наборы</h3><button type="button" aria-label="Закрыть выбор услуг" @click="dialog?.close()">×</button></header>
-      <div class="service-menu__search"><UiInput v-model="search" label="Поиск" placeholder="Название услуги или набора" />
-        <div class="service-menu__tabs"><button type="button" :aria-pressed="tab === 'services'" @click="tab = 'services'">Услуги</button>
-          <button type="button" :aria-pressed="tab === 'bundles'" @click="tab = 'bundles'">Наборы</button>
-          <a v-if="canOpenCatalog" :href="`#catalog?catalog=${tab === 'bundles' ? 'service_bundle' : 'service'}`" target="_blank" rel="noopener" :aria-label="tab === 'bundles' ? 'Изменить наборы в справочнике (новая вкладка)' : 'Изменить услуги в справочнике (новая вкладка)'">Изменить ↗</a></div>
+    <dialog ref="dialog" class="service-menu" :aria-label="t('maintenanceWork.servicesAndBundles')">
+      <header class="ui-form-header"><h3>{{ t('maintenanceWork.servicesAndBundles') }}</h3><button type="button" :aria-label="t('maintenanceWork.closeServicePicker')" @click="dialog?.close()">×</button></header>
+      <div class="service-menu__search"><UiInput v-model="search" :label="t('maintenanceWork.search')" :placeholder="t('maintenanceWork.searchPlaceholder')" />
+        <div class="service-menu__tabs"><button type="button" :aria-pressed="tab === 'services'" @click="tab = 'services'">{{ t('maintenanceWork.services') }}</button>
+          <button type="button" :aria-pressed="tab === 'bundles'" @click="tab = 'bundles'">{{ t('maintenanceWork.bundles') }}</button>
+          <a v-if="canOpenCatalog" :href="`#catalog?catalog=${tab === 'bundles' ? 'service_bundle' : 'service'}`" target="_blank" rel="noopener" :aria-label="tab === 'bundles' ? t('maintenanceWork.editBundles') : t('maintenanceWork.editServices')">{{ t('maintenanceWork.edit') }} ↗</a></div>
       </div>
       <div class="service-menu__body">
-      <div class="service-menu__items" aria-label="Каталог услуг">
-        <p v-if="loading">Загружаем услуги…</p>
-        <p v-else-if="error" role="alert">{{ error }} <button type="button" @click="loadCatalog">Повторить</button></p>
-        <p v-else-if="!filtered.length">{{ tab === 'bundles' ? 'Наборы не найдены. Их можно создать в справочниках.' : 'Услуги не найдены.' }}</p>
+      <div class="service-menu__items" :aria-label="t('maintenanceWork.serviceCatalog')">
+        <p v-if="loading">{{ t('maintenanceWork.loadingServices') }}</p>
+        <p v-else-if="error" role="alert">{{ error }} <button type="button" @click="loadCatalog">{{ t('maintenanceWork.retry') }}</button></p>
+        <p v-else-if="!filtered.length">{{ tab === 'bundles' ? t('maintenanceWork.bundlesNotFound') : t('maintenanceWork.servicesNotFound') }}</p>
         <article v-for="item in loading || error ? [] : filtered" :key="item.id" class="service-menu__item" :class="{ muted: unavailable(item) || !missingIds(item).length, 'service-menu__item--selected': isSelected(item) && missingIds(item).length }">
           <div class="service-menu__item-heading">
             <label class="service-menu__choice">
               <input type="checkbox" :checked="!missingIds(item).length || isSelected(item)" :disabled="disabled || unavailable(item) || !missingIds(item).length" @change="toggle(item)" />
               <span><strong>{{ item.name }}</strong>
-                <small v-if="item.kindCode === 'service_bundle'">Услуг: {{ idsFor(item).length }}<template v-if="itemDuration(item)"> · {{ formatServiceDuration(itemDuration(item)!) }}</template></small>
+                <small v-if="item.kindCode === 'service_bundle'">{{ t('maintenanceWork.bundleServiceCount', { count: idsFor(item).length }) }}<template v-if="itemDuration(item)"> · {{ formatServiceDuration(itemDuration(item)!) }}</template></small>
                 <small v-else-if="item.durationMinutes">{{ formatServiceDuration(item.durationMinutes) }}</small>
-                <small v-if="unavailable(item)">Есть недоступные услуги</small><small v-else-if="!missingIds(item).length">Уже в записи</small>
+                <small v-if="unavailable(item)">{{ t('maintenanceWork.unavailableServices') }}</small><small v-else-if="!missingIds(item).length">{{ t('maintenanceWork.alreadyInRecord') }}</small>
               </span>
             </label>
-            <strong class="service-menu__price">{{ item.kindCode === 'service_bundle' ? (bundlePrice(item) == null ? 'Не все цены заданы' : money(bundlePrice(item)!)) : item.unitPrice == null ? 'Цена не задана' : money(item.unitPrice) }}</strong>
-            <button v-if="item.kindCode === 'service_bundle'" type="button" class="service-menu__expand" :aria-label="`Состав набора ${item.name}`" :aria-expanded="expandedBundles.includes(item.id)" @click="toggleExpanded(item.id)">{{ expandedBundles.includes(item.id) ? '⌃' : '⌄' }}</button>
+            <strong class="service-menu__price">{{ item.kindCode === 'service_bundle' ? (bundlePrice(item) == null ? t('maintenanceWork.pricesMissing') : money(bundlePrice(item)!)) : item.unitPrice == null ? t('maintenanceWork.priceMissing') : money(item.unitPrice) }}</strong>
+            <button v-if="item.kindCode === 'service_bundle'" type="button" class="service-menu__expand" :aria-label="t('maintenanceWork.bundleContents', { name: item.name })" :aria-expanded="expandedBundles.includes(item.id)" @click="toggleExpanded(item.id)">{{ expandedBundles.includes(item.id) ? '⌃' : '⌄' }}</button>
           </div>
           <p v-if="item.kindCode !== 'service_bundle' && item.description" class="service-menu__description">{{ item.description }}</p>
           <div v-if="item.kindCode === 'service_bundle' && expandedBundles.includes(item.id)" class="service-menu__composition">
-            <small>Стоимость по услугам набора</small>
+            <small>{{ t('maintenanceWork.bundlePriceBreakdown') }}</small>
             <div v-for="id in idsFor(item)" :key="id">
-              <span>{{ services.find(service => service.id === id)?.name ?? 'Недоступная услуга' }}<small v-if="addedIds.has(id)">Уже в записи</small></span>
+              <span>{{ services.find(service => service.id === id)?.name ?? t('maintenanceWork.unavailableService') }}<small v-if="addedIds.has(id)">{{ t('maintenanceWork.alreadyInRecord') }}</small></span>
               <small>{{ services.find(service => service.id === id)?.durationMinutes ? formatServiceDuration(services.find(service => service.id === id)!.durationMinutes!) : '—' }}</small>
               <span>{{ services.find(service => service.id === id)?.unitPrice == null ? '—' : money(services.find(service => service.id === id)!.unitPrice!) }}</span>
             </div>
           </div>
         </article>
       </div>
-      <aside class="service-menu__selection" aria-label="Выбранные услуги">
-        <h4 class="ui-section-header">Выбрано <span>{{ selectedServices.length }}</span></h4>
-        <p v-if="sharedServices.size" class="service-menu__shared" role="status">Общие услуги добавятся один раз. Для пересекающихся наборов длительность рассчитана по отдельным услугам.</p>
-        <p v-if="!selectedServices.length" class="service-menu__empty">Выберите услуги или набор в каталоге.</p>
+      <aside class="service-menu__selection" :aria-label="t('maintenanceWork.selectedServices')">
+        <h4 class="ui-section-header">{{ t('maintenanceWork.selected') }} <span>{{ selectedServices.length }}</span></h4>
+        <p v-if="sharedServices.size" class="service-menu__shared" role="status">{{ t('maintenanceWork.sharedServices') }}</p>
+        <p v-if="!selectedServices.length" class="service-menu__empty">{{ t('maintenanceWork.selectServicesHint') }}</p>
         <div v-for="item in selectedServices" :key="item.id" class="service-menu__selected-row">
-          <div><strong>{{ item.name }}</strong><small>{{ item.durationMinutes ? formatServiceDuration(item.durationMinutes) : 'Длительность не задана' }}</small><small v-if="sharedServices.has(item.id)">В {{ sharedServices.get(item.id) }} наборах · 1 раз</small></div>
+          <div><strong>{{ item.name }}</strong><small>{{ item.durationMinutes ? formatServiceDuration(item.durationMinutes) : t('maintenanceWork.durationMissing') }}</small><small v-if="sharedServices.has(item.id)">{{ t('maintenanceWork.includedInBundles', { count: sharedServices.get(item.id) }) }}</small></div>
           <span>{{ item.unitPrice == null ? '—' : money(item.unitPrice) }}</span>
-          <button type="button" :aria-label="`Убрать из выбора ${item.name}`" :disabled="disabled" @click="toggle(item)">×</button>
+          <button type="button" :aria-label="t('maintenanceWork.removeFromSelection', { name: item.name })" :disabled="disabled" @click="toggle(item)">×</button>
         </div>
         <dl v-if="selectedServices.length" class="service-menu__totals">
-          <div><dt>Сумма работ</dt><dd>{{ selectedPrice == null ? 'Не все цены заданы' : money(selectedPrice) }}</dd></div>
-          <div><dt>Длительность</dt><dd>{{ selectedDuration ? formatServiceDuration(selectedDuration) : 'Не задана полностью' }}</dd></div>
+          <div><dt>{{ t('maintenanceWork.workTotal') }}</dt><dd>{{ selectedPrice == null ? t('maintenanceWork.pricesMissing') : money(selectedPrice) }}</dd></div>
+          <div><dt>{{ t('maintenanceWork.duration') }}</dt><dd>{{ selectedDuration ? formatServiceDuration(selectedDuration) : t('maintenanceWork.durationIncomplete') }}</dd></div>
         </dl>
       </aside>
       </div>
-      <footer><span>Выбрано: {{ selectedServices.length }}<strong v-if="selectedServices.length && selectedPrice != null">{{ money(selectedPrice) }}</strong></span><div><UiButton variant="secondary" @click="dialog?.close()">Отмена</UiButton><UiButton :disabled="disabled || loading || !!error || !selectedServices.length" @click="addSelected">Добавить в запись</UiButton></div></footer>
+      <footer><span>{{ t('maintenanceWork.selected') }}: {{ selectedServices.length }}<strong v-if="selectedServices.length && selectedPrice != null">{{ money(selectedPrice) }}</strong></span><div><UiButton variant="secondary" @click="dialog?.close()">{{ t('maintenanceWork.cancel') }}</UiButton><UiButton :disabled="disabled || loading || !!error || !selectedServices.length" @click="addSelected">{{ t('maintenanceWork.addToRecord') }}</UiButton></div></footer>
     </dialog>
   </div>
 </template>

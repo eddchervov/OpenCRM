@@ -56,6 +56,9 @@ public class GetMaintenanceDto
     /// <summary> Общая стоимость обслуживания. </summary>
     public required decimal? Price { get; set; }
 
+    /// <summary> Валюта денежных сумм записи. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Сумма продажи до скидки.</summary>
     public decimal GrossAmount { get; set; }
 

@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/conversationMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -22,6 +24,7 @@ function inbox() {
   const module = { exports: {} }
   const props = vue.reactive({ context: { organization: { id: 'org' } }, conversationId: 'telegram-b' })
   const resolve = id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, watch() {}, onBeforeUnmount() {} }
     if (id === '../api/conversations') return { ConversationRequestError, conversationChannelName: value => value, loadClientInbox: async (_org, query) => { queries.push(query); const page = pages.shift(); if (page instanceof Error) throw page; return page } }
     if (id === '../composables/conversationUpdates') return { useConversationUpdates: () => ({ revision: vue.ref(''), unreadCount: vue.ref(0), connected: vue.ref(true) }) }

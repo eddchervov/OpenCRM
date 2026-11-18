@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../notificationMessages'
 import { computed } from 'vue'
 import type { TelegramNotificationRecord } from '../api/telegramNotifications'
 import type { MaxNotificationRecord } from '../api/maxNotifications'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ telegram: TelegramNotificationRecord[]; max: MaxNotificationRecord[]; timeZoneId?: string | null }>()
 const items = computed(() => [
   ...props.telegram.map(item => ({ ...item, channel: 'Telegram' })),
   ...props.max.map(item => ({ ...item, channel: 'MAX' }))
 ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime() || `${left.channel}:${left.id}`.localeCompare(`${right.channel}:${right.id}`)))
-const eventLabels: Record<string, string> = { booking_created: 'Запись создана', booking_changed: 'Запись перенесена', booking_cancelled: 'Запись отменена', ready: 'Автомобиль готов', booking_reminder: 'Напоминание о визите' }
-const statusLabels: Record<string, string> = { queued: 'Ожидает отправки', processing: 'Отправляется', retrying: 'Повторная попытка', sent: 'Принято', simulated: 'Проверка без отправки', failed: 'Ошибка отправки', skipped: 'Данные изменились — отправка отменена' }
-const date = (value: string) => new Intl.DateTimeFormat('ru-RU', {
+const eventLabels = computed<Record<string, string>>(() => ({ booking_created: t('notifications.bookingCreated'), booking_changed: t('notifications.bookingChanged'), booking_cancelled: t('notifications.bookingCancelled'), ready: t('notifications.vehicleReady'), booking_reminder: t('notifications.visitReminder') }))
+const statusLabels = computed<Record<string, string>>(() => ({ queued: t('notifications.awaitingSend'), processing: t('notifications.processing'), retrying: t('notifications.retrying'), sent: t('notifications.accepted'), simulated: t('notifications.testWithoutSending'), failed: t('notifications.sendError'), skipped: t('notifications.changedCancelled') }))
+const date = (value: string) => new Intl.DateTimeFormat(formattingCulture.value, {
   dateStyle: 'medium', timeStyle: 'short', timeZone: props.timeZoneId || 'UTC'
 }).format(new Date(value))
 </script>
@@ -21,7 +25,7 @@ const date = (value: string) => new Intl.DateTimeFormat('ru-RU', {
       <header><strong>{{ eventLabels[item.eventCode] ?? item.eventCode }}</strong><span class="maintenance-notifications__channel">{{ item.channel }}</span></header>
       <p>{{ item.body }}</p>
       <footer><span :class="{ 'maintenance-notifications__failed': item.status === 'failed' }">{{ statusLabels[item.status] ?? item.status }}{{ item.status === 'sent' ? ` ${item.channel}` : '' }}</span><time :datetime="item.sentAt ?? item.createdAt">{{ date(item.sentAt ?? item.createdAt) }}</time></footer>
-      <small v-if="item.status === 'failed' && item.errorCode">Код ошибки: {{ item.errorCode }}</small>
+      <small v-if="item.status === 'failed' && item.errorCode">{{ t('notifications.errorCode', { code: item.errorCode }) }}</small>
     </article>
   </div>
 </template>

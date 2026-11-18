@@ -183,7 +183,7 @@ internal sealed class WordDocumentComponents
 
         if (maintenance.Price.HasValue && maintenance.Price > 0)
         {
-            WordTableComponents.AddInfoRow(table, "Стоимость", FormatMoney(maintenance.Price.Value));
+            WordTableComponents.AddInfoRow(table, "Стоимость", FormatMoney(maintenance.Price.Value, maintenance.CurrencyCode));
         }
 
         body.AppendChild(table);
@@ -198,7 +198,7 @@ internal sealed class WordDocumentComponents
                 )
             ));
 
-            WordTableComponents.AddServicesTable(body, maintenance.MaintenanceDetails);
+            WordTableComponents.AddServicesTable(body, maintenance.MaintenanceDetails, currencyCode: maintenance.CurrencyCode);
         }
 
         if (!string.IsNullOrWhiteSpace(maintenance.Comment))
@@ -343,19 +343,22 @@ internal sealed class WordDocumentComponents
     }
 
     /// <summary> Добавляет блок статистики с количеством и суммой. </summary>
-    internal static void AddStatistics(Body body, int totalCount, decimal totalSpent)
+    internal static void AddStatistics(Body body, int totalCount, IReadOnlyDictionary<string, decimal> currencyTotals)
     {
         var table = WordTableComponents.CreateInfoTable();
         WordTableComponents.AddInfoRow(table, "Всего записей обслуживания", totalCount.ToString());
-        WordTableComponents.AddInfoRow(table, "Общие затраты", FormatMoney(totalSpent));
+        foreach (var currencyTotal in currencyTotals.OrderBy(total => total.Key))
+        {
+            WordTableComponents.AddInfoRow(table, $"Затраты, {currencyTotal.Key}", FormatMoney(currencyTotal.Value, currencyTotal.Key));
+        }
         body.AppendChild(table);
         AddSpacer(body, 120);
     }
 
     /// <summary> Форматирует денежное значение для отображения. </summary>
-    internal static string FormatMoney(decimal value)
+    internal static string FormatMoney(decimal value, string currencyCode = "RUB")
     {
-        return $"{value:N2} руб.";
+        return $"{value:N2} {currencyCode}";
     }
 
     /// <summary> Применяет настройки шрифта по умолчанию к документу. </summary>
@@ -411,7 +414,7 @@ internal sealed class WordDocumentComponents
 
         if (maintenance.Price.HasValue && maintenance.Price > 0)
         {
-            WordTableComponents.AddInfoRow(table, "Общая стоимость", FormatMoney(maintenance.Price.Value));
+            WordTableComponents.AddInfoRow(table, "Общая стоимость", FormatMoney(maintenance.Price.Value, maintenance.CurrencyCode));
         }
 
         body.AppendChild(table);

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
+import { useLocalization } from '../i18n'
+
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   src?: string | null
   title?: string
 }>(), {
   src: null,
-  title: 'Фото записи'
+  title: ''
 })
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
@@ -27,17 +30,17 @@ watch(() => props.src, async () => {
     <dialog
       ref="dialog"
       class="image-preview"
-      :aria-label="title"
+      :aria-label="title || t('common.photo')"
       @keydown.tab.prevent="closeButton?.focus()"
       @close="emit('close')"
       @click.self="dialog?.close()"
     >
       <div class="image-preview__content">
         <header class="image-preview__header">
-          <h2>{{ title }}</h2>
-          <button ref="closeButton" type="button" aria-label="Закрыть фото" autofocus @click="dialog?.close()">×</button>
+          <h2>{{ title || t('common.photo') }}</h2>
+          <button ref="closeButton" type="button" :aria-label="t('common.close')" autofocus @click="dialog?.close()">×</button>
         </header>
-        <img v-if="src" :src="src" :alt="title" class="image-preview__image">
+        <img v-if="src" :src="src" :alt="title || t('common.photo')" class="image-preview__image">
       </div>
     </dialog>
   </Teleport>

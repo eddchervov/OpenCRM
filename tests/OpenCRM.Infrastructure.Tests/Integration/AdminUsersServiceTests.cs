@@ -16,7 +16,7 @@ public sealed class AdminUsersServiceTests(NotificationFixture fixture) : IClass
         var foreignUser = new ApplicationUser { Email = $"foreign-{Guid.NewGuid():N}@example.test" };
         var organization = new Organization
         {
-            Name = "Организация пользователя", OwnerUser = owner,
+            Name = "Организация пользователя", OwnerUser = owner, CurrencyCode = "CNY",
             Members = [new OrganizationMember { User = owner, RoleCode = OrganizationRoleCodes.Owner }]
         };
         var foreignOrganization = new Organization
@@ -27,6 +27,13 @@ public sealed class AdminUsersServiceTests(NotificationFixture fixture) : IClass
         var vehicle = new Vehicle { User = owner, Organization = organization, Name = "Свой автомобиль" };
         var foreignVehicle = new Vehicle { User = foreignUser, Organization = foreignOrganization };
         context.Vehicles.AddRange(vehicle, foreignVehicle);
+        context.Maintenance.Add(new Maintenance
+        {
+            User = owner,
+            Vehicle = vehicle,
+            CurrencyCode = "CNY",
+            PaidAmount = 50m
+        });
         await context.SaveChangesAsync();
 
         var result = await new AdminUsersService(context).GetOverviewAsync(owner.Id);
@@ -34,6 +41,7 @@ public sealed class AdminUsersServiceTests(NotificationFixture fixture) : IClass
         Assert.NotNull(result);
         Assert.Equal(owner.Id, result.Profile.Id);
         Assert.Equal(vehicle.Id, Assert.Single(result.Vehicles).Id);
+        Assert.Equal("CNY", Assert.Single(result.Maintenances).CurrencyCode);
         Assert.Contains(result.Organizations, item => item.OrganizationId == organization.Id);
         Assert.DoesNotContain(result.Organizations, item => item.OrganizationId == foreignOrganization.Id);
         Assert.Null(await new AdminUsersService(context).GetOverviewAsync("missing-user"));

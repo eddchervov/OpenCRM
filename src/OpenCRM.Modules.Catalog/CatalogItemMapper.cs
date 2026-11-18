@@ -16,6 +16,7 @@ internal static class CatalogItemMapper
         Name = item.Name,
         Description = item.Description,
         UnitPrice = item.UnitPrice,
+        CurrencyCode = item.CurrencyCode,
         DurationMinutes = item.DurationMinutes,
         ServiceIds = item.BundleItems.OrderBy(value => value.Position).Select(value => value.ServiceId).ToArray(),
         DocumentKindCode = item.DocumentKindCode,

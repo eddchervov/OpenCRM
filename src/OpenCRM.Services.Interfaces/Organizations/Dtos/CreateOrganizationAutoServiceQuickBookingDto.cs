@@ -11,6 +11,10 @@ public class CreateOrganizationAutoServiceQuickBookingDto
     [MaxLength(24)]
     public string RegistrationPlate { get; set; } = string.Empty;
 
+    /// <summary> Страна регистрации автомобиля по ISO 3166-1 alpha-2. </summary>
+    [MaxLength(2)]
+    public string? RegistrationCountryCode { get; set; }
+
     /// <summary> Явно разрешает иностранный или другой нестандартный формат номера. </summary>
     public bool AllowOtherRegistrationPlateFormat { get; set; }
 

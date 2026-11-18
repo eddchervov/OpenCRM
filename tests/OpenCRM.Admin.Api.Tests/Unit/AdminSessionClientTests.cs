@@ -21,6 +21,73 @@ public sealed class AdminSessionClientTests
     }
 
     [Fact]
+    public async Task LoginPreservesServerErrorMessageWithoutCyrillicCharacters()
+    {
+        using var client = CreateClient((_, _) => JsonResponse(HttpStatusCode.Forbidden, new { message = "Access denied." }));
+        using var session = new AdminSessionClient(client) { UiLanguage = "en" };
+
+        var exception = await Assert.ThrowsAsync<ApiException>(() => session.LoginAsync("contact@example.invalid", "password"));
+
+        Assert.Equal("Access denied.", exception.Message);
+        Assert.Equal(HttpStatusCode.Forbidden, exception.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("en", "The email or password is incorrect, or the session has expired.")]
+    [InlineData("zh-Hans", "邮箱或密码错误，或者会话已过期。")]
+    public async Task LoginLocalizesFallbackWhenServerDoesNotReturnMessage(string language, string expected)
+    {
+        using var client = CreateClient((_, _) => JsonResponse(HttpStatusCode.Unauthorized, new { message = " " }));
+        using var session = new AdminSessionClient(client) { UiLanguage = language };
+
+        var exception = await Assert.ThrowsAsync<ApiException>(() => session.LoginAsync("contact@example.invalid", "password"));
+
+        Assert.Equal(expected, exception.Message);
+    }
+
+    [Theory]
+    [InlineData("en", "Could not load the administration dashboard.")]
+    [InlineData("zh-Hans", "无法加载管理仪表盘。")]
+    public async Task AuthorizedRouteFallbackUsesSelectedLanguageAndPreservesStatus(string language, string expected)
+    {
+        using var client = CreateClient((request, _) => request.RequestUri!.AbsolutePath switch
+        {
+            "/api/v1/auth/login" => JsonResponse(HttpStatusCode.OK, CreateTokens()),
+            "/api/v1/admin/current-user" => JsonResponse(HttpStatusCode.OK, CreateProfile()),
+            _ => JsonResponse(HttpStatusCode.ServiceUnavailable, new { message = "" })
+        });
+        using var session = new AdminSessionClient(client) { UiLanguage = language };
+        await session.LoginAsync("contact@example.invalid", "password");
+
+        var exception = await Assert.ThrowsAsync<ApiException>(() => session.GetDashboardAsync(1));
+
+        Assert.Equal(expected, exception.Message);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
+        Assert.True(session.HasSession);
+    }
+
+    [Theory]
+    [InlineData("en", "The quantity must be between 1 and 100.", "Select a file between 1 byte and 10 MB.")]
+    [InlineData("zh-Hans", "数量必须在 1 至 100 之间。", "请选择大小在 1 字节至 10 MB 之间的文件。")]
+    public async Task LocalValidationUsesSelectedLanguageWithoutSendingInvalidRequests(
+        string language,
+        string expectedCountMessage,
+        string expectedFileMessage)
+    {
+        using var client = CreateClient((_, _) => throw new InvalidOperationException("Недопустимый запрос не должен отправляться."));
+        using var session = new AdminSessionClient(client) { UiLanguage = language };
+
+        var countError = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => session.GenerateTestVehiclesAsync(Guid.NewGuid(), 0));
+        var fileError = await Assert.ThrowsAsync<ArgumentException>(() => session.CreateCrmImportPreviewAsync(
+            "fictional-user", Guid.NewGuid(), "empty.csv", [], default));
+
+        Assert.StartsWith(expectedCountMessage, countError.Message);
+        Assert.Equal("count", countError.ParamName);
+        Assert.StartsWith(expectedFileMessage, fileError.Message);
+        Assert.Equal("content", fileError.ParamName);
+    }
+
+    [Fact]
     public async Task LoginRevokesTokenAndRejectsForbiddenProfile()
     {
         var revokeCalled = false;

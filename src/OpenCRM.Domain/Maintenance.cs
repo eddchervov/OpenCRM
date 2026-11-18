@@ -6,6 +6,8 @@ namespace OpenCRM.Domain;
 /// <summary> Запись об обслуживании техники. </summary>
 public class Maintenance
 {
+    /// <summary>Код валюты денежных значений обслуживания на момент создания.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     /// <summary> Идентификатор записи. </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 

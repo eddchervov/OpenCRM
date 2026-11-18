@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -26,9 +27,16 @@ public partial class CrmImportViewModel(AdminSessionClient sessionClient) : Comm
     public bool HasResult => this.Result != null;
     public bool HasResultReport => this.Result != null || this.Preview?.AlreadyImported == true;
     public string Summary => this.Preview is not { } preview ? string.Empty
-        : $"Клиенты: {preview.Summary.Clients} · Техника: {preview.Summary.Vehicles} · К добавлению: {preview.Summary.Create} · Дубли: {preview.Summary.Duplicate} · Ошибки: {preview.Summary.Error}";
+        : AdminLocalization.Instance.Format("native.crmImport.klienty.preview.summary.clients.tekhnika.preview.summary.vehicle", preview.Summary.Clients, preview.Summary.Vehicles, preview.Summary.Create, preview.Summary.Duplicate, preview.Summary.Error);
     public string ResultSummary => this.Result is not { } result ? string.Empty
-        : $"Добавлено клиентов: {result.CreatedClients} · Техники: {result.CreatedVehicles} · Пропущено дублей: {result.SkippedDuplicates} · Ошибки: {result.Errors}";
+        : AdminLocalization.Instance.Format("native.crmImport.dobavleno.klientov.result.createdclients.tekhniki.result.created", result.CreatedClients, result.CreatedVehicles, result.SkippedDuplicates, result.Errors);
+
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        this.OnPropertyChanged(nameof(this.Summary));
+        this.OnPropertyChanged(nameof(this.ResultSummary));
+    }
 
     public void SetFile(string name, byte[] content)
     {
@@ -39,7 +47,7 @@ public partial class CrmImportViewModel(AdminSessionClient sessionClient) : Comm
 
         if (content.Length is 0 or > 10 * 1024 * 1024)
         {
-            this.ErrorMessage = "Выберите файл размером от 1 байта до 10 МБ.";
+            this.ErrorMessage = AdminLocalization.Instance["native.crmImport.vyberite.fayl.razmerom.ot.1.bayta.do.10.mb"];
             return;
         }
 

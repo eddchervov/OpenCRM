@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/notificationMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -29,6 +31,8 @@ function setup({ channel = 'telegram', canWrite = true, load = async () => statu
     api[`disconnect${provider}Client`] = (...args) => { calls.push(['disconnect', provider, ...args]); return disconnect(...args) }
   }
   const resolve = id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../notificationMessages' || id === '@opencrm/workspace/notificationMessages') return {}
     if (id === 'vue') return { ...vue, onBeforeUnmount: callback => { unmount = callback } }
     if (id.startsWith('../api/')) return api
     return {}

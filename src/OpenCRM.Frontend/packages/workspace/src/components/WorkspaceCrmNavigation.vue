@@ -1,9 +1,31 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue'
+import { useLocalization } from '@opencrm/ui'
+import '../workspaceChromeMessages'
+import { workspaceGroupKey, workspaceLabelKey } from '../workspaceChromeMessages'
 
 export type CrmSection = { code: string, title: string, groupTitle?: string, targetCode?: string, unreadCount?: number, isAvailable?: boolean, unavailableMessage?: string | null }
 const props = defineProps<{ sections: CrmSection[], activeSection: string, compact?: boolean, showProBadges?: boolean }>()
 const emit = defineEmits<{ select: [code: string] }>()
+const { t, te } = useLocalization()
+function sectionTitle(section: CrmSection): string {
+  const key = workspaceLabelKey(section.code)
+  return te(key) ? t(key) : section.title
+}
+
+function groupTitle(title: string): string {
+  const key = workspaceGroupKey(title)
+  return key && te(key) ? t(key) : title
+}
+
+function sectionTooltip(section: CrmSection): string {
+  const title = sectionTitle(section)
+  if (section.isAvailable === false) {
+    return props.showProBadges ? `${title} · ${t('workspaceChrome.availableInPro')}` : section.unavailableMessage || t('workspaceChrome.unavailable')
+  }
+
+  return props.compact ? `${title}${section.unreadCount ? ` · ${t('workspaceChrome.unread', { count: section.unreadCount })}` : ''}` : ''
+}
 const groups = computed(() => {
   const result = new Map<string, CrmSection[]>()
   const sections = props.sections.filter(section => section.code !== 'members')
@@ -39,21 +61,21 @@ const icons: Record<string, string> = {
 </script>
 
 <template>
-  <nav class="crm-navigation" :class="{ 'crm-navigation--compact': compact }" aria-label="Разделы организации">
+  <nav class="crm-navigation" :class="{ 'crm-navigation--compact': compact }" :aria-label="t('common.workspace')">
     <div v-for="group in groups" :key="group.title" class="crm-navigation__group">
-      <p v-if="group.title" class="crm-navigation__label">{{ group.title }}</p>
+      <p v-if="group.title" class="crm-navigation__label">{{ groupTitle(group.title) }}</p>
       <template v-for="section in group.sections" :key="section.code">
         <a
           :href="`#${section.targetCode ?? section.code}`"
           :aria-current="section.code === activeSection || (section.code === 'employees' && activeSection === 'members') ? 'page' : undefined"
-          :title="section.isAvailable === false ? showProBadges ? `${section.title} · Доступно в PRO` : section.unavailableMessage || 'Функция недоступна' : compact ? section.title + (section.unreadCount ? ` · Непрочитанных: ${section.unreadCount}` : '') : undefined"
+          :title="sectionTooltip(section) || undefined"
           :class="{ 'crm-navigation__locked': section.isAvailable === false }"
           @click.prevent="emit('select', section.targetCode ?? section.code)"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="icons[section.code] ?? icons.catalog" /></svg>
-          <span>{{ section.code === 'settings' ? 'Настройки организации' : section.title }}</span>
-          <small v-if="showProBadges && section.isAvailable === false" class="crm-navigation__pro" aria-label="Доступно в PRO">PRO</small>
-          <strong v-if="section.unreadCount" class="crm-navigation__badge" :aria-label="'Непрочитанных: ' + section.unreadCount">{{ section.unreadCount > 99 ? '99+' : section.unreadCount }}</strong>
+          <span>{{ sectionTitle(section) }}</span>
+          <small v-if="showProBadges && section.isAvailable === false" class="crm-navigation__pro" :aria-label="t('workspaceChrome.availableInPro')">PRO</small>
+          <strong v-if="section.unreadCount" class="crm-navigation__badge" :aria-label="t('workspaceChrome.unread', { count: section.unreadCount })">{{ section.unreadCount > 99 ? '99+' : section.unreadCount }}</strong>
         </a>
       </template>
     </div>

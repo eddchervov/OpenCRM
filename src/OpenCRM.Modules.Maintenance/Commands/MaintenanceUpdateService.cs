@@ -109,8 +109,14 @@ internal sealed class MaintenanceUpdateService(
         Guid maintenanceId,
         UpdateMaintenanceVatRatesDto dto)
     {
+        await this._transaction.LockOrganizationAsync(organizationId);
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.FinanceManage);
         var maintenance = await this._maintenanceOrderLoader.LockMaintenanceAsync(userId, organizationId, maintenanceId);
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         if (dto.Version != maintenance.Version)
         {
             throw new InvalidOperationException("Заказ уже изменён. Обновите карточку.");
@@ -159,6 +165,11 @@ internal sealed class MaintenanceUpdateService(
         await this._transaction.LockOrganizationAsync(organizationId);
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.MaintenanceEdit);
         var maintenance = await this._maintenanceOrderLoader.LockMaintenanceAsync(userId, organizationId, maintenanceId);
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         if (dto.Version != maintenance.Version)
         {
             throw new InvalidOperationException("Запись уже изменена. Обновите карточку и проверьте состав услуг.");
@@ -234,6 +245,21 @@ internal sealed class MaintenanceUpdateService(
         await this._transaction.LockOrganizationAsync(organizationId);
         await this._maintenanceAccess.EnsureCanWriteWorkspaceAsync(userId, organizationId, OrganizationPermissionCodes.MaintenanceEdit);
 
+        TimeZoneInfo? organizationTimeZone = null;
+        string? organizationCurrencyCode = null;
+        if (organizationId.HasValue)
+        {
+            var organizationSettings = await context.Organizations
+                .Where(organization => organization.Id == organizationId.Value)
+                .Select(organization => new { organization.ShiftTimeZoneId, organization.CurrencyCode })
+                .SingleAsync();
+            organizationCurrencyCode = organizationSettings.CurrencyCode;
+            if (!string.IsNullOrWhiteSpace(organizationSettings.ShiftTimeZoneId))
+            {
+                organizationTimeZone = TimeZoneInfo.FindSystemTimeZoneById(organizationSettings.ShiftTimeZoneId);
+            }
+        }
+
         var maintenance = await maintenanceRepository.GetById(userId, organizationId, maintenanceId)
             ?? throw new Exception($"Не найдено обслуживание с maintenanceId={maintenanceId} и userId={userId}");
 
@@ -242,6 +268,10 @@ internal sealed class MaintenanceUpdateService(
         if (maintenance.IsDeleted)
         {
             throw new InvalidOperationException("Обслуживание не найдено.");
+        }
+        if (organizationCurrencyCode != null)
+        {
+            MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         }
 
         await MaintenanceDetailsLoader.ReloadAsync(context, maintenance);
@@ -297,7 +327,12 @@ internal sealed class MaintenanceUpdateService(
         maintenance.ReplaceDetails(details);
         MaintenanceMoneyRules.ApplyFinancialFields(maintenance, dto.DiscountAmount, organizationId.HasValue ? maintenance.PaidAmount : dto.PaidAmount, dto.LaborCostAmount);
         MaintenanceDateRules.ApplyStatusAndDates(maintenance, dto.Status, dto.PlannedDate, dto.CompletedDate);
-        MaintenanceDateRules.ApplyPlannedTime(maintenance, dto.PlannedStartTime, dto.PlannedEndTime, dto.PlannedEndDate ?? maintenance.PlannedEndDate);
+        MaintenanceDateRules.ApplyPlannedTime(
+            maintenance,
+            dto.PlannedStartTime,
+            dto.PlannedEndTime,
+            dto.PlannedEndDate ?? maintenance.PlannedEndDate,
+            organizationTimeZone);
         await this._maintenanceSlotGuard.EnsureCanAssignLocationAsync(
             organizationId,
             maintenance.Location,

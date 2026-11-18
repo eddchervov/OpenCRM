@@ -9,11 +9,49 @@ using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
+[Collection("Admin localization")]
 public sealed class RolesTests
 {
+    [Fact]
+    public async Task CachedNetworkErrorChangesLanguageWithoutReloadingOrClearingSearch()
+    {
+        var localization = AdminLocalization.Instance;
+        var previousLanguage = localization.Language;
+        var preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-role-error-language-{Guid.NewGuid():N}.txt");
+        using var preference = localization.UsePreferencePath(preferencePath);
+        using var handler = new RolesApiHandler { FailRoleList = true };
+        using var client = await RolesTests.CreateClientAsync(handler);
+        var model = new RolesViewModel(client);
+
+        try
+        {
+            localization.Language = "en";
+            await model.ActivateAsync();
+            model.MemberSearch = "keep search";
+            var requests = handler.Requests;
+            var english = model.ErrorMessage;
+            Assert.True(model.HasError);
+
+            localization.Language = "zh-Hans";
+            model.RefreshLocalizedValues();
+
+            Assert.NotEqual(english, model.ErrorMessage);
+            Assert.Equal(localization["native.roles.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori"], model.ErrorMessage);
+            Assert.Equal(requests, handler.Requests);
+            Assert.Equal("keep search", model.MemberSearch);
+        }
+        finally
+        {
+            await model.DeactivateAsync(true);
+            localization.Language = previousLanguage;
+            File.Delete(preferencePath);
+        }
+    }
+
     [Fact]
     public async Task PermissionDependenciesAndLockedRoleAreEnforcedAndEditableRoleCanBeSaved()
     {
@@ -228,6 +266,8 @@ public sealed class RolesTests
 
     private sealed class RolesApiHandler : HttpMessageHandler
     {
+        public int Requests { get; private set; }
+
         public bool DelayMembers { get; init; }
 
         public bool DelayManagerMembers { get; init; }
@@ -256,6 +296,7 @@ public sealed class RolesTests
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            this.Requests++;
             var path = request.RequestUri!.AbsolutePath;
             if (path == "/api/v1/auth/login")
             {

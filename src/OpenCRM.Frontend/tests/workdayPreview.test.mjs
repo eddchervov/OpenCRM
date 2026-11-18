@@ -1,9 +1,14 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/maintenanceCardMessages.ts'
+import '../packages/workspace/src/workdayPreviewMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
+import { parseDateOnly } from '../packages/ui/src/dateOnly.ts'
+import { formattingCulture, i18n } from '@opencrm/ui/i18n'
 
 const filename = new URL('../packages/workspace/src/components/WorkspaceWorkdayPreview.vue', import.meta.url)
 const { descriptor } = parse(readFileSync(filename, 'utf8'))
@@ -12,24 +17,27 @@ const code = ts.transpileModule(script.content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
-function preview(api = {}) {
+function preview(api = {}, organizationCurrencyCode = 'RUB') {
   const hooks = {}
   const module = { exports: {} }
   const document = { body: { style: { overflow: 'auto' } } }
   const resolve = id => {
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return {
       ...vue,
       onMounted: hook => { hooks.mount = hook },
       onBeforeUnmount: hook => { hooks.unmount = hook }
     }
-    if (id === '@opencrm/ui') return {}
+    if (id === '@opencrm/ui') return { parseDateOnly }
+    if (id === '../maintenanceCardMessages') return {}
+    if (id === '../workdayPreviewMessages') return {}
     if (id === '../utils/vehicleBrandLogo') return { getVehicleBrandLogo: () => null }
     if (id === '../api/maintenance') return api
     throw new Error('Не задана зависимость: ' + id)
   }
   new Function('require', 'module', 'exports', 'document', code)(resolve, module, module.exports, document)
   const props = {
-    context: { organization: { id: 'org-1' } },
+    context: { organization: { id: 'org-1', currencyCode: organizationCurrencyCode } },
     item: { id: 'order-1', workTotalCount: 2, workCompletedCount: 1 }
   }
   const events = []
@@ -68,6 +76,18 @@ test('Переплата отображается отдельно от долг
   assert.equal(state.balanceAmount.value, 500)
 })
 
+test('Предпросмотр сохраняет валюту заказа и предупреждает при отличии валюты организации', async () => {
+  const { state } = preview({ loadMaintenance: async () => ({
+    currencyCode: 'RUB', grossAmount: 2000, discountAmount: 100, paidAmount: 500,
+    debtAmount: 1400, maintenanceDetails: []
+  }) }, 'CNY')
+  await state.load()
+
+  assert.equal(state.workspaceCurrency.value, 'RUB')
+  assert.equal(state.isHistoricalCurrencyReadOnly.value, true)
+  assert.match(state.historicalCurrencyReadOnlyMessage.value, /RUB.*CNY/)
+})
+
 test('Ответ закрытого окна не меняет данные и восстанавливает прокрутку страницы', async () => {
   const pending = deferred()
   const { state, hooks, document } = preview({ loadMaintenance: () => pending.promise, loadMaintenancePhotos: async () => [] })
@@ -97,6 +117,25 @@ test('Ошибка фото не скрывает заказ и доступен
   assert.equal(state.error.value, '')
   assert.equal(state.maintenance.value.id, 'order-1')
   assert.ok(state.photoError.value)
+})
+
+test('Предпросмотр переводит статусы и использует выбранный формат даты', () => {
+  const originalLocale = i18n.global.locale.value
+  const originalCulture = formattingCulture.value
+  try {
+    for (const [locale, culture, expected] of [['en', 'en-GB', 'Planned'], ['zh-Hans', 'zh-CN', '已计划']]) {
+      i18n.global.locale.value = locale
+      formattingCulture.value = culture
+      const { state } = preview()
+      assert.equal(state.status.value, expected)
+      assert.equal(state.formatDate('2026-11-18'), parseDateOnly('2026-11-18').toLocaleDateString(culture, {
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      }))
+    }
+  } finally {
+    i18n.global.locale.value = originalLocale
+    formattingCulture.value = originalCulture
+  }
 })
 
 test('Клик внутри окна не закрывает его, клик за границами закрывает', () => {

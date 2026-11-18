@@ -58,6 +58,7 @@ internal static class MaintenanceWorkMapping
             Name = detail.Name,
             Description = detail.Description,
             Price = detail.Price,
+            CurrencyCode = maintenance.CurrencyCode,
             Quantity = detail.Quantity,
             VehicleName = maintenance.Vehicle.Name,
             RegistrationPlate = maintenance.Vehicle.RegistrationPlate,

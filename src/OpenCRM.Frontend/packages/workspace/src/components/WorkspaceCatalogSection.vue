@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import { formatLocaleCurrency, formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { UiButton, UiInput, UiTextarea, UiMoneyInput, UiNumberInput } from '@opencrm/ui'
+import { UiButton, UiInput, UiTextarea, UiMoneyInput, UiNumberInput, useLocalization } from '@opencrm/ui'
+import '../catalogMessages'
 import { formatServiceDuration } from '../serviceDuration'
 import type { WorkspaceScenarioCatalogItem, WorkspaceScenarioCatalogKindCode } from '../api/scenarioCatalog'
+
+const workspaceCurrency = useWorkspaceCurrency()
+const { t } = useLocalization()
 
 type CatalogGroup = {
   kind: WorkspaceScenarioCatalogKindCode
@@ -60,35 +67,53 @@ let isPageLocked = false
 
 const isService = computed(() => props.selectedCatalogKind === 'service')
 const isBundle = computed(() => props.selectedCatalogKind === 'service_bundle')
-const title = computed(() => {
-  if (mode.value === 'view') return selectedItem.value?.name ?? 'Элемент справочника'
-  if (isService.value) return mode.value === 'create' ? 'Новая услуга' : 'Редактирование услуги'
-  if (isBundle.value) return mode.value === 'create' ? 'Новый набор' : 'Редактирование набора'
-  if (props.selectedCatalogKind === 'work_post') return mode.value === 'create' ? 'Новый пост / бокс' : 'Редактирование поста / бокса'
-  if (props.selectedCatalogKind === 'material') return mode.value === 'create' ? 'Новый материал' : 'Редактирование материала'
+const groupTitleKeys: Partial<Record<WorkspaceScenarioCatalogKindCode, string>> = {
+  service: 'catalogEditor.groupServices', service_bundle: 'catalogEditor.groupBundles', work_post: 'catalogEditor.groupPosts', material: 'catalogEditor.groupMaterials',
+  work_type: 'catalogEditor.groupWorkTypes', document: 'catalogEditor.groupDocuments', planning_rule: 'catalogEditor.groupPlanningRules'
+}
+const groupEmptyKeys: Partial<Record<WorkspaceScenarioCatalogKindCode, string>> = {
+  service: 'catalogEditor.emptyServices', service_bundle: 'catalogEditor.emptyBundles', work_post: 'catalogEditor.emptyPosts', material: 'catalogEditor.emptyMaterials',
+  work_type: 'catalogEditor.emptyWorkTypes', document: 'catalogEditor.emptyDocuments', planning_rule: 'catalogEditor.emptyPlanningRules'
+}
+const groupTitle = (kind: WorkspaceScenarioCatalogKindCode) => t(groupTitleKeys[kind] ?? 'catalogEditor.groupOther')
+const groupEmpty = (kind: WorkspaceScenarioCatalogKindCode) => t(groupEmptyKeys[kind] ?? 'catalogEditor.emptyOther')
+const groupHelpKey = (kind: WorkspaceScenarioCatalogKindCode, field: 'name' | 'description') => {
+  if (kind === 'service') return field === 'name' ? 'catalogEditor.serviceNameHelp' : 'catalogEditor.serviceDescriptionHelp'
+  if (kind === 'service_bundle') return field === 'name' ? 'catalogEditor.bundleNameHelp' : 'catalogEditor.bundleDescriptionHelp'
+  if (kind === 'work_post') return field === 'name' ? 'catalogEditor.postNameHelp' : 'catalogEditor.postDescriptionHelp'
+  if (kind === 'material') return field === 'name' ? 'catalogEditor.materialNameHelp' : 'catalogEditor.materialDescriptionHelp'
 
-  return mode.value === 'create' ? 'Добавить элемент' : 'Редактирование элемента'
+  return field === 'name' ? 'catalogEditor.genericNameHelp' : 'catalogEditor.genericDescriptionHelp'
+}
+const title = computed(() => {
+  if (mode.value === 'view') return selectedItem.value?.name ?? t('catalogEditor.itemName')
+  if (isService.value) return t(mode.value === 'create' ? 'catalogEditor.createService' : 'catalogEditor.editService')
+  if (isBundle.value) return t(mode.value === 'create' ? 'catalogEditor.createBundle' : 'catalogEditor.editBundle')
+  if (props.selectedCatalogKind === 'work_post') return t(mode.value === 'create' ? 'catalogEditor.createPost' : 'catalogEditor.editPost')
+  if (props.selectedCatalogKind === 'material') return t(mode.value === 'create' ? 'catalogEditor.createMaterial' : 'catalogEditor.editMaterial')
+
+  return t(mode.value === 'create' ? 'catalogEditor.addItem' : 'catalogEditor.editItem')
 })
 const saveLabel = computed(() => {
-  if (props.isSaving) return 'Сохраняем…'
-  if (isService.value) return mode.value === 'create' ? 'Добавить услугу' : 'Сохранить услугу'
-  if (isBundle.value) return mode.value === 'create' ? 'Добавить набор' : 'Сохранить набор'
-  if (props.selectedCatalogKind === 'work_post') return mode.value === 'create' ? 'Добавить пост / бокс' : 'Сохранить пост / бокс'
-  if (props.selectedCatalogKind === 'material') return mode.value === 'create' ? 'Добавить материал' : 'Сохранить материал'
+  if (props.isSaving) return t('catalogEditor.saving')
+  if (isService.value) return t(mode.value === 'create' ? 'catalogEditor.addService' : 'catalogEditor.saveService')
+  if (isBundle.value) return t(mode.value === 'create' ? 'catalogEditor.addBundle' : 'catalogEditor.saveBundle')
+  if (props.selectedCatalogKind === 'work_post') return t(mode.value === 'create' ? 'catalogEditor.addPost' : 'catalogEditor.savePost')
+  if (props.selectedCatalogKind === 'material') return t(mode.value === 'create' ? 'catalogEditor.addMaterial' : 'catalogEditor.saveMaterial')
 
-  return mode.value === 'create' ? 'Добавить' : 'Сохранить'
+  return t(mode.value === 'create' ? 'catalogEditor.add' : 'catalogEditor.save')
 })
 const createLabel = computed(() => {
-  if (isService.value) return 'Добавить услугу'
-  if (isBundle.value) return 'Добавить набор'
-  if (props.selectedCatalogKind === 'work_post') return 'Добавить пост / бокс'
-  if (props.selectedCatalogKind === 'material') return 'Добавить материал'
+  if (isService.value) return t('catalogEditor.addService')
+  if (isBundle.value) return t('catalogEditor.addBundle')
+  if (props.selectedCatalogKind === 'work_post') return t('catalogEditor.addPost')
+  if (props.selectedCatalogKind === 'material') return t('catalogEditor.addMaterial')
 
-  return 'Добавить элемент'
+  return t('catalogEditor.addItem')
 })
 const catalogItems = computed(() => props.getCatalogItems(props.selectedCatalogKind))
 const filteredCatalogItems = computed(() => catalogItems.value.filter(item => [item.name, item.description].filter(Boolean)
-  .join(' ').toLocaleLowerCase('ru').includes(catalogSearch.value.trim().toLocaleLowerCase('ru'))))
+  .join(' ').toLocaleLowerCase(formattingCulture.value).includes(catalogSearch.value.trim().toLocaleLowerCase(formattingCulture.value))))
 
 const form = computed(() => mode.value === 'create'
   ? props.catalogCreateForms[props.selectedCatalogKind]
@@ -96,8 +121,8 @@ const form = computed(() => mode.value === 'create'
 
 const availableServices = computed(() => props.getCatalogItems('service')
   .filter(service => service.isActive || (mode.value === 'edit' && form.value?.serviceIds.includes(service.id))))
-const filteredServices = computed(() => availableServices.value.filter(service => service.name.toLocaleLowerCase('ru')
-  .includes(serviceSearch.value.trim().toLocaleLowerCase('ru'))))
+const filteredServices = computed(() => availableServices.value.filter(service => service.name.toLocaleLowerCase(formattingCulture.value)
+  .includes(serviceSearch.value.trim().toLocaleLowerCase(formattingCulture.value))))
 const selectedServices = computed(() => (form.value?.serviceIds ?? []).map(id => props.getCatalogItems('service').find(service => service.id === id)))
 const bundlePrice = computed(() => !selectedServices.value.length || selectedServices.value.some(service => service?.unitPrice == null)
   ? null : selectedServices.value.reduce((total, service) => total + service!.unitPrice!, 0))
@@ -111,8 +136,8 @@ const bundleDuration = computed(() => {
 const hasUnavailableServices = computed(() => selectedServices.value.some(service => !service?.isActive))
 const bundleValidationError = computed(() => bundleValidationAttempted.value && isBundle.value
   && (!form.value?.serviceIds.length || form.value.serviceIds.length > 100)
-  ? 'Выберите от 1 до 100 услуг для набора.' : '')
-const money = (value: number) => `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`
+  ? t('catalogEditor.validationServices', { min: 1, max: 100 }) : '')
+const money = (value: number) => `${formatLocaleCurrency(value, workspaceCurrency.value, { maximumFractionDigits: 2 })}`
 
 function canEdit(item: WorkspaceScenarioCatalogItem) {
   return props.canManageCatalog && (!item.isUsed || ['service', 'service_bundle'].includes(item.kindCode))
@@ -190,7 +215,13 @@ function removeItem() {
 }
 
 function serviceName(id: string) {
-  return props.getCatalogItems('service').find(service => service.id === id)?.name ?? 'Недоступная услуга'
+  return props.getCatalogItems('service').find(service => service.id === id)?.name ?? t('catalogEditor.unavailableService')
+}
+
+function statusLabel(item: WorkspaceScenarioCatalogItem) {
+  if (item.isActive) return t('catalogEditor.active')
+
+  return item.kindCode === 'service' ? t('catalogEditor.archived') : t('catalogEditor.disabled')
 }
 
 watch(() => props.isEditingCatalog, editing => {
@@ -241,7 +272,7 @@ onBeforeUnmount(() => closeDialog(true))
 <template>
   <div class="workspace-common-stack workspace-catalog">
     <section class="workspace-common-subpanel workspace-catalog-picker">
-      <div class="workspace-catalog-switcher" role="group" aria-label="Тип справочника">
+      <div class="workspace-catalog-switcher" role="group" :aria-label="t('catalogEditor.type')">
         <button
           v-for="group in catalogGroups"
           :key="group.kind"
@@ -251,7 +282,7 @@ onBeforeUnmount(() => closeDialog(true))
           :class="{ active: selectedCatalogKind === group.kind }"
           @click="$emit('selectCatalogKind', group.kind)"
         >
-          <span>{{ group.title }}</span>
+          <span>{{ groupTitle(group.kind) }}</span>
           <strong>{{ getActiveCatalogCount(group.kind) }} / {{ getCatalogItems(group.kind).length }}</strong>
         </button>
       </div>
@@ -260,19 +291,19 @@ onBeforeUnmount(() => closeDialog(true))
     <section class="workspace-common-subpanel workspace-catalog-panel">
       <div class="workspace-catalog-heading">
         <div>
-          <h3 class="ui-section-header">{{ selectedCatalogGroup.title }}</h3>
-          <span>{{ getActiveCatalogCount(selectedCatalogKind) }} активных из {{ getCatalogItems(selectedCatalogKind).length }}</span>
+          <h3 class="ui-section-header">{{ groupTitle(selectedCatalogKind) }}</h3>
+          <span>{{ t('catalogEditor.activeCount', { active: getActiveCatalogCount(selectedCatalogKind), total: getCatalogItems(selectedCatalogKind).length }) }}</span>
         </div>
-        <UiInput v-model="catalogSearch" class="catalog-search" type="search" label="Поиск по справочнику" placeholder="Название или описание…" />
+        <UiInput v-model="catalogSearch" class="catalog-search" type="search" :label="t('catalogEditor.search')" :placeholder="t('catalogEditor.searchPlaceholder')" />
         <UiButton v-if="canManageCatalog" class="catalog-add" variant="secondary" :disabled="isSaving" @click="$emit('startCatalogEdit')">
           {{ createLabel }}
         </UiButton>
       </div>
 
       <div v-if="getCatalogItems(selectedCatalogKind).length === 0" class="workspace-common-empty">
-        {{ selectedCatalogGroup.emptyText }}
+          {{ groupEmpty(selectedCatalogKind) }}
       </div>
-      <div v-else-if="!filteredCatalogItems.length" class="workspace-common-empty" role="status">По вашему запросу ничего не найдено.</div>
+      <div v-else-if="!filteredCatalogItems.length" class="workspace-common-empty" role="status">{{ t('catalogEditor.noSearchResults') }}</div>
       <div v-else class="workspace-catalog-list">
         <article
           v-for="item in filteredCatalogItems"
@@ -283,27 +314,27 @@ onBeforeUnmount(() => closeDialog(true))
           <div class="catalog-row__content">
             <strong>{{ item.name }}</strong>
             <div class="catalog-row__meta">
-              <span v-if="item.kindCode === 'service' && item.unitPrice != null">{{ item.unitPrice.toLocaleString('ru-RU') }} ₽</span>
-              <span v-if="item.kindCode === 'service_bundle'">Услуг: {{ item.serviceIds?.length ?? 0 }}</span>
+              <span v-if="item.kindCode === 'service' && item.unitPrice != null">{{ formatLocaleCurrency(item.unitPrice, workspaceCurrency) }}</span>
+              <span v-if="item.kindCode === 'service_bundle'">{{ t('catalogEditor.serviceCount', { count: item.serviceIds?.length ?? 0 }) }}</span>
               <span v-if="item.durationMinutes != null">{{ formatServiceDuration(item.durationMinutes) }}</span>
-              <span>Порядок: {{ item.sortOrder }}</span>
+              <span>{{ t('catalogEditor.order') }}: {{ item.sortOrder }}</span>
             </div>
           </div>
           <div class="catalog-row__badges">
             <span class="catalog-row__status" :class="{ inactive: !item.isActive }">
-              {{ item.isActive ? 'Активен' : item.kindCode === 'service' ? 'В архиве' : 'Отключен' }}
+              {{ statusLabel(item) }}
             </span>
-            <span v-if="item.isUsed" class="catalog-row__used">Используется в данных</span>
+            <span v-if="item.isUsed" class="catalog-row__used">{{ t('catalogEditor.usedInData') }}</span>
           </div>
           <div class="catalog-row__actions">
-            <UiButton variant="secondary" :disabled="isSaving" @click="openItem(item)">Подробнее</UiButton>
+            <UiButton variant="secondary" :disabled="isSaving" @click="openItem(item)">{{ t('catalogEditor.details') }}</UiButton>
             <UiButton
               v-if="canManageCatalog && item.kindCode === 'work_post' && item.isUsed"
               variant="secondary"
               :disabled="isSaving"
               @click="$emit('changePostActivity', item)"
-            >{{ item.isActive ? 'Закрыть пост' : 'Вернуть в работу' }}</UiButton>
-            <UiButton v-if="canEdit(item)" variant="secondary" :disabled="isSaving" @click="openItem(item, true)">Редактировать</UiButton>
+            >{{ t(item.isActive ? 'catalogEditor.closePost' : 'catalogEditor.restorePost') }}</UiButton>
+            <UiButton v-if="canEdit(item)" variant="secondary" :disabled="isSaving" @click="openItem(item, true)">{{ t('catalogEditor.edit') }}</UiButton>
           </div>
         </article>
       </div>
@@ -320,65 +351,65 @@ onBeforeUnmount(() => closeDialog(true))
     >
       <header class="catalog-dialog__header ui-form-header">
         <div>
-          <small>{{ selectedCatalogGroup.title }}</small>
+          <small>{{ groupTitle(selectedCatalogKind) }}</small>
           <h2 id="catalog-dialog-title">{{ title }}</h2>
         </div>
-        <button type="button" class="catalog-dialog__close" aria-label="Закрыть" :disabled="isSaving" @click="closeDialog()">×</button>
+        <button type="button" class="catalog-dialog__close" :aria-label="t('catalogEditor.close')" :disabled="isSaving" @click="closeDialog()">×</button>
       </header>
 
       <div class="catalog-dialog__body">
         <template v-if="mode === 'view' && selectedItem">
           <dl class="catalog-details">
-            <div><dt>Статус</dt><dd>{{ selectedItem.isActive ? 'Активен' : selectedItem.kindCode === 'service' ? 'В архиве' : 'Отключен' }}</dd></div>
-            <div v-if="selectedItem.kindCode === 'service' && selectedItem.unitPrice != null"><dt>Цена</dt><dd>{{ selectedItem.unitPrice.toLocaleString('ru-RU') }} ₽</dd></div>
-            <div v-if="selectedItem.durationMinutes != null"><dt>Длительность</dt><dd>{{ formatServiceDuration(selectedItem.durationMinutes) }}</dd></div>
-            <div><dt>Порядок</dt><dd>{{ selectedItem.sortOrder }}</dd></div>
+            <div><dt>{{ t('catalogEditor.status') }}</dt><dd>{{ statusLabel(selectedItem) }}</dd></div>
+            <div v-if="selectedItem.kindCode === 'service' && selectedItem.unitPrice != null"><dt>{{ t('catalogEditor.price') }}</dt><dd>{{ formatLocaleCurrency(selectedItem.unitPrice, workspaceCurrency) }}</dd></div>
+            <div v-if="selectedItem.durationMinutes != null"><dt>{{ t('catalogEditor.duration') }}</dt><dd>{{ formatServiceDuration(selectedItem.durationMinutes) }}</dd></div>
+            <div><dt>{{ t('catalogEditor.order') }}</dt><dd>{{ selectedItem.sortOrder }}</dd></div>
           </dl>
           <div v-if="selectedItem.description" class="catalog-details__section">
-            <h3 class="ui-section-header">Описание</h3>
+            <h3 class="ui-section-header">{{ t('catalogEditor.description') }}</h3>
             <p>{{ selectedItem.description }}</p>
           </div>
           <div v-if="selectedItem.kindCode === 'service_bundle'" class="catalog-details__section">
-            <h3 class="ui-section-header">Услуги набора</h3>
+            <h3 class="ui-section-header">{{ t('catalogEditor.bundleServices') }}</h3>
             <ul v-if="selectedItem.serviceIds?.length"><li v-for="id in selectedItem.serviceIds" :key="id">{{ serviceName(id) }}</li></ul>
-            <p v-else>Услуги не выбраны.</p>
+            <p v-else>{{ t('catalogEditor.noSelectedServices') }}</p>
           </div>
-          <p v-if="selectedItem.isUsed" class="catalog-dialog__note">Используется в данных{{ canEdit(selectedItem) ? '.' : '. Редактирование недоступно.' }}</p>
+          <p v-if="selectedItem.isUsed" class="catalog-dialog__note">{{ t(canEdit(selectedItem) ? 'catalogEditor.usedReadOnly' : 'catalogEditor.usedCannotEdit') }}</p>
         </template>
 
         <form v-else-if="form" id="catalog-dialog-form" class="catalog-dialog__form" @submit.prevent="submit">
-          <UiInput v-model="form.name" id="catalog-item-name" for="catalog-item-name" label="Название" :label-help="selectedCatalogGroup.nameHelp" :disabled="isSaving" required />
-          <UiTextarea v-model="form.description" id="catalog-item-description" for="catalog-item-description" label="Описание" :label-help="selectedCatalogGroup.descriptionHelp" :rows="3" :disabled="isSaving" />
+          <UiInput v-model="form.name" id="catalog-item-name" for="catalog-item-name" :label="t('catalogEditor.itemName')" :label-help="t(groupHelpKey(selectedCatalogKind, 'name'))" :disabled="isSaving" required />
+          <UiTextarea v-model="form.description" id="catalog-item-description" for="catalog-item-description" :label="t('catalogEditor.itemDescription')" :label-help="t(groupHelpKey(selectedCatalogKind, 'description'))" :rows="3" :disabled="isSaving" />
           <div class="catalog-dialog__fields">
-            <UiMoneyInput v-if="selectedCatalogKind === 'service'" v-model="form.unitPrice" label="Цена, ₽" :min="0" :max="999999999" :step="0.01" :disabled="isSaving" />
-            <UiNumberInput v-if="isService || isBundle" v-model="form.durationMinutes" id="catalog-item-duration" for="catalog-item-duration" :label="isBundle ? 'Длительность набора, мин' : 'Длительность, мин'" label-help="Время занятости поста, включая ожидание и сушку. У набора пустое поле означает сумму длительностей услуг." :min="1" :max="525600" :step="1" integer :placeholder="isBundle ? 'По услугам' : 'Не задана'" :disabled="isSaving" />
-            <UiInput v-if="mode === 'edit' && selectedItem" v-model="catalogDrafts[selectedItem.id].sortOrder" label="Порядок" type="number" :disabled="isSaving" />
+            <UiMoneyInput v-if="selectedCatalogKind === 'service'" v-model="form.unitPrice" :label="t('catalogEditor.priceCurrency', { currency: workspaceCurrency })" :min="0" :max="999999999" :step="0.01" :disabled="isSaving" />
+            <UiNumberInput v-if="isService || isBundle" v-model="form.durationMinutes" id="catalog-item-duration" for="catalog-item-duration" :label="t(isBundle ? 'catalogEditor.bundleDuration' : 'catalogEditor.serviceDuration')" :label-help="t('catalogEditor.durationHelp')" :min="1" :max="525600" :step="1" integer :placeholder="t(isBundle ? 'catalogEditor.durationFromServices' : 'catalogEditor.durationUnset')" :disabled="isSaving" />
+            <UiInput v-if="mode === 'edit' && selectedItem" v-model="catalogDrafts[selectedItem.id].sortOrder" :label="t('catalogEditor.order')" type="number" :disabled="isSaving" />
             <label v-if="mode === 'edit' && selectedItem" class="catalog-dialog__active">
               <input v-model="catalogDrafts[selectedItem.id].isActive" type="checkbox" :disabled="isSaving" />
-              <span>{{ isService ? 'Активна' : 'Активен' }}</span>
+              <span>{{ t(isService ? 'catalogEditor.serviceActive' : 'catalogEditor.inactiveCheckbox') }}</span>
             </label>
           </div>
-          <section v-if="isBundle" class="catalog-bundle" aria-label="Состав набора">
-            <div class="catalog-bundle__heading ui-section-header"><h3>Состав набора <span>{{ form.serviceIds.length }}</span></h3>
-              <UiInput v-model="serviceSearch" type="search" label="Поиск услуг" placeholder="Найти услугу…" :disabled="isSaving" />
+          <section v-if="isBundle" class="catalog-bundle" :aria-label="t('catalogEditor.bundleContents')">
+            <div class="catalog-bundle__heading ui-section-header"><h3>{{ t('catalogEditor.bundleContents') }} <span>{{ form.serviceIds.length }}</span></h3>
+              <UiInput v-model="serviceSearch" type="search" :label="t('catalogEditor.serviceSearch')" :placeholder="t('catalogEditor.findService')" :disabled="isSaving" />
             </div>
-            <div class="catalog-bundle__columns" aria-hidden="true"><span>Услуга</span><span>Длительность</span><span>Цена</span></div>
+            <div class="catalog-bundle__columns" aria-hidden="true"><span>{{ t('catalogEditor.service') }}</span><span>{{ t('catalogEditor.serviceDurationColumn') }}</span><span>{{ t('catalogEditor.servicePriceColumn') }}</span></div>
             <div class="catalog-bundle__services">
               <label v-for="service in filteredServices" :key="service.id" class="catalog-bundle__service" :class="{ 'catalog-bundle__service--selected': form.serviceIds.includes(service.id) }">
                 <input v-model="form.serviceIds" type="checkbox" :value="service.id" :disabled="isSaving" :aria-label="service.name" />
-                <span>{{ service.name }}<small v-if="!service.isActive">В архиве</small></span>
-                <span>{{ service.durationMinutes ? formatServiceDuration(service.durationMinutes) : 'Не задана' }}</span>
-                <span>{{ service.unitPrice == null ? 'Не задана' : money(service.unitPrice) }}</span>
+                <span>{{ service.name }}<small v-if="!service.isActive">{{ t('catalogEditor.archived') }}</small></span>
+                <span>{{ service.durationMinutes ? formatServiceDuration(service.durationMinutes) : t('catalogEditor.durationUnset') }}</span>
+                <span>{{ service.unitPrice == null ? t('catalogEditor.durationUnset') : money(service.unitPrice) }}</span>
               </label>
-              <p v-if="!availableServices.length" class="catalog-bundle__empty">Нет доступных услуг.</p>
-              <p v-else-if="!filteredServices.length" class="catalog-bundle__empty" role="status">По вашему запросу услуги не найдены.</p>
+              <p v-if="!availableServices.length" class="catalog-bundle__empty">{{ t('catalogEditor.noAvailableServices') }}</p>
+              <p v-else-if="!filteredServices.length" class="catalog-bundle__empty" role="status">{{ t('catalogEditor.noServicesFound') }}</p>
             </div>
-            <dl class="catalog-bundle__summary" aria-label="Итог набора">
-              <div><dt>Выбрано услуг</dt><dd>{{ form.serviceIds.length }}</dd></div>
-              <div><dt>Стоимость по услугам</dt><dd>{{ !form.serviceIds.length ? '—' : bundlePrice == null ? 'Не все цены заданы' : money(bundlePrice) }}</dd></div>
-              <div><dt>Длительность набора</dt><dd>{{ bundleDuration ? formatServiceDuration(bundleDuration) : form.serviceIds.length ? 'Не задана полностью' : '—' }}</dd><small>{{ form.durationMinutes ? 'Задана для набора' : 'Сумма длительностей услуг' }}</small></div>
+            <dl class="catalog-bundle__summary" :aria-label="t('catalogEditor.bundleSummary')">
+              <div><dt>{{ t('catalogEditor.selectedServices') }}</dt><dd>{{ form.serviceIds.length }}</dd></div>
+              <div><dt>{{ t('catalogEditor.priceFromServices') }}</dt><dd>{{ !form.serviceIds.length ? '—' : bundlePrice == null ? t('catalogEditor.unknownPrices') : money(bundlePrice) }}</dd></div>
+              <div><dt>{{ t('catalogEditor.bundleDurationSummary') }}</dt><dd>{{ bundleDuration ? formatServiceDuration(bundleDuration) : form.serviceIds.length ? t('catalogEditor.durationIncomplete') : '—' }}</dd><small>{{ t(form.durationMinutes ? 'catalogEditor.durationCustom' : 'catalogEditor.durationSum') }}</small></div>
             </dl>
-            <p v-if="hasUnavailableServices" class="catalog-bundle__warning" role="status">В составе есть архивные или недоступные услуги. Проверьте состав перед сохранением.</p>
+            <p v-if="hasUnavailableServices" class="catalog-bundle__warning" role="status">{{ t('catalogEditor.unavailableBundleWarning') }}</p>
           </section>
           <p v-if="bundleValidationError || actionErrorMessage" class="catalog-dialog__error" role="alert">{{ bundleValidationError || actionErrorMessage }}</p>
         </form>
@@ -391,9 +422,9 @@ onBeforeUnmount(() => closeDialog(true))
           class="catalog-dialog__remove"
           :disabled="isSaving"
           @click="removeItem"
-        >{{ selectedItem.kindCode === 'service' ? 'В архив' : selectedItem.isUsed ? 'Отключить' : 'Удалить' }}</UiButton>
-        <UiButton variant="secondary" :disabled="isSaving" @click="closeDialog()">{{ mode === 'view' ? 'Закрыть' : 'Отмена' }}</UiButton>
-        <UiButton v-if="mode === 'view' && selectedItem && canEdit(selectedItem)" :disabled="isSaving" @click="openItem(selectedItem, true)">Редактировать</UiButton>
+        >{{ t(selectedItem.kindCode === 'service' ? 'catalogEditor.archive' : selectedItem.isUsed ? 'catalogEditor.deactivate' : 'catalogEditor.delete') }}</UiButton>
+        <UiButton variant="secondary" :disabled="isSaving" @click="closeDialog()">{{ t(mode === 'view' ? 'catalogEditor.close' : 'catalogEditor.cancel') }}</UiButton>
+        <UiButton v-if="mode === 'view' && selectedItem && canEdit(selectedItem)" :disabled="isSaving" @click="openItem(selectedItem, true)">{{ t('catalogEditor.edit') }}</UiButton>
         <UiButton v-else-if="mode !== 'view'" type="submit" form="catalog-dialog-form" :disabled="isSaving">
           {{ saveLabel }}
         </UiButton>

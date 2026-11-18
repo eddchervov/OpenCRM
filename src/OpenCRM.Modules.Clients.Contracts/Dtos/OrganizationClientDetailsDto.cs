@@ -18,6 +18,12 @@ public class OrganizationClientDetailsDto
     /// <summary> Сумма действующих оплат по всем обслуживаниям клиента. </summary>
     public decimal? TotalPaidAmount { get; set; }
 
+    public decimal? TotalDebtAmount { get; set; }
+
+    public string CurrencyCode { get; set; } = "RUB";
+
+    public IReadOnlyList<OrganizationClientCurrencyTotalsDto> OtherCurrencyTotals { get; set; } = [];
+
     /// <summary> Ближайшее будущее обслуживание клиента со статусом «Запланировано». </summary>
     public OrganizationClientMaintenanceItemDto? UpcomingMaintenance { get; set; }
 

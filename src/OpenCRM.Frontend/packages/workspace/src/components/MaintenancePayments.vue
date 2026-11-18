@@ -1,8 +1,14 @@
 <script setup lang="ts">
+import { formattingCulture, translate as t } from '@opencrm/ui/i18n'
+import '../paymentMessages'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, ref } from 'vue'
 import { UiButton, UiMoneyInput, UiSelect, UiTextarea } from '@opencrm/ui'
 import { loadMaintenancePayments, saveMaintenanceCommerce, type WorkspaceMaintenance, type WorkspaceMaintenancePayment } from '../api/maintenance'
 import { loadClientOptions, type WorkspaceClientOption } from '../api/clients'
+
+const workspaceCurrency = useWorkspaceCurrency()
 
 const props = defineProps<{ organizationId: string; maintenance: WorkspaceMaintenance; disabled?: boolean; timeZoneId?: string | null }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -29,19 +35,26 @@ const canManage = computed(() => !props.disabled && props.maintenance.canManageP
 const canPay = computed(() => canManage.value && props.maintenance.debtAmount > 0 && props.maintenance.status !== 4)
 const amountValue = computed(() => Number(amount.value))
 const remainingAfterPayment = computed(() => Math.max(0, props.maintenance.debtAmount - (Number.isFinite(amountValue.value) ? amountValue.value : 0)))
-const money = (value: number) => value.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' })
-const date = (value: string) => new Date(value).toLocaleString('ru-RU', {
+const money = (value: number, currencyCode = props.maintenance.currencyCode ?? workspaceCurrency.value) => value.toLocaleString(formattingCulture.value, { style: 'currency', currency: currencyCode })
+const date = (value: string) => new Date(value).toLocaleString(formattingCulture.value, {
   dateStyle: 'short', timeStyle: 'short', timeZone: props.timeZoneId || 'UTC'
 })
 const methodOptions = [
-  { value: 'cash', label: 'Наличные' },
-  { value: 'card', label: 'Карта' },
-  { value: 'bank', label: 'Банковский перевод' },
-  { value: 'other', label: 'Другое' }
+  { value: 'cash', label: t('payments.cash') },
+  { value: 'card', label: t('payments.card') },
+  { value: 'bank', label: t('payments.bank') },
+  { value: 'other', label: t('payments.other') }
 ]
-const methodName = (code?: string | null) => methodOptions.find(option => option.value === code)?.label ?? 'Способ не указан'
+const methodName = (code?: string | null) => methodOptions.find(option => option.value === code)?.label ?? t('payments.noMethod')
 const payerOptions = computed(() => clients.value.map(client => ({ value: client.id, label: client.name })))
-const buyerName = computed(() => props.maintenance.buyerClientId ? props.maintenance.buyerName || 'Не указан' : 'Не указан')
+const buyerName = computed(() => props.maintenance.buyerClientId ? props.maintenance.buyerName || t('payments.unspecified') : t('payments.unspecified'))
+const submitLabel = computed(() => {
+  if (busy.value) return t('payments.saving')
+  if (mode.value !== 'payment') return t('payments.confirmCancellation')
+  if (!Number.isFinite(amountValue.value) || amountValue.value <= 0 || amountValue.value > props.maintenance.debtAmount) return t('payments.recordPayment')
+
+  return t('payments.recordAmount', { amount: money(amountValue.value) })
+})
 
 function showDialog() {
   if (dialog.value && !dialog.value.open) dialog.value.showModal()
@@ -56,7 +69,7 @@ async function loadHistory(request: number) {
     payments.value = result
   } catch (e) {
     if (request !== openRequest) return
-    historyError.value = e instanceof Error ? e.message : 'Не удалось загрузить оплаты.'
+    historyError.value = e instanceof Error ? e.message : t('payments.loadError')
   } finally {
     if (request === openRequest) loading.value = false
   }
@@ -70,7 +83,7 @@ async function loadClients(request: number) {
     clients.value = result
   } catch (e) {
     if (request !== openRequest) return
-    clientError.value = e instanceof Error ? e.message : 'Не удалось загрузить список клиентов.'
+    clientError.value = e instanceof Error ? e.message : t('payments.clientsError')
   }
 }
 
@@ -124,19 +137,19 @@ function cancel(payment: WorkspaceMaintenancePayment) {
 async function submit() {
   if (busy.value || !canManage.value) return
   if (mode.value === 'payment' && (!Number.isFinite(amountValue.value) || amountValue.value <= 0 || amountValue.value > props.maintenance.debtAmount)) {
-    error.value = 'Укажите сумму больше нуля и не больше остатка.'
+    error.value = t('payments.invalidAmount')
     return
   }
   if (mode.value === 'payment' && !methodCode.value) {
-    error.value = 'Выберите способ оплаты.'
+    error.value = t('payments.chooseMethod')
     return
   }
   if (mode.value === 'payment' && otherPayer.value && !payerClientId.value) {
-    error.value = 'Выберите другого плательщика.'
+    error.value = t('payments.choosePayer')
     return
   }
   if (mode.value === 'cancel' && !reason.value.trim()) {
-    error.value = 'Укажите причину отмены.'
+    error.value = t('payments.reasonRequired')
     return
   }
 
@@ -160,7 +173,7 @@ async function submit() {
     dialog.value?.close()
     emit('changed')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Не удалось сохранить оплату.'
+    error.value = e instanceof Error ? e.message : t('payments.saveError')
   } finally {
     busy.value = false
   }
@@ -169,90 +182,90 @@ async function submit() {
 
 <template>
   <div class="record-payments">
-    <UiButton v-if="canPay" @click="openPayment">Принять оплату</UiButton>
-    <button type="button" class="record-payments__history" @click="history">История оплат</button>
+    <UiButton v-if="canPay" @click="openPayment">{{ t('payments.accept') }}</UiButton>
+    <button type="button" class="record-payments__history" @click="history">{{ t('payments.history') }}</button>
     <dialog ref="dialog" class="payment-dialog" :class="{ 'payment-dialog--history': mode === 'history' }" aria-labelledby="payment-dialog-title" @cancel="busy && $event.preventDefault()">
       <header class="payment-dialog__header ui-form-header">
-        <div><p class="payment-dialog__eyebrow">{{ mode === 'cancel' ? 'Корректировка записи' : 'Финансы обслуживания' }}</p>
-          <h2 id="payment-dialog-title">{{ mode === 'payment' ? 'Приём оплаты' : mode === 'cancel' ? 'Отменить учёт оплаты' : 'История оплат' }}</h2></div>
-        <button type="button" :disabled="busy" aria-label="Закрыть" @click="close">×</button>
+        <div><p class="payment-dialog__eyebrow">{{ mode === 'cancel' ? t('payments.correction') : t('payments.maintenanceFinance') }}</p>
+          <h2 id="payment-dialog-title">{{ mode === 'payment' ? t('payments.paymentTitle') : mode === 'cancel' ? t('payments.cancelTitle') : t('payments.history') }}</h2></div>
+        <button type="button" :disabled="busy" :aria-label="t('payments.close')" @click="close">×</button>
       </header>
       <form v-if="mode !== 'history'" class="payment-dialog__form" @submit.prevent="submit">
         <div v-if="mode === 'payment'" class="payment-layout">
-          <section class="payment-layout__main" aria-label="Данные оплаты">
+          <section class="payment-layout__main" :aria-label="t('payments.details')">
             <div class="payment-amount">
-              <div class="payment-amount__label ui-section-header"><span>Сумма оплаты</span>
-                <button type="button" :disabled="busy" @click="amount = String(maintenance.debtAmount)">Весь остаток</button></div>
-              <UiMoneyInput id="payment-amount-input" v-model="amount" label="Сумма оплаты" :min="0.01" :max="maintenance.debtAmount" :step="0.01" :disabled="busy" required />
-              <p>После оплаты останется <strong>{{ money(remainingAfterPayment) }}</strong></p>
+              <div class="payment-amount__label ui-section-header"><span>{{ t('payments.amount') }}</span>
+                <button type="button" :disabled="busy" @click="amount = String(maintenance.debtAmount)">{{ t('payments.fullBalance') }}</button></div>
+              <UiMoneyInput id="payment-amount-input" v-model="amount" :label="t('payments.amount')" :min="0.01" :max="maintenance.debtAmount" :step="0.01" :disabled="busy" required />
+              <p>{{ t('payments.afterPayment', { amount: money(remainingAfterPayment) }) }}</p>
             </div>
 
             <fieldset class="payment-methods" :disabled="busy">
-              <legend>Способ оплаты</legend>
+              <legend>{{ t('payments.method') }}</legend>
               <div class="payment-methods__grid">
                 <button v-for="option in methodOptions" :key="option.value" type="button" :class="{ selected: methodCode === option.value }" :aria-pressed="methodCode === option.value" @click="methodCode = option.value">{{ option.label }}</button>
               </div>
             </fieldset>
 
             <section class="payment-payer">
-              <h3 class="ui-section-header">Плательщик</h3>
-              <p>{{ buyerName }}<template v-if="maintenance.buyerPartyTypeCode === 'company' && maintenance.buyerInn"> · ИНН {{ maintenance.buyerInn }}<template v-if="maintenance.buyerKpp"> · КПП {{ maintenance.buyerKpp }}</template></template></p>
-              <label class="payment-payer__other"><input v-model="otherPayer" type="checkbox" :disabled="busy"> Платит другой клиент</label>
-              <UiSelect v-if="otherPayer" v-model="payerClientId" label="Другой плательщик" :options="payerOptions" :disabled="busy" required />
+              <h3 class="ui-section-header">{{ t('payments.payer') }}</h3>
+              <p>{{ buyerName }}<template v-if="maintenance.buyerPartyTypeCode === 'company' && maintenance.buyerInn"> · {{ t('payments.inn') }} {{ maintenance.buyerInn }}<template v-if="maintenance.buyerKpp"> · {{ t('payments.kpp') }} {{ maintenance.buyerKpp }}</template></template></p>
+              <label class="payment-payer__other"><input v-model="otherPayer" type="checkbox" :disabled="busy"> {{ t('payments.anotherCustomerPays') }}</label>
+              <UiSelect v-if="otherPayer" v-model="payerClientId" :label="t('payments.otherPayer')" :options="payerOptions" :disabled="busy" required />
               <p v-if="clientError" class="payment-error" role="alert">{{ clientError }}</p>
             </section>
 
-            <UiTextarea v-model="comment" label="Комментарий" :maxlength="1000" :rows="2" :disabled="busy" />
+            <UiTextarea v-model="comment" :label="t('payments.comment')" :maxlength="1000" :rows="2" :disabled="busy" />
           </section>
 
-          <aside class="payment-layout__side" aria-label="Сводка и история оплат">
+          <aside class="payment-layout__side" :aria-label="t('payments.summary')">
             <section class="payment-summary">
-              <h3 class="ui-section-header">По обслуживанию</h3>
+              <h3 class="ui-section-header">{{ t('payments.serviceSummary') }}</h3>
               <dl>
-                <div><dt>Стоимость работ</dt><dd>{{ money(maintenance.grossAmount) }}</dd></div>
-                <div v-if="maintenance.discountAmount > 0"><dt>Скидка</dt><dd>−{{ money(maintenance.discountAmount) }}</dd></div>
-                <div><dt>Оплачено</dt><dd>{{ money(maintenance.paidAmount) }}</dd></div>
-                <div class="payment-summary__debt"><dt>Остаток</dt><dd>{{ money(maintenance.debtAmount) }}</dd></div>
+                <div><dt>{{ t('payments.workCost') }}</dt><dd>{{ money(maintenance.grossAmount) }}</dd></div>
+                <div v-if="maintenance.discountAmount > 0"><dt>{{ t('payments.discount') }}</dt><dd>−{{ money(maintenance.discountAmount) }}</dd></div>
+                <div><dt>{{ t('payments.paid') }}</dt><dd>{{ money(maintenance.paidAmount) }}</dd></div>
+                <div class="payment-summary__debt"><dt>{{ t('payments.balance') }}</dt><dd>{{ money(maintenance.debtAmount) }}</dd></div>
               </dl>
             </section>
             <section class="payment-recent">
-              <div class="payment-recent__heading ui-section-header"><h3>Последние оплаты</h3><button type="button" :disabled="busy" @click="history">Вся история</button></div>
-              <p v-if="loading" class="payment-muted">Загружаем…</p>
-              <p v-else-if="historyError" class="payment-muted" role="status">История временно недоступна</p>
-              <p v-else-if="!payments.length" class="payment-muted">Оплат пока нет</p>
+              <div class="payment-recent__heading ui-section-header"><h3>{{ t('payments.recent') }}</h3><button type="button" :disabled="busy" @click="history">{{ t('payments.allHistory') }}</button></div>
+              <p v-if="loading" class="payment-muted">{{ t('payments.loading') }}</p>
+              <p v-else-if="historyError" class="payment-muted" role="status">{{ t('payments.historyUnavailable') }}</p>
+              <p v-else-if="!payments.length" class="payment-muted">{{ t('payments.noPayments') }}</p>
               <ul v-else class="payment-recent__list">
                 <li v-for="payment in payments.slice(0, 3)" :key="payment.id" :class="{ cancelled: payment.cancelledAt }">
-                  <div><strong>{{ money(payment.amount) }}</strong><span v-if="payment.cancelledAt" class="payment-tag">Отменена</span>
-                    <small>{{ payment.isOpeningBalance ? 'Ранее учтено · дата неизвестна' : date(payment.createdAt) }}</small>
-                    <small>{{ methodName(payment.methodCode) }} · {{ payment.payerName || 'Плательщик не указан' }}</small></div>
+                  <div><strong>{{ money(payment.amount, payment.currencyCode) }}</strong><span v-if="payment.cancelledAt" class="payment-tag">{{ t('payments.cancelled') }}</span>
+                    <small>{{ payment.isOpeningBalance ? t('payments.openingBalance') : date(payment.createdAt) }}</small>
+                    <small>{{ methodName(payment.methodCode) }} · {{ payment.payerName || t('payments.payerUnspecified') }}</small></div>
                 </li>
               </ul>
             </section>
           </aside>
         </div>
         <section v-else class="payment-cancel">
-          <p>Отменить запись об оплате <strong>{{ money(cancelling?.amount ?? 0) }}</strong>. Это исправление учёта; деньги клиенту автоматически не возвращаются.</p>
-          <UiTextarea v-model="reason" label="Причина отмены" :maxlength="1000" :rows="3" :disabled="busy" required />
+          <p>{{ t('payments.cancelNotice', { amount: money(cancelling?.amount ?? 0) }) }}</p>
+          <UiTextarea v-model="reason" :label="t('payments.cancellationReason')" :maxlength="1000" :rows="3" :disabled="busy" required />
         </section>
         <p v-if="error" class="payment-error" role="alert">{{ error }}</p>
         <footer class="payment-dialog__footer">
-          <UiButton variant="secondary" :disabled="busy" @click="close">Отмена</UiButton>
-          <UiButton type="submit" class="payment-dialog__submit" :disabled="busy || (mode === 'payment' && amountValue > maintenance.debtAmount)">{{ busy ? 'Сохраняем…' : mode === 'payment' ? `Учесть ${Number.isFinite(amountValue) && amountValue > 0 && amountValue <= maintenance.debtAmount ? money(amountValue) : 'сумму'}` : 'Подтвердить отмену' }}</UiButton>
+          <UiButton variant="secondary" :disabled="busy" @click="close">{{ t('payments.cancel') }}</UiButton>
+          <UiButton type="submit" class="payment-dialog__submit" :disabled="busy || (mode === 'payment' && amountValue > maintenance.debtAmount)">{{ submitLabel }}</UiButton>
         </footer>
       </form>
       <div v-else class="payment-history">
-        <p v-if="loading">Загружаем оплаты…</p>
-        <p v-else-if="historyError" class="payment-error" role="alert">{{ historyError }} <button type="button" @click="history">Повторить</button></p>
-        <p v-else-if="!payments.length">Оплат пока нет.</p>
+        <p v-if="loading">{{ t('payments.loadingPayments') }}</p>
+        <p v-else-if="historyError" class="payment-error" role="alert">{{ historyError }} <button type="button" @click="history">{{ t('payments.retry') }}</button></p>
+        <p v-else-if="!payments.length">{{ t('payments.noPaymentsSentence') }}</p>
         <article v-for="payment in loading || historyError ? [] : payments" :key="payment.id" :class="{ cancelled: payment.cancelledAt }">
-          <div><strong>{{ money(payment.amount) }}</strong><span v-if="payment.cancelledAt" class="payment-tag">Отменена</span>
-            <small>{{ payment.isOpeningBalance ? 'Ранее учтено · дата получения неизвестна' : date(payment.createdAt) + ' · ' + payment.createdBy }}</small>
+          <div><strong>{{ money(payment.amount, payment.currencyCode) }}</strong><span v-if="payment.cancelledAt" class="payment-tag">{{ t('payments.cancelled') }}</span>
+            <small>{{ payment.isOpeningBalance ? t('payments.openingHistory') : date(payment.createdAt) + ' · ' + payment.createdBy }}</small>
             <small>{{ methodName(payment.methodCode) }}</small>
-            <small>Плательщик: {{ payment.payerName || 'не установлен' }}</small>
+            <small>{{ t('payments.payerLabel', { name: payment.payerName || t('payments.notSet') }) }}</small>
             <p v-if="payment.comment">{{ payment.comment }}</p>
             <p v-if="payment.cancelledAt">{{ date(payment.cancelledAt) }} · {{ payment.cancelledBy }}<br>{{ payment.cancellationReason }}</p>
           </div>
-          <button v-if="canManage && !payment.cancelledAt" type="button" @click="cancel(payment)">Отменить учёт</button>
+          <button v-if="canManage && !payment.cancelledAt" type="button" @click="cancel(payment)">{{ t('payments.cancelRecord') }}</button>
         </article>
       </div>
     </dialog>

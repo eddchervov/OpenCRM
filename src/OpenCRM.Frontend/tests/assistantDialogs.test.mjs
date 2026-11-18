@@ -2,10 +2,11 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import vm from 'node:vm'
+import { assistantUiMessages } from './assistantUiTestMessages.mjs'
 
 const source = await readFile(new URL('../../OpenCRM.WebApp/wwwroot/js/ai-pilot.js', import.meta.url), 'utf8')
 
-function assistant() {
+function assistant(locale = 'ru', culture = 'ru-RU') {
   const nodes = new Map()
   function node(selector) {
     if (!nodes.has(selector)) {
@@ -21,7 +22,7 @@ function assistant() {
     return nodes.get(selector)
   }
   const root = node('root')
-  root.dataset = { apiUrl: '/api/v1/assistant', organizationId: 'org-1' }
+  root.dataset = { apiUrl: '/api/v1/assistant', organizationId: 'org-1', uiMessages: JSON.stringify(assistantUiMessages(locale)), formatCulture: culture }
   root.querySelectorAll = selector => {
     if (selector === '[data-close-dialog]') return [node('close-composer')]
     if (selector === '[data-tab], [data-example]') return [node('mode-tab'), node('phrase-example')]
@@ -35,7 +36,7 @@ function assistant() {
   assert.equal(source.split(initialization).length, 2)
   const instrumented = source.replace(initialization, `
     globalThis.pilot = {
-      updateControls, closeDialog,
+      updateControls, closeDialog, uiText, formatAmount, actionLabel,
       setState(state) {
         context = { telegramConfigured: true };
         contextAvailable = state.available ?? true;
@@ -51,6 +52,32 @@ function assistant() {
   vm.runInNewContext(instrumented, sandbox)
   return { pilot: sandbox.pilot, node }
 }
+
+test('Помощник использует язык интерфейса отдельно от регионального формата и валюты AI бюджета', () => {
+  const { pilot } = assistant('zh-Hans', 'en-GB')
+  assert.equal(pilot.uiText('confirm'), '确认')
+  assert.equal(pilot.uiText('audioLimit', { size: 25, seconds: 60 }), '最多 25 MB · 60 秒')
+  assert.equal(pilot.formatAmount(1234.5), 'RUB\u00a01,234.50')
+  const english = assistant('en', 'zh-CN').pilot
+  assert.equal(english.uiText('draftCost', { amount: 'RUB 5' }), 'Draft prepared · request RUB 5')
+})
+
+test('Все доступные команды переводятся по коду, неизвестные расширения сохраняют свои подписи', async () => {
+  const catalog = await readFile(new URL('../../OpenCRM.WebApp/Infrastructure/AiPilot/AiPilotActionCatalog.cs', import.meta.url), 'utf8')
+  const actions = [...catalog.matchAll(/\b(?:A|Workflow)\("([^"]+)", "([^"]+)", "([^"]+)"/g)]
+    .map(match => ({ action: match[1], title: match[2], description: match[3] }))
+  for (const locale of ['en', 'zh-Hans']) {
+    const { pilot } = assistant(locale)
+    for (const action of actions) {
+      assert.notEqual(pilot.actionLabel(action, 'title'), action.title, `${locale}: ${action.action}`)
+      assert.notEqual(pilot.actionLabel(action, 'description'), action.description, `${locale}: ${action.action}`)
+      assert.doesNotMatch(pilot.actionLabel(action, 'title'), /[А-Яа-яЁё]/)
+    }
+    const custom = { action: 'custom', title: '自定义 действие', description: 'Описание расширения' }
+    assert.equal(pilot.actionLabel(custom, 'title'), custom.title)
+    assert.equal(pilot.actionLabel(custom, 'description'), custom.description)
+  }
+})
 
 test('Остановить запись можно и после отключения доступа к помощнику', () => {
   const { pilot, node } = assistant()

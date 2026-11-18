@@ -48,10 +48,17 @@ internal sealed partial class OperationMaterialCommandService(
         Guid detailId,
         IssueOperationMaterialDto request)
     {
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"""SELECT 1 FROM "Organizations" WHERE "Id" = {organizationId} FOR NO KEY UPDATE""");
         var assignment = await assignmentLoader.LoadAsync(userId, organizationId, maintenanceId, detailId);
         var maintenance = assignment.Maintenance;
         var member = assignment.Member;
         var employee = assignment.Employee;
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         await context.Database.ExecuteSqlInterpolatedAsync(
             $"""SELECT 1 FROM "OrganizationMaterialStocks" WHERE "Id" = {request.StockId} AND "OrganizationId" = {organizationId} FOR UPDATE""");
         var stock = await context.OrganizationMaterialStocks
@@ -105,6 +112,7 @@ internal sealed partial class OperationMaterialCommandService(
         var movement = new OrganizationMaterialMovement
         {
             OrganizationId = organizationId,
+            CurrencyCode = stock.CurrencyCode,
             StockId = stock.Id,
             CatalogItemId = stock.CatalogItemId,
             MaintenanceId = maintenanceId,

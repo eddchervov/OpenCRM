@@ -36,7 +36,7 @@ internal sealed class MaintenanceReportPdfRenderer(string projectName)
 
                         if (model.Maintenance?.MaintenanceDetails?.Count > 0)
                         {
-                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, "Работы и материалы", section => PdfTableComponents.RenderServices(section, model.Maintenance.MaintenanceDetails)));
+                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, "Работы и материалы", section => PdfTableComponents.RenderServices(section, model.Maintenance.MaintenanceDetails, currencyCode: model.Maintenance.CurrencyCode)));
                         }
 
                         if (!string.IsNullOrWhiteSpace(model.Maintenance?.IntakeNotes))

@@ -3,6 +3,9 @@ import { getVehicleDisplayName } from '../api/vehicles'
 import WorkspaceAccessNotice from './WorkspaceAccessNotice.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader, UiPagination, UiSearchInput, UiSelect } from '@opencrm/ui'
+import { useLocalization } from '@opencrm/ui'
+import { formattingCulture } from '@opencrm/ui/i18n'
+import '../vehicleOverviewMessages'
 import {
   loadVehiclePhotos,
   loadVehiclesPage,
@@ -16,6 +19,7 @@ import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 const props = defineProps<{
   context: WorkspaceContext
 }>()
+const { t } = useLocalization()
 
 const vehicles = ref<WorkspaceVehicle[]>([])
 const brandFilters = ref<WorkspaceVehicleBrandFilter[]>([])
@@ -48,7 +52,7 @@ const canCreateVehicle = computed(() => canWrite.value && props.context.shell.qu
 const readOnlyMessage = computed(() => props.context.workspaceAccess?.readOnlyMessage ?? '')
 const billingHref = computed(() => '#billing')
 const createVehicleUrl = computed(() => '#vehicles/new')
-const vehiclesTitle = computed(() => props.context.shell.scenario?.terms?.vehicles ?? 'Автомобили')
+const vehiclesTitle = computed(() => props.context.shell.scenario?.terms?.vehicles ?? t('vehicleOverview.vehiclesTitle'))
 const listStateStorageKey = computed(() => `opencrm-workspace:${props.context.user.id}:${props.context.organization.id}:vehicles:list-state:v1`)
 const hasActiveFilters = computed(() => Boolean(
   searchQuery.value ||
@@ -57,11 +61,11 @@ const hasActiveFilters = computed(() => Boolean(
   isArchiveMode.value
 ))
 const brandFilterOptions = computed(() => [
-  { value: 'all', label: 'Все марки' },
+  { value: 'all', label: t('vehicleOverview.allVehicles') },
   ...brandFilters.value.map(brand => ({ value: brand.id, label: brand.name }))
 ])
 const kindFilterOptions = computed(() => [
-  { value: 'all', label: 'Все типы' },
+  { value: 'all', label: t('vehicleOverview.allKinds') },
   ...kindValues.value.map(kind => ({ value: String(kind), label: getVehicleKindName(kind) }))
 ])
 const pageSizeOptions = [
@@ -71,30 +75,30 @@ const pageSizeOptions = [
 ]
 const paginationInfo = computed(() => {
   if (totalCount.value === 0) {
-    return 'Нет записей'
+    return t('vehicleOverview.noRecords')
   }
 
   const from = (page.value - 1) * pageSize.value + 1
   const to = Math.min(page.value * pageSize.value, totalCount.value)
-  return `${from}-${to} из ${totalCount.value}`
+  return t('vehicleOverview.range', { from, to, count: totalCount.value })
 })
 
 function getVehicleKindName(kind: number) {
   const names: Record<number, string> = {
-    1: 'Легковой автомобиль',
-    2: 'Грузовая техника',
-    3: 'Мотоцикл',
-    4: 'Квадроцикл',
-    5: 'Багги / UTV',
-    6: 'Снегоход',
-    7: 'Гидроцикл',
-    8: 'Лодка / катер',
-    9: 'Спецтехника',
-    10: 'Прицеп',
-    99: 'Другая техника'
+    1: t('vehicleOverview.kind1'),
+    2: t('vehicleOverview.kind2'),
+    3: t('vehicleOverview.kind3'),
+    4: t('vehicleOverview.kind4'),
+    5: t('vehicleOverview.kind5'),
+    6: t('vehicleOverview.kind6'),
+    7: t('vehicleOverview.kind7'),
+    8: t('vehicleOverview.kind8'),
+    9: t('vehicleOverview.kind9'),
+    10: t('vehicleOverview.kind10'),
+    99: t('vehicleOverview.kind99')
   }
 
-  return names[kind] ?? 'Другая техника'
+  return names[kind] ?? t('vehicleOverview.otherVehicle')
 }
 
 function getVehicleTitle(vehicle: WorkspaceVehicle) {
@@ -107,8 +111,8 @@ function getVehicleName(vehicle: WorkspaceVehicle) {
 
 function getVehicleMeta(vehicle: WorkspaceVehicle) {
   return [
-    vehicle.registrationPlate ? `Госномер: ${vehicle.registrationPlate}` : '',
-    vehicle.vin ? `VIN: ${vehicle.vin}` : ''
+    vehicle.registrationPlate ? t('vehicleOverview.plate', { plate: vehicle.registrationPlate }) : '',
+    vehicle.vin ? t('vehicleOverview.vin', { vin: vehicle.vin }) : ''
   ].filter(Boolean)
 }
 
@@ -134,15 +138,15 @@ function getVehicleUrl(vehicle: WorkspaceVehicle) {
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'Не обслуживалась'
+    return t('vehicleOverview.notMaintained')
   }
 
   const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (dateOnlyMatch) {
-    return `${dateOnlyMatch[3]}.${dateOnlyMatch[2]}.${dateOnlyMatch[1]}`
+    return new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short', timeZone: 'UTC' }).format(new Date(`${dateOnlyMatch[1]}-${dateOnlyMatch[2]}-${dateOnlyMatch[3]}T00:00:00Z`))
   }
 
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     day: '2-digit',
     month: 'short',
     year: 'numeric'
@@ -151,18 +155,18 @@ function formatDate(value?: string | null) {
 
 function getCurrentMaintenanceStatus(status?: number | null) {
   if (status === 3) {
-    return 'Готово к выдаче'
+    return t('vehicleOverview.readyForHandover')
   }
 
   if (status === 2) {
-    return 'В работе'
+    return t('vehicleOverview.inProgress')
   }
 
   if (status === 1) {
-    return 'Запланировано'
+    return t('vehicleOverview.planned')
   }
 
-  return 'Нет активных работ'
+  return t('vehicleOverview.noActiveWork')
 }
 
 function restoreListState() {
@@ -272,7 +276,7 @@ async function loadVehicles() {
     }
   } catch (error) {
     if (request === latestRequest && stateStorageKey === listStateStorageKey.value) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить автомобили.'
+      errorMessage.value = error instanceof Error ? error.message : t('vehicleOverview.loadVehiclesError')
     }
   } finally {
     if (request === latestRequest && stateStorageKey === listStateStorageKey.value) {
@@ -369,23 +373,23 @@ onBeforeUnmount(() => {
   <section class="vehicles-section">
     <UiCard page :title="vehiclesTitle" class="vehicles-list-card">
       <template #actions>
-        <UiButton v-if="canCreateVehicle" class="directory-create" :href="createVehicleUrl">＋ Добавить автомобиль</UiButton>
+        <UiButton v-if="canCreateVehicle" class="directory-create" :href="createVehicleUrl">＋ {{ t('vehicleOverview.addVehicle') }}</UiButton>
         <WorkspacePageHelpButton section-code="vehicles" :title="vehiclesTitle" />
       </template>
 
       <WorkspaceAccessNotice :can-manage-billing="context.organization.canManageBilling === true" v-if="readOnlyMessage" :message="readOnlyMessage" :href="billingHref" />
 
       <div class="vehicles-filters">
-        <UiSearchInput v-model="searchQuery" placeholder="Марка, модель, госномер, VIN или клиент" />
-        <UiSelect v-model="selectedBrandFilter" :options="brandFilterOptions" aria-label="Марка автомобиля" />
-        <UiSelect v-model="selectedKind" :options="kindFilterOptions" aria-label="Тип техники" />
+        <UiSearchInput v-model="searchQuery" :placeholder="t('vehicleOverview.searchPlaceholder')" />
+        <UiSelect v-model="selectedBrandFilter" :options="brandFilterOptions" :aria-label="t('vehicleOverview.carBrand')" />
+        <UiSelect v-model="selectedKind" :options="kindFilterOptions" :aria-label="t('vehicleOverview.vehicleKind')" />
         <UiButton variant="secondary" class="vehicles-reset" :disabled="isLoading || !hasActiveFilters" @click="resetFilters">
-          Сбросить
+          {{ t('vehicleOverview.reset') }}
         </UiButton>
       </div>
 
       <div class="vehicles-view-toolbar">
-        <div class="vehicles-status-toggle" role="group" aria-label="Статус автомобилей">
+        <div class="vehicles-status-toggle" role="group" :aria-label="t('vehicleOverview.vehicleStatus')">
           <UiButton
             variant="secondary"
             class="vehicles-view-button"
@@ -393,7 +397,7 @@ onBeforeUnmount(() => {
             :disabled="isLoading"
             @click="isArchiveMode ? toggleArchiveMode() : undefined"
           >
-            Активные
+            {{ t('vehicleOverview.active') }}
           </UiButton>
           <UiButton
             variant="secondary"
@@ -402,24 +406,24 @@ onBeforeUnmount(() => {
             :disabled="isLoading"
             @click="!isArchiveMode ? toggleArchiveMode() : undefined"
           >
-            Архив
+            {{ t('vehicleOverview.archive') }}
           </UiButton>
         </div>
 
-        <div class="vehicles-view-toggle" role="group" aria-label="Вид списка автомобилей">
+        <div class="vehicles-view-toggle" role="group" :aria-label="t('vehicleOverview.viewMode')">
           <UiButton variant="secondary" class="vehicles-view-button" :class="{ active: viewMode === 'list' }"
-            :aria-pressed="viewMode === 'list'" @click="setViewMode('list')">Список</UiButton>
+            :aria-pressed="viewMode === 'list'" @click="setViewMode('list')">{{ t('vehicleOverview.listView') }}</UiButton>
           <UiButton variant="secondary" class="vehicles-view-button" :class="{ active: viewMode === 'cards' }"
-            :aria-pressed="viewMode === 'cards'" @click="setViewMode('cards')">Карточки</UiButton>
+            :aria-pressed="viewMode === 'cards'" @click="setViewMode('cards')">{{ t('vehicleOverview.cardView') }}</UiButton>
         </div>
       </div>
 
-      <UiLoader v-if="isLoading && !hasLoaded" class="vehicles-loader" text="Загружаем автомобили..." />
+      <UiLoader v-if="isLoading && !hasLoaded" class="vehicles-loader" :text="t('vehicleOverview.loadingVehicles')" />
       <div v-else-if="errorMessage" class="detailing-state detailing-state-error">{{ errorMessage }}</div>
 
       <div v-else class="vehicles-list-shell">
         <div v-if="isLoading" class="client-list-overlay">
-          <UiLoader compact text="Обновляем список..." />
+          <UiLoader compact :text="t('vehicleOverview.refreshingVehicles')" />
         </div>
 
         <div v-if="vehicles.length > 0 && viewMode === 'cards'" class="vehicles-grid">
@@ -427,7 +431,7 @@ onBeforeUnmount(() => {
             <a class="vehicle-image-container" :href="getVehicleUrl(vehicle)" :aria-label="getVehicleTitle(vehicle)">
               <img v-if="getPhotoUrl(vehicle)" class="vehicle-image" :src="getPhotoUrl(vehicle)" :alt="getVehicleTitle(vehicle)">
               <div v-else class="vehicle-placeholder">
-                <span>Авто</span>
+                <span>{{ t('vehicleOverview.carShort') }}</span>
               </div>
             </a>
 
@@ -442,7 +446,7 @@ onBeforeUnmount(() => {
               <p v-if="vehicle.description" class="vehicle-description">{{ vehicle.description }}</p>
               <div class="vehicle-card-footer">
                 <UiButton class="btn-view-maintenance" :href="getVehicleUrl(vehicle)">
-                  Открыть
+                  {{ t('vehicleOverview.open') }}
                 </UiButton>
               </div>
             </div>
@@ -451,7 +455,7 @@ onBeforeUnmount(() => {
 
         <div v-else-if="vehicles.length > 0" class="vehicle-directory">
           <table class="vehicle-directory__table has-actions" :class="{ 'has-maintenance': canViewMaintenance }" :aria-label="vehiclesTitle">
-            <thead><tr><th scope="col">Техника</th><th scope="col">Владелец / подразделение</th><th v-if="canViewMaintenance" scope="col">Обслуживание</th><th scope="col" aria-label="Действия"></th></tr></thead>
+            <thead><tr><th scope="col">{{ t('vehicleOverview.equipment') }}</th><th scope="col">{{ t('vehicleOverview.ownerDepartment') }}</th><th v-if="canViewMaintenance" scope="col">{{ t('vehicleOverview.maintenance') }}</th><th scope="col" :aria-label="t('vehicleOverview.actions')"></th></tr></thead>
             <tbody>
               <tr v-for="vehicle in vehicles" :key="vehicle.id">
                 <th scope="row" class="vehicle-directory__identity">
@@ -464,24 +468,24 @@ onBeforeUnmount(() => {
                     <div>
                       <a class="vehicle-directory__name" :href="getVehicleUrl(vehicle)">{{ getVehicleTitle(vehicle) }}</a>
                       <span v-if="vehicle.name" class="vehicle-directory__unit">{{ vehicle.name }}</span>
-                      <span class="vehicle-directory__plate">{{ vehicle.registrationPlate || 'Без номера' }}</span>
+                      <span class="vehicle-directory__plate">{{ vehicle.registrationPlate || t('vehicleOverview.noPlate') }}</span>
                       <small v-if="vehicle.vin" class="vehicle-directory__vin">VIN: {{ vehicle.vin }}</small>
                     </div>
                   </div>
                 </th>
-                <td class="vehicle-directory__owner" data-label="Владелец / подразделение"><span :class="{ 'vehicle-directory__muted': !vehicle.organizationClientName }">{{ vehicle.organizationClientName || 'Не указан' }}</span><small class="vehicle-directory__kind">{{ getVehicleKindName(vehicle.kind) }}</small></td>
-                <td v-if="canViewMaintenance" class="vehicle-directory__maintenance" data-label="Обслуживание">
+                <td class="vehicle-directory__owner" :data-label="t('vehicleOverview.ownerDepartment')"><span :class="{ 'vehicle-directory__muted': !vehicle.organizationClientName }">{{ vehicle.organizationClientName || t('vehicleOverview.notSpecified') }}</span><small class="vehicle-directory__kind">{{ getVehicleKindName(vehicle.kind) }}</small></td>
+                <td v-if="canViewMaintenance" class="vehicle-directory__maintenance" :data-label="t('vehicleOverview.maintenance')">
                   <span class="vehicle-directory__status" :class="vehicle.currentMaintenanceStatus === 2 ? 'is-progress' : vehicle.currentMaintenanceStatus === 1 ? 'is-planned' : vehicle.currentMaintenanceStatus === 3 ? 'is-ready' : 'is-idle'">{{ getCurrentMaintenanceStatus(vehicle.currentMaintenanceStatus) }}</span>
                   <small v-if="vehicle.currentMaintenanceName" class="vehicle-directory__kind">{{ vehicle.currentMaintenanceName }}</small>
                   <small v-if="vehicle.currentMaintenanceStatus === 1 && vehicle.currentMaintenanceDate" class="vehicle-directory__kind">{{ formatDate(vehicle.currentMaintenanceDate) }}</small>
-                  <div v-if="vehicle.totalWorkCount" class="vehicle-directory__progress" :aria-label="`Выполнено работ: ${vehicle.completedWorkCount ?? 0} из ${vehicle.totalWorkCount}`">
-                    <span>{{ vehicle.completedWorkCount ?? 0 }} из {{ vehicle.totalWorkCount }} работ</span>
+                  <div v-if="vehicle.totalWorkCount" class="vehicle-directory__progress" :aria-label="t('vehicleOverview.workProgressLabel', { completed: vehicle.completedWorkCount ?? 0, total: vehicle.totalWorkCount })">
+                    <span>{{ t('vehicleOverview.workProgress', { completed: vehicle.completedWorkCount ?? 0, total: vehicle.totalWorkCount }) }}</span>
                     <span class="vehicle-directory__progress-track"><span :style="{ width: `${Math.min(100, Math.round(((vehicle.completedWorkCount ?? 0) / vehicle.totalWorkCount) * 100))}%` }"></span></span>
                   </div>
-                  <small class="vehicle-directory__kind">Последнее: {{ formatDate(vehicle.lastMaintenanceDate) }}</small>
+                  <small class="vehicle-directory__kind">{{ t('vehicleOverview.lastMaintenance', { date: formatDate(vehicle.lastMaintenanceDate) }) }}</small>
                 </td>
                 <td class="vehicle-directory__actions">
-                  <UiButton variant="secondary" :href="getVehicleUrl(vehicle)">Открыть</UiButton>
+                  <UiButton variant="secondary" :href="getVehicleUrl(vehicle)">{{ t('vehicleOverview.open') }}</UiButton>
                 </td>
               </tr>
             </tbody>
@@ -489,7 +493,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-else class="detailing-empty">
-          {{ hasActiveFilters ? 'Ничего не найдено.' : `${vehiclesTitle} пока пусто.` }}
+          {{ hasActiveFilters ? t('vehicleOverview.noMatches') : t('vehicleOverview.emptyTitle', { title: vehiclesTitle }) }}
         </div>
       </div>
 
@@ -497,8 +501,8 @@ onBeforeUnmount(() => {
         <div class="vehicles-pagination__summary">
           <span aria-live="polite">{{ paginationInfo }}</span>
           <div class="vehicles-pagination__page-size">
-            <span>На странице</span>
-            <UiSelect v-model="selectedPageSize" :options="pageSizeOptions" :searchable="false" aria-label="Размер страницы" />
+            <span>{{ t('vehicleOverview.perPage') }}</span>
+            <UiSelect v-model="selectedPageSize" :options="pageSizeOptions" :searchable="false" :aria-label="t('vehicleOverview.pageSize')" />
           </div>
         </div>
         <UiPagination
@@ -507,7 +511,7 @@ onBeforeUnmount(() => {
           :items-per-page="pageSize"
           :max-pages-shown="3"
           :disabled="isLoading"
-          label="Навигация по страницам автомобилей"
+          :label="t('vehicleOverview.pagination')"
           @update:model-value="changePage"
         />
       </div>

@@ -11,7 +11,7 @@ internal static class MaintenanceChangeRules
     {
         return previous.Status != maintenance.Status
             || MaintenanceChangeRules.BuildFieldChanges(previous, maintenance).Count > 0
-            || MaintenanceChangeRules.BuildDetailChanges(previous.Details, maintenance.Details).Count > 0;
+            || MaintenanceChangeRules.BuildDetailChanges(previous.Details, maintenance.Details, previous.CurrencyCode).Count > 0;
     }
 
     /// <summary> Формирует список описаний изменённых полей обслуживания. </summary>
@@ -31,15 +31,18 @@ internal static class MaintenanceChangeRules
         MaintenanceChangeRules.AddChange(changes, "Исполнитель", MaintenanceChangeRules.FormatEmployee(previous.EmployeeId, previous.Performer), MaintenanceChangeRules.FormatEmployee(maintenance.EmployeeId, maintenance.Performer));
         MaintenanceChangeRules.AddChange(changes, "Пробег/наработка", MaintenanceChangeRules.FormatNullableNumber(previous.Mileage), MaintenanceChangeRules.FormatNullableNumber(maintenance.Mileage));
         MaintenanceChangeRules.AddChange(changes, "Комментарий", previous.Comment, maintenance.Comment);
-        MaintenanceChangeRules.AddChange(changes, "Скидка", MaintenanceChangeRules.FormatDecimalMoney(previous.DiscountAmount), MaintenanceChangeRules.FormatDecimalMoney(maintenance.DiscountAmount));
-        MaintenanceChangeRules.AddChange(changes, "Оплачено", MaintenanceChangeRules.FormatDecimalMoney(previous.PaidAmount), MaintenanceChangeRules.FormatDecimalMoney(maintenance.PaidAmount));
-        MaintenanceChangeRules.AddChange(changes, "Себестоимость труда", MaintenanceChangeRules.FormatDecimalMoney(previous.LaborCostAmount), MaintenanceChangeRules.FormatDecimalMoney(maintenance.LaborCostAmount));
+        MaintenanceChangeRules.AddChange(changes, "Скидка", MaintenanceChangeRules.FormatDecimalMoney(previous.DiscountAmount, previous.CurrencyCode), MaintenanceChangeRules.FormatDecimalMoney(maintenance.DiscountAmount, maintenance.CurrencyCode));
+        MaintenanceChangeRules.AddChange(changes, "Оплачено", MaintenanceChangeRules.FormatDecimalMoney(previous.PaidAmount, previous.CurrencyCode), MaintenanceChangeRules.FormatDecimalMoney(maintenance.PaidAmount, maintenance.CurrencyCode));
+        MaintenanceChangeRules.AddChange(changes, "Себестоимость труда", MaintenanceChangeRules.FormatDecimalMoney(previous.LaborCostAmount, previous.CurrencyCode), MaintenanceChangeRules.FormatDecimalMoney(maintenance.LaborCostAmount, maintenance.CurrencyCode));
 
         return changes;
     }
 
     /// <summary> Формирует список описаний изменений строк обслуживания. </summary>
-    internal static List<string> BuildDetailChanges(IReadOnlyList<MaintenanceDetailSnapshot> previousDetails, IReadOnlyList<MaintenanceDetail> currentDetails)
+    internal static List<string> BuildDetailChanges(
+        IReadOnlyList<MaintenanceDetailSnapshot> previousDetails,
+        IReadOnlyList<MaintenanceDetail> currentDetails,
+        string currencyCode)
     {
         var changes = new List<string>();
         var maxCommonCount = Math.Min(previousDetails.Count, currentDetails.Count);
@@ -61,25 +64,25 @@ internal static class MaintenanceChangeRules
             MaintenanceChangeRules.AddChange(detailChanges, "название", previous.Name, current.Name);
             MaintenanceChangeRules.AddChange(detailChanges, "описание", previous.Description, current.Description);
             MaintenanceChangeRules.AddChange(detailChanges, "количество", previous.Quantity.ToString(), current.Quantity.ToString());
-            MaintenanceChangeRules.AddChange(detailChanges, "стоимость", MaintenanceChangeRules.FormatNullableMoney(previous.Price), MaintenanceChangeRules.FormatNullableMoney(current.Price));
+            MaintenanceChangeRules.AddChange(detailChanges, "стоимость", MaintenanceChangeRules.FormatNullableMoney(previous.Price, currencyCode), MaintenanceChangeRules.FormatNullableMoney(current.Price, currencyCode));
             MaintenanceChangeRules.AddChange(detailChanges, "НДС", previous.VatRateCode, current.VatRateCode);
             MaintenanceChangeRules.AddChange(detailChanges, "материал", previous.MaterialName, current.MaterialName);
             MaintenanceChangeRules.AddChange(detailChanges, "единица расхода", previous.MaterialUnit, current.MaterialUnit);
-            MaintenanceChangeRules.AddChange(detailChanges, "себестоимость расхода", MaintenanceChangeRules.FormatNullableDecimal(previous.MaterialTotalCost), MaintenanceChangeRules.FormatNullableDecimal(current.MaterialTotalCost));
+            MaintenanceChangeRules.AddChange(detailChanges, "себестоимость расхода", MaintenanceChangeRules.FormatNullableMoney(previous.MaterialTotalCost, currencyCode), MaintenanceChangeRules.FormatNullableMoney(current.MaterialTotalCost, currencyCode));
             MaintenanceChangeRules.AddChange(detailChanges, "расход", MaintenanceChangeRules.FormatNullableDecimal(previous.MaterialQuantity), MaintenanceChangeRules.FormatNullableDecimal(current.MaterialQuantity));
-            MaintenanceChangeRules.AddChange(detailChanges, "себестоимость материала", MaintenanceChangeRules.FormatNullableDecimal(previous.MaterialUnitCost), MaintenanceChangeRules.FormatNullableDecimal(current.MaterialUnitCost));
+            MaintenanceChangeRules.AddChange(detailChanges, "себестоимость материала", MaintenanceChangeRules.FormatNullableMoney(previous.MaterialUnitCost, currencyCode), MaintenanceChangeRules.FormatNullableMoney(current.MaterialUnitCost, currencyCode));
 
             changes.Add($"Изменена услуга #{index + 1}: {string.Join("; ", detailChanges)}");
         }
 
         for (var index = maxCommonCount; index < currentDetails.Count; index++)
         {
-            changes.Add($"Добавлена услуга: {MaintenanceChangeRules.FormatDetail(currentDetails[index])}");
+            changes.Add($"Добавлена услуга: {MaintenanceChangeRules.FormatDetail(currentDetails[index], currencyCode)}");
         }
 
         for (var index = maxCommonCount; index < previousDetails.Count; index++)
         {
-            changes.Add($"Удалена услуга: {MaintenanceChangeRules.FormatDetail(previousDetails[index])}");
+            changes.Add($"Удалена услуга: {MaintenanceChangeRules.FormatDetail(previousDetails[index], currencyCode)}");
         }
 
         return changes;
@@ -119,20 +122,20 @@ internal static class MaintenanceChangeRules
     }
 
     /// <summary> Формирует текстовое представление снимка строки обслуживания. </summary>
-    internal static string FormatDetail(MaintenanceDetailSnapshot detail)
+    internal static string FormatDetail(MaintenanceDetailSnapshot detail, string currencyCode)
     {
         return MaintenanceChangeRules.FormatDetail(detail.Name, detail.Description, detail.Price, detail.VatRateCode, detail.Quantity,
             detail.CatalogItemId, detail.MaterialCatalogItemId, detail.MaterialName, detail.MaterialQuantity,
-            detail.MaterialUnit, detail.MaterialUnitCost, detail.MaterialTotalCost)
+            detail.MaterialUnit, detail.MaterialUnitCost, detail.MaterialTotalCost, currencyCode)
             + (detail.EmployeeId.HasValue ? $"; сотрудник: {MaintenanceChangeRules.FormatEmployee(detail.EmployeeId, detail.EmployeeName)}" : "");
     }
 
     /// <summary> Формирует текстовое представление строки обслуживания. </summary>
-    internal static string FormatDetail(MaintenanceDetail detail)
+    internal static string FormatDetail(MaintenanceDetail detail, string currencyCode)
     {
         return MaintenanceChangeRules.FormatDetail(detail.Name, detail.Description, detail.Price, detail.VatRateCode, detail.Quantity,
             detail.CatalogItemId, detail.MaterialCatalogItemId, detail.MaterialName, detail.MaterialQuantity,
-            detail.MaterialUnit, detail.MaterialUnitCost, detail.MaterialTotalCost)
+            detail.MaterialUnit, detail.MaterialUnitCost, detail.MaterialTotalCost, currencyCode)
             + (detail.EmployeeId.HasValue ? $"; сотрудник: {MaintenanceChangeRules.FormatEmployee(detail.EmployeeId, detail.EmployeeName)}" : "");
     }
 
@@ -149,7 +152,8 @@ internal static class MaintenanceChangeRules
         decimal? materialQuantity,
         string? materialUnit,
         decimal? materialUnitCost,
-        decimal? materialTotalCost)
+        decimal? materialTotalCost,
+        string currencyCode)
     {
         var parts = new List<string> { MaintenanceChangeRules.FormatNullableText(name), $"количество: {quantity}" };
         if (!string.IsNullOrWhiteSpace(description))
@@ -159,7 +163,7 @@ internal static class MaintenanceChangeRules
 
         if (price.HasValue)
         {
-            parts.Add($"стоимость: {MaintenanceChangeRules.FormatNullableMoney(price)}");
+            parts.Add($"стоимость: {MaintenanceChangeRules.FormatNullableMoney(price, currencyCode)}");
         }
 
         if (vatRateCode != null)
@@ -176,14 +180,14 @@ internal static class MaintenanceChangeRules
         {
             parts.Add($"материал: {MaintenanceChangeRules.FormatNullableText(materialName)}; справочник: {materialCatalogItemId}");
             parts.Add($"расход: {MaintenanceChangeRules.FormatNullableDecimal(materialQuantity)} {materialUnit}");
-            parts.Add($"себестоимость единицы: {MaintenanceChangeRules.FormatNullableDecimal(materialUnitCost)}; всего: {MaintenanceChangeRules.FormatNullableDecimal(materialTotalCost)}");
+            parts.Add($"себестоимость единицы: {MaintenanceChangeRules.FormatNullableMoney(materialUnitCost, currencyCode)}; всего: {MaintenanceChangeRules.FormatNullableMoney(materialTotalCost, currencyCode)}");
         }
 
         return string.Join("; ", parts);
     }
 
     /// <summary> Форматирует денежное значение с двумя знаками после разделителя. </summary>
-    internal static string FormatDecimalMoney(decimal value) => $"{value:0.##} ₽";
+    internal static string FormatDecimalMoney(decimal value, string currencyCode) => $"{value:0.##} {currencyCode}";
 
     /// <summary> Форматирует необязательное денежное значение или прочерк. </summary>
     internal static string? FormatNullableDecimal(decimal? value) => value.HasValue ? value.Value.ToString("0.###") : null;
@@ -202,7 +206,9 @@ internal static class MaintenanceChangeRules
     internal static string FormatNullableNumber(int? value) => value.HasValue ? value.Value.ToString() : "не указано";
 
     /// <summary> Форматирует необязательную денежную сумму или прочерк. </summary>
-    internal static string FormatNullableMoney(decimal? value) => value.HasValue ? value.Value.ToString("0.##") : "не указано";
+    internal static string FormatNullableMoney(decimal? value, string currencyCode) => value.HasValue
+        ? $"{value.Value:0.##} {currencyCode}"
+        : "не указано";
 
     /// <summary> Возвращает текст или прочерк для пустого значения. </summary>
     internal static string FormatNullableText(string? value) => string.IsNullOrWhiteSpace(value) ? "не указано" : value.Trim();

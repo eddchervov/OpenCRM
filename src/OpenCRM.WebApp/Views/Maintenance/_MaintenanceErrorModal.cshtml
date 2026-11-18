@@ -1,22 +1,24 @@
-﻿<div class="modal fade" id="errorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="errorModalLabel" aria-hidden="true">
+﻿<partial name="_MaintenanceLegacyMessages" />
+
+<div class="modal fade" id="errorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header text-white" :class="notificationType === 'success' ? 'bg-success' : 'bg-danger'">
                 <h5 class="modal-title" id="errorModalLabel">
                     <template v-if="notificationType === 'success'">
-                        <i class="fa fa-check-circle me-2"></i>Готово
+                        <i class="fa fa-check-circle me-2"></i>@Text["maintenance.legacy.modal.success"]
                     </template>
                     <template v-else>
-                        <i class="fa fa-exclamation-triangle me-2"></i>Ошибка
+                        <i class="fa fa-exclamation-triangle me-2"></i>@Text["maintenance.legacy.modal.error"]
                     </template>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="@Text["maintenance.legacy.modal.close"]"></button>
             </div>
             <div class="modal-body">
                 <p>{{ errorMessage }}</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["maintenance.legacy.modal.close"]</button>
             </div>
         </div>
     </div>

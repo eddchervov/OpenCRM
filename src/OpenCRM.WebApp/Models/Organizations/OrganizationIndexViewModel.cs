@@ -9,6 +9,8 @@ using OpenCRM.Modules.Vehicles.Contracts.Dtos;
 using OpenCRM.Modules.Inventory.Contracts.Dtos;
 using OpenCRM.Domain;
 using OpenCRM.Domain.Enums;
+using OpenCRM.WebApp.Infrastructure.Localization;
+using Microsoft.Extensions.Localization;
 using System.ComponentModel.DataAnnotations;
 
 namespace OpenCRM.WebApp.Models.Organizations;
@@ -389,6 +391,9 @@ public class OrganizationWorkJournalWorkItemViewModel
     /// <summary> Стоимость работы, если указана. </summary>
     public decimal? Price { get; set; }
 
+    /// <summary> Валюта сохранённого обслуживания. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Ссылка на детали записи, если есть. </summary>
     public string? DetailUrl { get; set; }
 
@@ -544,6 +549,9 @@ public class OrganizationRecentMaintenanceViewModel
 
     /// <summary> Стоимость обслуживания. </summary>
     public decimal? Price { get; set; }
+
+    /// <summary> Валюта сохранённого обслуживания. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
 
     /// <summary> Ссылка на страницу обслуживания. </summary>
     public string DetailUrl { get; set; } = string.Empty;
@@ -1868,10 +1876,10 @@ public class OrganizationSwitcherOptionViewModel
 }
 
 /// <summary> Входная модель создания организации. </summary>
-public class CreateOrganizationInputModel
+public class CreateOrganizationInputModel : IValidatableObject
 {
     /// <summary> Название новой организации. </summary>
-    [Required(ErrorMessage = "Укажите название организации.")]
+    [Required(ErrorMessage = "organization.create.name.required")]
     [MaxLength(160)]
     public string Name { get; set; } = string.Empty;
 
@@ -1879,13 +1887,40 @@ public class CreateOrganizationInputModel
     [MaxLength(600)]
     public string? Description { get; set; }
 
+    /// <summary> Валюта учета новой организации. </summary>
+    [Required(ErrorMessage = "organization.create.currency.required")]
+    [StringLength(3, MinimumLength = 3, ErrorMessage = "organization.create.currency.length")]
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
+
+    /// <summary> Часовой пояс новой организации в формате IANA. </summary>
+    [Required(ErrorMessage = "organization.create.timezone.required")]
+    [MaxLength(100, ErrorMessage = "organization.create.timezone.length")]
+    public string TimeZoneId { get; set; } = string.Empty;
+
     /// <summary> Код стиля документов организации. </summary>
     [MaxLength(40)]
     public string? DocumentStyleCode { get; set; } = "auto";
 
     /// <summary> Код основного сценария организации. </summary>
-    [Required(ErrorMessage = "Выберите тип организации.")]
+    [Required(ErrorMessage = "organization.create.scenario.required")]
     public string PrimaryScenarioCode { get; set; } = string.Empty;
+
+    /// <inheritdoc />
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!CurrencyCodes.IsSupported(this.CurrencyCode))
+        {
+            var localizer = validationContext.GetService(typeof(IStringLocalizer<LocalizationStrings>))
+                as IStringLocalizer<LocalizationStrings>;
+            var errorMessage = localizer is null
+                ? "Выберите валюту из списка."
+                : localizer["organization.create.currency.unsupported"].Value;
+
+            yield return new ValidationResult(
+                errorMessage,
+                [nameof(CurrencyCode)]);
+        }
+    }
 }
 
 /// <summary> Входная модель обновления организации с реквизитами. </summary>

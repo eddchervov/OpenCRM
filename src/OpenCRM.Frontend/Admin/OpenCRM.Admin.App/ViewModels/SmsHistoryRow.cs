@@ -1,8 +1,10 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
-public sealed class SmsHistoryRow(AdminSmsHistoryItem item)
+public sealed class SmsHistoryRow(AdminSmsHistoryItem item) : ObservableObject
 {
     public int Id { get; } = item.Id;
     public string Phone { get; } = item.Phone;
@@ -12,8 +14,10 @@ public sealed class SmsHistoryRow(AdminSmsHistoryItem item)
     public string Response { get; } = string.IsNullOrWhiteSpace(item.Response) ? "—" : item.Response;
     public string Type { get; } = item.Type switch
     {
-        10 => "Подтверждение телефона",
-        20 => "Вход по телефону",
-        _ => $"Тип {item.Type}"
+        10 => AdminLocalization.Instance["native.sms.podtverzhdenie.telefona"],
+        20 => AdminLocalization.Instance["native.sms.vkhod.po.telefonu"],
+        _ => AdminLocalization.Instance.Format("native.sms.tip.item.type", item.Type)
     };
+
+    public void RefreshLocalizedValues() => this.OnPropertyChanged((string?)null);
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import { UiButton } from '@opencrm/ui'
+import { UiButton, useLocalization } from '@opencrm/ui'
+import '../notificationMessages'
 import WorkspaceVisitReminderSettings from './WorkspaceVisitReminderSettings.vue'
 import WorkspaceTelegramSettings from './WorkspaceTelegramSettings.vue'
 import WorkspaceMaxSettings from './WorkspaceMaxSettings.vue'
@@ -15,23 +16,25 @@ defineProps<{
 const emit = defineEmits<{
   'busy-changed': [isBusy: boolean]
 }>()
+const { t } = useLocalization()
 
 type NotificationSection = 'visitReminder' | 'telegram' | 'max'
+type NotificationGroup = { title: string, items: { code: NotificationSection, title: string, description: string, symbol: string }[] }
 const selectedSection = ref<NotificationSection | null>(null)
 const visited = ref<Partial<Record<NotificationSection, boolean>>>({})
 const busy = ref(false)
 const overview = ref<InstanceType<typeof WorkspaceSettingsChoices> | null>(null)
 const backButton = ref<InstanceType<typeof UiButton> | null>(null)
-const groups: { title: string, items: { code: NotificationSection, title: string, description: string, symbol: string }[] }[] = [
-  { title: 'Автоматизация', items: [
-    { code: 'visitReminder' as const, title: 'Напоминание о визите', description: 'Когда отправлять, через какой канал и что писать клиенту.', symbol: 'clock' }
+const groups = computed<NotificationGroup[]>(() => [
+  { title: t('notificationSettings.automation'), items: [
+    { code: 'visitReminder' as const, title: t('notificationSettings.visitReminder'), description: t('notificationSettings.visitReminderDescription'), symbol: 'clock' }
   ] },
-  { title: 'Каналы связи', items: [
-    { code: 'telegram' as const, title: 'Telegram', description: 'Подключение бота и уведомления о записи и готовности автомобиля.', symbol: 'send' },
-    { code: 'max' as const, title: 'MAX', description: 'Подключение бота и уведомления о записи и готовности автомобиля.', symbol: 'chat' }
+  { title: t('notificationSettings.channels'), items: [
+    { code: 'telegram' as const, title: t('notificationChannel.telegram'), description: t('notificationSettings.telegramDescription'), symbol: 'send' },
+    { code: 'max' as const, title: t('notificationChannel.max'), description: t('notificationSettings.maxDescription'), symbol: 'chat' }
   ] }
-]
-const selectedTitle = computed(() => groups.flatMap(group => group.items).find(item => item.code === selectedSection.value)?.title)
+])
+const selectedTitle = computed(() => groups.value.flatMap(group => group.items).find(item => item.code === selectedSection.value)?.title)
 
 async function selectSection(section: NotificationSection | null) {
   if (busy.value) return
@@ -55,13 +58,13 @@ function setBusy(value: boolean) {
 <template>
   <div class="notification-settings">
     <template v-if="previewOnly">
-      <WorkspaceSettingsChoices title="Уведомления клиентам" :groups="groups" disabled />
+      <WorkspaceSettingsChoices :title="t('notificationSettings.title')" :groups="groups" disabled />
     </template>
     <template v-else>
-      <WorkspaceSettingsChoices v-show="!selectedSection" ref="overview" title="Уведомления клиентам" :groups="groups" :disabled="busy" @select="selectSection($event as NotificationSection)" />
+      <WorkspaceSettingsChoices v-show="!selectedSection" ref="overview" :title="t('notificationSettings.title')" :groups="groups" :disabled="busy" @select="selectSection($event as NotificationSection)" />
       <div v-show="selectedSection" class="notification-settings__editor">
-        <nav class="notification-settings__back" aria-label="Раздел уведомлений">
-          <UiButton ref="backButton" variant="secondary" :disabled="busy" @click="selectSection(null)">← Все уведомления</UiButton>
+        <nav class="notification-settings__back" :aria-label="t('notificationSettings.backAria')">
+          <UiButton ref="backButton" variant="secondary" :disabled="busy" @click="selectSection(null)">{{ t('notificationSettings.backAll') }}</UiButton>
           <span aria-current="page">{{ selectedTitle }}</span>
         </nav>
         <WorkspaceVisitReminderSettings v-if="visited.visitReminder" v-show="selectedSection === 'visitReminder'" :organization-id="organizationId" :can-write="canWrite" @busy-changed="setBusy" />

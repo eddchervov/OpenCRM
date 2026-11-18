@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '@opencrm/workspace/billingMessages'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -17,6 +19,8 @@ function setup() {
   const module = { exports: {} }
   let unmount
   new Function('require', 'module', 'exports', code)(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../billingMessages') return {}
     if (id === 'vue') return { ...vue, useId: () => 'qa-export', onBeforeUnmount: callback => { unmount = callback } }
     if (id === '../api/organizationExport') return exportApi
     if (id === '@opencrm/ui') return {}

@@ -160,7 +160,7 @@ public sealed class MaintenanceCommandRulesEdgeTests
         detail.CatalogItemId = null;
         detail.MaterialCatalogItemId = null;
         Assert.False(MaintenanceChangeRules.AreSameDetail(linked, detail));
-        Assert.DoesNotContain("сотрудник:", MaintenanceChangeRules.FormatDetail(unlinked));
+        Assert.DoesNotContain("сотрудник:", MaintenanceChangeRules.FormatDetail(unlinked, CurrencyCodes.Rub));
     }
 
     [Theory]

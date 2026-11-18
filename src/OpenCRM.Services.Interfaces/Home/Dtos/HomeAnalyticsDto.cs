@@ -12,6 +12,12 @@ public class HomeAnalyticsDto
     /// <summary> Общая сумма расходов на обслуживание. </summary>
     public decimal TotalSpent { get; set; }
 
+    /// <summary> Расходы, сохранённые в других валютах. </summary>
+    public IReadOnlyList<HomeAnalyticsCurrencyTotalDto> OtherCurrencyTotals { get; set; } = [];
+
+    /// <summary> Валюта денежных показателей. </summary>
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Средняя стоимость обслуживания. </summary>
     public decimal AverageMaintenanceCost { get; set; }
 

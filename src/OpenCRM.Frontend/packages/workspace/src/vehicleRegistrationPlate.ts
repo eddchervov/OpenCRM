@@ -1,4 +1,6 @@
 import { Mask, type MaskInputOptions } from 'maska'
+import { i18n } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/plateMessages'
 
 export type VehicleRegistrationPlateFormat = {
   code: string
@@ -23,12 +25,12 @@ export function loadVehicleRegistrationPlateFormats(): Promise<VehicleRegistrati
     headers: { Accept: 'application/json' }
   }).then(async response => {
     if (!response.ok) {
-      throw new Error(response.status === 401 ? 'Войдите в аккаунт, чтобы загрузить формат госномера.' : 'Не удалось загрузить форматы госномеров.')
+      throw new Error(i18n.global.t(response.status === 401 ? 'plate.signIn' : 'plate.loadError'))
     }
 
     const formats = await response.json() as VehicleRegistrationPlateFormats
     if (!formats || !Number.isInteger(formats.maxLength) || !formats.letterPattern || !Array.isArray(formats.formats)) {
-      throw new Error('Сервер вернул некорректные форматы госномеров.')
+      throw new Error(i18n.global.t('plate.invalidConfig'))
     }
 
     return formats
@@ -64,25 +66,25 @@ export function matchesRegistrationPlateSearch(value: string | null | undefined,
 
 export function validateRegistrationPlate(value: string, kind: string | number, config: VehicleRegistrationPlateFormats, allowOtherFormat = false): string {
   if (!value.trim()) return ''
-  if (value.length > config.maxLength) return `Номер не должен быть длиннее ${config.maxLength} символов.`
+  if (value.length > config.maxLength) return i18n.global.t('plate.length', { max: config.maxLength })
 
   if (allowOtherFormat) {
-    if (value.trim().length < 2) return 'Номер должен содержать не менее двух символов.'
-    return /^[\p{L}\p{N}\s-]+$/u.test(value) ? '' : 'Используйте в номере только буквы, цифры, пробелы и дефис.'
+    if (value.trim().length < 2) return i18n.global.t('plate.short')
+    return /^[\p{L}\p{N}\s-]+$/u.test(value) ? '' : i18n.global.t('plate.characters')
   }
 
   const format = getVehicleRegistrationPlateFormat(kind, config)
   if (!format) {
-    if (value.trim().length < 2) return 'Номер должен содержать не менее двух символов.'
-    return /^[\p{L}\p{N}\s-]+$/u.test(value) ? '' : 'Используйте в номере только буквы, цифры, пробелы и дефис.'
+    if (value.trim().length < 2) return i18n.global.t('plate.short')
+    return /^[\p{L}\p{N}\s-]+$/u.test(value) ? '' : i18n.global.t('plate.characters')
   }
 
   try {
     return new RegExp(format.pattern, 'u').test(normalizeRegistrationPlate(value, config))
       ? ''
-      : `Проверьте госномер. Для этого вида техники пример: ${format.example}.`
+      : i18n.global.t('plate.format', { example: format.example })
   } catch {
-    return 'Не удалось проверить формат госномера. Обновите страницу и попробуйте снова.'
+    return i18n.global.t('plate.validationError')
   }
 }
 

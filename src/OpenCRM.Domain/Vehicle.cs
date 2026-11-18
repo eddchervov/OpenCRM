@@ -45,6 +45,9 @@ public class Vehicle
     /// <summary> Регистрационный номер техники. </summary>
     public string? RegistrationPlate { get; set; }
 
+    /// <summary> Страна ISO 3166-1 или ZZ для неизвестной страны; null сохраняет прежние российские правила. </summary>
+    public string? RegistrationCountryCode { get; set; }
+
     /// <summary> Номер кузова или рамы. </summary>
     public string? BodyNumber { get; set; }
 

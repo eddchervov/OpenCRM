@@ -32,6 +32,8 @@ internal sealed partial class StockCommandService
         Guid movementId)
     {
         await context.Database.ExecuteSqlInterpolatedAsync(
+            $"""SELECT 1 FROM "Organizations" WHERE "Id" = {organizationId} FOR NO KEY UPDATE""");
+        await context.Database.ExecuteSqlInterpolatedAsync(
             $"""SELECT 1 FROM "OrganizationMaterialStocks" WHERE "Id" = {request.StockId} AND "OrganizationId" = {organizationId} FOR UPDATE""");
         var stock = await context.OrganizationMaterialStocks
             .FirstOrDefaultAsync(item => item.OrganizationId == organizationId && item.Id == request.StockId)
@@ -50,6 +52,7 @@ internal sealed partial class StockCommandService
         {
             Id = movementId,
             OrganizationId = organizationId,
+            CurrencyCode = stock.CurrencyCode,
             StockId = stock.Id,
             CatalogItemId = stock.CatalogItemId,
             TypeCode = OrganizationMaterialMovementTypeCodes.Issue,

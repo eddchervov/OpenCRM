@@ -1,11 +1,18 @@
 <script setup lang="ts">
+import { formattingCulture, formatLocaleCurrency } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { UiButton, UiTooltip } from '@opencrm/ui'
+import { UiButton, UiTooltip, useLocalization } from '@opencrm/ui'
+import '../maintenanceWorkMessages'
 import {
   adjustWorkTime, completeWorkForEmployee, decideWorkReport, loadProductionReport, loadWorkProgress,
   loadWorkReports, returnWorkForRework, type ProductionReport, type WorkProgress, type WorkReport
 } from '../api/work'
 import { formatWorkDuration, getWorkDurationSeconds, hasRecordedWorkTime } from '../formatWorkDuration'
+
+const workspaceCurrency = useWorkspaceCurrency()
+const { t } = useLocalization()
 
 const props = defineProps<{
   organizationId: string
@@ -54,7 +61,7 @@ const completedCount = computed(() => works.value.filter(work => work.status ===
 const canOpenManagement = computed(() => props.teamAvailable !== false
   || works.value.some(work => work.hasAssignedEmployee || work.version > 0 || work.status >= 2)
   || reports.value.length > 0)
-const managementTitle = computed(() => props.teamAvailable === false ? 'История работ' : 'Исполнители и корректировки')
+const managementTitle = computed(() => props.teamAvailable === false ? t('maintenanceWork.historyTitle') : t('maintenanceWork.performersAndAdjustments'))
 const completionPercent = computed(() => works.value.length
   ? Math.round(completedCount.value / works.value.length * 100)
   : 0)
@@ -67,9 +74,9 @@ const currentWorkSeconds = computed(() => {
   return getWorkDurationSeconds(work?.activeTime)
 })
 const timeExplanation = computed(() => [
-  'Учтённое время — время по таймеру с учётом предыдущих корректировок.',
-  currentWorkSeconds.value === 0 ? 'Время не зафиксировано. Отметка о выполнении сама по себе время не добавляет.' : '',
-  timeWork.value?.status === 2 ? 'Таймер запущен: итог продолжит увеличиваться до остановки работы.' : ''
+  t('maintenanceWork.accountedTimeExplanation'),
+  currentWorkSeconds.value === 0 ? t('maintenanceWork.timeNotRecordedExplanation') : '',
+  timeWork.value?.status === 2 ? t('maintenanceWork.timerRunningExplanation') : ''
 ].filter(Boolean).join(' '))
 const minimumTimeMinutes = computed(() => Math.max(-10080, -Math.floor((currentWorkSeconds.value ?? 0) / 60)))
 const adjustedWorkSeconds = computed(() => currentWorkSeconds.value !== null && Number.isInteger(timeMinutes.value)
@@ -77,14 +84,14 @@ const adjustedWorkSeconds = computed(() => currentWorkSeconds.value !== null && 
   : null)
 const timeValidationError = computed(() => {
   if (!timeWork.value) return ''
-  if (currentWorkSeconds.value === null) return 'Не удалось определить текущее время. Закройте форму и обновите данные.'
+  if (currentWorkSeconds.value === null) return t('maintenanceWork.currentTimeUnknown')
   if (!Number.isInteger(timeMinutes.value) || timeMinutes.value < -10080 || timeMinutes.value > 10080) {
-    return 'Введите целое число минут от −10 080 до 10 080.'
+    return t('maintenanceWork.minutesRange')
   }
   if (adjustedWorkSeconds.value !== null && adjustedWorkSeconds.value < 0) {
     return minimumTimeMinutes.value === 0
-      ? 'Уменьшить время нельзя: учтено меньше минуты.'
-      : `Можно убрать не больше ${-minimumTimeMinutes.value} мин.`
+      ? t('maintenanceWork.cannotReduce')
+      : t('maintenanceWork.canRemoveMinutes', { minutes: -minimumTimeMinutes.value })
   }
   return ''
 })
@@ -96,11 +103,11 @@ function formatAdjustmentTime(seconds: number | null) {
   const minutes = Math.floor(absoluteSeconds % 3600 / 60)
   const remainder = absoluteSeconds % 60
   const parts = []
-  if (hours) parts.push(`${hours} ч`)
-  if (minutes) parts.push(`${minutes} мин`)
-  if (remainder) parts.push(`${remainder} с`)
+  if (hours) parts.push(`${hours} ${t('maintenanceWork.hoursShort')}`)
+  if (minutes) parts.push(`${minutes} ${t('maintenanceWork.minutesShort')}`)
+  if (remainder) parts.push(`${remainder} ${t('maintenanceWork.secondsShort')}`)
 
-  return `${seconds < 0 ? '−' : ''}${parts.join(' ') || '0 мин'}`
+  return `${seconds < 0 ? '−' : ''}${parts.join(' ') || t('maintenanceWork.zeroMinutes')}`
 }
 
 async function load() {
@@ -143,7 +150,7 @@ async function load() {
   if (lastSnapshot && snapshot !== lastSnapshot) emit('changed')
   lastSnapshot = snapshot
   error.value = failures.length
-    ? failures[0] instanceof Error ? failures[0].message : 'Не удалось загрузить данные о работах.'
+    ? failures[0] instanceof Error ? failures[0].message : t('maintenanceWork.workLoadError')
     : ''
 }
 
@@ -151,15 +158,15 @@ async function decide(decision: 'approved' | 'rejected') {
   if (!props.canReturn || !decisionReport.value || busy.value) return
   if (decision === 'approved' && props.teamAvailable === false) return
   if (decision === 'approved' && (decisionPrice.value == null || decisionPrice.value < 0)) {
-    reportError.value = 'Укажите согласованную стоимость.'
+    reportError.value = t('maintenanceWork.agreedPriceRequired')
     return
   }
   if (decision === 'approved' && !decisionVatRateCode.value) {
-    reportError.value = 'Укажите ставку НДС.'
+    reportError.value = t('maintenanceWork.vatRateRequired')
     return
   }
   if (decision === 'rejected' && !decisionReason.value.trim()) {
-    reportError.value = 'Укажите причину отказа.'
+    reportError.value = t('maintenanceWork.reasonRequired')
     return
   }
 
@@ -181,7 +188,7 @@ async function decide(decision: 'approved' | 'rejected') {
     emit('changed')
   } catch (cause) {
     if (props.organizationId !== organizationId || props.maintenanceId !== maintenanceId) return
-    reportError.value = cause instanceof Error ? cause.message : 'Не удалось сохранить решение.'
+    reportError.value = cause instanceof Error ? cause.message : t('maintenanceWork.decisionSaveError')
     await load()
   } finally {
     busy.value = false
@@ -189,18 +196,16 @@ async function decide(decision: 'approved' | 'rejected') {
 }
 
 function reportKindName(kind: WorkReport['kind']) {
-  return kind === 'defect' ? 'Дефект' : kind === 'extra' ? 'Дополнительная работа'
-    : kind === 'time' ? 'Корректировка времени' : 'Комментарий'
+  return kind === 'defect' ? t('maintenanceWork.reportDefect') : kind === 'extra' ? t('maintenanceWork.reportExtra')
+    : kind === 'time' ? t('maintenanceWork.reportTime') : t('maintenanceWork.reportComment')
 }
 
 function formatMoney(value: number | null | undefined) {
-  return value == null ? '—' : new Intl.NumberFormat('ru-RU', {
-    style: 'currency', currency: 'RUB', maximumFractionDigits: 2
-  }).format(value)
+  return value == null ? '—' : formatLocaleCurrency(value, workspaceCurrency.value, { maximumFractionDigits: 2 })
 }
 
 function formatInstant(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     dateStyle: 'short', timeStyle: 'short', timeZone: props.timeZoneId || 'UTC'
   }).format(new Date(value))
 }
@@ -260,7 +265,7 @@ async function adjustTime() {
   if (!props.canReturn || !timeWork.value || busy.value) return
   if (timeValidationError.value) return
   if (!Number.isInteger(timeMinutes.value) || !timeMinutes.value || !timeReason.value.trim()) {
-    timeError.value = 'Укажите изменение времени в минутах и причину.'
+    timeError.value = t('maintenanceWork.timeChangeRequired')
     return
   }
 
@@ -278,7 +283,7 @@ async function adjustTime() {
     await load()
   } catch (cause) {
     if (props.organizationId === organizationId && props.maintenanceId === maintenanceId) {
-      timeError.value = cause instanceof Error ? cause.message : 'Не удалось исправить время работы.'
+      timeError.value = cause instanceof Error ? cause.message : t('maintenanceWork.timeChangeError')
     }
   } finally {
     busy.value = false
@@ -288,7 +293,7 @@ async function adjustTime() {
 async function returnForRework() {
   if (!props.canReturn || !selected.value || busy.value) return
   if (!reason.value.trim()) {
-    managementError.value = 'Укажите причину возврата.'
+    managementError.value = t('maintenanceWork.returnReasonRequired')
     return
   }
 
@@ -304,7 +309,7 @@ async function returnForRework() {
     await load()
   } catch (cause) {
     if (props.organizationId !== organizationId || props.maintenanceId !== maintenanceId) return
-    managementError.value = cause instanceof Error ? cause.message : 'Не удалось вернуть работу.'
+    managementError.value = cause instanceof Error ? cause.message : t('maintenanceWork.returnError')
     await load()
   } finally {
     busy.value = false
@@ -345,7 +350,7 @@ async function completeForEmployee() {
   if (!work || !canCompleteWork(work) || busy.value) return
   const reason = completionReason.value.trim()
   if (!reason || reason.length > 1000) {
-    completionError.value = 'Укажите причину завершения (до 1000 символов).'
+    completionError.value = t('maintenanceWork.completionReasonRequired')
     return
   }
   if (!completionCommand || completionCommand.reason !== reason) {
@@ -364,7 +369,7 @@ async function completeForEmployee() {
     emit('changed')
   } catch (cause) {
     if (props.organizationId === organizationId && props.maintenanceId === maintenanceId) {
-      completionError.value = cause instanceof Error ? cause.message : 'Не удалось завершить работу.'
+      completionError.value = cause instanceof Error ? cause.message : t('maintenanceWork.completionError')
     }
   } finally {
     busy.value = false
@@ -372,7 +377,7 @@ async function completeForEmployee() {
 }
 
 function statusName(status: number) {
-  return status === 2 ? 'В работе' : status === 3 ? 'На паузе' : status === 4 ? 'Выполнена' : 'Назначена'
+  return status === 2 ? t('maintenanceWork.statusInProgress') : status === 3 ? t('maintenanceWork.statusPaused') : status === 4 ? t('maintenanceWork.statusCompleted') : t('maintenanceWork.statusAssigned')
 }
 
 onMounted(() => {
@@ -421,162 +426,162 @@ watch(() => props.canReturn, canReturn => {
 </script>
 
 <template>
-  <section v-if="!simpleWorkflow || error || reports.length || works.some(work => work.version > 0 || work.status >= 2)" class="work-progress" aria-label="Ход работ">
-    <header class="ui-section-header"><strong>{{ compact ? 'Контроль работ' : 'Ход работ' }}</strong><span v-if="!compact">{{ completionPercent }}% · {{ completedCount }} из {{ works.length }}</span></header>
-    <div v-if="!compact" class="work-progress__track" role="progressbar" :aria-valuenow="completionPercent" aria-valuemin="0" aria-valuemax="100" aria-label="Выполнено работ">
+  <section v-if="!simpleWorkflow || error || reports.length || works.some(work => work.version > 0 || work.status >= 2)" class="work-progress" :aria-label="t('maintenanceWork.workProgress')">
+    <header class="ui-section-header"><strong>{{ compact ? t('maintenanceWork.workControl') : t('maintenanceWork.workProgress') }}</strong><span v-if="!compact">{{ completionPercent }}% · {{ t('maintenanceWork.completedOf', { completed: completedCount, total: works.length }) }}</span></header>
+    <div v-if="!compact" class="work-progress__track" role="progressbar" :aria-valuenow="completionPercent" aria-valuemin="0" aria-valuemax="100" :aria-label="t('maintenanceWork.completedWork')">
       <span :style="{ width: `${completionPercent}%` }" />
     </div>
-    <p v-if="awaitsReview && !simpleWorkflow" class="work-progress__review">Все операции завершены. Проверьте результат и подтвердите готовность к выдаче.</p>
-    <p v-if="error" class="work-progress__error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
+    <p v-if="awaitsReview && !simpleWorkflow" class="work-progress__review">{{ t('maintenanceWork.reviewReady') }}</p>
+    <p v-if="error" class="work-progress__error" role="alert">{{ error }} <button type="button" @click="load">{{ t('maintenanceWork.retry') }}</button></p>
     <div class="work-progress__navigation">
       <UiButton v-if="canOpenManagement" variant="secondary" @click="managementDialog?.showModal()">{{ managementTitle }}</UiButton>
-      <UiButton v-if="reports.length" variant="secondary" @click="reportsDialog?.showModal()">Замечания и дополнительные работы <span class="work-progress__count">{{ reports.length }}</span></UiButton>
-      <span v-if="pendingReportCount" class="work-progress__pending">{{ pendingReportCount }} ждут решения</span>
+      <UiButton v-if="reports.length" variant="secondary" @click="reportsDialog?.showModal()">{{ t('maintenanceWork.reports') }} <span class="work-progress__count">{{ reports.length }}</span></UiButton>
+      <span v-if="pendingReportCount" class="work-progress__pending">{{ t('maintenanceWork.pendingDecisions', { count: pendingReportCount }) }}</span>
     </div>
     <div v-if="productionReport" class="work-progress__summary">
-      <strong>Предварительный отчёт</strong>
+      <strong>{{ t('maintenanceWork.preliminaryReport') }}</strong>
       <dl class="work-progress__metrics">
-        <div><dt>Учтённое время работы</dt><dd>{{ hasRecordedWorkTime(productionReport.activeTime) ? formatWorkDuration(productionReport.activeTime) : 'Не зафиксировано' }}</dd></div>
-        <div><dt>Корректировки</dt><dd>{{ productionReport.timeAdjustmentsCount }}</dd></div>
-        <div v-if="productionReport.materialCostAmount != null"><dt>Материалы</dt><dd>{{ formatMoney(productionReport.materialCostAmount) }}</dd></div>
-        <div v-if="productionReport.laborCostAmount != null"><dt>Труд</dt><dd>{{ formatMoney(productionReport.laborCostAmount) }}</dd></div>
-        <div v-if="productionReport.revenueAmount != null"><dt>Выручка</dt><dd>{{ formatMoney(productionReport.revenueAmount) }}</dd></div>
-        <div v-if="productionReport.grossMarginAmount != null"><dt>Валовая маржа</dt><dd>{{ formatMoney(productionReport.grossMarginAmount) }}</dd></div>
+        <div><dt>{{ t('maintenanceWork.accountedWorkTime') }}</dt><dd>{{ hasRecordedWorkTime(productionReport.activeTime) ? formatWorkDuration(productionReport.activeTime) : t('maintenanceWork.notRecorded') }}</dd></div>
+        <div><dt>{{ t('maintenanceWork.adjustments') }}</dt><dd>{{ productionReport.timeAdjustmentsCount }}</dd></div>
+        <div v-if="productionReport.materialCostAmount != null"><dt>{{ t('maintenanceWork.materials') }}</dt><dd>{{ formatMoney(productionReport.materialCostAmount) }}</dd></div>
+        <div v-if="productionReport.laborCostAmount != null"><dt>{{ t('maintenanceWork.labor') }}</dt><dd>{{ formatMoney(productionReport.laborCostAmount) }}</dd></div>
+        <div v-if="productionReport.revenueAmount != null"><dt>{{ t('maintenanceWork.revenue') }}</dt><dd>{{ formatMoney(productionReport.revenueAmount) }}</dd></div>
+        <div v-if="productionReport.grossMarginAmount != null"><dt>{{ t('maintenanceWork.grossMargin') }}</dt><dd>{{ formatMoney(productionReport.grossMarginAmount) }}</dd></div>
       </dl>
       <details v-if="productionReport.materials.length" class="work-progress__materials">
-        <summary>Использованные материалы · {{ productionReport.materials.length }}</summary>
+        <summary>{{ t('maintenanceWork.usedMaterials', { count: productionReport.materials.length }) }}</summary>
         <ul><li v-for="(material, index) in productionReport.materials" :key="index">{{ material.name }} <span>{{ material.quantity }} {{ material.unit }}</span></li></ul>
       </details>
     </div>
     <dialog ref="managementDialog" class="work-completion-dialog work-progress-dialog" aria-labelledby="work-management-title" @cancel.prevent="closeManagement">
       <header class="work-completion-dialog__header ui-form-header">
         <h3 id="work-management-title">{{ managementTitle }}</h3>
-        <button type="button" :aria-label="`Закрыть: ${managementTitle}`" :disabled="busy" @click="closeManagement">×</button>
+        <button type="button" :aria-label="t('maintenanceWork.closeDialog', { title: managementTitle })" :disabled="busy" @click="closeManagement">×</button>
       </header>
       <div class="work-completion-dialog__body work-progress__management">
-        <p v-if="error" class="work-progress__error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
-        <p v-if="!works.length">Нет данных о работах.</p>
+        <p v-if="error" class="work-progress__error" role="alert">{{ error }} <button type="button" @click="load">{{ t('maintenanceWork.retry') }}</button></p>
+        <p v-if="!works.length">{{ t('maintenanceWork.noWorkData') }}</p>
         <ul class="work-progress__items">
           <li v-for="work in works" :key="work.detailId" class="work-progress__item">
             <div class="work-progress__identity">
               <strong>{{ work.name }}</strong>
-              <small>{{ work.employeeName || 'Исполнитель не назначен' }}</small>
-              <div class="work-progress__time"><span>Учтённое время</span><strong>{{ hasRecordedWorkTime(work.activeTime) ? formatWorkDuration(work.activeTime) : 'Не зафиксировано' }}</strong></div>
-              <small v-if="work.pauseReason">Причина паузы: {{ work.pauseReason }}</small>
+              <small>{{ work.employeeName || t('maintenanceWork.employeeUnassigned') }}</small>
+              <div class="work-progress__time"><span>{{ t('maintenanceWork.accountedWorkTime') }}</span><strong>{{ hasRecordedWorkTime(work.activeTime) ? formatWorkDuration(work.activeTime) : t('maintenanceWork.notRecorded') }}</strong></div>
+              <small v-if="work.pauseReason">{{ t('maintenanceWork.pauseReason', { reason: work.pauseReason }) }}</small>
             </div>
             <div class="work-progress__tools">
               <span class="work-progress__status" :data-status="work.status">{{ statusName(work.status) }}</span>
               <div v-if="canCompleteWork(work) || canReturn && work.status !== 1" class="work-progress__actions">
-                <UiButton v-if="canCompleteWork(work)" variant="secondary" :disabled="busy" @click="openCompletion(work)">Отметить выполненной</UiButton>
-                <UiButton v-if="canReturn && maintenanceStatus === 2 && work.status === 4" variant="secondary" :disabled="busy" @click="selected = work; reason = ''; managementError = ''">Вернуть в работу</UiButton>
-                <UiButton v-if="canReturn && work.status !== 1" variant="secondary" :disabled="busy" @click="openTimeAdjustment(work)">Исправить время</UiButton>
+                <UiButton v-if="canCompleteWork(work)" variant="secondary" :disabled="busy" @click="openCompletion(work)">{{ t('maintenanceWork.markCompleted') }}</UiButton>
+                <UiButton v-if="canReturn && maintenanceStatus === 2 && work.status === 4" variant="secondary" :disabled="busy" @click="selected = work; reason = ''; managementError = ''">{{ t('maintenanceWork.returnToWork') }}</UiButton>
+                <UiButton v-if="canReturn && work.status !== 1" variant="secondary" :disabled="busy" @click="openTimeAdjustment(work)">{{ t('maintenanceWork.adjustTime') }}</UiButton>
               </div>
             </div>
-            <button v-if="work.completionReason" type="button" class="work-progress__completion-link" @click="openCompletionDetails(work)">Завершено администратором</button>
+            <button v-if="work.completionReason" type="button" class="work-progress__completion-link" @click="openCompletionDetails(work)">{{ t('maintenanceWork.completedByAdmin') }}</button>
           </li>
         </ul>
         <p v-if="managementError" class="work-progress__error" role="alert">{{ managementError }}</p>
         <div v-if="selected" class="work-progress__return">
-          <label for="work-return-reason">Причина возврата</label>
+          <label for="work-return-reason">{{ t('maintenanceWork.returnReason') }}</label>
           <textarea id="work-return-reason" v-model="reason" maxlength="1000" :disabled="busy" rows="2" />
-          <div><UiButton :disabled="busy" @click="returnForRework">Подтвердить возврат</UiButton><UiButton variant="secondary" :disabled="busy" @click="selected = null">Отмена</UiButton></div>
+          <div><UiButton :disabled="busy" @click="returnForRework">{{ t('maintenanceWork.confirmReturn') }}</UiButton><UiButton variant="secondary" :disabled="busy" @click="selected = null">{{ t('maintenanceWork.cancel') }}</UiButton></div>
         </div>
       </div>
-      <footer class="work-completion-dialog__footer"><UiButton variant="secondary" :disabled="busy" @click="closeManagement">Закрыть</UiButton></footer>
+      <footer class="work-completion-dialog__footer"><UiButton variant="secondary" :disabled="busy" @click="closeManagement">{{ t('maintenanceWork.close') }}</UiButton></footer>
     </dialog>
     <dialog ref="reportsDialog" class="work-completion-dialog work-progress-dialog" aria-labelledby="work-reports-title" @cancel.prevent="closeReports">
       <header class="work-completion-dialog__header ui-form-header">
-        <h3 id="work-reports-title">Замечания и дополнительные работы</h3>
-        <button type="button" aria-label="Закрыть замечания и дополнительные работы" :disabled="busy" @click="closeReports">×</button>
+        <h3 id="work-reports-title">{{ t('maintenanceWork.reportsDialog') }}</h3>
+        <button type="button" :aria-label="t('maintenanceWork.closeReports')" :disabled="busy" @click="closeReports">×</button>
       </header>
       <div class="work-completion-dialog__body work-progress__reports">
-        <p v-if="error" class="work-progress__error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
-        <p v-if="!reports.length">Замечаний и дополнительных работ нет.</p>
+        <p v-if="error" class="work-progress__error" role="alert">{{ error }} <button type="button" @click="load">{{ t('maintenanceWork.retry') }}</button></p>
+        <p v-if="!reports.length">{{ t('maintenanceWork.noReports') }}</p>
         <ul>
           <li v-for="report in reports" :key="report.id">
             <div><strong>{{ reportKindName(report.kind) }}</strong><span>{{ report.employeeName }}</span></div>
             <small>{{ formatInstant(report.createdAt) }}</small>
             <p>{{ report.text }}</p>
-            <small v-if="report.kind === 'time'">{{ (report.timeAdjustmentMinutes ?? 0) > 0 ? '+' : '' }}{{ report.timeAdjustmentMinutes }} мин</small>
-            <small v-if="report.kind === 'extra'">{{ report.decision === 'approved' ? `Согласована · ${report.approvedPrice} ₽` : report.decision === 'rejected' ? `Отклонена · ${report.decisionReason || ''}` : 'Ожидает согласования' }}</small>
-            <UiButton v-if="canReturn && report.kind === 'extra' && !report.decision" variant="secondary" :disabled="busy" @click="decisionReport = report; decisionPrice = null; decisionVatRateCode = ''; decisionReason = ''; reportError = ''">Рассмотреть</UiButton>
+            <small v-if="report.kind === 'time'">{{ t('maintenanceWork.minutes', { minutes: `${(report.timeAdjustmentMinutes ?? 0) > 0 ? '+' : ''}${report.timeAdjustmentMinutes}` }) }}</small>
+            <small v-if="report.kind === 'extra'">{{ report.decision === 'approved' ? t('maintenanceWork.approved', { amount: formatLocaleCurrency(report.approvedPrice ?? 0, workspaceCurrency) }) : report.decision === 'rejected' ? t('maintenanceWork.rejected', { reason: report.decisionReason || '' }) : t('maintenanceWork.awaitingApproval') }}</small>
+            <UiButton v-if="canReturn && report.kind === 'extra' && !report.decision" variant="secondary" :disabled="busy" @click="decisionReport = report; decisionPrice = null; decisionVatRateCode = ''; decisionReason = ''; reportError = ''">{{ t('maintenanceWork.review') }}</UiButton>
           </li>
         </ul>
         <p v-if="reportError" class="work-progress__error" role="alert">{{ reportError }}</p>
         <div v-if="decisionReport" class="work-progress__return">
-          <strong>Решение по дополнительной работе</strong>
+          <strong>{{ t('maintenanceWork.extraWorkDecision') }}</strong>
           <template v-if="teamAvailable !== false">
-            <label for="work-extra-price">Согласованная стоимость</label>
+            <label for="work-extra-price">{{ t('maintenanceWork.agreedAmount') }}</label>
             <input id="work-extra-price" v-model.number="decisionPrice" type="number" min="0" step="0.01" :disabled="busy">
-            <label for="work-extra-vat">НДС</label>
-            <select id="work-extra-vat" v-model="decisionVatRateCode" :disabled="busy"><option value="">Выберите</option><option value="without_vat">Без НДС</option><option value="0">0 %</option><option value="5">5 %</option><option value="7">7 %</option><option value="10">10 %</option><option value="20">20 %</option><option value="22">22 %</option></select>
+            <label for="work-extra-vat">{{ t('maintenanceWork.vat') }}</label>
+            <select id="work-extra-vat" v-model="decisionVatRateCode" :disabled="busy"><option value="">{{ t('maintenanceWork.select') }}</option><option value="without_vat">{{ t('maintenanceWork.withoutVat') }}</option><option value="0">0 %</option><option value="5">5 %</option><option value="7">7 %</option><option value="10">10 %</option><option value="20">20 %</option><option value="22">22 %</option></select>
           </template>
-          <label for="work-extra-reason">Причина отказа или комментарий</label>
+          <label for="work-extra-reason">{{ t('maintenanceWork.reasonOrComment') }}</label>
           <textarea id="work-extra-reason" v-model="decisionReason" maxlength="1000" rows="2" :disabled="busy" />
-          <div><UiButton v-if="teamAvailable !== false" :disabled="busy" @click="decide('approved')">Согласовать</UiButton><UiButton variant="secondary" :disabled="busy" @click="decide('rejected')">Отклонить</UiButton><UiButton variant="secondary" :disabled="busy" @click="decisionReport = null">Отмена</UiButton></div>
+          <div><UiButton v-if="teamAvailable !== false" :disabled="busy" @click="decide('approved')">{{ t('maintenanceWork.approve') }}</UiButton><UiButton variant="secondary" :disabled="busy" @click="decide('rejected')">{{ t('maintenanceWork.reject') }}</UiButton><UiButton variant="secondary" :disabled="busy" @click="decisionReport = null">{{ t('maintenanceWork.cancel') }}</UiButton></div>
         </div>
       </div>
-      <footer class="work-completion-dialog__footer"><UiButton variant="secondary" :disabled="busy" @click="closeReports">Закрыть</UiButton></footer>
+      <footer class="work-completion-dialog__footer"><UiButton variant="secondary" :disabled="busy" @click="closeReports">{{ t('maintenanceWork.close') }}</UiButton></footer>
     </dialog>
     <dialog ref="auditDialog" class="work-completion-dialog" aria-labelledby="work-audit-title" @cancel.prevent="closeCompletionDetails">
       <header class="work-completion-dialog__header ui-form-header">
-        <h3 id="work-audit-title">Завершено администратором</h3>
-        <button type="button" aria-label="Закрыть сведения о завершении" @click="closeCompletionDetails">×</button>
+        <h3 id="work-audit-title">{{ t('maintenanceWork.completionDetails') }}</h3>
+        <button type="button" :aria-label="t('maintenanceWork.closeCompletionDetails')" @click="closeCompletionDetails">×</button>
       </header>
       <div class="work-completion-dialog__body">
         <strong>{{ auditWork?.name }}</strong>
         <dl class="work-progress__audit">
-          <div><dt>Завершил</dt><dd>{{ auditWork?.completedBy || 'Администратор' }}</dd></div>
-          <div><dt>Причина</dt><dd>{{ auditWork?.completionReason }}</dd></div>
+          <div><dt>{{ t('maintenanceWork.completedBy') }}</dt><dd>{{ auditWork?.completedBy || t('maintenanceWork.administrator') }}</dd></div>
+          <div><dt>{{ t('maintenanceWork.reason') }}</dt><dd>{{ auditWork?.completionReason }}</dd></div>
         </dl>
       </div>
-      <footer class="work-completion-dialog__footer"><UiButton variant="secondary" @click="closeCompletionDetails">Закрыть</UiButton></footer>
+      <footer class="work-completion-dialog__footer"><UiButton variant="secondary" @click="closeCompletionDetails">{{ t('maintenanceWork.close') }}</UiButton></footer>
     </dialog>
     <dialog ref="timeDialog" class="work-completion-dialog" aria-labelledby="work-time-title" @cancel.prevent="closeTimeAdjustment">
       <form @submit.prevent="adjustTime">
         <header class="work-completion-dialog__header ui-form-header">
-          <h3 id="work-time-title">Исправить время работы</h3>
-          <button type="button" aria-label="Закрыть корректировку времени" :disabled="busy" @click="closeTimeAdjustment">×</button>
+          <h3 id="work-time-title">{{ t('maintenanceWork.adjustWorkTime') }}</h3>
+          <button type="button" :aria-label="t('maintenanceWork.closeTimeAdjustment')" :disabled="busy" @click="closeTimeAdjustment">×</button>
         </header>
         <div class="work-completion-dialog__body">
           <strong>{{ timeWork?.name }}</strong>
           <dl class="work-time-summary">
             <div>
-              <dt>Учтено сейчас <UiTooltip :text="timeExplanation"><button type="button" class="work-time-help" aria-label="Как считается учтённое время">?</button></UiTooltip></dt>
+              <dt>{{ t('maintenanceWork.accountedNow') }} <UiTooltip :text="timeExplanation"><button type="button" class="work-time-help" :aria-label="t('maintenanceWork.howTimeIsCalculated')">?</button></UiTooltip></dt>
               <dd>{{ formatAdjustmentTime(currentWorkSeconds) }}</dd>
             </div>
-            <div><dt>После сохранения</dt><dd :class="{ 'work-progress__error': adjustedWorkSeconds !== null && adjustedWorkSeconds < 0 }" aria-live="polite">{{ formatAdjustmentTime(adjustedWorkSeconds) }}</dd></div>
+            <div><dt>{{ t('maintenanceWork.afterSave') }}</dt><dd :class="{ 'work-progress__error': adjustedWorkSeconds !== null && adjustedWorkSeconds < 0 }" aria-live="polite">{{ formatAdjustmentTime(adjustedWorkSeconds) }}</dd></div>
           </dl>
-          <label for="work-time-minutes">Изменение времени, мин.</label>
+          <label for="work-time-minutes">{{ t('maintenanceWork.timeChangeMinutes') }}</label>
           <input id="work-time-minutes" v-model.number="timeMinutes" type="number" step="1" :min="minimumTimeMinutes" max="10080" required :disabled="busy" autofocus :aria-invalid="Boolean(timeValidationError)" aria-describedby="work-time-hint work-time-validation" @input="timeError = ''">
-          <small id="work-time-hint">Положительное число добавит время, отрицательное — уменьшит.</small>
-          <label for="work-time-reason">Причина корректировки <span aria-hidden="true">*</span></label>
+          <small id="work-time-hint">{{ t('maintenanceWork.positiveAddsNegativeRemoves') }}</small>
+          <label for="work-time-reason">{{ t('maintenanceWork.adjustmentReason') }} <span aria-hidden="true">*</span></label>
           <textarea id="work-time-reason" v-model="timeReason" required maxlength="1000" rows="3" :disabled="busy" />
           <p v-if="timeValidationError || timeError" id="work-time-validation" class="work-progress__error" role="alert">{{ timeValidationError || timeError }}</p>
         </div>
         <footer class="work-completion-dialog__footer">
-          <UiButton type="button" variant="secondary" :disabled="busy" @click="closeTimeAdjustment">Отмена</UiButton>
-          <UiButton type="submit" :disabled="busy || Boolean(timeValidationError) || !timeMinutes || !timeReason.trim()">{{ busy ? 'Сохранение…' : 'Сохранить' }}</UiButton>
+          <UiButton type="button" variant="secondary" :disabled="busy" @click="closeTimeAdjustment">{{ t('maintenanceWork.cancel') }}</UiButton>
+          <UiButton type="submit" :disabled="busy || Boolean(timeValidationError) || !timeMinutes || !timeReason.trim()">{{ busy ? t('maintenanceWork.saving') : t('maintenanceWork.save') }}</UiButton>
         </footer>
       </form>
     </dialog>
     <dialog ref="completionDialog" class="work-completion-dialog" aria-labelledby="work-completion-title" @cancel.prevent="closeCompletion">
       <form @submit.prevent="completeForEmployee">
         <header class="work-completion-dialog__header ui-form-header">
-          <h3 id="work-completion-title">Завершить работу за сотрудника</h3>
-          <button type="button" aria-label="Закрыть завершение работы" :disabled="busy" @click="closeCompletion">×</button>
+          <h3 id="work-completion-title">{{ t('maintenanceWork.completeForEmployee') }}</h3>
+          <button type="button" :aria-label="t('maintenanceWork.closeCompletion')" :disabled="busy" @click="closeCompletion">×</button>
         </header>
         <div class="work-completion-dialog__body">
           <strong>{{ completionWork?.name }}</strong>
-          <p>Исполнитель: {{ completionWork?.employeeName }}</p>
-          <label for="work-completion-reason">Причина завершения <span aria-hidden="true">*</span></label>
+          <p>{{ t('maintenanceWork.performer', { name: completionWork?.employeeName ?? '' }) }}</p>
+          <label for="work-completion-reason">{{ t('maintenanceWork.completionReason') }} <span aria-hidden="true">*</span></label>
           <textarea id="work-completion-reason" v-model="completionReason" required maxlength="1000" rows="3" :disabled="busy" autofocus />
-          <small>Вы и причина завершения будут сохранены в истории. Исполнитель работы не изменится.</small>
+          <small>{{ t('maintenanceWork.completionAuditHint') }}</small>
           <p v-if="completionError" class="work-progress__error" role="alert">{{ completionError }}</p>
         </div>
         <footer class="work-completion-dialog__footer">
-          <UiButton type="button" variant="secondary" :disabled="busy" @click="closeCompletion">Отмена</UiButton>
-          <UiButton type="submit" :disabled="busy || !completionReason.trim()">{{ busy ? 'Сохранение…' : 'Подтвердить завершение' }}</UiButton>
+          <UiButton type="button" variant="secondary" :disabled="busy" @click="closeCompletion">{{ t('maintenanceWork.cancel') }}</UiButton>
+          <UiButton type="submit" :disabled="busy || !completionReason.trim()">{{ busy ? t('maintenanceWork.saving') : t('maintenanceWork.confirmCompletion') }}</UiButton>
         </footer>
       </form>
     </dialog>

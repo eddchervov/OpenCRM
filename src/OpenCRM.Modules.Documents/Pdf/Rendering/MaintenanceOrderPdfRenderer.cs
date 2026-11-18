@@ -31,7 +31,7 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
     }
 
     /// <summary> Отрисовывает стоимость позиций, скидку и итог документа. </summary>
-    private static void RenderSummary(IContainer container, string title, decimal grossAmount, decimal discountAmount)
+    private static void RenderSummary(IContainer container, string title, decimal grossAmount, decimal discountAmount, string currencyCode)
     {
         container.Element(PdfDocumentComponents.Card).Column(column =>
         {
@@ -39,7 +39,7 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
             column.Item().Row(row =>
             {
                 row.RelativeItem().Text("Работы и материалы").FontSize(9).FontColor(PdfDocumentComponents.MutedColor);
-                row.AutoItem().Text(PdfDocumentComponents.FormatMoney(grossAmount)).FontSize(9);
+                row.AutoItem().Text(PdfDocumentComponents.FormatMoney(grossAmount, currencyCode)).FontSize(9);
             });
 
             if (discountAmount > 0)
@@ -47,7 +47,7 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
                 column.Item().Row(row =>
                 {
                     row.RelativeItem().Text("Скидка").FontSize(9).FontColor(PdfDocumentComponents.MutedColor);
-                    row.AutoItem().Text($"-{PdfDocumentComponents.FormatMoney(discountAmount)}").FontSize(9);
+                    row.AutoItem().Text($"-{PdfDocumentComponents.FormatMoney(discountAmount, currencyCode)}").FontSize(9);
                 });
             }
 
@@ -57,7 +57,7 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
                     .FontSize(11)
                     .Bold()
                     .FontColor(PdfDocumentComponents.PrimaryColor);
-                row.AutoItem().Text(PdfDocumentComponents.FormatMoney(Math.Max(0, grossAmount - discountAmount)))
+                row.AutoItem().Text(PdfDocumentComponents.FormatMoney(Math.Max(0, grossAmount - discountAmount), currencyCode))
                     .FontSize(13)
                     .Bold()
                     .FontColor(PdfDocumentComponents.AccentColor);
@@ -151,7 +151,7 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
 
                         if (model.Works.Count > 0)
                         {
-                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, preset.PlannedWorksTitle, section => PdfTableComponents.RenderServices(section, model.Works, showTotal: false)));
+                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, preset.PlannedWorksTitle, section => PdfTableComponents.RenderServices(section, model.Works, showTotal: false, currencyCode: model.CurrencyCode)));
                         }
                         else
                         {
@@ -168,7 +168,8 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
                             c,
                             preset.WorkOrderSummaryTitle,
                             model.Works.Sum(x => x.Price ?? 0),
-                            model.DiscountAmount));
+                            model.DiscountAmount,
+                            model.CurrencyCode));
                         column.Item().PaddingTop(18).Element(c => RenderSignatures(c, model));
                     });
 
@@ -200,7 +201,7 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
 
                         if (model.Works.Count > 0)
                         {
-                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, preset.CompletedWorksTitle, section => PdfTableComponents.RenderServices(section, model.Works, showTotal: false)));
+                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, preset.CompletedWorksTitle, section => PdfTableComponents.RenderServices(section, model.Works, showTotal: false, currencyCode: model.CurrencyCode)));
                         }
                         else
                         {
@@ -216,7 +217,8 @@ internal sealed class MaintenanceOrderPdfRenderer(string projectName)
                             c,
                             preset.ActSummaryTitle,
                             model.Works.Sum(x => x.Price ?? 0),
-                            model.DiscountAmount));
+                            model.DiscountAmount,
+                            model.CurrencyCode));
                         column.Item().PaddingTop(18).Element(c => RenderSignatures(c, model));
                     });
 

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../notificationMessages'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
@@ -6,6 +8,8 @@ import { createMaxClientLink, disconnectMaxClient, loadMaxClientStatus, type Max
 import { createTelegramClientLink, disconnectTelegramClient, loadTelegramClientStatus } from '../api/telegramNotifications'
 import MaxNotificationHistory from './MaxNotificationHistory.vue'
 import TelegramNotificationHistory from './TelegramNotificationHistory.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   channel: 'telegram' | 'max'
@@ -30,10 +34,10 @@ const channelName = computed(() => props.channel === 'telegram' ? 'Telegram' : '
 const busy = computed(() => loading.value || saving.value)
 const canChange = computed(() => props.canWrite && !props.isLocked && status.value?.isBotConnected && !busy.value)
 const canDisconnect = computed(() => props.canWrite && !props.isLocked && status.value?.isClientConnected && !busy.value)
-const statusLabel = computed(() => !status.value ? 'Статус не загружен'
-  : status.value.isClientConnected && !status.value.isBotConnected ? 'Подключён · бот выключен'
-  : !status.value.isBotConnected ? 'Бот не подключён'
-  : status.value.isClientConnected ? 'Клиент подключён' : 'Ожидает подключения')
+const statusLabel = computed(() => !status.value ? t('notifications.notLoaded')
+  : status.value.isClientConnected && !status.value.isBotConnected ? t('notifications.connectedBotOff')
+  : !status.value.isBotConnected ? t('notifications.botNotConnected')
+  : status.value.isClientConnected ? t('notifications.clientConnected') : t('notifications.awaitingConnection'))
 
 watch(busy, value => emit('busy-changed', value), { immediate: true, flush: 'sync' })
 
@@ -50,7 +54,7 @@ async function loadStatus() {
     status.value = loaded
     if (loaded.isClientConnected || !loaded.isBotConnected) link.value = ''
   } catch (reason) {
-    if (current === generation) error.value = reason instanceof Error ? reason.message : 'Не удалось проверить подключение.'
+    if (current === generation) error.value = reason instanceof Error ? reason.message : t('notifications.connectionError')
   } finally {
     if (current === generation) loading.value = false
   }
@@ -69,7 +73,7 @@ async function createLink() {
       : await createMaxClientLink(props.organizationId, props.clientId)
     if (current === generation) link.value = result.url
   } catch (reason) {
-    if (current === generation) error.value = reason instanceof Error ? reason.message : 'Не удалось создать ссылку.'
+    if (current === generation) error.value = reason instanceof Error ? reason.message : t('notifications.linkError')
   } finally {
     if (current === generation) saving.value = false
   }
@@ -94,7 +98,7 @@ async function disconnect() {
     copied.value = false
     confirmDisconnect.value = false
   } catch (reason) {
-    if (current === generation) error.value = reason instanceof Error ? reason.message : 'Не удалось отключить клиента.'
+    if (current === generation) error.value = reason instanceof Error ? reason.message : t('notifications.disconnectError')
   } finally {
     if (current === generation) saving.value = false
   }
@@ -113,7 +117,7 @@ async function copyLink() {
     await navigator.clipboard.writeText(copiedLink)
     if (current === generation && copiedLink === link.value) copied.value = true
   } catch {
-    if (current === generation) error.value = 'Не удалось скопировать. Выделите ссылку и скопируйте её вручную.'
+    if (current === generation) error.value = t('notifications.copyError')
   }
 }
 
@@ -134,45 +138,45 @@ onBeforeUnmount(() => { generation++; emit('busy-changed', false) })
   <section class="client-bot-channel" :aria-label="channelName" :aria-busy="busy">
     <header class="client-bot-channel__header ui-section-header">
       <h3>{{ channelName }}</h3>
-      <span class="client-bot-channel__status" :class="{ 'is-connected': status?.isBotConnected && status.isClientConnected }">{{ loading ? 'Проверяем…' : statusLabel }}</span>
+      <span class="client-bot-channel__status" :class="{ 'is-connected': status?.isBotConnected && status.isClientConnected }">{{ loading ? t('notifications.checking') : statusLabel }}</span>
     </header>
     <div class="client-bot-channel__body">
       <p v-if="status?.botUsername" class="client-bot-channel__username">@{{ status.botUsername }}</p>
-      <p v-if="status && !status.isBotConnected">{{ status.isClientConnected ? 'Бот студии выключен. Подключение клиента сохранено; отправка станет доступна после включения бота.' : 'Подключите бота студии в настройках организации, чтобы связать клиента.' }}</p>
-      <p v-else-if="status?.isClientConnected">Клиент подключён к боту студии. Можно вести переписку и отправлять уведомления.</p>
-      <p v-else-if="status">Создайте ссылку для этого клиента. Он откроет её в {{ channelName }} и запустит бота студии.</p>
-      <p v-if="!canWrite" class="client-bot-channel__muted">Только просмотр</p>
-      <p v-if="isLocked" class="client-bot-channel__muted">Доступно в PRO</p>
-      <UiButton v-if="canWrite && status?.isBotConnected" :disabled="!canChange" @click="createLink">{{ saving ? 'Выполняем…' : link || status.isClientConnected ? 'Создать новую ссылку' : 'Создать ссылку' }}</UiButton>
-      <small v-if="canWrite && status?.isBotConnected" class="client-bot-channel__muted">Новая ссылка заменит ранее созданную для этого клиента.</small>
+      <p v-if="status && !status.isBotConnected">{{ status.isClientConnected ? t('notifications.botOffHint') : t('notifications.connectBotHint') }}</p>
+      <p v-else-if="status?.isClientConnected">{{ t('notifications.connectedHint') }}</p>
+      <p v-else-if="status">{{ t('notifications.createLinkHint', { channel: channelName }) }}</p>
+      <p v-if="!canWrite" class="client-bot-channel__muted">{{ t('notifications.readOnly') }}</p>
+      <p v-if="isLocked" class="client-bot-channel__muted">{{ t('notifications.pro') }}</p>
+      <UiButton v-if="canWrite && status?.isBotConnected" :disabled="!canChange" @click="createLink">{{ saving ? t('notifications.working') : link || status.isClientConnected ? t('notifications.newLink') : t('notifications.createLink') }}</UiButton>
+      <small v-if="canWrite && status?.isBotConnected" class="client-bot-channel__muted">{{ t('notifications.replaceLinkHint') }}</small>
       <div v-if="link" class="client-bot-channel__link">
-        <label class="ui-field"><span>Ссылка для клиента</span><input :value="link" :aria-label="`Ссылка для клиента в ${channelName}`" readonly /></label>
+        <label class="ui-field"><span>{{ t('notifications.clientLink') }}</span><input :value="link" :aria-label="t('notifications.clientChannelLink', { channel: channelName })" readonly /></label>
         <div class="client-bot-channel__actions">
-          <UiButton variant="secondary" :disabled="busy" @click="copyLink">{{ copied ? 'Скопировано' : 'Копировать' }}</UiButton>
-          <UiButton variant="secondary" :href="link" target="_blank" rel="noopener noreferrer">Открыть бота</UiButton>
+          <UiButton variant="secondary" :disabled="busy" @click="copyLink">{{ copied ? t('notifications.copied') : t('notifications.copy') }}</UiButton>
+          <UiButton variant="secondary" :href="link" target="_blank" rel="noopener noreferrer">{{ t('notifications.openBot') }}</UiButton>
         </div>
-        <small>Ссылка действует 7 дней. Передайте её только этому клиенту.</small>
-        <span v-if="copied" class="client-bot-channel__muted" role="status">Ссылка скопирована.</span>
+        <small>{{ t('notifications.linkExpiry') }}</small>
+        <span v-if="copied" class="client-bot-channel__muted" role="status">{{ t('notifications.linkCopied') }}</span>
       </div>
       <p v-if="error && !confirmDisconnect" class="client-bot-channel__error" role="alert">{{ error }}</p>
-      <UiButton variant="secondary" :disabled="busy" @click="loadStatus">{{ loading ? 'Проверяем…' : 'Проверить подключение' }}</UiButton>
+      <UiButton variant="secondary" :disabled="busy" @click="loadStatus">{{ loading ? t('notifications.checking') : t('notifications.checkConnection') }}</UiButton>
       <div v-if="canWrite && status?.isClientConnected" class="client-bot-channel__disconnect">
-        <UiButton variant="ghost" :disabled="!canDisconnect" @click="disconnect">Отключить клиента</UiButton>
+        <UiButton variant="ghost" :disabled="!canDisconnect" @click="disconnect">{{ t('notifications.disconnectClient') }}</UiButton>
       </div>
       <details v-if="status?.recentNotifications.length" class="client-bot-channel__history">
-        <summary>История уведомлений</summary>
+        <summary>{{ t('notifications.notificationHistory') }}</summary>
         <TelegramNotificationHistory v-if="channel === 'telegram'" :notifications="status.recentNotifications" :time-zone-id="timeZoneId" />
         <MaxNotificationHistory v-else :notifications="status.recentNotifications" :time-zone-id="timeZoneId" />
       </details>
     </div>
   </section>
-  <SchedulerBookingDialog :open="confirmDisconnect" :title="`Отключить клиента от ${channelName}?`" :busy="busy" :dismiss-on-backdrop="false" @close="closeDisconnectConfirmation">
+  <SchedulerBookingDialog :open="confirmDisconnect" :title="t('notifications.disconnectTitle', { channel: channelName })" :busy="busy" :dismiss-on-backdrop="false" @close="closeDisconnectConfirmation">
     <div class="client-bot-disconnect">
-      <p>Переписка сохранится. Отправка сообщений и уведомлений через это подключение прекратится.</p>
+      <p>{{ t('notifications.disconnectHint') }}</p>
       <p v-if="error" class="client-bot-channel__error" role="alert">{{ error }}</p>
       <footer>
-        <UiButton variant="secondary" :disabled="busy" @click="closeDisconnectConfirmation">Отмена</UiButton>
-        <UiButton :disabled="!canDisconnect" @click="disconnect">{{ saving ? 'Отключаем…' : 'Отключить' }}</UiButton>
+        <UiButton variant="secondary" :disabled="busy" @click="closeDisconnectConfirmation">{{ t('notifications.cancel') }}</UiButton>
+        <UiButton :disabled="!canDisconnect" @click="disconnect">{{ saving ? t('notifications.disconnecting') : t('notifications.disconnect') }}</UiButton>
       </footer>
     </div>
   </SchedulerBookingDialog>

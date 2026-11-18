@@ -23,6 +23,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@opencrm/ui/styles.css': fileURLToPath(new URL('../../packages/ui/src/styles.css', import.meta.url)),
+      '@opencrm/ui/i18n': fileURLToPath(new URL('../../packages/ui/src/i18n.ts', import.meta.url)),
       '@opencrm/ui/projectBrand': fileURLToPath(new URL('../../packages/ui/src/projectBrand.ts', import.meta.url)),
       '@opencrm/ui': fileURLToPath(new URL('../../packages/ui/src/index.ts', import.meta.url))
     }

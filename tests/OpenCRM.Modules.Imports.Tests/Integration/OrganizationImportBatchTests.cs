@@ -316,6 +316,68 @@ public sealed partial class OrganizationImportBatchTests(ImportDatabaseFixture f
     }
 
     [Fact]
+    public async Task BatchImportMapsAndPersistsForeignRegistrationCountry()
+    {
+        var (userId, organizationId) = await this.SeedAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context);
+        var draft = await service.UploadAsync(userId, organizationId, "cars.csv", Encoding.UTF8.GetBytes(
+            "Название автомобиля;VIN;Госномер;Страна регистрации\nCar;VIN123;京A·2;cn"), default);
+        await service.ProcessPendingAsync(default);
+        draft = await PageAsync(service, userId, organizationId, draft.Id);
+        draft = await service.QueueMappingAsync(userId, organizationId, draft.Id, draft.Revision, draft.Data.Mappings, default);
+        await service.ProcessPendingAsync(default);
+        draft = await PageAsync(service, userId, organizationId, draft.Id);
+
+        var candidate = Assert.Single(draft.Data.Rows);
+        Assert.Equal("CN", candidate.RegistrationCountryCode);
+        Assert.Equal("京A·2", candidate.Plate);
+        await service.StartAsync(userId, organizationId, draft.Id, draft.Revision, false, default);
+        await service.ProcessPendingAsync(default);
+        draft = await PageAsync(service, userId, organizationId, draft.Id);
+
+        Assert.Equal("completed", draft.State);
+        var vehicle = await context.Vehicles.SingleAsync(item => item.OrganizationId == organizationId);
+        Assert.Equal("CN", vehicle.RegistrationCountryCode);
+        Assert.Equal("京A·2", vehicle.RegistrationPlate);
+    }
+
+    [Fact]
+    public async Task BatchDuplicateLinkUsesCountryAndRawForeignPlateKey()
+    {
+        var (userId, organizationId) = await this.SeedAsync();
+        await using var context = fixture.CreateContext();
+        var existing = new Vehicle
+        {
+            OrganizationId = organizationId,
+            UserId = userId,
+            Vin = "VIN123",
+            RegistrationCountryCode = "CN",
+            RegistrationPlate = "京A·2",
+            DateTimeCreation = DateTime.UtcNow
+        };
+        context.Vehicles.Add(existing);
+        await context.SaveChangesAsync();
+        var service = CreateService(context);
+        var draft = await service.UploadAsync(userId, organizationId, "cars.csv", Encoding.UTF8.GetBytes(
+            "Название автомобиля;VIN;Госномер;Страна регистрации\nCar;VIN123;京A·2;cn"), default);
+        await service.ProcessPendingAsync(default);
+        draft = await PageAsync(service, userId, organizationId, draft.Id);
+        draft = await service.QueueMappingAsync(userId, organizationId, draft.Id, draft.Revision, draft.Data.Mappings, default);
+        await service.ProcessPendingAsync(default);
+        draft = await PageAsync(service, userId, organizationId, draft.Id);
+        Assert.Equal("duplicate", Assert.Single(draft.Data.Rows).Status);
+
+        await service.StartAsync(userId, organizationId, draft.Id, draft.Revision, false, default);
+        await service.ProcessPendingAsync(default);
+        draft = await PageAsync(service, userId, organizationId, draft.Id);
+
+        Assert.Equal("completed", draft.State);
+        Assert.Equal(existing.Id, Assert.Single(draft.Data.Rows).TargetId);
+        Assert.Equal(1, await context.Vehicles.CountAsync(item => item.OrganizationId == organizationId));
+    }
+
+    [Fact]
     public async Task InvalidMappingCanBeCorrectedWithoutUploadingSourceAgain()
     {
         var (userId, organizationId) = await this.SeedAsync();

@@ -6,7 +6,7 @@ function clickLogOut() {
 }
 
 async function stopImpersonation(endpoint) {
-    if (!confirm('Вернуться к админской учетке?')) {
+    if (!confirm(window.OpenCRMText('returnAdmin'))) {
         return;
     }
 
@@ -18,10 +18,10 @@ async function stopImpersonation(endpoint) {
             return;
         }
 
-        alert('Ошибка: ' + ((response.data && response.data.message) || 'не удалось вернуться к админской учетке'));
+        alert(window.OpenCRMText('error', { message: (response.data && response.data.message) || window.OpenCRMText('returnAdminFailed') }));
     } catch (error) {
         console.error('Ошибка возврата из имперсонации:', error);
-        alert('Произошла ошибка при возврате к админской учетке');
+        alert(window.OpenCRMText('returnAdminError'));
     }
 }
 

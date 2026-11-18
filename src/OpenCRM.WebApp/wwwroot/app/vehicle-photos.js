@@ -1,3 +1,5 @@
+var vehiclePhotoMessages = document.getElementById('vehicle-photo-manager').dataset;
+
 new Vue({
     el: '#vehicle-photo-manager',
     data: function () {
@@ -9,6 +11,12 @@ new Vue({
             photoDownloading: false,
             deleteSaving: false,
             pendingDeletePhoto: null,
+            photoOpenAria: vehiclePhotoMessages.openPhotoAria,
+            photoAlt: vehiclePhotoMessages.photoAlt,
+            primaryTitle: vehiclePhotoMessages.primaryTitle,
+            primarySetTitle: vehiclePhotoMessages.primarySetTitle,
+            coverLabel: vehiclePhotoMessages.coverLabel,
+            setCoverLabel: vehiclePhotoMessages.setCoverLabel,
             errorMessage: ''
         };
     },
@@ -34,7 +42,7 @@ new Vue({
                 var response = await axios.get('/api/v1/media/vehicles/' + vehicleId + '/photos', { params: this.getWorkspaceParams() });
                 this.photos = response.data || [];
             } catch (error) {
-                this.handleApiError(error, 'Не удалось загрузить фото техники');
+                this.handleApiError(error, vehiclePhotoMessages.errorLoad);
             } finally {
                 this.photosLoading = false;
             }
@@ -44,7 +52,7 @@ new Vue({
             if (!files.length) return;
 
             if (this.photos.length + files.length > 10) {
-                this.showError('Фото техники: максимум 10 штук.');
+                this.showError(vehiclePhotoMessages.errorMaxCount);
                 event.target.value = '';
                 return;
             }
@@ -63,7 +71,7 @@ new Vue({
         uploadFiles: async function (url, files) {
             var total = files.reduce(function (sum, file) { return sum + file.size; }, 0);
             if (total > 100 * 1024 * 1024) {
-                this.showError('Превышен лимит загрузки: до 100 МБ за раз.');
+                this.showError(vehiclePhotoMessages.errorMaxSize);
                 return false;
             }
 
@@ -74,7 +82,7 @@ new Vue({
                 await axios.post(url, form, { params: this.getWorkspaceParams() });
                 return true;
             } catch (error) {
-                this.handleApiError(error, 'Не удалось загрузить фотографии');
+                this.handleApiError(error, vehiclePhotoMessages.errorUpload);
                 return false;
             }
         },
@@ -83,7 +91,7 @@ new Vue({
                 await axios.post('/api/v1/media/vehicles/' + vehicleId + '/photos/' + photo.photoId + '/primary', null, { params: this.getWorkspaceParams() });
                 await this.loadPhotos();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось выставить главное фото');
+                this.handleApiError(error, vehiclePhotoMessages.errorPrimary);
             }
         },
         openPhotoViewer: function (index) {
@@ -146,7 +154,7 @@ new Vue({
                 this.pendingDeletePhoto = null;
                 await this.loadPhotos();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось удалить фото');
+                this.handleApiError(error, vehiclePhotoMessages.errorDelete);
             } finally {
                 this.deleteSaving = false;
             }

@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { InquiryRequestError, loadInquiryActionReminders, type Inquiry } from '../api/inquiries'
 import { formatInquiryTime } from '../utils/inquiryTime'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string; userId: string }>()
 const reminders = ref<Inquiry[]>([])
@@ -27,7 +32,7 @@ async function load() {
   } catch (caught) {
     if (!controller.signal.aborted && version === requestVersion) {
       reminders.value = []
-      error.value = 'Не удалось проверить сроки действий.'
+      error.value = t('inquiries.remindersError')
       if (caught instanceof InquiryRequestError && [401, 403].includes(caught.status)) {
         allowed.value = false
         if (refreshTimer) clearInterval(refreshTimer)
@@ -65,27 +70,27 @@ onBeforeUnmount(() => {
 
 <template>
   <details v-if="allowed" class="crm-dropdown crm-action-reminders">
-    <summary class="crm-icon-button crm-action-reminders__button" :aria-label="`Мои действия: ${reminders.length}`" title="Мои ближайшие действия">
+    <summary class="crm-icon-button crm-action-reminders__button" :aria-label="t('inquiries.actionsCount', { count: reminders.length })" :title="t('inquiries.myActions')">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
       <span v-if="reminders.length" class="crm-action-reminders__badge">{{ reminders.length > 99 ? '99+' : reminders.length }}</span>
     </summary>
-    <section class="crm-action-reminders__panel" aria-label="Мои ближайшие действия">
-      <strong>Мои ближайшие действия</strong>
-      <p v-if="loading && !reminders.length" class="crm-action-reminders__empty">Проверяем сроки…</p>
-      <p v-else-if="error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
-      <p v-else-if="!reminders.length" class="crm-action-reminders__empty">Срочных действий нет</p>
+    <section class="crm-action-reminders__panel" :aria-label="t('inquiries.myActions')">
+      <strong>{{ t('inquiries.myActions') }}</strong>
+      <p v-if="loading && !reminders.length" class="crm-action-reminders__empty">{{ t('inquiries.checking') }}</p>
+      <p v-else-if="error" role="alert">{{ error }} <button type="button" @click="load">{{ t('inquiries.retry') }}</button></p>
+      <p v-else-if="!reminders.length" class="crm-action-reminders__empty">{{ t('inquiries.noUrgentActions') }}</p>
       <ul v-else>
         <li v-for="item in reminders" :key="item.id">
           <a :href="`#inquiries/${item.id}`">
             <strong>{{ item.contactName }}</strong>
             <span>{{ item.nextActionText }}</span>
             <small :class="{ 'crm-action-reminders__overdue': isOverdue(item) }">
-              {{ isOverdue(item) ? 'Просрочено' : 'Срок' }} · {{ formatInquiryTime(item.nextActionAt, item.timeZoneId) }}
+              {{ isOverdue(item) ? t('inquiries.overdue') : t('inquiries.due') }} · {{ formatInquiryTime(item.nextActionAt, item.timeZoneId) }}
             </small>
           </a>
         </li>
       </ul>
-      <a class="crm-action-reminders__all" href="#inquiries">Все обращения</a>
+      <a class="crm-action-reminders__all" href="#inquiries">{{ t('inquiries.allInquiries') }}</a>
     </section>
   </details>
 </template>

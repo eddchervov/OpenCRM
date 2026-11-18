@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../notificationMessages'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiDatePicker, UiInput, UiModal, UiPagination, UiSelect, UiTextarea, UiTimePicker } from '@opencrm/ui'
 import { changeRepeatVisitState, loadRepeatVisitOptions, loadRepeatVisits, saveRepeatVisit, type RepeatVisit, type RepeatVisitSave } from '../api/repeatVisits'
 import { inquiryLocalTime, inquiryUtcTime } from '../utils/inquiryTime'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string; clientId?: string; sourceMaintenanceId?: string; canEdit: boolean; compact?: boolean }>()
 const listOpen = ref(false)
@@ -23,7 +27,8 @@ const createCommandId = ref('')
 const loadRequest = ref<AbortController | null>(null)
 let scopeVersion = 0
 const timeZoneId = ref('UTC')
-const responsibleOptions = ref<Array<{ value: string; label: string }>>([{ value: '', label: 'Все сотрудники' }])
+const responsibleOptions = ref<Array<{ value: string; label: string }>>([{ value: '', label: t('notifications.allEmployees') }])
+const responsibleSelectOptions = computed(() => responsibleOptions.value.map(option => option.value ? option : { ...option, label: t('notifications.allEmployees') }))
 const canCreateByPermission = ref(false)
 const statusMessage = ref('')
 const actionError = ref('')
@@ -31,6 +36,10 @@ const contactEnabled = ref(false)
 const draft = ref({ serviceName: '', reason: '', suggestedVisitDate: '', responsibleUserId: '', contactDate: '', contactTime: '' })
 const canCreate = computed(() => props.canEdit && canCreateByPermission.value && Boolean(props.sourceMaintenanceId))
 const editingItem = computed(() => items.value.find(item => item.id === editingId.value) ?? null)
+
+function displayDate(value: string) {
+  return new Intl.DateTimeFormat(formattingCulture.value, { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
+}
 
 function clearDraft() {
   editingId.value = null
@@ -65,10 +74,10 @@ async function load() {
     items.value = result.items
     totalCount.value = result.totalCount
     timeZoneId.value = result.timeZoneId || 'UTC'
-    responsibleOptions.value = [{ value: '', label: 'Все сотрудники' }, ...(options?.responsibles ?? []).map(item => ({ value: item.id, label: item.name }))]
+    responsibleOptions.value = [{ value: '', label: t('notifications.allEmployees') }, ...(options?.responsibles ?? []).map(item => ({ value: item.id, label: item.name }))]
     canCreateByPermission.value = options?.canCreate === true
   } catch (caught) {
-    if (!controller.signal.aborted && loadRequest.value === controller && currentScope === scopeVersion && org === props.organizationId) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить рекомендации.'
+    if (!controller.signal.aborted && loadRequest.value === controller && currentScope === scopeVersion && org === props.organizationId) error.value = caught instanceof Error ? caught.message : t('notifications.recommendationsError')
   } finally {
     if (loadRequest.value === controller && currentScope === scopeVersion) loading.value = false
   }
@@ -119,14 +128,14 @@ async function showFormError(message: string) {
 async function save() {
   if (busy.value) return
   fieldErrors.value = {}
-  if (!draft.value.serviceName.trim()) fieldErrors.value.serviceName = 'Укажите рекомендуемую услугу.'
-  else if (draft.value.serviceName.length > 240) fieldErrors.value.serviceName = 'Не больше 240 символов.'
-  if (draft.value.reason.length > 1000) fieldErrors.value.reason = 'Не больше 1000 символов.'
-  if (!draft.value.suggestedVisitDate) fieldErrors.value.suggestedVisitDate = 'Выберите предлагаемую дату визита.'
-  if (contactEnabled.value && !draft.value.contactDate) fieldErrors.value.contactDate = 'Выберите дату связи с клиентом.'
-  if (contactEnabled.value && !draft.value.contactTime) fieldErrors.value.contactTime = 'Выберите время связи с клиентом.'
+  if (!draft.value.serviceName.trim()) fieldErrors.value.serviceName = t('notifications.serviceRequired')
+  else if (draft.value.serviceName.length > 240) fieldErrors.value.serviceName = t('notifications.serviceLength')
+  if (draft.value.reason.length > 1000) fieldErrors.value.reason = t('notifications.reasonLength')
+  if (!draft.value.suggestedVisitDate) fieldErrors.value.suggestedVisitDate = t('notifications.visitDateRequired')
+  if (contactEnabled.value && !draft.value.contactDate) fieldErrors.value.contactDate = t('notifications.contactDateRequired')
+  if (contactEnabled.value && !draft.value.contactTime) fieldErrors.value.contactTime = t('notifications.contactTimeRequired')
   if (Object.keys(fieldErrors.value).length) {
-    await showFormError('Рекомендация не сохранена. Проверьте выделенные поля.')
+    await showFormError(t('notifications.recommendationInvalid'))
     return
   }
   const current = items.value.find(item => item.id === editingId.value)
@@ -135,7 +144,7 @@ async function save() {
     try {
       contactByUtc = inquiryUtcTime(`${draft.value.contactDate}T${draft.value.contactTime}`, timeZoneId.value)
     } catch (caught) {
-      await showFormError(caught instanceof Error ? caught.message : 'Укажите корректный срок связи.')
+      await showFormError(caught instanceof Error ? caught.message : t('notifications.contactDeadlineInvalid'))
       return
     }
   }
@@ -155,12 +164,12 @@ async function save() {
   try {
     await saveRepeatVisit(org, current?.id ?? null, body)
     if (currentScope !== scopeVersion || org !== props.organizationId) return
-    statusMessage.value = 'Рекомендация сохранена.'
+    statusMessage.value = t('notifications.recommendationSaved')
     clearDraft()
     page.value = 1
     await load()
   } catch (caught) {
-    if (currentScope === scopeVersion && org === props.organizationId) await showFormError(caught instanceof Error ? caught.message : 'Не удалось сохранить рекомендацию.')
+    if (currentScope === scopeVersion && org === props.organizationId) await showFormError(caught instanceof Error ? caught.message : t('notifications.recommendationSaveError'))
   } finally {
     if (currentScope === scopeVersion && org === props.organizationId) busy.value = false
   }
@@ -177,7 +186,7 @@ async function disable(item: RepeatVisit) {
     if (currentScope !== scopeVersion || org !== props.organizationId) return
     await load()
   } catch (caught) {
-    if (currentScope === scopeVersion && org === props.organizationId) actionError.value = caught instanceof Error ? caught.message : 'Не удалось изменить рекомендацию.'
+    if (currentScope === scopeVersion && org === props.organizationId) actionError.value = caught instanceof Error ? caught.message : t('notifications.recommendationChangeError')
   } finally {
     if (currentScope === scopeVersion && org === props.organizationId) busy.value = false
   }
@@ -189,43 +198,43 @@ onBeforeUnmount(() => { scopeVersion++; loadRequest.value?.abort() })
 </script>
 
 <template>
-  <UiButton v-if="compact" variant="secondary" aria-haspopup="dialog" :aria-expanded="listOpen" title="Рекомендации по повторному визиту" @click="listOpen = true">Рекомендации <span class="repeat-visits__count">{{ error ? '!' : loading && !items.length ? '…' : totalCount }}</span></UiButton>
-  <component :is="compact ? UiModal : 'div'" v-bind="compact ? { open: listOpen && !isCreating && !editingId, title: 'Рекомендации по повторному визиту' } : {}" @close="closeList">
-    <section class="repeat-visits" :class="{ 'repeat-visits--modal': compact }" aria-label="Рекомендации по повторному визиту" :aria-busy="loading || busy">
+  <UiButton v-if="compact" variant="secondary" aria-haspopup="dialog" :aria-expanded="listOpen" :title="t('notifications.repeatVisits')" @click="listOpen = true">{{ t('notifications.recommendations') }} <span class="repeat-visits__count">{{ error ? '!' : loading && !items.length ? '…' : totalCount }}</span></UiButton>
+  <component :is="compact ? UiModal : 'div'" v-bind="compact ? { open: listOpen && !isCreating && !editingId, title: t('notifications.repeatVisits') } : {}" @close="closeList">
+    <section class="repeat-visits" :class="{ 'repeat-visits--modal': compact }" :aria-label="t('notifications.repeatVisits')" :aria-busy="loading || busy">
       <header v-if="!compact || canCreate" class="repeat-visits__header" :class="{ 'ui-section-header': !compact }">
-        <div v-if="!compact"><h3>Рекомендации по повторному визиту</h3><p v-if="clientId">Рекомендации по возвращению клиента — по желанию.</p></div>
-        <UiButton v-if="canCreate && !isCreating && !editingId" variant="secondary" @click="startCreate">Добавить рекомендацию</UiButton>
+        <div v-if="!compact"><h3>{{ t('notifications.repeatVisits') }}</h3><p v-if="clientId">{{ t('notifications.recommendationsHint') }}</p></div>
+        <UiButton v-if="canCreate && !isCreating && !editingId" variant="secondary" @click="startCreate">{{ t('notifications.addRecommendation') }}</UiButton>
       </header>
-      <p v-if="error" class="repeat-visits__message" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
+      <p v-if="error" class="repeat-visits__message" role="alert">{{ error }} <button type="button" @click="load">{{ t('notifications.retry') }}</button></p>
       <p v-if="actionError" class="repeat-visits__message" role="alert">{{ actionError }}</p>
       <p v-if="statusMessage" class="repeat-visits__message" role="status">{{ statusMessage }}</p>
-      <p v-if="!loading && !error && !items.length && !isCreating" class="repeat-visits__empty">Рекомендаций пока нет.</p>
+      <p v-if="!loading && !error && !items.length && !isCreating" class="repeat-visits__empty">{{ t('notifications.noRecommendations') }}</p>
       <article v-for="item in items" :key="item.id" class="repeat-visits__item">
-        <div><strong>{{ item.serviceName }}</strong><span>{{ item.vehicleName }} · предлагаемый визит {{ item.suggestedVisitDate.split('-').reverse().join('.') }}</span><p v-if="item.reason">{{ item.reason }}</p><small v-if="item.contactByUtc">Связаться до {{ new Intl.DateTimeFormat('ru-RU', { timeZone: item.timeZoneId, dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.contactByUtc)) }}<template v-if="item.responsibleName"> · {{ item.responsibleName }}</template><template v-else-if="!item.responsibleUserId"> · Все сотрудники</template><template v-if="item.contactCompletedAtUtc"> · контакт выполнен</template></small><small v-if="item.bookedMaintenanceId">Уже записан <a :href="`#maintenance/${item.bookedMaintenanceId}`">Открыть запись</a></small><small v-else-if="!item.isActive">Отключена</small></div>
-        <div class="repeat-visits__actions"><UiButton v-if="item.canBook && !item.bookedMaintenanceId" variant="secondary" :href="`#maintenance/new?repeatVisit=${encodeURIComponent(item.id)}`">Создать запись</UiButton><template v-if="canEdit && item.canEdit"><UiButton variant="secondary" :disabled="busy" @click="startEdit(item)">Изменить</UiButton><UiButton variant="secondary" :disabled="busy" @click="disable(item)">{{ item.isActive ? 'Отключить' : 'Включить' }}</UiButton></template></div>
+        <div><strong>{{ item.serviceName }}</strong><span>{{ t('notifications.visitDescription', { vehicle: item.vehicleName, date: displayDate(item.suggestedVisitDate) }) }}</span><p v-if="item.reason">{{ item.reason }}</p><small v-if="item.contactByUtc">{{ t('notifications.contactDeadline', { date: new Intl.DateTimeFormat(formattingCulture, { timeZone: item.timeZoneId, dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.contactByUtc)) }) }}<template v-if="item.responsibleName"> · {{ item.responsibleName }}</template><template v-else-if="!item.responsibleUserId"> · {{ t('notifications.allEmployees') }}</template><template v-if="item.contactCompletedAtUtc"> · {{ t('notifications.contactCompleted') }}</template></small><small v-if="item.bookedMaintenanceId">{{ t('notifications.alreadyBooked') }} <a :href="`#maintenance/${item.bookedMaintenanceId}`">{{ t('notifications.openBooking') }}</a></small><small v-else-if="!item.isActive">{{ t('notifications.recommendationDisabled') }}</small></div>
+        <div class="repeat-visits__actions"><UiButton v-if="item.canBook && !item.bookedMaintenanceId" variant="secondary" :href="`#maintenance/new?repeatVisit=${encodeURIComponent(item.id)}`">{{ t('notifications.createBooking') }}</UiButton><template v-if="canEdit && item.canEdit"><UiButton variant="secondary" :disabled="busy" @click="startEdit(item)">{{ t('notifications.edit') }}</UiButton><UiButton variant="secondary" :disabled="busy" @click="disable(item)">{{ item.isActive ? t('notifications.disable') : t('notifications.enable') }}</UiButton></template></div>
       </article>
-      <UiPagination v-if="totalCount > pageSize && !isCreating && !editingId" v-model="page" :total-items="totalCount" :items-per-page="pageSize" label="Рекомендации повторных визитов" />
+      <UiPagination v-if="totalCount > pageSize && !isCreating && !editingId" v-model="page" :total-items="totalCount" :items-per-page="pageSize" :label="t('notifications.repeatPages')" />
     </section>
   </component>
-  <UiModal :open="isCreating || Boolean(editingId)" :title="isCreating ? 'Новая рекомендация' : 'Изменить рекомендацию'" @close="closeEditor">
+  <UiModal :open="isCreating || Boolean(editingId)" :title="isCreating ? t('notifications.newRecommendation') : t('notifications.editRecommendation')" @close="closeEditor">
     <form ref="formElement" class="repeat-visits__form" novalidate @submit.prevent="save">
-      <UiInput v-model="draft.serviceName" label="Рекомендуемая услуга" maxlength="240" :error="fieldErrors.serviceName" :disabled="busy" required />
-      <UiTextarea v-model="draft.reason" label="Почему стоит вернуться" :maxlength="1000" :error="fieldErrors.reason" :disabled="busy" />
-      <UiDatePicker v-model="draft.suggestedVisitDate" label="Предлагаемая дата визита" :error="fieldErrors.suggestedVisitDate" :disabled="busy" required />
-      <label class="repeat-visits__toggle"><input v-model="contactEnabled" type="checkbox" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)"> Напомнить связаться с клиентом</label>
+      <UiInput v-model="draft.serviceName" :label="t('notifications.recommendedService')" maxlength="240" :error="fieldErrors.serviceName" :disabled="busy" required />
+      <UiTextarea v-model="draft.reason" :label="t('notifications.reason')" :maxlength="1000" :error="fieldErrors.reason" :disabled="busy" />
+      <UiDatePicker v-model="draft.suggestedVisitDate" :label="t('notifications.suggestedDate')" :error="fieldErrors.suggestedVisitDate" :disabled="busy" required />
+      <label class="repeat-visits__toggle"><input v-model="contactEnabled" type="checkbox" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)"> {{ t('notifications.contactReminder') }}</label>
       <div v-if="contactEnabled" class="repeat-visits__subform">
-        <p>{{ draft.responsibleUserId ? 'Действие появится в рабочем дне выбранного сотрудника.' : 'Без ответственного действие видно всем сотрудникам с доступом к клиентам.' }}</p>
-        <UiSelect v-model="draft.responsibleUserId" label="Ответственный сотрудник (необязательно)" placeholder="Все сотрудники" :options="responsibleOptions" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)" />
+        <p>{{ draft.responsibleUserId ? t('notifications.assignedActionHint') : t('notifications.unassignedActionHint') }}</p>
+        <UiSelect v-model="draft.responsibleUserId" :label="t('notifications.optionalAssignee')" :placeholder="t('notifications.allEmployees')" :options="responsibleSelectOptions" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)" />
         <div class="repeat-visits__deadline">
-          <UiDatePicker v-model="draft.contactDate" label="Связаться с клиентом до" :error="fieldErrors.contactDate" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)" required />
+          <UiDatePicker v-model="draft.contactDate" :label="t('notifications.contactBy')" :error="fieldErrors.contactDate" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)" required />
           <div class="repeat-visits__time-field">
-            <UiTimePicker v-model="draft.contactTime" label="Время" align="end" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)" required />
+            <UiTimePicker v-model="draft.contactTime" :label="t('notifications.time')" align="end" :disabled="busy || Boolean(editingItem?.contactCompletedAtUtc)" required />
             <span v-if="fieldErrors.contactTime" class="ui-field__error" role="alert">{{ fieldErrors.contactTime }}</span>
           </div>
         </div>
       </div>
       <p v-if="formError" ref="errorSummary" class="repeat-visits__error" role="alert" tabindex="-1">{{ formError }}</p>
-      <div class="repeat-visits__actions"><UiButton type="submit" :disabled="busy">{{ busy ? 'Сохраняем…' : 'Сохранить' }}</UiButton><UiButton type="button" variant="secondary" :disabled="busy" @click="closeEditor">Отмена</UiButton></div>
+      <div class="repeat-visits__actions"><UiButton type="submit" :disabled="busy">{{ busy ? t('notifications.saving') : t('notifications.save') }}</UiButton><UiButton type="button" variant="secondary" :disabled="busy" @click="closeEditor">{{ t('notifications.cancel') }}</UiButton></div>
     </form>
   </UiModal>
 </template>

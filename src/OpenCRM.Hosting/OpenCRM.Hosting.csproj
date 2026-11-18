@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="OpenCRMApplication.cs" />
     <Compile Include="../OpenCRM.WebApp/**/*.cs" Exclude="../OpenCRM.WebApp/wwwroot/img/cars/**;../OpenCRM.WebApp/Program.cs;../OpenCRM.WebApp/bin/**;../OpenCRM.WebApp/obj/**" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../OpenCRM.WebApp/Resources/Infrastructure/Localization/*.resx" Link="Resources/Infrastructure/Localization/%(Filename)%(Extension)" LogicalName="OpenCRM.WebApp.Resources.Infrastructure.Localization.%(Filename).resources" />
     <RazorGenerate Include="../OpenCRM.WebApp/Views/**/*.cshtml" Link="Views/%(RecursiveDir)%(Filename)%(Extension)" TargetPath="Views/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -24,6 +24,7 @@ internal static class WorkDocumentModelAdapter
         {
             DocumentStyleCode = organization.DocumentStyleCode,
             ScenarioCode = organization.PrimaryScenarioCode,
+            CurrencyCode = maintenance.CurrencyCode,
             ActNumber = documentNumber,
             ActDate = documentDate.ToString("dd.MM.yyyy"),
             GeneratedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),
@@ -78,6 +79,7 @@ internal static class WorkDocumentModelAdapter
         {
             DocumentStyleCode = organization.DocumentStyleCode,
             ScenarioCode = organization.PrimaryScenarioCode,
+            CurrencyCode = maintenance.CurrencyCode,
             ActNumber = documentNumber,
             ActDate = documentDate.ToString("dd.MM.yyyy"),
             GeneratedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),

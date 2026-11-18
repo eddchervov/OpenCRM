@@ -9,6 +9,9 @@ public sealed class OrganizationScenarioCatalogDto
     /// <summary> Код сценария. </summary>
     public string ScenarioCode { get; init; } = string.Empty;
 
+    /// <summary> Валюта цен каталога организации. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Список видов работ справочника. </summary>
     public IReadOnlyList<OrganizationScenarioCatalogItemDto> WorkTypes { get; init; } = [];
 

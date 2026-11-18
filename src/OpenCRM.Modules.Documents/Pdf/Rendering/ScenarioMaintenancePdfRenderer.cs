@@ -61,12 +61,12 @@ internal sealed class ScenarioMaintenancePdfRenderer(string projectName)
             {
                 column.Item().Row(row =>
                 {
-                    row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Предварительная сумма", PdfDocumentComponents.FormatMoney(model.GrossAmount)));
+                    row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Предварительная сумма", PdfDocumentComponents.FormatMoney(model.GrossAmount, model.CurrencyCode)));
                     if (model.DiscountAmount > 0)
                     {
-                        row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Скидка", PdfDocumentComponents.FormatMoney(model.DiscountAmount)));
+                        row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Скидка", PdfDocumentComponents.FormatMoney(model.DiscountAmount, model.CurrencyCode)));
                     }
-                    row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Плановая стоимость", PdfDocumentComponents.FormatMoney(netAmount)));
+                    row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Плановая стоимость", PdfDocumentComponents.FormatMoney(netAmount, model.CurrencyCode)));
                 });
 
                 return;
@@ -74,18 +74,18 @@ internal sealed class ScenarioMaintenancePdfRenderer(string projectName)
 
             column.Item().Row(row =>
             {
-                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Сумма", PdfDocumentComponents.FormatMoney(model.GrossAmount)));
+                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Сумма", PdfDocumentComponents.FormatMoney(model.GrossAmount, model.CurrencyCode)));
                 if (model.DiscountAmount > 0)
                 {
-                    row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Скидка", PdfDocumentComponents.FormatMoney(model.DiscountAmount)));
+                    row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Скидка", PdfDocumentComponents.FormatMoney(model.DiscountAmount, model.CurrencyCode)));
                 }
-                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Итого к оплате", PdfDocumentComponents.FormatMoney(netAmount)));
+                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Итого к оплате", PdfDocumentComponents.FormatMoney(netAmount, model.CurrencyCode)));
             });
 
             column.Item().Row(row =>
             {
-                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Оплачено", PdfDocumentComponents.FormatMoney(model.PaidAmount)));
-                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Остаток", PdfDocumentComponents.FormatMoney(model.DebtAmount)));
+                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Оплачено", PdfDocumentComponents.FormatMoney(model.PaidAmount, model.CurrencyCode)));
+                row.RelativeItem().Element(c => PdfDocumentComponents.RenderFact(c, "Остаток", PdfDocumentComponents.FormatMoney(model.DebtAmount, model.CurrencyCode)));
             });
         });
     }
@@ -160,7 +160,7 @@ internal sealed class ScenarioMaintenancePdfRenderer(string projectName)
 
                         if (model.Works.Count > 0)
                         {
-                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, GetScenarioWorksTitle(model.DocumentKindCode, preset), section => PdfTableComponents.RenderServices(section, model.Works)));
+                            column.Item().Element(c => PdfDocumentComponents.RenderSection(c, GetScenarioWorksTitle(model.DocumentKindCode, preset), section => PdfTableComponents.RenderServices(section, model.Works, currencyCode: model.CurrencyCode)));
                         }
                         else
                         {
@@ -278,7 +278,7 @@ internal sealed class ScenarioMaintenancePdfRenderer(string projectName)
     {
         var items = new List<string>
         {
-            $"Сумма материалов и работ по позициям: {PdfDocumentComponents.FormatMoney(model.Works.Sum(x => x.Price ?? 0))}.",
+            $"Сумма материалов и работ по позициям: {PdfDocumentComponents.FormatMoney(model.Works.Sum(x => x.Price ?? 0), model.CurrencyCode)}.",
             "Материалы и работы перечислены по позициям для согласования с заказчиком.",
             "Замены материалов согласуются с заказчиком до выполнения работ."
         };

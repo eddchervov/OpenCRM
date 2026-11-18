@@ -188,6 +188,7 @@ public class MaintenanceController(
         }
 
         ViewData["MaintenanceOrganizationName"] = organization.Name;
+        this.ViewData["OrganizationTimeZoneId"] = organization.TimeZoneId;
         ViewData["MaintenanceOrganizationMembersCount"] = organization.MembersCount;
         ViewData["MaintenanceCanManageSettings"] = organization.CanManageSettings;
         ViewData["MaintenanceHasVehiclesModule"] = await organizationSubscriptionService.HasFeatureAsync(userId, organizationId.Value, Helpers.FeatureCodes.VehiclesModule);

@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              x:Class="OpenCRM.Admin.App.Views.UserActivityView"
              x:DataType="vm:UserActivityViewModel">
@@ -9,20 +9,20 @@
       <TextBlock Text="{Binding StatusLabel}" Classes="caption" />
     </StackPanel>
     <Border IsVisible="{Binding IsDisabled}" Classes="card" Padding="14" Background="#352C1D" BorderBrush="#665335">
-      <TextBlock Text="Сбор отключён: новые события не поступают, ранее записанные доступны в пределах срока хранения." TextWrapping="Wrap" />
+      <TextBlock Text="{loc:LocalizedText Key=core.activity.collectionDisabled}" TextWrapping="Wrap" />
     </Border>
     <Border Classes="card" Padding="14" Background="#111519" BorderBrush="#2D353E">
       <StackPanel Spacing="12">
         <Grid ColumnDefinitions="2*,*,*,1.5*" ColumnSpacing="10">
           <StackPanel Spacing="5">
-            <TextBlock Text="Пользователь" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=core.user}" Classes="caption" />
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
               <AutoCompleteBox x:Name="ActivityUserPicker" Text="{Binding UserSearch, Mode=TwoWay}"
                                ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
                                AsyncPopulator="{Binding PopulateUsers}" ValueMemberBinding="{ReflectionBinding Label}"
                                MinimumPrefixLength="0" MinimumPopulateDelay="0:0:0.25" FilterMode="None"
                                IsTextCompletionEnabled="False" IsEnabled="{Binding !IsUserFixed}"
-                               PlaceholderText="Все пользователи · email или телефон"
+                               PlaceholderText="{loc:LocalizedText Key=core.activity.allUsersPlaceholder}"
                                HorizontalAlignment="Stretch" Background="#181818" Foreground="#F1F1F1"
                                BorderBrush="#393939" CornerRadius="7" Padding="10,7"
                                AutomationProperties.AutomationId="ActivityUserPicker">
@@ -36,38 +36,46 @@
                 </AutoCompleteBox.ItemTemplate>
               </AutoCompleteBox>
               <Button Grid.Column="1" Content="×" Command="{Binding ClearUserCommand}" IsVisible="{Binding !IsUserFixed}"
-                      ToolTip.Tip="Все пользователи" AutomationProperties.AutomationId="ActivityClearUser" />
+                      ToolTip.Tip="{loc:LocalizedText Key=core.activity.allUsers}" AutomationProperties.AutomationId="ActivityClearUser" />
             </Grid>
-            <TextBlock Text="Ищем пользователей…" Classes="caption" IsVisible="{Binding IsSearchingUsers}" />
+            <TextBlock Text="{loc:LocalizedText Key=core.activity.searchingUsers}" Classes="caption" IsVisible="{Binding IsSearchingUsers}" />
           </StackPanel>
           <StackPanel Grid.Column="1" Spacing="5">
-            <TextBlock Text="Тип события" Classes="caption" />
-            <ComboBox ItemsSource="{Binding KindOptions}" SelectedItem="{Binding Kind}"
-                      AutomationProperties.AutomationId="ActivityKind" />
+            <TextBlock Text="{loc:LocalizedText Key=core.activity.eventType}" Classes="caption" />
+            <ComboBox ItemsSource="{Binding KindOptions}" SelectedItem="{Binding SelectedKindOption}"
+                      AutomationProperties.AutomationId="ActivityKind">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="loc:AdminLocalizedOption"><TextBlock Text="{Binding Title}" /></DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
           </StackPanel>
           <StackPanel Grid.Column="2" Spacing="5">
-            <TextBlock Text="Сценарий" Classes="caption" />
-            <ComboBox ItemsSource="{Binding ScenarioOptions}" SelectedItem="{Binding Scenario}"
-                      AutomationProperties.AutomationId="ActivityScenario" />
+            <TextBlock Text="{loc:LocalizedText Key=core.scenario}" Classes="caption" />
+            <ComboBox ItemsSource="{Binding ScenarioOptions}" SelectedItem="{Binding SelectedScenarioOption}"
+                      AutomationProperties.AutomationId="ActivityScenario">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="loc:AdminLocalizedOption"><TextBlock Text="{Binding Title}" /></DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
           </StackPanel>
           <StackPanel Grid.Column="3" Spacing="5">
-            <TextBlock Text="Поиск" Classes="caption" />
-            <TextBox Text="{Binding Search}" PlaceholderText="Организация, действие, страница"
+            <TextBlock Text="{loc:LocalizedText Key=core.search}" Classes="caption" />
+            <TextBox Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=core.activity.searchPlaceholder}"
                      AutomationProperties.AutomationId="ActivitySearch" />
           </StackPanel>
         </Grid>
         <StackPanel Orientation="Horizontal" Spacing="10">
           <StackPanel Spacing="5">
-            <TextBlock Text="Дата с (UTC)" Classes="caption" />
-            <TextBox Width="150" Text="{Binding FromDate}" PlaceholderText="ГГГГ-ММ-ДД" AutomationProperties.AutomationId="ActivityFrom" />
+            <TextBlock Text="{loc:LocalizedText Key=core.activity.dateFromUtc}" Classes="caption" />
+            <TextBox Width="150" Text="{Binding FromDate}" PlaceholderText="{loc:LocalizedText Key=core.datePlaceholder}" AutomationProperties.AutomationId="ActivityFrom" />
           </StackPanel>
           <StackPanel Spacing="5">
-            <TextBlock Text="Дата по (UTC)" Classes="caption" />
-            <TextBox Width="150" Text="{Binding ToDate}" PlaceholderText="ГГГГ-ММ-ДД" AutomationProperties.AutomationId="ActivityTo" />
+            <TextBlock Text="{loc:LocalizedText Key=core.activity.dateToUtc}" Classes="caption" />
+            <TextBox Width="150" Text="{Binding ToDate}" PlaceholderText="{loc:LocalizedText Key=core.datePlaceholder}" AutomationProperties.AutomationId="ActivityTo" />
           </StackPanel>
-          <Button Content="Применить" Command="{Binding ApplyFiltersCommand}" VerticalAlignment="Bottom"
+          <Button Content="{loc:LocalizedText Key=core.apply}" Command="{Binding ApplyFiltersCommand}" VerticalAlignment="Bottom"
                   AutomationProperties.AutomationId="ActivityApply" />
-          <Button Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Bottom"
+          <Button Content="{loc:LocalizedText Key=core.refresh}" Command="{Binding RefreshCommand}" VerticalAlignment="Bottom"
                   AutomationProperties.AutomationId="ActivityRefresh" />
         </StackPanel>
       </StackPanel>
@@ -76,16 +84,16 @@
             BorderThickness="1" CornerRadius="8" Padding="14">
       <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="#F4CACA" />
     </Border>
-    <TextBlock IsVisible="{Binding IsLoading}" Text="Загружаем журнал…" Classes="caption" />
-    <TextBlock IsVisible="{Binding !HasItems}" Text="Для выбранных фильтров записей нет." Classes="muted" Margin="8,12" />
+    <TextBlock IsVisible="{Binding IsLoading}" Text="{loc:LocalizedText Key=core.activity.loading}" Classes="caption" />
+    <TextBlock IsVisible="{Binding !HasItems}" Text="{loc:LocalizedText Key=core.activity.empty}" Classes="muted" Margin="8,12" />
     <Border Classes="card" Padding="0" IsVisible="{Binding HasItems}" Background="#111519" BorderBrush="#2D353E">
       <StackPanel>
         <Border Padding="15,12" Background="#1B222A" CornerRadius="12,12,0,0">
           <Grid ColumnDefinitions="160,1.1*,*,1.7*" ColumnSpacing="18">
-            <TextBlock Text="Когда" Classes="caption" />
-            <TextBlock Grid.Column="1" Text="Пользователь" Classes="caption" />
-            <TextBlock Grid.Column="2" Text="Организация" Classes="caption" />
-            <TextBlock Grid.Column="3" Text="Действие" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=core.when}" Classes="caption" />
+            <TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=core.user}" Classes="caption" />
+            <TextBlock Grid.Column="2" Text="{loc:LocalizedText Key=core.organization}" Classes="caption" />
+            <TextBlock Grid.Column="3" Text="{loc:LocalizedText Key=core.action}" Classes="caption" />
           </Grid>
         </Border>
         <ItemsControl ItemsSource="{Binding Items}" AutomationProperties.AutomationId="ActivityItems">
@@ -108,9 +116,9 @@
       </StackPanel>
     </Border>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-      <Button Content="← Предыдущая страница" Command="{Binding PreviousPageCommand}" IsVisible="{Binding CanGoPrevious}"
+      <Button Content="{loc:LocalizedText Key=core.previousPage}" Command="{Binding PreviousPageCommand}" IsVisible="{Binding CanGoPrevious}"
               AutomationProperties.AutomationId="ActivityPreviousPage" />
-      <Button Content="Следующая страница →" Command="{Binding NextPageCommand}" IsVisible="{Binding HasMore}"
+      <Button Content="{loc:LocalizedText Key=core.nextPage}" Command="{Binding NextPageCommand}" IsVisible="{Binding HasMore}"
               AutomationProperties.AutomationId="ActivityNextPage" />
     </StackPanel>
   </StackPanel>

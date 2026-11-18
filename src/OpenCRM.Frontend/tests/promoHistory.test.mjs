@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '@opencrm/workspace/billingMessages'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -11,7 +13,7 @@ const code = ts.transpileModule(compileScript(descriptor, { id: 'promo-history' 
 function setup(load) {
   const props = vue.reactive({ organizationId: 'org', disabled: false, historyOnly: false })
   const module = { exports: {} }
-  new Function('require', 'module', 'exports', code)(id => id === 'vue' ? vue : id.startsWith('../api/') ? { loadWorkspacePromoHistory: load } : {}, module, module.exports)
+  new Function('require', 'module', 'exports', code)(id => regionalTestDependencies[id] ?? (id === 'vue' ? vue : id.startsWith('../api/') ? { loadWorkspacePromoHistory: load } : {}), module, module.exports)
   const state = module.exports.default.setup(props, { expose() {}, emit() {} })
   return { props, state }
 }
@@ -58,6 +60,8 @@ test('История доступна кнопкой справа в шапке 
     setup: (props, { slots }) => () => vue.h(props.href ? 'a' : 'button', { href: props.href, disabled: props.disabled }, slots.default?.())
   })
   new Function('require', 'module', 'exports', compiled)(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../billingMessages') return {}
     if (id === 'vue') return vue
     if (id === '@opencrm/ui') return { UiButton: button, UiInput: vue.defineComponent({ setup: () => () => vue.h('input') }) }
     if (id.startsWith('../api/')) return { loadWorkspacePromoHistory: () => { historyReads++; throw new Error('История не должна загружаться вместе с формой.') } }

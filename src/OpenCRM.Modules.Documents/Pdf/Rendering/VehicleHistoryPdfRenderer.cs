@@ -32,7 +32,7 @@ internal sealed class VehicleHistoryPdfRenderer(string projectName)
                         }
 
                         column.Item().Element(c => PdfDocumentComponents.RenderSection(c, "Техника", section => PdfDocumentComponents.RenderVehicleInfo(section, model.Vehicle)));
-                        column.Item().Element(c => PdfDocumentComponents.RenderSection(c, "Сводка", section => PdfDocumentComponents.RenderStatistics(section, model.TotalMaintenanceCount, model.TotalSpent)));
+                        column.Item().Element(c => PdfDocumentComponents.RenderSection(c, "Сводка", section => PdfDocumentComponents.RenderStatistics(section, model.TotalMaintenanceCount, model.CurrencyTotals)));
 
                         if (model.MaintenanceHistory?.Count == 0)
                         {

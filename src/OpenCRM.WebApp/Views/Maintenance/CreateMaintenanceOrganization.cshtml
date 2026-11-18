@@ -4,15 +4,15 @@
 @using OpenCRM.WebApp.Presentation
 @{
     Layout = "/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Добавить обслуживание";
+    ViewData["Title"] = Text["maintenance.legacy.form.createMaintenance"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "maintenance-create-page-body";
-    ViewData["BreadcrumbTitle"] = "Добавить обслуживание";
-    ViewData["PageTitle"] = "Добавить обслуживание";
-    ViewData["SubtitlePrefix"] = "Заполните информацию об обслуживании или ремонте ";
+    ViewData["BreadcrumbTitle"] = Text["maintenance.legacy.form.createMaintenance"].Value;
+    ViewData["PageTitle"] = Text["maintenance.legacy.form.createMaintenance"].Value;
+    ViewData["SubtitlePrefix"] = Text["maintenance.legacy.form.subtitleCreate"].Value;
     ViewData["FormId"] = "maintenanceCreateForm";
     ViewData["SaveAction"] = "save_createMaintenance";
-    ViewData["SaveButtonText"] = "Сохранить обслуживание";
+    ViewData["SaveButtonText"] = Text["maintenance.legacy.form.saveMaintenance"].Value;
     ViewData["HideMaintenanceBreadcrumb"] = true;
     var organizationId = ViewData["MaintenanceOrganizationId"] as string ?? string.Empty;
     if (string.IsNullOrWhiteSpace(organizationId))
@@ -24,10 +24,10 @@
     var maintenanceFormProfile = ViewData["MaintenanceFormProfile"] as OrganizationWorkspaceMaintenanceFormProfileDto;
     var rootBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var rootBreadcrumbText = string.IsNullOrWhiteSpace(organizationId)
-        ? "Моя техника"
+        ? Text["maintenance.legacy.page.vehiclePersonal"].Value
         : !string.IsNullOrWhiteSpace(organizationName)
             ? organizationName
-            : "Организация";
+            : Text["maintenance.legacy.page.organization"].Value;
     var vehiclesBreadcrumbUrl = string.IsNullOrWhiteSpace(organizationId) ? "/vehicles" : "/organizations";
     var vehicleUrl = string.IsNullOrWhiteSpace(organizationId)
         ? $"/vehicle/{Model.Id}"
@@ -61,8 +61,8 @@
         new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
     var showPhotos = maintenanceFormProfile?.ShowPhotos ?? scenarioUx.ShowPhotosByDefault;
     var maintenanceTermGenitive = string.Equals(workspaceShell?.Scenario?.Code, OpenCRM.Domain.OrganizationTypeCodes.Detailing, StringComparison.OrdinalIgnoreCase)
-        ? "услуги"
-        : "обслуживания";
+        ? Text["maintenance.legacy.form.field.service"].Value.ToLowerInvariant()
+        : Text["maintenance.legacy.page.maintenance"].Value.ToLowerInvariant();
 }
 
 <div id="create-maintenance-form">
@@ -78,13 +78,13 @@
                     <nav aria-label="breadcrumb" class="mb-4">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item"><a href="@rootBreadcrumbUrl" class="text-decoration-none">@rootBreadcrumbText</a></li>
-                            <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">Техника</a></li>
+                            <li class="breadcrumb-item"><a href="@vehiclesBreadcrumbUrl" class="text-decoration-none">@Text["maintenance.legacy.page.vehicle"]</a></li>
                             <li class="breadcrumb-item">
                                 <a href="@vehicleUrl" class="text-decoration-none">
                                     @Helpers.VehicleDisplayName.Format(Model.BrandName, Model.ModelName, Model.RegistrationPlate)
                                     @if (Model.YearIssue != null && Model.YearIssue != 0)
                                     {
-                                        @Model.YearIssue <text>г.</text>
+                                        @Model.YearIssue <text>@Text["maintenance.legacy.form.yearSuffix"]</text>
                                     }
                                 </a>
                             </li>
@@ -114,11 +114,11 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fa fa-camera me-2"></i>
-                            Фотографии
+                            @Text["maintenance.legacy.form.create.photosTitle"]
                         </h3>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-4">Если выбрать фотографии сейчас, они загрузятся вместе с сохранением @maintenanceTermGenitive. Если загрузка не пройдет, ниже появится кнопка повтора.</p>
+                        <p class="text-muted mb-4">@(Text["maintenance.legacy.form.create.photosIntro"].Value.Replace("{0}", maintenanceTermGenitive))</p>
                         <div v-if="saveSuccessMessage" class="alert alert-success">
                             {{ saveSuccessMessage }}
                         </div>
@@ -127,9 +127,9 @@
                         </div>
                         <div v-if="photos.length > 0">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5>Выбранные фотографии ({{ photos.length }})</h5>
+                                    <h5>@(Text["maintenance.legacy.photos.selected"].Value.Replace("{0}", "{{ photos.length }}"))</h5>
                                     <button type="button" class="btn btn-sm btn-outline-danger" @@click="clearPhotoPreviews">
-                                        <i class="fa fa-trash me-1"></i>Очистить все
+                                        <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.clearAll"]
                                     </button>
                                 </div>
 
@@ -146,7 +146,7 @@
                                             </div>
                                             <div class="card-footer p-2">
                                                 <button type="button" class="btn btn-sm btn-danger w-100" @@click="removePhoto(index)">
-                                                    <i class="fa fa-trash me-1"></i>Удалить
+                                                    <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.remove"]
                                                 </button>
                                             </div>
                                         </div>
@@ -156,12 +156,12 @@
                             <div v-else>
                                 <div class="text-center py-4">
                                     <i class="fa fa-image fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">Фотографии не выбраны</p>
+                                    <p class="text-muted">@Text["maintenance.legacy.photos.empty"]</p>
                                 </div>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label">Добавить фотографии</label>
+                                <label class="form-label">@Text["maintenance.legacy.photos.add"]</label>
                                 <input type="file"
                                        class="form-control create-maintenance-input"
                                        id="photos"
@@ -169,14 +169,14 @@
                                        accept="image/*"
                                        @@change="changeFile($event)">
                                 <div class="form-text">
-                                    Можно загрузить до 10 фотографий (JPG, PNG).
-                                    <strong>Максимальный общий размер всех файлов: 100 МБ</strong>
+                                    @Text["maintenance.legacy.photos.uploadInstructions"]
+                                    <strong><strong>@Text["maintenance.legacy.photos.limits"]</strong></strong>
                                 </div>
                             </div>
 
                         <div v-if="isUploading" class="mt-4">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Загрузка...</span>
+                                <span>@Text["maintenance.legacy.photos.uploading"]</span>
                                 <span>{{ uploadProgress }}%</span>
                             </div>
                             <div class="progress">
@@ -186,14 +186,14 @@
 
                         <div class="d-flex justify-content-end gap-2 mt-4" v-if="createdMaintenanceId && photos.length > 0 && photoUploadErrorMessage">
                             <button type="button" class="btn btn-outline-dark" @@click="redirectToCar" :disabled="isUploading">
-                                Завершить позже
+                                @Text["maintenance.legacy.form.create.completeLater"]
                             </button>
                             <button type="button" class="btn btn-dark" @@click="uploadPhotos" :disabled="isUploading">
                                 <template v-if="!isUploading">
-                                    <i class="fa fa-upload me-2"></i>Повторить загрузку фотографий
+                                    <i class="fa fa-upload me-2"></i>@Text["maintenance.legacy.form.create.uploadRetry"]
                                 </template>
                                 <template v-else>
-                                    <i class="fa fa-spinner fa-spin fa-fw"></i> Загрузка...
+                                    <i class="fa fa-spinner fa-spin fa-fw"></i> @Text["maintenance.legacy.photos.uploading"]
                                 </template>
                             </button>
                         </div>
@@ -205,14 +205,14 @@
                     <a href="javascript:void(0)"
                        class="btn btn-outline-dark"
                        @@click="redirectToCar">
-                        Отмена
+                        @Text["maintenance.legacy.form.deletePhoto.cancel"]
                     </a>
                     <button type="button" class="btn btn-dark" :disabled="saveModal || isUploading" @@click="save_createMaintenance">
                         <template v-if="!saveModal">
                             <i class="fa fa-save me-2"></i>@scenarioUx.SaveButtonText
                         </template>
                         <template v-else>
-                            <i class="fa fa-spinner fa-spin fa-fw"></i> {{ selectedFiles.length > 0 ? 'Сохраняем и загружаем фото...' : 'Сохраняем...' }}
+                            <i class="fa fa-spinner fa-spin fa-fw"></i> {{ selectedFiles.length > 0 ? localizedText.formCreateSaveUpload : localizedText.formCreateSaving }}
                         </template>
                     </button>
                 </div>

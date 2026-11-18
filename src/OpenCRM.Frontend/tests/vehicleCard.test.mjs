@@ -14,6 +14,18 @@ const code = ts.transpileModule(script.content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
+const messages = {
+  'vehicleOverview.linkedOrganization': 'Связь с организацией',
+  'vehicleOverview.status3': 'Выполнено',
+  'vehicleOverview.status4': 'Отменено',
+  'vehicleOverview.readyStatus': 'Готово к выдаче',
+  'vehicleOverview.handedOver': 'Выдано'
+}
+
+function translate(key, parameters = {}) {
+  return (messages[key] ?? key).replace(/\{([^}]+)\}/g, (_, name) => parameters[name] ?? `{${name}}`)
+}
+
 function vehicle(id) {
   return { id, brandName: 'BMW', modelName: 'X3', isArchived: false, maintenanceCount: 0 }
 }
@@ -25,6 +37,8 @@ function page(items = [], values = {}) {
 function vehicleCard(api = {}, workApi = {}) {
   const watchers = []
   const calls = []
+  const currency = vue.ref('RUB')
+  const culture = vue.ref('ru-RU')
   const module = { exports: {} }
   const resolve = id => {
     if (id === 'vue') return {
@@ -35,7 +49,10 @@ function vehicleCard(api = {}, workApi = {}) {
       onUnmounted() {},
       watch: (source, callback) => watchers.push({ source, callback })
     }
-    if (id === '@opencrm/ui') return { UiButton: {}, UiCard: {}, UiConfirmDialog: {}, UiImagePreview: {}, UiLoader: {} }
+    if (id === '@opencrm/ui') return { UiButton: {}, UiCard: {}, UiConfirmDialog: {}, UiImagePreview: {}, UiLoader: {}, useLocalization: () => ({ t: translate }) }
+    if (id === '@opencrm/ui/i18n') return { formattingCulture: culture }
+    if (id === '../vehicleOverviewMessages') return {}
+    if (id === '../workspaceCurrency') return { useWorkspaceCurrency: () => currency }
     if (id === './WorkspaceProLock.vue') return {}
     if (id === '../api/vehicles') return {
       getVehicleDisplayName: item => `${item.brandName} ${item.modelName}`,
@@ -64,8 +81,20 @@ function vehicleCard(api = {}, workApi = {}) {
     vehicleId: 'vehicle-1'
   })
   const state = module.exports.default.setup(props, { expose() {}, emit() {} })
-  return { state, props, watchers, calls }
+  return { state, props, watchers, calls, currency, culture }
 }
+
+test('Исторические цены и оплаты сохраняют валюту заказа после переноса в другую организацию', () => {
+  const { state, currency, culture } = vehicleCard()
+  currency.value = 'CNY'
+  culture.value = 'en-GB'
+  assert.equal(state.formatMoney(1234.5, 'RUB'), 'RUB\u00a01,234.50')
+  assert.equal(state.formatMoney(1234.5), 'CNY\u00a01,234.50')
+  assert.equal(state.formatMoney(1234.5, 'USD'), 'USD\u00a01,234.50')
+  const moneyExpressions = [...descriptor.template.content.matchAll(/\{\{[^}]*?formatMoney\((.*?)\)\s*\}\}/g)].map(match => match[1])
+  assert.equal(moneyExpressions.length, 3)
+  assert.ok(moneyExpressions.every(expression => expression.endsWith(', item.currencyCode')))
+})
 
 test('Фото автомобиля доступны Free сразу, альбомы читаются только при открытии истории', async () => {
   const { state, props, calls } = vehicleCard()

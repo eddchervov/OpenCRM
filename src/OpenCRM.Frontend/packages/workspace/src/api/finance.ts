@@ -1,3 +1,5 @@
+import { translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/apiMessages'
 export type WorkspaceFinanceKpis = {
   ordersCount: number
   grossAmount: number
@@ -39,6 +41,7 @@ export type WorkspaceFinanceClientDebtItem = {
 }
 
 export type WorkspaceFinanceOrderItem = {
+  currencyCode?: string
   id: string
   isCancelled?: boolean
   date: string
@@ -61,6 +64,16 @@ export type WorkspaceFinanceOrderItem = {
 }
 
 export type WorkspaceFinanceSummary = {
+  currencyCode?: string
+  otherCurrencyTotals?: {
+    currencyCode: string
+    grossAmount: number
+    netAmount: number
+    paidAmount: number
+    debtAmount: number
+    costAmount: number
+    profitAmount: number
+  }[]
   dateFrom: string
   dateTo: string
   kpis: WorkspaceFinanceKpis
@@ -93,12 +106,12 @@ export async function loadWorkspaceFinance(
 
   if (response.status === 401) {
     window.location.href = `/auth/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search + window.location.hash)}`
-    throw new Error('Требуется авторизация.')
+    throw new Error(t('apiErrors.signIn'))
   }
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить финансы.')
+    throw new Error(error?.message ?? t('apiErrors.finance'))
   }
 
   return response.json()

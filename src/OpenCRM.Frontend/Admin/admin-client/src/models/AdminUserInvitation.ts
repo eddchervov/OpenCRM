@@ -3,6 +3,7 @@ export interface AdminUserInvitation {
   organizationName: string
   email: string
   roleName: string
+  roleCode?: string
   statusCode: string
   createdAt: string
   acceptedAt: string | null

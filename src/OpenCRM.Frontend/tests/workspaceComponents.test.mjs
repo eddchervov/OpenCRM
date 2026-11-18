@@ -1,11 +1,14 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
-import { formatDateOnly } from '../packages/ui/src/dateOnly.ts'
+import { formatDateOnly, parseDateOnly } from '../packages/ui/src/dateOnly.ts'
 import { getWorkdayProgress, shouldOpenRecord } from '../packages/workspace/src/utils/workdayCard.ts'
+import { formattingCulture, i18n } from '@opencrm/ui/i18n'
+import '../packages/workspace/src/workMessages.ts'
 
 const compiled = new Map()
 
@@ -22,6 +25,7 @@ function setupComponent(name, props, dependencies, emit = () => {}) {
   const storage = new Map()
   const lifecycle = { onMounted() {}, onUnmounted() {}, onBeforeUnmount() {}, watch() {} }
   const resolve = id => {
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, ...lifecycle }
     if (Object.hasOwn(dependencies, id)) return dependencies[id]
     throw new Error('Не задана зависимость компонента: ' + id)
@@ -40,6 +44,7 @@ function workdayCard(props, emit) {
   return setupComponent('WorkspaceWorkdayCard', props, {
     '@opencrm/ui': { formatDateOnly() {}, parseDateOnly() {} },
     '../utils/vehicleBrandLogo': { getVehicleBrandLogo: () => null },
+    '../workdayCardMessages': {},
     '../utils/workdayCard': { getWorkdayProgress, shouldOpenRecord }
   }, emit)
 }
@@ -49,7 +54,8 @@ function workComponent(api = {}, shiftApi = {}) {
   return setupComponent('WorkspaceWorkSection', {
     context: { organization: { id: 'org-1', allowWorkSelfAssignment: false }, workspaceAccess: { isReadOnly: false } }
   }, {
-    '@opencrm/ui': { formatDateOnly },
+    '@opencrm/ui': { formatDateOnly, parseDateOnly },
+    '../workMessages': {},
     '../api/work': { loadAssignedWork: async () => [work], loadWorkReports: async () => [], ...api },
     '../api/shifts': { loadOwnShifts: async () => [], ...shiftApi },
     '../formatWorkDuration': { formatWorkDuration() {} }
@@ -63,6 +69,31 @@ function deferred() {
 }
 
 const settled = () => new Promise(resolve => setImmediate(resolve))
+
+test('Цена работы использует валюту снимка вместо валюты открытой организации', () => {
+  const state = workComponent()
+  assert.match(state.formatPrice(100, 'CNY'), /CNY|CN¥|¥|￥/)
+  assert.doesNotMatch(state.formatPrice(100, 'CNY'), /₽|RUB/)
+  assert.match(state.formatPrice(100), /₽|RUB/)
+})
+
+test('Историческая валюта блокирует выдачу и возврат материалов до API-вызова', async () => {
+  let calls = 0
+  const state = workComponent({
+    issueOperationMaterial: async () => { calls++ },
+    returnOperationMaterial: async () => { calls++ }
+  })
+  state.materialStocks.value = [{ id: 'stock', name: 'Test', unit: 'л', availableQuantity: 2 }]
+  state.selectedStockId.value = 'stock'
+  state.materialQuantity.value = 1
+  state.materialReturnReason.value = 'Test reason'
+
+  await state.issueMaterial({ ...work, currencyCode: 'CNY' })
+  await state.returnMaterial({ ...work, currencyCode: 'CNY' }, { id: 'issue' })
+
+  assert.equal(calls, 0)
+  assert.equal(state.canManageWorkMaterials({ ...work, currencyCode: 'RUB' }), true)
+})
 
 test('Фоновый опрос обновляет согласование и сохраняет черновик замечания', async () => {
   let reports = [{ id: 'report-1', decision: null }]
@@ -109,11 +140,46 @@ test('Ответ фоновой загрузки не удаляет тольк�
   assert.equal(state.reportText.value, '')
 })
 
+test('Состояния и типы сообщений переводятся по коду, даты используют formattingCulture', () => {
+  const state = workComponent()
+  i18n.global.locale.value = 'en'
+  formattingCulture.value = 'en-US'
+
+  assert.equal(state.statusName(3), 'Paused')
+  assert.equal(state.reportKindName('extra'), 'Extra work')
+  assert.equal(state.emptyState.value.title, 'No work for today')
+  assert.equal(state.formatInstant('2026-11-16T09:05:00Z'), new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC'
+  }).format(new Date('2026-11-16T09:05:00Z')))
+  assert.equal(state.formatPlan({ plannedDate: '2026-11-16', plannedStartTime: '09:00' }),
+    parseDateOnly('2026-11-16').toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) + ' · 09:00')
+
+  const source = readFileSync(new URL('../packages/workspace/src/components/WorkspaceWorkSection.vue', import.meta.url), 'utf8')
+  const keys = [...new Set([...source.matchAll(/\bt\(['"]([^'"]+)['"]\)/g)].map(match => match[1]))]
+  const dynamicKeys = [
+    ...['today', 'active', 'assigned', 'available', 'completed'].flatMap(code => [
+      `work.tabs.${code}`, `work.empty.${code}Title`, `work.empty.${code}Description`
+    ]),
+    ...['assigned', 'active', 'paused', 'completed'].map(code => `work.status.${code}`),
+    ...['comment', 'defect', 'extra', 'time'].map(code => `work.reportKind.${code}`),
+    ...['g', 'kg', 'ml', 'l', 'package'].map(code => `work.units.${code}`)
+  ]
+  for (const locale of ['ru', 'en', 'zh-Hans']) {
+    i18n.global.locale.value = locale
+    for (const key of [...keys, ...dynamicKeys]) assert.notEqual(i18n.global.t(key), key, `${key} отсутствует для ${locale}`)
+  }
+
+  i18n.global.locale.value = 'ru'
+  formattingCulture.value = 'ru-RU'
+})
+
 function importComponent(api = {}) {
   return setupComponent('WorkspaceImportSection', { organizationId: 'org-1', userId: 'user-1' }, {
     '@opencrm/ui': {},
     '../importRecoveryReport': {},
     '../importProfileStructure.mjs': {},
+    '../importMessages': { importMessage: key => key },
+    '../importRowMessage': { importRowMessage: row => row.message ?? '' },
     '../api/imports': api
   })
 }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -48,6 +49,8 @@ public partial class SubscriptionPlanEditor : ObservableObject
     [ObservableProperty]
     private bool _isSystemFree;
 
+    public void RefreshLocalizedValues() => this.OnPropertyChanged((string?)null);
+
     /// <summary> Копирует значения тарифа в форму. </summary>
     public void Load(AdminSubscriptionPlan plan)
     {
@@ -86,7 +89,7 @@ public partial class SubscriptionPlanEditor : ObservableObject
 }
 
 /// <summary> Строка списка тарифов с доступными действиями. </summary>
-public sealed class SubscriptionPlanListItem(AdminSubscriptionPlan plan, bool canToggle)
+public sealed class SubscriptionPlanListItem(AdminSubscriptionPlan plan, bool canToggle) : ObservableObject
 {
     public AdminSubscriptionPlan Plan { get; } = plan;
 
@@ -95,31 +98,33 @@ public sealed class SubscriptionPlanListItem(AdminSubscriptionPlan plan, bool ca
     public string Name => this.Plan.Name;
 
     public string GroupLabel => this.Plan.Group == "workspace.free.v1"
-        ? "Системный тариф"
-        : string.IsNullOrWhiteSpace(this.Plan.Group) ? "Без группы" : this.Plan.Group;
+        ? AdminLocalization.Instance["native.plans.sistemnyy.tarif"]
+        : string.IsNullOrWhiteSpace(this.Plan.Group) ? AdminLocalization.Instance["native.plans.bez.gruppy"] : this.Plan.Group;
 
     public string PriceLabel => this.Plan.Group == "workspace.free.v1"
-        ? "Бесплатно"
-        : string.Format(System.Globalization.CultureInfo.GetCultureInfo("ru-RU"), "{0:C}", this.Plan.EffectivePrice);
+        ? AdminLocalization.Instance["native.plans.besplatno"]
+        : UserDisplayFormatting.Money(this.Plan.EffectivePrice);
 
     public string DurationLabel => this.Plan.Group == "workspace.free.v1" || this.Plan.IsDefaultPlan && this.Plan.DurationDays >= 36500
-        ? "Бессрочно"
-        : $"{this.Plan.DurationDays} дней";
+        ? AdminLocalization.Instance["native.plans.bessrochno"]
+        : AdminLocalization.Instance.Format("native.plans.this.plan.durationdays.dney", this.Plan.DurationDays);
 
-    public string StatusLabel => this.Plan.Group == "workspace.free.v1" ? "Free" : this.Plan.IsActive ? "Активен" : "Отключён";
+    public string StatusLabel => this.Plan.Group == "workspace.free.v1" ? "Free" : this.Plan.IsActive ? AdminLocalization.Instance["native.plans.aktiven"] : AdminLocalization.Instance["native.plans.otklyuchyon"];
 
     public bool IsActive => this.Plan.IsActive;
 
     public bool CanToggle => canToggle && this.Plan.Group != "workspace.free.v1";
 
-    public string ToggleLabel => this.IsActive ? "Отключить" : "Включить";
+    public string ToggleLabel => this.IsActive ? AdminLocalization.Instance["native.plans.otklyuchit"] : AdminLocalization.Instance["native.plans.vklyuchit"];
 
     public string KindLabel => this.Plan switch
     {
-        { Group: "workspace.free.v1" } => "Системный Free",
-        { IsDefaultPlan: true } => "Базовый · прежняя модель",
-        { IsDemoPlan: true } => "Демо · прежняя модель",
+        { Group: "workspace.free.v1" } => AdminLocalization.Instance["native.plans.sistemnyy.free"],
+        { IsDefaultPlan: true } => AdminLocalization.Instance["native.plans.bazovyy.prezhnyaya.model"],
+        { IsDemoPlan: true } => AdminLocalization.Instance["native.plans.demo.prezhnyaya.model"],
         { PlanTypeCode: "business" } => "PRO",
         _ => this.Plan.PlanTypeName
     };
+
+    public void RefreshLocalizedValues() => this.OnPropertyChanged((string?)null);
 }

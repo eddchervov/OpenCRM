@@ -1,3 +1,8 @@
+import { regionalTestDependencies, localizationTestContext } from './regionalTestDependencies.mjs'
+import * as workspaceChromeMessages from '../packages/workspace/src/workspaceChromeMessages.ts'
+import '../packages/workspace/src/permissionMessages.ts'
+import '../packages/workspace/src/employeeMessages.ts'
+import '../packages/workspace/src/interactionMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -28,10 +33,11 @@ function preview(name) {
     }
   })
   const resolve = id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return {
       ...vue, onMounted: callback => mounted.push(callback), onBeforeUnmount() {}, onUnmounted() {}
     }
-    if (id === '@opencrm/ui') return { formatDateOnly: () => '2026-10-29', parseDateOnly: value => value, getProjectBrand }
+    if (id === '@opencrm/ui') return { ...localizationTestContext, formatDateOnly: () => '2026-10-29', parseDateOnly: value => value, getProjectBrand }
     if (id === '@opencrm/ui/projectBrand') return { getProjectBrand }
     if (id === '../utils/organizationTimeZone') return { organizationTimeZoneName: value => value }
     if (id === '../composables/conversationUpdates') return { useConversationUpdates: () => ({ revision: vue.ref(''), unreadCount: vue.ref(0), connected: vue.ref(false), refresh() {} }) }
@@ -68,7 +74,7 @@ for (const name of ['WorkspaceEmployeesSection', 'WorkspaceShiftsSection', 'Work
 test('Накладка блокирует содержимое, а возможности открываются отдельной кнопкой без перехода к тарифам', async () => {
   const module = { exports: {} }
   new Function('require', 'module', 'exports', compile('WorkspaceProLock', true))(
-    id => id === 'vue' ? { ...vue, inject: (_key, fallback) => vue.computed(() => true) } : {}, module, module.exports
+    id => regionalTestDependencies[id] ?? (id === 'vue' ? { ...vue, inject: (_key, fallback) => vue.computed(() => true) } : localizationTestContext), module, module.exports
   )
   const component = module.exports.default
   const slot = () => vue.h('button', { type: 'button' }, 'Добавить смену')
@@ -88,7 +94,7 @@ test('Накладка блокирует содержимое, а возмож�
 test('Метка PRO отображается только на Free и только у закрытого платного пункта', async () => {
   const module = { exports: {} }
   new Function('require', 'module', 'exports', compile('WorkspaceCrmNavigation', true))(
-    id => id === 'vue' ? vue : {}, module, module.exports
+    id => id === 'vue' ? vue : id === '../workspaceChromeMessages' ? workspaceChromeMessages : localizationTestContext, module, module.exports
   )
   const sections = [
     { code: 'clients', title: 'Клиенты', isAvailable: true },
@@ -105,8 +111,9 @@ test('История сообщений открывается явно, сбр�
   let updatesOrganization
   const module = { exports: {} }
   const resolve = id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, provide() {}, onMounted() {}, onBeforeUnmount() {} }
-    if (id === '@opencrm/ui') return { pageBreadcrumbsKey: Symbol('breadcrumbs'), workspaceTheme: vue.ref('light'), getProjectBrand }
+    if (id === '@opencrm/ui') return { ...localizationTestContext, pageBreadcrumbsKey: Symbol('breadcrumbs'), workspaceTheme: vue.ref('light'), getProjectBrand }
     if (id === '@opencrm/ui/projectBrand') return { getProjectBrand }
     if (id === '../composables/conversationUpdates') return {
       provideConversationUpdates: organization => { updatesOrganization = organization; return { unreadCount: vue.ref(0) } }
@@ -149,7 +156,7 @@ test('Предпросмотр ролей показывает матрицу п
     UiButton: { render() { return vue.h('button', { disabled: true }, this.$slots.default?.()) } }
   }
   new Function('require', 'module', 'exports', compile('WorkspaceRolePermissions', true))(
-    id => id === 'vue' ? vue : id === '@opencrm/ui' ? ui : {}, module, module.exports
+    id => regionalTestDependencies[id] ?? (id === 'vue' ? vue : id === '@opencrm/ui' ? ui : {}), module, module.exports
   )
   const html = await renderToString(vue.h(module.exports.default, {
     roles: [], previewOnly: true, canManage: false, isEditing: false, isSaving: false, drafts: {}
@@ -165,7 +172,7 @@ test('Предпросмотр ролей показывает матрицу п
 test('Базовый режим сохраняет операционный запрет без рекламы PRO и переходов к оплате', async () => {
   const module = { exports: {} }
   new Function('require', 'module', 'exports', compile('WorkspaceProLock', true))(
-    id => id === 'vue' ? { ...vue, inject: (_key, fallback) => fallback } : {}, module, module.exports
+    id => regionalTestDependencies[id] ?? (id === 'vue' ? { ...vue, inject: (_key, fallback) => fallback } : {}), module, module.exports
   )
   const html = await renderToString(vue.h(module.exports.default,
     { locked: true, message: 'Смены доступны в PRO', feature: 'shifts' },

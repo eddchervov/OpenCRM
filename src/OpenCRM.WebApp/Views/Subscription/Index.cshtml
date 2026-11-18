@@ -2,8 +2,8 @@
 @using System.Globalization
 @{
     Layout ??= "/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Тарифы";
-    ViewData["SeoDescription"] = $"Бесплатная CRM {Brand.DisplayName} и варианты PRO для детейлинга и автосервиса: стоимость, срок, лимиты и включённые возможности.";
+    ViewData["Title"] = Text["entry.plans"].Value;
+    ViewData["SeoDescription"] = Text["entry.seo", Brand.DisplayName].Value;
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var targetUrl = isAuthenticated ? Url.Content("~/organizations") : Url.Content("~/auth/register");
     var plans = Model.BusinessPlanGroups
@@ -42,8 +42,8 @@
     };
 
     string FormatLimit(int value) => value == int.MaxValue
-        ? "Без ограничения"
-        : value.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"));
+        ? Text["entry.noLimit"].Value
+        : value.ToString("N0", CultureInfo.CurrentCulture);
 }
 
 @section Styles {
@@ -57,10 +57,10 @@
 
 <div id="subscription-page" class="platform-page subscription-catalog">
     <div class="container platform-page-shell">
-        <nav aria-label="Хлебные крошки" class="platform-page-breadcrumbs">
+        <nav aria-label="@Text["entry.breadcrumbs"]" class="platform-page-breadcrumbs">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="@Url.Content("~/")">Главная</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Тарифы</li>
+                <li class="breadcrumb-item"><a href="@Url.Content("~/")">@Text["entry.home"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Text["entry.plans"]</li>
             </ol>
         </nav>
 
@@ -82,31 +82,31 @@
         }
 
         <header class="tariff-heading">
-            <h1 class="platform-page-title">Тарифы</h1>
-            <p>Для детейлинга и автосервиса</p>
+            <h1 class="platform-page-title">@Text["entry.plans"]</h1>
+            <p>@Text["entry.businessTypes"]</p>
         </header>
 
         <div id="available-plans" class="tariff-grid">
             <article class="platform-page-panel tariff-card">
-                <h2>Бесплатный</h2>
-                <div class="tariff-price">0 ₽</div>
-                <p class="tariff-period">Без ограничения срока</p>
+                <h2>@Text["entry.free"]</h2>
+                <div class="tariff-price">@(0.ToString("N0", CultureInfo.CurrentCulture)) RUB</div>
+                <p class="tariff-period">@Text["entry.noExpiry"]</p>
                 <ul class="tariff-features">
-                    <li>Работа владельца</li>
-                    <li>Клиенты и автомобили в пределах лимитов</li>
-                    <li>Записи, заказы и услуги</li>
-                    <li>Склад, материалы и учёт оплат</li>
-                    <li>История и акт выполненных работ PDF</li>
+                    <li>@Text["entry.ownerWork"]</li>
+                    <li>@Text["entry.freeClients"]</li>
+                    <li>@Text["entry.freeOrders"]</li>
+                    <li>@Text["entry.freeInventory"]</li>
+                    <li>@Text["entry.freeDocuments"]</li>
                 </ul>
-                <a href="@targetUrl" class="btn btn-outline-dark tariff-action">@(isAuthenticated ? "Мои организации" : "Начать бесплатно")</a>
+                <a href="@targetUrl" class="btn btn-outline-dark tariff-action">@(isAuthenticated ? Text["entry.myOrganizations"].Value : Text["entry.startFree"].Value)</a>
             </article>
 
             @foreach (var plan in plans)
             {
                 var title = plan.DurationDays switch
                 {
-                    30 => "PRO на месяц",
-                    365 => "PRO на год",
+                    30 => Text["entry.monthlyPro"].Value,
+                    365 => Text["entry.yearlyPro"].Value,
                     _ => plan.Name
                 };
                 var visibleFeatures = FeaturePresentationHelper.GetVisibleFeatures(plan.Features, includeVehiclesLimit: true).ToList();
@@ -119,9 +119,9 @@
                     .ToList();
                 var limits = new (string Name, int? Value)[]
                 {
-                    ("Клиенты", visibleFeatures.FirstOrDefault(feature => feature.Code == FeatureCodes.WorkspaceClientsLimit)?.IntValue),
-                    ("Автомобили", FeaturePresentationHelper.GetVehicleLimit(visibleFeatures, plan.VehicleLimit)),
-                    ("Участники", visibleFeatures.FirstOrDefault(feature => feature.Code == FeatureCodes.WorkspaceMembersLimit)?.IntValue)
+                    (Text["entry.clients"].Value, visibleFeatures.FirstOrDefault(feature => feature.Code == FeatureCodes.WorkspaceClientsLimit)?.IntValue),
+                    (Text["entry.vehicles"].Value, FeaturePresentationHelper.GetVehicleLimit(visibleFeatures, plan.VehicleLimit)),
+                    (Text["entry.participants"].Value, visibleFeatures.FirstOrDefault(feature => feature.Code == FeatureCodes.WorkspaceMembersLimit)?.IntValue)
                 };
 
                 <article class="platform-page-panel tariff-card">
@@ -129,12 +129,12 @@
                     <div class="tariff-price">
                         @if (plan.HasDiscount && plan.Price > plan.EffectivePrice)
                         {
-                            <s>@plan.Price.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) ₽</s>
+                            <s>@plan.Price.ToString("0.##", CultureInfo.CurrentCulture) RUB</s>
                         }
-                        <span>@plan.EffectivePrice.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) ₽</span>
+                        <span>@plan.EffectivePrice.ToString("0.##", CultureInfo.CurrentCulture) RUB</span>
                     </div>
-                    <p class="tariff-period">За @plan.DurationDays дн.</p>
-                    <p class="tariff-includes">@(includesFreeFeatures ? "Всё из бесплатного +" : "Возможности тарифа")</p>
+                    <p class="tariff-period">@Text["entry.period", plan.DurationDays]</p>
+                    <p class="tariff-includes">@(includesFreeFeatures ? Text["entry.includesFree"].Value : Text["entry.planFeatures"].Value)</p>
                     <dl class="tariff-limits">
                         @foreach (var limit in limits)
                         {
@@ -155,16 +155,16 @@
                     }' />
                     @if (visibleFeatures.Any(feature => feature.Code == FeatureCodes.Assistant && feature.BoolValue == true))
                     {
-                        <p class="tariff-note mb-3">Бюджет ИИ учитывается отдельно.</p>
+                        <p class="tariff-note mb-3">@Text["entry.aiBudget"]</p>
                     }
-                    <a href="@targetUrl" class="btn btn-dark tariff-action">@(isAuthenticated ? "Выбрать организацию" : "Выбрать PRO")</a>
+                    <a href="@targetUrl" class="btn btn-dark tariff-action">@(isAuthenticated ? Text["entry.selectOrg"].Value : Text["entry.selectPro"].Value)</a>
                 </article>
             }
         </div>
         @if (plans.Count == 0)
         {
-            <p class="tariff-note" role="status">Платные тарифы сейчас недоступны.</p>
+            <p class="tariff-note" role="status">@Text["entry.paidUnavailable"]</p>
         }
-        <p class="tariff-payment">ЮКасса · Чек после оплаты · ИНН [удалено]</p>
+        <p class="tariff-payment">@Text["entry.providerInfo"]</p>
     </div>
 </div>

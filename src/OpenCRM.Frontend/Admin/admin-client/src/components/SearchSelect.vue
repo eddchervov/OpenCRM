@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { SearchSelectOption } from '@/models/SearchSelectOption'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminOperationsMessages'
+
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   options: SearchSelectOption[]
   placeholder?: string
   disabled?: boolean
 }>(), {
-  placeholder: 'Выберите значение',
   disabled: false
 })
 
@@ -22,12 +25,12 @@ const activeIndex = ref(0)
 const selectedOption = computed(() => props.options.find(option => option.value === model.value))
 const canClear = computed(() => props.options.some(option => option.value === ''))
 const filteredOptions = computed(() => {
-  const normalizedQuery = query.value.trim().toLocaleLowerCase('ru')
+  const normalizedQuery = query.value.trim().toLocaleLowerCase(formattingCulture.value)
   if (!normalizedQuery || selectedOption.value?.label === query.value) {
     return props.options
   }
 
-  return props.options.filter(option => option.label.toLocaleLowerCase('ru').includes(normalizedQuery))
+  return props.options.filter(option => option.label.toLocaleLowerCase(formattingCulture.value).includes(normalizedQuery))
 })
 
 watch([model, selectedOption], () => {
@@ -111,12 +114,12 @@ function closeFromOutside(event: MouseEvent): void {
 
 <template>
   <div ref="root" class="search-select" :class="{ 'search-select--open': isOpen, 'search-select--disabled': disabled }">
-    <input ref="input" v-model="query" class="search-select__input" type="search" autocomplete="off" :disabled="disabled" :placeholder="placeholder" role="combobox" :aria-expanded="isOpen" @focus="open" @click="open" @keydown="handleKeydown">
-    <button v-if="model !== '' && canClear && !disabled" class="search-select__clear" type="button" aria-label="Очистить" @click="clear">×</button>
-    <button class="search-select__toggle" type="button" tabindex="-1" :disabled="disabled" aria-label="Открыть список" @click="isOpen ? close() : open()">⌄</button>
+    <input ref="input" v-model="query" class="search-select__input" type="search" autocomplete="off" :disabled="disabled" :placeholder="placeholder || t('adminOperations.searchSelect.selectValue')" role="combobox" :aria-expanded="isOpen" @focus="open" @click="open" @keydown="handleKeydown">
+    <button v-if="model !== '' && canClear && !disabled" class="search-select__clear" type="button" :aria-label="t('adminOperations.searchSelect.clear')" @click="clear">×</button>
+    <button class="search-select__toggle" type="button" tabindex="-1" :disabled="disabled" :aria-label="t('adminOperations.searchSelect.open')" @click="isOpen ? close() : open()">⌄</button>
     <div v-if="isOpen" class="search-select__menu" role="listbox">
       <button v-for="(option, index) in filteredOptions" :key="option.value" type="button" class="search-select__option" :class="{ 'search-select__option--active': index === activeIndex, 'search-select__option--selected': option.value === model }" role="option" :aria-selected="option.value === model" @mouseenter="activeIndex = index" @mousedown.prevent="select(option)">{{ option.label }}</button>
-      <div v-if="filteredOptions.length === 0" class="search-select__empty">Ничего не найдено</div>
+      <div v-if="filteredOptions.length === 0" class="search-select__empty">{{ t('adminOperations.searchSelect.noResults') }}</div>
     </div>
   </div>
 </template>

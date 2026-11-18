@@ -7,6 +7,7 @@ namespace OpenCRM.Domain;
 /// </summary>
 public sealed class OrganizationServiceHourlyTotal
 {
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     public Guid OrganizationId { get; set; }
 
     public int UtcHour { get; set; }

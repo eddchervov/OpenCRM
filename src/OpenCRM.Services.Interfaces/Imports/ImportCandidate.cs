@@ -1,3 +1,5 @@
+using OpenCRM.Modules.Maintenance.Contracts.Imports;
+
 namespace OpenCRM.Services.Interfaces.Imports;
 
 /// <summary>Подготовленная к проверке строка импорта.</summary>
@@ -56,6 +58,9 @@ public class ImportCandidate
 
     /// <summary>Государственный регистрационный номер автомобиля.</summary>
     public string? Plate { get; set; }
+
+    /// <summary>Код страны регистрации автомобиля; пустое значение сохраняет российские правила.</summary>
+    public string? RegistrationCountryCode { get; set; }
 
     /// <summary>Год выпуска автомобиля.</summary>
     public string? Year { get; set; }
@@ -125,6 +130,15 @@ public class ImportCandidate
 
     /// <summary>Сообщение о результате проверки строки.</summary>
     public string Message { get; set; } = string.Empty;
+
+    /// <summary>Код системного сообщения проверки строки.</summary>
+    public string? MessageCode { get; set; }
+
+    /// <summary>Параметры системного сообщения проверки строки.</summary>
+    public Dictionary<string, string>? MessageParameters { get; set; }
+
+    /// <summary>Подробные причины проверки строки.</summary>
+    public List<ImportRowMessageDetail>? MessageDetails { get; set; }
 
     /// <summary>Возможные совпадения с существующими клиентами.</summary>
     public List<ImportClientMatch> Matches { get; set; } = [];

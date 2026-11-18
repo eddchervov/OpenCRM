@@ -15,7 +15,7 @@
         : null;
 
     IReadOnlyList<(string Title, string Description)> highlights = Model.ShowProductHighlights
-        ? FeaturePresentationHelper.GetProductHighlights(Model.ProductHighlightsForBusiness)
+        ? FeaturePresentationHelper.GetProductHighlights(Model.ProductHighlightsForBusiness, Text)
         : [];
 }
 
@@ -24,12 +24,12 @@
     <div class="@Model.ContainerCssClass">
         @foreach (var feature in visibleFeatures)
         {
-            <span class="badge @Model.BadgeCssClass me-1 mb-1">@FeaturePresentationHelper.FormatFeature(feature)</span>
+            <span class="badge @Model.BadgeCssClass me-1 mb-1">@FeaturePresentationHelper.FormatFeature(feature, Text)</span>
         }
 
         @if (Model.ShowVehiclesLimit && vehiclesLimit.HasValue && !rawVisibleFeatures.Any(feature => feature.Code == FeatureCodes.VehiclesLimit))
         {
-            <span class="badge @Model.BadgeCssClass me-1 mb-1">Лимит техники: @vehiclesLimit</span>
+            <span class="badge @Model.BadgeCssClass me-1 mb-1">@Text["entry.vehicleLimit", vehiclesLimit!]</span>
         }
     </div>
 }
@@ -39,13 +39,13 @@ else
         @foreach (var feature in visibleFeatures)
         {
             var description = Model.ShowDescriptions
-                ? FeaturePresentationHelper.GetFeatureDescription(feature)
+                ? FeaturePresentationHelper.GetFeatureDescription(feature, Text)
                 : null;
 
             <li class="d-flex gap-2">
                 <i class="@Model.IconCssClass mt-1"></i>
                 <span>
-                    <span class="fw-semibold">@FeaturePresentationHelper.FormatFeature(feature)</span>
+                    <span class="fw-semibold">@FeaturePresentationHelper.FormatFeature(feature, Text)</span>
                     @if (!string.IsNullOrWhiteSpace(description))
                     {
                         <span class="d-block text-muted small">@description</span>
@@ -59,10 +59,10 @@ else
             <li class="d-flex gap-2">
                 <i class="@Model.IconCssClass mt-1"></i>
                 <span>
-                    <span class="fw-semibold">Лимит техники: @vehiclesLimit</span>
+                    <span class="fw-semibold">@Text["entry.vehicleLimit", vehiclesLimit!]</span>
                     @if (Model.ShowDescriptions)
                     {
-                        <span class="d-block text-muted small">Сколько единиц техники можно вести в журнале.</span>
+                        <span class="d-block text-muted small">@Text["entry.vehicleLimitHelp"]</span>
                     }
                 </span>
             </li>

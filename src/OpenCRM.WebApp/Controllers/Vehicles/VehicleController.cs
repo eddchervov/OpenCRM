@@ -88,6 +88,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleDisplayName"] = BuildVehicleBreadcrumbTitle(vehicle);
             ViewData["VehicleOrganizationId"] = organizationId?.ToString() ?? string.Empty;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue
@@ -147,6 +148,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleDisplayName"] = BuildVehicleBreadcrumbTitle(vehicle);
             ViewData["VehicleOrganizationId"] = organizationId?.ToString() ?? string.Empty;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue
@@ -205,6 +207,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleDisplayName"] = BuildVehicleBreadcrumbTitle(vehicle);
             ViewData["VehicleOrganizationId"] = organizationId?.ToString() ?? string.Empty;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue
@@ -255,6 +258,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleDisplayName"] = BuildVehicleBreadcrumbTitle(vehicle);
             ViewData["VehicleOrganizationId"] = organizationId?.ToString() ?? string.Empty;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue
@@ -306,6 +310,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleAlbumId"] = albumId.ToString();
             ViewData["VehicleOrganizationId"] = organizationId?.ToString() ?? string.Empty;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue
@@ -362,6 +367,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleDisplayName"] = BuildVehicleBreadcrumbTitle(vehicle);
             ViewData["VehicleOrganizationId"] = organizationId?.ToString() ?? string.Empty;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue
@@ -424,6 +430,7 @@ namespace OpenCRM.WebApp.Controllers.Vehicles
             ViewData["VehicleOrganizationClientId"] = organizationClientId?.ToString() ?? string.Empty;
             ViewData["VehicleLockOrganizationClient"] = organizationId.HasValue && organizationClientId.HasValue;
             ViewData["VehicleOrganizationName"] = currentOrganization?.Name ?? string.Empty;
+            this.ViewData["OrganizationTimeZoneId"] = currentOrganization?.TimeZoneId;
             ViewData["VehicleOrganizationMembersCount"] = currentOrganization?.MembersCount ?? 0;
             ViewData["VehicleCanManageSettings"] = currentOrganization?.CanManageSettings ?? false;
             ViewData["VehicleHasVehiclesModule"] = organizationId.HasValue

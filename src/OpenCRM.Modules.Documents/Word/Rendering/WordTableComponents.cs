@@ -8,7 +8,7 @@ namespace OpenCRM.Modules.Documents.Word.Rendering;
 internal sealed class WordTableComponents
 {
     /// <summary> Добавляет таблицу работ или услуг в документ. </summary>
-    internal static void AddServicesTable(Body body, List<WordMaintenanceDetail> services, bool showTotal = true)
+    internal static void AddServicesTable(Body body, List<WordMaintenanceDetail> services, bool showTotal = true, string currencyCode = "RUB")
     {
         var table = new Table();
         table.AppendChild(new TableProperties(
@@ -46,7 +46,7 @@ internal sealed class WordTableComponents
             AddTableCell(row, (i + 1).ToString(), "500", JustificationValues.Center, fill);
             AddTableCell(row, service.Quantity > 1 ? $"{service.Name} × {service.Quantity}" : service.Name ?? "", "3400", JustificationValues.Left, fill, bold: true);
             AddTableCell(row, string.IsNullOrWhiteSpace(service.Description) ? "-" : service.Description, "2600", JustificationValues.Left, fill, italic: string.IsNullOrWhiteSpace(service.Description));
-            AddTableCell(row, service.Price.HasValue && service.Price > 0 ? WordDocumentComponents.FormatMoney(service.Price.Value) : "-", "1500", JustificationValues.Right, fill, color: service.Price > 0 ? WordDocumentComponents.AccentColor : WordDocumentComponents.MutedColor);
+            AddTableCell(row, service.Price.HasValue && service.Price > 0 ? WordDocumentComponents.FormatMoney(service.Price.Value, currencyCode) : "-", "1500", JustificationValues.Right, fill, color: service.Price > 0 ? WordDocumentComponents.AccentColor : WordDocumentComponents.MutedColor);
 
             total += service.Price ?? 0;
         }
@@ -61,7 +61,7 @@ internal sealed class WordTableComponents
                 new Shading { Val = ShadingPatternValues.Clear, Fill = WordDocumentComponents.HeaderFill }
             ));
             totalCell.AppendChild(CreateCellParagraph("Итого", JustificationValues.Right, bold: true));
-            AddTableCell(totalRow, WordDocumentComponents.FormatMoney(total), "1500", JustificationValues.Right, WordDocumentComponents.HeaderFill, bold: true, color: WordDocumentComponents.AccentColor);
+            AddTableCell(totalRow, WordDocumentComponents.FormatMoney(total, currencyCode), "1500", JustificationValues.Right, WordDocumentComponents.HeaderFill, bold: true, color: WordDocumentComponents.AccentColor);
         }
 
         body.AppendChild(table);

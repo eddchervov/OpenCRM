@@ -8,13 +8,36 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using OpenCRM.Admin.Api;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
-public sealed class DashboardTests
+[Collection("Admin localization")]
+public sealed class DashboardTests : IDisposable
 {
+    private readonly string _preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-admin-dashboard-language-{Guid.NewGuid():N}.txt");
+    private readonly IDisposable _preferenceScope;
+    private readonly string _previousLanguage;
+
+    public DashboardTests()
+    {
+        this._preferenceScope = AdminLocalization.Instance.UsePreferencePath(this._preferencePath);
+        this._previousLanguage = AdminLocalization.Instance.Language;
+        AdminLocalization.Instance.Language = "ru";
+    }
+
+    public void Dispose()
+    {
+        AdminLocalization.Instance.Language = this._previousLanguage;
+        this._preferenceScope.Dispose();
+        if (File.Exists(this._preferencePath))
+        {
+            File.Delete(this._preferencePath);
+        }
+    }
+
     [AvaloniaFact]
     public async Task LoginOpensDashboardAndRendersMetricsAndCharts()
     {
@@ -254,6 +277,45 @@ public sealed class DashboardTests
         Assert.Empty(model.Dashboard.ActivitySeries);
         Assert.DoesNotContain("ранее полученные", model.Dashboard.ErrorMessage);
         await model.ShutdownAsync();
+    }
+
+    [Fact]
+    public async Task LanguageRefreshRelocalizesCachedTimesAndErrorsWithoutReloading()
+    {
+        var handler = new DashboardApiHandler();
+        using var http = DashboardTests.CreateHttpClient(handler);
+        using var session = new AdminSessionClient(http);
+        await session.LoginAsync("contact@example.invalid", "password", TestContext.Current.CancellationToken);
+        var dashboard = new DashboardViewModel(session);
+        await dashboard.ActivateAsync(canViewBilling: true);
+        await dashboard.LoadStatisticsCommand.ExecuteAsync(null);
+
+        var updatedTime = dashboard.UpdatedLabel["Обновлено: ".Length..];
+        var statisticsTime = dashboard.StatisticsUpdatedLabel["Загружено: ".Length..];
+        handler.DashboardStatus = HttpStatusCode.ServiceUnavailable;
+        handler.BillingStatus = HttpStatusCode.ServiceUnavailable;
+        await dashboard.RefreshCommand.ExecuteAsync(null);
+        await dashboard.LoadStatisticsCommand.ExecuteAsync(null);
+
+        Assert.StartsWith("Не удалось обновить данные.", dashboard.ErrorMessage);
+        Assert.StartsWith("Не удалось обновить общую статистику.", dashboard.StatisticsErrorMessage);
+        Assert.StartsWith("Не удалось обновить платежи.", dashboard.BillingErrorMessage);
+        var requestCount = handler.Requests.Count;
+        AdminLocalization.Instance.Language = "en";
+        dashboard.RefreshLocalizedValues();
+
+        Assert.Equal(requestCount, handler.Requests.Count);
+        Assert.StartsWith("Updated: ", dashboard.UpdatedLabel);
+        Assert.StartsWith("Loaded: ", dashboard.StatisticsUpdatedLabel);
+        Assert.Equal(updatedTime, dashboard.UpdatedLabel["Updated: ".Length..]);
+        Assert.Equal(statisticsTime, dashboard.StatisticsUpdatedLabel["Loaded: ".Length..]);
+        Assert.StartsWith("Could not refresh data. Previously loaded values are shown.", dashboard.ErrorMessage);
+        Assert.StartsWith("Could not refresh overall statistics. Previously loaded values are shown.", dashboard.StatisticsErrorMessage);
+        Assert.StartsWith("Could not refresh payments. Previously loaded values are shown.", dashboard.BillingErrorMessage);
+        Assert.EndsWith("Отчёт недоступен.", dashboard.ErrorMessage);
+        Assert.EndsWith("Отчёт недоступен.", dashboard.StatisticsErrorMessage);
+        Assert.EndsWith("Платежи недоступны.", dashboard.BillingErrorMessage);
+        await dashboard.DeactivateAsync(clear: true);
     }
 
     [Fact]

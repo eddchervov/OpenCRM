@@ -1,4 +1,7 @@
-﻿export type FleetCounterVehicle = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/counterMessages'
+
+export type FleetCounterVehicle = {
   vehicleId: string
   organizationClientId?: string | null
   organizationClientName?: string | null
@@ -61,7 +64,7 @@ export async function loadCounterVehicles(
   const url = new URL(`/api/v1/organizations/${organizationId}/counters/vehicles/${options.page}/${options.pageSize}`, window.location.origin)
   appendParam(url.searchParams, 'organizationClientId', options.organizationClientId)
   appendParam(url.searchParams, 'sort', options.sort)
-  return sendJson(url.toString(), 'GET', undefined, 'Не удалось загрузить технику.')
+  return sendJson(url.toString(), 'GET', undefined, translate('counters.vehiclesError'))
 }
 
 export async function loadCounterHistory(
@@ -72,21 +75,21 @@ export async function loadCounterHistory(
   appendParam(url.searchParams, 'vehicleId', options.vehicleId)
   appendParam(url.searchParams, 'organizationClientId', options.organizationClientId)
   appendParam(url.searchParams, 'sort', options.sort)
-  return sendJson(url.toString(), 'GET', undefined, 'Не удалось загрузить историю.')
+  return sendJson(url.toString(), 'GET', undefined, translate('counters.historyError'))
 }
 
 export async function loadCounterChart(organizationId: string, vehicleId: string): Promise<FleetCounterEntry[]> {
   const url = new URL(`/api/v1/organizations/${organizationId}/counters/chart`, window.location.origin)
   url.searchParams.set('vehicleId', vehicleId)
-  return sendJson(url.toString(), 'GET', undefined, 'Не удалось загрузить график.')
+  return sendJson(url.toString(), 'GET', undefined, translate('counters.chartError'))
 }
 
 export async function saveCounter(organizationId: string, payload: FleetCounterSaveRequest): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/counters`, 'POST', payload, 'Не удалось сохранить показание.')
+  return sendJson(`/api/v1/organizations/${organizationId}/counters`, 'POST', payload, translate('counters.saveError'))
 }
 
 export async function deleteCounter(organizationId: string, entryId: string): Promise<{ message?: string }> {
-  return sendJson(`/api/v1/organizations/${organizationId}/counters/${entryId}`, 'DELETE', undefined, 'Не удалось удалить показание.')
+  return sendJson(`/api/v1/organizations/${organizationId}/counters/${entryId}`, 'DELETE', undefined, translate('counters.deleteError'))
 }
 
 function appendParam(params: URLSearchParams, name: string, value?: string | null) {

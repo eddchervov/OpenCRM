@@ -75,11 +75,9 @@ public sealed class CrmImportService(
         }
 
         var rows = CrmImportParser.Parse(content, fileName).ToList();
+        var fingerprintRows = rows.Select(CrmImportService.CreateFingerprintRow);
         var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-            JsonSerializer.Serialize(rows.Select(row => new
-            {
-                row.Type, row.Name, row.Phone, row.ClientPhone, row.Brand, row.Model, row.Vin, row.Plate, row.Year, row.YearText
-            }).OrderBy(row => JsonSerializer.Serialize(row))))));
+            JsonSerializer.Serialize(fingerprintRows.OrderBy(row => JsonSerializer.Serialize(row))))));
         var alreadyImported = await this._opencrmContext.CrmImportBatches.AsNoTracking()
             .AnyAsync(batch => batch.OrganizationId == organizationId && batch.Fingerprint == fingerprint &&
                 batch.ImportedAt != null, cancellationToken);
@@ -191,11 +189,11 @@ public sealed class CrmImportService(
         {
             Number = row.Number, Type = row.Type, Name = row.Name, Phone = row.Phone,
             ClientPhone = row.ClientPhone, Brand = row.Brand, Model = row.Model,
-            Vin = row.Vin, Plate = row.Plate, Year = row.Year, YearText = row.YearText
+            Vin = row.Vin, Plate = row.Plate, RegistrationCountryCode = row.RegistrationCountryCode,
+            Year = row.Year, YearText = row.YearText
         }).ToList();
         await this.ValidateRowsAsync(batch.OrganizationId, currentRows, cancellationToken);
-        if (rows.Where(row => row.Status == "create").Select(row => row.Number)
-            .Except(currentRows.Where(row => row.Status == "create").Select(row => row.Number)).Any())
+        if (rows.Where((row, index) => row.Status != currentRows[index].Status).Any())
         {
             throw new InvalidDataException("Данные организации изменились. Создайте новый предпросмотр.");
         }
@@ -264,6 +262,7 @@ public sealed class CrmImportService(
             Name = row.Name,
             Vin = row.Vin,
             RegistrationPlate = row.Plate,
+            RegistrationCountryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(row.RegistrationCountryCode),
             YearIssue = row.Year,
             DateTimeCreation = DateTime.UtcNow
         }).ToList();
@@ -293,6 +292,14 @@ public sealed class CrmImportService(
             ReportId = batch.Id
         };
         batch.ResultJson = JsonSerializer.Serialize(result);
+        foreach (var row in rows.Where(row => row.Status == "create"))
+        {
+            row.Message = "Создано.";
+            row.MessageCode = ImportRowMessageCodes.StatusCreated;
+            row.MessageParameters = null;
+        }
+
+        batch.RowsJson = JsonSerializer.Serialize(rows);
         batch.ImportedAt = DateTime.UtcNow;
         await this._opencrmContext.SaveChangesAsync(cancellationToken);
 
@@ -310,7 +317,7 @@ public sealed class CrmImportService(
         }
 
         var rows = JsonSerializer.Deserialize<List<CrmImportRow>>(batch.RowsJson) ?? [];
-        var builder = new StringBuilder("\uFEFFНомер;Тип;Имя;Телефон;Телефон клиента;Марка;Модель;VIN;Госномер;Год;Действие;Комментарий\r\n");
+        var builder = new StringBuilder("\uFEFFНомер;Тип;Имя;Телефон;Телефон клиента;Марка;Модель;VIN;Страна регистрации;Госномер;Год;Действие;Комментарий\r\n");
         foreach (var row in rows)
         {
             var status = result && row.Status == "create" ? "Создано" : row.Status switch
@@ -322,7 +329,7 @@ public sealed class CrmImportService(
             var fields = new[]
             {
                 row.Number.ToString(), row.Type, row.Name, row.Phone, row.ClientPhone, row.Brand,
-                row.Model, row.Vin, row.Plate, row.YearText ?? row.Year?.ToString(), status, row.Message
+                row.Model, row.Vin, row.RegistrationCountryCode, row.Plate, row.YearText ?? row.Year?.ToString(), status, row.Message
             };
             builder.AppendLine(string.Join(';', fields.Select(EscapeCsv)));
         }
@@ -339,22 +346,25 @@ public sealed class CrmImportService(
             .ToListAsync(cancellationToken);
         var existingVehicles = await this._opencrmContext.Vehicles.AsNoTracking()
             .Where(vehicle => vehicle.OrganizationId == organizationId && !vehicle.IsDeleted)
-            .Select(vehicle => new { vehicle.Vin, vehicle.RegistrationPlate })
+            .Select(vehicle => new { vehicle.Vin, vehicle.RegistrationPlate, vehicle.RegistrationCountryCode })
             .ToListAsync(cancellationToken);
         var phones = new HashSet<string>();
         var names = new HashSet<string>();
         var vehicleVins = new HashSet<string>();
-        var vehiclePlates = new HashSet<string>();
+        var vehiclePlates = new HashSet<string>(StringComparer.Ordinal);
+        var importedVehicles = new List<(string Vin, string Plate)>();
 
         foreach (var row in rows.OrderBy(item => item.Type == "client" ? 0 : 1))
         {
             row.Status = "create";
             row.Message = string.Empty;
+            row.MessageCode = ImportRowMessageCodes.WillCreate;
+            row.MessageParameters = null;
             if (row.Type == "client")
             {
                 if (string.IsNullOrWhiteSpace(row.Name) || row.Name.Length > 160 || row.Phone?.Length > 40)
                 {
-                    Mark(row, "error", "Укажите имя клиента до 160 символов и телефон до 40 символов.");
+                    Mark(row, "error", "Укажите имя клиента до 160 символов и телефон до 40 символов.", ImportRowMessageCodes.CrmClientInvalid);
                     continue;
                 }
 
@@ -365,34 +375,71 @@ public sealed class CrmImportService(
                     : !names.Add(name) || existingClients.Any(client => client.Name.ToUpperInvariant() == name);
                 if (isDuplicate)
                 {
-                    Mark(row, "duplicate", "Клиент с таким телефоном или именем уже есть.");
+                    Mark(row, "duplicate", "Клиент с таким телефоном или именем уже есть.", ImportRowMessageCodes.CrmClientDuplicate);
                 }
 
+                continue;
+            }
+
+            try
+            {
+                row.RegistrationCountryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(row.RegistrationCountryCode);
+            }
+            catch (InvalidOperationException)
+            {
+                Mark(row, "error", "Укажите корректный двухбуквенный код страны регистрации или ZZ.", ImportRowMessageCodes.RegistrationCountryInvalid);
                 continue;
             }
 
             if (row.YearText != null && row.Year == null || row.Year is < 1886 or > 2100 || row.Vin?.Length > 32 || row.Plate?.Length > 24 ||
                 row.Brand?.Length > 100 || row.Model?.Length > 100)
             {
-                Mark(row, "error", "Проверьте год, VIN, госномер, марку и модель.");
+                Mark(row, "error", "Проверьте год, VIN, госномер, марку и модель.", ImportRowMessageCodes.CrmVehicleInvalid);
                 continue;
             }
 
             var vin = NormalizeKey(row.Vin);
-            var plate = NormalizeKey(row.Plate);
+            if (row.RegistrationCountryCode is not (null or "RU") && row.Plate != null)
+            {
+                try
+                {
+                    row.Plate = InternationalRegistrationPlateRules.NormalizePlate(row.Plate);
+                }
+                catch (InvalidOperationException)
+                {
+                    Mark(row, "error", "Проверьте иностранный регистрационный номер.", ImportRowMessageCodes.ForeignPlateInvalid);
+                    continue;
+                }
+            }
+
+            var plate = NormalizePlateKey(row.Plate, row.RegistrationCountryCode);
             if (vin.Length == 0 && plate.Length == 0)
             {
-                Mark(row, "error", "Для автомобиля требуется VIN или госномер.");
+                Mark(row, "error", "Для автомобиля требуется VIN или госномер.", ImportRowMessageCodes.VehicleIdentityRequired);
                 continue;
             }
 
-            if (vin.Length > 0 && vehicleVins.Contains(vin) ||
-                plate.Length > 0 && vehiclePlates.Contains(plate) ||
-                existingVehicles.Any(vehicle =>
-                    vin.Length > 0 && NormalizeKey(vehicle.Vin) == vin ||
-                    plate.Length > 0 && NormalizeKey(vehicle.RegistrationPlate) == plate))
+            var importedMatches = importedVehicles.Where(vehicle =>
+                vin.Length > 0 && vehicle.Vin == vin || plate.Length > 0 && vehicle.Plate == plate).ToList();
+            var existingMatches = existingVehicles.Where(vehicle =>
+                vin.Length > 0 && NormalizeKey(vehicle.Vin) == vin ||
+                plate.Length > 0 && NormalizePlateKey(vehicle.RegistrationPlate, vehicle.RegistrationCountryCode) == plate).ToList();
+            if (importedMatches.Any(vehicle =>
+                    vin.Length > 0 && vehicle.Vin.Length > 0 && vehicle.Vin != vin ||
+                    plate.Length > 0 && vehicle.Plate.Length > 0 && vehicle.Plate != plate) ||
+                existingMatches.Any(vehicle =>
+                    vin.Length > 0 && NormalizeKey(vehicle.Vin).Length > 0 && NormalizeKey(vehicle.Vin) != vin ||
+                    plate.Length > 0 && NormalizePlateKey(vehicle.RegistrationPlate, vehicle.RegistrationCountryCode).Length > 0 &&
+                        NormalizePlateKey(vehicle.RegistrationPlate, vehicle.RegistrationCountryCode) != plate))
             {
-                Mark(row, "duplicate", "Автомобиль с таким VIN или госномером уже есть.");
+                Mark(row, "error", "VIN и страна или регистрационный номер противоречат друг другу.", ImportRowMessageCodes.VehicleIdentityConflict);
+                continue;
+            }
+
+            if (vin.Length > 0 && vehicleVins.Contains(vin) || plate.Length > 0 && vehiclePlates.Contains(plate) ||
+                importedMatches.Count > 0 || existingMatches.Count > 0)
+            {
+                Mark(row, "duplicate", "Автомобиль с таким VIN или госномером уже есть.", ImportRowMessageCodes.CrmVehicleDuplicate);
                 continue;
             }
 
@@ -406,11 +453,13 @@ public sealed class CrmImportService(
                 vehiclePlates.Add(plate);
             }
 
+            importedVehicles.Add((vin, plate));
+
             var clientPhone = NormalizePhone(row.ClientPhone);
             if (clientPhone.Length > 0 && existingClients.Count(client => NormalizePhone(client.Phone) == clientPhone) +
                 rows.Count(client => client.Type == "client" && client.Status == "create" && NormalizePhone(client.Phone) == clientPhone) != 1)
             {
-                Mark(row, "error", "Телефон клиента не соответствует ровно одному клиенту.");
+                Mark(row, "error", "Телефон клиента не соответствует ровно одному клиенту.", ImportRowMessageCodes.CrmVehicleClientAmbiguous);
             }
         }
     }
@@ -433,10 +482,40 @@ public sealed class CrmImportService(
     };
 
     /// <summary> Помечает строку статусом и сообщением. </summary>
-    private static void Mark(CrmImportRow row, string status, string message)
+    private static void Mark(CrmImportRow row, string status, string message, string messageCode)
     {
         row.Status = status;
         row.Message = message;
+        row.MessageCode = messageCode;
+        row.MessageParameters = null;
+    }
+
+    private static object CreateFingerprintRow(CrmImportRow row)
+    {
+        string? countryCode = null;
+        if (row.Type == "vehicle")
+        {
+            try
+            {
+                countryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(row.RegistrationCountryCode);
+            }
+            catch (InvalidOperationException)
+            {
+                // Ошибка страны показывается у строки; расчёт отпечатка не должен прерывать предпросмотр.
+            }
+        }
+
+        // Пустая страна и RU должны совпадать с отпечатком файла, созданным до появления поля страны.
+        return countryCode is null or "RU"
+            ? new
+            {
+                row.Type, row.Name, row.Phone, row.ClientPhone, row.Brand, row.Model, row.Vin, row.Plate, row.Year, row.YearText
+            }
+            : (object)new
+            {
+                row.Type, row.Name, row.Phone, row.ClientPhone, row.Brand, row.Model, row.Vin, row.Plate,
+                RegistrationCountryCode = countryCode, row.Year, row.YearText
+            };
     }
 
     /// <summary> Нормализует телефон для сравнения. </summary>
@@ -445,6 +524,18 @@ public sealed class CrmImportService(
     /// <summary> Нормализует значение ключа для сравнения. </summary>
     private static string NormalizeKey(string? value) => new((value ?? string.Empty)
         .Where(char.IsLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
+
+    private static string NormalizePlateKey(string? value, string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return countryCode is null or "RU"
+            ? NormalizeKey(value)
+            : $"{countryCode}\0{value.Trim()}";
+    }
 
     /// <summary> Экранирует значение для CSV. </summary>
     private static string EscapeCsv(string? value)

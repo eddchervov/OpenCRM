@@ -41,6 +41,9 @@ public sealed class AdminUserOverviewMaintenanceDto
     /// <summary> Оплаченная сумма. </summary>
     public decimal PaidAmount { get; init; }
 
+    /// <summary> Код валюты сумм записи обслуживания. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Сумма затрат на материалы. </summary>
     public decimal MaterialCostAmount { get; init; }
 

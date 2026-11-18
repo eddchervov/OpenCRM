@@ -10,6 +10,7 @@ public class OrganizationScenarioCatalogItemEntityTypeConfiguration : IEntityTyp
     /// <summary> Настраивает отображение сущности элемента каталога сценариев. </summary>
     public void Configure(EntityTypeBuilder<OrganizationScenarioCatalogItem> builder)
     {
+        builder.Property(item => item.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");
 

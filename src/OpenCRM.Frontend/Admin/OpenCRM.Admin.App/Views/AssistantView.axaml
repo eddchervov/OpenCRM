@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              xmlns:views="using:OpenCRM.Admin.App.Views"
@@ -8,11 +9,11 @@
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
       <StackPanel Spacing="4">
-        <TextBlock Text="ИИ-помощник" Classes="heading" />
-        <TextBlock Text="Управляйте доступом, лимитами и расходами сервиса." Classes="caption" />
+        <TextBlock Text="{loc:LocalizedText Key=native.assistant.ii.pomoshchnik}" Classes="heading" />
+        <TextBlock Text="{loc:LocalizedText Key=native.assistant.upravlyayte.dostupom.limitami.i.raskhodami.servisa}" Classes="caption" />
         <TextBlock Text="{Binding ProviderLabel}" Classes="caption" />
       </StackPanel>
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
     </Grid>
     <StackPanel Grid.Row="1" Spacing="5">
       <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
@@ -25,38 +26,38 @@
           <StackPanel Spacing="12">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="3">
-                <TextBlock Text="Глобальные настройки" Classes="section-title" />
-                <TextBlock Text="Глобальное выключение скрывает кнопку и блокирует работу помощника во всех организациях после обновления CRM. Каналы сайта и Telegram ниже можно отключать отдельно." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.assistant.globalnye.nastroyki}" Classes="section-title" />
+                <TextBlock Text="{loc:LocalizedText Key=native.assistant.globalnoe.vyklyuchenie.skryvaet.knopku.i.blokiruet.rabotu.pomosh}" Classes="caption" TextWrapping="Wrap" />
               </StackPanel>
-              <Button Grid.Column="1" Content="Сохранить настройки" Classes="primary" Command="{Binding SaveSettingsCommand}" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.assistant.sokhranit.nastroyki}" Classes="primary" Command="{Binding SaveSettingsCommand}" VerticalAlignment="Center" />
             </Grid>
             <TextBlock Text="{Binding BudgetLimitsLabel}" Classes="caption" TextWrapping="Wrap" />
             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="24" RowSpacing="10">
-              <StackPanel Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding IsEnabled}" /><TextBlock Text="Помощник включён глобально" VerticalAlignment="Center" /></StackPanel>
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding WebEnabled}" /><TextBlock Text="Канал сайта" VerticalAlignment="Center" /></StackPanel>
-              <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding TelegramEnabled}" /><TextBlock Text="Канал служебного Telegram" VerticalAlignment="Center" /></StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding SpeechRepliesEnabled}" /><TextBlock Text="Озвучивание ответов" VerticalAlignment="Center" /></StackPanel>
-              <StackPanel Grid.Row="2" Spacing="4"><TextBlock Text="Текстовая модель" Classes="caption" /><TextBox Text="{Binding TextModel}" /></StackPanel>
-              <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4"><TextBlock Text="Модель распознавания речи" Classes="caption" /><TextBox Text="{Binding SpeechModel}" /></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding IsEnabled}" /><TextBlock Text="{loc:LocalizedText Key=native.assistant.pomoshchnik.vklyuchyon.globalno}" VerticalAlignment="Center" /></StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding WebEnabled}" /><TextBlock Text="{loc:LocalizedText Key=native.assistant.kanal.sayta}" VerticalAlignment="Center" /></StackPanel>
+              <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding TelegramEnabled}" /><TextBlock Text="{loc:LocalizedText Key=native.assistant.kanal.sluzhebnogo.telegram}" VerticalAlignment="Center" /></StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding SpeechRepliesEnabled}" /><TextBlock Text="{loc:LocalizedText Key=native.assistant.ozvuchivanie.otvetov}" VerticalAlignment="Center" /></StackPanel>
+              <StackPanel Grid.Row="2" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.tekstovaya.model}" Classes="caption" /><TextBox Text="{Binding TextModel}" /></StackPanel>
+              <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.model.raspoznavaniya.rechi}" Classes="caption" /><TextBox Text="{Binding SpeechModel}" /></StackPanel>
             </Grid>
             <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
-              <StackPanel Spacing="4"><TextBlock Text="Модель озвучивания" Classes="caption" /><TextBox Text="{Binding VoiceModel}" /></StackPanel>
-              <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="Голос" Classes="caption" /><TextBox Text="{Binding VoiceName}" /></StackPanel>
-              <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Дневной бюджет, ₽" Classes="caption" /><TextBox Text="{Binding DailyBudgetRub}" /></StackPanel>
-              <StackPanel Grid.Column="3" Spacing="4"><TextBlock Text="Месячный бюджет, ₽" Classes="caption" /><TextBox Text="{Binding MonthlyBudgetRub}" /></StackPanel>
-              <StackPanel Grid.Row="1" Spacing="4"><TextBlock Text="Резерв текстового запроса, ₽" Classes="caption" /><TextBox Text="{Binding TextReservationRub}" /></StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4"><TextBlock Text="Резерв аудиозапроса, ₽" Classes="caption" /><TextBox Text="{Binding AudioReservationRub}" /></StackPanel>
-              <StackPanel Grid.Row="1" Grid.Column="2" Spacing="4"><TextBlock Text="Максимум токенов ответа" Classes="caption" /><TextBox Text="{Binding MaximumOutputTokens}" /></StackPanel>
+              <StackPanel Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.model.ozvuchivaniya}" Classes="caption" /><TextBox Text="{Binding VoiceModel}" /></StackPanel>
+              <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.golos}" Classes="caption" /><TextBox Text="{Binding VoiceName}" /></StackPanel>
+              <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.dnevnoy.byudzhet}" Classes="caption" /><TextBox Text="{Binding DailyBudgetRub}" /></StackPanel>
+              <StackPanel Grid.Column="3" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.mesyachnyy.byudzhet}" Classes="caption" /><TextBox Text="{Binding MonthlyBudgetRub}" /></StackPanel>
+              <StackPanel Grid.Row="1" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.rezerv.tekstovogo.zaprosa}" Classes="caption" /><TextBox Text="{Binding TextReservationRub}" /></StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.rezerv.audiozaprosa}" Classes="caption" /><TextBox Text="{Binding AudioReservationRub}" /></StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="2" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.maksimum.tokenov.otveta}" Classes="caption" /><TextBox Text="{Binding MaximumOutputTokens}" /></StackPanel>
             </Grid>
           </StackPanel>
         </Border>
 
         <Border Classes="card" Padding="18" IsVisible="{Binding CanManage}">
           <StackPanel Spacing="10">
-            <TextBlock Text="Доступ организаций" Classes="section-title" />
+            <TextBlock Text="{loc:LocalizedText Key=native.assistant.dostup.organizatsiy}" Classes="section-title" />
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-              <TextBox Text="{Binding Search}" PlaceholderText="Название организации" />
-              <Button Grid.Column="1" Content="Найти" Command="{Binding SearchOrganizationsCommand}" />
+              <TextBox Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=native.assistant.nazvanie.organizatsii}" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.nayti}" Command="{Binding SearchOrganizationsCommand}" />
               <Button Grid.Column="2" Content="←" Command="{Binding PreviousOrganizationPageCommand}" />
               <Button Grid.Column="3" Content="→" Command="{Binding NextOrganizationPageCommand}" />
             </Grid>
@@ -72,17 +73,17 @@
               </ListBox.ItemTemplate>
             </ListBox>
             <StackPanel IsVisible="{Binding SelectedOrganization, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="10">
-              <TextBlock Text="{Binding SelectedOrganization.Name, StringFormat='Настройки доступа: {0}'}" FontWeight="SemiBold" />
+              <TextBlock Text="{loc:LocalizedFormat Key=native.assistant.nastroyki.dostupa.0, Path=SelectedOrganization.Name}" FontWeight="SemiBold" />
               <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="20" RowSpacing="8">
-                <StackPanel Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding OrganizationIsEnabled}" /><TextBlock Text="Доступ разрешён" VerticalAlignment="Center" /></StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding OrganizationWebEnabled}" /><TextBlock Text="Сайт" VerticalAlignment="Center" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding OrganizationIsEnabled}" /><TextBlock Text="{loc:LocalizedText Key=native.assistant.dostup.razreshyon}" VerticalAlignment="Center" /></StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding OrganizationWebEnabled}" /><TextBlock Text="{loc:LocalizedText Key=native.assistant.sayt}" VerticalAlignment="Center" /></StackPanel>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8"><CheckBox IsChecked="{Binding OrganizationTelegramEnabled}" /><TextBlock Text="Telegram" VerticalAlignment="Center" /></StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4"><TextBlock Text="Доступ до (локальное время)" Classes="caption" /><views:AdminDateTimeField Value="{Binding OrganizationEnabledUntilLocal, Mode=TwoWay}" Placeholder="Без срока" /></StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.dostup.do.lokalnoe.vremya}" Classes="caption" /><views:AdminDateTimeField Value="{Binding OrganizationEnabledUntilLocal, Mode=TwoWay}" Placeholder="{loc:LocalizedText Key=native.promoCodes.bez.sroka}" /></StackPanel>
               </Grid>
               <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="12">
-                <StackPanel Spacing="4"><TextBlock Text="Дневной бюджет, ₽" Classes="caption" /><TextBox Text="{Binding OrganizationDailyBudgetRub}" /></StackPanel>
-                <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="Месячный бюджет, ₽" Classes="caption" /><TextBox Text="{Binding OrganizationMonthlyBudgetRub}" /></StackPanel>
-                <Button Grid.Column="2" Content="Сохранить доступ" Classes="primary" Command="{Binding SaveOrganizationAccessCommand}" VerticalAlignment="Bottom" />
+                <StackPanel Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.dnevnoy.byudzhet}" Classes="caption" /><TextBox Text="{Binding OrganizationDailyBudgetRub}" /></StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="{loc:LocalizedText Key=native.assistant.mesyachnyy.byudzhet}" Classes="caption" /><TextBox Text="{Binding OrganizationMonthlyBudgetRub}" /></StackPanel>
+                <Button Grid.Column="2" Content="{loc:LocalizedText Key=native.assistant.sokhranit.dostup}" Classes="primary" Command="{Binding SaveOrganizationAccessCommand}" VerticalAlignment="Bottom" />
               </Grid>
             </StackPanel>
           </StackPanel>
@@ -90,40 +91,40 @@
 
         <Border Classes="card" Padding="18" IsVisible="{Binding CanViewBilling}">
           <StackPanel Spacing="10">
-            <TextBlock Text="Расходы и сверка стоимости" Classes="section-title" />
+            <TextBlock Text="{loc:LocalizedText Key=native.assistant.raskhody.i.sverka.stoimosti}" Classes="section-title" />
             <Grid ColumnDefinitions="*,*,*,*,*,Auto" ColumnSpacing="8">
-              <views:AdminDateTimeField Value="{Binding UsageFrom, Mode=TwoWay}" Placeholder="Начало периода" />
-              <views:AdminDateTimeField Grid.Column="1" Value="{Binding UsageTo, Mode=TwoWay}" Placeholder="Конец периода" />
+              <views:AdminDateTimeField Value="{Binding UsageFrom, Mode=TwoWay}" Placeholder="{loc:LocalizedText Key=core.dateTime.periodStart}" />
+              <views:AdminDateTimeField Grid.Column="1" Value="{Binding UsageTo, Mode=TwoWay}" Placeholder="{loc:LocalizedText Key=core.dateTime.periodEnd}" />
               <ComboBox Grid.Column="2" ItemsSource="{Binding ChannelOptions}" SelectedItem="{Binding SelectedChannel}">
                 <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
               </ComboBox>
               <ComboBox Grid.Column="3" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}">
                 <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:CommunicationOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
               </ComboBox>
-              <TextBox Grid.Column="4" Text="{Binding ModelFilter}" PlaceholderText="Модель" />
-              <Button Grid.Column="5" Content="Загрузить" Command="{Binding FilterUsageCommand}" />
+              <TextBox Grid.Column="4" Text="{Binding ModelFilter}" PlaceholderText="{loc:LocalizedText Key=native.assistant.model}" />
+              <Button Grid.Column="5" Content="{loc:LocalizedText Key=native.assistant.zagruzit}" Command="{Binding FilterUsageCommand}" />
             </Grid>
             <Grid ColumnDefinitions="*,*,*,*,*" IsVisible="{Binding HasUsage}" ColumnSpacing="12">
-              <TextBlock Text="{Binding Usage.Totals.RequestCount, StringFormat='Запросы: {0:N0}'}" />
-              <TextBlock Grid.Column="1" Text="{Binding Usage.Totals.CostRub, StringFormat='Расход: {0:N2} ₽'}" />
-              <TextBlock Grid.Column="2" Text="{Binding Usage.Totals.ReservedRub, StringFormat='Резерв: {0:N2} ₽'}" />
-              <TextBlock Grid.Column="3" Text="{Binding Usage.Totals.UnknownCount, StringFormat='Неизвестная стоимость: {0}'}" />
+              <TextBlock Text="{loc:LocalizedFormat Key=native.assistant.zaprosy.0.n0, Path=Usage.Totals.RequestCount}" />
+              <TextBlock Grid.Column="1" Text="{loc:LocalizedFormat Key=native.assistant.raskhod.0.n2, Path=Usage.Totals.CostRub}" />
+              <TextBlock Grid.Column="2" Text="{loc:LocalizedFormat Key=native.assistant.rezerv.0.n2, Path=Usage.Totals.ReservedRub}" />
+              <TextBlock Grid.Column="3" Text="{loc:LocalizedFormat Key=native.assistant.neizvestnaya.stoimost.0, Path=Usage.Totals.UnknownCount}" />
               <TextBlock Grid.Column="4" Text="{Binding UsagePageLabel}" Classes="caption" />
             </Grid>
             <Grid ColumnDefinitions="*,*" ColumnSpacing="18" IsVisible="{Binding HasUsage}">
               <StackPanel Spacing="5">
-                <TextBlock Text="По дням" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:LocalizedText Key=native.assistant.po.dnyam}" FontWeight="SemiBold" />
                 <ItemsControl ItemsSource="{Binding Usage.Daily}">
                   <ItemsControl.ItemTemplate><DataTemplate x:DataType="api:AdminAssistantUsageDay">
-                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2"><TextBlock Text="{Binding Date}" /><TextBlock Grid.Column="1" Text="{Binding CostRub, StringFormat='Расход: {0:N2} ₽'}" Classes="caption" Margin="8,0" /><TextBlock Grid.Column="2" Text="{Binding ReservedRub, StringFormat='Резерв: {0:N2} ₽'}" Classes="caption" /></Grid>
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2"><TextBlock Text="{Binding Date}" /><TextBlock Grid.Column="1" Text="{loc:LocalizedFormat Key=native.assistant.raskhod.0.n2, Path=CostRub}" Classes="caption" Margin="8,0" /><TextBlock Grid.Column="2" Text="{loc:LocalizedFormat Key=native.assistant.rezerv.0.n2, Path=ReservedRub}" Classes="caption" /></Grid>
                   </DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
               </StackPanel>
               <StackPanel Grid.Column="1" Spacing="5">
-                <TextBlock Text="По организациям" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:LocalizedText Key=native.assistant.po.organizatsiyam}" FontWeight="SemiBold" />
                 <ItemsControl ItemsSource="{Binding Usage.ByOrganization}">
                   <ItemsControl.ItemTemplate><DataTemplate x:DataType="api:AdminAssistantUsageOrganization">
-                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="1" Text="{Binding RequestCount, StringFormat='Запросы: {0}'}" Classes="caption" Margin="8,0" /><TextBlock Grid.Column="2" Text="{Binding CostRub, StringFormat='{}{0:N2} ₽'}" Classes="caption" /></Grid>
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="1" Text="{loc:LocalizedFormat Key=native.assistant.zaprosy.0, Path=RequestCount}" Classes="caption" Margin="8,0" /><TextBlock Grid.Column="2" Text="{loc:LocalizedFormat Key=core.format.rubles, Path=CostRub}" Classes="caption" /></Grid>
                   </DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
               </StackPanel>
@@ -131,38 +132,38 @@
             <ListBox ItemsSource="{Binding UsageItems}" SelectedItem="{Binding SelectedUsage}" MaxHeight="260" Background="Transparent">
               <ListBox.ItemTemplate><DataTemplate x:DataType="api:AdminAssistantUsageItem">
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="12" Margin="4">
-                  <StackPanel Spacing="2"><TextBlock Text="{Binding OrganizationName}" FontWeight="SemiBold" /><TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" Classes="caption" /></StackPanel>
+                  <StackPanel Spacing="2"><TextBlock Text="{Binding OrganizationName}" FontWeight="SemiBold" /><TextBlock Text="{loc:LocalizedFormat Key=core.format.dateTime, Path=CreatedAt, UseLocalTime=True}" Classes="caption" /></StackPanel>
                   <TextBlock Grid.Column="1" Text="{Binding UserEmail}" VerticalAlignment="Center" />
                   <TextBlock Grid.Column="2" Text="{Binding Channel}" VerticalAlignment="Center" />
                   <TextBlock Grid.Column="3" Text="{Binding Model}" VerticalAlignment="Center" />
-                  <StackPanel Grid.Column="4" Spacing="3"><TextBlock Text="{Binding Status}" /><TextBlock Text="{Binding CostRub, StringFormat='{}{0:N2} ₽'}" Classes="caption" /></StackPanel>
+                  <StackPanel Grid.Column="4" Spacing="3"><TextBlock Text="{Binding Status}" /><TextBlock Text="{loc:LocalizedFormat Key=core.format.rubles, Path=CostRub}" Classes="caption" /></StackPanel>
                 </Grid>
               </DataTemplate></ListBox.ItemTemplate>
             </ListBox>
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Content="← Предыдущая" Command="{Binding PreviousUsagePageCommand}" />
-              <Button Content="Следующая →" Command="{Binding NextUsagePageCommand}" />
+              <Button Content="{loc:LocalizedText Key=native.assistant.predydushchaya}" Command="{Binding PreviousUsagePageCommand}" />
+              <Button Content="{loc:LocalizedText Key=native.assistant.sleduyushchaya}" Command="{Binding NextUsagePageCommand}" />
             </StackPanel>
             <StackPanel IsVisible="{Binding HasUnknownSelectedUsage}" Spacing="8">
-              <TextBlock Text="Сверка завершённого запроса с неизвестной стоимостью. Укажите сумму по кабинету провайдера и основание." TextWrapping="Wrap" Classes="caption" />
+              <TextBlock Text="{loc:LocalizedText Key=native.assistant.sverka.zavershyonnogo.zaprosa.s.neizvestnoy.stoimostyu.ukazhite.}" TextWrapping="Wrap" Classes="caption" />
               <Grid ColumnDefinitions="220,*" ColumnSpacing="10">
-                <TextBox Text="{Binding SettlementCostRub}" PlaceholderText="Фактическая стоимость, ₽" />
-                <TextBox Grid.Column="1" Text="{Binding SettlementReason}" PlaceholderText="Основание сверки" />
+                <TextBox Text="{Binding SettlementCostRub}" PlaceholderText="{loc:LocalizedText Key=native.assistant.fakticheskaya.stoimost}" />
+                <TextBox Grid.Column="1" Text="{Binding SettlementReason}" PlaceholderText="{loc:LocalizedText Key=native.assistant.osnovanie.sverki}" />
               </Grid>
-              <Button Content="Сохранить стоимость и основание" Classes="primary" Command="{Binding SettleUsageCommand}" IsVisible="{Binding CanSettle}" HorizontalAlignment="Left" />
+              <Button Content="{loc:LocalizedText Key=native.assistant.sokhranit.stoimost.i.osnovanie}" Classes="primary" Command="{Binding SettleUsageCommand}" IsVisible="{Binding CanSettle}" HorizontalAlignment="Left" />
             </StackPanel>
           </StackPanel>
         </Border>
 
         <Border Classes="card" Padding="18" IsVisible="{Binding CanManage}">
           <StackPanel Spacing="8">
-            <TextBlock Text="Аудит изменений" Classes="section-title" />
-            <TextBlock Text="Записей пока нет." IsVisible="{Binding !HasAudits}" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.assistant.audit.izmeneniy}" Classes="section-title" />
+            <TextBlock Text="{loc:LocalizedText Key=native.assistant.zapisey.poka.net}" IsVisible="{Binding !HasAudits}" Classes="caption" />
             <ItemsControl ItemsSource="{Binding Overview.Audits}">
               <ItemsControl.ItemTemplate><DataTemplate x:DataType="api:AdminAssistantAudit">
                 <StackPanel Margin="0,6" Spacing="3">
-                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Description}" TextWrapping="Wrap" /><TextBlock Grid.Column="1" Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" Classes="caption" Margin="10,0" /></Grid>
-                  <TextBlock Text="{Binding AdminUserId, StringFormat='Администратор: {0}'}" Classes="caption" />
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding Description}" TextWrapping="Wrap" /><TextBlock Grid.Column="1" Text="{loc:LocalizedFormat Key=core.format.dateTime, Path=CreatedAt, UseLocalTime=True}" Classes="caption" Margin="10,0" /></Grid>
+                  <TextBlock Text="{loc:LocalizedFormat Key=native.assistant.administrator.0, Path=AdminUserId}" Classes="caption" />
                 </StackPanel>
               </DataTemplate></ItemsControl.ItemTemplate>
             </ItemsControl>

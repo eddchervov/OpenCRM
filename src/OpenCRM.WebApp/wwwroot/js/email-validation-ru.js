@@ -2,40 +2,40 @@
     const getEmailValidationMessage = value => {
         const email = value.trim();
         if (!email) {
-            return 'Укажите email.';
+            return window.OpenCRMText('emailRequired');
         }
 
         const atCount = [...email].filter(character => character === '@').length;
         if (atCount === 0) {
-            return 'Email должен содержать символ @, например contact@example.invalid.';
+            return window.OpenCRMText('emailAtRequired');
         }
 
         if (atCount > 1) {
-            return 'Email должен содержать только один символ @. Удалите лишний @.';
+            return window.OpenCRMText('emailOneAt');
         }
 
         const [localPart, domainPart] = email.split('@');
         if (!localPart) {
-            return 'Укажите имя почтового ящика перед @.';
+            return window.OpenCRMText('emailLocalRequired');
         }
 
         if (!domainPart) {
-            return 'Укажите почтовый домен после @, например gmail.com.';
+            return window.OpenCRMText('emailDomainRequired');
         }
 
         if (localPart.endsWith('.')) {
-            return `Перед @ не должно быть точки. Возможно, вы имели в виду «${localPart.replace(/\.+$/, '')}@${domainPart}».`;
+            return window.OpenCRMText('emailDotSuggestion', { email: localPart.replace(/\.+$/, '') + '@' + domainPart });
         }
 
         if (localPart.startsWith('.')) {
-            return 'Email не может начинаться с точки.';
+            return window.OpenCRMText('emailStartDot');
         }
 
         if (localPart.includes('..')) {
-            return 'В email не должно быть двух точек подряд.';
+            return window.OpenCRMText('emailDoubleDot');
         }
 
-        return 'Email содержит недопустимые символы. Проверьте адрес и попробуйте ещё раз.';
+        return window.OpenCRMText('emailInvalid');
     };
 
     document.querySelectorAll('input[type="email"]').forEach(input => {

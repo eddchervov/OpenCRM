@@ -2,13 +2,14 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
+import { legacyClientText } from './legacyClientTestMessages.mjs'
 
 const webRoot = new URL('../../OpenCRM.WebApp/', import.meta.url)
 const view = readFileSync(new URL('Views/Auth/VerifyEmail.cshtml', webRoot), 'utf8')
 const siteScript = readFileSync(new URL('wwwroot/js/site.js', webRoot), 'utf8')
 const verificationScript = readFileSync(new URL('wwwroot/js/email-verification.js', webRoot), 'utf8')
 
-function createPage(retryAfter = 0) {
+function createPage(retryAfter = 0, locale = 'ru') {
   const formTag = view.match(/<form[^>]*data-email-resend[^>]*>/)[0]
   const documentHandlers = []
   const formHandlers = []
@@ -39,6 +40,7 @@ function createPage(retryAfter = 0) {
     },
   }
   const window = {
+    OpenCRMText: legacyClientText(locale),
     addEventListener() {},
     setTimeout() {},
     setInterval(handler) { intervals.add(handler); return handler },
@@ -64,6 +66,15 @@ function createPage(retryAfter = 0) {
     },
   }
 }
+
+test('Повторная отправка письма использует язык страницы и подставляет весь срок ожидания', () => {
+  const page = createPage(60, 'zh-Hans')
+  assert.equal(page.button.textContent, '60 秒后重新发送')
+  page.advance(60)
+  assert.equal(page.button.textContent, '重新发送邮件')
+  assert.equal(page.submit().defaultPrevented, false)
+  assert.equal(page.button.textContent, '正在发送…')
+})
 
 test('resend submits with the shared loader installed and blocks a second submission', () => {
   const page = createPage()

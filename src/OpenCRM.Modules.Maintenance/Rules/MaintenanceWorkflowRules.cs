@@ -182,7 +182,7 @@ internal sealed class MaintenanceWorkflowRules(
                 }
 
                 MaintenanceDateRules.ApplyStatusAndDates(maintenance, maintenance.Status, MaintenanceDateRules.ParseMaintenanceDateText(dto.PlannedDateText) ?? MaintenanceDateRules.NormalizeMaintenanceDate(dto.PlannedDate), null);
-                MaintenanceWorkflowRules.ApplyWorkflowPlannedTime(maintenance, dto);
+                MaintenanceWorkflowRules.ApplyWorkflowPlannedTime(maintenance, dto, organizationTimeZone);
                 return "Обслуживание перенесено";
 
             case "reopen":
@@ -198,7 +198,7 @@ internal sealed class MaintenanceWorkflowRules(
                 }
 
                 MaintenanceDateRules.ApplyStatusAndDates(maintenance, MaintenanceStatus.Planned, reopenPlannedDate, null);
-                MaintenanceWorkflowRules.ApplyWorkflowPlannedTime(maintenance, dto);
+                MaintenanceWorkflowRules.ApplyWorkflowPlannedTime(maintenance, dto, organizationTimeZone);
                 return "Обслуживание возобновлено";
 
             default:
@@ -218,12 +218,15 @@ internal sealed class MaintenanceWorkflowRules(
     }
 
     /// <summary> Устанавливает планируемое время из данных рабочего действия. </summary>
-    internal static void ApplyWorkflowPlannedTime(MaintenanceEntity maintenance, MaintenanceWorkflowActionDto dto)
+    internal static void ApplyWorkflowPlannedTime(
+        MaintenanceEntity maintenance,
+        MaintenanceWorkflowActionDto dto,
+        TimeZoneInfo? organizationTimeZone = null)
     {
         var start = MaintenanceWorkflowRules.ParsePlannedTimeText(dto.PlannedStartTimeText) ?? dto.PlannedStartTime ?? maintenance.PlannedStartTime ?? new TimeSpan(9, 0, 0);
         var end = MaintenanceWorkflowRules.ParsePlannedTimeText(dto.PlannedEndTimeText) ?? dto.PlannedEndTime ?? maintenance.PlannedEndTime ?? start.Add(TimeSpan.FromHours(1));
 
-        MaintenanceDateRules.ApplyPlannedTime(maintenance, start, end, dto.PlannedEndDate);
+        MaintenanceDateRules.ApplyPlannedTime(maintenance, start, end, dto.PlannedEndDate, organizationTimeZone);
     }
 
     /// <summary> Формирует описание рабочего действия для истории изменений. </summary>

@@ -81,7 +81,7 @@ internal sealed class CatalogQueryService(
         var organization = await context.Organizations
             .AsNoTracking()
             .Where(x => x.Id == organizationId)
-            .Select(x => new { x.Id, x.PrimaryScenarioCode })
+            .Select(x => new { x.Id, x.PrimaryScenarioCode, x.CurrencyCode })
             .FirstOrDefaultAsync() ?? throw new InvalidOperationException("Организация не найдена.");
 
         var entities = await context.OrganizationScenarioCatalogItems
@@ -99,6 +99,7 @@ internal sealed class CatalogQueryService(
         {
             OrganizationId = organization.Id,
             ScenarioCode = OrganizationScenarioProcessCatalog.NormalizeScenarioCode(organization.PrimaryScenarioCode),
+            CurrencyCode = organization.CurrencyCode,
             WorkTypes = items.Where(x => x.KindCode == OrganizationScenarioCatalogKindCodes.WorkType).ToList(),
             Services = items.Where(x => x.KindCode == OrganizationScenarioCatalogKindCodes.Service).ToList(),
             ServiceBundles = items.Where(x => x.KindCode == OrganizationScenarioCatalogKindCodes.ServiceBundle).ToList(),

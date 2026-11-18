@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../conversationMessages'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiInput, UiLoader, UiTextarea } from '@opencrm/ui'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
 import { archiveMessageTemplate, archiveMessageTemplateGroup, loadMessageTemplateCatalog, messageTemplateVariables, saveMessageTemplate, saveMessageTemplateGroup, type MessageTemplate, type MessageTemplateCatalog, type MessageTemplateGroup } from '../api/messageTemplates'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ organizationId: string; readOnly?: boolean; previewOnly?: boolean }>()
 const catalog = ref<MessageTemplateCatalog | null>(null)
@@ -37,7 +41,7 @@ async function load() {
     if (active.signal.aborted) return
     catalog.value = result
     if (!result.groups.some(group => group.id === selectedGroupId.value)) selectedGroupId.value = result.groups[0]?.id ?? ''
-  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить шаблоны.' }
+  } catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('conversations.templatesError') }
   finally { if (request === active) loading.value = false }
 }
 function editGroup(group: MessageTemplateGroup | null = null) {
@@ -62,7 +66,7 @@ async function save() {
     if (current !== generation) return
     mode.value = null
     await load()
-  } catch (caught) { if (current === generation) editorError.value = caught instanceof Error ? caught.message : 'Не удалось сохранить шаблон.' }
+  } catch (caught) { if (current === generation) editorError.value = caught instanceof Error ? caught.message : t('conversations.saveTemplateError') }
   finally { if (current === generation) saving.value = false }
 }
 async function archive() {
@@ -75,7 +79,7 @@ async function archive() {
     if (current !== generation) return
     mode.value = null
     await load()
-  } catch (caught) { if (current === generation) editorError.value = caught instanceof Error ? caught.message : 'Не удалось архивировать.' }
+  } catch (caught) { if (current === generation) editorError.value = caught instanceof Error ? caught.message : t('conversations.archiveError') }
   finally { if (current === generation) saving.value = false }
 }
 async function restore(item: MessageTemplateGroup | MessageTemplate) {
@@ -86,7 +90,7 @@ async function restore(item: MessageTemplateGroup | MessageTemplate) {
     if ('body' in item) await saveMessageTemplate(props.organizationId, item.id, { groupId: item.groupId, name: item.name, body: item.body, sortOrder: item.sortOrder, expectedVersion: item.version, isArchived: false })
     else await saveMessageTemplateGroup(props.organizationId, item.id, { name: item.name, sortOrder: item.sortOrder, expectedVersion: item.version, isArchived: false })
     if (current === generation) await load()
-  } catch (caught) { if (current === generation) error.value = caught instanceof Error ? caught.message : 'Не удалось восстановить.' }
+  } catch (caught) { if (current === generation) error.value = caught instanceof Error ? caught.message : t('conversations.restoreError') }
   finally { if (current === generation) saving.value = false }
 }
 watch(() => [props.organizationId, props.previewOnly], () => { generation++; catalog.value = null; selectedGroupId.value = ''; mode.value = null; saving.value = false; void load() }, { immediate: true })
@@ -95,40 +99,40 @@ onBeforeUnmount(() => { generation++; request?.abort() })
 </script>
 
 <template>
-  <section class="message-templates" aria-label="Шаблоны сообщений">
-    <header class="message-templates__toolbar"><div><h3>Шаблоны сообщений</h3><p>Готовые ответы для переписки в MAX и Telegram.</p></div><UiButton v-if="canManage || previewOnly" :disabled="previewOnly" @click="editGroup()">Добавить группу</UiButton></header>
+  <section class="message-templates" :aria-label="t('conversations.templatesTitle')">
+    <header class="message-templates__toolbar"><div><h3>{{ t('conversations.templatesTitle') }}</h3><p>{{ t('conversations.templatesIntro') }}</p></div><UiButton v-if="canManage || previewOnly" :disabled="previewOnly" @click="editGroup()">{{ t('conversations.addGroup') }}</UiButton></header>
     <div v-if="previewOnly" class="message-templates__layout message-templates__preview" aria-hidden="true">
       <aside class="message-templates__groups"><div v-for="index in 4" :key="index" class="message-templates__preview-group"><i></i></div></aside>
       <div class="message-templates__content">
-        <UiInput placeholder="Название или текст" label="Поиск шаблонов" disabled />
+        <UiInput :placeholder="t('conversations.templateSearchPlaceholder')" :label="t('conversations.searchTemplates')" disabled />
         <article v-for="index in 3" :key="index" class="message-templates__item"><i></i><i></i><i></i></article>
       </div>
     </div>
-    <p v-if="!previewOnly && error" role="alert" class="message-templates__error">{{ error }} <UiButton variant="secondary" @click="load">Повторить</UiButton></p>
-    <UiLoader v-if="!previewOnly && loading && !catalog" text="Загружаем шаблоны…" />
+    <p v-if="!previewOnly && error" role="alert" class="message-templates__error">{{ error }} <UiButton variant="secondary" @click="load">{{ t('conversations.retry') }}</UiButton></p>
+    <UiLoader v-if="!previewOnly && loading && !catalog" :text="t('conversations.loadingTemplates')" />
     <div v-else-if="!previewOnly && catalog" class="message-templates__layout">
-      <aside class="message-templates__groups" aria-label="Группы шаблонов">
-        <button v-for="group in catalog.groups" :key="group.id" type="button" :aria-current="group.id === selectedGroupId ? 'page' : undefined" @click="selectedGroupId = group.id"><span>{{ group.name }}<small v-if="group.isArchived">В архиве</small></span><span>{{ group.templates.length }}</span></button>
-        <p v-if="!catalog.groups.length">Групп пока нет.</p>
-        <label v-if="canManage" class="message-templates__archive"><input v-model="includeArchived" type="checkbox" />Показать архив</label>
+      <aside class="message-templates__groups" :aria-label="t('conversations.templateGroups')">
+        <button v-for="group in catalog.groups" :key="group.id" type="button" :aria-current="group.id === selectedGroupId ? 'page' : undefined" @click="selectedGroupId = group.id"><span>{{ group.name }}<small v-if="group.isArchived">{{ t('conversations.archived') }}</small></span><span>{{ group.templates.length }}</span></button>
+        <p v-if="!catalog.groups.length">{{ t('conversations.noGroups') }}</p>
+        <label v-if="canManage" class="message-templates__archive"><input v-model="includeArchived" type="checkbox" />{{ t('conversations.showArchive') }}</label>
       </aside>
       <div class="message-templates__content">
-        <div v-if="activeGroup" class="message-templates__heading"><h3>{{ activeGroup.name }}</h3><div><UiButton v-if="canManage && activeGroup.isArchived" variant="secondary" :disabled="saving" @click="restore(activeGroup)">Восстановить группу</UiButton><UiButton v-if="canManage && !activeGroup.isArchived" variant="secondary" @click="editGroup(activeGroup)">Изменить группу</UiButton><UiButton v-if="canManage && !activeGroup.isArchived" @click="editTemplate()">Добавить шаблон</UiButton></div></div>
-        <UiInput v-if="activeGroup" v-model="search" type="search" placeholder="Название или текст" label="Поиск шаблонов" />
-        <p v-if="activeGroup && !templates.length" class="message-templates__empty">{{ search ? 'Шаблоны не найдены.' : 'В этой группе пока нет шаблонов.' }}</p>
-        <p v-if="!activeGroup" class="message-templates__empty">Создайте группу, чтобы добавить ответы для клиентов.</p>
-        <article v-for="template in templates" :key="template.id" class="message-templates__item"><header><strong>{{ template.name }}</strong><small v-if="template.isArchived">В архиве</small><UiButton v-if="canManage && template.isArchived && !activeGroup?.isArchived" variant="secondary" :disabled="saving" @click="restore(template)">Восстановить</UiButton><UiButton v-if="canManage && !template.isArchived && !activeGroup?.isArchived" variant="secondary" @click="editTemplate(template)">Изменить</UiButton></header><p>{{ template.body }}</p></article>
+        <div v-if="activeGroup" class="message-templates__heading"><h3>{{ activeGroup.name }}</h3><div><UiButton v-if="canManage && activeGroup.isArchived" variant="secondary" :disabled="saving" @click="restore(activeGroup)">{{ t('conversations.restoreGroup') }}</UiButton><UiButton v-if="canManage && !activeGroup.isArchived" variant="secondary" @click="editGroup(activeGroup)">{{ t('conversations.editGroup') }}</UiButton><UiButton v-if="canManage && !activeGroup.isArchived" @click="editTemplate()">{{ t('conversations.addTemplate') }}</UiButton></div></div>
+        <UiInput v-if="activeGroup" v-model="search" type="search" :placeholder="t('conversations.templateSearchPlaceholder')" :label="t('conversations.searchTemplates')" />
+        <p v-if="activeGroup && !templates.length" class="message-templates__empty">{{ search ? t('conversations.noTemplates') : t('conversations.emptyGroup') }}</p>
+        <p v-if="!activeGroup" class="message-templates__empty">{{ t('conversations.createGroupHint') }}</p>
+        <article v-for="template in templates" :key="template.id" class="message-templates__item"><header><strong>{{ template.name }}</strong><small v-if="template.isArchived">{{ t('conversations.archived') }}</small><UiButton v-if="canManage && template.isArchived && !activeGroup?.isArchived" variant="secondary" :disabled="saving" @click="restore(template)">{{ t('conversations.restore') }}</UiButton><UiButton v-if="canManage && !template.isArchived && !activeGroup?.isArchived" variant="secondary" @click="editTemplate(template)">{{ t('conversations.edit') }}</UiButton></header><p>{{ template.body }}</p></article>
       </div>
     </div>
-    <SchedulerBookingDialog :open="!!mode" :busy="saving" :dismiss-on-backdrop="false" :title="mode === 'group' ? editingGroup ? 'Изменить группу' : 'Новая группа' : editingTemplate ? 'Изменить шаблон' : 'Новый шаблон'" @close="mode = null">
+    <SchedulerBookingDialog :open="!!mode" :busy="saving" :dismiss-on-backdrop="false" :title="mode === 'group' ? editingGroup ? t('conversations.editGroup') : t('conversations.newGroup') : editingTemplate ? t('conversations.editTemplate') : t('conversations.newTemplate')" @close="mode = null">
       <form class="message-template-editor" @submit.prevent="save">
-        <UiInput v-model="name" label="Название" required :maxlength="100" :disabled="saving" />
-        <UiTextarea v-if="mode === 'template'" v-model="body" label="Текст сообщения" required :rows="8" :maxlength="4096" :disabled="saving" />
-        <div v-if="mode === 'template'" class="message-template-editor__variables"><span>Подстановки:</span><button v-for="variable in messageTemplateVariables" :key="variable.code" type="button" :title="variable.code" :disabled="saving" @click="body += variable.code">{{ variable.label }}</button></div>
-        <p v-if="mode === 'template'" class="message-template-editor__hint">Дата, время и автомобиль подставляются при отправке из конкретного обслуживания. Перед отправкой можно изменить текст.</p>
-        <UiInput v-model="sortOrder" type="number" label="Порядок в списке" min="0" max="9999" :disabled="saving" />
+        <UiInput v-model="name" :label="t('conversations.name')" required :maxlength="100" :disabled="saving" />
+        <UiTextarea v-if="mode === 'template'" v-model="body" :label="t('conversations.messageText')" required :rows="8" :maxlength="4096" :disabled="saving" />
+        <div v-if="mode === 'template'" class="message-template-editor__variables"><span>{{ t('conversations.variables') }}</span><button v-for="variable in messageTemplateVariables" :key="variable.code" type="button" :title="variable.code" :disabled="saving" @click="body += variable.code">{{ variable.label }}</button></div>
+        <p v-if="mode === 'template'" class="message-template-editor__hint">{{ t('conversations.variablesHint') }}</p>
+        <UiInput v-model="sortOrder" type="number" :label="t('conversations.sortOrder')" min="0" max="9999" :disabled="saving" />
         <p v-if="editorError" class="message-templates__error" role="alert">{{ editorError }}</p>
-        <footer><UiButton type="submit" :disabled="saving || !name.trim() || (mode === 'template' && !body.trim())">{{ saving ? 'Сохраняем…' : 'Сохранить' }}</UiButton><UiButton variant="secondary" :disabled="saving" @click="mode = null">Отмена</UiButton><button v-if="editingGroup || editingTemplate" class="message-template-editor__archive" type="button" :disabled="saving" @click="archive">В архив</button></footer>
+        <footer><UiButton type="submit" :disabled="saving || !name.trim() || (mode === 'template' && !body.trim())">{{ saving ? t('conversations.saving') : t('conversations.save') }}</UiButton><UiButton variant="secondary" :disabled="saving" @click="mode = null">{{ t('conversations.cancel') }}</UiButton><button v-if="editingGroup || editingTemplate" class="message-template-editor__archive" type="button" :disabled="saving" @click="archive">{{ t('conversations.archive') }}</button></footer>
       </form>
     </SchedulerBookingDialog>
   </section>

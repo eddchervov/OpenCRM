@@ -1,6 +1,9 @@
 namespace OpenCRM.Modules.Maintenance.Contracts.Dtos;
 
-/// <summary> Предпросмотр напоминания и фактическое состояние отправки. </summary>
+/// <summary>
+/// Предпросмотр напоминания и фактическое состояние отправки.
+/// Код причины и часовой пояс позволяют локализовать описание, сохраняя исходный текст для прежних клиентов.
+/// </summary>
 public sealed record MaintenanceVisitReminderDto(
     bool Enabled,
     uint Version,
@@ -10,4 +13,6 @@ public sealed record MaintenanceVisitReminderDto(
     string StatusText,
     string ChannelCode,
     string Preview,
-    bool CanEdit);
+    bool CanEdit,
+    string? TimeZoneId = null,
+    string? StatusDetailCode = null);

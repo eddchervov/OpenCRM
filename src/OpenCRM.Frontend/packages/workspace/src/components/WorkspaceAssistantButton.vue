@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../interactionMessages'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getAssistantUrl, isAssistantScenario, loadAssistantAvailability, type AssistantAvailability } from '../api/assistant'
 
@@ -59,11 +61,11 @@ onBeforeUnmount(() => {
     v-if="assistantUrl || isLocked && isAssistantScenario(scenarioCode)"
     class="crm-assistant-link"
     href="#assistant"
-    aria-label="ИИ помощник"
-    :title="isLocked ? 'ИИ помощник · Доступно в PRO' : 'ИИ помощник'"
+    :aria-label="t('interaction.assistant')"
+    :title="isLocked ? t('interaction.assistantPro') : t('interaction.assistant')"
   >
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 14.2 9.8 20.5 12l-6.3 2.2L12 20.5l-2.2-6.3L3.5 12l6.3-2.2L12 3.5Z" /><path d="m19 3 .7 2.3L22 6l-2.3.7L19 9l-.7-2.3L16 6l2.3-.7L19 3Z" /></svg>
-    <span>ИИ помощник</span>
+    <span>{{ t('interaction.assistant') }}</span>
   </a>
 </template>
 

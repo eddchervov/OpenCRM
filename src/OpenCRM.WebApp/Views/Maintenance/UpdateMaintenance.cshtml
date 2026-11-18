@@ -1,15 +1,15 @@
 ﻿@model OpenCRM.WebApp.Models.Maintenance.UpdateMaintenanceFormModel
 @{
     Layout = "/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Редактировать обслуживание";
+    ViewData["Title"] = Text["maintenance.legacy.form.editMaintenance"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "maintenance-update-page-body";
-    ViewData["BreadcrumbTitle"] = "Редактировать обслуживание";
-    ViewData["PageTitle"] = "Редактировать обслуживание";
-    ViewData["SubtitlePrefix"] = "Измените информацию о проведенном обслуживании или ремонте ";
+    ViewData["BreadcrumbTitle"] = Text["maintenance.legacy.form.editMaintenance"].Value;
+    ViewData["PageTitle"] = Text["maintenance.legacy.form.editMaintenance"].Value;
+    ViewData["SubtitlePrefix"] = Text["maintenance.legacy.form.subtitleUpdate"].Value;
     ViewData["FormId"] = "maintenanceEditForm";
     ViewData["SaveAction"] = "save_editMaintenance";
-    ViewData["SaveButtonText"] = "Сохранить изменения";
+    ViewData["SaveButtonText"] = Text["maintenance.legacy.form.saveChanges"].Value;
     var organizationId = ViewData["MaintenanceOrganizationId"] as string ?? string.Empty;
     if (string.IsNullOrWhiteSpace(organizationId))
     {
@@ -52,7 +52,7 @@
             <form id="maintenanceEditForm">
                 <div v-if="formLoad" class="d-flex align-items-center gap-2 text-muted mb-4">
                     <i class="fa fa-spinner fa-spin"></i>
-                    <span>Загружаем данные обслуживания...</span>
+                    <span>@Text["maintenance.legacy.form.loadingData"]</span>
                 </div>
                 <partial name="_MaintenanceSharedSteps" view-data="ViewData" />
 
@@ -61,31 +61,31 @@
                         <div class="card-header">
                             <h3 class="card-title">
                                 <i class="fa fa-camera me-2"></i>
-                                Управление фотографиями
+                                @Text["maintenance.legacy.photos.manage"]
                             </h3>
                         </div>
                         <div class="card-body">
                             <div class="text-center mb-4">
                                 <i class="fa fa-check-circle text-success fa-3x mb-3"></i>
-                                <h4>Обслуживание успешно обновлено!</h4>
-                                <p class="text-muted">Теперь вы можете управлять фотографиями</p>
+                                <h4>@Text["maintenance.legacy.form.update.successTitle"]</h4>
+                                <p class="text-muted">@Text["maintenance.legacy.form.update.successText"]</p>
                             </div>
 
                             <div v-if="existingPhotos.length > 0">
-                                <h5>Существующие фотографии ({{ existingPhotos.length }})</h5>
+                                <h5>@(Text["maintenance.legacy.photos.existing"].Value.Replace("{0}", "{{ existingPhotos.length }}"))</h5>
                                 <div class="row mt-3">
                                     <div class="col-md-4 mb-3" v-for="(photo, index) in existingPhotos" :key="photo.id">
                                         <div class="card h-100">
                                             <img :src="photo.url"
                                                  class="card-img-top"
                                                  style="height: 150px; object-fit: cover;"
-                                                 :alt="'Фото ' + (index + 1)">
+                                                 :alt="localizedText.photosPhotoLabel.replace('{0}', index + 1)">
                                             <div class="card-body p-2">
-                                                <small class="text-muted">Фото {{ index + 1 }}</small>
+                                                <small class="text-muted">@(Text["maintenance.legacy.photos.photoLabel"].Value.Replace("{0}", "{{ index + 1 }}"))</small>
                                             </div>
                                             <div class="card-footer p-2">
                                                 <button type="button" class="btn btn-sm btn-danger w-100" @@click="deleteExistingPhoto(photo, index)">
-                                                    <i class="fa fa-trash me-1"></i>Удалить
+                                                    <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.remove"]
                                                 </button>
                                             </div>
                                         </div>
@@ -95,15 +95,15 @@
                             <div v-else>
                                 <div class="text-center py-4">
                                     <i class="fa fa-image fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">Нет загруженных фотографий</p>
+                                    <p class="text-muted">@Text["maintenance.legacy.photos.existingEmpty"]</p>
                                 </div>
                             </div>
 
                             <div v-if="newPhotos.length > 0" class="mt-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5>Новые фотографии для загрузки ({{ newPhotos.length }})</h5>
+                                    <h5>@(Text["maintenance.legacy.photos.new"].Value.Replace("{0}", "{{ newPhotos.length }}"))</h5>
                                     <button type="button" class="btn btn-sm btn-outline-danger" @@click="clearNewPhotos">
-                                        <i class="fa fa-trash me-1"></i>Очистить все
+                                        <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.clearAll"]
                                     </button>
                                 </div>
 
@@ -120,7 +120,7 @@
                                             </div>
                                             <div class="card-footer p-2">
                                                 <button type="button" class="btn btn-sm btn-danger w-100" @@click="removeNewPhoto(index)">
-                                                    <i class="fa fa-trash me-1"></i>Удалить
+                                                    <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.remove"]
                                                 </button>
                                             </div>
                                         </div>
@@ -129,7 +129,7 @@
                             </div>
 
                             <div class="mb-4 mt-4">
-                                <label class="form-label">Добавить новые фотографии</label>
+                                <label class="form-label">@Text["maintenance.legacy.form.update.addNewPhotos"]</label>
                                 <input type="file"
                                        class="form-control create-maintenance-input"
                                        id="newPhotos"
@@ -137,14 +137,14 @@
                                        accept="image/*"
                                        @@change="addNewPhotos($event)">
                                 <div class="form-text">
-                                    Можно загрузить до 10 фотографий (JPG, PNG).
-                                    <strong>Максимальный общий размер всех файлов: 100 МБ</strong>
+                                    @Text["maintenance.legacy.photos.uploadInstructions"]
+
                                 </div>
                             </div>
 
                             <div v-if="isUploading" class="mt-4">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Загрузка...</span>
+                                    <span>@Text["maintenance.legacy.photos.uploading"]</span>
                                     <span>{{ uploadProgress }}%</span>
                                 </div>
                                 <div class="progress">
@@ -156,17 +156,17 @@
 
                     <div class="d-flex justify-content-between mt-4">
                         <button type="button" class="btn btn-outline-dark" @@click="skipPhotoManagement">
-                            Завершить
+                            @Text["maintenance.legacy.form.update.finish"]
                         </button>
 
                         <button type="button" class="btn btn-success"
                                 :disabled="isUploading || newPhotos.length === 0"
                                 @@click="uploadNewPhotos">
                             <template v-if="!isUploading">
-                                <i class="fa fa-upload me-2"></i>Загрузить новые фото
+                                <i class="fa fa-upload me-2"></i>@Text["maintenance.legacy.form.update.uploadRetry"]
                             </template>
                             <template v-else>
-                                <i class="fa fa-spinner fa-spin fa-fw"></i> Загрузка...
+                                <i class="fa fa-spinner fa-spin fa-fw"></i> @Text["maintenance.legacy.photos.uploading"]
                             </template>
                         </button>
                     </div>
@@ -181,18 +181,18 @@
                 <div class="modal-content">
                     <div class="modal-header bg-warning text-dark">
                         <h5 class="modal-title" id="deletePhotoConfirmModalLabel">
-                            <i class="fa fa-exclamation-triangle me-2"></i>Подтверждение удаления
+                            <i class="fa fa-exclamation-triangle me-2"></i>@Text["maintenance.legacy.form.deletePhoto.confirmTitle"]
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["maintenance.legacy.form.deletePhoto.close"]"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Вы уверены, что хотите удалить эту фотографию?</p>
-                        <p class="text-muted small">Действие нельзя будет отменить.</p>
+                        <p>@Text["maintenance.legacy.form.deletePhoto.confirm"]</p>
+                        <p class="text-muted small">@Text["maintenance.legacy.form.deletePhoto.warning"]</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["maintenance.legacy.form.deletePhoto.cancel"]</button>
                         <button type="button" class="btn btn-danger" @@click="confirmDeletePhoto">
-                            <i class="fa fa-trash me-1"></i>Удалить
+                            <i class="fa fa-trash me-1"></i>@Text["maintenance.legacy.photos.remove"]
                         </button>
                     </div>
                 </div>

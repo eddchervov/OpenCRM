@@ -1,3 +1,5 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
 export type WorkspaceClientLookupItem = {
   id: string
   name: string
@@ -32,7 +34,7 @@ export async function loadClientLookup(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось найти клиентов.')
+    throw new Error(error?.message ?? translate('workspaceApi.clientLookup'))
   }
 
   return response.json()

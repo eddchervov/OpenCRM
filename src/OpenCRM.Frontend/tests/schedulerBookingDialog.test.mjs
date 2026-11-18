@@ -1,19 +1,25 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { parse, compileScript } from '@vue/compiler-sfc'
+import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 
 function createDialog({ dirty = true, busy = false } = {}) {
   const path = '../packages/workspace/src/components/SchedulerBookingDialog.vue'
   const { descriptor } = parse(readFileSync(new URL(path, import.meta.url), 'utf8'))
+  assert.deepEqual(compileTemplate({ source: descriptor.template?.content ?? '', id: 'booking-dialog-test', filename: path }).errors, [])
   const code = ts.transpileModule(compileScript(descriptor, { id: 'booking-dialog-test' }).content, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
   }).outputText
   const module = { exports: {} }
   new Function('require', 'module', 'exports', 'document', 'HTMLElement', code)(
-    () => ({ ...vue, watch() {}, onBeforeUnmount() {}, useId: () => 'booking-dialog' }),
+    id => {
+      if (id === 'vue') return { ...vue, watch() {}, onBeforeUnmount() {}, useId: () => 'booking-dialog' }
+      if (id === '@opencrm/ui') return { useLocalization: () => ({ t: key => key }) }
+      if (id === '../schedulerControlMessages') return {}
+      throw new Error('Не задана зависимость: ' + id)
+    },
     module, module.exports, { activeElement: null }, class HTMLElement {}
   )
   const state = module.exports.default.setup({ open: true, busy, dirty }, { expose() {}, emit() {} })
@@ -27,6 +33,7 @@ function createDialog({ dirty = true, busy = false } = {}) {
 
 test('Изменённая запись требует подтверждения, продолжение возвращает фокус в редактор', async () => {
   const dialog = createDialog()
+  assert.equal(dialog.state.dialogTitle.value, 'schedulerControl.newAppointment')
   await dialog.state.close()
   assert.equal(dialog.closed(), 0)
   assert.equal(dialog.state.discardPending.value, true)

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { useLocalization } from '@opencrm/ui'
+import '../schedulerControlMessages'
 
 const props = withDefaults(defineProps<{
   open: boolean
@@ -10,9 +12,10 @@ const props = withDefaults(defineProps<{
 }>(), {
   busy: false,
   dirty: false,
-  dismissOnBackdrop: true,
-  title: 'Новая запись'
+  dismissOnBackdrop: true
 })
+const { t } = useLocalization()
+const dialogTitle = computed(() => props.title ?? t('schedulerControl.newAppointment'))
 
 const emit = defineEmits<{
   close: []
@@ -125,15 +128,15 @@ onBeforeUnmount(() => {
       @click.self="dismissOnBackdrop && close()"
     >
       <header class="scheduler-booking-dialog__header ui-form-header">
-        <h2 :id="titleId">{{ title }}</h2>
-        <button type="button" class="scheduler-booking-dialog__close" aria-label="Закрыть" :disabled="busy" @click="close">×</button>
+        <h2 :id="titleId">{{ dialogTitle }}</h2>
+        <button type="button" class="scheduler-booking-dialog__close" :aria-label="t('schedulerControl.closeDialog')" :disabled="busy" @click="close">×</button>
       </header>
       <div class="scheduler-booking-dialog__content">
-        <div v-if="discardPending" class="scheduler-booking-dialog__confirmation" role="alertdialog" aria-label="Несохранённая запись">
-          <p>Изменения не сохранены. Закрыть запись без сохранения?</p>
+        <div v-if="discardPending" class="scheduler-booking-dialog__confirmation" role="alertdialog" :aria-label="t('schedulerControl.unsavedAppointment')">
+          <p>{{ t('schedulerControl.unsavedPrompt') }}</p>
           <div class="scheduler-booking-dialog__confirmation-actions">
-            <button ref="keepEditingButton" type="button" class="ui-button ui-button--primary btn btn-dark" @click="keepEditing">Продолжить редактирование</button>
-            <button type="button" class="ui-button ui-button--secondary btn btn-outline-dark" @click="discard">Закрыть без сохранения</button>
+            <button ref="keepEditingButton" type="button" class="ui-button ui-button--primary btn btn-dark" @click="keepEditing">{{ t('schedulerControl.continueEditing') }}</button>
+            <button type="button" class="ui-button ui-button--secondary btn btn-outline-dark" @click="discard">{{ t('schedulerControl.closeWithoutSaving') }}</button>
           </div>
         </div>
         <div v-show="!discardPending" ref="editor" class="scheduler-booking-dialog__editor"><slot /></div>

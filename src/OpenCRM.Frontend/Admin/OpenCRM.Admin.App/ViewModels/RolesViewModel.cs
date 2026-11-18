@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -26,6 +27,8 @@ public partial class RolesViewModel(AdminSessionClient sessionClient) : Observab
     private CancellationTokenSource? _selectionLoadCancellation;
     private readonly List<Task> _selectionLoadTasks = [];
     private long _membersLoadVersion;
+    private string? _errorTranslationKey;
+    private bool _isSettingLocalizedError;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
@@ -119,6 +122,22 @@ public partial class RolesViewModel(AdminSessionClient sessionClient) : Observab
     public bool IsRemovalConfirmationOpen => this.MemberToRemove != null;
 
     public bool IsEmpty => !this.IsLoading && this.Roles.Count == 0 && !this.HasError;
+
+    public void RefreshLocalizedValues()
+    {
+        this.RefreshLocalizedError();
+        foreach (var role in this.Roles)
+        {
+            role.RefreshLocalizedValues();
+        }
+
+        foreach (var group in this.PermissionGroups)
+        {
+            group.RefreshLocalizedValues();
+        }
+
+        this.OnPropertyChanged((string?)null);
+    }
 
     public IReadOnlyList<RoleMemberItem> FilteredMembers
     {
@@ -305,7 +324,7 @@ public partial class RolesViewModel(AdminSessionClient sessionClient) : Observab
                 [role.Id] = new AdminRolePermissions
                 {
                     RoleId = role.Id,
-                    RoleName = role.Name,
+                    RoleName = role.OriginalName,
                     IsLocked = role.IsLocked,
                     PermissionCodes = permissionCodes
                 }
@@ -584,6 +603,12 @@ public partial class RolesViewModel(AdminSessionClient sessionClient) : Observab
             return;
         }
 
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportErrorKey)
+        {
+            this.SetLocalizedError(transportErrorKey);
+            return;
+        }
+
         this.ErrorMessage = exception.Message;
     }
 
@@ -727,9 +752,37 @@ public partial class RolesViewModel(AdminSessionClient sessionClient) : Observab
             return;
         }
 
-        this.ErrorMessage = timedOut
-            ? "Превышено время ожидания ответа сервера. Повторите попытку."
-            : "Не удалось связаться с сервером. Проверьте подключение и повторите попытку.";
+        this.SetLocalizedError(timedOut
+            ? "native.roles.prevysheno.vremya.ozhidaniya.otveta.servera.povtorite.popytku"
+            : "native.roles.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori");
+    }
+
+    private void SetLocalizedError(string key)
+    {
+        this._errorTranslationKey = key;
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedError = false;
+    }
+
+    private void RefreshLocalizedError()
+    {
+        if (this._errorTranslationKey == null)
+        {
+            return;
+        }
+
+        this._isSettingLocalizedError = true;
+        this.ErrorMessage = AdminLocalization.Instance[this._errorTranslationKey];
+        this._isSettingLocalizedError = false;
+    }
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedError)
+        {
+            this._errorTranslationKey = null;
+        }
     }
 
     private void NotifyCommands()

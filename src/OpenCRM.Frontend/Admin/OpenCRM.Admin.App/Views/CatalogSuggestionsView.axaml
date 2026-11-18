@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.CatalogSuggestionsView"
@@ -31,10 +32,10 @@
   <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="14">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
       <StackPanel Spacing="4">
-        <TextBlock Text="Предложения в каталог" Classes="heading" />
-        <TextBlock Text="Проверяйте пользовательские предложения и принимайте решение по каждому." Classes="caption" TextWrapping="Wrap" />
+        <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.predlozheniya.v.katalog}" Classes="heading" />
+        <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.proveryayte.polzovatelskie.predlozheniya.i.prinimayte.reshenie.p}" Classes="caption" TextWrapping="Wrap" />
       </StackPanel>
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
     </Grid>
 
     <StackPanel Grid.Row="1" Spacing="6">
@@ -53,10 +54,10 @@
             <Grid ColumnDefinitions="*,Auto" Margin="18,16,18,12">
               <StackPanel Spacing="3">
                 <TextBlock Text="{Binding ListTitle}" Classes="configurationHeading" />
-                <TextBlock Text="Откройте предложение, чтобы посмотреть детали и ответить автору." Classes="caption" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.otkroyte.predlozhenie.chtoby.posmotret.detali.i.otvetit.avtoru}" Classes="caption" TextWrapping="Wrap" />
               </StackPanel>
               <Border Grid.Column="1" Classes="configurationBadge" VerticalAlignment="Center">
-                <TextBlock Text="{Binding Suggestions.Count, StringFormat='В списке: {0:N0}'}" />
+                <TextBlock Text="{loc:LocalizedFormat Key=native.catalogSuggestions.v.spiske.0.n0, Path=Suggestions.Count}" />
               </Border>
             </Grid>
             <ItemsControl ItemsSource="{Binding Suggestions}">
@@ -70,14 +71,14 @@
                         <StackPanel Orientation="Horizontal" Spacing="8">
                           <TextBlock Text="{Binding KindText}" Classes="caption" />
                           <TextBlock Text="·" Classes="caption" />
-                          <TextBlock Text="{Binding SuggestedByEmail, FallbackValue='Пользователь'}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{loc:LocalizedFormat Path=SuggestedByEmail, FallbackKey=native.promoCodes.polzovatel}" Classes="caption" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                       </StackPanel>
                       <StackPanel Grid.Column="1" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Border Classes="configurationBadge" HorizontalAlignment="Right">
                           <TextBlock Text="{Binding StatusText}" />
                         </Border>
-                        <Button Content="Открыть" HorizontalAlignment="Right" Classes="configurationPrimary"
+                        <Button Content="{loc:LocalizedText Key=native.billing.otkryt}" HorizontalAlignment="Right" Classes="configurationPrimary"
                                 Command="{Binding $parent[UserControl].((vm:CatalogSuggestionsViewModel)DataContext).SelectSuggestionCommand}"
                                 CommandParameter="{Binding}" />
                       </StackPanel>
@@ -87,7 +88,7 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
             <Border IsVisible="{Binding IsEmpty}" Padding="18,24">
-              <TextBlock Text="Предложений с таким статусом нет." Classes="caption" TextWrapping="Wrap" />
+              <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.predlozheniy.s.takim.statusom.net}" Classes="caption" TextWrapping="Wrap" />
             </Border>
           </StackPanel>
         </Border>
@@ -99,17 +100,17 @@
                 <TextBlock Text="{Binding SelectedSuggestion.BrandName}" Classes="configurationHeading" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding SelectedSuggestion.ModelName}" FontSize="16" TextWrapping="Wrap" />
               </StackPanel>
-              <Button Grid.Column="1" Content="← К предложениям" Command="{Binding CloseDetailsCommand}" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.catalogSuggestions.k.predlozheniyam}" Command="{Binding CloseDetailsCommand}" VerticalAlignment="Center" />
             </Grid>
 
             <Border Classes="configurationSection" Padding="14">
               <Grid ColumnDefinitions="*,*" ColumnSpacing="20">
                 <StackPanel Spacing="5">
-                  <TextBlock Text="Вид техники" Classes="caption" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.vid.tekhniki}" Classes="caption" />
                   <TextBlock Text="{Binding SelectedSuggestion.KindText}" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Spacing="5">
-                  <TextBlock Text="Статус предложения" Classes="caption" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.status.predlozheniya}" Classes="caption" />
                   <Border Classes="configurationBadge" HorizontalAlignment="Left">
                     <TextBlock Text="{Binding SelectedSuggestion.StatusText}" />
                   </Border>
@@ -119,29 +120,29 @@
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="20">
               <StackPanel Spacing="5">
-                <TextBlock Text="Предложил" Classes="caption" />
-                <TextBlock Text="{Binding SelectedSuggestion.SuggestedByEmail, FallbackValue='Пользователь'}" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.predlozhil}" Classes="caption" />
+                <TextBlock Text="{loc:LocalizedFormat Path=SelectedSuggestion.SuggestedByEmail, FallbackKey=native.promoCodes.polzovatel}" TextWrapping="Wrap" />
               </StackPanel>
               <StackPanel Grid.Column="1" Spacing="5">
-                <TextBlock Text="Создано" Classes="caption" />
-                <TextBlock Text="{Binding SelectedSuggestion.CreatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" />
+                <TextBlock Text="{loc:LocalizedText Key=native.email.createdColumn}" Classes="caption" />
+                <TextBlock Text="{loc:LocalizedFormat Key=core.format.dateTime, Path=SelectedSuggestion.CreatedAt, UseLocalTime=True}" />
               </StackPanel>
             </Grid>
 
             <StackPanel Spacing="7">
-              <TextBlock Text="Комментарий модератора" Classes="caption" />
+              <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.kommentariy.moderatora}" Classes="caption" />
               <TextBox Text="{Binding Comment}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="112" MaxHeight="240"
-                       VerticalContentAlignment="Top" Padding="12,10" PlaceholderText="Напишите пояснение для автора, если нужно"
+                       VerticalContentAlignment="Top" Padding="12,10" PlaceholderText="{loc:LocalizedText Key=native.catalogSuggestions.napishite.poyasnenie.dlya.avtora.esli.nuzhno}"
                        IsEnabled="{Binding CanManage}" />
-              <TextBlock Text="Комментарий будет сохранён вместе с решением." Classes="caption" TextWrapping="Wrap" />
+              <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.kommentariy.budet.sokhranyon.vmeste.s.resheniem}" Classes="caption" TextWrapping="Wrap" />
             </StackPanel>
 
             <Grid ColumnDefinitions="*,Auto">
-              <Button Content="Удалить предложение…" IsVisible="{Binding CanManage}" Command="{Binding RequestDeleteCommand}"
+              <Button Content="{loc:LocalizedText Key=native.catalogSuggestions.deleteAction}" IsVisible="{Binding CanManage}" Command="{Binding RequestDeleteCommand}"
                       Foreground="#F4CACA" HorizontalAlignment="Left" />
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button Content="Отклонить" IsVisible="{Binding CanReview}" Command="{Binding RequestRejectCommand}" />
-                <Button Content="Одобрить" Classes="configurationPrimary" IsVisible="{Binding CanReview}" Command="{Binding RequestApproveCommand}" />
+                <Button Content="{loc:LocalizedText Key=native.catalogSuggestions.otklonit}" IsVisible="{Binding CanReview}" Command="{Binding RequestRejectCommand}" />
+                <Button Content="{loc:LocalizedText Key=native.catalogSuggestions.odobrit}" Classes="configurationPrimary" IsVisible="{Binding CanReview}" Command="{Binding RequestApproveCommand}" />
               </StackPanel>
             </Grid>
           </StackPanel>
@@ -152,11 +153,11 @@
     <Border Grid.RowSpan="4" IsVisible="{Binding IsConfirmationOpen}" Background="#CC000000" ZIndex="10" Padding="20">
       <Border Classes="configurationSection" MaxWidth="480" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="22">
         <StackPanel Spacing="14">
-          <TextBlock Text="Подтвердите решение" Classes="configurationHeading" />
+          <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.podtverdite.reshenie}" Classes="configurationHeading" />
           <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Подтвердить" Classes="configurationPrimary" Command="{Binding ConfirmReviewCommand}" />
-            <Button Content="Назад" Command="{Binding CancelConfirmationCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.billing.podtverdit}" Classes="configurationPrimary" Command="{Binding ConfirmReviewCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.siteNotifications.nazad}" Command="{Binding CancelConfirmationCommand}" />
           </StackPanel>
         </StackPanel>
       </Border>
@@ -164,11 +165,11 @@
     <Border Grid.RowSpan="4" IsVisible="{Binding IsDeleteConfirmationOpen}" Background="#CC000000" ZIndex="11" Padding="20">
       <Border Classes="configurationSection" MaxWidth="480" HorizontalAlignment="Stretch" VerticalAlignment="Center" Padding="22">
         <StackPanel Spacing="14">
-          <TextBlock Text="Удалить предложение?" Classes="configurationHeading" />
-          <TextBlock Text="Удалится только это предложение. Марки, модели и техника сохранятся. Отменить удаление нельзя." TextWrapping="Wrap" />
+          <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.deleteConfirmTitle}" Classes="configurationHeading" />
+          <TextBlock Text="{loc:LocalizedText Key=native.catalogSuggestions.udalitsya.tolko.eto.predlozhenie.marki.modeli.i.tekhnika.sokhran}" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Отмена" Command="{Binding CancelDeleteCommand}" />
-            <Button Content="Удалить" Command="{Binding ConfirmDeleteCommand}" Foreground="#F4CACA" />
+            <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelDeleteCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.plans.udalit}" Command="{Binding ConfirmDeleteCommand}" Foreground="#F4CACA" />
           </StackPanel>
         </StackPanel>
       </Border>

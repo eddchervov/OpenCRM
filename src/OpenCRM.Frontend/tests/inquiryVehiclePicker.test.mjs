@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import './inquiryTestMessages.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -15,6 +17,7 @@ function picker({ modelValue = '', pageResult, loadSelected = async () => vehicl
   const scope = vue.effectScope()
   const props = vue.reactive({ organizationId: 'org', clientId: 'client', modelValue, disabled: false })
   new Function('require', 'module', 'exports', code)(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onBeforeUnmount() {} }
     if (id === '../api/vehicles') return {
       loadVehicle: loadSelected,

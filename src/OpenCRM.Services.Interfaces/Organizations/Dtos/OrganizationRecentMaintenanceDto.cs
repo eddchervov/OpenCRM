@@ -74,6 +74,9 @@ public sealed class OrganizationRecentMaintenanceDto
     /// <summary> Комментарий к обслуживанию. </summary>
     public string? Comment { get; init; }
 
+    /// <summary> Валюта сохранённого обслуживания. </summary>
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Стоимость обслуживания. </summary>
     public decimal? Price { get; init; }
 

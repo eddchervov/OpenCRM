@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../notificationMessages'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
 import { loadMaintenanceVisitReminder, saveMaintenanceVisitReminder, type MaintenanceVisitReminder as MaintenanceVisitReminderModel } from '../api/visitReminders'
+
+const { t, te } = useLocalization()
 
 const props = defineProps<{
   organizationId: string
@@ -16,19 +20,30 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref('')
 const channelName = (code: string) => ({
-  auto: 'Telegram, иначе MAX',
+  auto: t('notifications.autoChannel'),
   telegram: 'Telegram',
   max: 'MAX',
-  both: 'Telegram и MAX'
+  both: t('notifications.bothChannels')
 }[code] ?? code)
 const statusLabel = computed(() => ({
-  scheduled: 'Запланировано', queued: 'В очереди', processing: 'Отправляется', retrying: 'Повторная попытка',
-  sent: 'Принято провайдером', simulated: 'Тестовая отправка', disabled: 'Выключено', failed: 'Нужна проверка',
-  skipped: 'Отправка отменена', no_channel: 'Нет подключения', past: 'Визит уже наступил',
-  not_planned: 'Не требуется', time_zone_required: 'Проверьте время'
-}[reminder.value?.statusCode ?? ''] ?? 'Напоминание'))
-const statusDetail = computed(() => reminder.value?.statusCode === 'scheduled'
-  ? reminder.value.statusText.replace(/^Запланировано:\s*/, '') : reminder.value?.statusText)
+  scheduled: t('notifications.scheduled'), queued: t('notifications.queued'), processing: t('notifications.processing'), retrying: t('notifications.retrying'),
+  sent: t('notifications.acceptedProvider'), simulated: t('notifications.simulatedSend'), disabled: t('notifications.disabled'), failed: t('notifications.needsReview'),
+  skipped: t('notifications.sendCancelled'), no_channel: t('notifications.noChannel'), past: t('notifications.pastVisit'),
+  not_planned: t('notifications.notRequired'), time_zone_required: t('notifications.checkTime')
+}[reminder.value?.statusCode ?? ''] ?? t('notifications.reminder')))
+const statusDetail = computed(() => {
+  const current = reminder.value
+  if (!current) return ''
+  if (current.statusCode === 'scheduled' && current.scheduledAtUtc && current.timeZoneId) {
+    const date = new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short', timeStyle: 'short', timeZone: current.timeZoneId }).format(new Date(current.scheduledAtUtc))
+
+    return t('notifications.detail_scheduled', { date })
+  }
+  const code = current.statusDetailCode
+  const key = `notifications.detail_${['queued', 'processing', 'retrying'].includes(code ?? '') ? 'queued' : code}`
+
+  return code && te(key) ? t(key) : current.statusText
+})
 
 let requestId = 0
 let requestController: AbortController | undefined
@@ -50,7 +65,7 @@ async function load() {
     if (currentRequest === requestId) reminder.value = result
   } catch (caught) {
     if (currentRequest === requestId && !(caught instanceof DOMException && caught.name === 'AbortError')) {
-      error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить напоминание.'
+      error.value = caught instanceof Error ? caught.message : t('notifications.reminderLoadError')
     }
   } finally {
     if (currentRequest === requestId) isLoading.value = false
@@ -81,7 +96,7 @@ async function setEnabled(enabled: boolean) {
   } catch (caught) {
     if (currentRequest === requestId) {
       if (caught instanceof DOMException && caught.name === 'AbortError') return
-      const message = caught instanceof Error ? caught.message : 'Не удалось изменить напоминание.'
+      const message = caught instanceof Error ? caught.message : t('notifications.reminderSaveError')
       await load()
       if (currentOrganizationId === props.organizationId && currentMaintenanceId === props.maintenanceId) {
         error.value = message
@@ -109,31 +124,31 @@ onBeforeUnmount(() => {
       <div class="record-visit-reminder__identity">
         <span class="record-visit-reminder__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3 2" /></svg></span>
         <div>
-          <h4 id="maintenance-visit-reminder-title">Напоминание о визите</h4>
-          <p v-if="previewOnly" class="record-visit-reminder__detail">Автоматически напомните клиенту о записи.</p>
+          <h4 id="maintenance-visit-reminder-title">{{ t('notifications.visitReminder') }}</h4>
+          <p v-if="previewOnly" class="record-visit-reminder__detail">{{ t('notifications.automaticReminderHint') }}</p>
           <p class="record-visit-reminder__detail" v-if="reminder">{{ statusDetail }}</p>
         </div>
       </div>
       <div class="record-visit-reminder__controls">
-        <UiButton v-if="previewOnly" variant="secondary" disabled>Настроить</UiButton>
+        <UiButton v-if="previewOnly" variant="secondary" disabled>{{ t('notifications.configure') }}</UiButton>
         <span v-if="reminder" class="record-visit-reminder__status" :class="{ 'record-visit-reminder__status--error': reminder.statusCode === 'failed', 'record-visit-reminder__status--muted': reminder.statusCode === 'disabled' }">{{ statusLabel }}</span>
         <UiButton v-if="reminder?.canEdit" variant="secondary" :disabled="isLoading || isSaving" @click="setEnabled(!reminder.enabled)">
-          {{ isSaving ? 'Сохраняем…' : reminder.enabled ? 'Отключить' : 'Включить' }}
+          {{ isSaving ? t('notifications.saving') : reminder.enabled ? t('notifications.disable') : t('notifications.enable') }}
         </UiButton>
       </div>
     </header>
     <div v-if="previewOnly" class="record-visit-reminder__message">
-      <div class="record-visit-reminder__message-label"><span>Предпросмотр сообщения</span><span>Telegram / MAX</span></div>
-      <p class="record-visit-reminder__preview">Напоминаем о вашей записи на завтра. Будем ждать вас в назначенное время!</p>
+      <div class="record-visit-reminder__message-label"><span>{{ t('notifications.preview') }}</span><span>Telegram / MAX</span></div>
+      <p class="record-visit-reminder__preview">{{ t('notifications.demoReminder') }}</p>
     </div>
-    <UiLoader v-else-if="isLoading && !reminder" text="Загружаем напоминание…" />
-    <p v-else-if="error" class="ui-field__error" role="alert">{{ error }} <UiButton variant="secondary" @click="load">Повторить</UiButton></p>
+    <UiLoader v-else-if="isLoading && !reminder" :text="t('notifications.loadingReminder')" />
+    <p v-else-if="error" class="ui-field__error" role="alert">{{ error }} <UiButton variant="secondary" @click="load">{{ t('notifications.retry') }}</UiButton></p>
     <template v-else-if="reminder">
       <div v-if="reminder.preview" class="record-visit-reminder__message">
-        <div class="record-visit-reminder__message-label"><span>Предпросмотр сообщения</span><span>{{ channelName(reminder.channelCode) }}</span></div>
+        <div class="record-visit-reminder__message-label"><span>{{ t('notifications.preview') }}</span><span>{{ channelName(reminder.channelCode) }}</span></div>
         <p class="record-visit-reminder__preview">{{ reminder.preview }}</p>
       </div>
-      <p v-else class="record-visit-reminder__detail">Для просмотра текста нужны права на просмотр клиентов и автомобилей.</p>
+      <p v-else class="record-visit-reminder__detail">{{ t('notifications.previewPermissions') }}</p>
     </template>
   </section>
 </template>

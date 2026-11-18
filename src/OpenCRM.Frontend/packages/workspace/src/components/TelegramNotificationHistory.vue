@@ -1,31 +1,36 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../notificationMessages'
+import { computed } from 'vue'
 import type { TelegramNotificationRecord } from '../api/telegramNotifications'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ timeZoneId?: string | null; notifications: TelegramNotificationRecord[] }>()
 
-const eventLabels: Record<string, string> = {
-  booking_created: 'Запись создана',
-  booking_changed: 'Запись перенесена',
-  booking_cancelled: 'Запись отменена',
-  ready: 'Автомобиль готов'
-}
+const eventLabels = computed<Record<string, string>>(() => ({
+  booking_created: t('notifications.bookingCreated'),
+  booking_changed: t('notifications.bookingChanged'),
+  booking_cancelled: t('notifications.bookingCancelled'),
+  ready: t('notifications.vehicleReady')
+}))
 
-const statusLabels: Record<string, string> = {
-  queued: 'Ожидает отправки',
-  processing: 'Отправляется',
-  retrying: 'Повторная попытка',
-  sent: 'Принято Telegram',
-  simulated: 'Проверка без отправки',
-  failed: 'Ошибка отправки',
-  skipped: 'Не отправлено: данные изменились'
-}
+const statusLabels = computed<Record<string, string>>(() => ({
+  queued: t('notifications.awaitingSend'),
+  processing: t('notifications.processing'),
+  retrying: t('notifications.retrying'),
+  sent: t('notifications.acceptedTelegram'),
+  simulated: t('notifications.testWithoutSending'),
+  failed: t('notifications.sendError'),
+  skipped: t('notifications.skippedChanged')
+}))
 </script>
 
 <template>
   <div v-if="notifications.length" class="notification-history">
     <div v-for="item in notifications" :key="item.id" class="notification-history__item">
       <strong>Telegram · {{ eventLabels[item.eventCode] ?? item.eventCode }}</strong>
-      <span>{{ statusLabels[item.status] ?? item.status }} · {{ new Date(item.sentAt ?? item.createdAt).toLocaleString('ru-RU', { timeZone: props.timeZoneId || 'UTC' }) }}</span>
+      <span>{{ statusLabels[item.status] ?? item.status }} · {{ new Date(item.sentAt ?? item.createdAt).toLocaleString(formattingCulture, { timeZone: props.timeZoneId || 'UTC' }) }}</span>
       <p>{{ item.body }}</p>
     </div>
   </div>

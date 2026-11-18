@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { formattingCulture, formatLocaleCurrency } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import { buildImportRecoveryReport } from '../importRecoveryReport'
 import { remapImportProfileMappings } from '../importProfileStructure.mjs'
+import { importMessage } from '../importMessages'
+import { importRowMessage } from '../importRowMessage'
 import {
   confirmOrganizationImport,
   deleteOrganizationImportProfile,
@@ -32,6 +37,8 @@ import {
   type OrganizationImportSummary
 } from '../api/imports'
 
+const workspaceCurrency = useWorkspaceCurrency()
+
 const props = defineProps<{ organizationId: string, userId: string, timeZoneId?: string | null }>()
 
 type MappingKind = OrganizationImportMapping['kind']
@@ -44,6 +51,7 @@ type TextCandidateField =
   | 'model'
   | 'vin'
   | 'plate'
+  | 'registrationCountryCode'
   | 'year'
   | 'clientExternalId'
   | 'clientPhone'
@@ -82,88 +90,89 @@ type LocalRecovery = {
 }
 
 const mappingFields: Array<{ key: string, label: string, kind: OrganizationImportMapping['kind'] }> = [
-  { key: 'clientId', label: 'Внешний ID клиента', kind: 'client' },
-  { key: 'clientName', label: 'Имя клиента', kind: 'client' },
-  { key: 'clientPhone', label: 'Телефон клиента', kind: 'client' },
-  { key: 'clientComment', label: 'Комментарий клиента', kind: 'client' },
-  { key: 'vehicleId', label: 'ID автомобиля', kind: 'vehicle' },
-  { key: 'vehicleExternalId', label: 'Внешний ID автомобиля', kind: 'vehicle' },
-  { key: 'vehicleName', label: 'Название автомобиля', kind: 'vehicle' },
-  { key: 'brand', label: 'Марка', kind: 'vehicle' },
-  { key: 'model', label: 'Модель', kind: 'vehicle' },
-  { key: 'vin', label: 'VIN', kind: 'vehicle' },
-  { key: 'plate', label: 'Госномер', kind: 'vehicle' },
-  { key: 'year', label: 'Год', kind: 'vehicle' },
-  { key: 'vehicleClientId', label: 'Внешний ID владельца', kind: 'vehicle' },
-  { key: 'vehicleClientPhone', label: 'Телефон владельца', kind: 'vehicle' },
-  { key: 'orderId', label: 'Внешний ID заказа', kind: 'order' },
-  { key: 'orderStatus', label: 'Статус заказа (completed или cancelled)', kind: 'order' },
-  { key: 'occurredAt', label: 'Дата заказа (ISO 8601)', kind: 'order' },
-  { key: 'orderComment', label: 'Комментарий к заказу', kind: 'order' },
-  { key: 'orderType', label: 'Тип обслуживания', kind: 'order' },
-  { key: 'amount', label: 'Сумма', kind: 'order' },
-  { key: 'discountAmount', label: 'Скидка', kind: 'order' },
-  { key: 'partyClientId', label: 'Внешний ID клиента-покупателя', kind: 'order' },
-  { key: 'partyName', label: 'Имя покупателя (снимок)', kind: 'order' },
-  { key: 'detailName', label: 'Название услуги или работы', kind: 'order-line' },
-  { key: 'detailDescription', label: 'Описание строки', kind: 'order-line' },
-  { key: 'quantity', label: 'Количество', kind: 'order-line' },
-  { key: 'unitPrice', label: 'Цена за единицу', kind: 'order-line' },
-  { key: 'partyClientId', label: 'Внешний ID клиента-плательщика', kind: 'payment' },
-  { key: 'partyName', label: 'Имя плательщика (снимок)', kind: 'payment' },
-  { key: 'paymentMethod', label: 'Способ оплаты', kind: 'payment' },
-  { key: 'amount', label: 'Сумма оплаты', kind: 'payment' },
-  { key: 'occurredAt', label: 'Дата оплаты (ISO 8601)', kind: 'payment' },
-  { key: 'cancelledAt', label: 'Дата отмены оплаты (ISO 8601)', kind: 'payment' },
-  { key: 'actorName', label: 'Автор оплаты', kind: 'payment' },
-  { key: 'historyComment', label: 'Комментарий к оплате', kind: 'payment' },
-  { key: 'occurredAt', label: 'Дата события (ISO 8601)', kind: 'history' },
-  { key: 'actorName', label: 'Исполнитель или автор', kind: 'history' },
-  { key: 'eventType', label: 'Тип события', kind: 'history' },
-  { key: 'historyComment', label: 'Комментарий события', kind: 'history' }
+  { key: 'clientId', label: 'clientExternalId', kind: 'client' },
+  { key: 'clientName', label: 'clientName', kind: 'client' },
+  { key: 'clientPhone', label: 'clientPhone', kind: 'client' },
+  { key: 'clientComment', label: 'clientComment', kind: 'client' },
+  { key: 'vehicleId', label: 'vehicleId', kind: 'vehicle' },
+  { key: 'vehicleExternalId', label: 'vehicleExternalId', kind: 'vehicle' },
+  { key: 'vehicleName', label: 'vehicleName', kind: 'vehicle' },
+  { key: 'brand', label: 'brand', kind: 'vehicle' },
+  { key: 'model', label: 'model', kind: 'vehicle' },
+  { key: 'vin', label: 'vin', kind: 'vehicle' },
+  { key: 'plate', label: 'plate', kind: 'vehicle' },
+  { key: 'year', label: 'year', kind: 'vehicle' },
+  { key: 'vehicleClientId', label: 'ownerExternalId', kind: 'vehicle' },
+  { key: 'vehicleClientPhone', label: 'ownerPhone', kind: 'vehicle' },
+  { key: 'orderId', label: 'orderExternalId', kind: 'order' },
+  { key: 'orderStatus', label: 'orderStatus', kind: 'order' },
+  { key: 'occurredAt', label: 'orderDate', kind: 'order' },
+  { key: 'orderComment', label: 'orderComment', kind: 'order' },
+  { key: 'orderType', label: 'serviceType', kind: 'order' },
+  { key: 'amount', label: 'amount', kind: 'order' },
+  { key: 'discountAmount', label: 'discount', kind: 'order' },
+  { key: 'partyClientId', label: 'buyerClientId', kind: 'order' },
+  { key: 'partyName', label: 'buyerName', kind: 'order' },
+  { key: 'detailName', label: 'serviceName', kind: 'order-line' },
+  { key: 'detailDescription', label: 'lineDescription', kind: 'order-line' },
+  { key: 'quantity', label: 'quantity', kind: 'order-line' },
+  { key: 'unitPrice', label: 'unitPrice', kind: 'order-line' },
+  { key: 'partyClientId', label: 'payerClientId', kind: 'payment' },
+  { key: 'partyName', label: 'payerName', kind: 'payment' },
+  { key: 'paymentMethod', label: 'paymentMethod', kind: 'payment' },
+  { key: 'amount', label: 'paymentAmount', kind: 'payment' },
+  { key: 'occurredAt', label: 'paymentDate', kind: 'payment' },
+  { key: 'cancelledAt', label: 'paymentCancelledDate', kind: 'payment' },
+  { key: 'actorName', label: 'paymentAuthor', kind: 'payment' },
+  { key: 'historyComment', label: 'paymentComment', kind: 'payment' },
+  { key: 'occurredAt', label: 'eventDate', kind: 'history' },
+  { key: 'actorName', label: 'eventAuthor', kind: 'history' },
+  { key: 'eventType', label: 'eventType', kind: 'history' },
+  { key: 'historyComment', label: 'eventComment', kind: 'history' }
 ]
 
 const clientFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'externalId', label: 'Внешний ID' },
-  { key: 'name', label: 'Имя клиента' },
-  { key: 'phone', label: 'Телефон' },
-  { key: 'comment', label: 'Комментарий' }
+  { key: 'externalId', label: 'externalId' },
+  { key: 'name', label: 'clientName' },
+  { key: 'phone', label: 'phone' },
+  { key: 'comment', label: 'comment' }
 ]
 const vehicleFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'externalId', label: 'Внешний ID' },
-  { key: 'name', label: 'Автомобиль' },
-  { key: 'brand', label: 'Марка' },
-  { key: 'model', label: 'Модель' },
-  { key: 'vin', label: 'VIN' },
-  { key: 'plate', label: 'Госномер' },
-  { key: 'year', label: 'Год' },
-  { key: 'clientExternalId', label: 'Внешний ID клиента' },
-  { key: 'clientPhone', label: 'Телефон клиента' }
+  { key: 'externalId', label: 'externalId' },
+  { key: 'name', label: 'vehicleName' },
+  { key: 'brand', label: 'brand' },
+  { key: 'model', label: 'model' },
+  { key: 'vin', label: 'vin' },
+  { key: 'plate', label: 'plate' },
+  { key: 'registrationCountryCode', label: 'registrationCountryCode' },
+  { key: 'year', label: 'year' },
+  { key: 'clientExternalId', label: 'clientExternalId' },
+  { key: 'clientPhone', label: 'clientPhone' }
 ]
 const orderFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'externalId', label: 'Внешний ID заказа' }, { key: 'vehicleExternalId', label: 'Внешний ID автомобиля' },
-  { key: 'orderStatus', label: 'Статус (completed или cancelled)' },
-  { key: 'occurredAt', label: 'Дата заказа (ISO 8601)' }, { key: 'orderComment', label: 'Комментарий' },
-  { key: 'orderType', label: 'Тип обслуживания' }, { key: 'amount', label: 'Сумма' },
-  { key: 'discountAmount', label: 'Скидка' }, { key: 'clientExternalId', label: 'Внешний ID покупателя' },
-  { key: 'partyName', label: 'Покупатель (снимок имени)' }
+  { key: 'externalId', label: 'orderExternalId' }, { key: 'vehicleExternalId', label: 'vehicleExternalId' },
+  { key: 'orderStatus', label: 'orderStatusShort' },
+  { key: 'occurredAt', label: 'orderDate' }, { key: 'orderComment', label: 'comment' },
+  { key: 'orderType', label: 'serviceType' }, { key: 'amount', label: 'amount' },
+  { key: 'discountAmount', label: 'discount' }, { key: 'clientExternalId', label: 'buyerExternalId' },
+  { key: 'partyName', label: 'buyerSnapshot' }
 ]
 const orderLineFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'orderExternalId', label: 'Внешний ID заказа' }, { key: 'name', label: 'Услуга или работа' },
-  { key: 'detailDescription', label: 'Описание' }, { key: 'quantity', label: 'Количество' },
-  { key: 'unitPrice', label: 'Цена за единицу' }
+  { key: 'orderExternalId', label: 'orderExternalId' }, { key: 'name', label: 'serviceOrWork' },
+  { key: 'detailDescription', label: 'description' }, { key: 'quantity', label: 'quantity' },
+  { key: 'unitPrice', label: 'unitPrice' }
 ]
 const paymentFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'orderExternalId', label: 'Внешний ID заказа' }, { key: 'amount', label: 'Сумма' },
-  { key: 'paymentMethod', label: 'Способ оплаты' }, { key: 'occurredAt', label: 'Дата оплаты (ISO 8601)' },
-  { key: 'cancelledAt', label: 'Дата отмены (ISO 8601)' }, { key: 'actorName', label: 'Автор оплаты' },
-  { key: 'historyComment', label: 'Комментарий к оплате' },
-  { key: 'clientExternalId', label: 'Внешний ID плательщика' }, { key: 'partyName', label: 'Плательщик (снимок имени)' }
+  { key: 'orderExternalId', label: 'orderExternalId' }, { key: 'amount', label: 'amount' },
+  { key: 'paymentMethod', label: 'paymentMethod' }, { key: 'occurredAt', label: 'paymentDate' },
+  { key: 'cancelledAt', label: 'paymentCancelled' }, { key: 'actorName', label: 'paymentAuthor' },
+  { key: 'historyComment', label: 'paymentComment' },
+  { key: 'clientExternalId', label: 'payerExternalId' }, { key: 'partyName', label: 'payerName' }
 ]
 const historyFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'orderExternalId', label: 'Внешний ID заказа' }, { key: 'occurredAt', label: 'Дата события (ISO 8601)' },
-  { key: 'actorName', label: 'Исполнитель или автор' }, { key: 'eventType', label: 'Тип события' },
-  { key: 'historyComment', label: 'Комментарий события' }
+  { key: 'orderExternalId', label: 'orderExternalId' }, { key: 'occurredAt', label: 'eventDate' },
+  { key: 'actorName', label: 'eventAuthor' }, { key: 'eventType', label: 'eventType' },
+  { key: 'historyComment', label: 'eventComment' }
 ]
 const recoveryCandidateFields: MutableCandidateField[] = [
   'externalId', 'name', 'phone', 'comment', 'brand', 'model', 'vin', 'plate', 'year',
@@ -250,13 +259,13 @@ const sourceRequiredForBusiness = computed(() => {
 const serverMappingPreview = computed(() => rows.value
   .filter(row => row.tableId === selectedTable.value?.id)
   .slice(0, 3)
-  .map(row => ({ row, result: `${row.name || row.externalId || row.orderExternalId || row.paymentMethod || 'Без названия'} · ${row.message || statusLabel(row.status)}` })))
+  .map(row => ({ row, result: `${row.name || row.externalId || row.orderExternalId || row.paymentMethod || importMessage('fallbackTitle')} · ${importRowMessage(row) || statusLabel(row.status)}` })))
 const filteredRows = computed(() => isBatch.value ? rows.value : rows.value.filter(row => {
   if (kindFilter.value !== 'all' && row.kind !== kindFilter.value) return false
   if (statusFilter.value !== 'all' && row.status !== statusFilter.value) return false
   if (search.value.trim()) {
     const query = search.value.trim().toLocaleLowerCase('ru-RU')
-    const searchable = [row.name, row.phone, row.plate, row.vin, row.externalId, row.message, row.linkedClientName]
+    const searchable = [row.name, row.phone, row.plate, row.vin, row.externalId, importRowMessage(row), row.linkedClientName]
       .filter(Boolean).join(' ').toLocaleLowerCase('ru-RU')
     if (!searchable.includes(query)) return false
   }
@@ -283,10 +292,10 @@ const editFields = computed(() => {
   return [...new Map(fields.map(field => [field.key, field])).values()]
 })
 const compactFields: Array<{ key: TextCandidateField, label: string }> = [
-  { key: 'externalId', label: 'Внешний ID' },
-  { key: 'name', label: 'Имя / название' },
-  { key: 'occurredAt', label: 'Дата' },
-  { key: 'amount', label: 'Сумма' }
+  { key: 'externalId', label: 'externalId' },
+  { key: 'name', label: 'combinedName' },
+  { key: 'occurredAt', label: 'date' },
+  { key: 'amount', label: 'amount' }
 ]
 const tableFields = computed(() => kindFilter.value === 'all' ? compactFields : editFields.value)
 const summaryCounts = computed(() => draft.value?.counts ?? {})
@@ -383,7 +392,7 @@ function readRecovery(key = recoveryKey.value): LocalRecovery | null {
     }
     return value
   } catch {
-    recoveryError.value = 'Локальное восстановление недоступно. Не закрывайте страницу до завершения серверного сохранения.'
+    recoveryError.value = importMessage('localRecoveryUnavailable')
     return null
   }
 }
@@ -413,7 +422,7 @@ function persistRecovery() {
     window.sessionStorage.setItem(recoveryKey.value, JSON.stringify(recovery))
     recoveryError.value = ''
   } catch {
-    recoveryError.value = 'Не удалось сохранить локальную копию правок. Дождитесь серверного сохранения и не закрывайте страницу.'
+    recoveryError.value = importMessage('localCopySaveError')
   }
 }
 
@@ -430,7 +439,7 @@ function clearRecovery(draftId: string, revision?: number) {
     window.sessionStorage.removeItem(key)
     recoveryError.value = ''
   } catch {
-    recoveryError.value = 'Не удалось очистить локальную копию. Проверьте черновик перед закрытием страницы.'
+    recoveryError.value = importMessage('localCopyClearError')
   }
 }
 
@@ -574,7 +583,7 @@ async function pollBatchUntilSettled(
       mergeBatchPage(latest, rowsDirty.value)
     }
     if (latest.state === 'failed') {
-      errorMessage.value = latest.error || 'Фоновая обработка завершилась с ошибкой.'
+      errorMessage.value = latest.error || importMessage('batchBackgroundError')
     }
     return latest
   } finally {
@@ -600,11 +609,11 @@ async function initializeOrganization() {
     if (draftList.status === 'fulfilled') drafts.value = draftList.value
     else throw draftList.reason
     if (profileList.status === 'fulfilled') profiles.value = profileList.value
-    else profileError.value = profileList.reason instanceof Error ? profileList.reason.message : 'Не удалось загрузить профили импорта.'
+    else profileError.value = profileList.reason instanceof Error ? profileList.reason.message : importMessage('profileLoadError')
   } catch (error) {
     if (!current(generation, organizationId)) return
     isAccessLoaded.value = true
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить импорты.'
+    errorMessage.value = error instanceof Error ? error.message : importMessage('importsLoadError')
   }
 }
 
@@ -690,7 +699,7 @@ async function openDraft(draftId: string) {
       }
     }
   } catch (error) {
-    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть черновик.'
+    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('draftOpenError')
   } finally {
     if (current(generation, organizationId)) {
       isBusy.value = false
@@ -716,7 +725,7 @@ function downloadRecovery() {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `импорт-${recovery.draftId}-локальные-правки-v${recovery.revision}.csv`
+  link.download = importMessage('localEditsFilename', { draftId: recovery.draftId, revision: recovery.revision })
   link.click()
   URL.revokeObjectURL(url)
 }
@@ -733,7 +742,7 @@ function restoreRecovery() {
   if (pending.recovery.mappings) {
     const knownTableIds = new Set(draft.value.data.tables.map(table => table.id))
     if (pending.recovery.mappings.some(mapping => !mapping || !knownTableIds.has(mapping.tableId))) {
-      recoveryError.value = 'Локальное сопоставление не подходит к этому файлу. Откройте актуальную версию без локальных правок.'
+      recoveryError.value = importMessage('localMappingMismatch')
       return
     }
   }
@@ -777,7 +786,7 @@ async function uploadFile(event: Event) {
   if (!file) return
   input.value = ''
   if (file.size > 50 * 1024 * 1024) {
-    errorMessage.value = 'Файл превышает ограничение 50 МБ.'
+    errorMessage.value = importMessage('fileTooLarge')
     return
   }
   if (rowsDirty.value || mappingDirty.value) {
@@ -802,7 +811,7 @@ async function createDraft(file: File) {
     await loadDraftList(generation, organizationId)
     if (isBatchBusy(result.state)) await pollBatchUntilSettled(result, generation, organizationId, result.id, 'upload')
   } catch (error) {
-    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить файл.'
+    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('fileLoadError')
   } finally {
     if (current(generation, organizationId)) {
       isBusy.value = false
@@ -894,14 +903,14 @@ function transformationPreview(fieldKey: string) {
   return selectedTable.value.rows.slice(0, 3).map(row => {
     const source = columns.map(index => row.values[index]?.trim()).filter(Boolean).join(' ')
     if (!source) return null
-    if (transformation.type === 'value-map') return `${source} → ${transformation.values?.[source] ?? 'нет пары'}`
+    if (transformation.type === 'value-map') return `${source} → ${transformation.values?.[source] ?? importMessage('valueMapNoPair')}`
     if (transformation.type === 'phone') {
       let digits = source.replace(/\D/g, '')
       if (digits.length === 11 && digits.startsWith('8')) digits = `7${digits.slice(1)}`
       return `${source} → ${digits}`
     }
     if (transformation.type === 'decimal') return `${source} → ${source.replace(/[ \u00a0\u202f]/g, '').replace(',', '.')}`
-    return `${source} → будет проверено сервером при построении строк`
+    return `${source} → ${importMessage('valueMapServerCheck')}`
   }).filter((value): value is string => value !== null)
 }
 
@@ -918,7 +927,7 @@ async function saveSourceKey() {
     if (isBatchBusy(result.state)) {
       const settled = await pollBatchUntilSettled(result, organizationGeneration, props.organizationId, draft.value.id, 'validation')
       if (!settled || settled.state === 'failed') {
-        profileError.value = settled?.error || 'Не удалось перепроверить строки после смены источника.'
+        profileError.value = settled?.error || importMessage('sourceRecheckError')
         return false
       }
 
@@ -929,7 +938,7 @@ async function saveSourceKey() {
     sourceKeyDraft.value = result.sourceKey ?? ''
     return true
   } catch (error) {
-    profileError.value = error instanceof Error ? error.message : 'Не удалось сохранить источник данных.'
+    profileError.value = error instanceof Error ? error.message : importMessage('sourceSaveError')
     return false
   } finally {
     isBusy.value = false
@@ -938,7 +947,7 @@ async function saveSourceKey() {
 
 function formatImportMoney(value: number | string) {
   const amount = Number(value)
-  return Number.isFinite(amount) ? `${amount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽` : '—'
+  return Number.isFinite(amount) ? formatLocaleCurrency(amount, workspaceCurrency.value) : '—'
 }
 
 function profileTables(): OrganizationImportProfile['tables'] {
@@ -963,7 +972,7 @@ async function saveProfile() {
     profileNameDraft.value = ''
     profileError.value = ''
   } catch (error) {
-    profileError.value = error instanceof Error ? error.message : 'Не удалось сохранить профиль.'
+    profileError.value = error instanceof Error ? error.message : importMessage('profileSaveError')
   } finally {
     isBusy.value = false
   }
@@ -976,7 +985,7 @@ function profileMatchesCurrentTables(profile: OrganizationImportProfile) {
 function requestApplyProfile() {
   if (!selectedProfile.value || isMappingLocked.value || isBusy.value) return
   if (!profileMatchesCurrentTables(selectedProfile.value)) {
-    profileError.value = 'Структура файла не совпадает с профилем. Сопоставление не изменено.'
+    profileError.value = importMessage('profileStructureMismatch')
     return
   }
 
@@ -1013,7 +1022,7 @@ async function removeProfile() {
     profiles.value = profiles.value.filter(item => item.id !== profile.id)
     selectedProfileId.value = ''
   } catch (error) {
-    profileError.value = error instanceof Error ? error.message : 'Не удалось удалить профиль.'
+    profileError.value = error instanceof Error ? error.message : importMessage('profileDeleteError')
   } finally {
     isBusy.value = false
   }
@@ -1080,10 +1089,10 @@ async function saveMapping() {
     }
     mappingDirty.value = false
     clearRecovery(draftId)
-    successMessage.value = 'Сопоставление сохранено. Строки построены заново, ручные правки сброшены.'
+    successMessage.value = importMessage('mappingSaved')
     await loadDraftList(generation, organizationId)
   } catch (error) {
-    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось сохранить сопоставление.'
+    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('mappingSaveError')
   } finally {
     if (current(generation, organizationId)) {
       isBusy.value = false
@@ -1167,7 +1176,7 @@ function isRowLocked(row: OrganizationImportCandidate) {
 }
 
 function kindLabel(kind: OrganizationImportKind) {
-  return ({ client: 'Клиент', vehicle: 'Автомобиль', order: 'Заказ', 'order-line': 'Строка заказа', payment: 'Оплата', history: 'Событие истории' })[kind]
+  return importMessage(({ client: 'kindClient', vehicle: 'kindVehicle', order: 'kindOrder', 'order-line': 'kindOrderLine', payment: 'kindPayment', history: 'kindHistory' })[kind])
 }
 
 function undoLastEdit() {
@@ -1186,11 +1195,11 @@ function pasteRows(event: ClipboardEvent) {
   if (!/[\t\r\n]/.test(text)) return
   event.preventDefault()
   if (target.dataset.rowIndex === undefined || target.dataset.fieldIndex === undefined) {
-    errorMessage.value = 'Для вставки диапазона используйте основные ячейки таблицы. В раскрытых полях доступна вставка одной ячейки.'
+    errorMessage.value = importMessage('rangePasteMainCells')
     return
   }
   if (text.includes('"')) {
-    errorMessage.value = 'Вставка диапазона с кавычками или переносами внутри ячеек не поддерживается. Скопируйте обычный диапазон без кавычек.'
+    errorMessage.value = importMessage('rangePasteQuotedCells')
     return
   }
   if (!Number.isInteger(startField) || !Number.isInteger(startRow) || startField < 0 || startRow < 0) return
@@ -1202,7 +1211,7 @@ function pasteRows(event: ClipboardEvent) {
   const rowsToEdit = pageRows.value
   const maxColumns = Math.max(...values.map(row => row.length))
   if (startRow + values.length > rowsToEdit.length || startField + maxColumns > fields.length) {
-    errorMessage.value = 'Диапазон выходит за границы текущей страницы или таблицы. Выберите фильтр «Клиенты» или «Автомобили» и вставьте диапазон ещё раз.'
+    errorMessage.value = importMessage('rangePasteOutOfBounds')
     return
   }
 
@@ -1210,14 +1219,14 @@ function pasteRows(event: ClipboardEvent) {
   for (let rowOffset = 0; rowOffset < values.length; rowOffset += 1) {
     const row = rowsToEdit[startRow + rowOffset]
     if (isRowLocked(row)) {
-      errorMessage.value = `Строка ${row.sourceRow} уже импортирована и не редактируется. Вставка отменена полностью.`
+      errorMessage.value = importMessage('rowImportedLocked', { row: row.sourceRow })
       return
     }
     for (let fieldOffset = 0; fieldOffset < values[rowOffset].length; fieldOffset += 1) {
       const field = fields[startField + fieldOffset]
       const rowField = fieldForRow(row, field.key)
       if (!rowField) {
-        errorMessage.value = 'Диапазон включает поля другого типа записи. Выберите фильтр «Клиенты» или «Автомобили» и вставьте диапазон ещё раз.'
+        errorMessage.value = importMessage('rangePasteWrongKind')
         return
       }
       edits.push({ row, field: rowField, value: values[rowOffset][fieldOffset] })
@@ -1239,7 +1248,7 @@ async function saveAndValidate() {
 async function requestQueryChange(next: Partial<OrganizationImportPageQuery>) {
   if (!draft.value || isBusy.value || isSavingRows.value || pendingRecovery.value) return
   if (mappingDirty.value) {
-    errorMessage.value = 'Сначала сохраните сопоставление или отмените его, затем меняйте фильтры.'
+    errorMessage.value = importMessage('saveMappingFirst')
     return
   }
   clearAutosave()
@@ -1272,7 +1281,7 @@ async function requestQueryChange(next: Partial<OrganizationImportPageQuery>) {
       statusFilter.value = oldQuery.status ?? 'all'
       search.value = oldQuery.search ?? ''
       searchDraft.value = search.value
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить страницу импорта.'
+      errorMessage.value = error instanceof Error ? error.message : importMessage('importPageLoadError')
     }
   } finally {
     if (current(generation, organizationId) && draft.value?.id === draftId) isBusy.value = false
@@ -1317,21 +1326,21 @@ async function saveRows() {
       const settled = await pollBatchUntilSettled(result, generation, organizationId, targetDraftId, 'validation')
       if (!settled || settled.state === 'failed') {
         rowSaveStatus.value = 'error'
-        rowSaveError.value = settled?.error || 'Проверка правок завершилась с ошибкой.'
+        rowSaveError.value = settled?.error || importMessage('validationFailed')
         return
       }
       mergeBatchPage(settled, false)
       baselineRows = copyRows(settled.data.rows)
       rowsDirty.value = false
       rowSaveStatus.value = 'saved'
-      successMessage.value = 'Правки сохранены и проверены.'
+      successMessage.value = importMessage('rowEditsSaved')
       clearRecovery(targetDraftId)
       await loadDraftList(generation, organizationId)
       return
     }
     if (draft.value.revision !== targetRevision) {
       rowSaveStatus.value = 'error'
-      rowSaveError.value = 'Версия черновика изменилась на сервере. Откройте его заново перед повторным сохранением.'
+      rowSaveError.value = importMessage('draftRevisionChanged')
       return
     }
     const hasNewerEdits = rowEditGeneration !== targetEditGeneration
@@ -1342,6 +1351,9 @@ async function saveRows() {
         if (!validated) return
         row.status = validated.status
         row.message = validated.message
+        row.messageCode = validated.messageCode
+        row.messageParameters = validated.messageParameters
+        row.messageDetails = validated.messageDetails
         row.matches = validated.matches
         row.linkedClientName = validated.linkedClientName
       })
@@ -1351,7 +1363,7 @@ async function saveRows() {
       draft.value.data.rows = copyRows(result.data.rows)
       rowsDirty.value = false
       rowSaveStatus.value = 'saved'
-      successMessage.value = 'Правки сохранены и проверены.'
+      successMessage.value = importMessage('rowEditsSaved')
     }
     draft.value.revision = result.revision
     draft.value.updatedAt = result.updatedAt
@@ -1361,7 +1373,7 @@ async function saveRows() {
     try {
       await loadDraftList(generation, organizationId)
     } catch (error) {
-      if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось обновить историю.'
+      if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('historyRefreshError')
     }
     if (focusedInput?.element.isConnected && document.activeElement === focusedInput.element && focusedInput.selectionStart !== null && focusedInput.selectionEnd !== null) {
       focusedInput.element.setSelectionRange(focusedInput.selectionStart, focusedInput.selectionEnd)
@@ -1369,7 +1381,7 @@ async function saveRows() {
   } catch (error) {
     if (current(generation, organizationId) && draft.value?.id === targetDraftId) {
       rowSaveStatus.value = 'error'
-      rowSaveError.value = error instanceof Error ? error.message : 'Не удалось сохранить правки.'
+      rowSaveError.value = error instanceof Error ? error.message : importMessage('rowSaveError')
     }
   } finally {
     if (current(generation, organizationId) && draft.value?.id === targetDraftId) {
@@ -1397,10 +1409,10 @@ async function confirmImport() {
       mergeBatchPage(settled, false)
       clearRecovery(draftId)
       successMessage.value = settled.state === 'completed'
-        ? `Импорт завершён. ${resultLabel(settled.result)}`
+        ? importMessage('importCompletedResult', { result: resultLabel(settled.result) })
         : settled.state === 'paused'
-          ? 'Импорт приостановлен. Его можно возобновить.'
-          : 'Импорт завершился без полного результата.'
+          ? importMessage('importPaused')
+          : importMessage('importIncomplete')
       await loadDraftList(generation, organizationId)
       return
     }
@@ -1408,10 +1420,10 @@ async function confirmImport() {
     if (!current(generation, organizationId)) return
     setDraft(result)
     clearRecovery(draftId, revision)
-    successMessage.value = 'Импорт завершён.'
+    successMessage.value = importMessage('importCompleted')
     await loadDraftList(generation, organizationId)
   } catch (error) {
-    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось выполнить импорт.'
+    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('importExecuteError')
   } finally {
     if (current(generation, organizationId)) isBusy.value = false
   }
@@ -1423,7 +1435,7 @@ async function pauseBatch() {
     const result = await pauseOrganizationImportBatch(props.organizationId, draft.value.id, draft.value.revision)
     if (current(organizationGeneration, props.organizationId) && draft.value?.id === result.id) mergeBatchPage(result, rowsDirty.value)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось приостановить импорт.'
+    errorMessage.value = error instanceof Error ? error.message : importMessage('importPauseError')
   }
 }
 
@@ -1441,15 +1453,15 @@ async function resumeBatch() {
     if (!settled) return
     mergeBatchPage(settled, false)
     successMessage.value = settled.state === 'completed'
-      ? `Импорт завершён. ${resultLabel(settled.result)}`
+      ? importMessage('importCompletedResult', { result: resultLabel(settled.result) })
       : settled.state === 'paused'
-        ? 'Импорт приостановлен. Его можно возобновить.'
+        ? importMessage('importPaused')
         : settled.state === 'ready'
-          ? 'Подготовка завершена. Проверьте сопоставление и строки.'
-          : 'Обработка завершилась ошибкой. Можно повторить.'
+          ? importMessage('importPreparationDone')
+          : importMessage('importProcessingFailed')
     await loadDraftList(generation, organizationId)
   } catch (error) {
-    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось возобновить импорт.'
+    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('importResumeError')
   } finally {
     if (current(generation, organizationId) && draft.value?.id === draftId) isBusy.value = false
   }
@@ -1477,58 +1489,68 @@ async function downloadReport() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${draft.value.fileName.replace(/\.[^.]+$/, '')}-отчёт.csv`
+    link.download = importMessage('reportFilename', { file: draft.value.fileName.replace(/\.[^.]+$/, '') })
     link.click()
     URL.revokeObjectURL(url)
   } catch (error) {
-    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось скачать отчёт.'
+    if (current(generation, organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('reportDownloadError')
   } finally {
     if (current(generation, organizationId)) isBusy.value = false
   }
 }
 
 function statusLabel(status: OrganizationImportCandidate['status']) {
-  return ({ create: 'Создать', link: 'Связать', duplicate: 'Дубль', error: 'Ошибка', conflict: 'Конфликт', skip: 'Пропустить' })[status]
+  return importMessage(({ create: 'statusCreate', link: 'statusLink', duplicate: 'statusDuplicate', error: 'statusError', conflict: 'statusConflict', skip: 'statusSkip' })[status])
 }
 
 function plannedActionLabel(row: OrganizationImportCandidate) {
-  if (row.appliedAt) return 'Уже обработано'
+  if (row.appliedAt) return importMessage('alreadyProcessed')
   if (isImported.value) {
-    if (row.status === 'create') return 'Создано'
-    if (row.status === 'link') return 'Использован существующий клиент'
-    return 'Строка пропущена'
+    if (row.status === 'create') return importMessage('statusCreated')
+    if (row.status === 'link') return importMessage('useExistingClient')
+    return importMessage('rowSkippedAction')
   }
 
-  if (row.excluded || row.status === 'skip' || row.status === 'duplicate') return 'Строка будет пропущена'
-  if (row.kind === 'client' && row.createSeparateClient) return 'Будет создан отдельный клиент'
+  if (row.excluded || row.status === 'skip' || row.status === 'duplicate') return importMessage('rowWillSkip')
+  if (row.kind === 'client' && row.createSeparateClient) return importMessage('separateClientWillBeCreated')
   if (row.kind === 'client' && row.existingClientId) {
     const matchName = row.matches.find(match => match.id === row.existingClientId)?.name
-    return `Будет использован существующий клиент: ${row.linkedClientName || matchName || 'выбранный клиент'}`
+    return importMessage('existingClientWillBeUsed', { name: row.linkedClientName || matchName || importMessage('unknownClient') })
   }
   if (row.kind === 'vehicle' && row.linkedClientName) {
-    return `Автомобиль будет связан с клиентом: ${row.linkedClientName}`
+    return importMessage('vehicleWillBeLinked', { name: row.linkedClientName })
   }
 
   return statusLabel(row.status)
 }
 
 function stateLabel(state: OrganizationImportState, importedAt: string | null) {
-  if (importedAt || state === 'completed') return 'завершён'
-  return ({
-    'upload-queued': 'загрузка обрабатывается',
-    'mapping-queued': 'сопоставление строится',
-    'validation-queued': 'строки проверяются',
-    ready: 'готов к проверке',
-    'import-queued': 'импорт в очереди',
-    importing: 'импорт выполняется',
-    paused: 'импорт приостановлен',
-    failed: 'ошибка обработки'
-  } as Partial<Record<OrganizationImportState, string>>)[state] ?? 'черновик'
+  if (importedAt || state === 'completed') return importMessage('stateCompleted')
+  const key = ({
+    'upload-queued': 'stateUploadQueued',
+    'mapping-queued': 'stateMappingQueued',
+    'validation-queued': 'stateValidationQueued',
+    ready: 'stateReady',
+    'import-queued': 'stateImportQueued',
+    importing: 'stateImporting',
+    paused: 'statePaused',
+    failed: 'stateFailed'
+  } as Partial<Record<OrganizationImportState, string>>)[state]
+
+  return importMessage(key ?? 'stateDraft')
 }
 
 function resultLabel(result: OrganizationImportDraft['result']) {
-  if (!result) return 'результат не предоставлен сервером.'
-  return `Клиенты: ${result.createdClients}; автомобили: ${result.createdVehicles}; заказы: ${result.createdOrders ?? 0}; строки заказов: ${result.createdOrderLines ?? 0}; оплаты: ${result.createdPayments ?? 0}; события: ${result.createdHistoryEvents ?? 0}`
+  if (!result) return importMessage('resultUnavailable')
+
+  return importMessage('resultSummary', {
+    clients: result.createdClients,
+    vehicles: result.createdVehicles,
+    orders: result.createdOrders ?? 0,
+    orderLines: result.createdOrderLines ?? 0,
+    payments: result.createdPayments ?? 0,
+    events: result.createdHistoryEvents
+  })
 }
 
 async function reloadHistory() {
@@ -1536,7 +1558,7 @@ async function reloadHistory() {
   try {
     await loadDraftList(generation, props.organizationId)
   } catch (error) {
-    if (current(generation, props.organizationId)) errorMessage.value = error instanceof Error ? error.message : 'Не удалось обновить историю.'
+    if (current(generation, props.organizationId)) errorMessage.value = error instanceof Error ? error.message : importMessage('historyRefreshError')
   }
 }
 </script>
@@ -1545,108 +1567,108 @@ async function reloadHistory() {
   <section v-if="isAccessLoaded && canImport" class="workspace-import workspace-common-subpanel">
     <div class="workspace-subpanel-heading ui-form-header">
       <div>
-        <h3>Импорт данных</h3>
-        <p class="workspace-import__muted">CSV, XLSX и ZIP с CSV до 50 МБ и 100&nbsp;000 строк; SQL — текстовые INSERT или PostgreSQL COPY FROM stdin.</p>
+        <h3>{{ importMessage('title') }}</h3>
+        <p class="workspace-import__muted">{{ importMessage('help') }}</p>
       </div>
-      <UiButton variant="secondary" :disabled="isBusy || isSavingRows || Boolean(pendingDraftChange) || Boolean(pendingRecovery)" @click="fileInput?.click()">Загрузить файл</UiButton>
+      <UiButton variant="secondary" :disabled="isBusy || isSavingRows || Boolean(pendingDraftChange) || Boolean(pendingRecovery)" @click="fileInput?.click()">{{ importMessage('upload') }}</UiButton>
       <input ref="fileInput" class="workspace-import__file" type="file" accept=".csv,.xlsx,.sql,.zip,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/sql,application/zip" :disabled="isBusy" @change="uploadFile">
     </div>
 
     <p v-if="errorMessage" class="workspace-import__message workspace-import__message--error" role="alert">{{ errorMessage }}</p>
     <p v-if="successMessage" class="workspace-import__message workspace-import__message--success" role="status">{{ successMessage }}</p>
     <p v-if="recoveryError" class="workspace-import__message workspace-import__message--error" role="alert">{{ recoveryError }}</p>
-    <div v-if="pendingDraftChange" class="workspace-import__discard" role="alertdialog" aria-label="Несохранённые правки">
-      <span>Есть несохранённые правки. Продолжить и потерять их{{ pendingDraftChange.type === 'upload' ? ` перед загрузкой «${pendingDraftChange.file.name}»` : ' перед открытием другого черновика' }}?</span>
-      <UiButton :disabled="isBusy" @click="confirmDraftChange">Продолжить без сохранения</UiButton>
-      <UiButton variant="secondary" :disabled="isBusy" @click="pendingDraftChange = null">Остаться</UiButton>
+    <div v-if="pendingDraftChange" class="workspace-import__discard" role="alertdialog" :aria-label="importMessage('unsavedChanges')">
+      <span>{{ pendingDraftChange.type === 'upload' ? importMessage('loseChangesBeforeUpload', { file: pendingDraftChange.file.name }) : importMessage('loseChangesBeforeDraft') }}</span>
+      <UiButton :disabled="isBusy" @click="confirmDraftChange">{{ importMessage('continueWithoutSaving') }}</UiButton>
+      <UiButton variant="secondary" :disabled="isBusy" @click="pendingDraftChange = null">{{ importMessage('stay') }}</UiButton>
     </div>
-    <div v-if="isBusy" class="workspace-import__busy" role="status">Обрабатываем запрос…</div>
+    <div v-if="isBusy" class="workspace-import__busy" role="status">{{ importMessage('processingRequest') }}</div>
 
     <div v-if="drafts.length" class="workspace-import__history">
-      <span>Импорты:</span>
+      <span>{{ importMessage('imports') }}</span>
       <button v-for="item in drafts" :key="item.id" type="button" :disabled="isBusy || isSavingRows || Boolean(pendingDraftChange) || Boolean(pendingRecovery)" :class="{ 'is-current': draft?.id === item.id }" @click="requestOpenDraft(item.id)">
         {{ item.fileName }} · {{ stateLabel(item.state, item.importedAt) }}<template v-if="item.totalRows"> · {{ item.processedRows }}/{{ item.totalRows }}</template>
       </button>
-      <button type="button" :disabled="isBusy" @click="reloadHistory">Обновить</button>
+      <button type="button" :disabled="isBusy" @click="reloadHistory">{{ importMessage('refresh') }}</button>
     </div>
 
     <template v-if="draft">
-      <div v-if="pendingRecovery" class="workspace-import__discard" role="alertdialog" aria-label="Восстановление локальных правок">
-        <UiButton variant="secondary" @click="downloadRecovery">Скачать локальные правки (CSV)</UiButton>
+      <div v-if="pendingRecovery" class="workspace-import__discard" role="alertdialog" :aria-label="importMessage('localRecovery')">
+        <UiButton variant="secondary" @click="downloadRecovery">{{ importMessage('downloadLocalChanges') }}</UiButton>
         <template v-if="pendingRecovery.revisionMatches">
-          <span>Найдена локальная копия для версии {{ pendingRecovery.recovery.revision }}. Восстановить её?</span>
-          <UiButton @click="restoreRecovery">Восстановить правки</UiButton>
-          <UiButton variant="secondary" @click="declineRecovery">Удалить локальную копию и открыть серверную версию</UiButton>
+          <span>{{ importMessage('localCopyFound', { revision: pendingRecovery.recovery.revision }) }}</span>
+          <UiButton @click="restoreRecovery">{{ importMessage('restoreChanges') }}</UiButton>
+          <UiButton variant="secondary" @click="declineRecovery">{{ importMessage('removeLocalOpenServer') }}</UiButton>
         </template>
         <template v-else>
-          <span>Локальная копия относится к версии {{ pendingRecovery.recovery.revision }}, а на сервере уже версия {{ draft.revision }}. Она не будет применена автоматически.</span>
-          <UiButton variant="secondary" @click="declineRecovery">Удалить локальную копию и открыть серверную версию</UiButton>
+          <span>{{ importMessage('localRevisionMismatch', { localRevision: pendingRecovery.recovery.revision, serverRevision: draft.revision }) }}</span>
+          <UiButton variant="secondary" @click="declineRecovery">{{ importMessage('removeLocalOpenServer') }}</UiButton>
         </template>
       </div>
       <div class="workspace-import__draft-heading">
         <strong>{{ draft.fileName }}</strong>
-        <span>Версия {{ draft.revision }} · {{ stateLabel(draft.state, draft.importedAt) }} · изменён {{ new Date(draft.updatedAt).toLocaleString('ru-RU', { timeZone: props.timeZoneId || 'UTC' }) }}</span>
+        <span>{{ importMessage('versionUpdated', { revision: draft.revision, state: stateLabel(draft.state, draft.importedAt), date: new Date(draft.updatedAt).toLocaleString(formattingCulture, { timeZone: props.timeZoneId || 'UTC' }) }) }}</span>
       </div>
       <div v-if="isBatch" class="workspace-import__source-key">
-        <label class="workspace-import__field">Источник CRM{{ sourceRequiredForBusiness ? ' (обязателен)' : '' }}
-          <input v-model="sourceKeyDraft" maxlength="120" placeholder="Например: МойСклад, YCLIENTS, crm.example.ru" :disabled="isBusy || isImported || isMappingLocked">
-          <small v-if="sourceRequiredForBusiness">Для переноса заказов, оплат или истории укажите источник и сохраните его до запуска импорта.</small>
-          <small v-else>Укажите одинаковое имя для файлов одной CRM: оно помогает находить повторы между загрузками. Для импорта только клиентов и автомобилей значение можно оставить пустым.</small>
+        <label class="workspace-import__field">{{ importMessage('sourceCrm') }}{{ sourceRequiredForBusiness ? importMessage('required') : '' }}
+          <input v-model="sourceKeyDraft" maxlength="120" :placeholder="importMessage('sourcePlaceholder')" :disabled="isBusy || isImported || isMappingLocked">
+          <small v-if="sourceRequiredForBusiness">{{ importMessage('sourceRequiredHelp') }}</small>
+          <small v-else>{{ importMessage('sourceHelp') }}</small>
         </label>
-        <UiButton variant="secondary" :disabled="isBusy || isImported || !sourceKeyChanged" @click="saveSourceKey">Сохранить источник</UiButton>
+        <UiButton variant="secondary" :disabled="isBusy || isImported || !sourceKeyChanged" @click="saveSourceKey">{{ importMessage('saveSource') }}</UiButton>
       </div>
       <div v-if="isBatch && profiles.length" class="workspace-import__profile-tools">
-        <label class="workspace-import__field">Профиль сопоставления
+        <label class="workspace-import__field">{{ importMessage('mappingProfile') }}
           <select v-model="selectedProfileId" :disabled="isBusy || isImported">
-            <option value="">Выберите профиль</option>
+            <option value="">{{ importMessage('selectProfile') }}</option>
             <option v-for="profile in profiles" :key="profile.id" :value="profile.id">{{ profile.name }} · {{ profile.sourceKey }}</option>
           </select>
         </label>
-        <UiButton variant="secondary" :disabled="!selectedProfile || isBusy || isImported || isMappingLocked" @click="requestApplyProfile">Применить профиль</UiButton>
-        <UiButton variant="secondary" :disabled="!selectedProfile || isBusy" @click="removeProfile">Удалить профиль</UiButton>
+        <UiButton variant="secondary" :disabled="!selectedProfile || isBusy || isImported || isMappingLocked" @click="requestApplyProfile">{{ importMessage('applyProfile') }}</UiButton>
+        <UiButton variant="secondary" :disabled="!selectedProfile || isBusy" @click="removeProfile">{{ importMessage('deleteProfile') }}</UiButton>
       </div>
       <div v-if="isBatch && !isImported" class="workspace-import__profile-tools">
-        <label class="workspace-import__field">Сохранить профиль без данных клиентов
-          <input v-model="profileNameDraft" maxlength="100" placeholder="Например: История из YCLIENTS" :disabled="isBusy || isMappingLocked">
+        <label class="workspace-import__field">{{ importMessage('saveProfileWithoutClients') }}
+          <input v-model="profileNameDraft" maxlength="100" :placeholder="importMessage('profileNamePlaceholder')" :disabled="isBusy || isMappingLocked">
         </label>
-        <UiButton variant="secondary" :disabled="!canSaveProfile" @click="saveProfile">Сохранить профиль</UiButton>
+        <UiButton variant="secondary" :disabled="!canSaveProfile" @click="saveProfile">{{ importMessage('saveProfile') }}</UiButton>
       </div>
       <p v-if="profileError" class="workspace-import__message workspace-import__message--error" role="alert">{{ profileError }}</p>
-      <div v-if="pendingProfile" class="workspace-import__confirm" role="group" aria-label="Подтверждение применения профиля">
-        <p>Профиль «{{ pendingProfile.name }}» заменит сопоставление текущего файла. Сервер заново построит строки и проверит результат. {{ mappingResetCount ? 'Текущие строки и ручные правки будут потеряны.' : '' }}</p>
-        <UiButton :disabled="isBusy || isMappingLocked" @click="applyProfile">Применить и проверить</UiButton>
-        <UiButton variant="secondary" :disabled="isBusy" @click="pendingProfile = null">Отмена</UiButton>
+      <div v-if="pendingProfile" class="workspace-import__confirm" role="group" :aria-label="importMessage('applyProfile')">
+        <p>{{ importMessage('applyProfileConfirmation', { name: pendingProfile.name }) }} {{ mappingResetCount ? importMessage('loseRowsEdits') : '' }}</p>
+        <UiButton :disabled="isBusy || isMappingLocked" @click="applyProfile">{{ importMessage('applyAndCheck') }}</UiButton>
+        <UiButton variant="secondary" :disabled="isBusy" @click="pendingProfile = null">{{ importMessage('cancel') }}</UiButton>
       </div>
       <div v-if="isBatch" class="workspace-import__progress" role="status">
-        <span>{{ draft.processedRows.toLocaleString('ru-RU') }} из {{ draft.totalRows.toLocaleString('ru-RU') }} строк обработано</span>
+        <span>{{ importMessage('rowsProcessed', { processed: draft.processedRows.toLocaleString(formattingCulture), total: draft.totalRows.toLocaleString(formattingCulture) }) }}</span>
         <progress :value="draft.totalRows ? draft.processedRows : 0" :max="Math.max(1, draft.totalRows)"></progress>
         <span v-if="draft.error" class="workspace-import__status--error">{{ draft.error }}</span>
-        <span v-if="draft.result">{{ isImported ? 'Результат' : 'Частичный результат' }}: {{ resultLabel(draft.result) }}</span>
+        <span v-if="draft.result">{{ importMessage(isImported ? 'result' : 'partialResult') }}: {{ resultLabel(draft.result) }}</span>
       </div>
 
       <section class="workspace-import__panel">
         <div class="workspace-import__section-heading ui-section-header">
-          <h4>Листы и сопоставление</h4>
-          <UiButton variant="secondary" :disabled="isBusy" @click="showSource = !showSource">{{ showSource ? 'Скрыть исходную таблицу' : 'Показать исходную таблицу' }}</UiButton>
+          <h4>{{ importMessage('sheetsAndMapping') }}</h4>
+          <UiButton variant="secondary" :disabled="isBusy" @click="showSource = !showSource">{{ importMessage(showSource ? 'hideSource' : 'showSource') }}</UiButton>
         </div>
         <label class="workspace-import__field">
-          Лист файла
+          {{ importMessage('sheetName') }}
           <select v-model="selectedTableId" :disabled="isBusy">
             <option v-for="table in draft.data.tables" :key="table.id" :value="table.id">{{ table.name }}</option>
           </select>
         </label>
         <div v-if="selectedMapping && selectedTable" class="workspace-import__mapping">
           <label class="workspace-import__field">
-            Назначение листа
+            {{ importMessage('sheetPurpose') }}
             <select :value="selectedMapping.kind" :disabled="isMappingLocked" @change="mappingKindChanged(($event.target as HTMLSelectElement).value as MappingKind)">
-              <option value="client">Клиенты</option>
-              <option value="vehicle">Автомобили</option>
-              <option value="order">Заказы</option>
-              <option value="order-line">Строки заказов</option>
-              <option value="payment">Оплаты</option>
-              <option value="history">История</option>
-              <option value="combined">Клиенты и автомобили</option>
-              <option value="ignore">Не импортировать</option>
+              <option value="client">{{ importMessage('client') }}</option>
+              <option value="vehicle">{{ importMessage('vehicle') }}</option>
+              <option value="order">{{ importMessage('order') }}</option>
+              <option value="order-line">{{ importMessage('orderLines') }}</option>
+              <option value="payment">{{ importMessage('payment') }}</option>
+              <option value="history">{{ importMessage('history') }}</option>
+              <option value="combined">{{ importMessage('clientsAndVehicles') }}</option>
+              <option value="ignore">{{ importMessage('ignore') }}</option>
             </select>
           </label>
           <div v-if="visibleMappingFields.length" class="workspace-import__mapping-grid">
@@ -1654,49 +1676,49 @@ async function reloadHistory() {
               {{ field.label }}
               <select multiple :disabled="isMappingLocked" @change="mappingColumnsChanged(field.key, $event)">
                 <option v-for="(column, index) in selectedTable.columns" :key="index" :value="index" :selected="selectedMapping.fields[field.key]?.includes(index) === true">
-                  {{ column || `Столбец ${index + 1}` }}
+                  {{ column || importMessage('column', { number: index + 1 }) }}
                 </option>
               </select>
-              <small>Можно выбрать несколько столбцов, например для составного имени.</small>
+              <small>{{ importMessage('multiColumnHelp') }}</small>
               <template v-if="selectedMapping.fields[field.key]?.length">
-                <select :value="fieldTransformation(field.key)?.type ?? ''" :disabled="isMappingLocked" :aria-label="`Преобразование поля ${field.label}`" @change="mappingTransformationTypeChanged(field.key, ($event.target as HTMLSelectElement).value)">
-                  <option value="">Без дополнительного преобразования</option>
-                  <option value="phone">Телефон: только цифры, 8 в начале → 7</option>
-                  <option value="date-exact">Дата по точному формату → ISO</option>
-                  <option value="decimal">Десятичное число: запятая и пробелы</option>
-                  <option value="value-map">Словарь значений</option>
+                <select :value="fieldTransformation(field.key)?.type ?? ''" :disabled="isMappingLocked" :aria-label="importMessage('transformationAria', { field: importMessage(field.label) })" @change="mappingTransformationTypeChanged(field.key, ($event.target as HTMLSelectElement).value)">
+                  <option value="">{{ importMessage('noTransformation') }}</option>
+                  <option value="phone">{{ importMessage('phoneTransform') }}</option>
+                  <option value="date-exact">{{ importMessage('exactDateTransform') }}</option>
+                  <option value="decimal">{{ importMessage('decimalTransform') }}</option>
+                  <option value="value-map">{{ importMessage('valueMapTransform') }}</option>
                 </select>
-                <select v-if="fieldTransformation(field.key)?.type === 'date-exact'" :value="fieldTransformation(field.key)?.format ?? ''" :disabled="isMappingLocked" aria-label="Формат даты в исходном файле" @change="mappingTransformationFormatChanged(field.key, ($event.target as HTMLSelectElement).value)">
-                  <option value="">Выберите формат исходной даты</option>
+                <select v-if="fieldTransformation(field.key)?.type === 'date-exact'" :value="fieldTransformation(field.key)?.format ?? ''" :disabled="isMappingLocked" :aria-label="importMessage('sourceDateFormat')" @change="mappingTransformationFormatChanged(field.key, ($event.target as HTMLSelectElement).value)">
+                  <option value="">{{ importMessage('selectSourceDateFormat') }}</option>
                   <option v-for="format in ['yyyy-MM-dd', 'dd.MM.yyyy', 'd.M.yyyy', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyyMMdd', 'yyyy-MM-dd HH:mm:ss', 'yyyy-MM-ddTHH:mm:ss', 'yyyy-MM-ddTHH:mm:ssZ', 'dd.MM.yyyy HH:mm:ss', 'dd.MM.yyyy H:mm', 'dd.MM.yyyy HH:mm', 'dd/MM/yyyy HH:mm:ss', 'MM/dd/yyyy HH:mm:ss']" :key="format" :value="format">{{ format }}</option>
                 </select>
-                <textarea v-if="fieldTransformation(field.key)?.type === 'value-map'" :value="mappingValueMapText(field.key)" rows="3" maxlength="30000" placeholder="Одно правило на строку: Исходное значение → целевое" :disabled="isMappingLocked" aria-label="Словарь преобразования значений" @input="mappingValueMapChanged(field.key, $event)"></textarea>
-                <small v-if="fieldTransformation(field.key)?.type === 'value-map'">До 100 пар, например «Завершён → completed». Каждое исходное значение должно иметь пару.</small>
+                <textarea v-if="fieldTransformation(field.key)?.type === 'value-map'" :value="mappingValueMapText(field.key)" rows="3" maxlength="30000" :placeholder="importMessage('valueMapPlaceholder')" :disabled="isMappingLocked" :aria-label="importMessage('valueMapAria')" @input="mappingValueMapChanged(field.key, $event)"></textarea>
+                <small v-if="fieldTransformation(field.key)?.type === 'value-map'">{{ importMessage('valueMapHelp') }}</small>
                 <small v-for="preview in transformationPreview(field.key)" :key="preview" class="workspace-import__transform-preview">{{ preview }}</small>
               </template>
             </label>
           </div>
           <div v-if="serverMappingPreview.length" class="workspace-import__server-preview" role="status">
-            <strong>Первые результаты серверного сопоставления</strong>
-            <span v-for="item in serverMappingPreview" :key="item.row.id">Строка {{ item.row.sourceRow }}: {{ item.result }}</span>
+            <strong>{{ importMessage('serverMappingPreview') }}</strong>
+            <span v-for="item in serverMappingPreview" :key="item.row.id">{{ importMessage('rowPreview', { row: item.row.sourceRow, result: item.result }) }}</span>
           </div>
-          <p v-if="mappingDirty" class="workspace-import__warning" role="status">После сохранения сопоставления строки будут построены заново, ручные правки сбросятся.</p>
+          <p v-if="mappingDirty" class="workspace-import__warning" role="status">{{ importMessage('rowsRebuiltWarning') }}</p>
           <div v-if="canSaveMapping" class="workspace-import__actions">
-            <UiButton :disabled="!canSaveMapping" @click="requestSaveMapping">{{ mappingNeedsBuild ? 'Построить записи' : 'Сохранить сопоставление' }}</UiButton>
-            <UiButton v-if="mappingDirty" variant="secondary" :disabled="isBusy || isSavingRows" @click="cancelMappingChanges">Отменить изменения сопоставления</UiButton>
-            <span v-if="mappingNeedsBuild">Сервер предложил сопоставления. Проверьте их или измените перед построением строк.</span>
-            <span v-else>Сохранённые строки останутся доступны до подтверждения пересоздания.</span>
+            <UiButton :disabled="!canSaveMapping" @click="requestSaveMapping">{{ importMessage(mappingNeedsBuild ? 'buildRows' : 'saveMapping') }}</UiButton>
+            <UiButton v-if="mappingDirty" variant="secondary" :disabled="isBusy || isSavingRows" @click="cancelMappingChanges">{{ importMessage('cancelMappingChanges') }}</UiButton>
+            <span v-if="mappingNeedsBuild">{{ importMessage('serverSuggestedMapping') }}</span>
+            <span v-else>{{ importMessage('savedRowsRemain') }}</span>
           </div>
-          <div v-if="pendingMappingRebuild" class="workspace-import__confirm" role="group" aria-label="Подтверждение пересоздания строк">
-            <p v-if="mappingResetCount">Сопоставление будет сохранено, {{ mappingResetCount }} строк будут пересозданы и их ручные правки будут потеряны.</p>
-            <p v-else>Сопоставление будет сохранено, затем записи будут построены.</p>
-            <UiButton :disabled="!canSaveMapping" @click="saveMapping">Подтвердить и продолжить</UiButton>
-            <UiButton variant="secondary" :disabled="isBusy" @click="pendingMappingRebuild = false">Отмена</UiButton>
+          <div v-if="pendingMappingRebuild" class="workspace-import__confirm" role="group" :aria-label="importMessage('rebuildRowsConfirmation')">
+            <p v-if="mappingResetCount">{{ importMessage('rebuildRowsLoseEdits', { count: mappingResetCount }) }}</p>
+            <p v-else>{{ importMessage('rebuildRows') }}</p>
+            <UiButton :disabled="!canSaveMapping" @click="saveMapping">{{ importMessage('confirmContinue') }}</UiButton>
+            <UiButton variant="secondary" :disabled="isBusy" @click="pendingMappingRebuild = false">{{ importMessage('cancel') }}</UiButton>
           </div>
           <div v-if="showSource" class="workspace-import__source">
             <div class="workspace-import__table-wrap">
               <table>
-                <thead><tr><th>#</th><th v-for="(column, index) in selectedTable.columns" :key="index">{{ column || `Столбец ${index + 1}` }}</th></tr></thead>
+                <thead><tr><th>#</th><th v-for="(column, index) in selectedTable.columns" :key="index">{{ column || importMessage('column', { number: index + 1 }) }}</th></tr></thead>
                 <tbody>
                   <tr v-for="row in selectedTable.rows.slice(0, 20)" :key="row.number">
                     <td>{{ row.number }}</td><td v-for="(column, index) in selectedTable.columns" :key="index">{{ row.values[index] }}</td>
@@ -1704,61 +1726,61 @@ async function reloadHistory() {
                 </tbody>
               </table>
             </div>
-            <small>Показаны первые 20 исходных строк из {{ selectedTable.rows.length }}.</small>
+            <small>{{ importMessage('sampleRows', { count: selectedTable.rows.length }) }}</small>
           </div>
         </div>
       </section>
 
       <section class="workspace-import__panel">
         <div class="workspace-import__section-heading ui-section-header">
-          <h4>{{ isImported ? 'Результаты импорта' : 'Будущие записи' }}</h4>
+          <h4>{{ importMessage(isImported ? 'importResults' : 'futureRows') }}</h4>
           <div class="workspace-import__actions">
-            <UiButton variant="secondary" :disabled="isEditingLocked || !undoSnapshot" @click="undoLastEdit">Отменить правку</UiButton>
-            <UiButton :disabled="isBusy || isSavingRows || isImported || isBatchFailed || mappingDirty || !rows.length" @click="saveAndValidate">{{ rowSaveStatus === 'error' ? 'Повторить сохранение' : 'Сохранить и проверить' }}</UiButton>
+            <UiButton variant="secondary" :disabled="isEditingLocked || !undoSnapshot" @click="undoLastEdit">{{ importMessage('undoEdit') }}</UiButton>
+            <UiButton :disabled="isBusy || isSavingRows || isImported || isBatchFailed || mappingDirty || !rows.length" @click="saveAndValidate">{{ importMessage(rowSaveStatus === 'error' ? 'retrySave' : 'saveAndCheck') }}</UiButton>
           </div>
         </div>
-        <p v-if="rowSaveStatus === 'pending'" class="workspace-import__busy" role="status">{{ mappingDirty ? 'Сохраните или отмените сопоставление, чтобы продолжить автосохранение строк.' : 'Изменения будут сохранены автоматически.' }}</p>
-        <p v-else-if="rowSaveStatus === 'saving'" class="workspace-import__busy" role="status">Сохраняем изменения…</p>
-        <p v-else-if="rowSaveStatus === 'saved'" class="workspace-import__message workspace-import__message--success" role="status">Изменения сохранены на сервере.</p>
+        <p v-if="rowSaveStatus === 'pending'" class="workspace-import__busy" role="status">{{ importMessage(mappingDirty ? 'autosavePrerequisite' : 'autosavePending') }}</p>
+        <p v-else-if="rowSaveStatus === 'saving'" class="workspace-import__busy" role="status">{{ importMessage('savingChanges') }}</p>
+        <p v-else-if="rowSaveStatus === 'saved'" class="workspace-import__message workspace-import__message--success" role="status">{{ importMessage('savedOnServer') }}</p>
         <div v-else-if="rowSaveStatus === 'error'" class="workspace-import__message workspace-import__message--error" role="alert">
-          {{ rowSaveError }} Нажмите «Повторить сохранение» или обновите версию черновика.
-          <UiButton variant="secondary" :disabled="isSavingRows" @click="reloadCurrentDraft">Обновить черновик</UiButton>
+          {{ rowSaveError }} {{ importMessage('retryOrReload') }}
+          <UiButton variant="secondary" :disabled="isSavingRows" @click="reloadCurrentDraft">{{ importMessage('reloadDraft') }}</UiButton>
         </div>
         <div class="workspace-import__filters">
-          <label class="workspace-import__field">Поиск
+          <label class="workspace-import__field">{{ importMessage('search') }}
             <input v-model="searchDraft" type="search" :disabled="isBusy || isSavingRows" @keydown.enter.prevent="requestQueryChange({ page: 1, search: searchDraft })">
           </label>
-          <UiButton variant="secondary" :disabled="isBusy || isSavingRows" @click="requestQueryChange({ page: 1, search: searchDraft })">Найти</UiButton>
-          <label class="workspace-import__field">Тип
+          <UiButton variant="secondary" :disabled="isBusy || isSavingRows" @click="requestQueryChange({ page: 1, search: searchDraft })">{{ importMessage('find') }}</UiButton>
+          <label class="workspace-import__field">{{ importMessage('type') }}
             <select :value="kindFilter" :disabled="isBusy || isSavingRows" @change="requestQueryChange({ page: 1, kind: ($event.target as HTMLSelectElement).value })">
-              <option value="all">Все</option><option value="client">Клиенты</option><option value="vehicle">Автомобили</option><option value="order">Заказы</option><option value="order-line">Строки заказов</option><option value="payment">Оплаты</option><option value="history">История</option>
+              <option value="all">{{ importMessage('all') }}</option><option value="client">{{ importMessage('client') }}</option><option value="vehicle">{{ importMessage('vehicle') }}</option><option value="order">{{ importMessage('order') }}</option><option value="order-line">{{ importMessage('orderLines') }}</option><option value="payment">{{ importMessage('payment') }}</option><option value="history">{{ importMessage('history') }}</option>
             </select>
           </label>
-          <label class="workspace-import__field">Проверка
+          <label class="workspace-import__field">{{ importMessage('statusCheck') }}
             <select :value="statusFilter" :disabled="isBusy || isSavingRows" @change="requestQueryChange({ page: 1, status: ($event.target as HTMLSelectElement).value })">
-              <option value="all">Все</option><option value="create">Создать</option><option value="link">Связать</option><option value="duplicate">Дубли</option><option value="error">Ошибки</option><option value="conflict">Конфликты</option><option value="skip">Пропущенные</option>
+              <option value="all">{{ importMessage('all') }}</option><option value="create">{{ importMessage('create') }}</option><option value="link">{{ importMessage('link') }}</option><option value="duplicate">{{ importMessage('duplicates') }}</option><option value="error">{{ importMessage('errors') }}</option><option value="conflict">{{ importMessage('conflicts') }}</option><option value="skip">{{ importMessage('skipped') }}</option>
             </select>
           </label>
-          <label class="workspace-import__field workspace-import__exclude"><input type="checkbox" :checked="pageRows.length > 0 && pageRows.every(row => row.excluded)" :disabled="isEditingLocked || pageRows.some(row => row.appliedAt)" @change="updatePageExcluded"> Исключить страницу</label>
-          <span>{{ filteredRowCount.toLocaleString('ru-RU') }} строк · страница {{ page }} из {{ pageCount }}</span>
+          <label class="workspace-import__field workspace-import__exclude"><input type="checkbox" :checked="pageRows.length > 0 && pageRows.every(row => row.excluded)" :disabled="isEditingLocked || pageRows.some(row => row.appliedAt)" @change="updatePageExcluded"> {{ importMessage('excludePage') }}</label>
+          <span>{{ importMessage('rowsPage', { count: filteredRowCount.toLocaleString(formattingCulture), page, pages: pageCount }) }}</span>
         </div>
-        <p v-if="rowsDirty" class="workspace-import__warning">Есть несохранённые правки. Сначала сохраните и проверьте строки.</p>
+        <p v-if="rowsDirty" class="workspace-import__warning">{{ importMessage('unsavedRows') }}</p>
         <div class="workspace-import__table-wrap" @paste="pasteRows">
             <table class="workspace-import__candidates" :class="{ 'is-compact': kindFilter === 'all' }">
             <thead>
-              <tr><th>Строка</th><th>Тип / состояние</th><th>Исключить</th><th v-for="field in tableFields" :key="field.key">{{ field.label }}</th><th v-if="kindFilter === 'all'">Поля</th><th>Связь с клиентом</th><th>Проверка</th></tr>
+              <tr><th>{{ importMessage('row') }}</th><th>{{ importMessage('typeState') }}</th><th>{{ importMessage('exclude') }}</th><th v-for="field in tableFields" :key="field.key">{{ importMessage(field.label) }}</th><th v-if="kindFilter === 'all'">{{ importMessage('fields') }}</th><th>{{ importMessage('clientLink') }}</th><th>{{ importMessage('check') }}</th></tr>
             </thead>
             <tbody>
               <template v-for="(row, rowIndex) in pageRows" :key="row.id">
               <tr :class="{ 'is-excluded': row.excluded, 'is-applied': row.appliedAt }">
                 <td>{{ row.sourceRow }}</td>
                 <td>{{ kindLabel(row.kind) }}<small>{{ plannedActionLabel(row) }}</small></td>
-                <td><input type="checkbox" :checked="row.excluded" :disabled="isRowLocked(row)" aria-label="Исключить строку" @change="updateRow(row, 'excluded', ($event.target as HTMLInputElement).checked)"></td>
+                <td><input type="checkbox" :checked="row.excluded" :disabled="isRowLocked(row)" :aria-label="importMessage('rowExcluded')" @change="updateRow(row, 'excluded', ($event.target as HTMLInputElement).checked)"></td>
                 <td v-for="(field, fieldIndex) in tableFields" :key="field.key">
                   <input
                     v-if="fieldForRow(row, field.key)"
                     :value="candidateValue(row, field.key)"
-                    :aria-label="`${field.label}, строка ${row.sourceRow}`"
+                    :aria-label="importMessage('fieldRowAria', { field: importMessage(field.label), row: row.sourceRow })"
                     :data-row-index="rowIndex"
                     :data-field-index="fieldIndex"
                     :disabled="isInputDisabled || Boolean(row.appliedAt)"
@@ -1767,16 +1789,16 @@ async function reloadHistory() {
                     @input="updateTableCell(row, field.key, $event)"
                   >
                 </td>
-                <td v-if="kindFilter === 'all'"><button type="button" class="workspace-import__expand" :disabled="isBusy" :aria-expanded="expandedRowId === row.id" @click="toggleExpandedRow(row.id)">{{ expandedRowId === row.id ? 'Скрыть поля' : 'Все поля' }}</button></td>
+                <td v-if="kindFilter === 'all'"><button type="button" class="workspace-import__expand" :disabled="isBusy" :aria-expanded="expandedRowId === row.id" @click="toggleExpandedRow(row.id)">{{ importMessage(expandedRowId === row.id ? 'hideFields' : 'allFields') }}</button></td>
                 <td>
-                  <select v-if="row.kind === 'client'" :value="row.createSeparateClient ? '__new' : row.existingClientId ?? ''" :aria-label="`Решение о совпадениях для строки ${row.sourceRow}`" :disabled="isRowLocked(row)" @focus="rememberUndo" @change="updateExistingClient(row, ($event.target as HTMLSelectElement).value)">
-                    <option value="">Проверить совпадения</option>
-                    <option value="__new">Создать отдельного клиента</option>
+                  <select v-if="row.kind === 'client'" :value="row.createSeparateClient ? '__new' : row.existingClientId ?? ''" :aria-label="importMessage('matchDecision', { row: row.sourceRow })" :disabled="isRowLocked(row)" @focus="rememberUndo" @change="updateExistingClient(row, ($event.target as HTMLSelectElement).value)">
+                    <option value="">{{ importMessage('checkMatches') }}</option>
+                    <option value="__new">{{ importMessage('createSeparateClient') }}</option>
                     <option v-for="match in row.matches" :key="match.id" :value="match.id">{{ match.name }} · {{ match.phone }}</option>
                   </select>
-                  <span v-else>{{ row.linkedClientName || row.clientExternalId || row.clientPhone || 'Не указан' }}</span>
+                  <span v-else>{{ row.linkedClientName || row.clientExternalId || row.clientPhone || importMessage('notSpecified') }}</span>
                 </td>
-                <td><span :class="`workspace-import__status workspace-import__status--${row.status}`">{{ row.appliedAt ? (row.status === 'create' ? 'Создано' : row.status === 'link' ? 'Связано' : 'Пропущено') : row.message || statusLabel(row.status) }}</span></td>
+                <td><span :class="`workspace-import__status workspace-import__status--${row.status}`">{{ row.appliedAt ? importMessage(row.status === 'create' ? 'created' : row.status === 'link' ? 'linked' : 'rowSkipped') : importRowMessage(row) || statusLabel(row.status) }}</span></td>
               </tr>
               <tr v-if="kindFilter === 'all' && expandedRowId === row.id" class="workspace-import__expanded-row">
                 <td :colspan="tableFields.length + 6">
@@ -1785,7 +1807,7 @@ async function reloadHistory() {
                       {{ field.label }}
                       <input
                         :value="row[field.key] ?? ''"
-                        :aria-label="`${field.label}, строка ${row.sourceRow}`"
+                        :aria-label="importMessage('fieldRowAria', { field: importMessage(field.label), row: row.sourceRow })"
                         :disabled="isInputDisabled || Boolean(row.appliedAt)"
                         :readonly="isSavingRows"
                         @focus="rememberUndo"
@@ -1796,66 +1818,66 @@ async function reloadHistory() {
                 </td>
               </tr>
               </template>
-              <tr v-if="!pageRows.length"><td :colspan="tableFields.length + (kindFilter === 'all' ? 6 : 5)">Нет строк по выбранным условиям.</td></tr>
+              <tr v-if="!pageRows.length"><td :colspan="tableFields.length + (kindFilter === 'all' ? 6 : 5)">{{ importMessage('noRows') }}</td></tr>
             </tbody>
           </table>
         </div>
         <div class="workspace-import__pagination">
-          <button type="button" :disabled="page <= 1 || isBusy || isSavingRows" @click="requestQueryChange({ page: page - 1 })">Назад</button>
-          <button type="button" :disabled="page >= pageCount || isBusy || isSavingRows" @click="requestQueryChange({ page: page + 1 })">Дальше</button>
-          <span>Вставьте диапазон из Excel через Ctrl+V в ячейку таблицы.</span>
+          <button type="button" :disabled="page <= 1 || isBusy || isSavingRows" @click="requestQueryChange({ page: page - 1 })">{{ importMessage('previous') }}</button>
+          <button type="button" :disabled="page >= pageCount || isBusy || isSavingRows" @click="requestQueryChange({ page: page + 1 })">{{ importMessage('next') }}</button>
+          <span>{{ importMessage('pasteFromExcel') }}</span>
         </div>
       </section>
 
       <section class="workspace-import__panel workspace-import__review">
-        <div class="workspace-import__section-heading ui-section-header"><h4>Проверка перед импортом</h4><span>{{ draft.importedAt ? 'Импорт уже выполнен' : 'Подтвердите итог после сохранения правок' }}</span></div>
-        <p v-if="mappingDirty" class="workspace-import__warning" role="status">Сопоставление изменено и не сохранено. Подтверждение заблокировано.</p>
-        <p v-if="sourceRequiredForBusiness && !draft.sourceKey?.trim()" class="workspace-import__warning" role="status">Для бизнес-данных сохраните источник CRM. Импорт заказов, оплат и истории без источника заблокирован.</p>
+        <div class="workspace-import__section-heading ui-section-header"><h4>{{ importMessage('preImportCheck') }}</h4><span>{{ importMessage(draft.importedAt ? 'importAlreadyDone' : 'confirmAfterEdits') }}</span></div>
+        <p v-if="mappingDirty" class="workspace-import__warning" role="status">{{ importMessage('mappingUnsaved') }}</p>
+        <p v-if="sourceRequiredForBusiness && !draft.sourceKey?.trim()" class="workspace-import__warning" role="status">{{ importMessage('businessSourceRequired') }}</p>
         <div class="workspace-import__totals">
           <template v-if="!isBatch || draft.result">
-            <span>Клиенты: <strong>{{ draft.result?.createdClients ?? summary.clients }}</strong></span>
-            <span>Автомобили: <strong>{{ draft.result?.createdVehicles ?? summary.vehicles }}</strong></span>
+            <span>{{ importMessage('customersCount') }} <strong>{{ draft.result?.createdClients ?? summary.clients }}</strong></span>
+            <span>{{ importMessage('vehiclesCount') }} <strong>{{ draft.result?.createdVehicles ?? summary.vehicles }}</strong></span>
           </template>
-          <span v-if="isBatch && !draft.result">К переносу готово: <strong>{{ summaryCounts.create ?? 0 }}</strong></span>
-          <span v-if="isBatch && !draft.result">Связаны с существующим клиентом: <strong>{{ summaryCounts.link ?? 0 }}</strong></span>
+          <span v-if="isBatch && !draft.result">{{ importMessage('readyToImport') }} <strong>{{ summaryCounts.create ?? 0 }}</strong></span>
+          <span v-if="isBatch && !draft.result">{{ importMessage('existingLinks') }} <strong>{{ summaryCounts.link ?? 0 }}</strong></span>
           <template v-if="draft.result">
-            <span>Заказы: <strong>{{ draft.result.createdOrders }}</strong></span>
-            <span>Строки заказов: <strong>{{ draft.result.createdOrderLines }}</strong></span>
-            <span>Оплаты: <strong>{{ draft.result.createdPayments }}</strong></span>
-            <span>История: <strong>{{ draft.result.createdHistoryEvents }}</strong></span>
+            <span>{{ importMessage('ordersCount') }} <strong>{{ draft.result.createdOrders }}</strong></span>
+            <span>{{ importMessage('orderLinesCount') }} <strong>{{ draft.result.createdOrderLines }}</strong></span>
+            <span>{{ importMessage('paymentsCount') }} <strong>{{ draft.result.createdPayments }}</strong></span>
+            <span>{{ importMessage('historyCount') }} <strong>{{ draft.result.createdHistoryEvents }}</strong></span>
           </template>
-          <span v-if="!isBatch || draft.result">Связаны клиенты: <strong>{{ draft.result?.linkedClients ?? summary.linked }}</strong></span>
-          <span>Пропущено: <strong>{{ draft.result?.skipped ?? summary.skipped }}</strong></span>
-          <span v-if="summary.problems" class="workspace-import__status--error">Ошибок и конфликтов: {{ summary.problems }}</span>
+          <span v-if="!isBatch || draft.result">{{ importMessage('linkedClients') }} <strong>{{ draft.result?.linkedClients ?? summary.linked }}</strong></span>
+          <span>{{ importMessage('skippedCount') }} <strong>{{ draft.result?.skipped ?? summary.skipped }}</strong></span>
+          <span v-if="summary.problems" class="workspace-import__status--error">{{ importMessage('problemCount', { count: summary.problems }) }}</span>
         </div>
         <div v-if="isBatch && !draft.result && draft.data.reconciliation" class="workspace-import__reconciliation">
-          <strong>Предварительный итог</strong>
-          <span>Новые клиенты: {{ draft.data.reconciliation.newClients }} · существующие связи: {{ draft.data.reconciliation.linkedClients }}</span>
-          <span>Новые автомобили: {{ draft.data.reconciliation.newVehicles }} · уже есть: {{ draft.data.reconciliation.existingVehicles }}</span>
-          <span>Заказы: {{ draft.data.reconciliation.newOrders }} · оплаты: {{ draft.data.reconciliation.newPayments }} · события: {{ draft.data.reconciliation.newHistoryEvents }}</span>
-          <span>Сумма заказов: {{ formatImportMoney(draft.data.reconciliation.orderTotal) }} · активные оплаты: {{ formatImportMoney(draft.data.reconciliation.activePaymentsTotal) }} · ожидаемый долг: {{ formatImportMoney(draft.data.reconciliation.outstandingTotal) }}</span>
-          <small v-if="summary.problems">Суммы предварительные: в файле есть ошибки или конфликты, итог изменится после их исправления.</small>
+          <strong>{{ importMessage('preliminaryResult') }}</strong>
+          <span>{{ importMessage('newExistingClients', { newCount: draft.data.reconciliation.newClients, existingCount: draft.data.reconciliation.linkedClients }) }}</span>
+          <span>{{ importMessage('newExistingVehicles', { newCount: draft.data.reconciliation.newVehicles, existingCount: draft.data.reconciliation.existingVehicles }) }}</span>
+          <span>{{ importMessage('newOrdersPaymentsHistory', { orders: draft.data.reconciliation.newOrders, payments: draft.data.reconciliation.newPayments, events: draft.data.reconciliation.newHistoryEvents }) }}</span>
+          <span>{{ importMessage('financialTotals', { orders: formatImportMoney(draft.data.reconciliation.orderTotal), payments: formatImportMoney(draft.data.reconciliation.activePaymentsTotal), debt: formatImportMoney(draft.data.reconciliation.outstandingTotal) }) }}</span>
+          <small v-if="summary.problems">{{ importMessage('preliminaryAmounts') }}</small>
         </div>
         <div class="workspace-import__actions">
-          <UiButton v-if="isImported" variant="secondary" :disabled="isBusy" @click="downloadReport">Скачать CSV-отчёт</UiButton>
-          <UiButton v-else-if="isBatch && ['paused', 'failed'].includes(draft.state)" :disabled="isBusy" @click="resumeBatch">{{ draft.state === 'failed' ? 'Повторить обработку' : 'Возобновить импорт' }}</UiButton>
-          <UiButton v-else-if="isBatch && activeOperation === 'import'" variant="secondary" :disabled="activeOperation !== 'import'" @click="pauseBatch">Приостановить после текущей партии</UiButton>
-          <UiButton v-else-if="!isImported" :disabled="!canConfirm" @click="confirmSummaryOpen = true">Подтвердить импорт</UiButton>
+          <UiButton v-if="isImported" variant="secondary" :disabled="isBusy" @click="downloadReport">{{ importMessage('downloadCsvReport') }}</UiButton>
+          <UiButton v-else-if="isBatch && ['paused', 'failed'].includes(draft.state)" :disabled="isBusy" @click="resumeBatch">{{ importMessage(draft.state === 'failed' ? 'retryProcessing' : 'resumeImport') }}</UiButton>
+          <UiButton v-else-if="isBatch && activeOperation === 'import'" variant="secondary" :disabled="activeOperation !== 'import'" @click="pauseBatch">{{ importMessage('pauseAfterBatch') }}</UiButton>
+          <UiButton v-else-if="!isImported" :disabled="!canConfirm" @click="confirmSummaryOpen = true">{{ importMessage('confirmImport') }}</UiButton>
         </div>
-        <div v-if="confirmSummaryOpen" class="workspace-import__confirm" role="group" aria-label="Подтверждение импорта">
-          <p v-if="isBatch">Будут обработаны {{ draft.totalRows.toLocaleString('ru-RU') }} строк. К запуску готовы: {{ summaryCounts.create ?? 0 }}, существующие связи: {{ summaryCounts.link ?? 0 }}, пропуски: {{ summary.skipped }}. Ошибок и конфликтов: {{ summary.problems }}.</p>
-          <p v-else>Будут созданы {{ summary.clients }} клиентов и {{ summary.vehicles }} автомобилей; с существующими клиентами будут связаны {{ summary.linked }}, пропусков: {{ summary.skipped }}.</p>
-          <UiButton :disabled="!canConfirm" @click="confirmImport">{{ isBatch ? 'Запустить импорт' : `Импортировать ${summary.clients + summary.vehicles + summary.linked} записей` }}</UiButton>
-          <UiButton variant="secondary" :disabled="isBusy" @click="confirmSummaryOpen = false">Отмена</UiButton>
+        <div v-if="confirmSummaryOpen" class="workspace-import__confirm" role="group" :aria-label="importMessage('importConfirmation')">
+          <p v-if="isBatch">{{ importMessage('batchImportConfirmation', { rows: draft.totalRows.toLocaleString(formattingCulture), create: summaryCounts.create ?? 0, link: summaryCounts.link ?? 0, skipped: summary.skipped, problems: summary.problems }) }}</p>
+          <p v-else>{{ importMessage('simpleImportConfirmation', { clients: summary.clients, vehicles: summary.vehicles, linked: summary.linked, skipped: summary.skipped }) }}</p>
+          <UiButton :disabled="!canConfirm" @click="confirmImport">{{ isBatch ? importMessage('startImport') : importMessage('importRecords', { count: summary.clients + summary.vehicles + summary.linked }) }}</UiButton>
+          <UiButton variant="secondary" :disabled="isBusy" @click="confirmSummaryOpen = false">{{ importMessage('cancel') }}</UiButton>
         </div>
       </section>
     </template>
 
-    <div v-else-if="!drafts.length && !isBusy" class="workspace-import__empty">Загрузите CSV, XLSX, ZIP с CSV или поддерживаемую SQL-выгрузку, чтобы подготовить перенос данных организации.</div>
+    <div v-else-if="!drafts.length && !isBusy" class="workspace-import__empty">{{ importMessage('uploadEmpty') }}</div>
   </section>
   <div v-else-if="isAccessLoaded && errorMessage" class="workspace-common-subpanel workspace-import-access-error" role="alert">
     {{ errorMessage }}
-    <UiButton variant="secondary" @click="initializeOrganization">Повторить проверку доступа</UiButton>
+    <UiButton variant="secondary" @click="initializeOrganization">{{ importMessage('retryAccess') }}</UiButton>
   </div>
 </template>
 

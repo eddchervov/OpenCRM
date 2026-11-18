@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -30,6 +31,11 @@ public partial class UsersViewModel : ObservableObject
 
     /// <summary> Применённая сортировка списка. </summary>
     private AdminUsersSort _appliedSort = AdminUsersSort.ByDateDesc;
+
+    private string? _listErrorTranslationKey;
+    private string? _listErrorDetails;
+    private string? _cardErrorTranslationKey;
+    private string? _cardErrorDetails;
 
     /// <summary> Применённый размер страницы. </summary>
     private int _appliedPageSize = 50;
@@ -137,6 +143,26 @@ public partial class UsersViewModel : ObservableObject
         };
     }
 
+    public void RefreshLocalizedValues()
+    {
+        this.OnPropertyChanged(nameof(this.EmailHeader));
+        this.OnPropertyChanged(nameof(this.RegistrationHeader));
+        this.OnPropertyChanged(nameof(this.VehiclesHeader));
+        this.OnPropertyChanged(nameof(this.MaintenanceHeader));
+        this.OnPropertyChanged(nameof(this.OrganizationsHeader));
+        this.OnPropertyChanged(nameof(this.TotalLabel));
+        this.RefreshLocalizedErrors();
+        var selectedUserId = this.SelectedUser?.Id;
+        if (this._list != null)
+        {
+            this.Rows = this._list.Users.Select(user => new AdminUserRow(user)).ToArray();
+            this.SelectedUser = this.Rows.FirstOrDefault(user => user.Id == selectedUserId);
+        }
+
+        this.Card?.RefreshLocalizedValues();
+        this.Management.RefreshLocalizedValues();
+    }
+
     /// <summary> Подтверждённые действия над пользователем и его подписками. </summary>
     public UserManagementViewModel Management { get; }
 
@@ -144,19 +170,19 @@ public partial class UsersViewModel : ObservableObject
     public IReadOnlyList<int> PageSizes { get; } = [25, 50, 100];
 
     /// <summary> Заголовок колонки с электронной почтой. </summary>
-    public string EmailHeader => this.SortLabel("Пользователь", AdminUsersSort.ByEmailAsc);
+    public string EmailHeader => this.SortLabel(AdminLocalization.Instance["core.users.emailHeader"], AdminUsersSort.ByEmailAsc);
 
     /// <summary> Заголовок колонки с датой регистрации. </summary>
-    public string RegistrationHeader => this.SortLabel("Регистрация", AdminUsersSort.ByDateAsc);
+    public string RegistrationHeader => this.SortLabel(AdminLocalization.Instance["core.users.registrationHeader"], AdminUsersSort.ByDateAsc);
 
     /// <summary> Заголовок колонки с количеством техники. </summary>
-    public string VehiclesHeader => this.SortLabel("Техника", AdminUsersSort.ByVehiclesAsc);
+    public string VehiclesHeader => this.SortLabel(AdminLocalization.Instance["core.users.vehiclesHeader"], AdminUsersSort.ByVehiclesAsc);
 
     /// <summary> Заголовок колонки с количеством обслуживаний. </summary>
-    public string MaintenanceHeader => this.SortLabel("ТО", AdminUsersSort.ByMaintenanceAsc);
+    public string MaintenanceHeader => this.SortLabel(AdminLocalization.Instance["core.users.maintenanceHeader"], AdminUsersSort.ByMaintenanceAsc);
 
     /// <summary> Заголовок колонки с организациями. </summary>
-    public string OrganizationsHeader => this.SortLabel("Организации", AdminUsersSort.ByOrganizationsAsc);
+    public string OrganizationsHeader => this.SortLabel(AdminLocalization.Instance["core.users.organizationsHeader"], AdminUsersSort.ByOrganizationsAsc);
 
     /// <summary> Событие истечения сессии. </summary>
     public event Action? SessionExpired;
@@ -174,7 +200,8 @@ public partial class UsersViewModel : ObservableObject
     public bool IsEmpty => this._list != null && !this.IsLoading && this.Rows.Count == 0 && !this.HasError;
 
     /// <summary> Подпись общего количества пользователей. </summary>
-    public string TotalLabel => $"Найдено: {this.TotalCount:N0}";
+    public string TotalLabel => string.Format(System.Globalization.CultureInfo.CurrentCulture,
+        AdminLocalization.Instance["core.users.total"], this.TotalCount);
 
     /// <summary> Подпись номера страницы. </summary>
     public string PageLabel => $"{this.Page} / {Math.Max(1, (int)Math.Ceiling((double)this.TotalCount / this._appliedPageSize))}";
@@ -234,8 +261,8 @@ public partial class UsersViewModel : ObservableObject
         this.SelectedUser = null;
         this.Card = null;
         this.IsCardOpen = false;
-        this.ErrorMessage = string.Empty;
-        this.CardErrorMessage = string.Empty;
+        this.ClearListError();
+        this.ClearCardError();
         this.Search = string.Empty;
         this.IncludeDeleted = false;
         this.PageSize = 50;
@@ -412,7 +439,7 @@ public partial class UsersViewModel : ObservableObject
     private async Task RefreshAsync(CancellationToken cancellationToken)
     {
         this.IsLoading = true;
-        this.ErrorMessage = string.Empty;
+        this.ClearListError();
         try
         {
             Func<Task> load = async () =>
@@ -467,7 +494,7 @@ public partial class UsersViewModel : ObservableObject
         await this.OpenCardCommand.ExecuteAsync(user);
         if (this._isActive && this.IsCardOpen && this.Card != null && this._cardUserId == user.Id)
         {
-            this.Card.SelectedTab = this.Card.Tabs.First(tab => tab.Title.StartsWith("Организации", StringComparison.Ordinal));
+            this.Card.SelectedTab = this.Card.Tabs.First(tab => tab.Id == "organizations");
         }
     }
 
@@ -479,7 +506,7 @@ public partial class UsersViewModel : ObservableObject
     private async Task LoadCardAsync(string userId, CancellationToken cancellationToken)
     {
         this.IsLoadingCard = true;
-        this.CardErrorMessage = string.Empty;
+        this.ClearCardError();
         try
         {
             var overview = await this._sessionClient.GetUserOverviewAsync(userId, cancellationToken);
@@ -509,7 +536,7 @@ public partial class UsersViewModel : ObservableObject
     /// <summary> Применяет загруженные данные к карточке пользователя. </summary>
     private void ApplyCard(AdminUserOverview overview)
     {
-        var previousTab = this.Card?.SelectedTab?.Title.Split('·')[0].Trim();
+        var previousTabId = this.Card?.SelectedTab?.Id;
         var previousOrganizationStatus = this.Card?.OrganizationStatus;
         var previousSubscriptionStatus = this.Card?.SubscriptionStatus;
         this.Card = new UserCardViewModel(overview, this._canViewBilling, this.Management,
@@ -523,7 +550,7 @@ public partial class UsersViewModel : ObservableObject
             this.Card.SubscriptionStatus = previousSubscriptionStatus;
         }
 
-        this.Card.SelectedTab = this.Card.Tabs.FirstOrDefault(tab => tab.Title.Split('·')[0].Trim() == previousTab)
+        this.Card.SelectedTab = this.Card.Tabs.FirstOrDefault(tab => tab.Id == previousTabId)
             ?? this.Card.Tabs[0];
     }
 
@@ -537,7 +564,7 @@ public partial class UsersViewModel : ObservableObject
         this.RefreshCardCommand.Cancel();
         await Task.WhenAll(new[] { this.OpenCardCommand.ExecutionTask, this.RefreshCardCommand.ExecutionTask,
             managementStopped }.OfType<Task>());
-        this.CardErrorMessage = string.Empty;
+        this.ClearCardError();
     }
 
     /// <summary> Обновляет карточку после сохранённого административного изменения. </summary>
@@ -551,7 +578,7 @@ public partial class UsersViewModel : ObservableObject
         await this.LoadCardAsync(this._cardUserId, cancellationToken);
         if (this.HasCardError)
         {
-            throw new ApiException("Изменения сохранены, но карточку не удалось обновить. Нажмите «Обновить».",
+            throw new ApiException(AdminLocalization.Instance["userManagement.success.refreshFailed"],
                 HttpStatusCode.ServiceUnavailable);
         }
     }
@@ -576,13 +603,76 @@ public partial class UsersViewModel : ObservableObject
             return;
         }
 
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportKey)
+        {
+            if (isCard)
+            {
+                this.SetCardError(transportKey, null);
+            }
+            else
+            {
+                this.SetListError(transportKey, null);
+            }
+
+            return;
+        }
+
         if (isCard)
         {
-            this.CardErrorMessage = this.Card == null ? exception.Message : "Не удалось обновить карточку. Показаны прежние данные. " + exception.Message;
+            this.SetCardError(
+                this.Card == null ? null : "core.users.refreshCardFailed",
+                exception.Message);
         }
         else
         {
-            this.ErrorMessage = this.Rows.Count == 0 ? exception.Message : "Не удалось обновить список. Показаны прежние данные. " + exception.Message;
+            this.SetListError(
+                this.Rows.Count == 0 ? null : "core.users.refreshListFailed",
+                exception.Message);
         }
+    }
+
+    private void RefreshLocalizedErrors()
+    {
+        if (this._listErrorTranslationKey != null)
+        {
+            this.ErrorMessage = AdminLocalization.Instance[this._listErrorTranslationKey] + " " + this._listErrorDetails;
+        }
+
+        if (this._cardErrorTranslationKey != null)
+        {
+            this.CardErrorMessage = AdminLocalization.Instance[this._cardErrorTranslationKey] + " " + this._cardErrorDetails;
+        }
+    }
+
+    private void SetListError(string? translationKey, string? details)
+    {
+        this._listErrorTranslationKey = translationKey;
+        this._listErrorDetails = details;
+        this.ErrorMessage = translationKey == null
+            ? details ?? string.Empty
+            : AdminLocalization.Instance[translationKey] + " " + details;
+    }
+
+    private void SetCardError(string? translationKey, string? details)
+    {
+        this._cardErrorTranslationKey = translationKey;
+        this._cardErrorDetails = details;
+        this.CardErrorMessage = translationKey == null
+            ? details ?? string.Empty
+            : AdminLocalization.Instance[translationKey] + " " + details;
+    }
+
+    private void ClearListError()
+    {
+        this._listErrorTranslationKey = null;
+        this._listErrorDetails = null;
+        this.ErrorMessage = string.Empty;
+    }
+
+    private void ClearCardError()
+    {
+        this._cardErrorTranslationKey = null;
+        this._cardErrorDetails = null;
+        this.CardErrorMessage = string.Empty;
     }
 }

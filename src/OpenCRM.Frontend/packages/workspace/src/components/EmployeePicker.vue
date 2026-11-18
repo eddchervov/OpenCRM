@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../pickerMessages'
+import { translate as t } from '@opencrm/ui/i18n'
 import { computed, onMounted, ref, watch } from 'vue'
 import { UiSelect, UiTooltip } from '@opencrm/ui'
 import { loadEmployees, type OrganizationEmployee } from '../api/employees'
@@ -13,8 +15,8 @@ const availabilityError = ref(false)
 let availabilityRequestId = 0
 const options = computed(() => {
   const items = (props.items ?? loaded.value).filter(item => item.isActive || item.id === props.modelValue)
-  const options = [{ value: '', label: props.emptyLabel ?? 'Не назначен' }, ...items.map(item => ({ value: item.id, label: `${item.name}${item.isActive ? '' : ' · архив'}` }))]
-  if (props.modelValue && !items.some(item => item.id === props.modelValue)) options.push({ value: props.modelValue, label: props.currentName || 'Назначенный сотрудник' })
+  const options = [{ value: '', label: props.emptyLabel ?? t('pickers.unassigned') }, ...items.map(item => ({ value: item.id, label: item.isActive ? item.name : t('pickers.archived', { name: item.name }) }))]
+  if (props.modelValue && !items.some(item => item.id === props.modelValue)) options.push({ value: props.modelValue, label: props.currentName || t('pickers.assignedEmployee') })
   return options
 })
 async function load() {
@@ -22,7 +24,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try { loaded.value = (await loadEmployees(props.organizationId)).items }
-  catch (e) { error.value = e instanceof Error ? e.message : 'Не удалось загрузить сотрудников.' }
+  catch (e) { error.value = e instanceof Error ? e.message : t('pickers.employeesError') }
   finally { loading.value = false }
 }
 onMounted(load)
@@ -51,15 +53,15 @@ watch(() => [props.organizationId, props.modelValue, props.plannedStartLocal, pr
 <template>
   <div class="employee-picker">
     <div class="employee-picker__field">
-      <UiSelect :model-value="modelValue || ''" label="Сотрудник" :options="options" :disabled="disabled || loading || !!error" :append-to="appendTo" @update:model-value="emit('update:modelValue', $event)" />
+      <UiSelect :model-value="modelValue || ''" :label="t('pickers.employee')" :options="options" :disabled="disabled || loading || !!error" :append-to="appendTo" @update:model-value="emit('update:modelValue', $event)" />
       <span v-if="isOutsideShift" class="employee-picker__shift-hint">
-        <UiTooltip text="По графику сотрудник вне смены. Назначить можно.">
-          <button type="button" class="employee-picker__shift-warning" aria-label="Сотрудник вне смены: подробности">!</button>
+        <UiTooltip :text="t('pickers.offShift')">
+          <button type="button" class="employee-picker__shift-warning" :aria-label="t('pickers.offShiftDetails')">!</button>
         </UiTooltip>
       </span>
     </div>
-    <p v-if="availabilityError" class="employee-picker__warning">Не удалось проверить график. Назначить можно.</p>
-    <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
+    <p v-if="availabilityError" class="employee-picker__warning">{{ t('pickers.scheduleError') }}</p>
+    <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">{{ t('pickers.retry') }}</button></p>
   </div>
 </template>
 <style scoped>

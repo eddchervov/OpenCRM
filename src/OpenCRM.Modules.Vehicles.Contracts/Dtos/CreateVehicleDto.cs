@@ -37,6 +37,9 @@ public class CreateVehicleDto
     [MaxLength(24, ErrorMessage = "Госномер не должен быть длиннее 24 символов.")]
     public string? RegistrationPlate { get; set; }
 
+    /// <summary> Страна ISO 3166-1 или ZZ для неизвестной страны; пустое значение сохраняет прежние российские правила. </summary>
+    public string? RegistrationCountryCode { get; set; }
+
     /// <summary> Разрешает сохранить безопасный регистрационный номер вне настроенного шаблона. </summary>
     public bool AllowOtherRegistrationPlateFormat { get; set; }
 

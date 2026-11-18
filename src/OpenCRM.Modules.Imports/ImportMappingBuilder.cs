@@ -25,6 +25,10 @@ public static class ImportMappingBuilder
         ["model"] = ["model", "модель"],
         ["vin"] = ["vin", "вин"],
         ["plate"] = ["plate", "registrationplate", "госномер", "регзнак", "номер"],
+        ["registrationCountryCode"] =
+        [
+            "registrationcountrycode", "registrationcountry", "countrycode", "country", "странарегистрации", "странагосномера", "кодстраны"
+        ],
         ["year"] = ["year", "год", "годвыпуска"],
         ["vehicleClientId"] = ["ownerid", "vehicleclientid", "идвладельца", "кодвладельца"],
         ["vehicleClientPhone"] = ["ownerphone", "vehicleclientphone", "телефонвладельца"],
@@ -198,6 +202,7 @@ public static class ImportMappingBuilder
                         Model = Read("model"),
                         Vin = Read("vin"),
                         Plate = Read("plate"),
+                        RegistrationCountryCode = Read("registrationCountryCode"),
                         Year = Read("year"),
                         ClientExternalId = Read("vehicleClientId") ?? (hasClient ? clientId : null),
                         ClientPhone = Read("vehicleClientPhone") ?? (hasClient && clientId == null ? clientPhone : null)
@@ -219,6 +224,7 @@ public static class ImportMappingBuilder
                         Model = Read("model"),
                         Vin = Read("vin"),
                         Plate = Read("plate"),
+                        RegistrationCountryCode = Read("registrationCountryCode"),
                         Year = Read("year"),
                         ClientExternalId = Read("vehicleClientId"),
                         ClientPhone = Read("vehicleClientPhone")
@@ -323,8 +329,8 @@ public static class ImportMappingBuilder
     private static string[] FieldsFor(string kind) => kind switch
     {
         "client" => ["clientId", "clientName", "clientPhone", "clientComment"],
-        "vehicle" => ["vehicleId", "vehicleName", "brand", "model", "vin", "plate", "year", "vehicleClientId", "vehicleClientPhone"],
-        "combined" => ["clientId", "clientName", "clientPhone", "clientComment", "vehicleId", "vehicleName", "brand", "model", "vin", "plate", "year", "vehicleClientId", "vehicleClientPhone"],
+        "vehicle" => ["vehicleId", "vehicleName", "brand", "model", "vin", "plate", "registrationCountryCode", "year", "vehicleClientId", "vehicleClientPhone"],
+        "combined" => ["clientId", "clientName", "clientPhone", "clientComment", "vehicleId", "vehicleName", "brand", "model", "vin", "plate", "registrationCountryCode", "year", "vehicleClientId", "vehicleClientPhone"],
         "order" => ["orderId", "vehicleExternalId", "orderStatus", "occurredAt", "orderType", "amount", "discountAmount", "orderComment", "partyClientId", "partyName"],
         "order-line" => ["orderExternalId", "detailName", "detailDescription", "quantity", "unitPrice"],
         "payment" => ["orderExternalId", "occurredAt", "amount", "paymentMethod", "cancelledAt", "actorName", "historyComment", "partyClientId", "partyName"],

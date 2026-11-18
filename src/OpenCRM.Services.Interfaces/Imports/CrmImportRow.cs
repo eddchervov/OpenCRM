@@ -30,6 +30,9 @@ public sealed class CrmImportRow
     /// <summary> Госномер техники. </summary>
     public string? Plate { get; set; }
 
+    /// <summary> Код страны регистрации техники; пустое значение сохраняет российские правила. </summary>
+    public string? RegistrationCountryCode { get; set; }
+
     /// <summary> Год выпуска техники. </summary>
     public int? Year { get; set; }
 
@@ -41,4 +44,10 @@ public sealed class CrmImportRow
 
     /// <summary> Сообщение о результате обработки строки. </summary>
     public string Message { get; set; } = string.Empty;
+
+    /// <summary> Код системного сообщения обработки строки. </summary>
+    public string? MessageCode { get; set; }
+
+    /// <summary> Параметры системного сообщения обработки строки. </summary>
+    public Dictionary<string, string>? MessageParameters { get; set; }
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../proPreviewMessages'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import type { ProFeatureKey } from '../proFeatureDetails'
@@ -6,6 +8,8 @@ import { proFeatureDetails } from '../proFeatureDetails'
 import WorkspaceProTeamLanding from './WorkspaceProTeamLanding.vue'
 import WorkspaceProFeatureLanding from './WorkspaceProFeatureLanding.vue'
 import WorkspaceProFeatureVisual from './WorkspaceProFeatureVisual.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   open: boolean
@@ -163,15 +167,15 @@ onBeforeUnmount(() => {
       class="workspace-pro-feature-dialog"
       :class="{ 'workspace-pro-feature-dialog--expanded': isExpanded, 'workspace-pro-feature-dialog--landing': !isExpanded }"
       :aria-labelledby="!isExpanded ? titleId : undefined"
-      :aria-label="isExpanded ? `Увеличенный пример: ${detail.title}` : undefined"
+      :aria-label="isExpanded ? t('proPreview.enlargedExample', { title: detail.title }) : undefined"
       @cancel="onDialogCancel"
       @keydown="trapFocus"
       @click="closeFromBackdrop"
       @close="onDialogClose"
     >
       <header class="workspace-pro-feature-dialog__header">
-        <span class="workspace-pro-feature-dialog__eyebrow">Возможность PRO</span>
-        <button ref="closeButton" class="workspace-pro-feature-dialog__close" type="button" :aria-label="isExpanded ? 'Вернуться к описанию' : 'Закрыть'" @click="closeDialog">×</button>
+        <span class="workspace-pro-feature-dialog__eyebrow">{{ t('proPreview.feature') }}</span>
+        <button ref="closeButton" class="workspace-pro-feature-dialog__close" type="button" :aria-label="isExpanded ? t('proPreview.backDescription') : t('proPreview.close')" @click="closeDialog">×</button>
       </header>
 
       <div class="workspace-pro-feature-dialog__content">
@@ -194,36 +198,36 @@ onBeforeUnmount(() => {
           @billing="onBillingClick"
         />
 
-        <div v-if="isExpanded" class="workspace-pro-feature-dialog__zoom-toolbar" aria-label="Масштаб примера">
-          <button ref="backButton" type="button" class="workspace-pro-feature-dialog__zoom-back" @click="returnToDescription">← К описанию</button>
+        <div v-if="isExpanded" class="workspace-pro-feature-dialog__zoom-toolbar" :aria-label="t('proPreview.zoomLabel')">
+          <button ref="backButton" type="button" class="workspace-pro-feature-dialog__zoom-back" @click="returnToDescription">{{ t('proPreview.backDescriptionLink') }}</button>
           <div class="workspace-pro-feature-dialog__zoom-controls">
-            <button type="button" aria-label="Уменьшить пример" :disabled="zoomScale <= 1" @click="decreaseZoom">−</button>
+            <button type="button" :aria-label="t('proPreview.zoomOut')" :disabled="zoomScale <= 1" @click="decreaseZoom">−</button>
             <span aria-live="polite">{{ Math.round(zoomScale * 100) }}%</span>
-            <button type="button" aria-label="Увеличить пример" :disabled="zoomScale >= 3" @click="increaseZoom">+</button>
-            <button type="button" class="workspace-pro-feature-dialog__zoom-fit" :disabled="zoomScale === 1" @click="resetZoom">По размеру окна</button>
+            <button type="button" :aria-label="t('proPreview.zoomIn')" :disabled="zoomScale >= 3" @click="increaseZoom">+</button>
+            <button type="button" class="workspace-pro-feature-dialog__zoom-fit" :disabled="zoomScale === 1" @click="resetZoom">{{ t('proPreview.fitWindow') }}</button>
           </div>
         </div>
 
         <div v-if="isExpanded" class="workspace-pro-feature-dialog__layout" :class="{ 'workspace-pro-feature-dialog__layout--expanded': isExpanded }">
-          <section class="workspace-pro-feature-dialog__visual" :class="{ 'workspace-pro-feature-dialog__visual--expanded': isExpanded }" aria-label="Пример возможности">
-            <div class="workspace-pro-feature-dialog__zoom-viewport" tabindex="0" aria-label="Увеличенный пример; прокручивайте, чтобы посмотреть детали">
+          <section class="workspace-pro-feature-dialog__visual" :class="{ 'workspace-pro-feature-dialog__visual--expanded': isExpanded }" :aria-label="t('proPreview.featureExample')">
+            <div class="workspace-pro-feature-dialog__zoom-viewport" tabindex="0" :aria-label="t('proPreview.zoomViewport')">
               <div class="workspace-pro-feature-dialog__zoom-canvas" :style="{ width: `${zoomScale * 100}%`, zoom: zoomScale }">
                 <img v-if="landingPreview" :src="landingPreview.src" :alt="landingPreview.alt" class="workspace-pro-feature-dialog__landing-image">
                 <WorkspaceProFeatureVisual v-else :feature="feature" />
               </div>
             </div>
-            <span class="workspace-pro-feature-dialog__visual-note">Демонстрационный пример</span>
+            <span class="workspace-pro-feature-dialog__visual-note">{{ t('proPreview.demo') }}</span>
           </section>
         </div>
 
         <p v-if="!isExpanded && !canManageBilling" class="workspace-pro-feature-dialog__notice">
-          Подключение PRO доступно администратору тарифов организации.
+          {{ t('proPreview.billingAdminOnly') }}
         </p>
       </div>
 
       <footer v-if="!isExpanded" class="workspace-pro-feature-dialog__footer">
-        <UiButton variant="secondary" @click="closeDialog">Закрыть</UiButton>
-        <UiButton v-if="canManageBilling" href="#billing" @click="onBillingClick">Перейти к тарифам</UiButton>
+        <UiButton variant="secondary" @click="closeDialog">{{ t('proPreview.close') }}</UiButton>
+        <UiButton v-if="canManageBilling" href="#billing" @click="onBillingClick">{{ t('proPreview.goToPlans') }}</UiButton>
       </footer>
     </dialog>
   </Teleport>

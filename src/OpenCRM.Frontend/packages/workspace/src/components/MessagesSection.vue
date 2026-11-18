@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../conversationMessages'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader, UiSearchInput } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
@@ -6,6 +8,8 @@ import { ConversationRequestError, conversationChannelName, loadClientInbox, typ
 import { useConversationUpdates } from '../composables/conversationUpdates'
 import ConversationThread from './ConversationThread.vue'
 import ClientConversationPanel from './ClientConversationPanel.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext; conversationId?: string; previewOnly?: boolean }>()
 const updates = useConversationUpdates()
@@ -24,9 +28,9 @@ const activeGroup = computed(() => listedActiveGroup.value ?? (openedGroup.value
   (activeClientId.value && openedGroup.value.clientId === activeClientId.value) || openedGroup.value.routes.some(route => route.id === activeId.value)
 ) ? openedGroup.value : undefined))
 watch(listedActiveGroup, group => { if (group) openedGroup.value = group })
-const pageTitle = computed(() => activeId.value || activeClientId.value ? activeGroup.value?.clientName || activeGroup.value?.externalDisplayName || 'Диалог' : 'Сообщения')
+const pageTitle = computed(() => activeId.value || activeClientId.value ? activeGroup.value?.clientName || activeGroup.value?.externalDisplayName || t('conversations.conversation') : t('conversations.messages'))
 const pageBreadcrumbs = computed(() => activeId.value || activeClientId.value
-  ? [{ title: 'Сообщения', href: '#messages' }]
+  ? [{ title: t('conversations.messages'), href: '#messages' }]
   : [])
 const activeRoutes = computed(() => activeGroup.value?.routes.filter(route => !route.isReadOnly) ?? [])
 function groupHref(group: ClientInboxGroup) {
@@ -54,7 +58,7 @@ async function load(more = false, refresh = false) {
         const cursor = result.nextCursor
         const following = await loadClientInbox(props.context.organization.id, { search: search.value, onlyUnread: true, cursor }, active.signal)
         if (active.signal.aborted) return
-        if (following.nextCursor === cursor) throw new Error('Не удалось обновить список. Повторите запрос.')
+        if (following.nextCursor === cursor) throw new Error(t('conversations.refreshListError'))
         result.items.push(...following.items.filter(item => !result.items.some(existing => existing.groupId === item.groupId)))
         result.nextCursor = following.nextCursor
       }
@@ -84,7 +88,7 @@ async function load(more = false, refresh = false) {
       nextCursor.value = null
       hasLoadedMore = false
     }
-    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить диалоги.'
+    error.value = caught instanceof Error ? caught.message : t('conversations.loadConversationsError')
   }
   finally { if (request === active) loading.value = false }
 }
@@ -100,7 +104,7 @@ async function conversationChanged(reason: 'read' | 'sent' | 'linked') {
   await load(false, reason !== 'linked')
 }
 function time(value: string | null) {
-  return value ? new Intl.DateTimeFormat('ru-RU', {
+  return value ? new Intl.DateTimeFormat(formattingCulture.value, {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
     timeZone: props.context.organization.timeZoneId || 'UTC'
   }).format(new Date(value)) : ''
@@ -115,31 +119,31 @@ onBeforeUnmount(() => { request?.abort(); clearTimeout(timer); window.removeEven
 <template>
   <UiCard page :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
     <div class="inbox" :class="{ 'inbox--selected': activeId || activeClientId }">
-      <aside class="inbox__sidebar" aria-label="Диалоги организации">
-        <div class="inbox__filters"><UiSearchInput v-model="search" placeholder="Клиент или сообщение" aria-label="Поиск диалогов" /><div><button type="button" :aria-pressed="onlyUnread" @click="onlyUnread = !onlyUnread">Непрочитанные <span v-if="updates.unreadCount.value">{{ updates.unreadCount.value }}</span></button><span class="inbox__connection" :class="{ 'inbox__connection--online': updates.connected.value }" :title="updates.connected.value ? 'Обновления подключены' : 'Восстанавливаем обновления'" aria-hidden="true"></span></div></div>
+      <aside class="inbox__sidebar" :aria-label="t('conversations.organizationConversations')">
+        <div class="inbox__filters"><UiSearchInput v-model="search" :placeholder="t('conversations.searchPlaceholder')" :aria-label="t('conversations.searchConversations')" /><div><button type="button" :aria-pressed="onlyUnread" @click="onlyUnread = !onlyUnread">{{ t('conversations.unread') }} <span v-if="updates.unreadCount.value">{{ updates.unreadCount.value }}</span></button><span class="inbox__connection" :class="{ 'inbox__connection--online': updates.connected.value }" :title="updates.connected.value ? t('conversations.updatesConnected') : t('conversations.updatesRecovering')" aria-hidden="true"></span></div></div>
         <div class="inbox__list" :aria-busy="loading">
           <div v-if="previewOnly" class="inbox__preview-list" aria-hidden="true">
             <div v-for="index in 5" :key="index" class="inbox__item"><span class="inbox__avatar"></span><span class="inbox__preview"><i></i><i></i><i></i></span></div>
           </div>
-          <p v-else-if="error" class="inbox__empty" role="alert">{{ error }} <UiButton variant="secondary" @click="load()">Повторить</UiButton></p>
-          <UiLoader v-else-if="loading && !items.length" text="Загружаем диалоги…" />
-          <p v-else-if="!items.length" class="inbox__empty">{{ search || onlyUnread ? 'Диалоги не найдены.' : 'Здесь появятся сообщения клиентов вашим ботам в Telegram и MAX.' }}</p>
+          <p v-else-if="error" class="inbox__empty" role="alert">{{ error }} <UiButton variant="secondary" @click="load()">{{ t('conversations.retry') }}</UiButton></p>
+          <UiLoader v-else-if="loading && !items.length" :text="t('conversations.loadingConversations')" />
+          <p v-else-if="!items.length" class="inbox__empty">{{ search || onlyUnread ? t('conversations.noConversations') : t('conversations.conversationsHint') }}</p>
           <a v-for="item in items" :key="item.groupId" :href="groupHref(item)" class="inbox__item" :aria-current="item.groupId === activeGroup?.groupId ? 'page' : undefined">
             <span class="inbox__avatar" aria-hidden="true">{{ (item.clientName || item.externalDisplayName || '?').slice(0, 1).toUpperCase() }}</span>
-            <span class="inbox__preview"><span class="inbox__title">{{ item.clientName || item.externalDisplayName || 'Новый контакт' }}</span><span class="inbox__text">{{ item.lastMessageText || 'Вложение' }}</span><span class="inbox__meta">{{ [...new Set(item.routes.filter(route => !route.isReadOnly).map(route => conversationChannelName(route.channelCode)))].join(' · ') || 'История переписки' }} <span v-if="!item.clientId">· Не связан с клиентом</span></span></span>
-            <span class="inbox__right"><time>{{ time(item.lastMessageAt) }}</time><span v-if="item.unreadCount" class="inbox__badge" :aria-label="`Непрочитанных: ${item.unreadCount}`">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</span></span>
+            <span class="inbox__preview"><span class="inbox__title">{{ item.clientName || item.externalDisplayName || t('conversations.newContact') }}</span><span class="inbox__text">{{ item.lastMessageText || t('conversations.attachment') }}</span><span class="inbox__meta">{{ [...new Set(item.routes.filter(route => !route.isReadOnly).map(route => conversationChannelName(route.channelCode)))].join(' · ') || t('conversations.conversationHistory') }} <span v-if="!item.clientId">· {{ t('conversations.notLinked') }}</span></span></span>
+            <span class="inbox__right"><time>{{ time(item.lastMessageAt) }}</time><span v-if="item.unreadCount" class="inbox__badge" :aria-label="t('conversations.unreadCount', { count: item.unreadCount })">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</span></span>
           </a>
-          <UiButton v-if="nextCursor" variant="secondary" :disabled="loading" @click="load(true)">Ещё диалоги</UiButton>
+          <UiButton v-if="nextCursor" variant="secondary" :disabled="loading" @click="load(true)">{{ t('conversations.moreConversations') }}</UiButton>
         </div>
       </aside>
       <div v-if="previewOnly" class="inbox__preview-thread" aria-hidden="true">
         <div class="inbox__preview-title"><i></i></div>
         <div class="inbox__preview-bubbles"><i></i><i></i><i></i></div>
-        <div class="inbox__preview-compose"><textarea disabled placeholder="Сообщение клиенту"></textarea><UiButton disabled>Отправить</UiButton></div>
+        <div class="inbox__preview-compose"><textarea disabled :placeholder="t('conversations.messageToClient')"></textarea><UiButton disabled>{{ t('conversations.send') }}</UiButton></div>
       </div>
-      <div v-else-if="activeId" class="inbox__thread"><nav v-if="activeRoutes.length > 1" class="inbox__channels" aria-label="Мессенджер клиента"><a v-for="route in activeRoutes" :key="route.id" :href="`#messages/${route.id}`" :aria-current="route.id === activeId ? 'page' : undefined">{{ conversationChannelName(route.channelCode) }}<span v-if="route.unreadCount"> · {{ route.unreadCount }}</span></a></nav><ConversationThread :key="context.organization.id + ':' + activeId" :context="context" :conversation-id="activeId" show-back @changed="conversationChanged" @back="back" /></div>
+      <div v-else-if="activeId" class="inbox__thread"><nav v-if="activeRoutes.length > 1" class="inbox__channels" :aria-label="t('conversations.clientMessenger')"><a v-for="route in activeRoutes" :key="route.id" :href="`#messages/${route.id}`" :aria-current="route.id === activeId ? 'page' : undefined">{{ conversationChannelName(route.channelCode) }}<span v-if="route.unreadCount"> · {{ route.unreadCount }}</span></a></nav><ConversationThread :key="context.organization.id + ':' + activeId" :context="context" :conversation-id="activeId" show-back @changed="conversationChanged" @back="back" /></div>
       <ClientConversationPanel v-else-if="activeClientId" :key="context.organization.id + ':' + activeClientId" :context="context" :client-id="activeClientId" show-back @back="back" />
-      <div v-else class="inbox__placeholder"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 8h32v25H20L8 41V8Z M15 17h18M15 24h12" /></svg><h3>Переписка с клиентами</h3><p>Выберите диалог, чтобы прочитать сообщения и ответить.</p></div>
+      <div v-else class="inbox__placeholder"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 8h32v25H20L8 41V8Z M15 17h18M15 24h12" /></svg><h3>{{ t('conversations.clientConversations') }}</h3><p>{{ t('conversations.chooseConversation') }}</p></div>
     </div>
   </UiCard>
 </template>

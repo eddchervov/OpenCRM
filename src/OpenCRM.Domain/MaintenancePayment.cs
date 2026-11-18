@@ -3,6 +3,8 @@ namespace OpenCRM.Domain;
 /// <summary>Учтённая оплата записи с сохранением отменённых операций.</summary>
 public class MaintenancePayment
 {
+    /// <summary>Код валюты оплаты на момент создания.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     public Guid Id { get; set; }
     public Guid MaintenanceId { get; set; }
     public Maintenance Maintenance { get; set; } = null!;

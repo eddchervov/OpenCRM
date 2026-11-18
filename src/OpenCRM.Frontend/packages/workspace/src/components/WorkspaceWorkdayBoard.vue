@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../workdayBoardMessages'
 import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader, formatDateOnly, parseDateOnly } from '@opencrm/ui'
 import WorkspaceAccessNotice from './WorkspaceAccessNotice.vue'
@@ -24,6 +26,7 @@ type WorkdayBoardGroup = {
 }
 
 const props = defineProps<{ context: WorkspaceContext, showSetup?: boolean }>()
+const { t } = useLocalization()
 const today = ref(formatDateOnly(undefined, props.context.organization.timeZoneId || 'UTC'))
 const selectedDate = ref(today.value)
 const data = ref<WorkspaceWorkday | null>(null)
@@ -52,7 +55,7 @@ const canOpenRecords = computed(() => (props.context.shell.menu ?? []).some(item
 const previewItem = computed(() => stageGroups.value.flatMap(group => group.items).find(entry => entry.item.id === previewId.value)?.item)
 const bookingHref = computed(() => '#maintenance/new?date=' + selectedDate.value)
 const dateHeading = computed(() => {
-  const label = parseDateOnly(selectedDate.value)?.toLocaleDateString('ru-RU', {
+  const label = parseDateOnly(selectedDate.value)?.toLocaleDateString(formattingCulture.value, {
     weekday: 'long', day: 'numeric', month: 'long'
   }) ?? ''
 
@@ -61,33 +64,33 @@ const dateHeading = computed(() => {
 const stageGroups = computed<WorkdayBoardGroup[]>(() => data.value ? [
   {
     code: 'planned',
-    title: 'Запланировано',
-    subtitle: 'Сегодня и просроченные',
-    empty: 'Нет запланированных работ',
+    title: t('workdayBoard.planned'),
+    subtitle: t('workdayBoard.plannedSubtitle'),
+    empty: t('workdayBoard.plannedEmpty'),
     totalCount: data.value.planned.totalCount,
     items: data.value.planned.items.map(item => ({ item, stage: 'planned' }))
   },
   {
     code: 'inProgress',
-    title: 'В работе',
-    subtitle: 'Техника обслуживается сейчас',
-    empty: 'Сейчас нет работ в процессе',
+    title: t('workdayBoard.inProgress'),
+    subtitle: t('workdayBoard.inProgressSubtitle'),
+    empty: t('workdayBoard.inProgressEmpty'),
     totalCount: data.value.inProgress.totalCount,
     items: data.value.inProgress.items.map(item => ({ item, stage: 'inProgress' }))
   },
   {
     code: 'ready',
-    title: 'Готово',
-    subtitle: 'Ожидает передачи',
-    empty: 'Нет готовой к выдаче техники',
+    title: t('workdayBoard.ready'),
+    subtitle: t('workdayBoard.readySubtitle'),
+    empty: t('workdayBoard.readyEmpty'),
     totalCount: data.value.ready.totalCount,
     items: data.value.ready.items.map(item => ({ item, stage: 'ready' }))
   },
   {
     code: 'handedOver',
-    title: 'Выдано',
-    subtitle: 'За выбранный день',
-    empty: 'В этот день выдач не было',
+    title: t('workdayBoard.handedOver'),
+    subtitle: t('workdayBoard.handedOverSubtitle'),
+    empty: t('workdayBoard.handedOverEmpty'),
     totalCount: data.value.handedOver.totalCount,
     items: data.value.handedOver.items.map(item => ({ item, stage: 'handedOver' }))
   }
@@ -97,7 +100,7 @@ const postGroups = computed<WorkdayBoardGroup[]>(() => {
   const grouped = new Map<string, WorkdayBoardEntry[]>()
 
   for (const entry of entries) {
-    const post = entry.item.location?.trim() || 'Без поста'
+    const post = entry.item.location?.trim() || ''
     const postEntries = grouped.get(post) ?? []
     postEntries.push(entry)
     grouped.set(post, postEntries)
@@ -105,10 +108,10 @@ const postGroups = computed<WorkdayBoardGroup[]>(() => {
 
   return Array.from(grouped.entries())
     .sort(([left], [right]) => {
-      if (left === 'Без поста') return 1
-      if (right === 'Без поста') return -1
+      if (left === '') return 1
+      if (right === '') return -1
 
-      return left.localeCompare(right, 'ru')
+      return left.localeCompare(right, formattingCulture.value)
     })
     .map(([post, items], index) => {
       const sortedItems = [...items].sort((left, right) => {
@@ -120,9 +123,9 @@ const postGroups = computed<WorkdayBoardGroup[]>(() => {
 
       return {
         code: 'post-' + index,
-        title: post,
-        subtitle: items.length === 1 ? '1 работа' : items.length < 5 ? items.length + ' работы' : items.length + ' работ',
-        empty: 'На этом посту нет работ',
+        title: post || t('workdayBoard.noPost'),
+        subtitle: t('workdayBoard.jobCount', { count: items.length }),
+        empty: t('workdayBoard.postEmpty'),
         totalCount: items.length,
         items: sortedItems
       }
@@ -149,14 +152,14 @@ async function loadDay() {
     const result = await loadWorkspaceWorkday(props.context.organization.id, selectedDate.value, activeRequest.signal)
     if (request !== activeRequest) return
     data.value = result
-    updatedAt.value = new Intl.DateTimeFormat('ru-RU', {
+    updatedAt.value = new Intl.DateTimeFormat(formattingCulture.value, {
       hour: '2-digit', minute: '2-digit', timeZone: props.context.organization.timeZoneId || 'UTC'
     }).format(new Date())
   } catch (error) {
     if (request !== activeRequest || (activeRequest.signal.aborted && activeRequest.signal.reason !== 'timeout')) return
     errorMessage.value = activeRequest.signal.reason === 'timeout'
-      ? 'Сервер долго не отвечает. Попробуйте обновить рабочий день.'
-      : error instanceof Error ? error.message : 'Не удалось загрузить рабочий день.'
+      ? t('workdayBoard.timeout')
+      : error instanceof Error ? error.message : t('workdayBoard.loadError')
   } finally {
     window.clearTimeout(timeout)
     if (request === activeRequest) isLoading.value = false
@@ -194,69 +197,69 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UiCard page title="Рабочий день">
+  <UiCard page :title="t('workdayBoard.title')">
     <template #actions>
-      <UiButton v-if="canCreate" :href="bookingHref" class="workday-create"><span aria-hidden="true">＋</span> Новая запись</UiButton>
+      <UiButton v-if="canCreate" :href="bookingHref" class="workday-create"><span aria-hidden="true">＋</span> {{ t('workdayBoard.create') }}</UiButton>
     </template>
     <div class="workday">
       <WorkspaceAccessNotice v-if="readOnlyMessage" :message="readOnlyMessage" :can-manage-billing="context.organization.canManageBilling === true" />
       <WorkspaceSetupWizard v-if="showSetup && context.organization.canManageSettings && !isReadOnly" :key="context.organization.id" :organization-id="context.organization.id" :scenario-code="context.shell.scenario?.code" :can-write="!isReadOnly" :can-create="canCreate" />
       <div class="workday-toolbar">
         <div class="workday-date">
-          <button type="button" class="workday-date__nav" aria-label="Предыдущий день" title="Предыдущий день" @click="moveDay(-1)">
+          <button type="button" class="workday-date__nav" :aria-label="t('workdayBoard.previousDay')" :title="t('workdayBoard.previousDay')" @click="moveDay(-1)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
           </button>
           <div class="workday-date__text">
             <h3>{{ dateHeading }}</h3>
-            <span v-if="selectedDate === today" class="workday-date__caption">Сегодня</span>
-            <button v-else type="button" class="workday-today" @click="selectedDate = today">Вернуться к сегодня</button>
+            <span v-if="selectedDate === today" class="workday-date__caption">{{ t('workdayBoard.today') }}</span>
+            <button v-else type="button" class="workday-today" @click="selectedDate = today">{{ t('workdayBoard.returnToday') }}</button>
           </div>
-          <button type="button" class="workday-date__nav" aria-label="Следующий день" title="Следующий день" @click="moveDay(1)">
+          <button type="button" class="workday-date__nav" :aria-label="t('workdayBoard.nextDay')" :title="t('workdayBoard.nextDay')" @click="moveDay(1)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
           </button>
         </div>
-        <div class="workday-view" aria-label="Представление рабочего дня">
-          <button type="button" :aria-pressed="viewMode === 'stages'" @click="viewMode = 'stages'">Этапы</button>
-          <button type="button" :aria-pressed="viewMode === 'posts'" @click="viewMode = 'posts'">Посты</button>
+        <div class="workday-view" :aria-label="t('workdayBoard.view')">
+          <button type="button" :aria-pressed="viewMode === 'stages'" @click="viewMode = 'stages'">{{ t('workdayBoard.stages') }}</button>
+          <button type="button" :aria-pressed="viewMode === 'posts'" @click="viewMode = 'posts'">{{ t('workdayBoard.posts') }}</button>
         </div>
         <div class="workday-toolbar__links">
-          <span v-if="updatedAt" class="workday-updated">Обновлено {{ updatedAt }}</span>
-          <button class="workday-refresh" type="button" aria-label="Обновить рабочий день" title="Обновить" :disabled="isLoading" @click="loadDay">
+          <span v-if="updatedAt" class="workday-updated">{{ t('workdayBoard.updated', { time: updatedAt }) }}</span>
+          <button class="workday-refresh" type="button" :aria-label="t('workdayBoard.refreshDay')" :title="t('workdayBoard.refresh')" :disabled="isLoading" @click="loadDay">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a7.5 7.5 0 0 1 13-1L20 9M4 15l1.5 3a7.5 7.5 0 0 0 13-1"/></svg>
           </button>
         </div>
       </div>
-      <div v-if="hasInquiryActions || hasRepeatVisitActions" class="workday-client-actions" role="group" aria-label="Связаться с клиентами">
-        <strong>Связаться с клиентами</strong>
+      <div v-if="hasInquiryActions || hasRepeatVisitActions" class="workday-client-actions" role="group" :aria-label="t('workdayBoard.contact')">
+        <strong>{{ t('workdayBoard.contact') }}</strong>
         <WorkdayInquiryActions v-if="hasInquiryActions" :organization-id="context.organization.id" :user-id="context.user.id" :date="selectedDate" />
         <WorkdayRepeatVisitActions v-if="hasRepeatVisitActions"
           :organization-id="context.organization.id" :user-id="context.user.id" :date="selectedDate" />
       </div>
       <div v-if="errorMessage" class="workday-error" role="alert">
-        <div><strong>Рабочий день не обновлён</strong><p>{{ errorMessage }}</p></div>
-        <UiButton variant="secondary" :disabled="isLoading" @click="loadDay">Повторить</UiButton>
+        <div><strong>{{ t('workdayBoard.notUpdated') }}</strong><p>{{ errorMessage }}</p></div>
+        <UiButton variant="secondary" :disabled="isLoading" @click="loadDay">{{ t('workdayBoard.retry') }}</UiButton>
       </div>
       <div v-if="isLoading && !data" class="workday-loading">
-        <UiLoader text="Загружаем записи" />
+        <UiLoader :text="t('workdayBoard.loading')" />
       </div>
       <template v-else-if="data">
         <div v-if="!data.hasAnyWork" class="workday-welcome">
           <div class="workday-welcome__illustration" aria-hidden="true">
             <svg viewBox="0 0 200 120"><rect x="18" y="16" width="164" height="94" rx="14"/><path d="M18 42h164M51 8v18M149 8v18"/><path class="workday-car" d="m55 77 9-20h61l14 20 8 5v15H47V82zM55 77h84M67 88h1M127 88h1"/><path d="M62 100v6M132 100v6"/></svg>
           </div>
-          <span class="workday-eyebrow">ВАШ РАБОЧИЙ ДЕНЬ НАЧИНАЕТСЯ ЗДЕСЬ</span>
-          <h3 v-if="canCreate">Первый автомобиль.<br>Первая запись.</h3><h3 v-else>Рабочий день организации</h3>
-          <p v-if="canCreate">Создайте первую запись — она появится на доске и будет двигаться по этапам работы.</p>
-          <UiButton v-if="canCreate" :href="bookingHref" class="workday-create">Записать первого клиента <span aria-hidden="true">↗</span></UiButton>
-          <p v-else class="workday-welcome__muted">В организации пока нет записей.</p>
+          <span class="workday-eyebrow">{{ t('workdayBoard.welcome') }}</span>
+          <h3 v-if="canCreate">{{ t('workdayBoard.firstVehicle') }}<br>{{ t('workdayBoard.firstBooking') }}</h3><h3 v-else>{{ t('workdayBoard.organizationDay') }}</h3>
+          <p v-if="canCreate">{{ t('workdayBoard.welcomeHint') }}</p>
+          <UiButton v-if="canCreate" :href="bookingHref" class="workday-create">{{ t('workdayBoard.bookFirst') }} <span aria-hidden="true">↗</span></UiButton>
+          <p v-else class="workday-welcome__muted">{{ t('workdayBoard.noBookings') }}</p>
         </div>
         <template v-else>
-          <div class="workday-mobile-tabs" aria-label="Группы работ">
+          <div class="workday-mobile-tabs" :aria-label="t('workdayBoard.groups')">
             <button v-for="group in groups" :key="group.code" type="button" :aria-pressed="mobileGroup === group.code" @click="mobileGroup = group.code">{{ group.title }} <span>{{ group.totalCount }}</span></button>
           </div>
           <div v-if="viewMode === 'posts' && !groups.length" class="workday-posts-empty">
-            <strong>На выбранной доске нет работ по постам</strong>
-            <span>Назначьте пост в записи или выберите другой день.</span>
+            <strong>{{ t('workdayBoard.noPostJobs') }}</strong>
+            <span>{{ t('workdayBoard.assignPost') }}</span>
           </div>
           <div v-else class="workday-board" :class="'workday-board--' + viewMode" :aria-busy="isLoading">
             <section v-for="group in groups" :key="group.code" class="workday-column" :class="[`workday-column--${group.code}`, { 'workday-column--mobile-active': mobileGroup === group.code }]" :aria-label="group.title">
@@ -271,13 +274,13 @@ onBeforeUnmount(() => {
                   </svg>
                   {{ group.title }} <span>{{ group.totalCount }}</span>
                 </h3><p>{{ group.subtitle }}</p></div>
-                <a v-if="group.code === 'planned' && canCreate" :href="bookingHref" class="workday-add" aria-label="Добавить запись">＋</a>
+                <a v-if="group.code === 'planned' && canCreate" :href="bookingHref" class="workday-add" :aria-label="t('workdayBoard.add')">＋</a>
               </header>
               <div class="workday-column__body">
                 <WorkspaceWorkdayCard v-for="entry in (expandedGroups.includes(group.code) ? group.items : group.items.slice(0, 5))" :key="entry.item.id" :item="entry.item" :stage="entry.stage" :today="today" :time-zone-id="context.organization.timeZoneId || 'UTC'" :can-open="canOpenRecords" @open="previewId = $event" />
                 <div v-if="!group.items.length" class="workday-column__empty"><span aria-hidden="true">{{ group.code === 'inProgress' ? '✓' : '—' }}</span><p>{{ group.empty }}</p></div>
-                <button v-if="group.items.length > 5 && !expandedGroups.includes(group.code)" type="button" class="workday-more" @click="expandedGroups.push(group.code)">Ещё {{ group.items.length - 5 }} <span aria-hidden="true">↓</span></button>
-                <p v-if="group.totalCount > group.items.length" class="workday-limit">Показаны первые {{ group.items.length }} из {{ group.totalCount }}. Остальные — в разделе записей.</p>
+                <button v-if="group.items.length > 5 && !expandedGroups.includes(group.code)" type="button" class="workday-more" @click="expandedGroups.push(group.code)">{{ t('workdayBoard.more', { count: group.items.length - 5 }) }} <span aria-hidden="true">↓</span></button>
+                <p v-if="group.totalCount > group.items.length" class="workday-limit">{{ t('workdayBoard.limit', { count: group.items.length, total: group.totalCount }) }}</p>
               </div>
             </section>
           </div>

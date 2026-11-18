@@ -1,9 +1,11 @@
 using System.Globalization;
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using OpenCRM.Admin.App.ViewModels;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.Views;
 
@@ -35,6 +37,26 @@ public sealed class DashboardChart : Control
         set => this.SetValue(DashboardChart.SeriesProperty, value);
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs args)
+    {
+        base.OnAttachedToVisualTree(args);
+        AdminLocalization.Instance.PropertyChanged += this.OnLanguageChanged;
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs args)
+    {
+        AdminLocalization.Instance.PropertyChanged -= this.OnLanguageChanged;
+        base.OnDetachedFromVisualTree(args);
+    }
+
+    private void OnLanguageChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName == nameof(AdminLocalization.Language))
+        {
+            this.InvalidateVisual();
+        }
+    }
+
     /// <summary> Отрисовывает диаграмму и легенду. </summary>
     public override void Render(DrawingContext context)
     {
@@ -42,7 +64,7 @@ public sealed class DashboardChart : Control
         var points = this.Series.FirstOrDefault()?.Points;
         if (points == null || points.Count == 0)
         {
-            DashboardChart.DrawText(context, "Нет данных", new Point(20, 80), Brushes.Gray);
+            DashboardChart.DrawText(context, AdminLocalization.Instance["core.chart.noData"], new Point(20, 80), Brushes.Gray);
 
             return;
         }
@@ -61,7 +83,7 @@ public sealed class DashboardChart : Control
         {
             var y = plot.Top + index * plot.Height / 4;
             context.DrawLine(gridPen, new Point(plot.Left, y), new Point(plot.Right, y));
-            DashboardChart.DrawText(context, (maximum * (4 - index) / 4).ToString("0.#", CultureInfo.InvariantCulture),
+            DashboardChart.DrawText(context, (maximum * (4 - index) / 4).ToString("0.#", CultureInfo.CurrentCulture),
                 new Point(2, y - 8), Brushes.Gray);
         }
 
@@ -97,11 +119,7 @@ public sealed class DashboardChart : Control
                 continue;
             }
 
-            var label = points[index].Label;
-            if (DateOnly.TryParseExact(label, "yyyy-MM-dd", out var date))
-            {
-                label = date.ToString("dd.MM");
-            }
+            var label = DashboardChart.FormatDateLabel(points[index].Label);
 
             DashboardChart.DrawText(context, label, new Point(DashboardChart.X(plot, index, points.Count), plot.Bottom + 12),
                 Brushes.Gray, true, this.Bounds.Width);
@@ -115,7 +133,8 @@ public sealed class DashboardChart : Control
 
         if (this._selectedIndex is { } dateIndex && dateIndex < points.Count)
         {
-            DashboardChart.DrawText(context, points[dateIndex].Label, new Point(plot.Left, legendBottom + 4), Brushes.LightGray);
+            DashboardChart.DrawText(context, DashboardChart.FormatDateLabel(points[dateIndex].Label),
+                new Point(plot.Left, legendBottom + 4), Brushes.LightGray);
         }
     }
 
@@ -132,7 +151,7 @@ public sealed class DashboardChart : Control
                 label += ": " + DashboardFormatting.Value(series.Points[legendIndex].Value, series.Format);
             }
 
-            var text = new FormattedText(label, CultureInfo.GetCultureInfo("ru-RU"), FlowDirection.LeftToRight,
+            var text = new FormattedText(label, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                 Typeface.Default, 11, new SolidColorBrush(Color.Parse(series.Color)));
 
             if (legendX > 64 && legendX + text.Width > this.Bounds.Width - 10)
@@ -207,10 +226,14 @@ public sealed class DashboardChart : Control
         ? plot.Center.X
         : plot.Left + index * plot.Width / (count - 1);
 
+    private static string FormatDateLabel(string value) => DateOnly.TryParseExact(value, "yyyy-MM-dd", out var date)
+        ? date.ToString("m", CultureInfo.CurrentCulture)
+        : value;
+
     /// <summary> Рисует текст в указанной позиции. </summary>
     private static void DrawText(DrawingContext context, string value, Point origin, IBrush brush, bool center = false, double? right = null)
     {
-        var text = new FormattedText(value, CultureInfo.GetCultureInfo("ru-RU"), FlowDirection.LeftToRight,
+        var text = new FormattedText(value, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
             Typeface.Default, 11, brush);
 
         var x = Math.Clamp(center ? origin.X - text.Width / 2 : origin.X, 0, Math.Max(0, (right ?? double.MaxValue) - text.Width));

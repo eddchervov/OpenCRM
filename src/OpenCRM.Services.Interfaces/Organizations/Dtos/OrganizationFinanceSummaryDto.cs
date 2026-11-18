@@ -3,6 +3,10 @@ namespace OpenCRM.Services.Interfaces.Organizations.Dtos;
 /// <summary> Сводка финансовых показателей организации за период. </summary>
 public sealed class OrganizationFinanceSummaryDto
 {
+    public string CurrencyCode { get; init; } = "RUB";
+
+    public IReadOnlyList<OrganizationFinanceCurrencyTotalsDto> OtherCurrencyTotals { get; init; } = [];
+
     /// <summary> Начало периода. </summary>
     public DateTime DateFrom { get; init; }
 
@@ -32,6 +36,18 @@ public sealed class OrganizationFinanceSummaryDto
 
     /// <summary> Заказы за период. </summary>
     public IReadOnlyList<OrganizationFinanceOrderItemDto> Orders { get; init; } = [];
+}
+
+public sealed class OrganizationFinanceCurrencyTotalsDto
+{
+    public string CurrencyCode { get; init; } = "RUB";
+    public decimal GrossAmount { get; init; }
+    public decimal NetAmount { get; init; }
+    public decimal PaidAmount { get; init; }
+    public decimal DebtAmount { get; init; }
+    public decimal DiscountAmount { get; init; }
+    public decimal CostAmount { get; init; }
+    public decimal ProfitAmount { get; init; }
 }
 
 /// <summary> Ключевые финансовые показатели организации. </summary>
@@ -132,6 +148,7 @@ public sealed class OrganizationFinanceClientDebtItemDto
 /// <summary> Заказ в финансовой сводке организации. </summary>
 public sealed class OrganizationFinanceOrderItemDto
 {
+    public string CurrencyCode { get; init; } = "RUB";
     /// <summary> Идентификатор заказа. </summary>
     public Guid Id { get; init; }
 

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminBillingMessages'
 import { ApiError } from '@/api/ApiError'
 import { getAdminPaymentServiceActions, submitAdminPaymentServiceAction } from '@/api/adminBillingApi'
 import type { AdminPaymentServiceActions, AdminPaymentServiceActionRequest, PaymentServiceActionKind } from '@/models/AdminPaymentServiceActions'
-import { getPaymentActionStatus, parseRefundAmount, paymentActionLabels, readPaymentActionDraft } from '@/paymentServiceActions'
+import { parseRefundAmount, readPaymentActionDraft } from '@/paymentServiceActions'
 import { formatPaymentDate } from '@/paymentDetails'
 
 const props = defineProps<{ paymentId: number; canManage: boolean; actorId: string }>()
+const { t } = useLocalization()
 const emit = defineEmits<{ updated: [] }>()
 const state = ref<AdminPaymentServiceActions | null>(null)
 const loading = ref(false)
@@ -34,6 +37,25 @@ const actionItems = computed(() => state.value ? [
   { kind: 'retry-access' as const, enabled: state.value.canRetryAccess, hint: state.value.retryAccessHint },
   { kind: 'resolve-review' as const, enabled: state.value.canResolveReview, hint: state.value.resolveReviewHint },
 ] : [])
+function actionLabel(kind: PaymentServiceActionKind): string {
+  const keys: Record<PaymentServiceActionKind, string> = {
+    check: 'adminBilling.actions.labels.check',
+    refund: 'adminBilling.actions.labels.refundAction',
+    'retry-access': 'adminBilling.actions.labels.retryAccessLabel',
+    'resolve-review': 'adminBilling.actions.labels.resolveReviewAction'
+  }
+
+  return t(keys[kind])
+}
+function actionStatus(status: string): string {
+  const keys: Record<string, string> = {
+    queued: 'statusQueued', requested: 'statusRequested', processing: 'statusProcessing', pending: 'statusPending',
+    succeeded: 'statusSucceeded', completed: 'statusSucceeded', failed: 'statusFailed', rejected: 'statusRejected',
+    needs_attention: 'statusReview', unknown: 'statusUnknown'
+  }
+
+  return t(`adminBilling.actions.labels.${keys[status.toLowerCase()] ?? 'statusUnknown'}`)
+}
 const selectedHint = computed(() => actionItems.value.find(item => item.kind === selectedAction.value)?.hint || '')
 const canSubmit = computed(() => props.canManage && !submitting.value && !pendingDraft.value && !draftBlocked.value &&
   reason.value.trim().length > 0 && acknowledged.value &&
@@ -41,7 +63,7 @@ const canSubmit = computed(() => props.canManage && !submitting.value && !pendin
   (selectedAction.value !== 'refund' || refundAmount.value !== null && refundAmount.value > 0))
 
 function money(value: number): string {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code' }).format(value)
 }
 
 function restoreDraft(): void {
@@ -49,7 +71,7 @@ function restoreDraft(): void {
     pendingDraft.value = readPaymentActionDraft(sessionStorage.getItem(draftKey.value))
   } catch {
     draftBlocked.value = true
-    actionError.value = 'Не удалось восстановить предыдущий запрос. Проверьте журнал операций; новые действия заблокированы до проверки результата.'
+    actionError.value = t('adminBilling.actions.restorePendingError')
   }
 }
 
@@ -86,7 +108,7 @@ async function loadState(): Promise<void> {
       pollTimer = setTimeout(() => { void loadState() }, 5000)
     }
   } catch (error) {
-    if (version === requestVersion) loadError.value = error instanceof ApiError ? error.message : 'Не удалось загрузить действия. Обновите операции.'
+    if (version === requestVersion) loadError.value = error instanceof ApiError ? error.message : t('adminBilling.actions.loadError')
   } finally {
     if (version === requestVersion) loading.value = false
   }
@@ -121,7 +143,7 @@ async function submit(): Promise<void> {
     sessionStorage.setItem(draftKey.value, JSON.stringify(draft))
     pendingDraft.value = draft
   } catch {
-    actionError.value = 'Не удалось сохранить идентификатор запроса в браузере. Действие не отправлено. Разрешите хранение данных для этого сайта.'
+    actionError.value = t('adminBilling.actions.saveDraftError')
     return
   }
   await sendDraft()
@@ -156,7 +178,7 @@ async function sendDraft(): Promise<void> {
       actionError.value = error.message
       await loadState()
     } else {
-      actionError.value = 'Ответ не получен. Запрос мог быть принят. Проверьте результат кнопкой ниже: будет использован тот же запрос, без новой операции.'
+      actionError.value = t('adminBilling.actions.ambiguousResponse')
     }
   } finally {
     submitting.value = false
@@ -182,58 +204,58 @@ onBeforeUnmount(() => { active = false; requestVersion++; clearTimeout(pollTimer
 <template>
   <section class="payment-actions" aria-labelledby="payment-actions-title">
     <div class="payment-actions__heading">
-      <h3 id="payment-actions-title">Действия с платежом</h3>
-      <button type="button" class="payment-actions__refresh" :disabled="loading || submitting" title="Перечитать операции и их результаты. Новая проверка ЮKassa не запускается." @click="loadState">{{ loading ? 'Загружаем…' : 'Обновить операции' }}</button>
+      <h3 id="payment-actions-title">{{ t('adminBilling.actions.title') }}</h3>
+      <button type="button" class="payment-actions__refresh" :disabled="loading || submitting" :title="t('adminBilling.actions.refreshTitle')" @click="loadState">{{ loading ? t('adminBilling.actions.refreshing') : t('adminBilling.actions.refresh') }}</button>
     </div>
     <p v-if="loadError" class="payment-actions__error" role="alert">{{ loadError }}</p>
     <p v-if="state?.operations[0] || message" class="payment-actions__message" role="status">{{ state?.operations[0]?.message || message }}</p>
     <div v-if="pendingDraft && !submitting" class="payment-actions__pending" role="status">
-      <strong>У предыдущего запроса пока нет подтверждённого ответа</strong>
-      <p>{{ paymentActionLabels[pendingDraft.action] }}<span v-if="pendingDraft.amount != null"> · {{ money(pendingDraft.amount) }}</span>. Новую операцию пока не создавайте.</p>
-      <button type="button" :disabled="submitting || !canManage" @click="sendDraft">{{ submitting ? 'Проверяем…' : 'Проверить результат запроса' }}</button>
+      <strong>{{ t('adminBilling.actions.pendingTitle') }}</strong>
+          <p>{{ t('adminBilling.actions.pendingOperation', { action: actionLabel(pendingDraft.action), amount: pendingDraft.amount == null ? '' : ` · ${money(pendingDraft.amount)}` }) }}</p>
+      <button type="button" :disabled="submitting || !canManage" @click="sendDraft">{{ submitting ? t('adminBilling.actions.checking') : t('adminBilling.actions.checkResult') }}</button>
     </div>
     <p v-if="actionError && !selectedAction" class="payment-actions__error" role="alert">{{ actionError }}</p>
-    <p v-if="!canManage" class="payment-actions__hint">У вас есть доступ к просмотру. Выполнять действия может администратор с правом управления платежами.</p>
+    <p v-if="!canManage" class="payment-actions__hint">{{ t('adminBilling.actions.viewOnly') }}</p>
     <template v-if="state">
-      <p v-if="state.reviewResolved" class="payment-actions__review">Решение по текущей ситуации сохранено. Новый возврат или изменение проблемы потребует нового разбора.</p>
+      <p v-if="state.reviewResolved" class="payment-actions__review">{{ t('adminBilling.actions.reviewResolved') }}</p>
       <div class="payment-actions__grid">
         <article v-for="item in actionItems" :key="item.kind">
-          <button type="button" :class="{ 'payment-actions__refund': item.kind === 'refund' }" :disabled="!canManage || !item.enabled || loading || submitting || !!pendingDraft || draftBlocked" :aria-describedby="'payment-action-hint-' + item.kind" :title="item.hint" @click="openAction(item.kind)">{{ paymentActionLabels[item.kind] }}</button>
+          <button type="button" :class="{ 'payment-actions__refund': item.kind === 'refund' }" :disabled="!canManage || !item.enabled || loading || submitting || !!pendingDraft || draftBlocked" :aria-describedby="'payment-action-hint-' + item.kind" :title="item.hint" @click="openAction(item.kind)">{{ actionLabel(item.kind) }}</button>
           <p :id="'payment-action-hint-' + item.kind">{{ item.hint }}</p>
         </article>
       </div>
       <details v-if="state.operations.length" class="payment-actions__history">
-        <summary>Последние действия администратора · {{ state.operations.length }} (до 30)</summary>
+        <summary>{{ t('adminBilling.actions.recentAdminActions', { count: state.operations.length }) }}</summary>
         <ol>
           <li v-for="operation in state.operations" :key="operation.id">
-            <div class="payment-actions__operation-heading"><strong>{{ paymentActionLabels[operation.action] || operation.action }}</strong><span>{{ getPaymentActionStatus(operation.status) }}</span></div>
+            <div class="payment-actions__operation-heading"><strong>{{ actionLabel(operation.action) || operation.action }}</strong><span>{{ actionStatus(operation.status) }}</span></div>
             <p>{{ operation.message }}<span v-if="operation.amount != null"> · {{ money(operation.amount) }}</span></p>
             <p class="payment-actions__hint">{{ formatPaymentDate(operation.createdAt) }} · {{ operation.actor }}</p>
-            <p>Причина: {{ operation.reason }}</p>
-            <details><summary>Идентификатор операции</summary><code>{{ operation.id }}</code><p v-if="operation.code">Код: {{ operation.code }}</p></details>
+            <p>{{ t('adminBilling.actions.reason', { reason: operation.reason }) }}</p>
+            <details><summary>{{ t('adminBilling.actions.operationId') }}</summary><code>{{ operation.id }}</code><p v-if="operation.code">{{ t('adminBilling.actions.code', { code: operation.code }) }}</p></details>
           </li>
         </ol>
       </details>
     </template>
     <dialog ref="dialog" class="payment-actions__dialog" aria-labelledby="payment-action-dialog-title" @cancel="submitting ? $event.preventDefault() : closeDialog()">
       <form v-if="selectedAction" @submit.prevent="submit">
-        <header><h3 id="payment-action-dialog-title">{{ paymentActionLabels[selectedAction] }}</h3><button type="button" aria-label="Закрыть" :disabled="submitting" @click="closeDialog">×</button></header>
+        <header><h3 id="payment-action-dialog-title">{{ actionLabel(selectedAction) }}</h3><button type="button" :aria-label="t('adminBilling.actions.close')" :disabled="submitting" @click="closeDialog">×</button></header>
         <p class="payment-actions__hint">{{ selectedHint }}</p>
         <fieldset v-if="selectedAction === 'refund'" :disabled="submitting || !!pendingDraft">
-          <legend>Сумма возврата</legend>
-          <label class="payment-actions__choice"><input v-model="refundMode" type="radio" value="full"> Весь доступный остаток — {{ money(state?.refundableAmount ?? 0) }}</label>
-          <label class="payment-actions__choice"><input v-model="refundMode" type="radio" value="partial"> Часть суммы</label>
-          <label v-if="refundMode === 'partial'" class="payment-actions__field"><span>Вернуть, ₽</span><input v-model="amount" inputmode="decimal" placeholder="Например, 150,00" required></label>
-          <p v-if="refundMode === 'partial' && amount && refundAmount === null" class="payment-actions__error">Укажите сумму больше нуля, не больше доступного остатка, с точностью до копейки.</p>
-          <p class="payment-actions__hint">Деньги возвращаются через платёжный сервис. Уже выданный доступ автоматически не меняется.</p>
+          <legend>{{ t('adminBilling.actions.refundAmount') }}</legend>
+          <label class="payment-actions__choice"><input v-model="refundMode" type="radio" value="full"> {{ t('adminBilling.actions.fullRefund', { amount: money(state?.refundableAmount ?? 0) }) }}</label>
+          <label class="payment-actions__choice"><input v-model="refundMode" type="radio" value="partial">{{ t('adminBilling.actions.partialRefund') }}</label>
+          <label v-if="refundMode === 'partial'" class="payment-actions__field"><span>{{ t('adminBilling.actions.returnAmount') }}</span><input v-model="amount" inputmode="decimal" :placeholder="t('adminBilling.actions.amountExample')" required></label>
+          <p v-if="refundMode === 'partial' && amount && refundAmount === null" class="payment-actions__error">{{ t('adminBilling.actions.invalidAmount') }}</p>
+          <p class="payment-actions__hint">{{ t('adminBilling.actions.refundWarning') }}</p>
         </fieldset>
-        <p v-if="selectedAction === 'retry-access'" class="payment-actions__hint">Повторяется выдача по исходной оплаченной покупке. Новое списание не создаётся. Уже выданный период повторно не продлевается.</p>
-        <p v-if="selectedAction === 'resolve-review'" class="payment-actions__hint">Сохранится ваше решение. Денежные факты, ошибки и история остаются в журнале. Доступ при необходимости измените отдельно в подписках.</p>
-        <label class="payment-actions__field"><span>{{ selectedAction === 'resolve-review' ? 'Ваше решение и комментарий' : 'Причина действия' }}</span><textarea v-model="reason" rows="3" maxlength="500" required :disabled="submitting || !!pendingDraft" placeholder="Коротко укажите, почему выполняете действие"></textarea></label>
-        <label class="payment-actions__choice"><input v-model="acknowledged" type="checkbox" :disabled="submitting || !!pendingDraft"> {{ selectedAction === 'refund' ? 'Подтверждаю возврат ' + (refundAmount == null ? 'указанной суммы' : money(refundAmount)) + ' по этому платежу' : 'Проверил платёж и подтверждаю действие' }}</label>
+        <p v-if="selectedAction === 'retry-access'" class="payment-actions__hint">{{ t('adminBilling.actions.retryAccessHint') }}</p>
+        <p v-if="selectedAction === 'resolve-review'" class="payment-actions__hint">{{ t('adminBilling.actions.reviewHint') }}</p>
+        <label class="payment-actions__field"><span>{{ t(selectedAction === 'resolve-review' ? 'adminBilling.actions.decisionAndComment' : 'adminBilling.actions.actionReason') }}</span><textarea v-model="reason" rows="3" maxlength="500" required :disabled="submitting || !!pendingDraft" :placeholder="t('adminBilling.actions.reasonPlaceholder')"></textarea></label>
+        <label class="payment-actions__choice"><input v-model="acknowledged" type="checkbox" :disabled="submitting || !!pendingDraft"> {{ selectedAction === 'refund' ? t('adminBilling.actions.confirmRefund', { amount: refundAmount == null ? t('adminBilling.actions.amountToBeSpecified') : money(refundAmount) }) : t('adminBilling.actions.confirmAction') }}</label>
         <p v-if="actionError" class="payment-actions__error" role="alert">{{ actionError }}</p>
-        <div v-if="pendingDraft && !submitting" class="payment-actions__pending"><button type="button" :disabled="submitting" @click="sendDraft">{{ submitting ? 'Проверяем…' : 'Проверить результат запроса' }}</button><p class="payment-actions__hint">Повторяется тот же запрос с сохранённым идентификатором.</p></div>
-        <footer><button type="button" :disabled="submitting" :title="pendingDraft ? 'Закрывает форму. Уже отправленный запрос продолжит обрабатываться.' : 'Закрывает форму без отправки действия.'" @click="closeDialog">{{ pendingDraft ? 'Закрыть форму' : 'Отмена' }}</button><button type="submit" class="payment-actions__confirm" :disabled="!canSubmit">{{ submitting ? 'Отправляем…' : selectedAction === 'refund' ? 'Подтвердить возврат' : 'Подтвердить действие' }}</button></footer>
+        <div v-if="pendingDraft && !submitting" class="payment-actions__pending"><button type="button" :disabled="submitting" @click="sendDraft">{{ submitting ? t('adminBilling.actions.checking') : t('adminBilling.actions.checkResult') }}</button><p class="payment-actions__hint">{{ t('adminBilling.actions.repeatSameRequest') }}</p></div>
+        <footer><button type="button" :disabled="submitting" :title="t(pendingDraft ? 'adminBilling.actions.closePendingTitle' : 'adminBilling.actions.closeWithoutSendTitle')" @click="closeDialog">{{ pendingDraft ? t('adminBilling.actions.closeForm') : t('adminBilling.actions.cancel') }}</button><button type="submit" class="payment-actions__confirm" :disabled="!canSubmit">{{ submitting ? t('adminBilling.actions.sending') : selectedAction === 'refund' ? t('adminBilling.actions.confirmRefundButton') : t('adminBilling.actions.confirmActionButton') }}</button></footer>
       </form>
     </dialog>
   </section>

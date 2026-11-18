@@ -5,6 +5,7 @@
 План подготовки OpenCRM и навигация по технической документации.
 
 - [Архитектура приложения](architecture-current.ru.md)
+- [План многоязычности и региональных настроек](internationalization-plan.ru.md)
 - [Рабочие области и данные организаций](README.ru.md#рабочие-области)
 - [Уведомления](notifications.ru.md)
 - [Интеграция платежей](payments-service-integration.ru.md)

@@ -12,6 +12,7 @@ public class OrganizationEntityTypeConfiguration : IEntityTypeConfiguration<Orga
     {
         builder.Property(x => x.VisitReminderChannelCode).HasMaxLength(16);
         builder.Property(x => x.VisitReminderTemplate).HasMaxLength(1000);
+        builder.Property(x => x.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
 
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");

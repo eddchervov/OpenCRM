@@ -14,6 +14,15 @@ public partial class EmailCampaignsViewModel(AdminSessionClient sessionClient) :
 
     public bool IsEmpty => !this.IsBusy && this.Campaigns.Count == 0 && string.IsNullOrWhiteSpace(this.ErrorMessage);
 
+    public override void RefreshLocalizedValues()
+    {
+        base.RefreshLocalizedValues();
+        foreach (var campaign in this.Campaigns)
+        {
+            campaign.RefreshLocalizedValues();
+        }
+    }
+
     protected override async Task LoadPageAsync(CancellationToken cancellationToken)
     {
         var result = await this.SessionClient.GetEmailCampaignsAsync(this.Page, 20, cancellationToken);

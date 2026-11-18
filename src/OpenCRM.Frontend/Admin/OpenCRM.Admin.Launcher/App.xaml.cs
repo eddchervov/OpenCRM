@@ -39,7 +39,7 @@ public partial class App
             var chromeProcess = Process.Start(startInfo);
             if (chromeProcess == null)
             {
-                throw new InvalidOperationException("Не удалось запустить Google Chrome.");
+                throw new InvalidOperationException(LauncherText.Get("ChromeLaunchFailed"));
             }
 
             ChromeWindowActivator.Activate(chromeProcess, settings.DisplayName);
@@ -49,7 +49,7 @@ public partial class App
         {
             DesktopLog.Write($"Ошибка запуска административной панели: {exception}");
             MessageBox.Show(
-                $"Не удалось запустить административную панель.\n\n{exception.Message}",
+                LauncherText.Format("LaunchFailed", exception.Message),
                 displayName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

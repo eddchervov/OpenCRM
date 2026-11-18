@@ -20,6 +20,7 @@ public sealed class ImportBusinessRecordProcessorTests(MaintenanceDatabaseFixtur
         var records = CreateValidRecords();
         records.Single(record => record.Kind == "order-line").TargetId = null;
         var orderRecord = records.Single(record => record.Kind == "order");
+        orderRecord.MessageDetails = [new ImportRowMessageDetail { Message = "Старая ошибка", MessageCode = ImportBusinessMessageCodes.OrderDateInvalid }];
         orderRecord.ClientExternalId = "client-1";
         orderRecord.PartyName = "Покупатель в исходном заказе";
         records.Single(record => record.Kind == "payment").PartyName = "Плательщик в исходной оплате";
@@ -29,6 +30,7 @@ public sealed class ImportBusinessRecordProcessorTests(MaintenanceDatabaseFixtur
 
         await processor.ValidateAsync(user.Id, organization.Id, records, vehicleIds, clientIds, orderIds, default);
         Assert.All(records, record => Assert.Equal("create", record.Status));
+        Assert.All(records, record => Assert.Null(record.MessageDetails));
         var result = await processor.ApplyAsync(user.Id, organization.Id, records, vehicleIds, clientIds, orderIds, default);
         await context.SaveChangesAsync();
 
@@ -88,6 +90,10 @@ public sealed class ImportBusinessRecordProcessorTests(MaintenanceDatabaseFixtur
         Assert.Equal("error", order.Status);
         Assert.Contains("completed и cancelled", order.Message);
         Assert.Contains("превышает итог заказа", order.Message);
+        Assert.Null(order.MessageCode);
+        Assert.Null(order.MessageParameters);
+        Assert.Contains(order.MessageDetails!, detail => detail.MessageCode == ImportBusinessMessageCodes.OrderStatusInvalid);
+        Assert.Contains(order.MessageDetails!, detail => detail.MessageCode == ImportBusinessMessageCodes.PaymentsExceedOrderAmount);
         Assert.False(await context.Maintenance.AnyAsync(item => item.VehicleId == vehicle.Id));
     }
 
@@ -229,6 +235,7 @@ public sealed class ImportBusinessRecordProcessorTests(MaintenanceDatabaseFixtur
             new Dictionary<string, Guid>(), default);
 
         Assert.Equal("error", line.Status);
+        Assert.Contains(line.MessageDetails!, detail => detail.MessageCode == null && detail.Message == line.Message);
     }
 
     private async Task<(ApplicationUser User, Organization Organization, Vehicle Vehicle)> CreateVehicleAsync()

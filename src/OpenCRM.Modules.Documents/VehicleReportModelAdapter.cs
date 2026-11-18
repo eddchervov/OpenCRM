@@ -70,7 +70,7 @@ internal static class VehicleReportModelAdapter
             MaintenanceHistory = [],
             GeneratedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),
             TotalMaintenanceCount = maintenanceHistory.Count,
-            TotalSpent = (decimal)maintenanceHistory.Sum(maintenance => maintenance.Price ?? 0)
+            TotalSpent = 0
         };
 
     /// <summary> Создаёт модель записи обслуживания для Word-отчёта. </summary>

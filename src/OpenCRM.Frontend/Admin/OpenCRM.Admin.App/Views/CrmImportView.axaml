@@ -1,14 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels" xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.CrmImportView" x:DataType="vm:CrmImportViewModel">
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="14">
     <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="Импорт CRM" FontSize="28" FontWeight="SemiBold" />
-      <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" />
+      <TextBlock Text="{loc:LocalizedText Key=native.crmImport.import.crm}" FontSize="28" FontWeight="SemiBold" />
+      <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
     </Grid>
     <StackPanel Grid.Row="1" Spacing="8">
       <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
-      <TextBlock Text="Результат запроса неизвестен. Обновите проверку перед повторным подтверждением."
+      <TextBlock Text="{loc:LocalizedText Key=native.crmImport.rezultat.zaprosa.neizvesten.obnovite.proverku.pered.povtornym.po}"
                  IsVisible="{Binding IsOutcomeUnknown}" Foreground="#F0C58B" TextWrapping="Wrap" />
       <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
     </StackPanel>
@@ -16,19 +17,19 @@
       <StackPanel MaxWidth="1200" Spacing="18">
         <Border Classes="configurationSection">
           <StackPanel Spacing="12" IsEnabled="{Binding !IsBusy}">
-            <TextBlock Text="1. Пользователь и организация" Classes="configurationHeading" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.1.polzovatel.i.organizatsiya}" Classes="configurationHeading" />
             <WrapPanel>
-              <TextBox Text="{Binding Search}" PlaceholderText="Email или телефон пользователя" Width="280" Margin="0,0,10,8" />
-              <Button Content="Найти" Command="{Binding SearchUsersCommand}" Margin="0,0,0,8" />
+              <TextBox Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=native.crmImport.email.ili.telefon.polzovatelya}" Width="280" Margin="0,0,10,8" />
+              <Button Content="{loc:LocalizedText Key=native.billing.nayti}" Command="{Binding SearchUsersCommand}" Margin="0,0,0,8" />
             </WrapPanel>
-            <TextBlock Text="Пользователь" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.promoCodes.polzovatel}" Classes="caption" />
             <WrapPanel>
               <ComboBox ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" Width="320" Margin="0,0,10,8">
                 <ComboBox.ItemTemplate><DataTemplate x:DataType="api:AdminCrmImportUser"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
               </ComboBox>
-              <Button Content="Показать организации" Command="{Binding LoadOrganizationsCommand}" Margin="0,0,0,8" />
+              <Button Content="{loc:LocalizedText Key=native.crmImport.pokazat.organizatsii}" Command="{Binding LoadOrganizationsCommand}" Margin="0,0,0,8" />
             </WrapPanel>
-            <TextBlock Text="Организация" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.promoCodes.organizatsiya}" Classes="caption" />
             <ComboBox ItemsSource="{Binding Organizations}" SelectedItem="{Binding SelectedOrganization}" HorizontalAlignment="Left" Width="320">
               <ComboBox.ItemTemplate><DataTemplate x:DataType="api:AdminCrmImportOrganization"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
             </ComboBox>
@@ -36,31 +37,31 @@
         </Border>
         <Border Classes="configurationSection">
           <StackPanel Spacing="12">
-            <TextBlock Text="2. Файл и проверка" Classes="configurationHeading" />
-            <TextBlock Text="CSV, XLSX, JSON или XML · до 10 МБ · до 5000 строк" Classes="caption" TextWrapping="Wrap" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.2.fayl.i.proverka}" Classes="configurationHeading" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.csv.xlsx.json.ili.xml.do.10.mb.do.5000.strok}" Classes="caption" TextWrapping="Wrap" />
             <WrapPanel>
-              <Button Content="Выбрать файл" Click="OnChooseFile" IsEnabled="{Binding CanSelectFile}" Margin="0,0,12,8" />
+              <Button Content="{loc:LocalizedText Key=native.crmImport.vybrat.fayl}" Click="OnChooseFile" IsEnabled="{Binding CanSelectFile}" Margin="0,0,12,8" />
               <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" TextWrapping="Wrap" />
             </WrapPanel>
-            <Button Content="Проверить файл" Command="{Binding PreviewFileCommand}" Classes="configurationPrimary" />
+            <Button Content="{loc:LocalizedText Key=native.crmImport.proverit.fayl}" Command="{Binding PreviewFileCommand}" Classes="configurationPrimary" />
           </StackPanel>
         </Border>
         <Border Classes="configurationSection" IsVisible="{Binding HasPreview}">
           <StackPanel Spacing="14">
-            <TextBlock Text="3. Результат проверки" Classes="configurationHeading" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.3.rezultat.proverki}" Classes="configurationHeading" />
             <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" />
-            <TextBlock Text="Этот файл уже импортирован." IsVisible="{Binding Preview.AlreadyImported}" Foreground="#F0C58B" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.etot.fayl.uzhe.importirovan}" IsVisible="{Binding Preview.AlreadyImported}" Foreground="#F0C58B" />
             <WrapPanel>
-              <Button Content="Сохранить отчёт проверки" Click="OnSavePreview" IsEnabled="{Binding CanDownload}" Margin="0,0,10,8" />
-              <Button Content="Начать импорт" Command="{Binding RequestConfirmationCommand}" Classes="configurationPrimary" Margin="0,0,0,8" />
+              <Button Content="{loc:LocalizedText Key=native.crmImport.sokhranit.otchyot.proverki}" Click="OnSavePreview" IsEnabled="{Binding CanDownload}" Margin="0,0,10,8" />
+              <Button Content="{loc:LocalizedText Key=native.crmImport.nachat.import}" Command="{Binding RequestConfirmationCommand}" Classes="configurationPrimary" Margin="0,0,0,8" />
             </WrapPanel>
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
               <Grid RowDefinitions="Auto,*" MinWidth="700">
                 <Grid ColumnDefinitions="65,2*,150,*" Margin="12,8">
-                  <TextBlock Text="Строка" Classes="caption" />
-                  <TextBlock Grid.Column="1" Text="Данные" Classes="caption" />
-                  <TextBlock Grid.Column="2" Text="Результат" Classes="caption" />
-                  <TextBlock Grid.Column="3" Text="Комментарий" Classes="caption" />
+                  <TextBlock Text="{loc:LocalizedText Key=native.crmImport.stroka}" Classes="caption" />
+                  <TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=native.crmImport.dannye}" Classes="caption" />
+                  <TextBlock Grid.Column="2" Text="{loc:LocalizedText Key=native.crmImport.rezultat}" Classes="caption" />
+                  <TextBlock Grid.Column="3" Text="{loc:LocalizedText Key=native.crmImport.kommentariy}" Classes="caption" />
                 </Grid>
                 <ListBox Grid.Row="1" ItemsSource="{Binding Preview.Rows}" Height="300" Background="Transparent"
                          BorderThickness="0" ItemContainerTheme="{StaticResource AdminListRowTheme}">
@@ -83,20 +84,20 @@
         </Border>
         <Border Classes="configurationSection" IsVisible="{Binding IsConfirmationOpen}">
           <StackPanel Spacing="12">
-            <TextBlock Text="Подтвердить импорт?" Classes="configurationHeading" />
-            <TextBlock Text="{Binding SelectedOrganization.Name, StringFormat='Организация: {0}'}" TextWrapping="Wrap" />
-            <TextBlock Text="Будут созданы записи из проверенного файла. Дубликаты будут пропущены." TextWrapping="Wrap" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.confirmTitle}" Classes="configurationHeading" />
+            <TextBlock Text="{loc:LocalizedFormat Key=native.crmImport.organizatsiya.0, Path=SelectedOrganization.Name}" TextWrapping="Wrap" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.budut.sozdany.zapisi.iz.proverennogo.fayla.dublikaty.budut.propu}" TextWrapping="Wrap" />
             <WrapPanel>
-              <Button Content="Подтвердить импорт" Command="{Binding ConfirmCommand}" Classes="configurationPrimary" Margin="0,0,10,0" />
-              <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" />
+              <Button Content="{loc:LocalizedText Key=native.crmImport.confirmAction}" Command="{Binding ConfirmCommand}" Classes="configurationPrimary" Margin="0,0,10,0" />
+              <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelConfirmationCommand}" />
             </WrapPanel>
           </StackPanel>
         </Border>
         <Border Classes="configurationSection" IsVisible="{Binding HasResultReport}">
           <StackPanel Spacing="12">
-            <TextBlock Text="Импорт завершён" Classes="configurationHeading" />
+            <TextBlock Text="{loc:LocalizedText Key=native.crmImport.import.zavershyon}" Classes="configurationHeading" />
             <TextBlock Text="{Binding ResultSummary}" TextWrapping="Wrap" IsVisible="{Binding HasResult}" />
-            <Button Content="Сохранить итоговый отчёт" Click="OnSaveResult" IsEnabled="{Binding CanDownload}" />
+            <Button Content="{loc:LocalizedText Key=native.crmImport.sokhranit.itogovyy.otchyot}" Click="OnSaveResult" IsEnabled="{Binding CanDownload}" />
           </StackPanel>
         </Border>
       </StackPanel>

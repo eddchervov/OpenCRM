@@ -1,3 +1,5 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/proDetailsMessages'
 import { getProjectBrand } from '@opencrm/ui/projectBrand'
 export type ProFeatureKey =
   | 'team'
@@ -31,105 +33,135 @@ export type ProFeatureDetail = {
 }
 
 export const proFeatureDetails: Record<ProFeatureKey, ProFeatureDetail> = {
-  team: {
-    title: 'Команда',
-    description: 'Подключайте мастеров и администраторов, назначайте каждому роль и настраивайте доступ к CRM.',
-    points: [
-      'Добавление сотрудников и назначение на работы.',
-      'Выбор роли для каждого пользователя: администратор, сотрудник, исполнитель или только просмотр.',
-      'Права роли на просмотр и изменение клиентов, записей, склада и финансов.',
-      'Например, можно закрыть мастерам доступ к финансам. Права действуют для всех сотрудников с выбранной ролью.'
-    ],
-    visual: { type: 'screenshot', image: 'team', alt: 'Демонстрационный экран команды и назначений', viewBox: '232 66 1048 590', imageWidth: 1280, imageHeight: 720 }
+  get team(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.team_title'),
+      description: translate('proDetails.team_description'),
+      points: [
+        translate('proDetails.team_points_item1'),
+        translate('proDetails.team_points_item2'),
+        translate('proDetails.team_points_item3'),
+        translate('proDetails.team_points_item4')
+      ],
+      visual: { type: 'screenshot', image: 'team', alt: translate('proDetails.team_visual_alt'), viewBox: '232 66 1048 590', imageWidth: 1280, imageHeight: 720 }
+    }
   },
-  shifts: {
-    title: 'Смены',
-    description: 'Планируйте рабочие смены команды и заранее распределяйте загрузку.',
-    points: ['План смен на выбранный день.', 'Время работы каждого сотрудника.', 'Быстрый обзор, кто сегодня работает.'],
-    visual: { type: 'demo', heading: 'План смен · пример', rows: [{ label: 'Алексей', value: '09:00—18:00 · Детейлинг' }, { label: 'Мария', value: '10:00—19:00 · Приёмка' }, { label: 'Денис', value: 'Выходной' }] }
+  get shifts(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.shifts_title'),
+      description: translate('proDetails.shifts_description'),
+      points: [translate('proDetails.shifts_points_item1'), translate('proDetails.shifts_points_item2'), translate('proDetails.shifts_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.shifts_visual_heading'), rows: [{ label: translate('proDetails.shifts_visual_rows_item1_label'), value: translate('proDetails.shifts_visual_rows_item1_value') }, { label: translate('proDetails.shifts_visual_rows_item2_label'), value: translate('proDetails.shifts_visual_rows_item2_value') }, { label: translate('proDetails.shifts_visual_rows_item3_label'), value: translate('proDetails.shifts_visual_rows_item3_value') }] }
+    }
   },
-  statistics: {
-    title: 'Статистика',
-    description: 'Смотрите сводные показатели и замечайте изменения в работе сервиса.',
-    points: ['Динамика созданных и закрытых работ за последние 14 дней.', 'Начисления по закрытым работам.', 'Распределение работ по статусам.'],
-    visual: { type: 'screenshot', image: 'statistics', alt: 'Демонстрационный экран статистики', viewBox: '232 66 1033 646', imageWidth: 1265, imageHeight: 712 }
+  get statistics(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.statistics_title'),
+      description: translate('proDetails.statistics_description'),
+      points: [translate('proDetails.statistics_points_item1'), translate('proDetails.statistics_points_item2'), translate('proDetails.statistics_points_item3')],
+      visual: { type: 'screenshot', image: 'statistics', alt: translate('proDetails.statistics_visual_alt'), viewBox: '232 66 1033 646', imageWidth: 1265, imageHeight: 712 }
+    }
   },
-  messages: {
-    title: 'Сообщения клиентам',
-    description: 'Общайтесь с клиентами и сохраняйте переписку рядом с рабочими процессами.',
-    points: ['Диалог по текущей работе.', 'Уведомление о готовности автомобиля.', 'История отправленных сообщений.', 'Ответы на частые вопросы по шаблонам.'],
-    visual: { type: 'preview', kind: 'messages' }
+  get messages(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.messages_title'),
+      description: translate('proDetails.messages_description'),
+      points: [translate('proDetails.messages_points_item1'), translate('proDetails.messages_points_item2'), translate('proDetails.messages_points_item3'), translate('proDetails.messages_points_item4')],
+      visual: { type: 'preview', kind: 'messages' }
+    }
   },
-  intake: {
-    title: 'Расширенная приёмка',
-    description: 'Фиксируйте состояние автомобиля и замечания при передаче в работу.',
-    points: ['Пробег и заметки осмотра.', 'Отметки повреждений на схеме.', 'Акт приёма-передачи с данными осмотра.'],
-    visual: { type: 'screenshot', image: 'intake', alt: 'Демонстрационная схема осмотра автомобиля при приёмке', viewBox: '279 323 619 361', imageWidth: 1265, imageHeight: 712 }
+  get intake(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.intake_title'),
+      description: translate('proDetails.intake_description'),
+      points: [translate('proDetails.intake_points_item1'), translate('proDetails.intake_points_item2'), translate('proDetails.intake_points_item3')],
+      visual: { type: 'screenshot', image: 'intake', alt: translate('proDetails.intake_visual_alt'), viewBox: '279 323 619 361', imageWidth: 1265, imageHeight: 712 }
+    }
   },
-  albums: {
-    title: 'Фотоальбомы',
-    description: 'Собирайте результат каждой работы в отдельный альбом. Обычные фото автомобиля доступны и на Free.',
-    points: ['Фото до и после работы.', 'Альбомы по работам и этапам ухода.', 'Просмотр снимков рядом с историей услуг.'],
-    visual: { type: 'preview', kind: 'albums' }
+  get albums(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.albums_title'),
+      description: translate('proDetails.albums_description'),
+      points: [translate('proDetails.albums_points_item1'), translate('proDetails.albums_points_item2'), translate('proDetails.albums_points_item3')],
+      visual: { type: 'preview', kind: 'albums' }
+    }
   },
-  notifications: {
-    title: 'Уведомления клиентам',
-    description: 'Напоминайте клиенту о визите и сообщайте о ходе работ через подключённые Telegram и MAX.',
-    points: ['Настройка напоминаний перед визитом.', 'Сообщения о готовности автомобиля.', 'История и результат отправки уведомлений.'],
-    visual: { type: 'demo', heading: 'Уведомления клиенту · пример', rows: [{ label: 'Перед визитом', value: 'Напомнить о записи на полировку' }, { label: 'Готовность автомобиля', value: 'Сообщить клиенту о выдаче' }, { label: 'История', value: 'Дата, канал и результат отправки' }] }
+  get notifications(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.notifications_title'),
+      description: translate('proDetails.notifications_description'),
+      points: [translate('proDetails.notifications_points_item1'), translate('proDetails.notifications_points_item2'), translate('proDetails.notifications_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.notifications_visual_heading'), rows: [{ label: translate('proDetails.notifications_visual_rows_item1_label'), value: translate('proDetails.notifications_visual_rows_item1_value') }, { label: translate('proDetails.notifications_visual_rows_item2_label'), value: translate('proDetails.notifications_visual_rows_item2_value') }, { label: translate('proDetails.notifications_visual_rows_item3_label'), value: translate('proDetails.notifications_visual_rows_item3_value') }] }
+    }
   },
-  messageTemplates: {
-    title: 'Шаблоны сообщений',
-    description: 'Готовьте повторяющиеся ответы заранее и используйте единый стиль общения.',
-    points: ['Текст для подтверждения записи.', 'Сообщение о готовности автомобиля.', 'Ответы на частые вопросы клиентов.'],
-    visual: { type: 'demo', heading: 'Шаблоны · пример', rows: [{ label: 'Запись подтверждена', value: 'Дата, время и услуга' }, { label: 'Автомобиль готов', value: 'Сообщение о выдаче' }, { label: 'Спасибо за визит', value: 'Ответ после завершения' }] }
+  get messageTemplates(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.messageTemplates_title'),
+      description: translate('proDetails.messageTemplates_description'),
+      points: [translate('proDetails.messageTemplates_points_item1'), translate('proDetails.messageTemplates_points_item2'), translate('proDetails.messageTemplates_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.messageTemplates_visual_heading'), rows: [{ label: translate('proDetails.messageTemplates_visual_rows_item1_label'), value: translate('proDetails.messageTemplates_visual_rows_item1_value') }, { label: translate('proDetails.messageTemplates_visual_rows_item2_label'), value: translate('proDetails.messageTemplates_visual_rows_item2_value') }, { label: translate('proDetails.messageTemplates_visual_rows_item3_label'), value: translate('proDetails.messageTemplates_visual_rows_item3_value') }] }
+    }
   },
-  selfAssignment: {
-    title: 'Самостоятельное назначение работ',
-    description: 'Разрешите мастерам самостоятельно брать свободные операции в работу.',
-    points: ['Свободные операции, ожидающие исполнителя.', 'Назначение на себя при включённой настройке и необходимых правах.', 'Переход к своим текущим задачам.'],
-    visual: { type: 'demo', heading: 'Доступные работы · пример', rows: [{ label: 'Полировка кузова', value: 'Ожидает исполнителя' }, { label: 'Химчистка салона', value: 'Можно взять в работу' }, { label: 'Мойка кузова', value: 'Назначена вам' }] }
+  get selfAssignment(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.selfAssignment_title'),
+      description: translate('proDetails.selfAssignment_description'),
+      points: [translate('proDetails.selfAssignment_points_item1'), translate('proDetails.selfAssignment_points_item2'), translate('proDetails.selfAssignment_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.selfAssignment_visual_heading'), rows: [{ label: translate('proDetails.selfAssignment_visual_rows_item1_label'), value: translate('proDetails.selfAssignment_visual_rows_item1_value') }, { label: translate('proDetails.selfAssignment_visual_rows_item2_label'), value: translate('proDetails.selfAssignment_visual_rows_item2_value') }, { label: translate('proDetails.selfAssignment_visual_rows_item3_label'), value: translate('proDetails.selfAssignment_visual_rows_item3_value') }] }
+    }
   },
-  documentStyling: {
-    title: 'Оформление документов',
-    description: 'Настраивайте внешний вид документов, которые передаются клиентам.',
-    points: ['Выбор стиля печатных форм.', 'Единый вид актов и заказ-нарядов.', 'Сохранение оформления для организации.'],
-    visual: { type: 'demo', heading: 'Документ · пример оформления', rows: [{ label: getProjectBrand(), value: 'Детейлинг · заказ-наряд' }, { label: 'Работы', value: 'Полировка кузова' }, { label: 'Результат', value: 'Оформленный документ для клиента' }] }
+  get documentStyling(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.documentStyling_title'),
+      description: translate('proDetails.documentStyling_description'),
+      points: [translate('proDetails.documentStyling_points_item1'), translate('proDetails.documentStyling_points_item2'), translate('proDetails.documentStyling_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.documentStyling_visual_heading'), rows: [{ label: getProjectBrand(), value: translate('proDetails.documentStyling_visual_rows_item1_value') }, { label: translate('proDetails.documentStyling_visual_rows_item2_label'), value: translate('proDetails.documentStyling_visual_rows_item2_value') }, { label: translate('proDetails.documentStyling_visual_rows_item3_label'), value: translate('proDetails.documentStyling_visual_rows_item3_value') }] }
+    }
   },
-  dataImport: {
-    title: 'Импорт данных',
-    description: 'Переносите подготовленные списки клиентов и автомобилей в рабочее пространство.',
-    points: ['Загрузка таблицы с данными.', 'Сопоставление колонок.', 'Проверка строк перед переносом.'],
-    visual: { type: 'demo', heading: 'Сопоставление столбцов · пример', rows: [{ label: 'Имя клиента', value: 'Имя' }, { label: 'Телефон', value: 'Мобильный' }, { label: 'Марка автомобиля', value: 'Автомобиль' }] }
+  get dataImport(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.dataImport_title'),
+      description: translate('proDetails.dataImport_description'),
+      points: [translate('proDetails.dataImport_points_item1'), translate('proDetails.dataImport_points_item2'), translate('proDetails.dataImport_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.dataImport_visual_heading'), rows: [{ label: translate('proDetails.dataImport_visual_rows_item1_label'), value: translate('proDetails.dataImport_visual_rows_item1_value') }, { label: translate('proDetails.dataImport_visual_rows_item2_label'), value: translate('proDetails.dataImport_visual_rows_item2_value') }, { label: translate('proDetails.dataImport_visual_rows_item3_label'), value: translate('proDetails.dataImport_visual_rows_item3_value') }] }
+    }
   },
-  accountingExport: {
-    title: 'Выгрузка для бухгалтерии',
-    description: 'Подготавливайте сведения о работах для передачи в учётную систему.',
-    points: ['Выбор периода выгрузки.', 'Проверка документов и замечаний.', 'JSON и отдельная обработка для 1С:Бухгалтерии 3.0.'],
-    visual: { type: 'demo', heading: 'Выгрузка · пример', rows: [{ label: 'Период', value: 'Выбранный интервал' }, { label: 'Файл', value: 'JSON для 1С:Бухгалтерии 3.0' }, { label: 'Загрузка', value: 'Обработка .epf и ручная сверка' }] }
+  get accountingExport(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.accountingExport_title'),
+      description: translate('proDetails.accountingExport_description'),
+      points: [translate('proDetails.accountingExport_points_item1'), translate('proDetails.accountingExport_points_item2'), translate('proDetails.accountingExport_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.accountingExport_visual_heading'), rows: [{ label: translate('proDetails.accountingExport_visual_rows_item1_label'), value: translate('proDetails.accountingExport_visual_rows_item1_value') }, { label: translate('proDetails.accountingExport_visual_rows_item2_label'), value: translate('proDetails.accountingExport_visual_rows_item2_value') }, { label: translate('proDetails.accountingExport_visual_rows_item3_label'), value: translate('proDetails.accountingExport_visual_rows_item3_value') }] }
+    }
   },
-  assistant: {
-    title: 'ИИ-помощник',
-    description: 'Управляйте CRM на сайте и через служебного Telegram-бота: пишите, диктуйте команды и слушайте ответы.',
-    beta: true,
-    note: 'Telegram-бот требует подключения. Озвучивание ответов включается администратором. Использование ИИ учитывается в отдельном бюджете.',
-    points: ['Текстовые и голосовые команды на сайте и в служебном Telegram-боте.', 'Записи, клиенты, автомобили и работы — в пределах ваших прав.', 'Озвучивание ответов при включённой администратором функции.', 'Изменения только после проверки и подтверждения.'],
-    visual: { type: 'preview', kind: 'assistant' }
+  get assistant(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.assistant_title'),
+      description: translate('proDetails.assistant_description'),
+      beta: true,
+      note: translate('proDetails.assistant_note'),
+      points: [translate('proDetails.assistant_points_item1'), translate('proDetails.assistant_points_item2'), translate('proDetails.assistant_points_item3'), translate('proDetails.assistant_points_item4')],
+      visual: { type: 'preview', kind: 'assistant' }
+    }
   },
-  myWork: {
-    title: 'Мои работы',
-    description: 'Собирайте назначенные вам задачи в одном списке и отслеживайте ход выполнения.',
-    points: ['Список назначенных работ.', 'Сроки и текущий статус.', 'Быстрый переход к деталям работы.'],
-    visual: { type: 'demo', heading: 'Мои работы · пример', rows: [{ label: 'Полировка кузова', value: 'В работе · сегодня' }, { label: 'Подготовка к выдаче', value: 'Следующая задача' }, { label: 'Химчистка салона', value: 'Запланирована' }] }
+  get myWork(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.myWork_title'),
+      description: translate('proDetails.myWork_description'),
+      points: [translate('proDetails.myWork_points_item1'), translate('proDetails.myWork_points_item2'), translate('proDetails.myWork_points_item3')],
+      visual: { type: 'demo', heading: translate('proDetails.myWork_visual_heading'), rows: [{ label: translate('proDetails.myWork_visual_rows_item1_label'), value: translate('proDetails.myWork_visual_rows_item1_value') }, { label: translate('proDetails.myWork_visual_rows_item2_label'), value: translate('proDetails.myWork_visual_rows_item2_value') }, { label: translate('proDetails.myWork_visual_rows_item3_label'), value: translate('proDetails.myWork_visual_rows_item3_value') }] }
+    }
   },
-  roles: {
-    title: 'Роли и права',
-    description: 'Назначайте каждому сотруднику роль и определяйте, какие данные он может просматривать и изменять.',
-    points: [
-      'Роли администратора, сотрудника, исполнителя и доступ только для просмотра.',
-      'Раздельные права на просмотр и изменение клиентов, записей, склада и финансов.',
-      'Настройки применяются ко всем сотрудникам с выбранной ролью.'
-    ],
-    visual: { type: 'screenshot', image: 'team', alt: 'Демонстрационный пример управления доступом команды', viewBox: '232 66 1048 590', imageWidth: 1280, imageHeight: 720 }
+  get roles(): ProFeatureDetail {
+    return {
+      title: translate('proDetails.roles_title'),
+      description: translate('proDetails.roles_description'),
+      points: [
+        translate('proDetails.roles_points_item1'),
+        translate('proDetails.roles_points_item2'),
+        translate('proDetails.roles_points_item3')
+      ],
+      visual: { type: 'screenshot', image: 'team', alt: translate('proDetails.roles_visual_alt'), viewBox: '232 66 1048 590', imageWidth: 1280, imageHeight: 720 }
+    }
   }
 }

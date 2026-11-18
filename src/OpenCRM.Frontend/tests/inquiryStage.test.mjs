@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import './inquiryTestMessages.mjs'
+import { i18n, formattingCulture, setFormattingCulture } from '@opencrm/ui/i18n'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -15,6 +18,7 @@ function card(failure) {
   let state
   const props = vue.reactive({ inquiryId: 'inquiry', context: { organization: { id: 'org', members: [] } }, timeZoneId: null })
   new Function('require', 'module', 'exports', code)(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} }
     if (id === '../utils/inquiryTime') return { resolveInquiryTimeZone: () => 'UTC', inquiryLocalTime: () => '' }
     if (id === '../api/inquiries') return {
@@ -33,6 +37,20 @@ function card(failure) {
   state.inquiry.value = { id: 'inquiry', stageCode: 'new', version: 4, timeZoneId: null, canManage: true }
   return { state, transitions, historyRequests, dispose: () => scope.stop() }
 }
+
+test('Название часового пояса следует языку интерфейса отдельно от формата дат', () => {
+  const originalLocale = i18n.global.locale.value
+  const originalCulture = formattingCulture.value
+  const { state, dispose } = card()
+  try {
+    i18n.global.locale.value = 'zh-Hans'
+    setFormattingCulture('en-GB')
+    assert.match(state.zoneLabel.value, /\p{Script=Han}/u)
+    assert.equal(formattingCulture.value, 'en-GB')
+    i18n.global.locale.value = 'en'
+    assert.match(state.zoneLabel.value, /Universal Time/)
+  } finally { dispose(); i18n.global.locale.value = originalLocale; setFormattingCulture(originalCulture) }
+})
 
 test('Комментарий отправляется вместе с переходом и очищается после сохранения', async () => {
   const { state, transitions, dispose } = card()

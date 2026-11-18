@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../visualizationMessages'
 import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiCard, UiLoader, UiSelect, formatDateOnly } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
@@ -10,6 +12,8 @@ import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 import { getWorkdayProgress, shouldOpenRecord } from '../utils/workdayCard'
 import { buildVisualWorkPosts, isBookingOverdue, type VisualWorkEntry } from './visualization/workPosts'
 import type { WorkPostSceneState } from './visualization/types'
+
+const { t } = useLocalization()
 
 const WorkPostsScene = defineAsyncComponent(() => import('./visualization/WorkPostsScene.vue'))
 const props = defineProps<{ context: WorkspaceContext }>()
@@ -46,15 +50,16 @@ const selectedEntries = computed(() => selectedTray.value === 'ready' ? model.va
   : selectedTray.value === 'waiting' ? waitingEntries.value
   : selectedTray.value === 'paused' ? pausedEntries.value
   : selectedTray.value === 'unassigned' ? model.value.unassigned : selectedPost.value?.entries ?? [])
-const selectionTitle = computed(() => selectedTray.value === 'ready' ? 'Готовы к выдаче'
-  : selectedTray.value === 'waiting' ? 'Ожидают начала'
-  : selectedTray.value === 'paused' ? 'Работы с паузой'
-  : selectedTray.value === 'unassigned' ? 'Без поста' : selectedPost.value?.name ?? 'Выберите пост')
+const selectionTitle = computed(() => selectedTray.value === 'ready' ? t('visualization.ready')
+  : selectedTray.value === 'waiting' ? t('visualization.waiting')
+  : selectedTray.value === 'paused' ? t('visualization.pausedWorks')
+  : selectedTray.value === 'unassigned' ? t('visualization.noPost') : selectedPost.value?.name ?? t('visualization.choosePost'))
 const occupiedCount = computed(() => model.value.posts.filter(post => post.count > 0).length)
 const conflictPosts = computed(() => model.value.posts.filter(post => post.state === 'conflict'))
-const stateLabels: Record<WorkPostSceneState, string> = {
-  free: 'Свободен', inProgress: 'В работе', overdue: 'Ожидает начала', paused: 'Есть пауза', conflict: 'Несколько заказов'
-}
+const stateLabels = computed<Record<WorkPostSceneState, string>>(() => ({
+  free: t('visualization.free'), inProgress: t('visualization.inProgress'), overdue: t('visualization.overdue'), paused: t('visualization.paused'), conflict: t('visualization.conflict')
+
+}))
 
 function selectPost(id: string | null) {
   selectedTray.value = null
@@ -67,13 +72,17 @@ function openPreview(event: MouseEvent, item: WorkspaceWorkdayItem) {
   previewId.value = item.id
 }
 
+function displayDate(value: string) {
+  return new Intl.DateTimeFormat(formattingCulture.value, { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
+}
+
 function entrySchedule(entry: VisualWorkEntry) {
   const date = entry.item.date.slice(0, 10)
-  const label = date === today.value ? 'Сегодня' : date.split('-').reverse().join('.')
+  const label = date === today.value ? t('visualization.today') : displayDate(date)
   const endDate = entry.item.endDate?.slice(0, 10)
-  const endLabel = endDate && endDate !== date ? endDate.split('-').reverse().join('.') + ' ' : ''
+  const endLabel = endDate && endDate !== date ? displayDate(endDate) + ' ' : ''
 
-  return `${label} · ${entry.item.startTime?.slice(0, 5) || 'Без времени'}${entry.item.endTime ? ' — ' + endLabel + entry.item.endTime.slice(0, 5) : ''}`
+  return `${label} · ${entry.item.startTime?.slice(0, 5) || t('visualization.noTime')}${entry.item.endTime ? ' — ' + endLabel + entry.item.endTime.slice(0, 5) : ''}`
 }
 
 function entryProgress(entry: VisualWorkEntry) {
@@ -81,11 +90,11 @@ function entryProgress(entry: VisualWorkEntry) {
 }
 
 function entryLabel(entry: VisualWorkEntry): string {
-  if (entry.stage === 'ready') return 'Готов к выдаче'
-  if (entry.isOverdue) return 'Работа не начата'
-  if (entry.stage === 'planned') return entry.item.startTime ? 'Ожидается' : 'Время не задано'
+  if (entry.stage === 'ready') return t('visualization.readyItem')
+  if (entry.isOverdue) return t('visualization.notStarted')
+  if (entry.stage === 'planned') return entry.item.startTime ? t('visualization.expected') : t('visualization.timeMissing')
 
-  return entry.item.workPausedCount ? 'В работе · есть пауза' : 'В работе'
+  return entry.item.workPausedCount ? t('visualization.inProgressPaused') : t('visualization.inProgress')
 }
 
 function postForEntry(entry: VisualWorkEntry) {
@@ -108,7 +117,7 @@ async function load() {
     if (request !== activeRequest || activeRequest.signal.aborted) return
     data.value = day
     catalog.value = scenarioCatalog.workPosts
-    updatedAt.value = new Intl.DateTimeFormat('ru-RU', {
+    updatedAt.value = new Intl.DateTimeFormat(formattingCulture.value, {
       hour: '2-digit', minute: '2-digit', timeZone: props.context.organization.timeZoneId || 'UTC'
     }).format(new Date())
     errorMessage.value = ''
@@ -116,8 +125,8 @@ async function load() {
     if (request !== activeRequest || (activeRequest.signal.aborted && activeRequest.signal.reason !== 'timeout')) return
     const timedOut = activeRequest.signal.reason === 'timeout'
     activeRequest.abort()
-    errorMessage.value = timedOut ? 'Сервер долго отвечает. Повторите обновление.'
-      : error instanceof Error ? error.message : 'Не удалось обновить визуализацию.'
+    errorMessage.value = timedOut ? t('visualization.timeout')
+      : error instanceof Error ? error.message : t('visualization.refreshError')
   } finally {
     window.clearTimeout(timeout)
     if (request === activeRequest) isLoading.value = false
@@ -153,59 +162,59 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UiCard page title="Визуализация">
+  <UiCard page :title="t('visualization.title')">
     <div class="visualization">
       <div class="visualization__toolbar">
-        <div class="visualization__live"><i aria-hidden="true"></i><strong>Посты сейчас</strong><span>{{ today.split('-').reverse().join('.') }}</span></div>
+        <div class="visualization__live"><i aria-hidden="true"></i><strong>{{ t('visualization.postsNow') }}</strong><span>{{ displayDate(today) }}</span></div>
         <div class="visualization__refresh-actions">
-          <span v-if="updatedAt" class="visualization__updated" role="status">Обновлено {{ updatedAt }}</span>
-          <button class="visualization__refresh" type="button" aria-label="Обновить визуализацию" title="Обновить" :disabled="isLoading" @click="load">
+          <span v-if="updatedAt" class="visualization__updated" role="status">{{ t('visualization.updated', { time: updatedAt }) }}</span>
+          <button class="visualization__refresh" type="button" :aria-label="t('visualization.refreshLabel')" :title="t('visualization.refresh')" :disabled="isLoading" @click="load">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a7.5 7.5 0 0 1 13-1L20 9M4 15l1.5 3a7.5 7.5 0 0 0 13-1"/></svg>
           </button>
         </div>
       </div>
       <div v-if="errorMessage" class="visualization__error" role="alert">
-        <strong>{{ data ? 'Показаны последние загруженные данные.' : 'Не удалось загрузить посты.' }}</strong><span>{{ errorMessage }}</span>
-        <UiButton variant="secondary" :disabled="isLoading" @click="load">Повторить загрузку</UiButton>
+        <strong>{{ data ? t('visualization.cached') : t('visualization.postsError') }}</strong><span>{{ errorMessage }}</span>
+        <UiButton variant="secondary" :disabled="isLoading" @click="load">{{ t('visualization.retry') }}</UiButton>
       </div>
-      <UiLoader v-if="isLoading && !data" text="Загружаем посты и работы…" />
+      <UiLoader v-if="isLoading && !data" :text="t('visualization.loading')" />
       <template v-if="data">
-        <div class="visualization__summary" aria-label="Состояние работ">
-          <div class="visualization__load"><span>Занято постов</span><strong>{{ occupiedCount }} <small>/ {{ model.posts.length }}</small></strong><progress :value="occupiedCount" :max="model.posts.length || 1" :aria-label="`Занято ${occupiedCount} из ${model.posts.length} постов`"></progress><small>Свободно сейчас: {{ model.posts.length - occupiedCount }}</small></div>
-          <button type="button" class="visualization__metric metric-waiting" :disabled="!waitingEntries.length" :aria-pressed="selectedTray === 'waiting'" @click="selectedTray = 'waiting'"><span><i aria-hidden="true"></i>Ожидают начала</span><strong>{{ waitingEntries.length }}</strong><small>Время записи наступило</small></button>
-          <button type="button" class="visualization__metric metric-paused" :disabled="!pausedEntries.length" :aria-pressed="selectedTray === 'paused'" @click="selectedTray = 'paused'"><span><i aria-hidden="true"></i>Есть пауза</span><strong>{{ pausedEntries.length }}</strong><small>Заказов с паузой в работах</small></button>
-          <button type="button" class="visualization__metric" :disabled="!model.unassigned.length" :aria-pressed="selectedTray === 'unassigned'" @click="selectedTray = 'unassigned'"><span><i aria-hidden="true"></i>Без поста</span><strong>{{ model.unassigned.length }}</strong><small>Не назначен пост</small></button>
-          <button type="button" class="visualization__metric metric-ready" :disabled="!model.ready.length" :aria-pressed="selectedTray === 'ready'" @click="selectedTray = 'ready'"><span><i aria-hidden="true"></i>Готовы к выдаче</span><strong>{{ model.ready.length }}</strong><small>Работы завершены</small></button>
+        <div class="visualization__summary" :aria-label="t('visualization.workStatus')">
+          <div class="visualization__load"><span>{{ t('visualization.occupied') }}</span><strong>{{ occupiedCount }} <small>/ {{ model.posts.length }}</small></strong><progress :value="occupiedCount" :max="model.posts.length || 1" :aria-label="t('visualization.occupiedCount', { count: occupiedCount, total: model.posts.length })"></progress><small>{{ t('visualization.freeNow', { count: model.posts.length - occupiedCount }) }}</small></div>
+          <button type="button" class="visualization__metric metric-waiting" :disabled="!waitingEntries.length" :aria-pressed="selectedTray === 'waiting'" @click="selectedTray = 'waiting'"><span><i aria-hidden="true"></i>{{ t('visualization.waiting') }}</span><strong>{{ waitingEntries.length }}</strong><small>{{ t('visualization.bookingDue') }}</small></button>
+          <button type="button" class="visualization__metric metric-paused" :disabled="!pausedEntries.length" :aria-pressed="selectedTray === 'paused'" @click="selectedTray = 'paused'"><span><i aria-hidden="true"></i>{{ t('visualization.paused') }}</span><strong>{{ pausedEntries.length }}</strong><small>{{ t('visualization.pausedOrders') }}</small></button>
+          <button type="button" class="visualization__metric" :disabled="!model.unassigned.length" :aria-pressed="selectedTray === 'unassigned'" @click="selectedTray = 'unassigned'"><span><i aria-hidden="true"></i>{{ t('visualization.noPost') }}</span><strong>{{ model.unassigned.length }}</strong><small>{{ t('visualization.postUnassigned') }}</small></button>
+          <button type="button" class="visualization__metric metric-ready" :disabled="!model.ready.length" :aria-pressed="selectedTray === 'ready'" @click="selectedTray = 'ready'"><span><i aria-hidden="true"></i>{{ t('visualization.ready') }}</span><strong>{{ model.ready.length }}</strong><small>{{ t('visualization.workCompleted') }}</small></button>
         </div>
         <div class="visualization__layout">
-          <section class="visualization__view" aria-label="Посты организации">
-            <header class="visualization__view-header ui-section-header"><div><h3>Загрузка постов</h3><button v-if="conflictPosts.length" type="button" class="visualization__conflict" @click="selectPost(conflictPosts[0]!.id)">Конфликтов: {{ conflictPosts.length }}</button></div></header>
+          <section class="visualization__view" :aria-label="t('visualization.organizationPosts')">
+            <header class="visualization__view-header ui-section-header"><div><h3>{{ t('visualization.postLoad') }}</h3><button v-if="conflictPosts.length" type="button" class="visualization__conflict" @click="selectPost(conflictPosts[0]!.id)">{{ t('visualization.conflictCount', { count: conflictPosts.length }) }}</button></div></header>
             <div v-if="model.posts.length" class="visualization__post-picker">
-              <UiSelect :model-value="selectedTray ? '' : selectedPostId" aria-label="Пост" placeholder="Выберите пост" :options="model.posts.map(post => ({ value: post.id, label: `${post.name} · ${stateLabels[post.state]}` }))" @update:model-value="selectPost" />
-              <button v-if="selectedPostId || selectedTray" type="button" class="visualization__clear" aria-label="Сбросить выбор" title="Сбросить выбор" @click="selectPost('')">
+              <UiSelect :model-value="selectedTray ? '' : selectedPostId" :aria-label="t('visualization.post')" :placeholder="t('visualization.choosePost')" :options="model.posts.map(post => ({ value: post.id, label: `${post.name} · ${stateLabels[post.state]}` }))" @update:model-value="selectPost" />
+              <button v-if="selectedPostId || selectedTray" type="button" class="visualization__clear" :aria-label="t('visualization.clearSelection')" :title="t('visualization.clearSelection')" @click="selectPost('')">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>
               </button>
             </div>
             <WorkPostsScene v-if="model.posts.length && !isSceneUnavailable" :posts="model.posts" :selected-post-id="selectedTray ? '' : selectedPostId" @select="selectPost" @unavailable="isSceneUnavailable = true" />
-            <div v-if="!model.posts.length" class="visualization__empty">Посты пока не настроены. Добавьте их в справочнике организации.</div>
-            <p v-if="isSceneUnavailable" class="visualization__notice">3D недоступно. Выберите пост в списке ниже.</p>
-            <div v-if="isSceneUnavailable" class="visualization__posts" aria-label="Список постов">
+            <div v-if="!model.posts.length" class="visualization__empty">{{ t('visualization.noPostsHint') }}</div>
+            <p v-if="isSceneUnavailable" class="visualization__notice">{{ t('visualization.no3dHint') }}</p>
+            <div v-if="isSceneUnavailable" class="visualization__posts" :aria-label="t('visualization.postList')">
               <button v-for="post in model.posts" :key="post.id" type="button" :aria-pressed="!selectedTray && selectedPostId === post.id" @click="selectPost(post.id)"><strong>{{ post.name }}</strong><span class="visualization__badge" :class="`state-${post.state}`"><i aria-hidden="true"></i>{{ stateLabels[post.state] }}</span></button>
             </div>
-            <div v-if="model.posts.length" class="visualization__legend" aria-label="Обозначения цветов"><span v-for="(label, state) in stateLabels" :key="state"><i :class="`state-${state}`" aria-hidden="true"></i>{{ label }}</span></div>
+            <div v-if="model.posts.length" class="visualization__legend" :aria-label="t('visualization.legend')"><span v-for="(label, state) in stateLabels" :key="state"><i :class="`state-${state}`" aria-hidden="true"></i>{{ label }}</span></div>
           </section>
-          <aside class="visualization__details" aria-label="Работы выбранного поста">
-            <header class="visualization__details-header ui-section-header"><div><small>{{ selectedTray ? 'Подборка заказов' : 'Выбранный пост' }}</small><h3>{{ selectionTitle }}</h3></div></header>
-            <p v-if="!selectedTray && selectedPost?.isLegacy" class="visualization__notice">Пост отсутствует среди активных позиций справочника.</p><p v-if="!selectedTray && selectedPost?.state === 'conflict'" class="visualization__notice notice-conflict">На пост претендуют несколько заказов. Проверьте статусы и назначение поста.</p>
-            <div v-if="!selectedEntries.length" class="visualization__empty"><strong>{{ selectedTray ? 'Нет заказов' : selectedPost ? 'Пост свободен' : 'Выберите пост' }}</strong><span>{{ selectedTray ? 'В этой подборке пока нет записей.' : selectedPost ? 'Текущих и ожидаемых записей нет.' : 'Здесь появятся его текущие и ожидаемые записи.' }}</span></div>
+          <aside class="visualization__details" :aria-label="t('visualization.selectedWork')">
+            <header class="visualization__details-header ui-section-header"><div><small>{{ selectedTray ? t('visualization.orderSelection') : t('visualization.selectedPost') }}</small><h3>{{ selectionTitle }}</h3></div></header>
+            <p v-if="!selectedTray && selectedPost?.isLegacy" class="visualization__notice">{{ t('visualization.legacyPost') }}</p><p v-if="!selectedTray && selectedPost?.state === 'conflict'" class="visualization__notice notice-conflict">{{ t('visualization.conflictHint') }}</p>
+            <div v-if="!selectedEntries.length" class="visualization__empty"><strong>{{ selectedTray ? t('visualization.noOrders') : selectedPost ? t('visualization.postFree') : t('visualization.choosePost') }}</strong><span>{{ selectedTray ? t('visualization.emptySelection') : selectedPost ? t('visualization.emptyPost') : t('visualization.chooseHint') }}</span></div>
             <article v-for="entry in selectedEntries" :key="entry.item.id" class="visualization__entry">
               <div class="visualization__entry-top"><span class="visualization__badge" :class="entry.stage === 'ready' ? 'state-free' : entry.isOverdue ? 'state-overdue' : entry.stage === 'planned' ? 'state-planned' : entry.item.workPausedCount ? 'state-paused' : 'state-inProgress'"><i aria-hidden="true"></i>{{ entryLabel(entry) }}</span></div>
-              <div class="visualization__vehicle"><img v-if="getVehicleBrandLogo(entry.item.vehicleBrandLogoKey)" :src="getVehicleBrandLogo(entry.item.vehicleBrandLogoKey)!.src" :alt="`Логотип ${getVehicleBrandLogo(entry.item.vehicleBrandLogoKey)!.name}`"><div><strong>{{ entry.item.vehicleName }}</strong><span v-if="entry.item.registrationPlate && !entry.item.vehicleName.includes(entry.item.registrationPlate)" class="visualization__plate">{{ entry.item.registrationPlate }}</span></div></div>
-              <p class="visualization__entry-services">{{ entry.item.services.join(' · ') || 'Услуги не указаны' }}</p>
-              <div v-if="entry.stage !== 'planned' && entryProgress(entry).total" class="visualization__work-progress"><span>Выполнено работ <strong>{{ entryProgress(entry).completed }} / {{ entryProgress(entry).total }}</strong></span><progress :value="entryProgress(entry).completed" :max="entryProgress(entry).total" :aria-label="`Выполнено ${entryProgress(entry).completed} из ${entryProgress(entry).total} работ`"></progress><small v-if="entry.item.workPausedCount">На паузе: {{ entry.item.workPausedCount }}</small></div>
-              <dl class="visualization__facts"><div><dt>Запись</dt><dd>{{ entrySchedule(entry) }}</dd></div><div v-if="entry.item.performer"><dt>Исполнитель</dt><dd>{{ entry.item.performer }}</dd></div><div v-if="entry.item.clientName"><dt>{{ context.shell.scenario?.code === 'fleet' ? (context.shell.scenario.terms?.clients || 'Ответственный') : 'Клиент' }}</dt><dd>{{ entry.item.clientName }}</dd></div></dl>
-              <button v-if="selectedTray && postForEntry(entry)" type="button" class="visualization__post-link" @click="selectPost(postForEntry(entry)!.id)">{{ postForEntry(entry)!.name }}</button><span v-else-if="selectedTray === 'waiting' || selectedTray === 'unassigned'" class="visualization__muted">Пост не назначен</span>
-              <a v-if="canOpenMaintenance" class="visualization__open" :href="`#maintenance/${entry.item.id}`" @click="openPreview($event, entry.item)">Посмотреть заказ</a>
+              <div class="visualization__vehicle"><img v-if="getVehicleBrandLogo(entry.item.vehicleBrandLogoKey)" :src="getVehicleBrandLogo(entry.item.vehicleBrandLogoKey)!.src" :alt="t('visualization.logo', { name: getVehicleBrandLogo(entry.item.vehicleBrandLogoKey)!.name })"><div><strong>{{ entry.item.vehicleName }}</strong><span v-if="entry.item.registrationPlate && !entry.item.vehicleName.includes(entry.item.registrationPlate)" class="visualization__plate">{{ entry.item.registrationPlate }}</span></div></div>
+              <p class="visualization__entry-services">{{ entry.item.services.join(' · ') || t('visualization.noServices') }}</p>
+              <div v-if="entry.stage !== 'planned' && entryProgress(entry).total" class="visualization__work-progress"><span>{{ t('visualization.completedWork') }} <strong>{{ entryProgress(entry).completed }} / {{ entryProgress(entry).total }}</strong></span><progress :value="entryProgress(entry).completed" :max="entryProgress(entry).total" :aria-label="t('visualization.progress', { count: entryProgress(entry).completed, total: entryProgress(entry).total })"></progress><small v-if="entry.item.workPausedCount">{{ t('visualization.pausedCount', { count: entry.item.workPausedCount }) }}</small></div>
+              <dl class="visualization__facts"><div><dt>{{ t('visualization.booking') }}</dt><dd>{{ entrySchedule(entry) }}</dd></div><div v-if="entry.item.performer"><dt>{{ t('visualization.performer') }}</dt><dd>{{ entry.item.performer }}</dd></div><div v-if="entry.item.clientName"><dt>{{ context.shell.scenario?.code === 'fleet' ? t('visualization.responsible') : t('visualization.client') }}</dt><dd>{{ entry.item.clientName }}</dd></div></dl>
+              <button v-if="selectedTray && postForEntry(entry)" type="button" class="visualization__post-link" @click="selectPost(postForEntry(entry)!.id)">{{ postForEntry(entry)!.name }}</button><span v-else-if="selectedTray === 'waiting' || selectedTray === 'unassigned'" class="visualization__muted">{{ t('visualization.postNotAssigned') }}</span>
+              <a v-if="canOpenMaintenance" class="visualization__open" :href="`#maintenance/${entry.item.id}`" @click="openPreview($event, entry.item)">{{ t('visualization.viewOrder') }}</a>
             </article>
           </aside>
         </div>

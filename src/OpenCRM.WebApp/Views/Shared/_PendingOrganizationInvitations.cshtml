@@ -8,28 +8,32 @@
         <div class="pending-org-invitations-card">
             <div class="pending-org-invitations-head">
                 <div>
-                    <div class="pending-org-invitations-kicker">Приглашения</div>
-                    <h2>Приглашения в организации</h2>
+                    <div class="pending-org-invitations-kicker">@Text["entry.invitations"]</div>
+                    <h2>@Text["entry.orgInvitations"]</h2>
                 </div>
             </div>
 
             <div class="pending-org-invitations-list">
                 @foreach (var invitation in Model)
                 {
+                    var role = Text[$"organization.role.{invitation.RoleCode}"];
+                    var status = Text[$"organization.invitation.{invitation.StatusCode}"];
+                    var scenario = Text[$"organization.create.scenario.{invitation.OrganizationScenarioCode}.title"];
+
                     <article class="pending-org-invitation-item">
                         <div class="pending-org-invitation-main">
                             <div class="pending-org-invitation-badges">
-                                <span>@invitation.OrganizationScenarioName</span>
-                                <span>Роль: @invitation.RoleName</span>
-                                <span>Статус: @invitation.StatusName</span>
+                                <span>@(scenario.ResourceNotFound ? invitation.OrganizationScenarioName : scenario.Value)</span>
+                                <span>@Text["entry.role"] @(role.ResourceNotFound ? invitation.RoleName : role.Value)</span>
+                                <span>@Text["entry.status"] @(status.ResourceNotFound ? invitation.StatusName : status.Value)</span>
                                 @if (!string.IsNullOrWhiteSpace(invitation.EmployeeName))
                                 {
-                                    <span>Карточка мастера: @invitation.EmployeeName</span>
+                                    <span>@Text["entry.employeeCard"] @invitation.EmployeeName</span>
                                 }
                             </div>
                             <h3>@invitation.OrganizationName</h3>
                             <div class="pending-org-invitation-meta">
-                                Приглашение отправлено @invitation.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                @Text["entry.invitedAt", invitation.CreatedAt.ToLocalTime().ToString("d", System.Globalization.CultureInfo.CurrentCulture)]
                             </div>
                         </div>
 
@@ -41,12 +45,12 @@
                                     <form asp-controller="Personal" asp-action="AcceptOrganizationInvitation" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="invitationId" value="@invitation.InvitationId" />
-                                        <button type="submit" class="btn btn-dark">Принять</button>
+                                        <button type="submit" class="btn btn-dark">@Text["entry.accept"]</button>
                                     </form>
                                 }
                                 else
                                 {
-                                    <p class="mb-0 small">Чтобы принять приглашение, подтвердите email. Письмо можно повторно отправить в <a href="/personal">профиле</a>.</p>
+                                    <p class="mb-0 small">@Text["entry.verifyEmail"] <a href="/personal">@Text["entry.profile"]</a>.</p>
                                 }
 
                                 @if (invitation.CanAccept)
@@ -54,7 +58,7 @@
                                     <form asp-controller="Personal" asp-action="DeclineOrganizationInvitation" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="invitationId" value="@invitation.InvitationId" />
-                                        <button type="submit" class="btn btn-outline-secondary">Отклонить</button>
+                                        <button type="submit" class="btn btn-outline-secondary">@Text["entry.decline"]</button>
                                     </form>
                                 }
                             </div>

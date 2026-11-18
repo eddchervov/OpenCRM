@@ -9,11 +9,13 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
+[Collection("Admin localization")]
 public sealed class PaymentServiceActionsTests
 {
     [Theory]
@@ -66,21 +68,34 @@ public sealed class PaymentServiceActionsTests
         var model = new PaymentActionsViewModel(client);
         model.SetPayment(handler.Payment);
         await model.LoadServiceActionsAsync(TestContext.Current.CancellationToken);
+        var localization = AdminLocalization.Instance;
+        var previousLanguage = localization.Language;
+        var preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-retry-confirmation-{Guid.NewGuid():N}.txt");
+        using var preferenceScope = localization.UsePreferencePath(preferencePath);
+        PaymentActionsViewModel? restored = null;
         model.Reason = "Возврат с потерянным ответом";
         model.RefundAmount = 210m;
         try
         {
+            localization.Language = "ru";
             model.RequestServiceActionCommand.Execute("refund");
             await model.ConfirmCommand.ExecuteAsync(null);
             Assert.True(model.HasUnresolvedServiceRequest);
             Assert.Single(handler.Bodies);
             await model.DeactivateAsync(true);
-            var restored = new PaymentActionsViewModel(client);
+            restored = new PaymentActionsViewModel(client);
             restored.SetPayment(handler.Payment);
             await restored.LoadServiceActionsAsync(TestContext.Current.CancellationToken);
             Assert.True(restored.CanRetryUnresolvedServiceRequest);
             Assert.False(restored.RequestServiceActionCommand.CanExecute("refund"));
             restored.RetryUnresolvedServiceActionCommand.Execute(null);
+            using var requestJson = JsonDocument.Parse(handler.Bodies[0]);
+            var operationId = requestJson.RootElement.GetProperty("operationId").GetGuid();
+            Assert.Contains(operationId.ToString(), restored.ConfirmationText);
+            localization.Language = "en";
+            restored.RefreshLocalizedValues();
+            Assert.Contains(operationId.ToString(), restored.ConfirmationText);
+            Assert.Contains("Retry", restored.ConfirmationText);
             await restored.ConfirmCommand.ExecuteAsync(null);
             Assert.Equal(2, handler.Bodies.Count);
             Assert.Equal(handler.Bodies[0], handler.Bodies[1]);
@@ -90,7 +105,17 @@ public sealed class PaymentServiceActionsTests
         finally
         {
             await model.DeactivateAsync(true);
+            if (restored != null)
+            {
+                await restored.DeactivateAsync(true);
+            }
+
             await new PendingPaymentActionStore().DeleteAsync(client.PendingActionScope);
+            localization.Language = previousLanguage;
+            if (File.Exists(preferencePath))
+            {
+                File.Delete(preferencePath);
+            }
         }
     }
 

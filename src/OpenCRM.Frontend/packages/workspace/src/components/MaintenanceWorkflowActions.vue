@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../interactionMessages'
 import { nextTick, ref } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import MaintenanceCardActions from './MaintenanceCardActions.vue'
@@ -25,7 +27,7 @@ async function open() {
     await nextTick()
     actions.value?.show()
   } catch (failure) {
-    emit('error', failure instanceof Error ? failure.message : 'Не удалось загрузить запись.')
+    emit('error', failure instanceof Error ? failure.message : t('interaction.loadRecordError'))
   } finally {
     loading.value = false
   }
@@ -37,7 +39,7 @@ async function changed() {
     emit('changed', maintenance.value.status)
   } catch (failure) {
     emit('changed', props.status)
-    emit('error', failure instanceof Error ? failure.message : 'Обновите список записей.')
+    emit('error', failure instanceof Error ? failure.message : t('interaction.refreshRecords'))
   }
 }
 </script>
@@ -45,7 +47,7 @@ async function changed() {
 <template>
   <div class="maintenance-workflow-actions" :class="{ 'maintenance-workflow-actions--compact': compact }">
     <UiButton variant="secondary" :disabled="disabled || loading" aria-haspopup="dialog" @click.stop.prevent="open">
-      {{ loading ? 'Загружаем…' : 'Действия' }}
+      {{ loading ? t('interaction.loading') : t('interaction.actions') }}
     </UiButton>
     <MaintenanceCardActions v-if="maintenance" ref="actions" :organization-id="organizationId"
       :maintenance="maintenance" :disabled="disabled" :simple-workflow="simpleWorkflow" hide-trigger @changed="changed" />

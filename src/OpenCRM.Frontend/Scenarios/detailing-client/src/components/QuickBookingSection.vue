@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import '@opencrm/workspace/quickBookingMessages'
+import { formatLocaleCurrency, i18n, translate as t } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency, registrationCountryOptions, internationalRegistrationPlateError } from '@opencrm/workspace'
+
 import {
   BookingTimeFields,
   QuickBookingClientPicker,
@@ -43,6 +47,10 @@ import {
   type DetailingWorkspaceContext
 } from '@/api/detailingBff'
 
+const workspaceCurrency = useWorkspaceCurrency()
+const countryOptions = computed(() => [{ value: 'ZZ', label: t('quickBooking.unknownCountry') }, ...registrationCountryOptions(i18n.global.locale.value)])
+const isInternationalPlate = computed(() => Boolean(form.registrationCountryCode && form.registrationCountryCode !== 'RU'))
+
 const bookingTimes = ref<InstanceType<typeof BookingTimeFields> | null>(null)
 const inlineError = ref<HTMLElement | null>(null)
 const serviceDuration = ref<number | null | undefined>()
@@ -78,6 +86,7 @@ const clientPicker = ref<InstanceType<typeof QuickBookingClientPicker> | null>(n
 
 const form = reactive({
   registrationPlate: '',
+  registrationCountryCode: 'RU',
   kind: '1',
   manualBrandName: '',
   manualModelName: '',
@@ -121,7 +130,7 @@ const organizationId = computed(() => props.context.organization.id)
 const repeatVisitSourceReady = computed(() => !props.repeatVisitId || Boolean(repeatVisit.value && selectedVehicle.value?.id === repeatVisit.value.vehicleId))
 const isReadOnly = computed(() => props.context.workspaceAccess?.isReadOnly === true)
 const readOnlyMessage = computed(() =>
-  props.context.workspaceAccess?.readOnlyMessage ?? 'Рабочее пространство сейчас доступно только для просмотра.'
+  props.context.workspaceAccess?.readOnlyMessage ?? t('quickBooking.readOnly')
 )
 const billingHref = computed(() => '#billing')
 const searchText = computed(() => form.registrationPlate.trim())
@@ -134,28 +143,28 @@ const selectedClientName = computed(() => {
   return ''
 })
 const brandOptions = computed(() => [
-  { value: '', label: 'Неизвестно' },
+  { value: '', label: t('quickBooking.unknown') },
   ...brands.value.map(brand => ({ value: String(brand.id), label: brand.name }))
 ])
 const modelOptions = computed(() => [
-  { value: '', label: 'Неизвестно' },
+  { value: '', label: t('quickBooking.unknown') },
   ...models.value.map(model => ({ value: String(model.id), label: model.name }))
 ])
 const postOptions = computed(() => [
-  { value: '', label: 'Без поста' },
+  { value: '', label: t('quickBooking.noPost') },
   ...posts.value
     .filter(item => item.isActive !== false && item.name?.trim())
     .map(item => ({ value: item.name.trim(), label: item.name.trim() }))
 ])
 const kindOptions = [
-  { value: '1', label: 'Легковой автомобиль' },
-  { value: '2', label: 'Грузовая техника' },
-  { value: '3', label: 'Мотоцикл' },
-  { value: '4', label: 'Квадроцикл' },
-  { value: '5', label: 'Багги / UTV' },
-  { value: '9', label: 'Спецтехника' },
-  { value: '10', label: 'Прицеп' },
-  { value: '99', label: 'Другая техника' }
+  { value: '1', label: t('quickBooking.car') },
+  { value: '2', label: t('quickBooking.truck') },
+  { value: '3', label: t('quickBooking.motorcycle') },
+  { value: '4', label: t('quickBooking.atv') },
+  { value: '5', label: t('quickBooking.utv') },
+  { value: '9', label: t('quickBooking.special') },
+  { value: '10', label: t('quickBooking.trailer') },
+  { value: '99', label: t('quickBooking.otherVehicle') }
 ]
 
 function getVehicleTitle(vehicle: WorkspaceVehicle) {
@@ -253,7 +262,7 @@ function applyVehicle(vehicle: WorkspaceVehicle) {
     (form.organizationClientId && form.organizationClientId !== vehicle.organizationClientId) ||
     form.clientName.trim() || form.clientPhone.trim()
   )) {
-    showFormError('У автомобиля уже указан другой клиент. Выберите его или измените клиента в карточке автомобиля.', false)
+    showFormError(t('quickBooking.clientMismatch'), false)
     return
   }
   window.clearTimeout(searchTimer)
@@ -265,6 +274,7 @@ function applyVehicle(vehicle: WorkspaceVehicle) {
   allowOtherRegistrationPlateFormat.value = Boolean(vehicle.registrationPlate && registrationPlateFormats.value &&
     getVehicleRegistrationPlateFormat(vehicle.kind || 1, registrationPlateFormats.value) &&
     validateRegistrationPlate(vehicle.registrationPlate, vehicle.kind || 1, registrationPlateFormats.value))
+  form.registrationCountryCode = vehicle.registrationCountryCode || 'RU'
   form.registrationPlate = vehicle.registrationPlate || form.registrationPlate
   form.organizationClientId = vehicle.organizationClientId || form.organizationClientId
   form.kind = String(vehicle.kind || 1)
@@ -280,6 +290,7 @@ function clearVehicleSelection() {
   searchRequestId++
   isSearching.value = false
   selectedVehicleId.value = ''
+  form.registrationCountryCode = 'RU'
   form.registrationPlate = ''
   allowOtherRegistrationPlateFormat.value = false
   selectedBrandId.value = ''
@@ -383,7 +394,7 @@ async function saveBooking() {
   }
 
   if (!form.registrationPlate.trim()) {
-    const message = 'Укажите госномер. Без него быстро появятся одинаковые записи.'
+    const message = t('quickBooking.plateRequired')
     registrationPlateError.value = message
     showFormError(message, false, 'plate')
     focusField(`${formId}-registration-plate`)
@@ -393,7 +404,7 @@ async function saveBooking() {
   try {
     registrationPlateFormats.value ??= await loadVehicleRegistrationPlateFormats()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Не удалось загрузить форматы госномеров.'
+    const message = error instanceof Error ? error.message : t('quickBooking.plateLoadError')
     registrationPlateError.value = message
     showFormError(message, false, 'plate')
     focusField(`${formId}-registration-plate`)
@@ -407,7 +418,10 @@ async function saveBooking() {
   }
 
   if (!selectedVehicle.value) {
-    const validationError = validateRegistrationPlate(
+    const internationalError = isInternationalPlate.value ? internationalRegistrationPlateError(form.registrationPlate) : ''
+    const validationError = isInternationalPlate.value
+      ? internationalError ? t(`quickBooking.plate.${internationalError}`) : ''
+      : validateRegistrationPlate(
       form.registrationPlate,
       form.kind,
       registrationPlateFormats.value,
@@ -423,7 +437,7 @@ async function saveBooking() {
 
   const serviceValidationError = servicesEditor.value?.validate()
   if (serviceValidationError === undefined) {
-    showFormError('Не удалось проверить строки работ.')
+    showFormError(t('quickBooking.validationError'))
     return
   }
   if (serviceValidationError) {
@@ -432,7 +446,7 @@ async function saveBooking() {
   }
 
   if (!form.plannedDate) {
-    const message = 'Укажите дату записи.'
+    const message = t('quickBooking.dateRequired')
     plannedDateError.value = message
     showFormError(message, false, 'date')
     focusField(`${formId}-planned-date`)
@@ -458,7 +472,8 @@ async function saveBooking() {
     const payload: CreateDetailingQuickBookingRequest = {
       vehicleId: selectedVehicle.value?.id ?? null,
       isPlannedBooking: Boolean(props.inquiryId || props.repeatVisitId) || props.plannedBooking === true || Boolean(props.initialDate) || form.plannedDate > formatDateOnly(undefined, props.context.organization.timeZoneId || 'UTC'),
-      registrationPlate: registrationPlateFormats.value
+      registrationCountryCode: form.registrationCountryCode || null,
+      registrationPlate: !isInternationalPlate.value && registrationPlateFormats.value
         ? normalizeRegistrationPlate(form.registrationPlate.trim(), registrationPlateFormats.value,
           allowOtherRegistrationPlateFormat.value || !getVehicleRegistrationPlateFormat(form.kind, registrationPlateFormats.value))
         : form.registrationPlate.trim(),
@@ -481,7 +496,7 @@ async function saveBooking() {
       comment: toNullableString(form.comment)
     }
 
-    if (props.inquiryId && props.repeatVisitId) throw new Error('Нельзя одновременно создавать запись по обращению и рекомендации.')
+    if (props.inquiryId && props.repeatVisitId) throw new Error(t('quickBooking.oneSource'))
     const bookingOrganizationId = organizationId.value
     const result = props.repeatVisitId && repeatVisit.value
       ? await convertRepeatVisitBooking(bookingOrganizationId, props.repeatVisitId, { version: repeatVisit.value.version, detailing: payload })
@@ -502,7 +517,7 @@ async function saveBooking() {
       window.location.hash = `#maintenance/${result.maintenanceId}`
     }
   } catch (error) {
-    showFormError(error instanceof Error ? error.message : 'Не удалось создать запись.', true, 'submission')
+    showFormError(error instanceof Error ? error.message : t('quickBooking.bookingError'), true, 'submission')
   } finally {
     isSaving.value = false
   }
@@ -513,7 +528,7 @@ onMounted(async () => {
   errorMessage.value = ''
 
   try {
-    if (props.inquiryId && props.repeatVisitId) throw new Error('Выберите один источник записи: обращение или рекомендацию.')
+    if (props.inquiryId && props.repeatVisitId) throw new Error(t('quickBooking.sourceRequired'))
     const [catalog, , plateFormats] = await Promise.all([
       loadScenarioCatalog(organizationId.value),
       loadBrandsForKind(),
@@ -525,8 +540,8 @@ onMounted(async () => {
 
     if (props.repeatVisitId) {
       repeatVisit.value = await loadRepeatVisit(organizationId.value, props.repeatVisitId)
-      if (repeatVisit.value.bookedMaintenanceId) throw new Error(`По рекомендации уже создана запись ${repeatVisit.value.bookedMaintenanceId}.`)
-      if (!repeatVisit.value.canBook || !repeatVisit.value.isActive) throw new Error('Создание записи по этой рекомендации недоступно.')
+      if (repeatVisit.value.bookedMaintenanceId) throw new Error(t('quickBooking.alreadyBooked', { id: repeatVisit.value.bookedMaintenanceId }))
+      if (!repeatVisit.value.canBook || !repeatVisit.value.isActive) throw new Error(t('quickBooking.recommendationUnavailable'))
       form.organizationClientId = repeatVisit.value.organizationClientId
       form.plannedDate = repeatVisit.value.suggestedVisitDate
       form.comment = repeatVisit.value.reason ?? ''
@@ -535,7 +550,7 @@ onMounted(async () => {
 
     if (props.inquiryId) {
       inquiry.value = await loadInquiry(organizationId.value, props.inquiryId)
-      if (!inquiry.value.canCreateBooking) throw new Error('Создание записи по этому обращению недоступно.')
+      if (!inquiry.value.canCreateBooking) throw new Error(t('quickBooking.inquiryUnavailable'))
       form.organizationClientId = inquiry.value.organizationClientId ?? ''
       form.comment = [inquiry.value.interestText, inquiry.value.vehicleDescription].filter(Boolean).join('\n')
     }
@@ -546,7 +561,7 @@ onMounted(async () => {
       applyVehicle(vehicle)
     }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось открыть форму записи.'
+    errorMessage.value = error instanceof Error ? error.message : t('quickBooking.formLoadError')
     foundVehicles.value = []
   } finally {
     isLoading.value = false
@@ -627,11 +642,11 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
 
 <template>
   <section class="entity-card-section">
-    <UiCard :page="!modal" class="quick-editor" :title="modal ? undefined : 'Новая запись'">
+    <UiCard :page="!modal" class="quick-editor" :title="modal ? undefined : t('quickBooking.newBooking')">
       <template v-if="!modal" #actions>
-        <WorkspacePageHelpButton section-code="maintenance" entity-id="new" title="Новая запись" />
+        <WorkspacePageHelpButton section-code="maintenance" entity-id="new" :title="t('quickBooking.newBooking')" />
       </template>
-      <UiLoader v-if="isLoading" text="Открываем форму записи..." />
+      <UiLoader v-if="isLoading" :text="t('quickBooking.loadingBooking')" />
       <form v-else class="quick-editor-form" novalidate @submit.prevent="saveBooking">
         <InquiryBookingContext v-if="inquiry" ref="inquiryContact" :inquiry="inquiry" :selected-client-id="form.organizationClientId" />
         <WorkspaceAccessNotice
@@ -643,14 +658,14 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
         />
         <div class="quick-editor-layout">
           <section class="quick-editor-customer" aria-labelledby="quick-customer-title">
-            <h3 id="quick-customer-title">Автомобиль и клиент</h3>
+            <h3 id="quick-customer-title">{{ t('quickBooking.vehicleClient') }}</h3>
             <div v-if="selectedVehicle" class="quick-booking-selected-vehicle">
-              <img v-if="selectedVehicleLogo" :src="selectedVehicleLogo.src" :alt="`Логотип ${selectedVehicleLogo.name}`">
+              <img v-if="selectedVehicleLogo" :src="selectedVehicleLogo.src" :alt="t('quickBooking.logo', { name: selectedVehicleLogo.name })">
               <div>
                 <strong>{{ getVehicleTitle(selectedVehicle) }}</strong>
-                <span>{{ getVehicleMeta(selectedVehicle) || 'Автомобиль из базы' }}</span>
+                <span>{{ getVehicleMeta(selectedVehicle) || t('quickBooking.existingVehicle') }}</span>
               </div>
-              <button type="button" :disabled="isSaving || isReadOnly || Boolean(repeatVisitId)" @click="clearVehicleSelection">Выбрать другой</button>
+              <button type="button" :disabled="isSaving || isReadOnly || Boolean(repeatVisitId)" @click="clearVehicleSelection">{{ t('quickBooking.other') }}</button>
             </div>
             <div class="quick-editor-fields">
               <QuickBookingClientPicker
@@ -665,17 +680,19 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
                 :disabled="isSaving || isReadOnly || Boolean(selectedVehicle?.organizationClientId) || Boolean(repeatVisitId)"
               />
               <template v-if="!selectedVehicle">
+              <UiSelect v-model="form.registrationCountryCode" :label="t('quickBooking.registrationCountry')" :options="countryOptions" :disabled="isSaving || isReadOnly" />
               <VehicleRegistrationPlateInput
                 v-model="form.registrationPlate"
                 v-model:allow-other-format="allowOtherRegistrationPlateFormat"
                 :id="`${formId}-registration-plate`"
+                :country-code="form.registrationCountryCode"
                 :kind="form.kind"
                 :disabled="isSaving || isReadOnly || Boolean(repeatVisitId)"
                 :error="registrationPlateError"
                 required
               />
               <div class="entity-form__wide quick-booking-search">
-                <UiLoader v-if="isSearching" compact text="Ищем авто..." />
+                <UiLoader v-if="isSearching" compact :text="t('quickBooking.searching')" />
                 <div v-else-if="foundVehicles.length" class="quick-booking-matches">
                   <button
                     v-for="vehicle in foundVehicles"
@@ -686,24 +703,22 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
                     @click="applyVehicle(vehicle)"
                   >
                     <strong>{{ getVehicleTitle(vehicle) }}</strong>
-                    <span>{{ getVehicleMeta(vehicle) || 'Найдено в базе' }}</span>
+                    <span>{{ getVehicleMeta(vehicle) || t('quickBooking.foundVehicle') }}</span>
                   </button>
                 </div>
                 <div v-else-if="searchText.length >= 2" class="detailing-empty">
-                  Совпадений нет, при сохранении создадим новый автомобиль
-                  {{ form.organizationClientId ? ' у выбранного клиента' : '' }}
-                  .
+                  {{ form.organizationClientId ? t('quickBooking.newClientVehicle') : t('quickBooking.newVehicle') }}
                 </div>
               </div>
               <UiSelect
                 v-model="form.kind"
-                label="Тип техники"
+                :label="t('quickBooking.vehicleType')"
                 :options="kindOptions"
                 :searchable="false"
                 :disabled="isSaving || isReadOnly || Boolean(selectedVehicle)"
               />
               <div class="entity-form-identity entity-form__wide">
-                <div class="entity-form-toggle" role="group" aria-label="Способ заполнения автомобиля">
+                <div class="entity-form-toggle" role="group" :aria-label="t('quickBooking.identityMethod')">
                   <button
                     type="button"
                     class="entity-form-toggle__button"
@@ -711,7 +726,7 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
                     :disabled="isSaving || isReadOnly || Boolean(selectedVehicle)"
                     @click="isManualIdentity = false"
                   >
-                    Из справочника
+                    {{ t('quickBooking.fromCatalog') }}
                   </button>
                   <button
                     type="button"
@@ -720,73 +735,73 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
                     :disabled="isSaving || isReadOnly || Boolean(selectedVehicle)"
                     @click="isManualIdentity = true"
                   >
-                    Ввести вручную
+                    {{ t('quickBooking.manual') }}
                   </button>
                 </div>
               </div>
               <template v-if="!isManualIdentity">
                 <UiSelect
                   v-model="selectedBrandId"
-                  label="Марка"
+                  :label="t('quickBooking.brand')"
                   :options="brandOptions"
                   :disabled="isSaving || isReadOnly || Boolean(selectedVehicle)"
                 />
                 <UiSelect
                   v-model="selectedModelId"
-                  label="Модель"
+                  :label="t('quickBooking.model')"
                   :options="modelOptions"
                   :disabled="isSaving || isReadOnly || Boolean(selectedVehicle) || isLoadingModels || !selectedBrandId"
-                  :placeholder="isLoadingModels ? 'Загружаем модели...' : 'Неизвестно'"
+                  :placeholder="isLoadingModels ? t('quickBooking.loadingModels') : t('quickBooking.unknown')"
                 />
               </template>
               <template v-else>
                 <UiInput
                   v-model="form.manualBrandName"
-                  label="Марка"
-                  label-help="Укажите марку вручную, если автомобиля еще нет в справочнике."
+                  :label="t('quickBooking.brand')"
+                  :label-help="t('quickBooking.manualBrandHelp')"
                   :disabled="isSaving || isReadOnly || Boolean(selectedVehicle)"
                 />
                 <UiInput
                   v-model="form.manualModelName"
-                  label="Модель"
-                  label-help="Укажите модель вручную, если автомобиля еще нет в справочнике."
+                  :label="t('quickBooking.model')"
+                  :label-help="t('quickBooking.manualModelHelp')"
                   :disabled="isSaving || isReadOnly || Boolean(selectedVehicle)"
                 />
               </template>
               </template>
             </div>
-            <div class="quick-services"><h3>Услуги</h3>
+            <div class="quick-services"><h3>{{ t('quickBooking.services') }}</h3>
               <MaintenanceServicesEditor :can-assign-employees="context.shell.scenario?.modules?.members !== false" ref="servicesEditor" @duration-change="serviceDuration = $event" @validation-cleared="clearClientValidationSummary('service')" v-model="selectedServices" :can-open-catalog="context.shell.menu?.some(item => item.code === 'catalog' && item.isVisible)" :organization-id="organizationId" default-vat-rate-code="without_vat" :disabled="isSaving || isReadOnly" />
             </div>
             <UiTextarea
               class="entity-form__wide quick-booking-comment"
               v-model="form.comment"
-              label="Комментарий"
+              :label="t('quickBooking.comment')"
               :rows="3"
               :disabled="isSaving || isReadOnly"
             />
           </section>
           <section class="quick-editor-visit" aria-labelledby="quick-visit-title">
-            <h3 id="quick-visit-title">Параметры записи</h3>
+            <h3 id="quick-visit-title">{{ t('quickBooking.bookingOptions') }}</h3>
 
             <div class="catalog-linked-field">
-              <UiSelect v-model="form.location" label="Пост / место" :options="postOptions" :disabled="isSaving || isReadOnly" />
+              <UiSelect v-model="form.location" :label="t('quickBooking.post')" :options="postOptions" :disabled="isSaving || isReadOnly" />
               <a
                 v-if="context.shell.menu?.some(item => item.code === 'catalog' && item.isVisible) && !isSaving"
                 href="#catalog?catalog=work_post"
               >
-                Справочник постов ↗
+                {{ t('quickBooking.postCatalog') }}
               </a>
             </div>
             <UiDatePicker
               v-model="form.plannedDate"
               :id="`${formId}-planned-date`"
-              label="Дата начала"
+              :label="t('quickBooking.startDate')"
               :disabled="isSaving || isReadOnly"
               :error="plannedDateError"
               required
             />
-            <UiDatePicker v-model="form.plannedEndDate" @update:model-value="bookingTimes?.useManualEnd()" label="Дата окончания" :disabled="isSaving || isReadOnly" required />
+            <UiDatePicker v-model="form.plannedEndDate" @update:model-value="bookingTimes?.useManualEnd()" :label="t('quickBooking.endDate')" :disabled="isSaving || isReadOnly" required />
             <BookingTimeFields
               ref="bookingTimes"
               v-model:start="form.plannedStartTime"
@@ -801,25 +816,25 @@ watch(() => [form.plannedDate, form.plannedEndDate, form.plannedStartTime, form.
               class="booking-times entity-form__wide"
             />
             <div class="quick-booking-totals">
-              <div><span>Длительность</span><strong>{{ serviceDuration == null ? 'Не указана' : formatServiceDuration(serviceDuration) }}</strong></div>
-              <div><span>Стоимость работ</span><strong>{{ selectedServices.reduce((sum, item) => sum + (item.price ?? 0), 0).toLocaleString('ru-RU') }} ₽</strong></div>
+              <div><span>{{ t('quickBooking.duration') }}</span><strong>{{ serviceDuration == null ? t('quickBooking.unspecified') : formatServiceDuration(serviceDuration) }}</strong></div>
+              <div><span>{{ t('quickBooking.price') }}</span><strong>{{ formatLocaleCurrency(selectedServices.reduce((sum, item) => sum + (item.price ?? 0), 0), workspaceCurrency) }}</strong></div>
             </div>
           </section>
         </div>
         <div class="quick-editor-footer">
           <div v-if="errorMessage && !errorDialogMessage" ref="inlineError" class="quick-editor-error" role="alert" tabindex="-1">{{ errorMessage }}</div>
-          <a v-if="repeatVisit?.bookedMaintenanceId" :href="`#maintenance/${repeatVisit.bookedMaintenanceId}`">Открыть уже созданную запись</a>
+          <a v-if="repeatVisit?.bookedMaintenanceId" :href="`#maintenance/${repeatVisit.bookedMaintenanceId}`">{{ t('quickBooking.openBooking') }}</a>
           <div class="quick-editor-actions">
-            <UiButton v-if="!isReadOnly" type="submit" :disabled="isSaving || !repeatVisitSourceReady || Boolean(repeatVisit?.bookedMaintenanceId)">{{ isSaving ? 'Создаем...' : 'Создать запись' }}</UiButton>
-            <UiButton v-if="modal" variant="secondary" :disabled="isSaving" @click="emit('cancel')">Отмена</UiButton>
-            <UiButton v-else variant="secondary" href="#scheduler" :disabled="isSaving">Отмена</UiButton>
+            <UiButton v-if="!isReadOnly" type="submit" :disabled="isSaving || !repeatVisitSourceReady || Boolean(repeatVisit?.bookedMaintenanceId)">{{ isSaving ? t('quickBooking.creating') : t('quickBooking.createBooking') }}</UiButton>
+            <UiButton v-if="modal" variant="secondary" :disabled="isSaving" @click="emit('cancel')">{{ t('quickBooking.cancel') }}</UiButton>
+            <UiButton v-else variant="secondary" href="#scheduler" :disabled="isSaving">{{ t('quickBooking.cancel') }}</UiButton>
           </div>
         </div>
       </form>
     </UiCard>
     <UiAlertDialog
       :open="!modal && Boolean(errorDialogMessage)"
-      title="Не удалось создать запись"
+      :title="t('quickBooking.bookingFailed')"
       :message="errorDialogMessage"
       tone="danger"
       @close="errorDialogMessage = ''"

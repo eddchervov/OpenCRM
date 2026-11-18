@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { UiButton, UiInput } from '@opencrm/ui'
+import { UiButton, UiInput, useLocalization } from '@opencrm/ui'
+import '../clientMessages'
 import type { WorkspaceClientVehicle } from '../api/clients'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
@@ -14,6 +15,7 @@ const props = defineProps<{
   canAdd: boolean
   createLabel: string
 }>()
+const { t } = useLocalization()
 const emit = defineEmits<{ add: [] }>()
 const isOpen = ref(false)
 const isChoosing = ref(false)
@@ -42,38 +44,38 @@ defineExpose({ open })
   <section class="client-vehicles" :aria-label="title">
     <header class="client-vehicles__header ui-section-header">
       <h3>{{ title }} <span>{{ vehicles.length }}</span></h3>
-      <UiButton v-if="canAdd" variant="secondary" @click="emit('add')">+ Добавить</UiButton>
+      <UiButton v-if="canAdd" variant="secondary" @click="emit('add')">{{ t('clients.add') }}</UiButton>
     </header>
-    <p v-if="!vehicles.length" class="client-vehicles__empty">Пока ничего не добавлено.</p>
+    <p v-if="!vehicles.length" class="client-vehicles__empty">{{ t('clients.vehiclesEmpty') }}</p>
     <ul v-else class="client-vehicles__list">
       <li v-for="vehicle in visibleVehicles" :key="vehicle.id" class="client-vehicles__row">
-        <component :is="canOpen ? 'a' : 'div'" :href="canOpen ? `#vehicles/${vehicle.id}` : undefined" class="client-vehicles__photo" :aria-label="canOpen ? `Открыть: ${vehicle.displayName}` : undefined">
+        <component :is="canOpen ? 'a' : 'div'" :href="canOpen ? `#vehicles/${vehicle.id}` : undefined" class="client-vehicles__photo" :aria-label="canOpen ? t('clients.openVehicle', { name: vehicle.displayName }) : undefined">
           <img v-if="hasPhoto(vehicle)" :src="vehicle.photoUrl!" :alt="vehicle.displayName" loading="lazy" @error="failedPhotos.add(vehicle.photoUrl!)" />
           <div v-else class="client-vehicles__no-photo">
             <img v-if="getVehicleBrandLogo(vehicle.brandLogoKey)" :src="getVehicleBrandLogo(vehicle.brandLogoKey)!.src" alt="" />
-            <span v-else>Нет фото</span>
+            <span v-else>{{ t('clients.noPhoto') }}</span>
           </div>
         </component>
         <div class="client-vehicles__identity">
           <div><strong>{{ vehicle.displayName }}</strong><span v-if="vehicle.registrationPlate" class="client-vehicles__plate">{{ vehicle.registrationPlate }}</span></div>
         </div>
         <div class="client-vehicles__actions">
-          <UiButton v-if="canOpen" variant="secondary" :href="`#vehicles/${vehicle.id}`">Открыть</UiButton>
+          <UiButton v-if="canOpen" variant="secondary" :href="`#vehicles/${vehicle.id}`">{{ t('clients.open') }}</UiButton>
           <UiButton v-if="canCreate" class="client-vehicles__create" variant="secondary" :href="`#maintenance/new/${vehicle.id}`">{{ createLabel }} →</UiButton>
         </div>
       </li>
     </ul>
-    <UiButton v-if="vehicles.length > 4" class="client-vehicles__all" variant="secondary" @click="open()">{{ title === 'Автомобили' ? 'Все автомобили' : 'Весь список' }} · {{ vehicles.length }} →</UiButton>
+    <UiButton v-if="vehicles.length > 4" class="client-vehicles__all" variant="secondary" @click="open()">{{ t('clients.allItems') }} · {{ vehicles.length }} →</UiButton>
   </section>
 
-  <SchedulerBookingDialog :open="isOpen" :title="isChoosing ? 'Выберите автомобиль для записи' : title" @close="isOpen = false">
+  <SchedulerBookingDialog :open="isOpen" :title="isChoosing ? t('clients.chooseVehicle') : title" @close="isOpen = false">
     <div class="client-vehicles-modal">
       <div class="client-vehicles-modal__tools">
         <p>{{ clientName }} · {{ vehicles.length }}</p>
-        <div><UiInput v-model="search" label="Поиск автомобиля" placeholder="Марка, модель или госномер…" type="search" /><UiButton v-if="canAdd" variant="secondary" @click="isOpen = false; emit('add')">+ Добавить</UiButton></div>
+        <div><UiInput v-model="search" :label="t('clients.searchVehicle')" :placeholder="t('clients.vehicleSearchPlaceholder')" type="search" /><UiButton v-if="canAdd" variant="secondary" @click="isOpen = false; emit('add')">{{ t('clients.add') }}</UiButton></div>
       </div>
-      <div class="client-vehicles-modal__list" aria-label="Все автомобили клиента" tabindex="0">
-        <p v-if="!filteredVehicles.length" class="client-vehicles__empty" role="status">Ничего не найдено. Попробуйте другой запрос.</p>
+      <div class="client-vehicles-modal__list" :aria-label="t('clients.allClientVehicles')" tabindex="0">
+        <p v-if="!filteredVehicles.length" class="client-vehicles__empty" role="status">{{ t('clients.vehicleNotFound') }}</p>
         <article v-for="vehicle in filteredVehicles" :key="vehicle.id" class="client-vehicles-modal__row">
           <div class="client-vehicles__identity">
             <img v-if="hasPhoto(vehicle)" class="client-vehicles__thumbnail" :src="vehicle.photoUrl!" :alt="vehicle.displayName" loading="lazy" @error="failedPhotos.add(vehicle.photoUrl!)" />
@@ -81,12 +83,12 @@ defineExpose({ open })
             <div><strong>{{ vehicle.displayName }}</strong><span v-if="vehicle.registrationPlate" class="client-vehicles__plate">{{ vehicle.registrationPlate }}</span></div>
           </div>
           <div class="client-vehicles__actions">
-            <UiButton v-if="canOpen" variant="secondary" :href="`#vehicles/${vehicle.id}`" @click="isOpen = false">Открыть</UiButton>
+            <UiButton v-if="canOpen" variant="secondary" :href="`#vehicles/${vehicle.id}`" @click="isOpen = false">{{ t('clients.open') }}</UiButton>
             <UiButton v-if="canCreate" class="client-vehicles__create" variant="secondary" :href="`#maintenance/new/${vehicle.id}`" @click="isOpen = false">{{ createLabel }}</UiButton>
           </div>
         </article>
       </div>
-      <footer class="client-vehicles-modal__footer"><span aria-live="polite">Найдено: {{ filteredVehicles.length }} из {{ vehicles.length }}</span><UiButton variant="secondary" @click="isOpen = false">Закрыть</UiButton></footer>
+      <footer class="client-vehicles-modal__footer"><span aria-live="polite">{{ t('clients.foundCount', { found: filteredVehicles.length, total: vehicles.length }) }}</span><UiButton variant="secondary" @click="isOpen = false">{{ t('clients.close') }}</UiButton></footer>
     </div>
   </SchedulerBookingDialog>
 </template>

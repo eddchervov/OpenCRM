@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import vm from 'node:vm'
+import { assistantUiMessages } from './assistantUiTestMessages.mjs'
 
 const source = await readFile(new URL('../../OpenCRM.WebApp/wwwroot/js/ai-pilot-telegram.js', import.meta.url), 'utf8')
 const connected = {
@@ -11,7 +12,7 @@ const connected = {
 }
 const settled = () => new Promise(resolve => setImmediate(resolve))
 
-function telegram(request) {
+function telegram(request, locale = 'ru', culture = 'ru-RU') {
   const nodes = new Map()
   function element() {
     return {
@@ -34,7 +35,7 @@ function telegram(request) {
     return nodes.get(selector)
   }
   const root = node('root')
-  root.dataset = { organizationId: 'org-1' }
+  root.dataset = { organizationId: 'org-1', uiMessages: JSON.stringify(assistantUiMessages(locale)), formatCulture: culture, timeZoneId: 'Asia/Shanghai' }
   root.querySelector = node
   const sandbox = {
     window: { addEventListener() {} }, URLSearchParams, URL, Intl, Date,
@@ -45,6 +46,16 @@ function telegram(request) {
   manager.setAvailability({ enabled: true, canConnect: true })
   return { root, manager, node }
 }
+
+test('Telegram показывает китайские состояния и английский региональный формат без изменения ID', async () => {
+  const { root, node } = telegram(async () => connected, 'zh-Hans', 'en-GB')
+  root.listeners.get('assistant:ready')()
+  await settled()
+  assert.equal(node('[data-telegram-connect]').textContent, 'Telegram · 已连接')
+  assert.equal(node('[data-telegram-user-id]').textContent, connected.telegramUserId)
+  assert.match(node('[data-telegram-connected-at]').textContent, /27\/10\/2026/)
+  assert.match(node('[data-telegram-connected-at]').textContent, /18:00/)
+})
 
 test('Страница показывает существующий Telegram ID и дату подключения', async () => {
   const paths = []

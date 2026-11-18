@@ -1,4 +1,5 @@
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -9,13 +10,15 @@ public sealed class AdminUserRow(AdminUserListItem user)
     public string Id => user.Id;
 
     /// <summary> Email пользователя. </summary>
-    public string Email => string.IsNullOrWhiteSpace(user.Email) ? "Без email" : user.Email;
+    public string Email => string.IsNullOrWhiteSpace(user.Email) ? AdminLocalization.Instance["core.users.noEmail"] : user.Email;
 
     /// <summary> Контактные данные пользователя. </summary>
     public string Contact => string.IsNullOrWhiteSpace(user.Phone) ? "—" : user.Phone;
 
     /// <summary> Статус пользователя. </summary>
-    public string Status => user.IsDeleted ? "Удалён" : user.EmailConfirmed ? "Email подтверждён" : "Email не подтверждён";
+    public string Status => user.IsDeleted ? AdminLocalization.Instance["core.users.deletedStatus"]
+        : user.EmailConfirmed ? AdminLocalization.Instance["core.users.emailConfirmed"]
+        : AdminLocalization.Instance["core.users.emailUnconfirmed"];
 
     /// <summary> Признак удалённого пользователя. </summary>
     public bool IsDeleted => user.IsDeleted;
@@ -24,7 +27,7 @@ public sealed class AdminUserRow(AdminUserListItem user)
     public string Registered => AdminUserRow.FormatDate(user.DatetimeCreation);
 
     /// <summary> Дата последнего входа. </summary>
-    public string LastLogin => AdminUserRow.FormatDate(user.LastLoginDate, "Не входил");
+    public string LastLogin => AdminUserRow.FormatDate(user.LastLoginDate, AdminLocalization.Instance["core.users.notLoggedIn"]);
 
     /// <summary> Число транспортных средств. </summary>
     public int VehiclesCount => user.CountVehicles;

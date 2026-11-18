@@ -1,4 +1,7 @@
-﻿export type WorkspaceWorkdayItem = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workdayBoardMessages'
+
+export type WorkspaceWorkdayItem = {
   id: string
   vehicleName: string
   vehicleBrandLogoKey?: string | null
@@ -43,7 +46,7 @@ export async function loadWorkspaceWorkday(organizationId: string, date: string,
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить рабочий день. Попробуйте ещё раз.')
+    throw new Error(error?.message ?? translate('workdayBoard.apiError'))
   }
 
   return response.json()

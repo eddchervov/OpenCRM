@@ -40,6 +40,20 @@ public sealed class QuickBookingVehicleLookupService(
         VehicleKind kind,
         bool allowOtherFormat)
     {
+        return await this.FindByPlateAsync(userId, organizationId, plate, clientId, kind, allowOtherFormat, null);
+    }
+
+    /// <summary> Находит номер в выбранной стране регистрации. </summary>
+    public async Task<QuickBookingVehicleDto?> FindByPlateAsync(
+        string userId,
+        Guid organizationId,
+        string? plate,
+        Guid? clientId,
+        VehicleKind kind,
+        bool allowOtherFormat,
+        string? registrationCountryCode)
+    {
+        var countryCode = InternationalRegistrationPlateRules.NormalizeCountryCode(registrationCountryCode);
         await this._subscriptions.EnsureWorkspaceCanWriteAsync(
             userId,
             organizationId,
@@ -57,19 +71,21 @@ public sealed class QuickBookingVehicleLookupService(
                 && !vehicle.IsDeleted
                 && vehicle.Kind == kind
                 && !string.IsNullOrEmpty(vehicle.RegistrationPlate))
+            .Where(vehicle => countryCode == null || (vehicle.RegistrationCountryCode ?? "RU") == countryCode)
             .Where(vehicle => !clientId.HasValue || vehicle.OrganizationClientId == clientId.Value)
             .Select(vehicle => new QuickBookingVehicleDto
             {
                 Id = vehicle.Id,
                 OrganizationClientId = vehicle.OrganizationClientId,
                 Kind = vehicle.Kind,
-                RegistrationPlate = vehicle.RegistrationPlate
+                RegistrationPlate = vehicle.RegistrationPlate,
+                RegistrationCountryCode = vehicle.RegistrationCountryCode
             })
             .ToListAsync();
 
         var freeFormat = allowOtherFormat || registrationPlates is not null &&
             (!registrationPlates.GetFormats().Formats.Any(format => format.Kinds.Contains((int)kind)) || !registrationPlates.MatchesFormat(plate, kind));
-        var matches = vehicles.Where(vehicle => freeFormat
+        var matches = vehicles.Where(vehicle => freeFormat || vehicle.RegistrationCountryCode is not null and not "RU"
             ? string.Equals(vehicle.RegistrationPlate?.Trim(), plate?.Trim(), StringComparison.Ordinal)
             : this.NormalizePlateForSearch(vehicle.RegistrationPlate) == normalizedPlate).Take(2).ToArray();
         if (matches.Length > 1)
@@ -98,7 +114,8 @@ public sealed class QuickBookingVehicleLookupService(
                 Id = vehicle.Id,
                 OrganizationClientId = vehicle.OrganizationClientId,
                 Kind = vehicle.Kind,
-                RegistrationPlate = vehicle.RegistrationPlate
+                RegistrationPlate = vehicle.RegistrationPlate,
+                RegistrationCountryCode = vehicle.RegistrationCountryCode
             })
             .SingleOrDefaultAsync();
     }

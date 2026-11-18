@@ -1,3 +1,5 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
 import { getMutationHeaders } from './maintenance'
 
 export type IntakeDamageView = 'front' | 'rear' | 'left' | 'right'
@@ -36,10 +38,10 @@ async function readErrorMessage(response: Response) {
     const validationMessages = error?.errors && typeof error.errors === 'object'
       ? Object.values(error.errors).flat().filter(Boolean).join('\n')
       : ''
-    return validationMessages || error?.message || error?.title || 'Не удалось сохранить повреждения.'
+    return validationMessages || error?.message || error?.title || translate('workspaceApi.saveIntakeDamages')
   }
 
-  return (await response.text().catch(() => '')).trim() || 'Не удалось сохранить повреждения.'
+  return (await response.text().catch(() => '')).trim() || translate('workspaceApi.saveIntakeDamages')
 }
 
 function getUrl(maintenanceId: string, organizationId: string, damageId?: string) {

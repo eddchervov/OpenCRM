@@ -148,7 +148,7 @@ internal sealed class MaintenanceWorkflowService(
             dto.PlannedEndDate = (MaintenanceDateRules.ParseMaintenanceDateText(dto.PlannedDateText) ?? dto.PlannedDate.Value).Date.AddDays(days);
         }
         TimeZoneInfo? organizationTimeZone = null;
-        if (organizationId.HasValue && action is ("complete" or "simple_handover"))
+        if (organizationId.HasValue && action is ("complete" or "simple_handover" or "reschedule" or "reopen"))
         {
             var timeZoneId = await context.Organizations
                 .AsNoTracking()

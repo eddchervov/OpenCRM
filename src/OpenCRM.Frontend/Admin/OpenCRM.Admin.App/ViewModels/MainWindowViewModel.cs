@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -23,11 +24,17 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary> Признак ошибки конфигурации приложения. </summary>
     private readonly bool _hasConfigurationError;
 
+    /// <summary> Исходные подробности ошибки конфигурации сервера. </summary>
+    private readonly string? _configurationErrorDetails;
+
     /// <summary> Признак закрытия окна. </summary>
     private bool _isClosing;
 
     /// <summary> Версия навигации для отмены устаревших операций. </summary>
     private int _navigationVersion;
+
+    private string? _errorMessageTranslationKey;
+    private object?[] _errorMessageArguments = [];
 
     /// <summary> Признак открытого дашборда. </summary>
     [ObservableProperty]
@@ -73,6 +80,8 @@ public partial class MainWindowViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorMessage = string.Empty;
 
+    partial void OnErrorMessageChanging(string value) => this._errorMessageTranslationKey = null;
+
     /// <summary> Профиль администратора. </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsAuthenticated))]
@@ -97,16 +106,21 @@ public partial class MainWindowViewModel : ObservableObject
         IReadOnlyList<AdminProductSection>? productSections = null)
     {
         this._sessionClient = sessionClient;
+        this.Permissions.CollectionChanged += (_, _) => this.OnPropertyChanged(nameof(this.PermissionCountLabel));
+        this._sessionClient.UiLanguage = AdminLocalization.Instance.Language;
         this._serverAddress = serverAddress;
         this._productSections = productSections ?? [];
         this._hasConfigurationError = configurationError != null;
+        this._configurationErrorDetails = configurationError;
         this.ServerAddress = serverAddress.GetLeftPart(UriPartial.Authority);
-        this.ErrorMessage = configurationError ?? string.Empty;
+        this.ErrorMessage = configurationError == null
+            ? string.Empty
+            : AdminLocalization.Instance["error.configuration"] + " " + AdminLocalization.Instance[configurationError];
         this.Dashboard = new DashboardViewModel(sessionClient, refreshSeconds);
         this.Dashboard.SessionExpired += () =>
         {
             this.SetProfile(null);
-            this.ErrorMessage = "Срок действия сессии истёк. Войдите снова.";
+            this.SetLocalizedError("error.sessionExpired");
         };
         this.Dashboard.AccessDenied += async () =>
         {
@@ -116,7 +130,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             if (this.IsAuthenticated)
             {
-                this.ErrorMessage = "Нет доступа к дашборду. Права пользователя обновлены.";
+                this.SetLocalizedError("error.dashboardAccess");
             }
         };
         this.Dashboard.BillingAccessDenied += this.RefreshPermissionsAsync;
@@ -124,7 +138,7 @@ public partial class MainWindowViewModel : ObservableObject
         this.Users.SessionExpired += () =>
         {
             this.SetProfile(null);
-            this.ErrorMessage = "Срок действия сессии истёк. Войдите снова.";
+            this.SetLocalizedError("error.sessionExpired");
         };
         this.Users.AccessDenied += async () =>
         {
@@ -133,7 +147,7 @@ public partial class MainWindowViewModel : ObservableObject
             await this.RefreshPermissionsAsync();
             if (this.IsAuthenticated)
             {
-                this.ErrorMessage = "Нет доступа к пользователям. Права пользователя обновлены.";
+                this.SetLocalizedError("error.usersAccess");
             }
         };
         this.InitializeSections();
@@ -142,7 +156,7 @@ public partial class MainWindowViewModel : ObservableObject
         this.Billing.SessionExpired += () =>
         {
             this.SetProfile(null);
-            this.ErrorMessage = "Срок действия сессии истёк. Войдите снова.";
+            this.SetLocalizedError("error.sessionExpired");
         };
         this.Billing.AccessDenied += async () =>
         {
@@ -151,7 +165,7 @@ public partial class MainWindowViewModel : ObservableObject
             await this.RefreshPermissionsAsync();
             if (this.IsAuthenticated)
             {
-                this.ErrorMessage = "Нет доступа к платежам и подпискам. Права пользователя обновлены.";
+                this.SetLocalizedError("error.billingAccess");
             }
         };
         this.InitializeNavigationReadTracking();
@@ -169,6 +183,75 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary> Список разрешений администратора. </summary>
     public ObservableCollection<PermissionItem> Permissions { get; } = [];
+
+    /// <summary> Подпись количества разрешений в текущем языке интерфейса. </summary>
+    public string PermissionCountLabel => string.Format(System.Globalization.CultureInfo.CurrentCulture,
+        AdminLocalization.Instance["core.profile.permissionCount"], this.Permissions.Count);
+
+    public IReadOnlyList<AdminUiLanguageOption> Languages => AdminLocalization.Instance.Languages;
+
+    public string Language
+    {
+        get => AdminLocalization.Instance.Language;
+        set
+        {
+            if (AdminLocalization.Instance.Language == value)
+            {
+                return;
+            }
+
+            AdminLocalization.Instance.Language = value;
+            this._sessionClient.UiLanguage = AdminLocalization.Instance.Language;
+            if (this._configurationErrorDetails != null)
+            {
+                this.ErrorMessage = AdminLocalization.Instance["error.configuration"] + " " + AdminLocalization.Instance[this._configurationErrorDetails];
+            }
+
+            if (this._errorMessageTranslationKey is { } errorKey)
+            {
+                this.SetLocalizedError(errorKey, this._errorMessageArguments);
+            }
+
+            this.OnPropertyChanged(nameof(this.Language));
+            this.OnPropertyChanged(nameof(this.SelectedLanguage));
+            for (var index = 0; index < this.Permissions.Count; index++)
+            {
+                var code = this.Permissions[index].Code;
+                this.Permissions[index] = new PermissionItem(MainWindowViewModel.GetPermissionTitle(code), code);
+            }
+
+            this.OnPropertyChanged(nameof(this.PermissionCountLabel));
+            this.OnPropertyChanged(nameof(this.PageLabel));
+            this.OnPropertyChanged(nameof(this.AccessLabel));
+            foreach (var item in this.NavigationItems)
+            {
+                item.RefreshTitle();
+            }
+
+            foreach (var section in this._operationSections)
+            {
+                section.RefreshTitle();
+                section.Model.RefreshLocalizedValues();
+            }
+
+            this.Dashboard.RefreshLocalizedValues();
+            this.Users.RefreshLocalizedValues();
+            this.Organizations.RefreshLocalizedValues();
+            this.UserActivity.RefreshLocalizedValues();
+            this.Billing.RefreshLocalizedValues();
+            this.SubscriptionPlans.RefreshLocalizedValues();
+            this.PromoCodes.RefreshLocalizedValues();
+            this.Roles.RefreshLocalizedValues();
+            this.EmailHistory.RefreshLocalizedValues();
+            this.SupportMessages.RefreshLocalizedValues();
+        }
+    }
+
+    public AdminUiLanguageOption SelectedLanguage
+    {
+        get => AdminUiLanguage.Supported.First(language => language.Code == this.Language);
+        set => this.Language = value.Code;
+    }
 
     /// <summary> Доступные дополнительные ссылки продукта. </summary>
     public ObservableCollection<AdminProductSection> VisibleProductSections { get; } = [];
@@ -211,9 +294,52 @@ public partial class MainWindowViewModel : ObservableObject
         (profile.IsSystem || profile.Permissions.Contains("Admin.Dashboard.View"));
 
     /// <summary> Подпись текущей страницы. </summary>
-    public string PageLabel => !string.IsNullOrEmpty(this.AdditionalPage) ? this.AdditionalPage : this.IsUsersOpen
-        ? this.Users.IsCardOpen ? "Пользователи / Карточка" : "Пользователи"
-        : this.IsBillingOpen ? "Платежи и подписки" : this.IsDashboardOpen ? "Дашборд" : "Профиль";
+    public string PageLabel => !string.IsNullOrEmpty(this.AdditionalPage)
+        ? AdminLocalization.Instance[GetSectionTitleKey(this.AdditionalPage)] : this.IsUsersOpen
+        ? this.Users.IsCardOpen ? AdminLocalization.Instance["users.cardPage"] : AdminLocalization.Instance["nav.users"]
+        : this.IsBillingOpen ? AdminLocalization.Instance["nav.billing"]
+        : this.IsDashboardOpen ? AdminLocalization.Instance["nav.dashboard"] : AdminLocalization.Instance["page.profile"];
+
+    private void SetLocalizedError(string key, params object?[] arguments)
+    {
+        this.ErrorMessage = AdminLocalization.Instance.Format(key, arguments);
+        this._errorMessageTranslationKey = key;
+        this._errorMessageArguments = arguments;
+    }
+
+    private void SetApiError(ApiException exception)
+    {
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportKey)
+        {
+            this.SetLocalizedError(transportKey);
+
+            return;
+        }
+
+        this._errorMessageTranslationKey = null;
+        this.ErrorMessage = exception.Message;
+    }
+
+    private static string GetSectionTitleKey(string sectionId) => sectionId switch
+    {
+        "plans" => "nav.plans",
+        "promo-codes" => "nav.promoCodes",
+        "organizations" => "nav.organizations",
+        "roles" => "nav.roles",
+        "email-history" => "nav.emailHistory",
+        "support" => "nav.support",
+        "user-activity" => "operation.userActivity",
+        "compose" => "operation.compose",
+        "campaigns" => "operation.campaigns",
+        "sms-history" => "operation.smsHistory",
+        "site-notifications" => "operation.siteNotifications",
+        "vehicle-catalog" => "operation.vehicleCatalog",
+        "catalog-suggestions" => "operation.catalogSuggestions",
+        "test-data" => "operation.testData",
+        "crm-import" => "operation.crmImport",
+        "assistant" => "operation.assistant",
+        _ => sectionId
+    };
 
     /// <summary> Открывает раздел дашборда. </summary>
     [RelayCommand]
@@ -329,7 +455,8 @@ public partial class MainWindowViewModel : ObservableObject
     public string AvatarText => string.IsNullOrWhiteSpace(this.ProfileEmail) ? "M" : this.ProfileEmail[..1].ToUpperInvariant();
 
     /// <summary> Подпись уровня доступа. </summary>
-    public string AccessLabel => this.Profile?.IsSystem == true ? "Системный администратор" : "Административный доступ";
+    public string AccessLabel => this.Profile?.IsSystem == true
+        ? AdminLocalization.Instance["profile.systemAdmin"] : AdminLocalization.Instance["profile.adminAccess"];
 
     /// <summary> Отменяет текущие операции. </summary>
     public void CancelOperations()
@@ -394,7 +521,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (ApiException exception)
         {
-            this.ErrorMessage = exception.Message;
+            this.SetApiError(exception);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -435,15 +562,15 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (ApiException exception)
         {
-            this.ErrorMessage = exception.Message;
+            this.SetApiError(exception);
         }
         catch (HttpRequestException)
         {
-            this.ErrorMessage = "Не удалось связаться с сервером. Проверьте подключение и повторите вход.";
+            this.SetLocalizedError("error.network");
         }
         catch (OperationCanceledException)
         {
-            this.ErrorMessage = "Сервер не ответил вовремя. Повторите вход.";
+            this.SetLocalizedError("error.timeout");
         }
         finally
         {
@@ -469,15 +596,15 @@ public partial class MainWindowViewModel : ObservableObject
                 this.SetProfile(null);
             }
 
-            this.ErrorMessage = exception.Message;
+            this.SetApiError(exception);
         }
         catch (HttpRequestException)
         {
-            this.ErrorMessage = "Не удалось обновить профиль и права. Проверьте подключение к серверу.";
+            this.SetLocalizedError("error.profileRefreshNetwork");
         }
         catch (OperationCanceledException)
         {
-            this.ErrorMessage = "Сервер не ответил вовремя. Не удалось обновить профиль.";
+            this.SetLocalizedError("error.profileRefreshTimeout");
         }
         finally
         {
@@ -503,15 +630,22 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (ApiException exception)
         {
-            this.ErrorMessage = "Не удалось полностью завершить выход. " + exception.Message;
+            if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportKey)
+            {
+                this.SetLocalizedError(transportKey);
+            }
+            else
+            {
+                this.SetLocalizedError("core.session.logoutFailed", exception.Message);
+            }
         }
         catch (HttpRequestException)
         {
-            this.ErrorMessage = "Вы вышли из приложения. Сервер недоступен, отзыв сессии не подтверждён.";
+            this.SetLocalizedError("error.logoutNetwork");
         }
         catch (OperationCanceledException)
         {
-            this.ErrorMessage = "Вы вышли из приложения. Сервер не подтвердил отзыв сессии вовремя.";
+            this.SetLocalizedError("error.logoutTimeout");
         }
         finally
         {
@@ -564,20 +698,20 @@ public partial class MainWindowViewModel : ObservableObject
 
         NavigationItem[] items =
         [
-            new("Дашборд", "Admin.Dashboard.View"),
-            new("Пользователи", "Admin.Users.View"),
-            new("Организации", "Admin.Users.View"),
-            new("Платежи и подписки", "Admin.Billing.View"),
-            new("Обращения", "Admin.Content.View"),
-            new("История email", "Admin.Communications.View"),
-            new("Тарифы", "Admin.Configuration.Manage"),
-            new("Промокоды", "Admin.Configuration.Manage"),
-            new("Роли и права", "Admin.Permissions.Manage")
+            new("dashboard", "nav.dashboard", "Admin.Dashboard.View"),
+            new("users", "nav.users", "Admin.Users.View"),
+            new("organizations", "nav.organizations", "Admin.Users.View"),
+            new("billing", "nav.billing", "Admin.Billing.View"),
+            new("support", "nav.support", "Admin.Content.View"),
+            new("email-history", "nav.emailHistory", "Admin.Communications.View"),
+            new("plans", "nav.plans", "Admin.Configuration.Manage"),
+            new("promo-codes", "nav.promoCodes", "Admin.Configuration.Manage"),
+            new("roles", "nav.roles", "Admin.Permissions.Manage")
         ];
 
         foreach (var item in items)
         {
-            if ((item.Title is not ("Платежи и подписки" or "Тарифы" or "Промокоды") || profile.CommercialEnabled)
+            if ((item.Id is not ("billing" or "plans" or "promo-codes") || profile.CommercialEnabled)
                 && (profile.IsSystem || profile.Permissions.Contains(item.Permission)))
             {
                 this.NavigationItems.Add(item);
@@ -601,19 +735,19 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary> Возвращает название разрешения по коду. </summary>
     private static string GetPermissionTitle(string code) => code switch
     {
-        "Admin.Access" => "Вход в административную панель",
-        "Admin.Dashboard.View" => "Просмотр дашборда",
-        "Admin.Users.View" => "Просмотр пользователей",
-        "Admin.Users.Manage" => "Управление пользователями",
-        "Admin.Users.Impersonate" => "Вход от имени пользователя",
-        "Admin.Billing.View" => "Просмотр платежей и подписок",
-        "Admin.Billing.Manage" => "Управление платежами и подписками",
-        "Admin.Content.View" => "Просмотр обращений и контента",
-        "Admin.Content.Manage" => "Управление контентом",
-        "Admin.Communications.View" => "Просмотр коммуникаций",
-        "Admin.Communications.Manage" => "Управление коммуникациями",
-        "Admin.Configuration.Manage" => "Настройка продукта",
-        "Admin.Permissions.Manage" => "Управление ролями и правами",
+        "Admin.Access" => AdminLocalization.Instance["core.permission.Admin.Access"],
+        "Admin.Dashboard.View" => AdminLocalization.Instance["core.permission.Admin.Dashboard.View"],
+        "Admin.Users.View" => AdminLocalization.Instance["core.permission.Admin.Users.View"],
+        "Admin.Users.Manage" => AdminLocalization.Instance["core.permission.Admin.Users.Manage"],
+        "Admin.Users.Impersonate" => AdminLocalization.Instance["core.permission.Admin.Users.Impersonate"],
+        "Admin.Billing.View" => AdminLocalization.Instance["core.permission.Admin.Billing.View"],
+        "Admin.Billing.Manage" => AdminLocalization.Instance["core.permission.Admin.Billing.Manage"],
+        "Admin.Content.View" => AdminLocalization.Instance["core.permission.Admin.Content.View"],
+        "Admin.Content.Manage" => AdminLocalization.Instance["core.permission.Admin.Content.Manage"],
+        "Admin.Communications.View" => AdminLocalization.Instance["core.permission.Admin.Communications.View"],
+        "Admin.Communications.Manage" => AdminLocalization.Instance["core.permission.Admin.Communications.Manage"],
+        "Admin.Configuration.Manage" => AdminLocalization.Instance["core.permission.Admin.Configuration.Manage"],
+        "Admin.Permissions.Manage" => AdminLocalization.Instance["core.permission.Admin.Permissions.Manage"],
         _ => code
     };
 }

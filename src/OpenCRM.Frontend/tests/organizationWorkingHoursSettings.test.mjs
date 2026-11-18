@@ -1,3 +1,4 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -32,6 +33,7 @@ function settingsComponent(api = {}, overrides = {}) {
   const events = []
   const props = { organizationId: 'org-1', disabled: false, ...overrides }
   new Function('require', 'module', 'exports', code)(id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return {
       ...vue, onBeforeUnmount() {}, onMounted() {}, watch: (source, callback) => watchers.push(callback)
     }

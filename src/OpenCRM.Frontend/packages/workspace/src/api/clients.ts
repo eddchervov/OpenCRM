@@ -1,4 +1,7 @@
-﻿export type WorkspaceClientTag = {
+﻿import { translate as t } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/clientMessages'
+
+export type WorkspaceClientTag = {
   id: string
   name: string
 }
@@ -11,6 +14,12 @@ export type WorkspaceClientVehicle = {
   registrationPlate?: string | null
   maintenanceCount: number
   lastMaintenanceDate?: string | null
+}
+
+export type WorkspaceClientCurrencyTotals = {
+  currencyCode: string
+  totalPaidAmount: number
+  totalDebtAmount: number
 }
 
 export type WorkspaceClient = {
@@ -35,6 +44,8 @@ export type WorkspaceClient = {
   vehiclesCount: number
   maintenanceCount: number
   lastMaintenanceDate?: string | null
+  currencyCode?: string
+  otherCurrencyTotals?: WorkspaceClientCurrencyTotals[]
   totalPaidAmount?: number | null
   totalDebtAmount?: number | null
   vehicles?: WorkspaceClientVehicle[]
@@ -55,6 +66,7 @@ export type WorkspaceClientMaintenanceItem = {
   mileage?: number | null
   comment?: string | null
   serviceNames?: string[]
+  currencyCode?: string
   grossAmount?: number | null
   netAmount?: number | null
   paidAmount?: number | null
@@ -98,6 +110,9 @@ export type WorkspaceClientDetails = {
   }
   canViewMaintenance?: boolean
   canEdit?: boolean
+  currencyCode?: string
+  otherCurrencyTotals?: WorkspaceClientCurrencyTotals[]
+  totalDebtAmount?: number | null
   totalPaidAmount?: number | null
   upcomingMaintenance?: WorkspaceClientMaintenanceItem | null
   recentMaintenances: WorkspaceClientMaintenanceItem[]
@@ -254,7 +269,7 @@ export async function loadClientsPage(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить клиентов.')
+    throw new Error(error?.message ?? t('clients.loadError'))
   }
 
   return response.json()
@@ -277,7 +292,7 @@ export async function loadClientDetails(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить карточку клиента.')
+    throw new Error(error?.message ?? t('clients.cardLoadError'))
   }
 
   return response.json()
@@ -312,7 +327,7 @@ export async function loadClientMaintenances(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить историю работ клиента.')
+    throw new Error(error?.message ?? t('clients.historyLoadError'))
   }
 
   return response.json()
@@ -349,7 +364,7 @@ export async function loadClientLookup(organizationId: string, searchQuery: stri
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message || 'Не удалось найти клиентов. Повторите поиск.')
+    throw new Error(error?.message || t('clients.lookupError'))
   }
 
   return response.json()
@@ -388,7 +403,7 @@ async function saveClient(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сохранить клиента.')
+    throw new Error(error?.message ?? t('clients.clientSaveError'))
   }
 
   return response.json()

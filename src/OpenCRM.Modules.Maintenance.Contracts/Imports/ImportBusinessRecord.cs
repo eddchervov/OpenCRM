@@ -80,4 +80,13 @@ public sealed class ImportBusinessRecord
 
     /// <summary>Сообщение о проверке строки.</summary>
     public string Message { get; set; } = string.Empty;
+
+    /// <summary>Код системного сообщения проверки строки.</summary>
+    public string? MessageCode { get; set; }
+
+    /// <summary>Параметры системного сообщения проверки строки.</summary>
+    public Dictionary<string, string>? MessageParameters { get; set; }
+
+    /// <summary>Подробные причины проверки строки.</summary>
+    public List<ImportRowMessageDetail>? MessageDetails { get; set; }
 }

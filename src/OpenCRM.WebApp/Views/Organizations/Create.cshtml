@@ -1,21 +1,40 @@
 ﻿@model OpenCRM.WebApp.Models.Organizations.OrganizationCreateViewModel
 @using OpenCRM.WebApp.Presentation
+@using OpenCRM.Domain
 
 @{
-    ViewData["Title"] = "Новая организация";
+    ViewData["Title"] = Text["organization.create.title"];
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "organizations-entry";
     ViewData["WorkspaceEntry"] = true;
     Layout = "/Views/Shared/_Layout.cshtml";
+
+    var timeZoneIds = new SortedSet<string>(StringComparer.Ordinal) { "Etc/UTC" };
+    var systemTimeZones = TimeZoneInfo.GetSystemTimeZones();
+    foreach (var timeZone in systemTimeZones)
+    {
+        if (timeZone.Id.Contains('/'))
+        {
+            timeZoneIds.Add(timeZone.Id);
+            continue;
+        }
+
+        if (TimeZoneInfo.TryConvertWindowsIdToIanaId(timeZone.Id, out var ianaId))
+        {
+            timeZoneIds.Add(ianaId);
+        }
+    }
+
+    string LocalizePreset(string key, string fallback) => Text[key].ResourceNotFound ? fallback : Text[key].Value;
 }
 
 <section class="entry-page">
     <div class="entry-shell entry-shell-create">
         <header class="entry-heading">
-            <nav aria-label="Хлебные крошки">
+            <nav aria-label="@Text["organization.create.breadcrumbs"]">
                 <ol class="entry-breadcrumbs">
-                    <li><a href="/organizations">Организации</a></li>
-                    <li aria-current="page"><h1>Новая организация</h1></li>
+                    <li><a href="/organizations">@Text["nav.organizations"]</a></li>
+                    <li aria-current="page"><h1>@Text["organization.create.title"]</h1></li>
                 </ol>
             </nav>
         </header>
@@ -32,10 +51,17 @@
             @if (!Model.CanCreateOrganization)
             {
                 <div class="alert alert-warning" role="status">
-                    @(Model.CreateOrganizationMessage ?? "Создание организации этого типа уже недоступно.")
                     @if (Model.OrganizationTypeOptions.Any(option => option.HasArchivedOrganization))
                     {
-                        <a href="/organizations">Откройте архив, чтобы восстановить организацию.</a>
+                        @Text["organization.create.unavailable.archived"]
+                    }
+                    else
+                    {
+                        @Text["organization.create.unavailable.all"]
+                    }
+                    @if (Model.OrganizationTypeOptions.Any(option => option.HasArchivedOrganization))
+                    {
+                        <a href="/organizations">@Text["organization.create.restoreArchived"]</a>
                     }
                 </div>
             }
@@ -43,7 +69,7 @@
                   class="entry-create-form" data-disable-submit-loader data-analytics-goal="organization_submit">
                 @Html.AntiForgeryToken()
                 <fieldset class="entry-scenario-field">
-                    <legend>Чем вы занимаетесь?</legend>
+                    <legend>@Text["organization.create.scenario.legend"]</legend>
                     <div class="entry-scenario-grid">
                         @foreach (var organizationType in Model.OrganizationTypeOptions)
                         {
@@ -53,17 +79,26 @@
                             <label class="entry-scenario" for="@inputId" aria-disabled="@(!organizationType.IsAvailable)">
                                 <input asp-for="CreateOrganization.PrimaryScenarioCode" type="radio" id="@inputId" value="@organizationType.Code" required disabled="@(!organizationType.IsAvailable)" aria-describedby="organization-type-error @(!organizationType.IsAvailable ? statusId : null)" />
                                 <span class="entry-scenario-body">
-                                    <span class="entry-scenario-title">@preset.Title</span>
-                                    <span class="entry-scenario-summary">@preset.Summary</span>
+                                    <span class="entry-scenario-title">@LocalizePreset($"organization.create.scenario.{preset.Code}.title", preset.Title)</span>
+                                    <span class="entry-scenario-summary">@LocalizePreset($"organization.create.scenario.{preset.Code}.summary", preset.Summary)</span>
                                     <span class="entry-scenario-modules">
-                                        @foreach (var module in preset.Modules.Take(3))
+                                        @for (var moduleIndex = 0; moduleIndex < Math.Min(3, preset.Modules.Count); moduleIndex++)
                                         {
-                                            <span>@module</span>
+                                            <span>@LocalizePreset($"organization.create.scenario.{preset.Code}.module.{moduleIndex}", preset.Modules[moduleIndex])</span>
                                         }
                                     </span>
                                     @if (!organizationType.IsAvailable)
                                     {
-                                        <span id="@statusId" class="entry-scenario-unavailable" role="note">@organizationType.UnavailableMessage</span>
+                                        <span id="@statusId" class="entry-scenario-unavailable" role="note">
+                                            @if (organizationType.HasArchivedOrganization)
+                                            {
+                                                @Text["organization.create.scenario.unavailable.archived"]
+                                            }
+                                            else
+                                            {
+                                                @Text["organization.create.scenario.unavailable.owned"]
+                                            }
+                                        </span>
                                     }
                                 </span>
                             </label>
@@ -72,18 +107,41 @@
                     <span id="organization-type-error" class="text-danger" asp-validation-for="CreateOrganization.PrimaryScenarioCode"></span>
                 </fieldset>
                 <div class="entry-name-field">
-                    <label class="form-label" asp-for="CreateOrganization.Name">Название организации <span aria-hidden="true">*</span></label>
-                    <input class="form-control" asp-for="CreateOrganization.Name" placeholder="Например, студия «Блеск»" maxlength="160" autocomplete="organization" required aria-describedby="organization-name-error" />
+                    <label class="form-label" asp-for="CreateOrganization.Name">@Text["organization.create.name"] <span aria-hidden="true">*</span></label>
+                    <input class="form-control" asp-for="CreateOrganization.Name" placeholder="@Text["organization.create.name.placeholder"]" maxlength="160" autocomplete="organization" required aria-describedby="organization-name-error" />
                     <span id="organization-name-error" class="text-danger" asp-validation-for="CreateOrganization.Name"></span>
                 </div>
                 <div class="entry-description">
-                    <label class="form-label" asp-for="CreateOrganization.Description">Описание <span class="entry-muted">необязательно</span></label>
+                    <label class="form-label" asp-for="CreateOrganization.Description">@Text["organization.create.description"] <span class="entry-muted">@Text["organization.create.optional"]</span></label>
                     <textarea class="form-control" asp-for="CreateOrganization.Description" rows="2" maxlength="600" aria-describedby="organization-description-error"></textarea>
                     <span id="organization-description-error" class="text-danger" asp-validation-for="CreateOrganization.Description"></span>
                 </div>
+                <div class="entry-currency-field">
+                    <label class="form-label" asp-for="CreateOrganization.CurrencyCode">@Text["organization.create.currency"] <span aria-hidden="true">*</span></label>
+                    <select class="form-select" asp-for="CreateOrganization.CurrencyCode" required aria-describedby="organization-currency-help organization-currency-error">
+                        @foreach (var currencyCode in CurrencyCodes.Supported)
+                        {
+                            <option value="@currencyCode">@currencyCode</option>
+                        }
+                    </select>
+                    <div id="organization-currency-help" class="form-text">@Text["organization.create.currency.help"]</div>
+                    <span id="organization-currency-error" class="text-danger" asp-validation-for="CreateOrganization.CurrencyCode"></span>
+                </div>
+                <div class="entry-timezone-field">
+                    <label class="form-label" asp-for="CreateOrganization.TimeZoneId">@Text["organization.create.timezone"] <span aria-hidden="true">*</span></label>
+                    <input class="form-control" asp-for="CreateOrganization.TimeZoneId" list="organization-timezone-options" placeholder="@Text["organization.create.timezone.choose"]" maxlength="100" required aria-describedby="organization-timezone-help organization-timezone-error" />
+                    <datalist id="organization-timezone-options">
+                        @foreach (var timeZoneId in timeZoneIds)
+                        {
+                            <option value="@timeZoneId"></option>
+                        }
+                    </datalist>
+                    <div id="organization-timezone-help" class="form-text">@Text["organization.create.timezone.help"]</div>
+                    <span id="organization-timezone-error" class="text-danger" asp-validation-for="CreateOrganization.TimeZoneId"></span>
+                </div>
                 <div class="entry-form-actions">
-                    <button type="submit" class="btn entry-primary" disabled="@(!Model.CanCreateOrganization)">Создать организацию <span aria-hidden="true">→</span></button>
-                    <a class="btn entry-secondary" href="/organizations">Отмена</a>
+                    <button type="submit" class="btn entry-primary" disabled="@(!Model.CanCreateOrganization)">@Text["organization.create.submit"] <span aria-hidden="true">→</span></button>
+                    <a class="btn entry-secondary" href="/organizations">@Text["auth.cancel"]</a>
                 </div>
             </form>
         </div>
@@ -101,4 +159,18 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const list = document.getElementById('organization-timezone-options');
+            if (!list || typeof Intl.supportedValuesOf !== 'function') return;
+
+            const existing = new Set(Array.from(list.options, option => option.value));
+            for (const id of Intl.supportedValuesOf('timeZone')) {
+                if (existing.has(id)) continue;
+                const option = document.createElement('option');
+                option.value = id;
+                list.append(option);
+            }
+        })();
+    </script>
 }

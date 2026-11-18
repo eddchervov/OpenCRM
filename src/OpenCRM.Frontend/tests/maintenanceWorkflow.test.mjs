@@ -1,3 +1,5 @@
+import '../packages/workspace/src/workflowMessages.ts'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -16,6 +18,7 @@ function actions({ simpleWorkflow = true, status = 1, disabled = false, failure 
   const props = vue.reactive({ organizationId: 'org', simpleWorkflow, disabled,
     maintenance: { id: 'order', status, version: 17, debtAmount: 3000 } })
   new Function('require', 'module', 'exports', code)(id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} }
     if (id === '../api/maintenance') return { changeMaintenanceWorkflow: async (...args) => {
       calls.push(args)

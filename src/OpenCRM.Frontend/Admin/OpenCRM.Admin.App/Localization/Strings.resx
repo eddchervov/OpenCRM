@@ -1,0 +1,1520 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="app.title" xml:space="preserve"><value>Администрирование</value></data>
+  <data name="app.subtitle" xml:space="preserve"><value>Панель управления сервисом</value></data>
+  <data name="language.label" xml:space="preserve"><value>Язык</value></data>
+  <data name="nav.profile" xml:space="preserve"><value>Мой профиль</value></data>
+  <data name="page.profile" xml:space="preserve"><value>Профиль</value></data>
+  <data name="nav.sections" xml:space="preserve"><value>РАЗДЕЛЫ</value></data>
+  <data name="nav.dashboard" xml:space="preserve"><value>Дашборд</value></data>
+  <data name="nav.users" xml:space="preserve"><value>Пользователи</value></data>
+  <data name="nav.organizations" xml:space="preserve"><value>Организации</value></data>
+  <data name="nav.billing" xml:space="preserve"><value>Платежи и подписки</value></data>
+  <data name="nav.support" xml:space="preserve"><value>Обращения</value></data>
+  <data name="nav.emailHistory" xml:space="preserve"><value>История email</value></data>
+  <data name="nav.plans" xml:space="preserve"><value>Тарифы</value></data>
+  <data name="nav.promoCodes" xml:space="preserve"><value>Промокоды</value></data>
+  <data name="nav.roles" xml:space="preserve"><value>Роли и права</value></data>
+  <data name="nav.logout" xml:space="preserve"><value>Выйти из аккаунта</value></data>
+  <data name="nav.newSinceLastVisit" xml:space="preserve"><value>Новых записей с последнего просмотра</value></data>
+  <data name="nav.billingAttention" xml:space="preserve"><value>Оплаченных платежей без чека или с незавершённой обработкой</value></data>
+  <data name="nav.pendingCatalog" xml:space="preserve"><value>Предложений ожидает модерации</value></data>
+  <data name="nav.productSections" xml:space="preserve"><value>РАЗДЕЛЫ ПРОДУКТА</value></data>
+  <data name="nav.placeholderTooltip" xml:space="preserve"><value>Раздел будет перенесён на следующем этапе</value></data>
+  <data name="nav.placeholderLater" xml:space="preserve"><value>позже</value></data>
+  <data name="users.cardPage" xml:space="preserve"><value>Пользователи / Карточка</value></data>
+  <data name="profile.systemAdmin" xml:space="preserve"><value>Системный администратор</value></data>
+  <data name="profile.adminAccess" xml:space="preserve"><value>Административный доступ</value></data>
+  <data name="core.users.noEmail" xml:space="preserve"><value>Без email</value></data>
+  <data name="core.users.notLoggedIn" xml:space="preserve"><value>Не входил</value></data>
+  <data name="core.users.deletedStatus" xml:space="preserve"><value>Удалён</value></data>
+  <data name="core.users.emailConfirmed" xml:space="preserve"><value>Email подтверждён</value></data>
+  <data name="core.users.emailUnconfirmed" xml:space="preserve"><value>Email не подтверждён</value></data>
+  <data name="core.organizations.activeStatus" xml:space="preserve"><value>Активна</value></data>
+  <data name="core.organizations.inactiveStatus" xml:space="preserve"><value>Неактивна</value></data>
+  <data name="core.organizations.archivedStatus" xml:space="preserve"><value>В архиве</value></data>
+  <data name="core.organizations.deletedStatus" xml:space="preserve"><value>Удалена</value></data>
+  <data name="core.organizations.noActivePlan" xml:space="preserve"><value>Нет активного тарифа</value></data>
+  <data name="core.organizations.noExpiry" xml:space="preserve"><value>Бессрочно</value></data>
+  <data name="core.user.status.deleted" xml:space="preserve"><value>Удалён</value></data>
+  <data name="core.user.status.locked" xml:space="preserve"><value>Временно заблокирован</value></data>
+  <data name="core.user.status.active" xml:space="preserve"><value>Активен</value></data>
+  <data name="operation.compose" xml:space="preserve"><value>Написать письмо</value></data>
+  <data name="operation.campaigns" xml:space="preserve"><value>Email-рассылки</value></data>
+  <data name="operation.smsHistory" xml:space="preserve"><value>История SMS</value></data>
+  <data name="operation.siteNotifications" xml:space="preserve"><value>Уведомления на сайте</value></data>
+  <data name="operation.vehicleCatalog" xml:space="preserve"><value>Каталог техники</value></data>
+  <data name="operation.catalogSuggestions" xml:space="preserve"><value>Предложения каталога</value></data>
+  <data name="operation.testData" xml:space="preserve"><value>Тестовые данные</value></data>
+  <data name="operation.crmImport" xml:space="preserve"><value>Импорт CRM</value></data>
+  <data name="operation.assistant" xml:space="preserve"><value>ИИ-помощник</value></data>
+  <data name="operation.userActivity" xml:space="preserve"><value>Активность</value></data>
+  <data name="login.title" xml:space="preserve"><value>Вход администратора</value></data>
+  <data name="login.email" xml:space="preserve"><value>Email</value></data>
+  <data name="login.password" xml:space="preserve"><value>Пароль</value></data>
+  <data name="login.submit" xml:space="preserve"><value>Войти</value></data>
+  <data name="login.loading" xml:space="preserve"><value>Выполняется вход…</value></data>
+  <data name="login.server" xml:space="preserve"><value>Сервер</value></data>
+  <data name="login.remember" xml:space="preserve"><value>Сессия хранится в защищённом хранилище устройства.</value></data>
+  <data name="error.network" xml:space="preserve"><value>Не удалось связаться с сервером. Проверьте подключение и повторите попытку.</value></data>
+  <data name="error.timeout" xml:space="preserve"><value>Сервер не ответил вовремя. Повторите попытку.</value></data>
+  <data name="error.unauthorized" xml:space="preserve"><value>Неверный email или пароль либо сессия истекла.</value></data>
+  <data name="error.forbidden" xml:space="preserve"><value>У учетной записи нет доступа к административной панели.</value></data>
+  <data name="error.emptyResponse" xml:space="preserve"><value>Сервер вернул пустой ответ.</value></data>
+  <data name="error.invalidResponse" xml:space="preserve"><value>Сервер вернул некорректный ответ.</value></data>
+  <data name="error.loginRequired" xml:space="preserve"><value>Войдите в административную панель.</value></data>
+  <data name="error.sessionExpired" xml:space="preserve"><value>Срок действия сессии истёк. Войдите снова.</value></data>
+  <data name="error.dashboardAccess" xml:space="preserve"><value>Нет доступа к дашборду. Права пользователя обновлены.</value></data>
+  <data name="error.usersAccess" xml:space="preserve"><value>Нет доступа к пользователям. Права пользователя обновлены.</value></data>
+  <data name="error.billingAccess" xml:space="preserve"><value>Нет доступа к платежам и подпискам. Права пользователя обновлены.</value></data>
+  <data name="error.profileRefreshNetwork" xml:space="preserve"><value>Не удалось обновить профиль и права. Проверьте подключение к серверу.</value></data>
+  <data name="error.profileRefreshTimeout" xml:space="preserve"><value>Сервер не ответил вовремя. Не удалось обновить профиль.</value></data>
+  <data name="error.logoutNetwork" xml:space="preserve"><value>Вы вышли из приложения. Сервер недоступен, отзыв сессии не подтверждён.</value></data>
+  <data name="error.logoutTimeout" xml:space="preserve"><value>Вы вышли из приложения. Сервер не подтвердил отзыв сессии вовремя.</value></data>
+  <data name="error.sessionChanged" xml:space="preserve"><value>Сессия изменилась. Войдите в административную панель снова.</value></data>
+  <data name="error.profileInvalid" xml:space="preserve"><value>Сервер вернул неполный или несогласованный профиль администратора.</value></data>
+  <data name="error.accessDenied" xml:space="preserve"><value>У учетной записи нет права Admin.Access.</value></data>
+  <data name="error.configuration" xml:space="preserve"><value>Не удалось прочитать настройки сервера.</value></data>
+  <data name="core.dashboard.title" xml:space="preserve"><value>Дашборд</value></data>
+  <data name="core.dashboard.autoRefresh" xml:space="preserve"><value>Автообновление, сек</value></data>
+  <data name="core.refresh" xml:space="preserve"><value>Обновить</value></data>
+  <data name="core.period" xml:space="preserve"><value>Период</value></data>
+  <data name="core.today" xml:space="preserve"><value>Сегодня</value></data>
+  <data name="core.sevenDays" xml:space="preserve"><value>7 дней</value></data>
+  <data name="core.month" xml:space="preserve"><value>Месяц</value></data>
+  <data name="core.dashboard.activationAlert" xml:space="preserve"><value>Срочно: ошибка активации подписки</value></data>
+  <data name="core.payments" xml:space="preserve"><value>Платежи</value></data>
+  <data name="core.dashboard.registrationsAndOrganizations" xml:space="preserve"><value>Регистрации и организации</value></data>
+  <data name="core.dashboard.overview" xml:space="preserve"><value>Общая статистика</value></data>
+  <data name="core.dashboard.loadOverview" xml:space="preserve"><value>Загрузить статистику</value></data>
+  <data name="core.dashboard.overviewHelp" xml:space="preserve"><value>Общая статистика обновляется по этой кнопке</value></data>
+  <data name="core.profile.title" xml:space="preserve"><value>Мой профиль</value></data>
+  <data name="core.profile.accountAndPermissions" xml:space="preserve"><value>Аккаунт и административные права</value></data>
+  <data name="core.readOnly" xml:space="preserve"><value>Только чтение</value></data>
+  <data name="core.profile.roles" xml:space="preserve"><value>РОЛИ</value></data>
+  <data name="core.profile.identifier" xml:space="preserve"><value>ИДЕНТИФИКАТОР</value></data>
+  <data name="core.profile.server" xml:space="preserve"><value>СЕРВЕР</value></data>
+  <data name="core.profile.permissions" xml:space="preserve"><value>Права доступа</value></data>
+  <data name="core.users.title" xml:space="preserve"><value>Пользователи</value></data>
+  <data name="core.users.searchPlaceholder" xml:space="preserve"><value>Поиск по email или телефону</value></data>
+  <data name="core.find" xml:space="preserve"><value>Найти</value></data>
+  <data name="core.reset" xml:space="preserve"><value>Сбросить</value></data>
+  <data name="core.users.includeDeleted" xml:space="preserve"><value>Включая удалённых</value></data>
+  <data name="core.pageSize" xml:space="preserve"><value>На странице</value></data>
+  <data name="core.users.organizationsAndPlans" xml:space="preserve"><value>Организации и тарифы пользователя</value></data>
+  <data name="core.card" xml:space="preserve"><value>Карточка</value></data>
+  <data name="core.users.empty" xml:space="preserve"><value>Пользователи не найдены</value></data>
+  <data name="core.backToList" xml:space="preserve"><value>← К списку</value></data>
+  <data name="core.show" xml:space="preserve"><value>Показать</value></data>
+  <data name="core.lastActivity" xml:space="preserve"><value>Последняя активность</value></data>
+  <data name="core.user.account" xml:space="preserve"><value>Аккаунт пользователя</value></data>
+  <data name="core.user.openInBrowserAdmin" xml:space="preserve"><value>Открыть в браузерной админке</value></data>
+  <data name="core.user.testSubscriptions" xml:space="preserve"><value>Тестовые подписки</value></data>
+  <data name="core.user.accessManagement" xml:space="preserve"><value>Управление доступом</value></data>
+  <data name="core.user.noAccessTargets" xml:space="preserve"><value>Нет получателей доступа.</value></data>
+  <data name="core.user.accessRecipient" xml:space="preserve"><value>Получатель доступа</value></data>
+  <data name="core.user.organizationPlanNote" xml:space="preserve"><value>Тариф организации действует отдельно от аккаунта владельца. Личная техника пользователя сохраняется независимо от подписки организации.</value></data>
+  <data name="core.user.grantDemo" xml:space="preserve"><value>Выдать демо</value></data>
+  <data name="core.user.grantDemoHelp" xml:space="preserve"><value>Доступно только для исторических сценариев. Детейлинг и СТО начинают с бесплатного Free; подарочный PRO выдаётся промокодом.</value></data>
+  <data name="core.user.revokeDemo" xml:space="preserve"><value>Отозвать демо</value></data>
+  <data name="core.user.revokeDemoHelp" xml:space="preserve"><value>Немедленно отзывает демонстрационный доступ выбранного получателя.</value></data>
+  <data name="core.user.assignPlanHelp" xml:space="preserve"><value>Назначает выбранный платный тариф без создания платежа. Укажите срок и причину.</value></data>
+  <data name="core.extend" xml:space="preserve"><value>Продлить</value></data>
+  <data name="core.user.extendHelp" xml:space="preserve"><value>Добавляет выбранное число дней к действующему доступу выбранного получателя без оплаты.</value></data>
+  <data name="core.user.stopSubscriptions" xml:space="preserve"><value>Остановить подписки</value></data>
+  <data name="core.user.stopSubscriptionsHelp" xml:space="preserve"><value>Немедленно останавливает все действующие подписки выбранного получателя. Неиспользованный срок автоматически не возвращается.</value></data>
+  <data name="core.plan" xml:space="preserve"><value>Тариф</value></data>
+  <data name="core.durationDays" xml:space="preserve"><value>Срок, дней</value></data>
+  <data name="core.changeReason" xml:space="preserve"><value>Причина изменения</value></data>
+  <data name="core.changeReasonHelp" xml:space="preserve"><value>Причина будет сохранена в журнале изменений</value></data>
+  <data name="core.confirm" xml:space="preserve"><value>Подтвердить</value></data>
+  <data name="core.cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="core.organizations.title" xml:space="preserve"><value>Организации</value></data>
+  <data name="core.organizations.searchPlaceholder" xml:space="preserve"><value>Поиск по организации</value></data>
+  <data name="core.organizations.userSearchPlaceholder" xml:space="preserve"><value>Пользователь: id, email или телефон</value></data>
+  <data name="core.organizations.open" xml:space="preserve"><value>Открыть организацию</value></data>
+  <data name="core.organizations.empty" xml:space="preserve"><value>Организации не найдены</value></data>
+  <data name="core.organizations.manage" xml:space="preserve"><value>Управление организацией</value></data>
+  <data name="core.organizations.archive" xml:space="preserve"><value>Принудительно архивировать</value></data>
+  <data name="core.organizations.restore" xml:space="preserve"><value>Восстановить из архива</value></data>
+  <data name="core.organizations.auditReasonPlaceholder" xml:space="preserve"><value>Обязательная причина для аудита</value></data>
+  <data name="core.organizations.confirmTarget" xml:space="preserve"><value>Подтверждаю действие для указанной организации</value></data>
+  <data name="core.execute" xml:space="preserve"><value>Выполнить</value></data>
+  <data name="core.organization" xml:space="preserve"><value>Организация</value></data>
+  <data name="core.organizations.ownerAndContacts" xml:space="preserve"><value>Владелец и контакты</value></data>
+  <data name="core.subscription" xml:space="preserve"><value>Подписка</value></data>
+  <data name="core.organizations.allTimeStats" xml:space="preserve"><value>Статистика за всё время</value></data>
+  <data name="core.members" xml:space="preserve"><value>Участники</value></data>
+  <data name="core.clients" xml:space="preserve"><value>Клиенты</value></data>
+  <data name="core.vehicles" xml:space="preserve"><value>Техника</value></data>
+  <data name="core.orders" xml:space="preserve"><value>Заказы</value></data>
+  <data name="core.organizations.ordersAfterDiscounts" xml:space="preserve"><value>Заказы после скидок</value></data>
+  <data name="core.organizations.ordersPaid" xml:space="preserve"><value>Оплачено по заказам</value></data>
+  <data name="core.organizations.inventoryValue" xml:space="preserve"><value>Стоимость запасов</value></data>
+  <data name="core.invitations" xml:space="preserve"><value>Приглашения</value></data>
+  <data name="core.maintenance" xml:space="preserve"><value>Обслуживания</value></data>
+  <data name="core.openDefects" xml:space="preserve"><value>Открытые дефекты</value></data>
+  <data name="core.schedulerTasks" xml:space="preserve"><value>Задачи планировщика</value></data>
+  <data name="core.inventoryItems" xml:space="preserve"><value>Позиции склада</value></data>
+  <data name="core.pendingInvitations" xml:space="preserve"><value>Ожидающие приглашения</value></data>
+  <data name="core.recentEvents" xml:space="preserve"><value>Последние события</value></data>
+  <data name="core.systemInformation" xml:space="preserve"><value>Служебные сведения</value></data>
+  <data name="core.userId" xml:space="preserve"><value>ID пользователя</value></data>
+  <data name="core.activity.collectionDisabled" xml:space="preserve"><value>Сбор отключён: новые события не поступают, ранее записанные доступны в пределах срока хранения.</value></data>
+  <data name="core.user" xml:space="preserve"><value>Пользователь</value></data>
+  <data name="core.activity.allUsersPlaceholder" xml:space="preserve"><value>Все пользователи · email или телефон</value></data>
+  <data name="core.activity.allUsers" xml:space="preserve"><value>Все пользователи</value></data>
+  <data name="core.activity.searchingUsers" xml:space="preserve"><value>Ищем пользователей…</value></data>
+  <data name="core.activity.eventType" xml:space="preserve"><value>Тип события</value></data>
+  <data name="core.scenario" xml:space="preserve"><value>Сценарий</value></data>
+  <data name="core.search" xml:space="preserve"><value>Поиск</value></data>
+  <data name="core.activity.searchPlaceholder" xml:space="preserve"><value>Организация, действие, страница</value></data>
+  <data name="core.activity.dateFromUtc" xml:space="preserve"><value>Дата с (UTC)</value></data>
+  <data name="core.datePlaceholder" xml:space="preserve"><value>ГГГГ-ММ-ДД</value></data>
+  <data name="core.activity.dateToUtc" xml:space="preserve"><value>Дата по (UTC)</value></data>
+  <data name="core.apply" xml:space="preserve"><value>Применить</value></data>
+  <data name="core.activity.loading" xml:space="preserve"><value>Загружаем журнал…</value></data>
+  <data name="core.activity.empty" xml:space="preserve"><value>Для выбранных фильтров записей нет.</value></data>
+  <data name="core.when" xml:space="preserve"><value>Когда</value></data>
+  <data name="core.action" xml:space="preserve"><value>Действие</value></data>
+  <data name="core.previousPage" xml:space="preserve"><value>← Предыдущая страница</value></data>
+  <data name="core.nextPage" xml:space="preserve"><value>Следующая страница →</value></data>
+  <data name="core.dateTime.clearLabel" xml:space="preserve"><value>Очистить дату и время</value></data>
+  <data name="core.dateTime.label" xml:space="preserve"><value>Дата и время</value></data>
+  <data name="core.dateTime.help" xml:space="preserve"><value>Выберите дату, затем время</value></data>
+  <data name="core.dateTime.hourFormat" xml:space="preserve"><value>24 ч</value></data>
+  <data name="core.dateTime.time" xml:space="preserve"><value>ВРЕМЯ</value></data>
+  <data name="core.clear" xml:space="preserve"><value>Очистить</value></data>
+  <data name="core.done" xml:space="preserve"><value>Готово</value></data>
+  <data name="activity.title" xml:space="preserve"><value>Активность пользователей</value></data>
+  <data name="activity.userTitle" xml:space="preserve"><value>Активность пользователя</value></data>
+  <data name="activity.pageNumber" xml:space="preserve"><value>Страница {0}</value></data>
+  <data name="activity.selectedUser" xml:space="preserve"><value>Выбранный пользователь</value></data>
+  <data name="activity.userMissingEmail" xml:space="preserve"><value>Пользователь без email</value></data>
+  <data name="activity.loadUsersFailed" xml:space="preserve"><value>Не удалось загрузить пользователей. Повторите поиск.</value></data>
+  <data name="activity.chooseUser" xml:space="preserve"><value>Выберите пользователя из списка или очистите поле, чтобы показать всех.</value></data>
+  <data name="activity.invalidFromDate" xml:space="preserve"><value>Дата начала должна быть в формате ГГГГ-ММ-ДД.</value></data>
+  <data name="activity.invalidToDate" xml:space="preserve"><value>Дата окончания должна быть в формате ГГГГ-ММ-ДД.</value></data>
+  <data name="activity.dateRangeInvalid" xml:space="preserve"><value>Дата начала не может быть позже даты окончания.</value></data>
+  <data name="activity.timeout" xml:space="preserve"><value>Превышено время ожидания ответа сервера. Повторите попытку.</value></data>
+  <data name="activity.network" xml:space="preserve"><value>Не удалось связаться с сервером. Проверьте подключение.</value></data>
+  <data name="core.activity.kind.all" xml:space="preserve"><value>Все типы</value></data>
+  <data name="core.activity.kind.page" xml:space="preserve"><value>Переход</value></data>
+  <data name="core.activity.kind.click" xml:space="preserve"><value>Нажатие</value></data>
+  <data name="core.activity.kind.goal" xml:space="preserve"><value>Цель</value></data>
+  <data name="core.activity.kind.operation" xml:space="preserve"><value>Операция</value></data>
+  <data name="core.activity.scenario.all" xml:space="preserve"><value>Все</value></data>
+  <data name="activity.scenario.detailing" xml:space="preserve"><value>Детейлинг</value></data>
+  <data name="activity.scenario.autoservice" xml:space="preserve"><value>Автосервис</value></data>
+  <data name="activity.scenario.personal" xml:space="preserve"><value>Личный кабинет</value></data>
+  <data name="activity.scenario.account" xml:space="preserve"><value>Аккаунт</value></data>
+  <data name="activity.scenario.fleet" xml:space="preserve"><value>Автопарк</value></data>
+  <data name="core.users.emailHeader" xml:space="preserve"><value>Пользователь</value></data>
+  <data name="core.users.registrationHeader" xml:space="preserve"><value>Регистрация</value></data>
+  <data name="core.users.vehiclesHeader" xml:space="preserve"><value>Техника</value></data>
+  <data name="core.users.maintenanceHeader" xml:space="preserve"><value>ТО</value></data>
+  <data name="core.users.organizationsHeader" xml:space="preserve"><value>Организации</value></data>
+  <data name="core.users.total" xml:space="preserve"><value>Найдено: {0:N0}</value></data>
+  <data name="core.organizations.nameHeader" xml:space="preserve"><value>Организация</value></data>
+  <data name="core.organizations.ownerHeader" xml:space="preserve"><value>Владелец</value></data>
+  <data name="core.organizations.scenarioHeader" xml:space="preserve"><value>Тип</value></data>
+  <data name="core.organizations.statusHeader" xml:space="preserve"><value>Статус</value></data>
+  <data name="core.organizations.subscriptionHeader" xml:space="preserve"><value>Тариф / срок</value></data>
+  <data name="core.organizations.membersHeader" xml:space="preserve"><value>Участники</value></data>
+  <data name="core.organizations.clientsHeader" xml:space="preserve"><value>Клиенты</value></data>
+  <data name="core.organizations.vehiclesHeader" xml:space="preserve"><value>Техника</value></data>
+  <data name="core.organizations.ordersHeader" xml:space="preserve"><value>Заказы</value></data>
+  <data name="core.organizations.createdHeader" xml:space="preserve"><value>Создана</value></data>
+  <data name="core.organizations.total" xml:space="preserve"><value>Найдено: {0:N0}</value></data>
+  <data name="core.dashboard.urgentPayment" xml:space="preserve"><value>Оплата получена, но подписка не активирована: {0}. Проверьте обработку платежей.</value></data>
+  <data name="core.dashboard.period.today" xml:space="preserve"><value>Сегодня</value></data>
+  <data name="core.dashboard.period.week" xml:space="preserve"><value>Последние 7 дней</value></data>
+  <data name="core.dashboard.period.month" xml:space="preserve"><value>Последние 30 дней</value></data>
+  <data name="core.dashboard.chartPeriod.today" xml:space="preserve"><value>Сегодня по часам</value></data>
+  <data name="core.dashboard.chartPeriod.week" xml:space="preserve"><value>За 7 дней</value></data>
+  <data name="core.dashboard.chartPeriod.month" xml:space="preserve"><value>За месяц</value></data>
+  <data name="core.dashboard.loadedAt" xml:space="preserve"><value>Загружено: {0}</value></data>
+  <data name="core.dashboard.updatedAt" xml:space="preserve"><value>Обновлено: {0}</value></data>
+  <data name="core.dashboard.statisticsLoadFailed" xml:space="preserve"><value>Не удалось загрузить общую статистику.</value></data>
+  <data name="core.dashboard.statisticsRefreshFailed" xml:space="preserve"><value>Не удалось обновить общую статистику. Показаны ранее полученные значения.</value></data>
+  <data name="core.dashboard.refreshFailed" xml:space="preserve"><value>Не удалось обновить данные. Показаны ранее полученные значения.</value></data>
+  <data name="core.dashboard.loadFailed" xml:space="preserve"><value>Не удалось загрузить дашборд.</value></data>
+  <data name="core.dashboard.receiptsUnsupported" xml:space="preserve"><value>Сервер не поддерживает статистику чеков за выбранный период. Требуется обновление сервера.</value></data>
+  <data name="core.dashboard.paymentsRefreshFailed" xml:space="preserve"><value>Не удалось обновить платежи. Показаны ранее полученные значения.</value></data>
+  <data name="core.dashboard.paymentsLoadFailed" xml:space="preserve"><value>Не удалось загрузить состояние платежей.</value></data>
+  <data name="core.dashboard.newUsers" xml:space="preserve"><value>Новые пользователи</value></data>
+  <data name="core.dashboard.registrationsForPeriod" xml:space="preserve"><value>Регистрации за период</value></data>
+  <data name="core.dashboard.newOrganizations" xml:space="preserve"><value>Новые организации</value></data>
+  <data name="core.dashboard.createdForPeriod" xml:space="preserve"><value>Созданы за период</value></data>
+  <data name="core.dashboard.registrations" xml:space="preserve"><value>Регистрации</value></data>
+  <data name="core.dashboard.maintenance" xml:space="preserve"><value>Обслуживания</value></data>
+  <data name="core.dashboard.payments" xml:space="preserve"><value>Платежи</value></data>
+  <data name="core.dashboard.users" xml:space="preserve"><value>Пользователи</value></data>
+  <data name="core.dashboard.total" xml:space="preserve"><value>Всего</value></data>
+  <data name="core.dashboard.newToday" xml:space="preserve"><value>Новых сегодня</value></data>
+  <data name="core.dashboard.newForWeek" xml:space="preserve"><value>Новых за 7 дней</value></data>
+  <data name="core.dashboard.organizations" xml:space="preserve"><value>Организации</value></data>
+  <data name="core.dashboard.active" xml:space="preserve"><value>Активных</value></data>
+  <data name="core.dashboard.members" xml:space="preserve"><value>Участников</value></data>
+  <data name="core.dashboard.activeSubscriptions" xml:space="preserve"><value>Активных подписок</value></data>
+  <data name="core.dashboard.vehiclesAndMaintenance" xml:space="preserve"><value>Техника и обслуживание</value></data>
+  <data name="core.dashboard.vehicles" xml:space="preserve"><value>Техники</value></data>
+  <data name="core.dashboard.planned" xml:space="preserve"><value>Запланировано</value></data>
+  <data name="core.dashboard.documents" xml:space="preserve"><value>Документов</value></data>
+  <data name="core.dashboard.openDefects" xml:space="preserve"><value>Открытых дефектов</value></data>
+  <data name="core.dashboard.finance" xml:space="preserve"><value>Финансы</value></data>
+  <data name="core.dashboard.amountForMonth" xml:space="preserve"><value>Сумма за 30 дней</value></data>
+  <data name="core.dashboard.paymentsForMonth" xml:space="preserve"><value>Платежей за 30 дней</value></data>
+  <data name="core.dashboard.problemPayments" xml:space="preserve"><value>Проблемных платежей</value></data>
+  <data name="core.dashboard.communications" xml:space="preserve"><value>Коммуникации</value></data>
+  <data name="core.dashboard.emailToday" xml:space="preserve"><value>Email сегодня</value></data>
+  <data name="core.dashboard.emailForWeek" xml:space="preserve"><value>Email за 7 дней</value></data>
+  <data name="core.dashboard.sentForWeek" xml:space="preserve"><value>Отправлено за 7 дней</value></data>
+  <data name="core.dashboard.failedForWeek" xml:space="preserve"><value>Ошибок за 7 дней</value></data>
+  <data name="core.dashboard.pendingSend" xml:space="preserve"><value>Ожидают отправки</value></data>
+  <data name="core.dashboard.otherAttention" xml:space="preserve"><value>Прочие показатели внимания</value></data>
+  <data name="core.dashboard.catalogSuggestions" xml:space="preserve"><value>Предложения в каталог</value></data>
+  <data name="core.dashboard.pendingInvitations" xml:space="preserve"><value>Ожидающие приглашения</value></data>
+  <data name="core.dashboard.overdueTasks" xml:space="preserve"><value>Просроченные задачи</value></data>
+  <data name="core.dashboard.lowStock" xml:space="preserve"><value>Низкие остатки</value></data>
+  <data name="core.dashboard.income" xml:space="preserve"><value>Поступления</value></data>
+  <data name="core.dashboard.afterRefunds" xml:space="preserve"><value>С учётом возвратов</value></data>
+  <data name="core.dashboard.paymentsForPeriod" xml:space="preserve"><value>Платежей за период</value></data>
+  <data name="core.dashboard.paidWithoutReceipt" xml:space="preserve"><value>Оплачено без чека</value></data>
+  <data name="core.dashboard.receiptNotMarked" xml:space="preserve"><value>Выдача чека не отмечена</value></data>
+  <data name="core.dashboard.overdueReceipts" xml:space="preserve"><value>Просроченные чеки</value></data>
+  <data name="core.dashboard.paidOver24HoursAgo" xml:space="preserve"><value>Оплачены более 24 ч назад</value></data>
+  <data name="core.users.refreshCardFailed" xml:space="preserve"><value>Не удалось обновить карточку. Показаны прежние данные.</value></data>
+  <data name="core.users.refreshListFailed" xml:space="preserve"><value>Не удалось обновить список. Показаны прежние данные.</value></data>
+  <data name="core.profile.permissionCount" xml:space="preserve"><value>Всего: {0}</value></data>
+  <data name="core.dashboard.duration" xml:space="preserve"><value>{0} мин {1} сек</value></data>
+  <data name="core.dateTime.hours" xml:space="preserve"><value>ЧАСЫ</value></data>
+  <data name="core.dateTime.minutes" xml:space="preserve"><value>МИНУТЫ</value></data>
+  <data name="native.billing.itogo.userdisplayformatting.money.this.purchase.amount.this.refu" xml:space="preserve"><value>· итого {0}</value></data>
+  <data name="native.plans.0.dney" xml:space="preserve"><value>{0} дней</value></data>
+  <data name="native.vehicleCatalog.0.edinits.tekhniki" xml:space="preserve"><value>{0} единиц техники</value></data>
+  <data name="native.vehicleCatalog.0.modeley" xml:space="preserve"><value>{0} моделей</value></data>
+  <data name="native.email.campaign.sentcount.n0.iz.campaign.totalcount.n0" xml:space="preserve"><value>{0:N0} из {1:N0}</value></data>
+  <data name="native.billing.payment.plandurationdays.n0.dn" xml:space="preserve"><value>{0:N0} дн.</value></data>
+  <data name="native.plans.this.plan.durationdays.dney" xml:space="preserve"><value>{0} дней</value></data>
+  <data name="native.promoCodes.this.promocode.organizationapplicationcount.iz.organizationlimit" xml:space="preserve"><value>{0} из {1} применений</value></data>
+  <data name="native.promoCodes.this.promocode.organizationapplicationcount.primeneniy" xml:space="preserve"><value>{0} применений</value></data>
+  <data name="native.promoCodes.this.promocode.redemptioncount.iz.redemptionlimit.registratsiy" xml:space="preserve"><value>{0} из {1} регистраций</value></data>
+  <data name="native.promoCodes.this.promocode.redemptioncount.registratsiy" xml:space="preserve"><value>{0} регистраций</value></data>
+  <data name="native.billing.userdisplayformatting.money.this.purchase.amount.vozvrat.userdis" xml:space="preserve"><value>{0} · возврат {1}</value></data>
+  <data name="native.billing.ntekushchee.sostoyanie.this.pendingpurchase.npdreceiptissued.pri" xml:space="preserve"><value>
+Текущее состояние: {0}. Причина: {1}</value></data>
+  <data name="native.email.k.istorii.email" xml:space="preserve"><value>← К истории email</value></data>
+  <data name="native.vehicleCatalog.k.markam" xml:space="preserve"><value>← К маркам</value></data>
+  <data name="native.support.k.obrashcheniyam" xml:space="preserve"><value>← К обращениям</value></data>
+  <data name="native.testData.k.organizatsiyam" xml:space="preserve"><value>← К организациям</value></data>
+  <data name="native.billing.k.pokupkam" xml:space="preserve"><value>← К покупкам</value></data>
+  <data name="native.catalogSuggestions.k.predlozheniyam" xml:space="preserve"><value>← К предложениям</value></data>
+  <data name="native.promoCodes.k.promokodam" xml:space="preserve"><value>← К промокодам</value></data>
+  <data name="native.billing.k.spisku" xml:space="preserve"><value>← К списку</value></data>
+  <data name="native.plans.k.tarifam" xml:space="preserve"><value>← К тарифам</value></data>
+  <data name="native.testData.k.tekhnike.organizatsii" xml:space="preserve"><value>← К технике организации</value></data>
+  <data name="native.assistant.predydushchaya" xml:space="preserve"><value>← Предыдущая</value></data>
+  <data name="native.promoCodes.createButton" xml:space="preserve"><value>+ Новый промокод</value></data>
+  <data name="native.crmImport.1.polzovatel.i.organizatsiya" xml:space="preserve"><value>1. Пользователь и организация</value></data>
+  <data name="native.crmImport.2.fayl.i.proverka" xml:space="preserve"><value>2. Файл и проверка</value></data>
+  <data name="native.crmImport.3.rezultat.proverki" xml:space="preserve"><value>3. Результат проверки</value></data>
+  <data name="native.billing.30.dney" xml:space="preserve"><value>30 дней</value></data>
+  <data name="native.billing.7.dney" xml:space="preserve"><value>7 дней</value></data>
+  <data name="native.siteNotifications.avtomaticheskie.shablony" xml:space="preserve"><value>Автоматические шаблоны</value></data>
+  <data name="native.promoCodes.avtomaticheskogo.demo.net.podarochnye.dni.dobavlyayut.pro.k.vybr" xml:space="preserve"><value>Автоматического демо нет. Подарочные дни добавляют PRO к выбранному тарифу; Free для детейлинга и СТО действует бессрочно.</value></data>
+  <data name="native.promoCodes.avtopark" xml:space="preserve"><value>Автопарк</value></data>
+  <data name="native.billing.avtoprodlenie" xml:space="preserve"><value>Автопродление</value></data>
+  <data name="native.support.administrator" xml:space="preserve"><value>Администратор</value></data>
+  <data name="native.assistant.administrator.0" xml:space="preserve"><value>Администратор: {0}</value></data>
+  <data name="native.siteNotifications.administratory" xml:space="preserve"><value>Администраторы</value></data>
+  <data name="native.email.adres.nedostupen" xml:space="preserve"><value>Адрес недоступен</value></data>
+  <data name="native.email.adresaty" xml:space="preserve"><value>Адресаты</value></data>
+  <data name="native.billing.aktivatsiya" xml:space="preserve"><value>Активация</value></data>
+  <data name="native.plans.aktiven" xml:space="preserve"><value>Активен</value></data>
+  <data name="native.plans.aktiven.0" xml:space="preserve"><value>Активен: {0}</value></data>
+  <data name="native.billing.aktivna" xml:space="preserve"><value>Активна</value></data>
+  <data name="native.billing.aktivnye" xml:space="preserve"><value>Активные</value></data>
+  <data name="native.assistant.audit.izmeneniy" xml:space="preserve"><value>Аудит изменений</value></data>
+  <data name="native.siteNotifications.auditorii" xml:space="preserve"><value>Аудитории</value></data>
+  <data name="native.vehicleCatalog.baggi.i.utv" xml:space="preserve"><value>Багги и UTV</value></data>
+  <data name="native.plans.bazovyy.prezhnyaya.model" xml:space="preserve"><value>Базовый · прежняя модель</value></data>
+  <data name="native.promoCodes.bez.bonusa" xml:space="preserve"><value>Без бонуса</value></data>
+  <data name="native.plans.bez.gruppy" xml:space="preserve"><value>Без группы</value></data>
+  <data name="native.promoCodes.bez.ogranicheniya" xml:space="preserve"><value>Без ограничения</value></data>
+  <data name="native.billing.bez.otmetki" xml:space="preserve"><value>Без отметки</value></data>
+  <data name="native.billing.bez.otmetki.24.ch" xml:space="preserve"><value>Без отметки &gt;24 ч</value></data>
+  <data name="native.promoCodes.bez.sroka" xml:space="preserve"><value>Без срока</value></data>
+  <data name="native.plans.besplatno" xml:space="preserve"><value>Бесплатно</value></data>
+  <data name="native.plans.bessrochno" xml:space="preserve"><value>Бессрочно</value></data>
+  <data name="native.plans.bessrochnyy.free.i.varianty.pro.starye.bazovye.i.demo.tarify.sok" xml:space="preserve"><value>Бессрочный Free и варианты PRO. Старые базовые и демо-тарифы сохранены для прежних условий.</value></data>
+  <data name="native.email.blokirovka.spama" xml:space="preserve"><value>Блокировка спама</value></data>
+  <data name="native.promoCodes.bonus.starogo.promokoda.dostupen.tolko.dlya.prosmotra" xml:space="preserve"><value>Бонус старого промокода доступен только для просмотра.</value></data>
+  <data name="native.testData.budet.sozdano.zapisey.this.count.this.actiontitle.tolowerinvaria" xml:space="preserve"><value>Будет создано записей: {0} · {1}. Действие нельзя отменить.</value></data>
+  <data name="native.crmImport.budut.sozdany.zapisi.iz.proverennogo.fayla.dublikaty.budut.propu" xml:space="preserve"><value>Будут созданы записи из проверенного файла. Дубликаты будут пропущены.</value></data>
+  <data name="native.billing.v.ocheredi" xml:space="preserve"><value>В очереди</value></data>
+  <data name="native.billing.v.ocheredi.otpravki" xml:space="preserve"><value>В очереди отправки</value></data>
+  <data name="native.promoCodes.v.platezhe" xml:space="preserve"><value>В платеже</value></data>
+  <data name="native.support.v.rabote" xml:space="preserve"><value>В работе</value></data>
+  <data name="native.catalogSuggestions.v.spiske.0.n0" xml:space="preserve"><value>В списке: {0:N0}</value></data>
+  <data name="native.testData.v.etoy.organizatsii.poka.net.tekhniki.sozdayte.eyo.chtoby.pereyt" xml:space="preserve"><value>В этой организации пока нет техники. Создайте её, чтобы перейти к генерации данных.</value></data>
+  <data name="native.promoCodes.vvedite.datu.i.vremya.v.formate.gggg.mm.dd.chch.mm" xml:space="preserve"><value>Введите дату и время в формате ГГГГ-ММ-ДД ЧЧ:ММ.</value></data>
+  <data name="native.vehicleCatalog.vvedite.nazvanie" xml:space="preserve"><value>Введите название</value></data>
+  <data name="native.billing.vernut.this.refundamount.n2" xml:space="preserve"><value>вернуть {0:N2} ₽</value></data>
+  <data name="native.billing.vernut.dengi" xml:space="preserve"><value>Вернуть деньги</value></data>
+  <data name="native.billing.vernut.mozhno.chast.summy" xml:space="preserve"><value>Вернуть, ₽ (можно часть суммы)</value></data>
+  <data name="native.billing.ves.period" xml:space="preserve"><value>Весь период</value></data>
+  <data name="native.vehicleCatalog.vid.tekhniki" xml:space="preserve"><value>Вид техники</value></data>
+  <data name="native.support.viden.tolko.administratoram" xml:space="preserve"><value>Виден только администраторам</value></data>
+  <data name="native.assistant.vklyuchyon" xml:space="preserve"><value>Включён</value></data>
+  <data name="native.plans.vklyucheno" xml:space="preserve"><value>Включено</value></data>
+  <data name="native.plans.vklyuchit" xml:space="preserve"><value>Включить</value></data>
+  <data name="native.billing.vladelets" xml:space="preserve"><value>Владелец</value></data>
+  <data name="native.testData.vladelets.ne.ukazan" xml:space="preserve"><value>Владелец не указан</value></data>
+  <data name="native.siteNotifications.vladeltsy.organizatsiy" xml:space="preserve"><value>Владельцы организаций</value></data>
+  <data name="native.billing.vlozhit.pdf.png.jpg" xml:space="preserve"><value>Вложить PDF / PNG / JPG</value></data>
+  <data name="native.billing.vneshniy.status" xml:space="preserve"><value>Внешний статус</value></data>
+  <data name="native.support.vnutrenniy.kommentariy" xml:space="preserve"><value>Внутренний комментарий</value></data>
+  <data name="native.billing.vozvrat" xml:space="preserve"><value>Возврат</value></data>
+  <data name="native.billing.vozvrat.ne.menyaet.ranee.vydannyy.srok.dostupa.prodlenie.i.ostan" xml:space="preserve"><value>Возврат не меняет ранее выданный срок доступа. Продление и остановка — в разделе «Пользователи» → карточка покупателя → «Управление». Выберите получателя доступа.</value></data>
+  <data name="native.billing.vozvraty" xml:space="preserve"><value>Возвраты</value></data>
+  <data name="native.billing.vozvrashchyon" xml:space="preserve"><value>Возвращён</value></data>
+  <data name="native.billing.vozvrashcheno.vsego" xml:space="preserve"><value>Возвращено всего</value></data>
+  <data name="native.plans.vozmozhnosti.tarifa" xml:space="preserve"><value>Возможности тарифа</value></data>
+  <data name="native.plans.vozmozhnosti.tarifa.sokhraneny.dlya.vsekh.srokov.oplaty" xml:space="preserve"><value>Возможности тарифа сохранены для всех сроков оплаты.</value></data>
+  <data name="native.email.vremennaya.oshibka" xml:space="preserve"><value>Временная ошибка</value></data>
+  <data name="native.billing.vse" xml:space="preserve"><value>Все</value></data>
+  <data name="native.vehicleCatalog.vse.vidy.tekhniki" xml:space="preserve"><value>Все виды техники</value></data>
+  <data name="native.assistant.vse.kanaly" xml:space="preserve"><value>Все каналы</value></data>
+  <data name="native.promoCodes.vse.napravleniya" xml:space="preserve"><value>Все направления</value></data>
+  <data name="native.support.vse.obrashcheniya" xml:space="preserve"><value>Все обращения</value></data>
+  <data name="native.billing.vse.pokupateli" xml:space="preserve"><value>Все покупатели</value></data>
+  <data name="native.email.vse.polzovateli" xml:space="preserve"><value>Все пользователи</value></data>
+  <data name="native.promoCodes.vse.statusy" xml:space="preserve"><value>Все статусы</value></data>
+  <data name="native.billing.vse.cheki" xml:space="preserve"><value>Все чеки</value></data>
+  <data name="native.vehicleCatalog.vsego.0.n0" xml:space="preserve"><value>Всего: {0:N0}</value></data>
+  <data name="native.billing.vsego.this.totalcount.n0" xml:space="preserve"><value>Всего: {0:N0}</value></data>
+  <data name="native.billing.vsya.ochered" xml:space="preserve"><value>Вся очередь</value></data>
+  <data name="native.sms.vkhod.po.telefonu" xml:space="preserve"><value>Вход по телефону</value></data>
+  <data name="native.promoCodes.vyberite.aktivnyy.platnyy.biznes.tarif.dlya.podarochnogo.dostupa" xml:space="preserve"><value>Выберите активный платный бизнес-тариф для подарочного доступа.</value></data>
+  <data name="native.siteNotifications.vyberite.vsekh.polzovateley.libo.odnu.ili.obe.spetsialnye.audito" xml:space="preserve"><value>Выберите всех пользователей либо одну или обе специальные аудитории.</value></data>
+  <data name="native.roles.vyberite.polzovatelya" xml:space="preserve"><value>Выберите пользователя</value></data>
+  <data name="native.testData.vyberite.tekhniku.dlya.generatsii.obsluzhivaniy.i.defektov" xml:space="preserve"><value>Выберите технику для генерации обслуживаний и дефектов.</value></data>
+  <data name="native.email.vyberite.tip.organizatsii" xml:space="preserve"><value>Выберите тип организации</value></data>
+  <data name="native.crmImport.vyberite.fayl.razmerom.ot.1.bayta.do.10.mb" xml:space="preserve"><value>Выберите файл размером от 1 байта до 10 МБ.</value></data>
+  <data name="native.promoCodes.vyberite.khotya.by.odin.platnyy.biznes.tarif" xml:space="preserve"><value>Выберите хотя бы один платный бизнес-тариф.</value></data>
+  <data name="native.promoCodes.vyberite.khotya.by.odno.napravlenie.ili.vklyuchite.vse.napravlen" xml:space="preserve"><value>Выберите хотя бы одно направление или включите все направления.</value></data>
+  <data name="native.billing.vyberite.pdf.png.ili.jpg.razmerom.do.5.mb" xml:space="preserve"><value>Выберите PDF, PNG или JPG размером до 5 МБ.</value></data>
+  <data name="native.testData.vyberite.kakie.demonstratsionnye.zapisi.sozdat" xml:space="preserve"><value>Выберите, какие демонстрационные записи создать.</value></data>
+  <data name="native.siteNotifications.vybrannye.poluchateli" xml:space="preserve"><value>Выбранные получатели</value></data>
+  <data name="native.siteNotifications.vybrannye.polzovateli" xml:space="preserve"><value>Выбранные пользователи</value></data>
+  <data name="native.siteNotifications.vybrano.0" xml:space="preserve"><value>Выбрано: {0}</value></data>
+  <data name="native.testData.vybrat" xml:space="preserve"><value>Выбрать</value></data>
+  <data name="native.email.vybrat.polzovatelya" xml:space="preserve"><value>Выбрать пользователя</value></data>
+  <data name="native.crmImport.vybrat.fayl" xml:space="preserve"><value>Выбрать файл</value></data>
+  <data name="native.crmImport.vybrat.fayl.crm" xml:space="preserve"><value>Выбрать файл CRM</value></data>
+  <data name="native.billing.vybrat.chek.npd" xml:space="preserve"><value>Выбрать чек НПД</value></data>
+  <data name="native.promoCodes.vygoda" xml:space="preserve"><value>Выгода</value></data>
+  <data name="native.promoCodes.vygoda.poluchena" xml:space="preserve"><value>Выгода получена</value></data>
+  <data name="native.billing.vydan" xml:space="preserve"><value>Выдан</value></data>
+  <data name="native.billing.vydannye" xml:space="preserve"><value>Выданные</value></data>
+  <data name="native.billing.vydannyy.period" xml:space="preserve"><value>Выданный период</value></data>
+  <data name="native.billing.vydannyy.srok.dostupa.avtomaticheski.ne.izmenitsya" xml:space="preserve"><value>Выданный срок доступа автоматически не изменится.</value></data>
+  <data name="native.billing.vydacha.dostupa" xml:space="preserve"><value>Выдача доступа</value></data>
+  <data name="native.billing.vydacha.i.otpravka.cheka" xml:space="preserve"><value>Выдача и отправка чека</value></data>
+  <data name="native.billing.vydacha.trebuet.proverki" xml:space="preserve"><value>Выдача требует проверки</value></data>
+  <data name="native.assistant.vyklyuchen" xml:space="preserve"><value>Выключен</value></data>
+  <data name="native.email.vypolnyaetsya" xml:space="preserve"><value>Выполняется</value></data>
+  <data name="native.testData.generatsiya.dlya.tekhniki" xml:space="preserve"><value>Генерация для техники</value></data>
+  <data name="native.testData.generiruyte.demonstratsionnuyu.tekhniku.obsluzhivaniya.i.defekty" xml:space="preserve"><value>Генерируйте демонстрационную технику, обслуживания и дефекты для организации.</value></data>
+  <data name="native.vehicleCatalog.gidrotsikly" xml:space="preserve"><value>Гидроциклы</value></data>
+  <data name="native.assistant.globalnoe.vyklyuchenie.skryvaet.knopku.i.blokiruet.rabotu.pomosh" xml:space="preserve"><value>Глобальное выключение скрывает кнопку и блокирует работу помощника во всех организациях после обновления CRM. Каналы сайта и Telegram ниже можно отключать отдельно.</value></data>
+  <data name="native.assistant.globalnye.nastroyki" xml:space="preserve"><value>Глобальные настройки</value></data>
+  <data name="native.assistant.golos" xml:space="preserve"><value>Голос</value></data>
+  <data name="native.support.gost" xml:space="preserve"><value>Гость</value></data>
+  <data name="native.vehicleCatalog.gruzovaya.tekhnika" xml:space="preserve"><value>Грузовая техника</value></data>
+  <data name="native.plans.gruppa" xml:space="preserve"><value>Группа</value></data>
+  <data name="native.billing.da" xml:space="preserve"><value>Да</value></data>
+  <data name="native.siteNotifications.dalshe" xml:space="preserve"><value>Дальше</value></data>
+  <data name="native.crmImport.dannye" xml:space="preserve"><value>Данные</value></data>
+  <data name="native.testData.dannye.obnovleny.proverte.kolichestva.pered.povtornym.sozdaniem" xml:space="preserve"><value>Данные обновлены. Проверьте количества перед повторным созданием.</value></data>
+  <data name="native.promoCodes.data" xml:space="preserve"><value>Дата</value></data>
+  <data name="native.promoCodes.data.okonchaniya.dolzhna.byt.pozzhe.daty.nachala" xml:space="preserve"><value>Дата окончания должна быть позже даты начала.</value></data>
+  <data name="native.promoCodes.deystvie" xml:space="preserve"><value>Действие</value></data>
+  <data name="native.billing.deystvie.administratora" xml:space="preserve"><value>Действие администратора</value></data>
+  <data name="native.billing.deystviya" xml:space="preserve"><value>Действия</value></data>
+  <data name="native.billing.deystviya.s.platezhom" xml:space="preserve"><value>Действия с платежом</value></data>
+  <data name="native.plans.demo.prezhnyaya.model" xml:space="preserve"><value>Демо · прежняя модель</value></data>
+  <data name="native.plans.demo.tarif" xml:space="preserve"><value>Демо-тариф</value></data>
+  <data name="native.promoCodes.demo.demoappliedat.tolocaltime.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>Демо: {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.billing.denezhnyy.snimok" xml:space="preserve"><value>Денежный снимок</value></data>
+  <data name="native.promoCodes.deteyling" xml:space="preserve"><value>Детейлинг</value></data>
+  <data name="native.testData.defektov.0.n0" xml:space="preserve"><value>Дефектов: {0:N0}</value></data>
+  <data name="native.email.dlya.massovoy.rassylki.pered.zapuskom.obyazatelno.proverte.adres" xml:space="preserve"><value>Для массовой рассылки перед запуском обязательно проверьте адресатов. Письмо будет поставлено в очередь сразу или после выбранной задержки.</value></data>
+  <data name="native.plans.dlya.sistemnogo.free.tsena.srok.i.statusy.zafiksirovany.menyayte" xml:space="preserve"><value>Для системного Free цена, срок и статусы зафиксированы. Меняйте квоты и возможности тарифа.</value></data>
+  <data name="native.plans.dlya.tarifa.net.nastraivaemykh.vozmozhnostey" xml:space="preserve"><value>Для тарифа нет настраиваемых возможностей.</value></data>
+  <data name="native.siteNotifications.dlya.shablonov.podpiski.dostupny.peremennye.organization.email.p" xml:space="preserve"><value>Для шаблонов подписки доступны переменные: {organization}, {email}, {plan}, {days}.</value></data>
+  <data name="native.assistant.dnevnoy.byudzhet" xml:space="preserve"><value>Дневной бюджет, ₽</value></data>
+  <data name="native.promoCodes.do.date.tolocaltime.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>До {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.promoCodes.dobavit.tarif" xml:space="preserve"><value>Добавить тариф</value></data>
+  <data name="native.crmImport.dobavleno.klientov.result.createdclients.tekhniki.result.created" xml:space="preserve"><value>Добавлено клиентов: {0} · Техники: {1} · Пропущено дублей: {2} · Ошибки: {3}</value></data>
+  <data name="native.vehicleCatalog.dobavleno.marok.result.createdbrands.modeley.result.createdmodel" xml:space="preserve"><value>Добавлено марок: {0}, моделей: {1}. Пропущено удалённых записей: {2}.</value></data>
+  <data name="native.vehicleCatalog.dopolnit.katalog" xml:space="preserve"><value>Дополнить каталог</value></data>
+  <data name="native.email.dostavka" xml:space="preserve"><value>Доставка</value></data>
+  <data name="native.billing.dostavka.komandy" xml:space="preserve"><value>Доставка команды</value></data>
+  <data name="native.billing.dostavlen" xml:space="preserve"><value>Доставлен</value></data>
+  <data name="native.email.dostavleno" xml:space="preserve"><value>Доставлено</value></data>
+  <data name="native.assistant.dostup.do.lokalnoe.vremya" xml:space="preserve"><value>Доступ до (локальное время)</value></data>
+  <data name="native.assistant.dostup.organizatsii.sokhranyon.i.zapisan.v.audit" xml:space="preserve"><value>Доступ организации сохранён и записан в аудит.</value></data>
+  <data name="native.assistant.dostup.organizatsiy" xml:space="preserve"><value>Доступ организаций</value></data>
+  <data name="native.billing.dostup.po.etoy.pokupke" xml:space="preserve"><value>Доступ по этой покупке</value></data>
+  <data name="native.assistant.dostup.razreshyon" xml:space="preserve"><value>Доступ разрешён</value></data>
+  <data name="native.billing.dostupno.k.vozvratu.0.n2" xml:space="preserve"><value>Доступно к возврату: {0:N2} ₽</value></data>
+  <data name="native.vehicleCatalog.drugie" xml:space="preserve"><value>Другие</value></data>
+  <data name="native.email.est.soglasie.na.rassylku" xml:space="preserve"><value>Есть согласие на рассылку</value></data>
+  <data name="native.billing.eshchyo.ne.nachalas" xml:space="preserve"><value>Ещё не началась</value></data>
+  <data name="native.billing.eshchyo.ne.nachalis" xml:space="preserve"><value>Ещё не начались</value></data>
+  <data name="native.billing.za.30.dney" xml:space="preserve"><value>За 30 дней</value></data>
+  <data name="native.billing.za.7.dney" xml:space="preserve"><value>За 7 дней</value></data>
+  <data name="native.billing.za.90.dney" xml:space="preserve"><value>За 90 дней</value></data>
+  <data name="native.billing.za.vsyo.vremya" xml:space="preserve"><value>За всё время</value></data>
+  <data name="native.billing.zavershena" xml:space="preserve"><value>Завершена</value></data>
+  <data name="native.billing.zavershyonnye" xml:space="preserve"><value>Завершённые</value></data>
+  <data name="native.billing.zavershit.razbor" xml:space="preserve"><value>Завершить разбор</value></data>
+  <data name="native.siteNotifications.zagolovok" xml:space="preserve"><value>Заголовок</value></data>
+  <data name="native.assistant.zagruzit" xml:space="preserve"><value>Загрузить</value></data>
+  <data name="native.plans.zagruzka.vozmozhnostey.tarifa.zanyala.slishkom.mnogo.vremeni" xml:space="preserve"><value>Загрузка возможностей тарифа заняла слишком много времени.</value></data>
+  <data name="native.plans.zagruzka.tarifov.zanyala.slishkom.mnogo.vremeni.povtorite.popytk" xml:space="preserve"><value>Загрузка тарифов заняла слишком много времени. Повторите попытку.</value></data>
+  <data name="native.billing.zakryvaet.formu.esli.zapros.uzhe.otpravlen.eto.ne.otmenyaet.plat" xml:space="preserve"><value>Закрывает форму. Если запрос уже отправлен, это не отменяет платёжную операцию.</value></data>
+  <data name="native.support.zakryto" xml:space="preserve"><value>Закрыто</value></data>
+  <data name="native.support.zakrytye" xml:space="preserve"><value>Закрытые</value></data>
+  <data name="native.siteNotifications.zakryt" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="native.billing.zakryt.podtverzhdenie" xml:space="preserve"><value>Закрыть подтверждение</value></data>
+  <data name="native.assistant.zapisey.poka.net" xml:space="preserve"><value>Записей пока нет.</value></data>
+  <data name="native.sms.zapisey.0.n0" xml:space="preserve"><value>Записей: {0:N0}</value></data>
+  <data name="native.billing.zapisi.ne.naydeny" xml:space="preserve"><value>Записи не найдены</value></data>
+  <data name="native.vehicleCatalog.zapis.kataloga.sokhranena" xml:space="preserve"><value>Запись каталога сохранена.</value></data>
+  <data name="native.email.zaplanirovana" xml:space="preserve"><value>Запланирована</value></data>
+  <data name="native.testData.zaplanirovannye" xml:space="preserve"><value>Запланированные</value></data>
+  <data name="native.email.zaplanirovat" xml:space="preserve"><value>Запланировать</value></data>
+  <data name="native.siteNotifications.zapros.otpravlen.no.rezultat.ne.podtverzhdyon.proverte.istoriyu." xml:space="preserve"><value>Запрос отправлен, но результат не подтверждён. Проверьте историю уведомлений перед повторной отправкой.</value></data>
+  <data name="native.email.zapros.uzhe.otpravlen.no.server.ne.podtverdil.rezultat.proverte." xml:space="preserve"><value>Запрос уже отправлен, но сервер не подтвердил результат. Проверьте список рассылок перед повторной отправкой.</value></data>
+  <data name="native.assistant.zaprosy.0.n0" xml:space="preserve"><value>Запросы: {0:N0}</value></data>
+  <data name="native.assistant.zaprosy.0" xml:space="preserve"><value>Запросы: {0}</value></data>
+  <data name="native.email.zapusk" xml:space="preserve"><value>Запуск</value></data>
+  <data name="native.email.zapustit.cherez.minut" xml:space="preserve"><value>Запустить через, минут</value></data>
+  <data name="native.billing.identifikatory.i.sostoyanie" xml:space="preserve"><value>Идентификаторы и состояние</value></data>
+  <data name="native.support.izmenenie.statusa" xml:space="preserve"><value>Изменение статуса</value></data>
+  <data name="native.plans.izmenenie.statusa.zanyalo.slishkom.mnogo.vremeni.obnovite.spisok" xml:space="preserve"><value>Изменение статуса заняло слишком много времени. Обновите список перед повтором.</value></data>
+  <data name="native.vehicleCatalog.izmeneniya.srazu.poyavyatsya.v.kataloge" xml:space="preserve"><value>Изменения сразу появятся в каталоге.</value></data>
+  <data name="native.siteNotifications.izmenit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="native.billing.izmenit.lokalnuyu.otmetku" xml:space="preserve"><value>Изменить локальную отметку…</value></data>
+  <data name="native.vehicleCatalog.izmenit.marku" xml:space="preserve"><value>Изменить марку</value></data>
+  <data name="native.vehicleCatalog.izmenit.model.this.selectedbrand.name" xml:space="preserve"><value>Изменить модель · {0}</value></data>
+  <data name="native.billing.izmenit.otmetku.o.vydache" xml:space="preserve"><value>Изменить отметку о выдаче</value></data>
+  <data name="native.assistant.ii.pomoshchnik" xml:space="preserve"><value>ИИ-помощник</value></data>
+  <data name="native.crmImport.import.zavershyon" xml:space="preserve"><value>Импорт завершён</value></data>
+  <data name="native.crmImport.import.crm" xml:space="preserve"><value>Импорт CRM</value></data>
+  <data name="native.email.interval.mezhdu.pismami.sekund" xml:space="preserve"><value>Интервал между письмами, секунд</value></data>
+  <data name="native.promoCodes.ispolzovana" xml:space="preserve"><value>Использована</value></data>
+  <data name="native.promoCodes.ispolzovanie" xml:space="preserve"><value>Использование</value></data>
+  <data name="native.billing.ispolzuyte.tolko.dlya.starykh.platezhey.eto.ne.vozvrashchaet.den" xml:space="preserve"><value>Используйте только для старых платежей: это не возвращает деньги и не выдаёт подписку.</value></data>
+  <data name="native.plans.istoricheskie.zapisi.dostupny.tolko.dlya.prosmotra" xml:space="preserve"><value>Исторические записи, доступны только для просмотра</value></data>
+  <data name="native.billing.istoricheskiy.period.pokupki.ne.pokazyvaet.tekushchiy.dostup.pro" xml:space="preserve"><value>Исторический период покупки не показывает текущий доступ. Проверьте подписку получателя отдельно.</value></data>
+  <data name="native.promoCodes.istoricheskiy.registratsionnyy.bonus.days.dn" xml:space="preserve"><value>Исторический регистрационный бонус: {0} дн.</value></data>
+  <data name="native.siteNotifications.istoriya" xml:space="preserve"><value>История</value></data>
+  <data name="native.billing.istoriya.izmeneniy" xml:space="preserve"><value>История изменений</value></data>
+  <data name="native.promoCodes.istoriya.primeneniy" xml:space="preserve"><value>История применений</value></data>
+  <data name="native.billing.istoriya.pusta" xml:space="preserve"><value>История пуста</value></data>
+  <data name="native.siteNotifications.istoriya.uvedomleniy.obnovlena.mozhno.nachat.novoe.uvedomlenie" xml:space="preserve"><value>История уведомлений обновлена. Можно начать новое уведомление.</value></data>
+  <data name="native.email.istoriya.email" xml:space="preserve"><value>История email</value></data>
+  <data name="native.sms.istoriya.sms" xml:space="preserve"><value>История SMS</value></data>
+  <data name="native.billing.istochnik" xml:space="preserve"><value>Источник</value></data>
+  <data name="native.promoCodes.istochnik.this.usage.sourcecode" xml:space="preserve"><value>Источник: {0}</value></data>
+  <data name="native.billing.iskhodnaya.summa" xml:space="preserve"><value>Исходная сумма</value></data>
+  <data name="native.testData.iskhodnuyu.organizatsiyu.ne.udalos.nayti.rezultat.generatsii.ost" xml:space="preserve"><value>Исходную организацию не удалось найти. Результат генерации остаётся неизвестным; проверьте доступ к организации и обновите данные снова.</value></data>
+  <data name="native.testData.iskhodnuyu.tekhniku.ne.udalos.nayti.v.organizatsii.rezultat.gene" xml:space="preserve"><value>Исходную технику не удалось найти в организации. Результат генерации остаётся неизвестным; обновите данные и проверьте технику снова.</value></data>
+  <data name="native.email.k.rassylkam" xml:space="preserve"><value>К рассылкам</value></data>
+  <data name="native.email.kampaniya" xml:space="preserve"><value>Кампания</value></data>
+  <data name="native.assistant.kanal.sayta" xml:space="preserve"><value>Канал сайта</value></data>
+  <data name="native.assistant.kanal.sluzhebnogo.telegram" xml:space="preserve"><value>Канал служебного Telegram</value></data>
+  <data name="native.vehicleCatalog.katalog.budet.dopolnen.bazovymi.markami.i.modelyami.ranee.udalyo" xml:space="preserve"><value>Каталог будет дополнен базовыми марками и моделями. Ранее удалённые записи не восстанавливаются.</value></data>
+  <data name="native.vehicleCatalog.katalog.tekhniki" xml:space="preserve"><value>Каталог техники</value></data>
+  <data name="native.vehicleCatalog.kvadrotsikly" xml:space="preserve"><value>Квадроциклы</value></data>
+  <data name="native.crmImport.klienty.preview.summary.clients.tekhnika.preview.summary.vehicle" xml:space="preserve"><value>Клиенты: {0} · Техника: {1} · К добавлению: {2} · Дубли: {3} · Ошибки: {4}</value></data>
+  <data name="native.billing.kod" xml:space="preserve"><value>Код</value></data>
+  <data name="native.promoCodes.kod.promokoda" xml:space="preserve"><value>Код промокода</value></data>
+  <data name="native.promoCodes.kod.promokoda.dolzhen.soderzhat.ot.1.do.64.simvolov" xml:space="preserve"><value>Код промокода должен содержать от 1 до 64 символов.</value></data>
+  <data name="native.testData.kolichestvo" xml:space="preserve"><value>Количество</value></data>
+  <data name="native.promoCodes.kolichestvo.podarochnykh.dney.dolzhno.byt.ot.1.do.3650" xml:space="preserve"><value>Количество подарочных дней должно быть от 1 до 3650.</value></data>
+  <data name="native.billing.komanda.po.platezhu.this.pendingservicepaymentid.eshchyo.ne.polu" xml:space="preserve"><value>Команда по платежу № {0} ещё не получила окончательный ответ. Повтор отправит тот же запрос с прежним номером операции.</value></data>
+  <data name="native.crmImport.kommentariy" xml:space="preserve"><value>Комментарий</value></data>
+  <data name="native.catalogSuggestions.kommentariy.budet.sokhranyon.vmeste.s.resheniem" xml:space="preserve"><value>Комментарий будет сохранён вместе с решением.</value></data>
+  <data name="native.billing.kommentariy.k.cheku" xml:space="preserve"><value>Комментарий к чеку</value></data>
+  <data name="native.catalogSuggestions.kommentariy.moderatora" xml:space="preserve"><value>Комментарий модератора</value></data>
+  <data name="native.billing.kommentariy.ne.dolzhen.prevyshat.1000.simvolov" xml:space="preserve"><value>Комментарий не должен превышать 1000 символов.</value></data>
+  <data name="native.siteNotifications.komu" xml:space="preserve"><value>Кому</value></data>
+  <data name="native.billing.korotko.opishite.pochemu.vypolnyaete.operatsiyu.prichina.ostanet" xml:space="preserve"><value>Коротко опишите, почему выполняете операцию. Причина останется в журнале.</value></data>
+  <data name="native.billing.kto.izmenil" xml:space="preserve"><value>Кто изменил</value></data>
+  <data name="native.vehicleCatalog.legkovye.avtomobili" xml:space="preserve"><value>Легковые автомобили</value></data>
+  <data name="native.promoCodes.limit.primeneniy.organizatsiyami.dolzhen.byt.tselym.chislom.ne.m" xml:space="preserve"><value>Лимит применений организациями должен быть целым числом не меньше 1.</value></data>
+  <data name="native.promoCodes.limit.registratsiy.dolzhen.byt.tselym.chislom.ne.menshe.1" xml:space="preserve"><value>Лимит регистраций должен быть целым числом не меньше 1.</value></data>
+  <data name="native.promoCodes.limit.registratsiy" xml:space="preserve"><value>Лимит регистраций:</value></data>
+  <data name="native.plans.limit.tekhniki" xml:space="preserve"><value>Лимит техники</value></data>
+  <data name="native.plans.lichnye.tarify" xml:space="preserve"><value>Личные тарифы</value></data>
+  <data name="native.plans.lichnye.tarify.zashchishcheny.ot.izmeneniya.v.administrativnoy.p" xml:space="preserve"><value>Личные тарифы защищены от изменения в административной панели.</value></data>
+  <data name="native.plans.lichnyy.tarif.tolko.prosmotr" xml:space="preserve"><value>Личный тариф · только просмотр</value></data>
+  <data name="native.vehicleCatalog.lodki.i.katera" xml:space="preserve"><value>Лодки и катера</value></data>
+  <data name="native.billing.lokalnaya.korrektirovka.statusa" xml:space="preserve"><value>Локальная корректировка статуса</value></data>
+  <data name="native.assistant.maksimalnyy.byudzhet.this.overview.limits.maximumbudgetrub.n2.re" xml:space="preserve"><value>Максимальный бюджет: {0:N2} ₽; резерв: {1:N2} ₽;</value></data>
+  <data name="native.assistant.maksimum.tokenov.otveta" xml:space="preserve"><value>Максимум токенов ответа</value></data>
+  <data name="native.vehicleCatalog.marka.udalena" xml:space="preserve"><value>Марка удалена.</value></data>
+  <data name="native.vehicleCatalog.marki" xml:space="preserve"><value>Марки</value></data>
+  <data name="native.vehicleCatalog.marki.i.modeli.dostupnye.v.prilozhenii" xml:space="preserve"><value>Марки и модели, доступные в приложении.</value></data>
+  <data name="native.vehicleCatalog.marki.ne.naydeny.izmenite.filtr.ili.dobavte.novuyu.marku" xml:space="preserve"><value>Марки не найдены. Измените фильтр или добавьте новую марку.</value></data>
+  <data name="native.billing.menyaet.tolko.lokalnyy.status.legacy.platezha.ne.ispolzuyte.eto." xml:space="preserve"><value>Меняет только локальный статус legacy-платежа. Не используйте это как подтверждение оплаты или возврата.</value></data>
+  <data name="native.promoCodes.mestnoe.vremya.pustaya.data.oznachaet.otsutstvie.ogranicheniya" xml:space="preserve"><value>Местное время. Пустая дата означает отсутствие ограничения.</value></data>
+  <data name="native.assistant.mesyachnyy.byudzhet" xml:space="preserve"><value>Месячный бюджет, ₽</value></data>
+  <data name="native.vehicleCatalog.modeli" xml:space="preserve"><value>Модели</value></data>
+  <data name="native.vehicleCatalog.modeli.vybrannoy.marki" xml:space="preserve"><value>Модели выбранной марки</value></data>
+  <data name="native.assistant.model" xml:space="preserve"><value>Модель</value></data>
+  <data name="native.assistant.model.ozvuchivaniya" xml:space="preserve"><value>Модель озвучивания</value></data>
+  <data name="native.assistant.model.raspoznavaniya.rechi" xml:space="preserve"><value>Модель распознавания речи</value></data>
+  <data name="native.vehicleCatalog.model.udalena" xml:space="preserve"><value>Модель удалена.</value></data>
+  <data name="native.vehicleCatalog.mototsikly" xml:space="preserve"><value>Мотоциклы</value></data>
+  <data name="native.catalogSuggestions.na.moderatsii" xml:space="preserve"><value>На модерации</value></data>
+  <data name="native.billing.na.stranitse" xml:space="preserve"><value>На странице</value></data>
+  <data name="native.siteNotifications.na.etoy.stranitse.uvedomleniy.net" xml:space="preserve"><value>На этой странице уведомлений нет.</value></data>
+  <data name="native.siteNotifications.nazad" xml:space="preserve"><value>Назад</value></data>
+  <data name="native.plans.nazvanie" xml:space="preserve"><value>Название</value></data>
+  <data name="native.promoCodes.nazvanie.dolzhno.soderzhat.ot.1.do.160.simvolov" xml:space="preserve"><value>Название должно содержать от 1 до 160 символов.</value></data>
+  <data name="native.plans.nazvanie.i.opisanie.kotorye.uvidyat.polzovateli" xml:space="preserve"><value>Название и описание, которые увидят пользователи</value></data>
+  <data name="native.assistant.nazvanie.organizatsii" xml:space="preserve"><value>Название организации</value></data>
+  <data name="native.testData.nazvanie.organizatsii.ili.email.vladeltsa" xml:space="preserve"><value>Название организации или email владельца</value></data>
+  <data name="native.promoCodes.naznachen.assignedat.tolocaltime.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>Назначен: {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.roles.naznachit" xml:space="preserve"><value>Назначить</value></data>
+  <data name="native.communications.naydeno.this.totalcount.n0.stranitsa.this.page.iz.math.max.1.int" xml:space="preserve"><value>Найдено: {0:N0} · Страница {1} из {2}</value></data>
+  <data name="native.testData.naydite.organizatsiyu.v.kotoroy.nuzhno.podgotovit.testovye.danny" xml:space="preserve"><value>Найдите организацию, в которой нужно подготовить тестовые данные.</value></data>
+  <data name="native.billing.nayti" xml:space="preserve"><value>Найти</value></data>
+  <data name="native.promoCodes.nayti.kod.ili.nazvanie" xml:space="preserve"><value>Найти код или название</value></data>
+  <data name="native.siteNotifications.nayti.polzovateley.po.email" xml:space="preserve"><value>Найти пользователей по email</value></data>
+  <data name="native.email.napisat.pismo" xml:space="preserve"><value>Написать письмо</value></data>
+  <data name="native.support.napishite.otvet" xml:space="preserve"><value>Напишите ответ…</value></data>
+  <data name="native.catalogSuggestions.napishite.poyasnenie.dlya.avtora.esli.nuzhno" xml:space="preserve"><value>Напишите пояснение для автора, если нужно</value></data>
+  <data name="native.promoCodes.naprimer.15" xml:space="preserve"><value>Например, 15</value></data>
+  <data name="native.plans.naprimer.standart" xml:space="preserve"><value>Например, Стандарт</value></data>
+  <data name="native.assistant.nastroen" xml:space="preserve"><value>настроен</value></data>
+  <data name="native.assistant.nastroyki.dostupa.0" xml:space="preserve"><value>Настройки доступа: {0}</value></data>
+  <data name="native.assistant.nastroyki.izmenilis.na.servere.dannye.obnovleny.proverte.ikh.i.s" xml:space="preserve"><value>Настройки изменились на сервере. Данные обновлены; проверьте их и сохраните ещё раз.</value></data>
+  <data name="native.assistant.nastroyki.pomoshchnika.sokhraneny" xml:space="preserve"><value>Настройки помощника сохранены.</value></data>
+  <data name="native.plans.nastroyki.tarifa" xml:space="preserve"><value>Настройки тарифа</value></data>
+  <data name="native.promoCodes.nachalo" xml:space="preserve"><value>Начало</value></data>
+  <data name="native.crmImport.nachat.import" xml:space="preserve"><value>Начать импорт</value></data>
+  <data name="native.testData.ne.vybrano.deystvie.generatsii" xml:space="preserve"><value>Не выбрано действие генерации.</value></data>
+  <data name="native.billing.ne.vydan" xml:space="preserve"><value>Не выдан</value></data>
+  <data name="native.billing.ne.vydan.sredstva.vozvrashcheny" xml:space="preserve"><value>Не выдан: средства возвращены</value></data>
+  <data name="native.assistant.ne.nastroen" xml:space="preserve"><value>не настроен</value></data>
+  <data name="native.billing.ne.otmechen" xml:space="preserve"><value>Не отмечен</value></data>
+  <data name="native.billing.ne.otmechen.bolee.24.ch" xml:space="preserve"><value>Не отмечен · более 24 ч</value></data>
+  <data name="native.billing.ne.otpravlen" xml:space="preserve"><value>Не отправлен</value></data>
+  <data name="native.communications.ne.udalos.vypolnit.zapros.povtorite.popytku" xml:space="preserve"><value>Не удалось выполнить запрос. Повторите попытку.</value></data>
+  <data name="native.billing.ne.udalos.obnovit.kartochku.server.ne.otvetil.vovremya" xml:space="preserve"><value>Не удалось обновить карточку: сервер не ответил вовремя.</value></data>
+  <data name="native.billing.ne.udalos.obnovit.kartochku.proverte.podklyuchenie.k.serveru" xml:space="preserve"><value>Не удалось обновить карточку. Проверьте подключение к серверу.</value></data>
+  <data name="native.billing.ne.udalos.obnovit.spisok.server.ne.otvetil.vovremya" xml:space="preserve"><value>Не удалось обновить список: сервер не ответил вовремя.</value></data>
+  <data name="native.billing.ne.udalos.obnovit.spisok.pokazana.predydushchaya.stranitsa.excep" xml:space="preserve"><value>Не удалось обновить список. Показана предыдущая страница. {0}</value></data>
+  <data name="native.billing.ne.udalos.obnovit.spisok.proverte.podklyuchenie.k.serveru" xml:space="preserve"><value>Не удалось обновить список. Проверьте подключение к серверу.</value></data>
+  <data name="native.promoCodes.ne.udalos.podtverdit.rezultat.operatsii.obnovite.spisok.pered.sl" xml:space="preserve"><value>Не удалось подтвердить результат операции. Обновите список перед следующими изменениями.</value></data>
+  <data name="native.billing.ne.udalos.podtverdit.rezultat.povtorite.otpravku.prezhney.operat" xml:space="preserve"><value>Не удалось подтвердить результат. Повторите отправку прежней операции с тем же номером.</value></data>
+  <data name="native.billing.ne.udalos.prochitat.sokhranyonnuyu.operatsiyu.novye.deystviya.za" xml:space="preserve"><value>Не удалось прочитать сохранённую операцию. Новые действия заблокированы; проверьте журнал и повторите загрузку.</value></data>
+  <data name="native.billing.ne.udalos.prochitat.fayl.proverte.dostup.i.povtorite.popytku" xml:space="preserve"><value>Не удалось прочитать файл. Проверьте доступ и повторите попытку.</value></data>
+  <data name="native.crmImport.ne.udalos.prochitat.fayl.proverte.dostup" xml:space="preserve"><value>Не удалось прочитать файл. Проверьте доступ.</value></data>
+  <data name="native.billing.ne.udalos.svyazatsya.s.serverom.obnovite.platyozh.pered.povtorom" xml:space="preserve"><value>Не удалось связаться с сервером. Обновите платёж перед повтором операции.</value></data>
+  <data name="native.roles.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori" xml:space="preserve"><value>Не удалось связаться с сервером. Проверьте подключение и повторите попытку.</value></data>
+  <data name="native.promoCodes.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie" xml:space="preserve"><value>Не удалось связаться с сервером. Проверьте подключение.</value></data>
+  <data name="native.billing.ne.udalos.sokhranit.lokalnyy.rezultat.zapros.mog.byt.prinyat.pro" xml:space="preserve"><value>Не удалось сохранить локальный результат. Запрос мог быть принят; проверьте журнал перед новым действием.</value></data>
+  <data name="native.billing.ne.udalos.sokhranit.nomer.operatsii.zapros.ne.otpravlen.proverte" xml:space="preserve"><value>Не удалось сохранить номер операции. Запрос не отправлен; проверьте доступ к локальному хранилищу.</value></data>
+  <data name="native.crmImport.ne.udalos.sokhranit.otchyot.proverte.dostup" xml:space="preserve"><value>Не удалось сохранить отчёт. Проверьте доступ.</value></data>
+  <data name="native.billing.ne.udalos.sokhranit.fayl.proverte.dostup.i.povtorite.popytku" xml:space="preserve"><value>Не удалось сохранить файл. Проверьте доступ и повторите попытку.</value></data>
+  <data name="native.assistant.neizvestnaya.stoimost" xml:space="preserve"><value>Неизвестная стоимость</value></data>
+  <data name="native.assistant.neizvestnaya.stoimost.0" xml:space="preserve"><value>Неизвестная стоимость: {0}</value></data>
+  <data name="native.billing.net" xml:space="preserve"><value>Нет</value></data>
+  <data name="native.billing.net.dannykh" xml:space="preserve"><value>Нет данных</value></data>
+  <data name="native.assistant.net.prava.na.prosmotr.nastroek.ili.raskhodov.ii.pomoshchnika" xml:space="preserve"><value>Нет права на просмотр настроек или расходов ИИ-помощника.</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.izmenenie.statusa.ne.podtverzhdeno.obnovit" xml:space="preserve"><value>Нет связи с сервером. Изменение статуса не подтверждено; обновите список перед повтором.</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.ne.udalos.zagruzit.vozmozhnosti.tarifa" xml:space="preserve"><value>Нет связи с сервером. Не удалось загрузить возможности тарифа.</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.ne.udalos.zagruzit.tarify" xml:space="preserve"><value>Нет связи с сервером. Не удалось загрузить тарифы.</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.sokhranenie.ne.podtverzhdeno.obnovite.spis" xml:space="preserve"><value>Нет связи с сервером. Сохранение не подтверждено; обновите список перед повтором.</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.sokhranenie.ne.podtverzhdeno.obnovite.tari" xml:space="preserve"><value>Нет связи с сервером. Сохранение не подтверждено; обновите тариф перед повтором.</value></data>
+  <data name="native.plans.net.svyazi.s.serverom.udalenie.ne.podtverzhdeno.obnovite.spisok." xml:space="preserve"><value>Нет связи с сервером. Удаление не подтверждено; обновите список перед повтором.</value></data>
+  <data name="native.vehicleCatalog.novaya.marka" xml:space="preserve"><value>Новая марка</value></data>
+  <data name="native.vehicleCatalog.novaya.model" xml:space="preserve"><value>Новая модель</value></data>
+  <data name="native.vehicleCatalog.novaya.model.this.selectedbrand.name" xml:space="preserve"><value>Новая модель · {0}</value></data>
+  <data name="native.support.novoe" xml:space="preserve"><value>Новое</value></data>
+  <data name="native.email.novoe.pismo" xml:space="preserve"><value>Новое письмо</value></data>
+  <data name="native.support.novye" xml:space="preserve"><value>Новые</value></data>
+  <data name="native.support.novye.result.newcount.v.rabote.result.inprogresscount.zakrytye.r" xml:space="preserve"><value>Новые: {0} · В работе: {1} · Закрытые: {2} · Спам: {3}</value></data>
+  <data name="native.plans.novyy.variant.pro" xml:space="preserve"><value>Новый вариант PRO</value></data>
+  <data name="native.promoCodes.createTitle" xml:space="preserve"><value>Новый промокод</value></data>
+  <data name="native.plans.novyy.tarif" xml:space="preserve"><value>Новый тариф</value></data>
+  <data name="native.billing.nomer.operatsii.nayden.v.zhurnale.s.drugimi.dannymi.ne.sozdavayt" xml:space="preserve"><value>Номер операции найден в журнале с другими данными. Не создавайте новую команду; передайте её номер ответственному администратору.</value></data>
+  <data name="native.billing.o.tekushchem.dostupe" xml:space="preserve"><value>О текущем доступе</value></data>
+  <data name="native.billing.obnovit" xml:space="preserve"><value>Обновить</value></data>
+  <data name="native.testData.obnovit.dannye.i.proverit.rezultat" xml:space="preserve"><value>Обновить данные и проверить результат</value></data>
+  <data name="native.support.obnovit.perepisku" xml:space="preserve"><value>Обновить переписку</value></data>
+  <data name="native.billing.obnovlyaet.legacy.platyozh.po.dannym.yookassa.dlya.novykh.platez" xml:space="preserve"><value>Обновляет legacy-платёж по данным YooKassa. Для новых платежей МС доступна отдельная проверка.</value></data>
+  <data name="native.billing.obrabotka.vozvrata" xml:space="preserve"><value>Обработка возврата</value></data>
+  <data name="native.billing.obrabotka.platezha" xml:space="preserve"><value>Обработка платежа</value></data>
+  <data name="native.support.obrashchenie" xml:space="preserve"><value>Обращение</value></data>
+  <data name="native.support.obrashcheniya" xml:space="preserve"><value>Обращения</value></data>
+  <data name="native.support.obrashcheniya.ne.naydeny" xml:space="preserve"><value>Обращения не найдены.</value></data>
+  <data name="native.testData.obsluzhivaniy.0.n0" xml:space="preserve"><value>Обслуживаний: {0:N0}</value></data>
+  <data name="native.plans.obshchie.nastroyki.dlya.vsekh.srokov.oplaty.etoy.gruppy" xml:space="preserve"><value>Общие настройки для всех сроков оплаты этой группы</value></data>
+  <data name="native.promoCodes.obshchiy.limit.primeneniy" xml:space="preserve"><value>Общий лимит применений</value></data>
+  <data name="native.email.obychnyy.tekst" xml:space="preserve"><value>Обычный текст</value></data>
+  <data name="native.billing.obyazatelnaya.prichina.izmeneniya" xml:space="preserve"><value>Обязательная причина изменения</value></data>
+  <data name="native.email.odin.adres" xml:space="preserve"><value>Один адрес</value></data>
+  <data name="native.billing.odin.fayl.do.5.mb.skachivanie.dostupno.tolko.avtorizovannomu.adm" xml:space="preserve"><value>Один файл до 5 МБ. Скачивание доступно только авторизованному администратору.</value></data>
+  <data name="native.catalogSuggestions.odobrennye" xml:space="preserve"><value>Одобренные</value></data>
+  <data name="native.catalogSuggestions.odobrennye.predlozheniya" xml:space="preserve"><value>Одобренные предложения</value></data>
+  <data name="native.catalogSuggestions.odobrit" xml:space="preserve"><value>Одобрить</value></data>
+  <data name="native.catalogSuggestions.odobrit.predlozhenie.i.dobavit.marku.i.model.v.katalog" xml:space="preserve"><value>Одобрить предложение и добавить марку и модель в каталог?</value></data>
+  <data name="native.billing.ozhidaet.vydachi" xml:space="preserve"><value>Ожидает выдачи</value></data>
+  <data name="native.email.ozhidaet.otpravki" xml:space="preserve"><value>Ожидает отправки</value></data>
+  <data name="native.billing.ozhidanie.oplaty" xml:space="preserve"><value>Ожидание оплаты</value></data>
+  <data name="native.billing.ozhidayut.oplaty" xml:space="preserve"><value>Ожидают оплаты</value></data>
+  <data name="native.assistant.ozvuchivanie.otvetov" xml:space="preserve"><value>Озвучивание ответов</value></data>
+  <data name="native.promoCodes.okonchanie" xml:space="preserve"><value>Окончание</value></data>
+  <data name="native.billing.okonchanie.do" xml:space="preserve"><value>Окончание до</value></data>
+  <data name="native.billing.okonchanie.posle" xml:space="preserve"><value>Окончание после</value></data>
+  <data name="native.plans.opisanie" xml:space="preserve"><value>Описание</value></data>
+  <data name="native.promoCodes.opisanie.ne.dolzhno.prevyshat.1000.simvolov" xml:space="preserve"><value>Описание не должно превышать 1000 символов.</value></data>
+  <data name="native.billing.oplata.podtverzhdena" xml:space="preserve"><value>Оплата подтверждена</value></data>
+  <data name="native.billing.oplachen" xml:space="preserve"><value>Оплачен</value></data>
+  <data name="native.billing.oplacheno" xml:space="preserve"><value>Оплачено</value></data>
+  <data name="native.billing.oplacheny" xml:space="preserve"><value>Оплачены</value></data>
+  <data name="native.testData.organizatsii" xml:space="preserve"><value>Организации</value></data>
+  <data name="native.billing.organizatsii.ip" xml:space="preserve"><value>Организации / ИП</value></data>
+  <data name="native.testData.organizatsii.ne.naydeny.izmenite.zapros.i.poprobuyte.eshchyo.raz" xml:space="preserve"><value>Организации не найдены. Измените запрос и попробуйте ещё раз.</value></data>
+  <data name="native.promoCodes.organizatsionnyy.promokod" xml:space="preserve"><value>Организационный промокод</value></data>
+  <data name="native.plans.organizatsionnyy.tarif.nastroyki.i.vozmozhnosti" xml:space="preserve"><value>Организационный тариф · настройки и возможности</value></data>
+  <data name="native.promoCodes.organizatsiya" xml:space="preserve"><value>Организация</value></data>
+  <data name="native.billing.organizatsiya.ip" xml:space="preserve"><value>Организация / ИП</value></data>
+  <data name="native.crmImport.organizatsiya.0" xml:space="preserve"><value>Организация: {0}</value></data>
+  <data name="native.assistant.osnovanie.sverki" xml:space="preserve"><value>Основание сверки</value></data>
+  <data name="native.plans.osnovnoe" xml:space="preserve"><value>Основное</value></data>
+  <data name="native.billing.ostalos.dney" xml:space="preserve"><value>Осталось дней</value></data>
+  <data name="native.billing.ostalos.posle.vozvratov" xml:space="preserve"><value>Осталось после возвратов</value></data>
+  <data name="native.support.ot.gostey" xml:space="preserve"><value>От гостей</value></data>
+  <data name="native.support.ot.polzovateley" xml:space="preserve"><value>От пользователей</value></data>
+  <data name="native.testData.otvet.na.sozdanie.ne.poluchen.i.rezultat.neizvesten.obnovite.dan" xml:space="preserve"><value>Ответ на создание не получен, и результат неизвестен. Обновите данные организации и техники, проверьте новые количества и только потом запускайте генерацию снова.</value></data>
+  <data name="native.support.otvet.otpravitelyu" xml:space="preserve"><value>Ответ отправителю</value></data>
+  <data name="native.sms.otvet.provaydera" xml:space="preserve"><value>Ответ провайдера</value></data>
+  <data name="native.billing.otvet.servera.ne.podtverzhdaet.rezultat.povtorite.otpravku.toy.z" xml:space="preserve"><value>Ответ сервера не подтверждает результат. Повторите отправку той же операции или обновите журнал.</value></data>
+  <data name="native.billing.otvet.servera.ne.sovpadaet.s.otpravlennoy.komandoy.komanda.sokhr" xml:space="preserve"><value>Ответ сервера не совпадает с отправленной командой. Команда сохранена; проверьте журнал перед повтором.</value></data>
+  <data name="native.catalogSuggestions.otklonyonnye" xml:space="preserve"><value>Отклонённые</value></data>
+  <data name="native.catalogSuggestions.otklonyonnye.predlozheniya" xml:space="preserve"><value>Отклонённые предложения</value></data>
+  <data name="native.catalogSuggestions.otklonit" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="native.catalogSuggestions.otklonit.vybrannoe.predlozhenie" xml:space="preserve"><value>Отклонить выбранное предложение?</value></data>
+  <data name="native.plans.otklyuchyon" xml:space="preserve"><value>Отключён</value></data>
+  <data name="native.promoCodes.otklyuchyonnye" xml:space="preserve"><value>Отключённые</value></data>
+  <data name="native.plans.otklyuchit" xml:space="preserve"><value>Отключить</value></data>
+  <data name="native.billing.otkrepit.fayl" xml:space="preserve"><value>Открепить файл</value></data>
+  <data name="native.billing.otkrepit.fayl.cheka.ranee.vydannye.ssylki.na.etot.fayl.stanut.ne" xml:space="preserve"><value>Открепить файл чека? Ранее выданные ссылки на этот файл станут недействительными.</value></data>
+  <data name="native.vehicleCatalog.otkroyte.marku.chtoby.upravlyat.eyo.modelyami" xml:space="preserve"><value>Откройте марку, чтобы управлять её моделями.</value></data>
+  <data name="native.catalogSuggestions.otkroyte.predlozhenie.chtoby.posmotret.detali.i.otvetit.avtoru" xml:space="preserve"><value>Откройте предложение, чтобы посмотреть детали и ответить автору.</value></data>
+  <data name="native.email.otkrytiya.message.opencount.perekhody.message.clickcount.sobytiy" xml:space="preserve"><value>Открытия: {0} · Переходы: {1} · События: {2}</value></data>
+  <data name="native.email.otkryto" xml:space="preserve"><value>Открыто</value></data>
+  <data name="native.billing.otkryt" xml:space="preserve"><value>Открыть</value></data>
+  <data name="native.plans.otkryt" xml:space="preserve"><value>Открыть →</value></data>
+  <data name="native.billing.otmena" xml:space="preserve"><value>Отмена</value></data>
+  <data name="native.email.otmenena" xml:space="preserve"><value>Отменена</value></data>
+  <data name="native.billing.otmeneno" xml:space="preserve"><value>Отменено</value></data>
+  <data name="native.billing.otmeneny" xml:space="preserve"><value>Отменены</value></data>
+  <data name="native.email.otmenit" xml:space="preserve"><value>Отменить</value></data>
+  <data name="native.billing.otmetit.chek.vydannym.podtverdite.chto.on.sozdan.v.moyom.naloge." xml:space="preserve"><value>Отметить чек выданным? Подтвердите, что он создан в «Моём налоге» и передан покупателю. Отметка не создаёт и не отправляет чек.</value></data>
+  <data name="native.billing.otmetka.userdisplayformatting.datetime.this.purchase.npdreceipti" xml:space="preserve"><value>Отметка: {0}</value></data>
+  <data name="native.email.otpiska" xml:space="preserve"><value>Отписка</value></data>
+  <data name="native.support.otpravitel" xml:space="preserve"><value>Отправитель</value></data>
+  <data name="native.support.otpravit.otvet" xml:space="preserve"><value>Отправить ответ</value></data>
+  <data name="native.siteNotifications.otpravit.uvedomlenie" xml:space="preserve"><value>Отправить уведомление…</value></data>
+  <data name="native.billing.otpravit.chek.pokupatelyu" xml:space="preserve"><value>Отправить чек покупателю</value></data>
+  <data name="native.billing.otpravka.ispolzuet.sokhranyonnye.fayl.ili.ssylku.i.email.polzova" xml:space="preserve"><value>Отправка использует сохранённые файл или ссылку и email пользователя. Для отправки новой версии обновите файл или ссылку.</value></data>
+  <data name="native.email.otpravka.otklyuchena" xml:space="preserve"><value>Отправка отключена</value></data>
+  <data name="native.siteNotifications.otpravka.srazu.vyberite.adresatov.i.auditoriyu.pered.podtverzhde" xml:space="preserve"><value>Отправка сразу: выберите адресатов и аудиторию перед подтверждением.</value></data>
+  <data name="native.billing.otpravka.userdisplayformatting.datetime.this.purchase.npdreceipt" xml:space="preserve"><value>Отправка: {0}</value></data>
+  <data name="native.billing.otpravlennye" xml:space="preserve"><value>Отправленные</value></data>
+  <data name="native.email.sentStatus" xml:space="preserve"><value>Отправлено</value></data>
+  <data name="native.email.sentLabel" xml:space="preserve"><value>Отправлено:</value></data>
+  <data name="native.catalogSuggestions.ochered.moderatsii" xml:space="preserve"><value>Очередь модерации</value></data>
+  <data name="native.billing.oshibka" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="native.billing.oshibka.aktivatsii" xml:space="preserve"><value>Ошибка активации</value></data>
+  <data name="native.billing.oshibka.otpravki" xml:space="preserve"><value>Ошибка отправки</value></data>
+  <data name="native.assistant.oshibki" xml:space="preserve"><value>Ошибки</value></data>
+  <data name="native.email.oshibki.campaign.failedcount.n0.propushcheno.campaign.skippedcou" xml:space="preserve"><value>Ошибки: {0:N0} · пропущено: {1:N0} · имитация: {2:N0}</value></data>
+  <data name="native.email.parametry.otpravki" xml:space="preserve"><value>Параметры отправки</value></data>
+  <data name="native.email.pauza" xml:space="preserve"><value>Пауза</value></data>
+  <data name="native.email.perekhod.po.ssylke" xml:space="preserve"><value>Переход по ссылке</value></data>
+  <data name="native.billing.period.po.etoy.pokupke.vydan" xml:space="preserve"><value>Период по этой покупке выдан</value></data>
+  <data name="native.email.pisma.ne.naydeny" xml:space="preserve"><value>Письма не найдены.</value></data>
+  <data name="native.email.pismo" xml:space="preserve"><value>Письмо</value></data>
+  <data name="native.email.pismo.postavleno.v.ochered.0.adresatov" xml:space="preserve"><value>Письмо поставлено в очередь: {0} адресатов.</value></data>
+  <data name="native.promoCodes.platyozh.paymentid" xml:space="preserve"><value>Платёж #{paymentId}</value></data>
+  <data name="native.billing.platyozh.payment.id" xml:space="preserve"><value>Платёж № {0}</value></data>
+  <data name="native.billing.platyozh.this.payment.id.ustanovit.status.this.selectedstatus.na" xml:space="preserve"><value>Платёж № {0}: установить статус «{1}»?</value></data>
+  <data name="native.billing.platezhi" xml:space="preserve"><value>Платежи</value></data>
+  <data name="native.billing.platezhi.i.podpiski" xml:space="preserve"><value>Платежи и подписки</value></data>
+  <data name="native.assistant.po.dnyam" xml:space="preserve"><value>По дням</value></data>
+  <data name="native.assistant.po.organizatsiyam" xml:space="preserve"><value>По организациям</value></data>
+  <data name="native.plans.po.umolchaniyu" xml:space="preserve"><value>По умолчанию</value></data>
+  <data name="native.billing.povtorit.vydachu.dostupa" xml:space="preserve"><value>Повторить выдачу доступа</value></data>
+  <data name="native.billing.povtorit.vydachu.podtverzhdyonnogo.dostupa" xml:space="preserve"><value>повторить выдачу подтверждённого доступа</value></data>
+  <data name="native.billing.povtorit.operatsiyu.this.pendingservicerequest.operationid.d.bud" xml:space="preserve"><value>Повторить операцию {0:D}? Будет отправлен тот же запрос, новая операция не создаётся.</value></data>
+  <data name="native.billing.povtorit.tu.zhe.operatsiyu" xml:space="preserve"><value>Повторить ту же операцию</value></data>
+  <data name="native.email.povtornaya.otpravka" xml:space="preserve"><value>Повторная отправка</value></data>
+  <data name="native.billing.povtoryaet.prezhniy.zapros.s.tem.zhe.nomerom.esli.server.ne.podt" xml:space="preserve"><value>Повторяет прежний запрос с тем же номером, если сервер не подтвердил приём команды.</value></data>
+  <data name="native.promoCodes.podarok.this.promocode.bonusdays.0.dn" xml:space="preserve"><value>Подарок: {0} дн.</value></data>
+  <data name="native.promoCodes.podarochnye.dni" xml:space="preserve"><value>Подарочные дни</value></data>
+  <data name="native.billing.podpiska.organizatsii.subscription.id" xml:space="preserve"><value>Подписка организации № {0}</value></data>
+  <data name="native.billing.podpiski.organizatsiy" xml:space="preserve"><value>Подписки организаций</value></data>
+  <data name="native.billing.podrobnosti" xml:space="preserve"><value>Подробности</value></data>
+  <data name="native.billing.podtverdite.deystvie.label.prichina.this.reason.trim" xml:space="preserve"><value>Подтвердите действие: {0}. Причина: {1}.</value></data>
+  <data name="native.catalogSuggestions.podtverdite.reshenie" xml:space="preserve"><value>Подтвердите решение</value></data>
+  <data name="native.roles.podtverdite.snyatie.roli.s.vybrannogo.polzovatelya" xml:space="preserve"><value>Подтвердите снятие роли с выбранного пользователя.</value></data>
+  <data name="native.billing.podtverdit" xml:space="preserve"><value>Подтвердить</value></data>
+  <data name="native.crmImport.confirmAction" xml:space="preserve"><value>Подтвердить импорт</value></data>
+  <data name="native.crmImport.confirmTitle" xml:space="preserve"><value>Подтвердить импорт?</value></data>
+  <data name="native.siteNotifications.podtverdit.otpravku" xml:space="preserve"><value>Подтвердить отправку</value></data>
+  <data name="native.vehicleCatalog.podtverzhdenie" xml:space="preserve"><value>Подтверждение</value></data>
+  <data name="native.sms.podtverzhdenie.telefona" xml:space="preserve"><value>Подтверждение телефона</value></data>
+  <data name="native.vehicleCatalog.poisk.po.nazvaniyu.marki" xml:space="preserve"><value>Поиск по названию марки</value></data>
+  <data name="native.roles.poisk.email.ili.telefona" xml:space="preserve"><value>Поиск email или телефона</value></data>
+  <data name="native.billing.poka.net" xml:space="preserve"><value>Пока нет</value></data>
+  <data name="native.crmImport.pokazat.organizatsii" xml:space="preserve"><value>Показать организации</value></data>
+  <data name="native.billing.pokupatel" xml:space="preserve"><value>Покупатель</value></data>
+  <data name="native.billing.pokupatel.inn.email.tarif.ili.id" xml:space="preserve"><value>Покупатель, ИНН, email, тариф или ID</value></data>
+  <data name="native.billing.pokupka.this.pendingpurchase.paymentid.this.pendingpurchase.user" xml:space="preserve"><value>Покупка #{0} · {1}
+{2}</value></data>
+  <data name="native.billing.pokupka.i.chek.npd" xml:space="preserve"><value>Покупка и чек НПД</value></data>
+  <data name="native.billing.pokupki.i.cheki.npd" xml:space="preserve"><value>Покупки и чеки НПД</value></data>
+  <data name="native.billing.pokupki.po.vybrannym.filtram.ne.naydeny" xml:space="preserve"><value>Покупки по выбранным фильтрам не найдены.</value></data>
+  <data name="native.billing.pokupok.allrows.length.oplacheno.allrows.sum.row.row.purchase.am" xml:space="preserve"><value>Покупок: {0} · Оплачено: {1:N2} ₽ · Возвраты: {2:N2} ₽ · Итого: {3:N2} ₽ · Требуют внимания: {4}</value></data>
+  <data name="native.email.poluchateley.this.recipients.totalcount.n0" xml:space="preserve"><value>Получателей: {0:N0}</value></data>
+  <data name="native.email.poluchatel" xml:space="preserve"><value>Получатель</value></data>
+  <data name="native.email.poluchatel.tema.ili.id" xml:space="preserve"><value>Получатель, тема или ID</value></data>
+  <data name="native.roles.polzovateley" xml:space="preserve"><value>пользователей</value></data>
+  <data name="native.roles.polzovateley.net" xml:space="preserve"><value>Пользователей нет</value></data>
+  <data name="native.promoCodes.polzovatel" xml:space="preserve"><value>Пользователь</value></data>
+  <data name="native.billing.polzovatel.organizatsiya.tarif.ili.id" xml:space="preserve"><value>Пользователь, организация, тариф или ID</value></data>
+  <data name="native.assistant.pomoshchnik.vklyuchyon.globalno" xml:space="preserve"><value>Помощник включён глобально</value></data>
+  <data name="native.plans.poryadok" xml:space="preserve"><value>Порядок</value></data>
+  <data name="native.billing.poslednie.deystviya.administratora.do.30" xml:space="preserve"><value>Последние действия администратора (до 30)</value></data>
+  <data name="native.billing.poslednie.tekhnicheskie.sobytiya.do.20" xml:space="preserve"><value>Последние технические события (до 20)</value></data>
+  <data name="native.billing.posledniy.kod.oshibki" xml:space="preserve"><value>Последний код ошибки</value></data>
+  <data name="native.email.postavit.v.ochered" xml:space="preserve"><value>Поставить в очередь</value></data>
+  <data name="native.billing.postavit.chek.v.ochered.otpravki.na.this.detail.purchase.userema" xml:space="preserve"><value>Поставить чек в очередь отправки на {0}? Будут отправлены сохранённые на сервере файл или ссылка.</value></data>
+  <data name="native.roles.prav" xml:space="preserve"><value>прав ·</value></data>
+  <data name="native.roles.prava" xml:space="preserve"><value>Права</value></data>
+  <data name="native.roles.prevysheno.vremya.ozhidaniya.otveta.servera.povtorite.popytku" xml:space="preserve"><value>Превышено время ожидания ответа сервера. Повторите попытку.</value></data>
+  <data name="native.catalogSuggestions.predlozheniy.s.takim.statusom.net" xml:space="preserve"><value>Предложений с таким статусом нет.</value></data>
+  <data name="native.catalogSuggestions.predlozheniya.v.katalog" xml:space="preserve"><value>Предложения в каталог</value></data>
+  <data name="native.catalogSuggestions.predlozhil" xml:space="preserve"><value>Предложил</value></data>
+  <data name="native.email.predprosmotr.pisma" xml:space="preserve"><value>Предпросмотр письма</value></data>
+  <data name="native.promoCodes.primenyon" xml:space="preserve"><value>Применён</value></data>
+  <data name="native.billing.primenenie.dostupa" xml:space="preserve"><value>Применение доступа</value></data>
+  <data name="native.promoCodes.primeneniy.poka.net" xml:space="preserve"><value>Применений пока нет.</value></data>
+  <data name="native.promoCodes.primeneniy.this.usages.count" xml:space="preserve"><value>Применений: {0}</value></data>
+  <data name="native.billing.prinyat.pochtovym.servisom" xml:space="preserve"><value>Принят почтовым сервисом</value></data>
+  <data name="native.email.priostanovlena" xml:space="preserve"><value>Приостановлена</value></data>
+  <data name="native.vehicleCatalog.pritsepy" xml:space="preserve"><value>Прицепы</value></data>
+  <data name="native.billing.prichina" xml:space="preserve"><value>Причина</value></data>
+  <data name="native.billing.prichina.deystviya" xml:space="preserve"><value>Причина действия</value></data>
+  <data name="native.billing.prichina.otmetki.ili.snyatiya.otmetki.obyazatelno" xml:space="preserve"><value>Причина отметки или снятия отметки (обязательно)</value></data>
+  <data name="native.billing.prichina.this.pendingreason.izmenyaetsya.lokalnaya.zapis.vozvrat" xml:space="preserve"><value>Причина: {0}. Изменяется локальная запись; возврат денег этим действием не выполняется.</value></data>
+  <data name="native.email.proverit.adresatov" xml:space="preserve"><value>Проверить адресатов</value></data>
+  <data name="native.siteNotifications.proverit.istoriyu.i.nachat.novoe.uvedomlenie" xml:space="preserve"><value>Проверить историю и начать новое уведомление</value></data>
+  <data name="native.billing.proverit.platyozh" xml:space="preserve"><value>Проверить платёж</value></data>
+  <data name="native.billing.proverit.platyozh.v.yukassa" xml:space="preserve"><value>проверить платёж в ЮKassa</value></data>
+  <data name="native.crmImport.proverit.fayl" xml:space="preserve"><value>Проверить файл</value></data>
+  <data name="native.catalogSuggestions.proveryayte.polzovatelskie.predlozheniya.i.prinimayte.reshenie.p" xml:space="preserve"><value>Проверяйте пользовательские предложения и принимайте решение по каждому.</value></data>
+  <data name="native.email.progress" xml:space="preserve"><value>Прогресс</value></data>
+  <data name="native.email.prodolzhit" xml:space="preserve"><value>Продолжить</value></data>
+  <data name="native.promoCodes.promokod" xml:space="preserve"><value>Промокод</value></data>
+  <data name="native.promoCodes.promokod.aktiven" xml:space="preserve"><value>Промокод активен</value></data>
+  <data name="native.promoCodes.promokod.vklyuchyon" xml:space="preserve"><value>Промокод включён.</value></data>
+  <data name="native.promoCodes.promokod.otklyuchyon" xml:space="preserve"><value>Промокод отключён.</value></data>
+  <data name="native.promoCodes.promokod.pogashen" xml:space="preserve"><value>Промокод погашен</value></data>
+  <data name="native.promoCodes.promokod.sokhranyon" xml:space="preserve"><value>Промокод сохранён.</value></data>
+  <data name="native.promoCodes.promokod.udalyon" xml:space="preserve"><value>Промокод удалён.</value></data>
+  <data name="native.promoCodes.promokod.uzhe.ispolzovan.ego.mozhno.otklyuchit.no.nelzya.udalit" xml:space="preserve"><value>Промокод уже использован. Его можно отключить, но нельзя удалить.</value></data>
+  <data name="native.promoCodes.promokody" xml:space="preserve"><value>Промокоды</value></data>
+  <data name="native.promoCodes.promokody.ne.naydeny" xml:space="preserve"><value>Промокоды не найдены</value></data>
+  <data name="native.promoCodes.protsent.skidki.dolzhen.byt.bolshe.0.i.ne.prevyshat.99" xml:space="preserve"><value>Процент скидки должен быть больше 0 и не превышать 99.</value></data>
+  <data name="native.promoCodes.razmer.skidki" xml:space="preserve"><value>Размер скидки</value></data>
+  <data name="native.billing.razmer.fayla.ne.dolzhen.prevyshat.5.mb" xml:space="preserve"><value>Размер файла не должен превышать 5 МБ.</value></data>
+  <data name="native.siteNotifications.razovoe.uvedomlenie" xml:space="preserve"><value>Разовое уведомление</value></data>
+  <data name="native.roles.razresheniya.ne.naydeny" xml:space="preserve"><value>Разрешения не найдены</value></data>
+  <data name="native.siteNotifications.rassylka" xml:space="preserve"><value>Рассылка</value></data>
+  <data name="native.email.rassylok.poka.net" xml:space="preserve"><value>Рассылок пока нет.</value></data>
+  <data name="native.assistant.raskhod.0.n2" xml:space="preserve"><value>Расход: {0:N2} ₽</value></data>
+  <data name="native.assistant.raskhody.i.sverka.stoimosti" xml:space="preserve"><value>Расходы и сверка стоимости</value></data>
+  <data name="native.promoCodes.registratsionnaya.skidka.this.promocode.discountvalue.n2" xml:space="preserve"><value>Регистрационная скидка: {0:N2}</value></data>
+  <data name="native.siteNotifications.redaktirovanie.shablona" xml:space="preserve"><value>Редактирование шаблона</value></data>
+  <data name="native.assistant.rezerv" xml:space="preserve"><value>Резерв</value></data>
+  <data name="native.assistant.rezerv.audiozaprosa" xml:space="preserve"><value>Резерв аудиозапроса, ₽</value></data>
+  <data name="native.assistant.rezerv.tekstovogo.zaprosa" xml:space="preserve"><value>Резерв текстового запроса, ₽</value></data>
+  <data name="native.assistant.rezerv.0.n2" xml:space="preserve"><value>Резерв: {0:N2} ₽</value></data>
+  <data name="native.crmImport.rezultat" xml:space="preserve"><value>Результат</value></data>
+  <data name="native.crmImport.rezultat.zaprosa.neizvesten.obnovite.proverku.pered.povtornym.po" xml:space="preserve"><value>Результат запроса неизвестен. Обновите проверку перед повторным подтверждением.</value></data>
+  <data name="native.plans.rezultat.operatsii.ne.podtverzhdyon.serverom.obnovite.spisok.per" xml:space="preserve"><value>Результат операции не подтверждён сервером. Обновите список перед повтором.</value></data>
+  <data name="native.roles.roli.i.prava" xml:space="preserve"><value>Роли и права</value></data>
+  <data name="native.roles.roli.ne.naydeny" xml:space="preserve"><value>Роли не найдены</value></data>
+  <data name="native.billing.s.vozvratom" xml:space="preserve"><value>С возвратом</value></data>
+  <data name="native.assistant.sayt" xml:space="preserve"><value>Сайт</value></data>
+  <data name="native.billing.sbrosit" xml:space="preserve"><value>Сбросить</value></data>
+  <data name="native.billing.sverit.platyozh.this.payment.id.s.yookassa.sverka.mozhet.obnovit" xml:space="preserve"><value>Сверить платёж № {0} с YooKassa? Сверка может обновить статус и сведения об оплате.</value></data>
+  <data name="native.billing.sverit.s.yookassa" xml:space="preserve"><value>Сверить с YooKassa</value></data>
+  <data name="native.assistant.sverka.zavershyonnogo.zaprosa.s.neizvestnoy.stoimostyu.ukazhite." xml:space="preserve"><value>Сверка завершённого запроса с неизвестной стоимостью. Укажите сумму по кабинету провайдера и основание.</value></data>
+  <data name="native.billing.sverka.platezha" xml:space="preserve"><value>Сверка платежа</value></data>
+  <data name="native.billing.segodnya" xml:space="preserve"><value>Сегодня</value></data>
+  <data name="native.testData.server.vozvrashchaet.tolko.pervye.25.sovpadeniy.dlya.polnoy.post" xml:space="preserve"><value>Сервер возвращает только первые 25 совпадений. Для полной постраничной загрузки требуется обновить сервер.</value></data>
+  <data name="native.billing.server.ne.otvetil.vovremya.obnovite.platyozh.pered.povtorom.oper" xml:space="preserve"><value>Сервер не ответил вовремя. Обновите платёж перед повтором операции.</value></data>
+  <data name="native.billing.server.ne.otvetil.povtorite.otpravku.prezhney.operatsii.s.tem.zh" xml:space="preserve"><value>Сервер не ответил. Повторите отправку прежней операции с тем же номером.</value></data>
+  <data name="native.billing.server.ne.podderzhivaet.postranichnuyu.zagruzku.billinga.trebuet" xml:space="preserve"><value>Сервер не поддерживает постраничную загрузку биллинга. Требуется обновление сервера.</value></data>
+  <data name="native.billing.server.soobshchil.o.konflikte.nomera.operatsii.novaya.komanda.ne" xml:space="preserve"><value>Сервер сообщил о конфликте номера операции. Новая команда не создана. Сверьте журнал и обратитесь к ответственному администратору.</value></data>
+  <data name="native.billing.simulyatsiya.otpravki" xml:space="preserve"><value>Симуляция отправки</value></data>
+  <data name="native.roles.sistemnaya" xml:space="preserve"><value>Системная</value></data>
+  <data name="native.roles.sistemnaya.rol.zashchishchena.ot.izmeneniya.prav" xml:space="preserve"><value>Системная роль защищена от изменения прав</value></data>
+  <data name="native.plans.sistemnyy.tarif" xml:space="preserve"><value>Системный тариф</value></data>
+  <data name="native.plans.sistemnyy.free" xml:space="preserve"><value>Системный Free</value></data>
+  <data name="native.billing.skachat.fayl" xml:space="preserve"><value>Скачать файл</value></data>
+  <data name="native.billing.skidka" xml:space="preserve"><value>Скидка</value></data>
+  <data name="native.promoCodes.skidka.v.protsentakh" xml:space="preserve"><value>Скидка в процентах</value></data>
+  <data name="native.promoCodes.skidka.v.rublyakh" xml:space="preserve"><value>Скидка в рублях</value></data>
+  <data name="native.promoCodes.skidka.dostupna" xml:space="preserve"><value>Скидка доступна</value></data>
+  <data name="native.promoCodes.skidka.this.promocode.discountvalue.n2" xml:space="preserve"><value>Скидка: {0:N2} ₽</value></data>
+  <data name="native.promoCodes.skidka.this.promocode.discountvalue" xml:space="preserve"><value>Скидка: {0}%</value></data>
+  <data name="native.promoCodes.skidka.this.selectedpromocode.discountvalue.n2" xml:space="preserve"><value>Скидка: {0:N2} ₽</value></data>
+  <data name="native.promoCodes.skidka.this.selectedpromocode.discountvalue" xml:space="preserve"><value>Скидка: {0}%</value></data>
+  <data name="native.assistant.sleduyushchaya" xml:space="preserve"><value>Следующая →</value></data>
+  <data name="native.plans.snachala.naznachte.drugoy.tarif.po.umolchaniyu" xml:space="preserve"><value>Сначала назначьте другой тариф по умолчанию.</value></data>
+  <data name="native.email.snachala.proverte.spisok.adresatov" xml:space="preserve"><value>Сначала проверьте список адресатов.</value></data>
+  <data name="native.billing.snachala.sozdayte.chek.v.moyom.naloge.i.peredayte.pokupatelyu.ot" xml:space="preserve"><value>Сначала создайте чек в «Моём налоге» и передайте покупателю. Отметка ниже только фиксирует выдачу, она не создаёт и не отправляет чек.</value></data>
+  <data name="native.vehicleCatalog.snegokhody" xml:space="preserve"><value>Снегоходы</value></data>
+  <data name="native.billing.snyat.otmetku.o.vydache.cheka.izmenenie.s.ukazannoy.prichinoy.bu" xml:space="preserve"><value>Снять отметку о выдаче чека? Изменение с указанной причиной будет сохранено в журнале.</value></data>
+  <data name="native.roles.snyat.rol" xml:space="preserve"><value>Снять роль</value></data>
+  <data name="native.email.sobytiya.dostavki" xml:space="preserve"><value>События доставки</value></data>
+  <data name="native.email.soderzhanie" xml:space="preserve"><value>Содержание</value></data>
+  <data name="native.billing.sozdan" xml:space="preserve"><value>Создан</value></data>
+  <data name="native.email.createdColumn" xml:space="preserve"><value>Создано</value></data>
+  <data name="native.email.createdLabel" xml:space="preserve"><value>Создано:</value></data>
+  <data name="native.billing.sozdano.0.dd.mm.yyyy.hh.mm" xml:space="preserve"><value>Создано: {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="native.testData.sozdat" xml:space="preserve"><value>Создать</value></data>
+  <data name="native.testData.sozdat.defekty" xml:space="preserve"><value>Создать дефекты</value></data>
+  <data name="native.testData.sozdat.obsluzhivaniya" xml:space="preserve"><value>Создать обслуживания</value></data>
+  <data name="native.testData.sozdat.testovuyu.tekhniku" xml:space="preserve"><value>Создать тестовую технику</value></data>
+  <data name="native.testData.sozdat.tekhniku" xml:space="preserve"><value>Создать технику</value></data>
+  <data name="native.testData.sostoyanie" xml:space="preserve"><value>Состояние</value></data>
+  <data name="native.billing.sostoyanie.platezha.izmenilos.proverte.obnovlyonnye.svedeniya.i." xml:space="preserve"><value>Состояние платежа изменилось. Проверьте обновлённые сведения и подтвердите действие заново.</value></data>
+  <data name="native.billing.sostoyanie.provaydera" xml:space="preserve"><value>Состояние провайдера</value></data>
+  <data name="native.plans.sokhranenie.vozmozhnostey.zanyalo.slishkom.mnogo.vremeni.obnovit" xml:space="preserve"><value>Сохранение возможностей заняло слишком много времени. Обновите тариф перед повтором.</value></data>
+  <data name="native.plans.sokhranenie.tarifa.zanyalo.slishkom.mnogo.vremeni.obnovite.spiso" xml:space="preserve"><value>Сохранение тарифа заняло слишком много времени. Обновите список перед повтором.</value></data>
+  <data name="native.vehicleCatalog.sokhranit" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="native.plans.sokhranit.vozmozhnosti" xml:space="preserve"><value>Сохранить возможности</value></data>
+  <data name="native.assistant.sokhranit.dostup" xml:space="preserve"><value>Сохранить доступ</value></data>
+  <data name="native.crmImport.sokhranit.itogovyy.otchyot" xml:space="preserve"><value>Сохранить итоговый отчёт</value></data>
+  <data name="native.assistant.sokhranit.nastroyki" xml:space="preserve"><value>Сохранить настройки</value></data>
+  <data name="native.crmImport.sokhranit.otchyot.proverki" xml:space="preserve"><value>Сохранить отчёт проверки</value></data>
+  <data name="native.crmImport.sokhranit.otchyot.crm" xml:space="preserve"><value>Сохранить отчёт CRM</value></data>
+  <data name="native.roles.sokhranit.prava" xml:space="preserve"><value>Сохранить права</value></data>
+  <data name="native.promoCodes.sokhranit.promokod" xml:space="preserve"><value>Сохранить промокод</value></data>
+  <data name="native.billing.sokhranit.reshenie.po.razboru" xml:space="preserve"><value>сохранить решение по разбору</value></data>
+  <data name="native.billing.sokhranit.ssylku.i.kommentariy" xml:space="preserve"><value>Сохранить ссылку и комментарий</value></data>
+  <data name="native.support.sokhranit.status.i.kommentariy" xml:space="preserve"><value>Сохранить статус и комментарий</value></data>
+  <data name="native.assistant.sokhranit.stoimost.i.osnovanie" xml:space="preserve"><value>Сохранить стоимость и основание</value></data>
+  <data name="native.plans.sokhranit.tarif" xml:space="preserve"><value>Сохранить тариф</value></data>
+  <data name="native.billing.sokhranit.chek.npd" xml:space="preserve"><value>Сохранить чек НПД</value></data>
+  <data name="native.siteNotifications.sokhranit.shablon" xml:space="preserve"><value>Сохранить шаблон</value></data>
+  <data name="native.support.spam" xml:space="preserve"><value>Спам</value></data>
+  <data name="native.vehicleCatalog.spetstekhnika" xml:space="preserve"><value>Спецтехника</value></data>
+  <data name="native.billing.sposob.oplaty" xml:space="preserve"><value>Способ оплаты</value></data>
+  <data name="native.plans.srok" xml:space="preserve"><value>Срок</value></data>
+  <data name="native.promoCodes.srok.deystviya" xml:space="preserve"><value>Срок действия</value></data>
+  <data name="native.promoCodes.srok.skidki.dolzhen.byt.tselym.chislom.ot.1.do.3650.dney" xml:space="preserve"><value>Срок скидки должен быть целым числом от 1 до 3650 дней.</value></data>
+  <data name="native.promoCodes.srok.skidki.dney" xml:space="preserve"><value>Срок скидки, дней</value></data>
+  <data name="native.billing.srok.tarifa" xml:space="preserve"><value>Срок тарифа</value></data>
+  <data name="native.plans.srok.dney" xml:space="preserve"><value>Срок, дней</value></data>
+  <data name="native.plans.srok.stoimost.i.ogranicheniya.rabochego.prostranstva" xml:space="preserve"><value>Срок, стоимость и ограничения рабочего пространства</value></data>
+  <data name="native.billing.ssylka.fns.i.kommentariy" xml:space="preserve"><value>Ссылка ФНС и комментарий</value></data>
+  <data name="native.promoCodes.staryy.registratsionnyy.bonus.days.dn" xml:space="preserve"><value>Старый регистрационный бонус: {0} дн.</value></data>
+  <data name="native.plans.status" xml:space="preserve"><value>Статус</value></data>
+  <data name="native.billing.status.obnovlyon" xml:space="preserve"><value>Статус обновлён</value></data>
+  <data name="native.catalogSuggestions.status.predlozheniya" xml:space="preserve"><value>Статус предложения</value></data>
+  <data name="native.promoCodes.sto" xml:space="preserve"><value>СТО</value></data>
+  <data name="native.plans.stoimost" xml:space="preserve"><value>Стоимость</value></data>
+  <data name="native.plans.stoimost.i.limity" xml:space="preserve"><value>Стоимость и лимиты</value></data>
+  <data name="native.testData.stranitsa.0" xml:space="preserve"><value>Страница {0}</value></data>
+  <data name="native.assistant.stranitsa.this.overview.page.naydeno.this.overview.totalcount.n0" xml:space="preserve"><value>Страница {0} · найдено {1:N0}</value></data>
+  <data name="native.assistant.stranitsa.this.usage.page.naydeno.this.usage.totalcount.n0" xml:space="preserve"><value>Страница {0} · найдено {1:N0}</value></data>
+  <data name="native.crmImport.stroka" xml:space="preserve"><value>Строка</value></data>
+  <data name="native.billing.summa" xml:space="preserve"><value>Сумма</value></data>
+  <data name="native.billing.summa.i.vozvraty" xml:space="preserve"><value>Сумма и возвраты</value></data>
+  <data name="native.billing.summa.pokupki" xml:space="preserve"><value>Сумма покупки</value></data>
+  <data name="native.billing.summa.0.n2" xml:space="preserve"><value>Сумма: {0:N2} ₽</value></data>
+  <data name="native.plans.fallbackName" xml:space="preserve"><value>тариф</value></data>
+  <data name="native.plans.planColumn" xml:space="preserve"><value>Тариф</value></data>
+  <data name="native.billing.tarif.oplata" xml:space="preserve"><value>Тариф / оплата</value></data>
+  <data name="native.promoCodes.tarif.podarka" xml:space="preserve"><value>Тариф подарка</value></data>
+  <data name="native.plans.tarif.sozdan" xml:space="preserve"><value>Тариф создан.</value></data>
+  <data name="native.plans.tarif.sokhranyon" xml:space="preserve"><value>Тариф сохранён.</value></data>
+  <data name="native.plans.tarif.udalyon" xml:space="preserve"><value>Тариф удалён.</value></data>
+  <data name="native.plans.tarifa" xml:space="preserve"><value>тарифа</value></data>
+  <data name="native.plans.tarifov" xml:space="preserve"><value>тарифов</value></data>
+  <data name="native.plans.tarify.ne.naydeny" xml:space="preserve"><value>Тарифы не найдены</value></data>
+  <data name="native.plans.tarify.organizatsiy" xml:space="preserve"><value>Тарифы организаций</value></data>
+  <data name="native.plans.tarify.organizatsiy.ne.naydeny" xml:space="preserve"><value>Тарифы организаций не найдены</value></data>
+  <data name="native.promoCodes.tarify.so.skidkoy" xml:space="preserve"><value>Тарифы со скидкой</value></data>
+  <data name="native.plans.tarify.free.i.pro" xml:space="preserve"><value>Тарифы Free и PRO</value></data>
+  <data name="native.email.tekst" xml:space="preserve"><value>Текст</value></data>
+  <data name="native.email.tekst.pisma" xml:space="preserve"><value>Текст письма</value></data>
+  <data name="native.sms.tekst.soobshcheniya" xml:space="preserve"><value>Текст сообщения</value></data>
+  <data name="native.siteNotifications.tekst.uvedomleniya" xml:space="preserve"><value>Текст уведомления</value></data>
+  <data name="native.siteNotifications.tekst.shablona" xml:space="preserve"><value>Текст шаблона</value></data>
+  <data name="native.assistant.tekstovaya.model" xml:space="preserve"><value>Текстовая модель</value></data>
+  <data name="native.siteNotifications.teksty.sozdayutsya.pri.sistemnykh.sobytiyakh.poluchateli.opredel" xml:space="preserve"><value>Тексты создаются при системных событиях. Получатели определяются автоматически.</value></data>
+  <data name="native.billing.tekushchiy.administrator.ili.adres.api.izmenilsya.otkroyte.platy" xml:space="preserve"><value>Текущий администратор или адрес API изменился. Откройте платёж заново для своей учётной записи.</value></data>
+  <data name="native.sms.telefon" xml:space="preserve"><value>Телефон</value></data>
+  <data name="native.sms.telefon.tekst.ili.kod.sms" xml:space="preserve"><value>Телефон, текст или код SMS</value></data>
+  <data name="native.email.tema" xml:space="preserve"><value>Тема</value></data>
+  <data name="native.email.tema.pisma" xml:space="preserve"><value>Тема письма</value></data>
+  <data name="native.support.tema.tekst.email.ili.organizatsiya" xml:space="preserve"><value>Тема, текст, email или организация</value></data>
+  <data name="native.testData.testovye.dannye" xml:space="preserve"><value>Тестовые данные</value></data>
+  <data name="native.billing.testovyy.platyozh" xml:space="preserve"><value>Тестовый платёж</value></data>
+  <data name="native.plans.tekhnika" xml:space="preserve"><value>Техника</value></data>
+  <data name="native.testData.tekhnika.organizatsii" xml:space="preserve"><value>Техника организации</value></data>
+  <data name="native.sms.tip.item.type" xml:space="preserve"><value>Тип {0}</value></data>
+  <data name="native.sms.tip.kod" xml:space="preserve"><value>Тип / код</value></data>
+  <data name="native.promoCodes.tip.bonusa.tarify.i.napravleniya.zakrepleny.posle.pervogo.primen" xml:space="preserve"><value>Тип бонуса, тарифы и направления закреплены после первого применения.</value></data>
+  <data name="native.billing.tip.ne.ukazan" xml:space="preserve"><value>Тип не указан</value></data>
+  <data name="native.email.tip.organizatsii" xml:space="preserve"><value>Тип организации</value></data>
+  <data name="native.email.tip.organizatsii.campaign.targetorganizationtypecode" xml:space="preserve"><value>Тип организации · {0}</value></data>
+  <data name="native.billing.tip.tarifa" xml:space="preserve"><value>Тип тарифа</value></data>
+  <data name="native.assistant.tokeny.this.overview.limits.maximumoutputtokensallowed.n0.chasov" xml:space="preserve"><value>токены: {0:N0}; часовой пояс: {1}.</value></data>
+  <data name="native.email.tolko.podtverzhdyonnye.email" xml:space="preserve"><value>Только подтверждённые email</value></data>
+  <data name="native.billing.trebuet.vnimaniya" xml:space="preserve"><value>Требует внимания</value></data>
+  <data name="native.billing.trebuetsya.razbor" xml:space="preserve"><value>Требуется разбор</value></data>
+  <data name="native.billing.trebuyut.vnimaniya" xml:space="preserve"><value>Требуют внимания</value></data>
+  <data name="native.billing.u.platezha.net.vneshnego.identifikatora.dlya.sverki" xml:space="preserve"><value>У платежа нет внешнего идентификатора для сверки.</value></data>
+  <data name="native.vehicleCatalog.u.etoy.marki.poka.net.modeley.dobavte.pervuyu.model.knopkoy.vysh" xml:space="preserve"><value>У этой марки пока нет моделей. Добавьте первую модель кнопкой выше.</value></data>
+  <data name="native.siteNotifications.ubrat" xml:space="preserve"><value>Убрать</value></data>
+  <data name="native.promoCodes.ubrat.tarif" xml:space="preserve"><value>Убрать тариф</value></data>
+  <data name="native.siteNotifications.uvedomlenie.budet.otpravleno.srazu.vybrannym.polzovatelyam.prove" xml:space="preserve"><value>Уведомление будет отправлено сразу выбранным пользователям. Проверьте заголовок, текст и аудитории.</value></data>
+  <data name="native.siteNotifications.uvedomlenie.otpravleno" xml:space="preserve"><value>Уведомление отправлено.</value></data>
+  <data name="native.siteNotifications.uvedomlenie.udaleno" xml:space="preserve"><value>Уведомление удалено.</value></data>
+  <data name="native.siteNotifications.uvedomleniya.sayta" xml:space="preserve"><value>Уведомления сайта</value></data>
+  <data name="native.plans.udalenie.zanyalo.slishkom.mnogo.vremeni.obnovite.spisok.pered.po" xml:space="preserve"><value>Удаление заняло слишком много времени. Обновите список перед повтором.</value></data>
+  <data name="native.catalogSuggestions.udalitsya.tolko.eto.predlozhenie.marki.modeli.i.tekhnika.sokhran" xml:space="preserve"><value>Удалится только это предложение. Марки, модели и техника сохранятся. Отменить удаление нельзя.</value></data>
+  <data name="native.plans.udalit" xml:space="preserve"><value>Удалить</value></data>
+  <data name="native.vehicleCatalog.udalit.vybrannuyu.marku.esli.ona.ispolzuetsya.server.otklonit.op" xml:space="preserve"><value>Удалить выбранную марку? Если она используется, сервер отклонит операцию.</value></data>
+  <data name="native.vehicleCatalog.udalit.vybrannuyu.model.esli.ona.ispolzuetsya.server.otklonit.op" xml:space="preserve"><value>Удалить выбранную модель? Если она используется, сервер отклонит операцию.</value></data>
+  <data name="native.catalogSuggestions.deleteConfirmTitle" xml:space="preserve"><value>Удалить предложение?</value></data>
+  <data name="native.catalogSuggestions.deleteAction" xml:space="preserve"><value>Удалить предложение…</value></data>
+  <data name="native.promoCodes.deleteAction" xml:space="preserve"><value>Удалить промокод</value></data>
+  <data name="native.promoCodes.udalit.promokod.this.selectedpromocode.code.eto.deystvie.nelzya." xml:space="preserve"><value>Удалить промокод «{0}»? Это действие нельзя отменить.</value></data>
+  <data name="native.promoCodes.deleteConfirmTitle" xml:space="preserve"><value>Удалить промокод?</value></data>
+  <data name="native.plans.udalit.tarif" xml:space="preserve"><value>Удалить тариф</value></data>
+  <data name="native.siteNotifications.udalit.eto.uvedomlenie.iz.istorii" xml:space="preserve"><value>Удалить это уведомление из истории?</value></data>
+  <data name="native.promoCodes.ukazhite.polozhitelnyy.razmer.skidki" xml:space="preserve"><value>Укажите положительный размер скидки.</value></data>
+  <data name="native.billing.ukazhite.prichinu" xml:space="preserve"><value>Укажите причину</value></data>
+  <data name="native.billing.ukazhite.https.ssylku.na.nalog.ru.ili.ego.poddomen" xml:space="preserve"><value>Укажите HTTPS-ссылку на nalog.ru или его поддомен.</value></data>
+  <data name="native.email.ukazat.email" xml:space="preserve"><value>Указать email</value></data>
+  <data name="native.assistant.upravlyayte.dostupom.limitami.i.raskhodami.servisa" xml:space="preserve"><value>Управляйте доступом, лимитами и расходами сервиса.</value></data>
+  <data name="native.promoCodes.usloviya.primeneniya" xml:space="preserve"><value>Условия применения</value></data>
+  <data name="native.roles.uchastniki" xml:space="preserve"><value>Участники</value></data>
+  <data name="native.crmImport.fayl.prevyshaet.10.mb" xml:space="preserve"><value>Файл превышает 10 МБ.</value></data>
+  <data name="native.billing.fayl.pust" xml:space="preserve"><value>Файл пуст.</value></data>
+  <data name="native.crmImport.fayl.crm" xml:space="preserve"><value>Файл CRM</value></data>
+  <data name="native.assistant.fakticheskaya.stoimost.sokhranena.v.audite" xml:space="preserve"><value>Фактическая стоимость сохранена в аудите.</value></data>
+  <data name="native.assistant.fakticheskaya.stoimost" xml:space="preserve"><value>Фактическая стоимость, ₽</value></data>
+  <data name="native.billing.fizicheskie.litsa" xml:space="preserve"><value>Физические лица</value></data>
+  <data name="native.billing.fizicheskoe.litso" xml:space="preserve"><value>Физическое лицо</value></data>
+  <data name="native.plans.price" xml:space="preserve"><value>Цена</value></data>
+  <data name="native.plans.tsena.so.skidkoy" xml:space="preserve"><value>Цена со скидкой, ₽</value></data>
+  <data name="native.plans.priceRubles" xml:space="preserve"><value>Цена, ₽</value></data>
+  <data name="native.billing.chek.dostavka" xml:space="preserve"><value>Чек / доставка</value></data>
+  <data name="native.billing.chek.pdf.png.jpg" xml:space="preserve"><value>Чек PDF / PNG / JPG</value></data>
+  <data name="native.billing.cheki.bez.otmetki.pokazany.pervymi.24.chasa.vnutrenniy.orientir." xml:space="preserve"><value>Чеки без отметки показаны первыми. 24 часа — внутренний ориентир контроля.</value></data>
+  <data name="native.siteNotifications.shablon.sokhranyon" xml:space="preserve"><value>Шаблон сохранён.</value></data>
+  <data name="native.siteNotifications.shablony" xml:space="preserve"><value>Шаблоны</value></data>
+  <data name="native.billing.etap" xml:space="preserve"><value>Этап</value></data>
+  <data name="native.crmImport.etot.fayl.uzhe.importirovan" xml:space="preserve"><value>Этот файл уже импортирован.</value></data>
+  <data name="native.crmImport.csv.xlsx.json.ili.xml.do.10.mb.do.5000.strok" xml:space="preserve"><value>CSV, XLSX, JSON или XML · до 10 МБ · до 5000 строк</value></data>
+  <data name="native.crmImport.email.ili.telefon.polzovatelya" xml:space="preserve"><value>Email или телефон пользователя</value></data>
+  <data name="native.email.email.rassylki" xml:space="preserve"><value>Email-рассылки</value></data>
+  <data name="native.email.email.imya.ili.telefon.polzovatelya" xml:space="preserve"><value>Email, имя или телефон пользователя</value></data>
+  <data name="native.plans.free.besplatno.i.bessrochno" xml:space="preserve"><value>Free · бесплатно и бессрочно</value></data>
+  <data name="native.email.html.prosmotr.nedostupen.iskhodnyy.tekst.pisma.ostayotsya.v.reda" xml:space="preserve"><value>HTML-просмотр недоступен. Исходный текст письма остаётся в редакторе выше.</value></data>
+  <data name="native.email.html.prosmotr.nedostupen.tekst.pisma" xml:space="preserve"><value>HTML-просмотр недоступен. Текст письма:</value></data>
+  <data name="native.billing.id.komandy" xml:space="preserve"><value>ID команды</value></data>
+  <data name="native.billing.id.platezha.yukassa" xml:space="preserve"><value>ID платежа ЮKassa</value></data>
+  <data name="native.billing.id.pokupki" xml:space="preserve"><value>ID покупки</value></data>
+  <data name="native.billing.id.provaydera" xml:space="preserve"><value>ID провайдера</value></data>
+  <data name="native.billing.id.sobytiya" xml:space="preserve"><value>ID события</value></data>
+  <data name="native.billing.id.tranzaktsii" xml:space="preserve"><value>ID транзакции</value></data>
+  <data name="native.sms.sms.ne.naydeny" xml:space="preserve"><value>SMS не найдены.</value></data>
+  <data name="native.email.createdLabel.prefix" xml:space="preserve"><value>Создано: </value></data>
+  <data name="native.email.sentLabel.prefix" xml:space="preserve"><value>Отправлено: </value></data>
+  <data name="native.promoCodes.limit.registratsiy.prefix" xml:space="preserve"><value>Лимит регистраций: </value></data>
+  <data name="native.roles.prav.padded" xml:space="preserve"><value> прав · </value></data>
+  <data name="native.roles.polzovateley.suffix" xml:space="preserve"><value> пользователей</value></data>
+  <data name="core.dateTime.notSet" xml:space="preserve"><value>Не задано</value></data>
+  <data name="core.dateTime.previousPeriod" xml:space="preserve"><value>Предыдущий период</value></data>
+  <data name="core.dateTime.nextPeriod" xml:space="preserve"><value>Следующий период</value></data>
+  <data name="userCard.tab.itemCount" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="userCard.tab.overview" xml:space="preserve"><value>Обзор</value></data>
+  <data name="userCard.tab.organizations" xml:space="preserve"><value>Организации</value></data>
+  <data name="userCard.tab.subscriptions" xml:space="preserve"><value>Подписки</value></data>
+  <data name="userCard.tab.payments" xml:space="preserve"><value>Платежи</value></data>
+  <data name="userCard.tab.vehicles" xml:space="preserve"><value>Личная техника и ТО</value></data>
+  <data name="userCard.tab.support" xml:space="preserve"><value>Обращения</value></data>
+  <data name="userCard.tab.features" xml:space="preserve"><value>Возможности</value></data>
+  <data name="userCard.tab.management" xml:space="preserve"><value>Управление</value></data>
+  <data name="userCard.empty.organizations" xml:space="preserve"><value>Организаций с выбранным статусом нет.</value></data>
+  <data name="userCard.empty.subscriptions" xml:space="preserve"><value>Подписок с выбранным статусом нет.</value></data>
+  <data name="userCard.empty.payments" xml:space="preserve"><value>Платежей нет.</value></data>
+  <data name="userCard.empty.vehicles" xml:space="preserve"><value>Личной техники и её обслуживаний нет.</value></data>
+  <data name="userCard.empty.support" xml:space="preserve"><value>Обращений нет.</value></data>
+  <data name="userCard.empty.features" xml:space="preserve"><value>Индивидуальных возможностей нет.</value></data>
+  <data name="userCard.limit.payments" xml:space="preserve"><value>Показаны последние 40 платежей.</value></data>
+  <data name="userCard.limit.vehicles" xml:space="preserve"><value>Сводка ограничена 30 единицами техники; показана только личная.</value></data>
+  <data name="userCard.limit.maintenances" xml:space="preserve"><value>Сводка ограничена 20 обслуживаниями.</value></data>
+  <data name="userCard.limit.support" xml:space="preserve"><value>Показаны последние 20 обращений.</value></data>
+  <data name="userCard.limit.features" xml:space="preserve"><value>Показаны последние 40 назначений.</value></data>
+  <data name="userCard.user" xml:space="preserve"><value>Пользователь</value></data>
+  <data name="userCard.userId" xml:space="preserve"><value>ID пользователя: {0}</value></data>
+  <data name="userCard.registration" xml:space="preserve"><value>Регистрация</value></data>
+  <data name="userCard.organizations" xml:space="preserve"><value>Организации</value></data>
+  <data name="userCard.section.contacts" xml:space="preserve"><value>Контакты</value></data>
+  <data name="userCard.section.access" xml:space="preserve"><value>Доступ</value></data>
+  <data name="userCard.section.consents" xml:space="preserve"><value>Согласия</value></data>
+  <data name="userCard.field.email" xml:space="preserve"><value>Email</value></data>
+  <data name="userCard.field.phone" xml:space="preserve"><value>Телефон</value></data>
+  <data name="userCard.field.roles" xml:space="preserve"><value>Роли</value></data>
+  <data name="userCard.field.status" xml:space="preserve"><value>Статус</value></data>
+  <data name="userCard.field.password" xml:space="preserve"><value>Пароль</value></data>
+  <data name="userCard.field.failedLogins" xml:space="preserve"><value>Неудачные входы</value></data>
+  <data name="userCard.field.dataProcessing" xml:space="preserve"><value>Обработка данных</value></data>
+  <data name="userCard.field.amount" xml:space="preserve"><value>Сумма</value></data>
+  <data name="userCard.field.method" xml:space="preserve"><value>Способ</value></data>
+  <data name="userCard.field.transaction" xml:space="preserve"><value>Транзакция</value></data>
+  <data name="userCard.field.registrationPlate" xml:space="preserve"><value>Госномер</value></data>
+  <data name="userCard.field.mileage" xml:space="preserve"><value>Пробег</value></data>
+  <data name="userCard.field.maintenances" xml:space="preserve"><value>Обслуживания</value></data>
+  <data name="userCard.field.openDefects" xml:space="preserve"><value>Открытые дефекты</value></data>
+  <data name="userCard.field.lastMaintenance" xml:space="preserve"><value>Последнее ТО</value></data>
+  <data name="userCard.field.location" xml:space="preserve"><value>Место</value></data>
+  <data name="userCard.field.performer" xml:space="preserve"><value>Исполнитель</value></data>
+  <data name="userCard.field.paid" xml:space="preserve"><value>Оплачено</value></data>
+  <data name="userCard.field.comment" xml:space="preserve"><value>Комментарий</value></data>
+  <data name="userCard.field.text" xml:space="preserve"><value>Текст</value></data>
+  <data name="userCard.field.page" xml:space="preserve"><value>Страница</value></data>
+  <data name="userCard.field.value" xml:space="preserve"><value>Значение</value></data>
+  <data name="userCard.field.source" xml:space="preserve"><value>Источник</value></data>
+  <data name="userCard.field.start" xml:space="preserve"><value>Начало</value></data>
+  <data name="userCard.field.end" xml:space="preserve"><value>Окончание</value></data>
+  <data name="userCard.field.role" xml:space="preserve"><value>Роль</value></data>
+  <data name="userCard.field.memberSince" xml:space="preserve"><value>В организации с</value></data>
+  <data name="userCard.field.members" xml:space="preserve"><value>Участники</value></data>
+  <data name="userCard.field.vehicles" xml:space="preserve"><value>Техника</value></data>
+  <data name="userCard.field.clients" xml:space="preserve"><value>Клиенты</value></data>
+  <data name="userCard.field.invitedAt" xml:space="preserve"><value>Приглашён</value></data>
+  <data name="userCard.field.invitedBy" xml:space="preserve"><value>Кто пригласил</value></data>
+  <data name="userCard.field.plan" xml:space="preserve"><value>Тариф</value></data>
+  <data name="userCard.start" xml:space="preserve"><value>Начало</value></data>
+  <data name="userCard.end" xml:space="preserve"><value>Окончание</value></data>
+  <data name="userCard.daysLeft" xml:space="preserve"><value>Осталось дней</value></data>
+  <data name="userCard.autoRenewal" xml:space="preserve"><value>Автопродление</value></data>
+  <data name="userCard.yes" xml:space="preserve"><value>Да</value></data>
+  <data name="userCard.no" xml:space="preserve"><value>Нет</value></data>
+  <data name="userCard.confirmed" xml:space="preserve"><value>Подтверждён</value></data>
+  <data name="userCard.notConfirmed" xml:space="preserve"><value>Не подтверждён</value></data>
+  <data name="userCard.passwordSet" xml:space="preserve"><value>Установлен</value></data>
+  <data name="userCard.passwordNotSet" xml:space="preserve"><value>Не установлен</value></data>
+  <data name="userCard.accepted" xml:space="preserve"><value>Принято</value></data>
+  <data name="userCard.notAccepted" xml:space="preserve"><value>Не принято</value></data>
+  <data name="userCard.active" xml:space="preserve"><value>Активна</value></data>
+  <data name="userCard.inactive" xml:space="preserve"><value>Неактивна</value></data>
+  <data name="userCard.vehicle.deleted" xml:space="preserve"><value>Удалена</value></data>
+  <data name="userCard.vehicle.archived" xml:space="preserve"><value>В архиве</value></data>
+  <data name="userCard.planUntil" xml:space="preserve"><value>До {0}{1}</value></data>
+  <data name="userCard.demo" xml:space="preserve"><value>демо</value></data>
+  <data name="userCard.freePlan" xml:space="preserve"><value>Без ограничения срока · базовая работа продолжается</value></data>
+  <data name="userCard.noActiveSubscription" xml:space="preserve"><value>Нет активной подписки</value></data>
+  <data name="userCard.allowed" xml:space="preserve"><value>Разрешено</value></data>
+  <data name="userCard.denied" xml:space="preserve"><value>Запрещено</value></data>
+  <data name="userCard.noValue" xml:space="preserve"><value>Без значения</value></data>
+  <data name="userCard.organizationStatus.active" xml:space="preserve"><value>Активные</value></data>
+  <data name="userCard.organizationStatus.archived" xml:space="preserve"><value>Архивированные</value></data>
+  <data name="userCard.organizationStatus.deleted" xml:space="preserve"><value>Удалённые</value></data>
+  <data name="userCard.subscriptionStatus.active" xml:space="preserve"><value>Активные</value></data>
+  <data name="userCard.subscriptionStatus.ended" xml:space="preserve"><value>Завершённые</value></data>
+  <data name="userCard.subscriptionStatus.all" xml:space="preserve"><value>Все</value></data>
+  <data name="userManagement.enabled" xml:space="preserve"><value>Включены</value></data>
+  <data name="userManagement.disabled" xml:space="preserve"><value>Выключены</value></data>
+  <data name="userManagement.chooseTarget" xml:space="preserve"><value>Выберите получателя доступа.</value></data>
+  <data name="userManagement.grantPro" xml:space="preserve"><value>Выдать PRO без оплаты</value></data>
+  <data name="userManagement.grantPlan" xml:space="preserve"><value>Выдать тариф без оплаты</value></data>
+  <data name="userManagement.newEndDate" xml:space="preserve"><value>Новая дата окончания: {0}</value></data>
+  <data name="userManagement.planAndDaysRequired" xml:space="preserve"><value>Укажите тариф и срок от 1 до 366 дней.</value></data>
+  <data name="userManagement.personalAccess" xml:space="preserve"><value>Личный доступ пользователя</value></data>
+  <data name="userManagement.freePlanTarget" xml:space="preserve"><value>Free · без ограничения срока</value></data>
+  <data name="userManagement.noActivePlanTarget" xml:space="preserve"><value>Нет активной подписки</value></data>
+  <data name="userManagement.planTargetUntil" xml:space="preserve"><value>{0} · до {1}</value></data>
+  <data name="userManagement.error.noPlans" xml:space="preserve"><value>Для выбранной цели нет доступных тарифов.</value></data>
+  <data name="userManagement.error.planTimeout" xml:space="preserve"><value>Сервер не ответил вовремя при загрузке тарифов. Повторите попытку.</value></data>
+  <data name="userManagement.error.planLoad" xml:space="preserve"><value>Не удалось загрузить тарифы. Обновите карточку и повторите попытку.</value></data>
+  <data name="userManagement.error.impersonationUnavailable" xml:space="preserve"><value>Вход от имени пользователя недоступен в текущем окне.</value></data>
+  <data name="userManagement.error.connectionRefresh" xml:space="preserve"><value>Не удалось связаться с сервером. Обновите карточку перед повтором операции.</value></data>
+  <data name="userManagement.error.browser" xml:space="preserve"><value>Не удалось открыть сайт в браузере. {0}</value></data>
+  <data name="userManagement.error.timeoutRefresh" xml:space="preserve"><value>Сервер не ответил вовремя. Обновите карточку перед повтором операции.</value></data>
+  <data name="userManagement.success.refreshRequired" xml:space="preserve"><value>Операция выполнена на сервере. Обновите карточку перед следующими действиями.</value></data>
+  <data name="userManagement.success.refreshMissing" xml:space="preserve"><value>Операция выполнена на сервере, но карточка не обновилась. Обновите её перед следующими действиями.</value></data>
+  <data name="userManagement.success.refreshFailed" xml:space="preserve"><value>Операция выполнена на сервере, но карточку не удалось обновить. Обновите её перед следующими действиями.</value></data>
+  <data name="userManagement.errorSuffix.refreshBeforeActions" xml:space="preserve"><value>Обновите карточку перед следующими действиями.</value></data>
+  <data name="userManagement.errorSuffix.refreshTarget" xml:space="preserve"><value>Обновите цель и проверьте её состояние перед повтором.</value></data>
+  <data name="userManagement.errorSuffix.checkTarget" xml:space="preserve"><value>Проверьте состояние цели перед повтором.</value></data>
+  <data name="userManagement.errorSuffix.cardNotUpdated" xml:space="preserve"><value>Карточка не обновилась. Обновите её перед следующими действиями.</value></data>
+  <data name="userManagement.errorSuffix.retryAfterRefresh" xml:space="preserve"><value>Обновите карточку перед повтором операции.</value></data>
+  <data name="organization.card.organization" xml:space="preserve"><value>Организация: {0}</value></data>
+  <data name="organization.card.owner" xml:space="preserve"><value>Владелец: {0}</value></data>
+  <data name="organization.card.created" xml:space="preserve"><value>Создана: {0}</value></data>
+  <data name="organization.card.updated" xml:space="preserve"><value>Изменена: {0}</value></data>
+  <data name="organization.card.inn" xml:space="preserve"><value>ИНН: {0}</value></data>
+  <data name="organization.card.subscriptionEnd" xml:space="preserve"><value>Действует до: {0}</value></data>
+  <data name="organization.card.admins" xml:space="preserve"><value>Администраторов: {0}</value></data>
+  <data name="organization.card.completedOrders" xml:space="preserve"><value>Завершено: {0}</value></data>
+  <data name="organization.card.overdueTasks" xml:space="preserve"><value>Просрочено: {0}</value></data>
+  <data name="organization.card.lowStock" xml:space="preserve"><value>Низкий запас: {0}</value></data>
+  <data name="organization.card.scenarioCode" xml:space="preserve"><value>Код сценария: {0}</value></data>
+  <data name="organization.card.documentStyle" xml:space="preserve"><value>Стиль документов: {0}</value></data>
+  <data name="organization.card.archived" xml:space="preserve"><value>Архивирована: {0}</value></data>
+  <data name="organization.card.deleted" xml:space="preserve"><value>Удалена: {0}</value></data>
+  <data name="activity.organizationUnavailable" xml:space="preserve"><value>Организация недоступна</value></data>
+  <data name="activity.noOrganization" xml:space="preserve"><value>Без организации</value></data>
+  <data name="activity.event.page" xml:space="preserve"><value>Открытие страницы</value></data>
+  <data name="activity.event.clickButton" xml:space="preserve"><value>Нажатие кнопки</value></data>
+  <data name="activity.operation.delete" xml:space="preserve"><value>Удаление</value></data>
+  <data name="activity.operation.save" xml:space="preserve"><value>Сохранение изменений</value></data>
+  <data name="activity.operation.submit" xml:space="preserve"><value>Отправка данных</value></data>
+  <data name="activity.operation.error" xml:space="preserve"><value>{0} — ошибка</value></data>
+  <data name="userManagement.confirm.tests.disable.title" xml:space="preserve"><value>Изменить доступ к тестовым тарифам?</value></data>
+  <data name="userManagement.confirm.tests.disable.text" xml:space="preserve"><value>Для пользователя {0} тестовые подписки будут запрещены.</value></data>
+  <data name="userManagement.confirm.tests.enable.title" xml:space="preserve"><value>Изменить доступ к тестовым тарифам?</value></data>
+  <data name="userManagement.confirm.tests.enable.text" xml:space="preserve"><value>Для пользователя {0} тестовые подписки будут разрешены.</value></data>
+  <data name="userManagement.confirm.impersonate.title" xml:space="preserve"><value>Открыть браузерную админку?</value></data>
+  <data name="userManagement.confirm.impersonate.text" xml:space="preserve"><value>Откроется карточка {0}. Войдите в браузере как администратор, затем используйте действие «Войти от имени пользователя». Авторизация из приложения в браузер не передаётся.</value></data>
+  <data name="userManagement.confirm.grantDemo.title" xml:space="preserve"><value>Выдать демо-доступ?</value></data>
+  <data name="userManagement.confirm.grantDemo.text" xml:space="preserve"><value>Для цели «{0}» будет выдан демонстрационный тариф. Срок определяется настройками тарифа.</value></data>
+  <data name="userManagement.confirm.revokeDemo.title" xml:space="preserve"><value>Отозвать демо-доступ?</value></data>
+  <data name="userManagement.confirm.revokeDemo.text" xml:space="preserve"><value>Демонстрационная подписка цели «{0}» будет отозвана.</value></data>
+  <data name="userManagement.confirm.revokeDemoFree.title" xml:space="preserve"><value>Отозвать демо-доступ?</value></data>
+  <data name="userManagement.confirm.revokeDemoFree.text" xml:space="preserve"><value>Демо-подписка организации «{0}» будет отозвана. Для детейлинга и СТО останется бесплатный тариф Free, история и данные сохранятся.</value></data>
+  <data name="userManagement.confirm.grantPlan.title" xml:space="preserve"><value>Выдать тариф без оплаты?</value></data>
+  <data name="userManagement.confirm.grantPlan.text" xml:space="preserve"><value>Цель: «{0}». Тариф начнётся сейчас, платёж не создаётся.</value></data>
+  <data name="userManagement.confirm.grantPro.title" xml:space="preserve"><value>Выдать PRO без оплаты?</value></data>
+  <data name="userManagement.confirm.grantPro.text" xml:space="preserve"><value>Цель: «{0}». Тариф начнётся сейчас, платёж не создаётся.</value></data>
+  <data name="userManagement.confirm.extend.title" xml:space="preserve"><value>Продлить подписку?</value></data>
+  <data name="userManagement.confirm.extend.text" xml:space="preserve"><value>Цель: «{0}». Подписка № {1} будет продлена.</value></data>
+  <data name="userManagement.confirm.stop.title" xml:space="preserve"><value>Остановить подписки?</value></data>
+  <data name="userManagement.confirm.stop.text" xml:space="preserve"><value>Все действующие подписки цели «{0}» будут остановлены. Неиспользованный оплаченный срок автоматически не возвращается.</value></data>
+  <data name="userManagement.confirm.stopFree.title" xml:space="preserve"><value>Остановить подписки?</value></data>
+  <data name="userManagement.confirm.stopFree.text" xml:space="preserve"><value>Все подписки организации «{0}» будут остановлены. Для детейлинга и СТО останется бесплатный тариф Free, история и данные сохранятся. Неиспользованный оплаченный срок автоматически не возвращается.</value></data>
+  <data name="activity.action.view" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="activity.action.save" xml:space="preserve"><value>Сохранение</value></data>
+  <data name="activity.action.create" xml:space="preserve"><value>Создание</value></data>
+  <data name="activity.action.create_order" xml:space="preserve"><value>Создание заказа</value></data>
+  <data name="activity.action.create_booking" xml:space="preserve"><value>Создание записи</value></data>
+  <data name="activity.action.create_client" xml:space="preserve"><value>Создание клиента</value></data>
+  <data name="activity.action.create_vehicle" xml:space="preserve"><value>Создание техники</value></data>
+  <data name="activity.action.add_service" xml:space="preserve"><value>Добавление услуги</value></data>
+  <data name="activity.action.add_material" xml:space="preserve"><value>Добавление материала</value></data>
+  <data name="activity.action.add_employee" xml:space="preserve"><value>Добавление сотрудника</value></data>
+  <data name="activity.action.add" xml:space="preserve"><value>Добавление</value></data>
+  <data name="activity.action.delete" xml:space="preserve"><value>Удаление</value></data>
+  <data name="activity.action.edit" xml:space="preserve"><value>Редактирование</value></data>
+  <data name="activity.action.cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="activity.action.close" xml:space="preserve"><value>Закрытие</value></data>
+  <data name="activity.action.back" xml:space="preserve"><value>Назад</value></data>
+  <data name="activity.action.continue" xml:space="preserve"><value>Продолжение</value></data>
+  <data name="activity.action.next" xml:space="preserve"><value>Далее</value></data>
+  <data name="activity.action.done" xml:space="preserve"><value>Готово</value></data>
+  <data name="activity.action.confirm" xml:space="preserve"><value>Подтверждение</value></data>
+  <data name="activity.action.open" xml:space="preserve"><value>Открытие</value></data>
+  <data name="activity.action.open_detailing" xml:space="preserve"><value>Открытие детейлинга</value></data>
+  <data name="activity.action.open_autoservice" xml:space="preserve"><value>Открытие автосервиса</value></data>
+  <data name="activity.action.open_fleet" xml:space="preserve"><value>Открытие автопарка</value></data>
+  <data name="activity.action.open_order" xml:space="preserve"><value>Открытие заказа</value></data>
+  <data name="activity.action.start_work" xml:space="preserve"><value>Начало работы</value></data>
+  <data name="activity.action.complete" xml:space="preserve"><value>Завершение</value></data>
+  <data name="activity.action.complete_work" xml:space="preserve"><value>Завершение работы</value></data>
+  <data name="activity.action.handover" xml:space="preserve"><value>Передача автомобиля</value></data>
+  <data name="activity.action.record_payment" xml:space="preserve"><value>Учёт оплаты</value></data>
+  <data name="activity.action.pay" xml:space="preserve"><value>Оплата</value></data>
+  <data name="activity.action.activate" xml:space="preserve"><value>Активация</value></data>
+  <data name="activity.action.start_demo" xml:space="preserve"><value>Запуск демо-доступа</value></data>
+  <data name="activity.action.refresh" xml:space="preserve"><value>Обновление</value></data>
+  <data name="activity.action.apply" xml:space="preserve"><value>Применение</value></data>
+  <data name="activity.action.reset" xml:space="preserve"><value>Сброс</value></data>
+  <data name="activity.action.search" xml:space="preserve"><value>Поиск</value></data>
+  <data name="activity.action.download" xml:space="preserve"><value>Скачивание</value></data>
+  <data name="activity.action.export" xml:space="preserve"><value>Экспорт</value></data>
+  <data name="activity.action.import" xml:space="preserve"><value>Импорт</value></data>
+  <data name="activity.action.print" xml:space="preserve"><value>Печать</value></data>
+  <data name="activity.action.send" xml:space="preserve"><value>Отправка</value></data>
+  <data name="activity.action.invite" xml:space="preserve"><value>Приглашение</value></data>
+  <data name="activity.action.archive" xml:space="preserve"><value>Архивация</value></data>
+  <data name="activity.action.restore" xml:space="preserve"><value>Восстановление</value></data>
+  <data name="activity.action.view_list" xml:space="preserve"><value>Просмотр списка</value></data>
+  <data name="activity.action.view_calendar" xml:space="preserve"><value>Просмотр расписания</value></data>
+  <data name="activity.action.view_posts" xml:space="preserve"><value>Просмотр по постам</value></data>
+  <data name="activity.action.view_slots" xml:space="preserve"><value>Просмотр временных слотов</value></data>
+  <data name="activity.action.view_month" xml:space="preserve"><value>Просмотр месяца</value></data>
+  <data name="activity.action.view_week" xml:space="preserve"><value>Просмотр недели</value></data>
+  <data name="activity.action.view_day" xml:space="preserve"><value>Просмотр дня</value></data>
+  <data name="activity.action.today" xml:space="preserve"><value>Переход к сегодня</value></data>
+  <data name="activity.action.previous" xml:space="preserve"><value>Предыдущий период</value></data>
+  <data name="activity.action.load_more" xml:space="preserve"><value>Загрузка следующего списка</value></data>
+  <data name="activity.action.open_scheduler" xml:space="preserve"><value>Открытие расписания</value></data>
+  <data name="activity.action.open_clients" xml:space="preserve"><value>Открытие клиентов</value></data>
+  <data name="activity.action.open_finance" xml:space="preserve"><value>Открытие финансов</value></data>
+  <data name="activity.action.open_settings" xml:space="preserve"><value>Открытие настроек</value></data>
+  <data name="activity.action.open_services" xml:space="preserve"><value>Открытие услуг</value></data>
+  <data name="activity.action.open_employees" xml:space="preserve"><value>Открытие сотрудников</value></data>
+  <data name="activity.action.link" xml:space="preserve"><value>Переход по ссылке</value></data>
+  <data name="activity.action.submit" xml:space="preserve"><value>Отправка формы</value></data>
+  <data name="activity.action.button" xml:space="preserve"><value>Кнопка</value></data>
+  <data name="activity.action.client_created" xml:space="preserve"><value>Создан клиент</value></data>
+  <data name="activity.action.work_created" xml:space="preserve"><value>Создан заказ</value></data>
+  <data name="activity.action.vehicle_created" xml:space="preserve"><value>Создана техника</value></data>
+  <data name="activity.action.demo_activated" xml:space="preserve"><value>Активирован демо-доступ</value></data>
+  <data name="activity.action.checkout_started" xml:space="preserve"><value>Начато оформление оплаты</value></data>
+  <data name="activity.action.plan_activated" xml:space="preserve"><value>Активирован тариф</value></data>
+  <data name="activity.section.scheduler" xml:space="preserve"><value>Расписание</value></data>
+  <data name="activity.section.detailing" xml:space="preserve"><value>Детейлинг</value></data>
+  <data name="activity.section.autoservice" xml:space="preserve"><value>Автосервис</value></data>
+  <data name="activity.section.fleet" xml:space="preserve"><value>Автопарк</value></data>
+  <data name="activity.section.personal" xml:space="preserve"><value>Личный кабинет</value></data>
+  <data name="activity.section.clients" xml:space="preserve"><value>Клиенты</value></data>
+  <data name="activity.section.finance" xml:space="preserve"><value>Финансы</value></data>
+  <data name="activity.section.settings" xml:space="preserve"><value>Настройки</value></data>
+  <data name="activity.section.services" xml:space="preserve"><value>Услуги</value></data>
+  <data name="activity.section.employees" xml:space="preserve"><value>Сотрудники</value></data>
+  <data name="activity.section.orders" xml:space="preserve"><value>Заказы</value></data>
+  <data name="activity.section.vehicles" xml:space="preserve"><value>Техника</value></data>
+  <data name="activity.section.vehicle" xml:space="preserve"><value>Техника</value></data>
+  <data name="activity.section.organizations" xml:space="preserve"><value>Организации</value></data>
+  <data name="activity.section.posts" xml:space="preserve"><value>Посты</value></data>
+  <data name="activity.section.slots" xml:space="preserve"><value>Слоты</value></data>
+  <data name="activity.section.profile" xml:space="preserve"><value>Профиль</value></data>
+  <data name="activity.section.account" xml:space="preserve"><value>Аккаунт</value></data>
+  <data name="activity.section.workspace" xml:space="preserve"><value>Рабочее пространство</value></data>
+  <data name="activity.section.catalog" xml:space="preserve"><value>Каталог</value></data>
+  <data name="activity.section.auth" xml:space="preserve"><value>Авторизация</value></data>
+  <data name="activity.section.payments" xml:space="preserve"><value>Платежи</value></data>
+  <data name="activity.section.export" xml:space="preserve"><value>Экспорт</value></data>
+  <data name="activity.section.import" xml:space="preserve"><value>Импорт</value></data>
+  <data name="activity.section.maintenance" xml:space="preserve"><value>Обслуживание</value></data>
+  <data name="activity.section.organization" xml:space="preserve"><value>Организация</value></data>
+  <data name="activity.section.subscription" xml:space="preserve"><value>Подписка</value></data>
+  <data name="activity.section.payment" xml:space="preserve"><value>Оплата</value></data>
+  <data name="activity.section.support" xml:space="preserve"><value>Поддержка</value></data>
+  <data name="activity.section.visualization" xml:space="preserve"><value>Визуализация</value></data>
+  <data name="activity.section.materials" xml:space="preserve"><value>Материалы</value></data>
+  <data name="activity.section.work-journal" xml:space="preserve"><value>Журнал работ</value></data>
+  <data name="activity.section.statistics" xml:space="preserve"><value>Статистика</value></data>
+  <data name="activity.section.shifts" xml:space="preserve"><value>Смены</value></data>
+  <data name="activity.section.members" xml:space="preserve"><value>Участники</value></data>
+  <data name="activity.section.billing" xml:space="preserve"><value>Биллинг</value></data>
+  <data name="activity.section.wiki" xml:space="preserve"><value>База знаний</value></data>
+  <data name="activity.section.defects" xml:space="preserve"><value>Дефекты</value></data>
+  <data name="activity.section.counters" xml:space="preserve"><value>Счётчики</value></data>
+  <data name="activity.section.bundles" xml:space="preserve"><value>Наборы</value></data>
+  <data name="activity.section.index" xml:space="preserve"><value>Главная</value></data>
+  <data name="activity.section.list" xml:space="preserve"><value>Список</value></data>
+  <data name="activity.section.create" xml:space="preserve"><value>Создание</value></data>
+  <data name="activity.section.edit" xml:space="preserve"><value>Редактирование</value></data>
+  <data name="activity.section.new" xml:space="preserve"><value>Создание</value></data>
+  <data name="activity.section.details" xml:space="preserve"><value>Подробности</value></data>
+  <data name="activity.section.history" xml:space="preserve"><value>История</value></data>
+  <data name="activity.section.journal" xml:space="preserve"><value>Журнал</value></data>
+  <data name="activity.section.albums" xml:space="preserve"><value>Альбомы</value></data>
+  <data name="activity.section.album" xml:space="preserve"><value>Альбом</value></data>
+  <data name="activity.section.photos" xml:space="preserve"><value>Фотографии</value></data>
+  <data name="activity.section.documents" xml:space="preserve"><value>Документы</value></data>
+  <data name="activity.section.quick-booking" xml:space="preserve"><value>Быстрая запись</value></data>
+  <data name="activity.section.quickbooking" xml:space="preserve"><value>Быстрая запись</value></data>
+  <data name="activity.section.overview" xml:space="preserve"><value>Обзор</value></data>
+  <data name="activity.section.rates" xml:space="preserve"><value>Тарифы</value></data>
+  <data name="activity.section.invitations" xml:space="preserve"><value>Приглашения</value></data>
+  <data name="activity.section.notifications" xml:space="preserve"><value>Уведомления</value></data>
+  <data name="activity.section.login" xml:space="preserve"><value>Вход</value></data>
+  <data name="activity.section.logout" xml:space="preserve"><value>Выход</value></data>
+  <data name="activity.section.register" xml:space="preserve"><value>Регистрация</value></data>
+  <data name="activity.section.confirmemail" xml:space="preserve"><value>Подтверждение почты</value></data>
+  <data name="activity.section.changepassword" xml:space="preserve"><value>Смена пароля</value></data>
+  <data name="activity.section.setpassword" xml:space="preserve"><value>Установка пароля</value></data>
+  <data name="activity.section.deleteaccount" xml:space="preserve"><value>Удаление аккаунта</value></data>
+  <data name="activity.section.vehiclepersonal" xml:space="preserve"><value>Личная техника</value></data>
+  <data name="activity.section.vehicleeditpersonal" xml:space="preserve"><value>Редактирование техники</value></data>
+  <data name="activity.section.vehiclecreatepersonal" xml:space="preserve"><value>Создание техники</value></data>
+  <data name="activity.section.vehiclejournal" xml:space="preserve"><value>Журнал техники</value></data>
+  <data name="activity.section.vehiclealbums" xml:space="preserve"><value>Альбомы техники</value></data>
+  <data name="activity.section.vehiclealbum" xml:space="preserve"><value>Альбом техники</value></data>
+  <data name="activity.section.vehiclephotos" xml:space="preserve"><value>Фотографии техники</value></data>
+  <data name="activity.section.maintenancepersonal" xml:space="preserve"><value>Личное обслуживание</value></data>
+  <data name="activity.section.maintenanceorganization" xml:space="preserve"><value>Обслуживание организации</value></data>
+  <data name="activity.section.createmaintenance" xml:space="preserve"><value>Создание обслуживания</value></data>
+  <data name="activity.section.createmaintenancepersonal" xml:space="preserve"><value>Создание личного обслуживания</value></data>
+  <data name="activity.section.createmaintenanceorganization" xml:space="preserve"><value>Создание обслуживания организации</value></data>
+  <data name="activity.section.maintenancehistory" xml:space="preserve"><value>История обслуживания</value></data>
+  <data name="activity.section.accountprofile" xml:space="preserve"><value>Профиль аккаунта</value></data>
+  <data name="activity.section.createorganization" xml:space="preserve"><value>Создание организации</value></data>
+  <data name="activity.section.setup" xml:space="preserve"><value>Настройка</value></data>
+  <data name="activity.section.resources" xml:space="preserve"><value>Ресурсы</value></data>
+  <data name="activity.section.schedule" xml:space="preserve"><value>Расписание</value></data>
+  <data name="activity.section.search" xml:space="preserve"><value>Поиск</value></data>
+  <data name="activity.section.help" xml:space="preserve"><value>Помощь</value></data>
+  <data name="core.session.readFailed" xml:space="preserve"><value>Не удалось прочитать сохранённую сессию.</value></data>
+  <data name="core.session.saveFailed" xml:space="preserve"><value>Не удалось защитить и сохранить сессию. Проверьте доступ к папке данных приложения.</value></data>
+  <data name="core.session.deleteFailed" xml:space="preserve"><value>Не удалось удалить сохранённую сессию. Проверьте доступ к папке данных приложения.</value></data>
+  <data name="core.navigation.readFailed" xml:space="preserve"><value>Раздел загружен, но не удалось сохранить отметку просмотра. Повторите обновление списка.</value></data>
+  <data name="core.navigation.timeout" xml:space="preserve"><value>Сервер не ответил вовремя. Повторите открытие раздела.</value></data>
+  <data name="core.navigation.accessDenied" xml:space="preserve"><value>Нет доступа к операции. Права пользователя обновлены.</value></data>
+  <data name="core.session.logoutFailed" xml:space="preserve"><value>Не удалось полностью завершить выход. {0}</value></data>
+  <data name="core.chart.noData" xml:space="preserve"><value>Нет данных</value></data>
+  <data name="core.permission.Admin.Access" xml:space="preserve"><value>Вход в административную панель</value></data>
+  <data name="core.permission.Admin.Dashboard.View" xml:space="preserve"><value>Просмотр дашборда</value></data>
+  <data name="core.permission.Admin.Users.View" xml:space="preserve"><value>Просмотр пользователей</value></data>
+  <data name="core.permission.Admin.Users.Manage" xml:space="preserve"><value>Управление пользователями</value></data>
+  <data name="core.permission.Admin.Users.Impersonate" xml:space="preserve"><value>Вход от имени пользователя</value></data>
+  <data name="core.permission.Admin.Billing.View" xml:space="preserve"><value>Просмотр платежей и подписок</value></data>
+  <data name="core.permission.Admin.Billing.Manage" xml:space="preserve"><value>Управление платежами и подписками</value></data>
+  <data name="core.permission.Admin.Content.View" xml:space="preserve"><value>Просмотр обращений и контента</value></data>
+  <data name="core.permission.Admin.Content.Manage" xml:space="preserve"><value>Управление контентом</value></data>
+  <data name="core.permission.Admin.Communications.View" xml:space="preserve"><value>Просмотр коммуникаций</value></data>
+  <data name="core.permission.Admin.Communications.Manage" xml:space="preserve"><value>Управление коммуникациями</value></data>
+  <data name="core.permission.Admin.Configuration.Manage" xml:space="preserve"><value>Настройка продукта</value></data>
+  <data name="core.permission.Admin.Permissions.Manage" xml:space="preserve"><value>Управление ролями и правами</value></data>
+  <data name="userCard.maintenanceTitle" xml:space="preserve"><value>ТО · {0}</value></data>
+  <data name="organization.status.archiveWarning" xml:space="preserve"><value>Организация станет недоступна для работы всем участникам. Через 30 дней штатная очистка пометит её удалённой. Архив не освобождает слот создания организации.</value></data>
+  <data name="organization.status.restoreWarning" xml:space="preserve"><value>Организация снова станет доступна участникам. Тариф, права и сохранённые данные останутся прежними.</value></data>
+  <data name="organization.status.unknownResult" xml:space="preserve"><value>Ответ сервера не получен. Обновите карточку и проверьте статус перед новым действием.</value></data>
+  <data name="Укажите HTTPS-адрес сервера в configuration/brand.json. HTTP допустим только для локальной разработки." xml:space="preserve"><value>Укажите HTTPS-адрес сервера в configuration/brand.json. HTTP допустим только для локальной разработки.</value></data>
+  <data name="Ссылка раздела должна быть локальным путём." xml:space="preserve"><value>Ссылка раздела должна быть локальным путём.</value></data>
+  <data name="Путь AdminDesktop:PendingActionsDirectory должен быть абсолютным." xml:space="preserve"><value>Путь AdminDesktop:PendingActionsDirectory должен быть абсолютным.</value></data>
+  <data name="Путь AdminDesktop:SessionDirectory должен быть абсолютным." xml:space="preserve"><value>Путь AdminDesktop:SessionDirectory должен быть абсолютным.</value></data>
+  <data name="Путь AdminDesktop:DashboardPreferencesFile должен быть абсолютным." xml:space="preserve"><value>Путь AdminDesktop:DashboardPreferencesFile должен быть абсолютным.</value></data>
+  <data name="core.dateTime.periodStart" xml:space="preserve"><value>Начало периода</value></data>
+  <data name="core.dateTime.periodEnd" xml:space="preserve"><value>Конец периода</value></data>
+  <data name="core.dateTime.noStart" xml:space="preserve"><value>Без даты начала</value></data>
+  <data name="core.dateTime.noEnd" xml:space="preserve"><value>Без даты окончания</value></data>
+  <data name="core.plans.deleteConfirmation" xml:space="preserve"><value>Удалить тариф «{0}»? Это действие нельзя отменить.</value></data>
+  <data name="core.format.dateTime" xml:space="preserve"><value>{0:g}</value></data>
+  <data name="core.format.date" xml:space="preserve"><value>{0:d}</value></data>
+  <data name="core.format.rubles" xml:space="preserve"><value>{0:N2} RUB</value></data>
+  <data name="userCard.timeline.registration" xml:space="preserve"><value>Регистрация</value></data>
+  <data name="userCard.timeline.login" xml:space="preserve"><value>Вход</value></data>
+  <data name="userCard.timeline.vehicle" xml:space="preserve"><value>Техника</value></data>
+  <data name="userCard.timeline.payment" xml:space="preserve"><value>Платеж</value></data>
+  <data name="userCard.timeline.subscription" xml:space="preserve"><value>Подписка</value></data>
+  <data name="userCard.timeline.support" xml:space="preserve"><value>Обращение</value></data>
+  <data name="userCard.timeline.organization" xml:space="preserve"><value>Организация</value></data>
+  <data name="userCard.timeline.registrationTitle" xml:space="preserve"><value>Пользователь зарегистрировался</value></data>
+  <data name="userCard.timeline.loginTitle" xml:space="preserve"><value>Последний вход пользователя</value></data>
+  <data name="userCard.maintenance.status.planned" xml:space="preserve"><value>Запланировано</value></data>
+  <data name="userCard.maintenance.status.inProgress" xml:space="preserve"><value>Выполняется</value></data>
+  <data name="userCard.maintenance.status.completed" xml:space="preserve"><value>Завершено</value></data>
+  <data name="userCard.maintenance.status.cancelled" xml:space="preserve"><value>Отменено</value></data>
+  <data name="userCard.maintenance.type.maintenance" xml:space="preserve"><value>Обслуживание</value></data>
+  <data name="userCard.maintenance.type.repair" xml:space="preserve"><value>Ремонт</value></data>
+  <data name="userCard.maintenance.type.refill" xml:space="preserve"><value>Заправка</value></data>
+  <data name="userCard.maintenance.type.other" xml:space="preserve"><value>Другое</value></data>
+  <data name="userCard.vehicle.kind.passengerCar" xml:space="preserve"><value>Легковой автомобиль</value></data>
+  <data name="userCard.vehicle.kind.truck" xml:space="preserve"><value>Грузовая техника</value></data>
+  <data name="userCard.vehicle.kind.motorcycle" xml:space="preserve"><value>Мотоцикл</value></data>
+  <data name="userCard.vehicle.kind.atv" xml:space="preserve"><value>Квадроцикл</value></data>
+  <data name="userCard.vehicle.kind.utv" xml:space="preserve"><value>Багги или UTV</value></data>
+  <data name="userCard.vehicle.kind.snowmobile" xml:space="preserve"><value>Снегоход</value></data>
+  <data name="userCard.vehicle.kind.jetSki" xml:space="preserve"><value>Гидроцикл</value></data>
+  <data name="userCard.vehicle.kind.boat" xml:space="preserve"><value>Лодка или катер</value></data>
+  <data name="userCard.vehicle.kind.specialEquipment" xml:space="preserve"><value>Спецтехника</value></data>
+  <data name="userCard.vehicle.kind.trailer" xml:space="preserve"><value>Прицеп</value></data>
+  <data name="userCard.vehicle.kind.other" xml:space="preserve"><value>Другая техника</value></data>
+  <data name="userCard.vehicle.mileageUnit.kilometers" xml:space="preserve"><value>км</value></data>
+  <data name="userCard.vehicle.mileageUnit.engineHours" xml:space="preserve"><value>моточасов</value></data>
+  <data name="userCard.support.type.question" xml:space="preserve"><value>Вопрос</value></data>
+  <data name="userCard.support.type.suggestion" xml:space="preserve"><value>Предложение</value></data>
+  <data name="userCard.support.type.bug" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="userCard.support.type.billing" xml:space="preserve"><value>Биллинг</value></data>
+  <data name="userCard.support.type.cooperation" xml:space="preserve"><value>Сотрудничество</value></data>
+  <data name="userCard.support.status.new" xml:space="preserve"><value>Новое</value></data>
+  <data name="userCard.support.status.inProgress" xml:space="preserve"><value>В работе</value></data>
+  <data name="userCard.support.status.closed" xml:space="preserve"><value>Закрыто</value></data>
+  <data name="userCard.support.status.spam" xml:space="preserve"><value>Спам</value></data>
+  <data name="userCard.payment.status.completed" xml:space="preserve"><value>Оплачено</value></data>
+  <data name="userCard.payment.status.succeeded" xml:space="preserve"><value>Успешно в YooKassa</value></data>
+  <data name="userCard.payment.status.pending" xml:space="preserve"><value>Ожидание</value></data>
+  <data name="userCard.payment.status.processing" xml:space="preserve"><value>Обработка</value></data>
+  <data name="userCard.payment.status.waitingForCapture" xml:space="preserve"><value>Ждет подтверждения</value></data>
+  <data name="userCard.payment.status.paidWaitingConfirmation" xml:space="preserve"><value>Оплачен, ждет подтверждения</value></data>
+  <data name="userCard.payment.status.canceled" xml:space="preserve"><value>Отменено</value></data>
+  <data name="userCard.payment.status.failed" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="userCard.payment.status.refunded" xml:space="preserve"><value>Возврат</value></data>
+  <data name="userCard.payment.status.noStatus" xml:space="preserve"><value>Без статуса</value></data>
+  <data name="userCard.payment.method.yooKassaExtension" xml:space="preserve"><value>YooKassa: продление</value></data>
+  <data name="userCard.payment.method.workspacePurchase" xml:space="preserve"><value>Покупка организации</value></data>
+  <data name="userCard.payment.method.workspaceExtension" xml:space="preserve"><value>Продление организации</value></data>
+  <data name="userCard.payment.method.noMethod" xml:space="preserve"><value>Не указан</value></data>
+  <data name="userCard.field.invitationRole" xml:space="preserve"><value>Роль приглашения</value></data>
+  <data name="userCard.organization.role.owner" xml:space="preserve"><value>Владелец</value></data>
+  <data name="userCard.organization.role.admin" xml:space="preserve"><value>Администратор</value></data>
+  <data name="userCard.organization.role.employee" xml:space="preserve"><value>Сотрудник</value></data>
+  <data name="userCard.organization.role.performer" xml:space="preserve"><value>Исполнитель</value></data>
+  <data name="userCard.organization.role.viewer" xml:space="preserve"><value>Наблюдатель</value></data>
+  <data name="userCard.organization.scenario.personal" xml:space="preserve"><value>Личный кабинет</value></data>
+  <data name="userCard.organization.scenario.serviceStation" xml:space="preserve"><value>Автосервис</value></data>
+  <data name="userCard.organization.scenario.detailing" xml:space="preserve"><value>Детейлинг</value></data>
+  <data name="userCard.organization.scenario.wrapping" xml:space="preserve"><value>Оклейка автомобилей</value></data>
+  <data name="userCard.organization.scenario.carWash" xml:space="preserve"><value>Автомойка</value></data>
+  <data name="userCard.organization.scenario.fleet" xml:space="preserve"><value>Автопарк</value></data>
+  <data name="userCard.organization.scenario.drivingSchool" xml:space="preserve"><value>Автошкола</value></data>
+  <data name="native.communications.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori" xml:space="preserve"><value>Не удалось связаться с сервером. Проверьте подключение и повторите попытку.</value></data>
+  <data name="native.roles.systemRoleName" xml:space="preserve"><value>System</value></data>
+  <data name="native.roles.permission.access" xml:space="preserve"><value>Доступ к административному модулю</value></data>
+  <data name="native.roles.permission.dashboardView" xml:space="preserve"><value>Просмотр дашборда</value></data>
+  <data name="native.roles.permission.usersView" xml:space="preserve"><value>Просмотр пользователей</value></data>
+  <data name="native.roles.permission.usersManage" xml:space="preserve"><value>Управление пользователями</value></data>
+  <data name="native.roles.permission.usersImpersonate" xml:space="preserve"><value>Вход от имени пользователя</value></data>
+  <data name="native.roles.permission.billingView" xml:space="preserve"><value>Просмотр платежей и подписок</value></data>
+  <data name="native.roles.permission.billingManage" xml:space="preserve"><value>Управление платежами и подписками</value></data>
+  <data name="native.roles.permission.contentView" xml:space="preserve"><value>Просмотр контента и обращений</value></data>
+  <data name="native.roles.permission.contentManage" xml:space="preserve"><value>Управление контентом и обращениями</value></data>
+  <data name="native.roles.permission.communicationsView" xml:space="preserve"><value>Просмотр сообщений и рассылок</value></data>
+  <data name="native.roles.permission.communicationsManage" xml:space="preserve"><value>Управление сообщениями и рассылками</value></data>
+  <data name="native.roles.permission.configurationManage" xml:space="preserve"><value>Управление настройками</value></data>
+  <data name="native.roles.permissionGroup.common" xml:space="preserve"><value>Общее</value></data>
+  <data name="native.roles.permissionGroup.dashboard" xml:space="preserve"><value>Дашборд</value></data>
+  <data name="native.roles.permissionGroup.users" xml:space="preserve"><value>Пользователи</value></data>
+  <data name="native.roles.permissionGroup.billing" xml:space="preserve"><value>Платежи</value></data>
+  <data name="native.roles.permissionGroup.content" xml:space="preserve"><value>Контент</value></data>
+  <data name="native.roles.permissionGroup.communications" xml:space="preserve"><value>Коммуникации</value></data>
+  <data name="native.roles.permissionGroup.configuration" xml:space="preserve"><value>Настройки</value></data>
+  <data name="userCard.subscriptionEnded" xml:space="preserve"><value>Завершена</value></data>
+  <data name="core.payment.needsAttention" xml:space="preserve"><value>Требует проверки</value></data>
+  <data name="userCard.payment.method.yooKassaPurchase" xml:space="preserve"><value>YooKassa: покупка</value></data>
+  <data name="userCard.payment.method.yooKassaWorkspacePurchase" xml:space="preserve"><value>YooKassa: покупка организации</value></data>
+  <data name="userCard.payment.method.yooKassaWorkspaceExtension" xml:space="preserve"><value>YooKassa: продление организации</value></data>
+</root>

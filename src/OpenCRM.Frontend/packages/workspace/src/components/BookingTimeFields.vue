@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../bookingTimeMessages'
+import { translate as t } from '@opencrm/ui/i18n'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { UiContextHint, UiTimePicker } from '@opencrm/ui'
 import { formatServiceDuration } from '../serviceDuration'
@@ -65,25 +67,25 @@ const dayOffset = computed(() => bookingDayOffset(props.date, endDate.value || p
 const intervalError = computed(() => {
   const from = timeMinutes(start.value)
   const to = timeMinutes(end.value)
-  if (dayOffset.value < 0) return 'Дата окончания не может быть раньше даты начала.'
-  if (dayOffset.value > 0 && (from === null || to === null)) return 'Укажите время начала и окончания многодневной записи.'
-  if (to !== null && from === null) return 'Укажите время начала.'
-  return from !== null && to !== null && dayOffset.value + to <= from ? 'Окончание должно быть позже начала.' : ''
+  if (dayOffset.value < 0) return t('bookingTime.endDate')
+  if (dayOffset.value > 0 && (from === null || to === null)) return t('bookingTime.multiTimes')
+  if (to !== null && from === null) return t('bookingTime.startRequired')
+  return from !== null && to !== null && dayOffset.value + to <= from ? t('bookingTime.endAfter') : ''
 })
 const unknownDurationHintText = computed(() => {
   if (dayOffset.value > 0) {
-    return 'Для многодневной записи необходимо вручную указать время начала и окончания. Автоматический расчёт по услугам недоступен.'
+    return t('bookingTime.multiManual')
   }
 
   if (end.value) {
-    return 'Длительность выбранных услуг неизвестна. Указанное окончание сохранится без автоматического пересчёта.'
+    return t('bookingTime.unknownEnd')
   }
 
   if (start.value) {
-    return 'Длительность выбранных услуг неизвестна. Для проверки занятости поста учитывается 60 минут от указанного начала; время окончания можно оставить пустым.'
+    return t('bookingTime.unknownDefault')
   }
 
-  return 'Длительность выбранных услуг неизвестна. Время начала и окончания можно указать вручную; автоматический расчёт недоступен.'
+  return t('bookingTime.unknownManual')
 })
 const conflicts = computed(() => {
   const minute = timeMinutes(start.value)
@@ -95,7 +97,7 @@ let timer: ReturnType<typeof setTimeout> | undefined
 
 function startUnavailable(value: string) {
   if (!enabled.value) return ''
-  if (!checked.value) return loading.value ? 'Проверяем занятость поста…' : 'Занятость поста не проверена'
+  if (!checked.value) return loading.value ? t('bookingTime.checking') : t('bookingTime.unchecked')
   const minute = timeMinutes(value)
   const occupied = slots.value.filter(slot => minute !== null && minute >= slot.startMinute && minute < slot.endMinute)
 
@@ -104,11 +106,11 @@ function startUnavailable(value: string) {
 
 function endUnavailable(value: string) {
   if (!enabled.value) return ''
-  if (!checked.value) return loading.value ? 'Проверяем занятость поста…' : 'Занятость поста не проверена'
+  if (!checked.value) return loading.value ? t('bookingTime.checking') : t('bookingTime.unchecked')
   const from = timeMinutes(start.value)
   const to = timeMinutes(value)
   if (from === null || to === null) return ''
-  if (dayOffset.value + to <= from) return 'Окончание должно быть позже начала'
+  if (dayOffset.value + to <= from) return t('bookingTime.endAfterShort')
 
   return findBookingConflicts(slots.value, from, dayOffset.value + to).map(describeOccupiedSlot).join('\n')
 }
@@ -132,7 +134,7 @@ async function refresh() {
 
     return true
   } catch {
-    if (!current.signal.aborted) error.value = 'Не удалось проверить занятость поста.'
+    if (!current.signal.aborted) error.value = t('bookingTime.loadError')
 
     return false
   } finally {
@@ -157,9 +159,9 @@ async function validate() {
 function getValidationError() {
   if (intervalError.value) return intervalError.value
   if (error.value) return error.value
-  if (conflicts.value.length) return `В выбранном интервале пост занят: ${conflicts.value.map(describeOccupiedSlot).join('; ')}`
+  if (conflicts.value.length) return t('bookingTime.conflict', { slots: conflicts.value.map(describeOccupiedSlot).join('; ') })
 
-  return 'Проверьте выбранный интервал времени.'
+  return t('bookingTime.checkInterval')
 }
 
 watch(() => [props.organizationId, props.date, endDate.value, props.location, props.excludeMaintenanceId, props.cancelled], () => {
@@ -183,39 +185,39 @@ defineExpose({ validate, getValidationError, useManualEnd })
 <template>
   <div class="booking-time-fields">
     <div class="booking-time-fields__inputs">
-      <UiTimePicker v-model="start" label="Начало" :disabled="disabled" :unavailable-reason="startUnavailable" />
+      <UiTimePicker v-model="start" :label="t('bookingTime.start')" :disabled="disabled" :unavailable-reason="startUnavailable" />
       <div class="booking-time-fields__end">
-        <UiTimePicker v-model="end" @update:model-value="useManualEnd" label="Окончание" :disabled="disabled" :unavailable-reason="endUnavailable" />
+        <UiTimePicker v-model="end" @update:model-value="useManualEnd" :label="t('bookingTime.end')" :disabled="disabled" :unavailable-reason="endUnavailable" />
         <UiContextHint
           :active="durationMinutes === null"
-          label="Почему окончание не рассчитывается автоматически"
+          :label="t('bookingTime.why')"
           :text="unknownDurationHintText"
         />
       </div>
     </div>
     <div v-if="durationMinutes !== undefined" class="booking-time-fields__duration" aria-live="polite">
-      <span v-if="durationMinutes != null">По услугам: {{ formatServiceDuration(durationMinutes) }}</span>
-      <button v-if="manualEnd && canCalculate" type="button" :disabled="disabled || cancelled" @click="recalculate">Рассчитать окончание</button>
+      <span v-if="durationMinutes != null">{{ t('bookingTime.duration', { duration: formatServiceDuration(durationMinutes) }) }}</span>
+      <button v-if="manualEnd && canCalculate" type="button" :disabled="disabled || cancelled" @click="recalculate">{{ t('bookingTime.recalculate') }}</button>
     </div>
     <div v-if="enabled || intervalError" ref="feedback" class="booking-time-fields__availability" tabindex="-1" aria-live="polite">
       <div v-if="intervalError" class="booking-time-fields__error" role="alert">{{ intervalError }}</div>
-      <span v-if="loading" role="status">Проверяем занятость поста…</span>
+      <span v-if="loading" role="status">{{ t('bookingTime.checking') }}</span>
       <div v-else-if="error" class="booking-time-fields__error" role="alert">
-        {{ error }} <button type="button" :disabled="disabled" @click="refresh">Повторить</button>
+        {{ error }} <button type="button" :disabled="disabled" @click="refresh">{{ t('bookingTime.retry') }}</button>
       </div>
       <template v-else-if="checked">
         <div v-if="conflicts.length" class="booking-time-fields__error" role="alert">
-          В выбранном интервале пост занят:
+          {{ t('bookingTime.occupied') }}
           <div v-for="slot in conflicts" :key="slot.id">{{ describeOccupiedSlot(slot) }}</div>
         </div>
         <div v-if="!conflicts.length && !intervalError && start && end" class="booking-time-fields__free">
-          <span aria-hidden="true">✓</span> Выбранное время свободно
+          <span aria-hidden="true">✓</span> {{ t('bookingTime.free') }}
         </div>
         <details v-if="slots.length">
-          <summary>Занято на посту · {{ slots.length }}</summary>
+          <summary>{{ t('bookingTime.slots', { count: slots.length }) }}</summary>
           <ul><li v-for="slot in slots" :key="slot.id">{{ describeOccupiedSlot(slot) }}</li></ul>
         </details>
-        <span v-else-if="!start || !end">На выбранный период пост свободен</span>
+        <span v-else-if="!start || !end">{{ t('bookingTime.periodFree') }}</span>
       </template>
     </div>
   </div>

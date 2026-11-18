@@ -20,6 +20,8 @@ public class OrganizationClientMaintenanceItemDto
     /// <summary> Сумма строк заказа до скидки. </summary>
     public decimal? GrossAmount { get; set; }
 
+    public string CurrencyCode { get; set; } = "RUB";
+
     /// <summary> Сумма строк заказа после скидки. </summary>
     public decimal? NetAmount { get; set; }
 

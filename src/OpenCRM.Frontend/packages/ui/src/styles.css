@@ -67,6 +67,34 @@
   margin-left: auto;
 }
 
+.opencrm-language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--crm-text, #202833);
+  font-size: 13px;
+}
+
+.opencrm-language-switcher select {
+  max-width: 138px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--crm-line, #dce2e9);
+  border-radius: 6px;
+  color: inherit;
+  background: var(--crm-surface, #fff);
+}
+
+.opencrm-language-switcher select:focus-visible {
+  outline: 2px solid var(--opencrm-accent);
+  outline-offset: 2px;
+}
+
+.opencrm-language-switcher__error {
+  color: var(--crm-danger-text, #a12b24);
+  font-size: 12px;
+}
+
 .opencrm-header__link {
   color: var(--opencrm-ink);
   padding: 4px 4px;

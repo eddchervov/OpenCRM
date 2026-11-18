@@ -49,6 +49,7 @@ public sealed class MaintenanceWorkMappingTests
     {
         var now = new DateTime(2026, 10, 11, 9, 0, 0, DateTimeKind.Utc);
         var maintenance = CreateMaintenance();
+        maintenance.CurrencyCode = CurrencyCodes.Cny;
         var detail = new MaintenanceDetail
         {
             DetailId = Guid.NewGuid(),
@@ -76,6 +77,7 @@ public sealed class MaintenanceWorkMappingTests
             maintenance, detail, operation, intervals, now, adjustmentMinutes: -5, reworkReason: "Перепроверить");
 
         Assert.Equal(maintenance.Id, result.MaintenanceId);
+        Assert.Equal(CurrencyCodes.Cny, result.CurrencyCode);
         Assert.Equal(detail.DetailId, result.DetailId);
         Assert.Equal("Полировка", result.Name);
         Assert.Equal("Автомобиль", result.VehicleName);

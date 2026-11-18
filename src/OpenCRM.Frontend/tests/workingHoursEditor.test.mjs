@@ -1,3 +1,4 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -6,6 +7,21 @@ import ts from 'typescript'
 import * as vue from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { workingWeek, workingScheduleError } from '../packages/workspace/src/workingHours.ts'
+import { i18n } from '@opencrm/ui/i18n'
+
+test('Названия дней и проверка графика используют язык после загрузки настроек', () => {
+  const previousLocale = i18n.global.locale.value
+  try {
+    i18n.global.locale.value = 'en'
+    assert.equal(workingWeek[0].name, 'Monday')
+    assert.equal(workingScheduleError([]), 'Select at least one working day.')
+    i18n.global.locale.value = 'zh-Hans'
+    assert.equal(workingWeek[0].name, '星期一')
+    assert.equal(workingScheduleError([]), '请至少选择一个营业日。')
+  } finally {
+    i18n.global.locale.value = previousLocale
+  }
+})
 
 const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/OrganizationWorkingHoursEditor.vue', import.meta.url), 'utf8'))
 const code = ts.transpileModule(compileScript(descriptor, { id: 'hours-editor', inlineTemplate: true }).content, {
@@ -23,6 +39,7 @@ async function render(disabled = false) {
   })
   const module = { exports: {} }
   new Function('require', 'module', 'exports', code)(id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
     if (id === 'vue') return vue
     if (id === '@opencrm/ui') return { UiTimePicker: picker, UiButton: { render() { return vue.h('button') } } }
     if (id === '../workingHours') return { workingWeek }

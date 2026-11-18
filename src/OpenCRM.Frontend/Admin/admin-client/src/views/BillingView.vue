@@ -35,8 +35,12 @@ import type { AdminPaymentStatusAudit } from '@/models/AdminPaymentStatusAudit'
 import type { AdminSubscriptionAudit } from '@/models/AdminSubscriptionAudit'
 import type { AdminAvailablePlan } from '@/models/AdminAvailablePlan'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminBillingMessages'
+import { getAdminRecordLabel, getAdminPaymentStatusLabel } from '@/utils/adminRecordLabels'
 
 const currentUserStore = useAdminCurrentUserStore()
+const { t, locale } = useLocalization()
 const route = useRoute()
 const router = useRouter()
 const billing = ref<AdminBilling | null>(null)
@@ -193,20 +197,15 @@ function requiresReceiptAttention(purchase: AdminBillingPurchase): boolean {
 
 function getReceiptAge(purchase: AdminBillingPurchase): string {
   const ageDays = Math.floor((Date.now() - new Date(purchase.paidAt).getTime()) / (24 * 60 * 60 * 1000))
-  return ageDays < 1 ? 'Сегодня' : `${ageDays} дн.`
+  return ageDays < 1 ? t('adminBilling.view.todayAge') : t('adminBilling.view.daysShort', { days: ageDays })
 }
 
 function getDeliveryStatusName(status: string): string {
-  const names: Record<string, string> = {
-    not_sent: 'Не отправлен',
-    queued: 'В очереди',
-    sent: 'Принят почтовым сервисом',
-    delivered: 'Доставлен',
-    simulated: 'Симуляция отправки',
-    failed: 'Ошибка отправки'
+  const keys: Record<string, string> = {
+    not_sent: 'sentNot', queued: 'sentQueued', sent: 'sentAccepted', delivered: 'sentDelivered', simulated: 'sentSimulated', failed: 'sentFailed'
   }
 
-  return names[status] ?? status
+  return keys[status] ? t(`adminBilling.view.${keys[status]}`) : status
 }
 
 const subscriptions = computed(() => subscriptionScope.value === 'users'
@@ -214,7 +213,7 @@ const subscriptions = computed(() => subscriptionScope.value === 'users'
   : billing.value?.subscriptions.organizations ?? [])
 
 const subscriptionPlans = computed(() => [...new Set(subscriptions.value.map(subscription => subscription.planName))]
-  .sort((first, second) => first.localeCompare(second, 'ru')))
+  .sort((first, second) => first.localeCompare(second, locale.value)))
 const grantablePlans = computed(() => availablePlans.value.filter(plan =>
   plan.planTypeCode === (subscriptionScope.value === 'users' ? 'personal' : 'business')))
 
@@ -281,7 +280,7 @@ async function loadAvailablePlans(): Promise<void> {
   try {
     availablePlans.value = await getAdminAvailablePlans()
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось загрузить тарифы для выдачи.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.plansLoadError'))
   }
 }
 
@@ -294,7 +293,7 @@ async function loadBilling(): Promise<void> {
     purchases.value = await getAdminBillingPurchases()
     await selectRecordFromRoute()
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось загрузить платежи и подписки.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.loadError'))
   } finally {
     isLoading.value = false
   }
@@ -308,7 +307,7 @@ async function selectRecordFromRoute(): Promise<void> {
   const id = Number(route.params.recordId)
   const type = route.params.recordType
   if (!Number.isInteger(id)) {
-    errorMessage.value = 'Некорректный номер записи.'
+    errorMessage.value = t('adminBilling.view.invalidRecordId')
     return
   }
 
@@ -317,20 +316,20 @@ async function selectRecordFromRoute(): Promise<void> {
     const payment = billing.value.payments.find(item => item.id === id)
       ?? await getAdminBillingPayment(id).catch(() => null)
     if (payment) await selectPayment(payment)
-    else errorMessage.value = 'Платёж не найден.'
+    else errorMessage.value = t('adminBilling.view.paymentNotFound')
   } else if (type === 'purchases') {
     activeTab.value = 'purchases'
     const purchase = purchases.value.find(item => item.paymentId === id)
     if (purchase) selectPurchase(purchase)
-    else errorMessage.value = 'Покупка не найдена.'
+    else errorMessage.value = t('adminBilling.view.purchaseNotFound')
   } else if (type === 'user-subscriptions' || type === 'organization-subscriptions') {
     activeTab.value = 'subscriptions'
     subscriptionScope.value = type === 'user-subscriptions' ? 'users' : 'organizations'
     const subscription = billing.value.subscriptions[subscriptionScope.value].find(item => item.id === id)
     if (subscription) await selectSubscription(subscription)
-    else errorMessage.value = 'Подписка не найдена.'
+    else errorMessage.value = t('adminBilling.view.subscriptionNotFound')
   } else {
-    errorMessage.value = 'Неизвестный тип записи.'
+    errorMessage.value = t('adminBilling.view.unknownRecordType')
   }
 }
 
@@ -374,7 +373,7 @@ async function selectPayment(payment: AdminBillingPayment): Promise<void> {
     paymentStatusAudits.value = audits
   } catch (error) {
     if (request !== paymentDetailsRequest || selectedPayment.value?.id !== payment.id) return
-    paymentDetailsError.value = getErrorMessage(error, 'Не удалось загрузить данные платежа. Попробуйте обновить карточку.')
+    paymentDetailsError.value = getErrorMessage(error, t('adminBilling.view.paymentDetailsError'))
     if (payment.paymentProviderCode !== 'payments-service') errorMessage.value = paymentDetailsError.value
   } finally {
     if (request === paymentDetailsRequest) isLoadingPaymentDetails.value = false
@@ -394,7 +393,7 @@ async function selectSubscription(subscription: AdminBillingUserSubscription | A
   try {
     subscriptionAudits.value = await getAdminSubscriptionAudits(subscriptionScope.value, subscription.id)
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось загрузить журнал подписки.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.subscriptionAuditsError'))
   }
 }
 
@@ -470,8 +469,8 @@ async function saveNpdReceiptStatus(): Promise<void> {
   }
 
   const issued = !purchase.npdReceiptIssued
-  const action = issued ? 'отметить чек НПД выданным' : 'снять отметку о выдаче чека НПД'
-  if (!window.confirm(`Подтвердить действие: ${action}?`)) {
+  const action = issued ? t('adminBilling.view.issueReceipt') : t('adminBilling.view.unissueReceipt')
+  if (!window.confirm(t('adminBilling.view.confirmActionPrompt', { action }))) {
     return
   }
 
@@ -480,11 +479,11 @@ async function saveNpdReceiptStatus(): Promise<void> {
 
   try {
     const result = await markAdminNpdReceipt(purchase.paymentId, issued, purchase.npdReceiptIssued, reason)
-    successMessage.value = result.message || 'Статус чека НПД сохранён.'
+    successMessage.value = result.message || t('adminBilling.view.receiptStatusSaved')
     purchases.value = await getAdminBillingPurchases()
     returnToList()
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось сохранить статус чека НПД.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.saveReceiptStatusError'))
   } finally {
     isSaving.value = false
   }
@@ -505,10 +504,10 @@ async function saveNpdReceiptDetails(): Promise<void> {
       receiptUrl.value.trim(),
       receiptComment.value.trim()
     )
-    successMessage.value = result.message || 'Ссылка и комментарий сохранены.'
+    successMessage.value = result.message || t('adminBilling.view.receiptDetailsSaved')
     await refreshSelectedPurchase(purchase.paymentId)
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось сохранить данные чека.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.saveReceiptDetailsError'))
   } finally {
     isSaving.value = false
   }
@@ -523,7 +522,7 @@ async function uploadNpdReceiptFile(event: Event): Promise<void> {
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    errorMessage.value = 'Размер файла не должен превышать 5 МБ.'
+    errorMessage.value = t('adminBilling.view.fileTooLarge')
     input.value = ''
     return
   }
@@ -533,10 +532,10 @@ async function uploadNpdReceiptFile(event: Event): Promise<void> {
 
   try {
     const result = await uploadAdminNpdReceiptFile(purchase.paymentId, file)
-    successMessage.value = result.message || 'Файл чека приложен.'
+    successMessage.value = result.message || t('adminBilling.view.receiptFileAttached')
     await refreshSelectedPurchase(purchase.paymentId)
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось приложить файл чека.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.attachFileError'))
   } finally {
     isUploadingReceipt.value = false
     input.value = ''
@@ -545,7 +544,7 @@ async function uploadNpdReceiptFile(event: Event): Promise<void> {
 
 async function removeNpdReceiptFile(): Promise<void> {
   const purchase = selectedPurchase.value
-  if (!purchase || !window.confirm('Открепить файл чека от платежа?')) {
+  if (!purchase || !window.confirm(t('adminBilling.view.removeReceiptFileConfirm'))) {
     return
   }
 
@@ -554,10 +553,10 @@ async function removeNpdReceiptFile(): Promise<void> {
 
   try {
     const result = await deleteAdminNpdReceiptFile(purchase.paymentId)
-    successMessage.value = result.message || 'Файл чека откреплён.'
+    successMessage.value = result.message || t('adminBilling.view.receiptFileRemoved')
     await refreshSelectedPurchase(purchase.paymentId)
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось открепить файл чека.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.removeReceiptFileError'))
   } finally {
     isSaving.value = false
   }
@@ -574,12 +573,12 @@ async function sendNpdReceipt(purchase: AdminBillingPurchase): Promise<void> {
   }
 
   if (!purchase.userEmail) {
-    errorMessage.value = 'У покупателя не указан адрес электронной почты.'
+    errorMessage.value = t('adminBilling.view.emailMissing')
     return
   }
 
   if (!purchase.npdReceiptFileUrl && !purchase.npdReceiptUrl) {
-    errorMessage.value = 'Добавьте файл чека или ссылку на чек перед отправкой.'
+    errorMessage.value = t('adminBilling.view.receiptRequired')
     return
   }
 
@@ -588,14 +587,14 @@ async function sendNpdReceipt(purchase: AdminBillingPurchase): Promise<void> {
 
   try {
     const result = await sendAdminNpdReceipt(purchase.paymentId)
-    successMessage.value = result.message || 'Чек поставлен в очередь на отправку.'
+    successMessage.value = result.message || t('adminBilling.view.receiptQueued')
     const selectedPaymentId = selectedPurchase.value?.paymentId
     purchases.value = await getAdminBillingPurchases()
     selectedPurchase.value = selectedPaymentId
       ? purchases.value.find(item => item.paymentId === selectedPaymentId) ?? null
       : null
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось поставить чек в очередь на отправку.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.sendReceiptError'))
   } finally {
     sendingReceiptPaymentId.value = null
   }
@@ -613,9 +612,9 @@ async function syncPayment(): Promise<void> {
     const result = await syncAdminPayment(selectedPayment.value.id)
     await loadBilling()
     returnToList()
-    successMessage.value = result.message || 'Статус платежа обновлён.'
+    successMessage.value = result.message || t('adminBilling.view.paymentUpdated')
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось сверить платёж с YooKassa.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.syncPaymentError'))
   } finally {
     isSyncing.value = false
   }
@@ -633,7 +632,7 @@ async function savePaymentStatus(): Promise<void> {
       selectedPayment.value!.paymentStatus,
       statusChangeReason.value.trim()
     ),
-    'Статус платежа сохранён.'
+    t('adminBilling.view.paymentStatusSaved')
   )
 }
 
@@ -644,7 +643,7 @@ async function extendSubscription(): Promise<void> {
 
   await runOperation(
     () => extendAdminSubscription(subscriptionScope.value, selectedSubscription.value!.id, extensionDays.value, subscriptionReason.value.trim(), selectedSubscription.value!.endDate),
-    'Подписка продлена.'
+    t('adminBilling.view.subscriptionExtended')
   )
 }
 
@@ -655,7 +654,7 @@ async function stopSubscription(): Promise<void> {
 
   await runOperation(
     () => stopAdminSubscription(subscriptionScope.value, selectedSubscription.value!.id, subscriptionReason.value.trim(), selectedSubscription.value!.endDate),
-    'Подписка остановлена.'
+    t('adminBilling.view.subscriptionStopped')
   )
 }
 
@@ -678,7 +677,7 @@ async function changeDemo(): Promise<void> {
       ? grantAdminUserDemo(subscription.userId, reason)
       : revokeAdminUserDemo(subscription.userId, reason)
 
-  await runOperation(operation, isGrant ? 'Демо-доступ выдан.' : 'Демо-доступ отозван.')
+  await runOperation(operation, isGrant ? t('adminBilling.view.demoGranted') : t('adminBilling.view.demoRevoked'))
 }
 
 async function grantPlan(): Promise<void> {
@@ -692,7 +691,7 @@ async function grantPlan(): Promise<void> {
 
   await runOperation(
     () => grantAdminPlan(subscriptionScope.value, id, grantPlanId.value, extensionDays.value, subscriptionReason.value.trim()),
-    'Тариф выдан без оплаты.'
+    t('adminBilling.view.planGranted')
   )
 }
 
@@ -722,7 +721,7 @@ async function runOperation(
     else closeEditors()
     successMessage.value = result.message || fallbackMessage
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, 'Не удалось выполнить операцию.')
+    errorMessage.value = getErrorMessage(error, t('adminBilling.view.operationError'))
   } finally {
     isSaving.value = false
   }
@@ -738,11 +737,11 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 function formatMoney(value: number): string {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code' }).format(value)
 }
 
 function formatDate(value: string): string {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -752,199 +751,185 @@ function formatDate(value: string): string {
 }
 
 function formatDaysLeft(days: number): string {
-  return days > 0 ? `Осталось ${days} дн.` : 'Срок истёк'
+  return days > 0 ? t('adminBilling.view.expiredInDays', { days }) : t('adminBilling.view.termExpired')
 }
 
 function getSourceName(source: string): string {
-  const names: Record<string, string> = {
-    paid: 'Оплата',
-    demo: 'Демо',
-    promo: 'Подарочный доступ',
-    manual: 'Администратор',
-    unknown: 'Неизвестен'
+  const keys: Record<string, string> = {
+    paid: 'sourcePaid', demo: 'sourceDemo', promo: 'sourcePromo', manual: 'sourceManual', unknown: 'sourceUnknown'
   }
 
-  return names[source] ?? source
+  return keys[source] ? t(`adminBilling.view.${keys[source]}`) : source
 }
 
 function getAuditActionName(action: string): string {
-  const names: Record<string, string> = {
-    extended: 'Продление без оплаты',
-    stopped: 'Остановка',
-    demo_granted: 'Демо выдано',
-    demo_revoked: 'Демо отозвано',
-    granted: 'Тариф выдан без оплаты'
+  const keys: Record<string, string> = {
+    extended: 'auditExtended', stopped: 'auditStopped', demo_granted: 'auditDemoGranted', demo_revoked: 'auditDemoRevoked', granted: 'auditPlanGranted'
   }
 
-  return names[action] ?? action
+  return keys[action] ? t(`adminBilling.view.${keys[action]}`) : action
 }
 
 function getStatusName(status: string): string {
-  const names: Record<string, string> = {
-    completed: 'Оплачено',
-    succeeded: 'Успешно в YooKassa',
-    paid_waiting_confirmation: 'Оплачен, ждёт подтверждения',
-    pending: 'Ожидание',
-    waiting_for_capture: 'Ждёт подтверждения',
-    failed: 'Ошибка',
-    canceled: 'Отменено',
-    refunded: 'Возврат'
+  const keys: Record<string, string> = {
+    completed: 'statusCompleted', succeeded: 'statusSucceeded', paid_waiting_confirmation: 'statusPaidWaiting', pending: 'statusPending',
+    waiting_for_capture: 'statusCapture', failed: 'statusFailed', canceled: 'statusCanceled', refunded: 'statusRefunded'
   }
 
-  return names[status] ?? (status || 'Без статуса')
+  return keys[status] ? t(`adminBilling.view.${keys[status]}`) : status || t('adminBilling.view.statusUnknown')
 }
 
 function getBuyerTypeName(buyerType: AdminBillingPurchase['buyerType']): string {
   if (buyerType === 'individual') {
-    return 'Физическое лицо'
+    return t('adminBilling.view.buyerIndividual')
   }
 
   if (buyerType === 'business') {
-    return 'Организация или ИП'
+    return t('adminBilling.view.buyerBusiness')
   }
 
-  return 'Тип не указан'
+  return t('adminBilling.view.buyerUnknown')
 }
 </script>
 
 <template>
   <section class="finance-page">
-    <h1>Платежи и подписки</h1>
+    <h1>{{ t('adminBilling.view.title') }}</h1>
 
-    <button v-if="isDetail" class="secondary-button finance-back" type="button" @click="returnToList">← К списку</button>
+    <button v-if="isDetail" class="secondary-button finance-back" type="button" @click="returnToList">{{ t('adminBilling.view.backToList') }}</button>
 
     <div v-if="billing && !isDetail" class="finance-kpis">
-      <div><span>Оплачено после возвратов за 30 дней</span><strong>{{ formatMoney(billing.kpis.payments30DaysAmount) }}</strong></div>
-      <div><span>Подтверждённых оплат за 30 дней</span><strong>{{ billing.kpis.payments30DaysCount }}</strong></div>
-      <div><span>Ожидают</span><strong>{{ billing.kpis.pendingPayments30Days }}</strong></div>
-      <div><span>Проблемные</span><strong>{{ billing.kpis.problemPayments30Days }}</strong></div>
-      <button class="finance-kpi-action" type="button" @click="showActiveSubscriptions('organizations')"><span>Действующие подписки организаций</span><strong>{{ billing.kpis.activeOrganizationSubscriptions }}</strong></button>
-      <button class="finance-kpi-action" type="button" @click="showActiveSubscriptions('users')"><span>Действующие личные подписки</span><strong>{{ billing.kpis.activeUserSubscriptions }}</strong></button>
-      <div><span>Истекают за 7 дней</span><strong>{{ billing.kpis.expiringSubscriptions7Days }}</strong></div>
+      <div><span>{{ t('adminBilling.view.paidAfterRefunds30') }}</span><strong>{{ formatMoney(billing.kpis.payments30DaysAmount) }}</strong></div>
+      <div><span>{{ t('adminBilling.view.confirmedPayments30') }}</span><strong>{{ billing.kpis.payments30DaysCount }}</strong></div>
+      <div><span>{{ t('adminBilling.view.pending') }}</span><strong>{{ billing.kpis.pendingPayments30Days }}</strong></div>
+      <div><span>{{ t('adminBilling.view.problem') }}</span><strong>{{ billing.kpis.problemPayments30Days }}</strong></div>
+      <button class="finance-kpi-action" type="button" @click="showActiveSubscriptions('organizations')"><span>{{ t('adminBilling.view.activeOrganizationSubscriptions') }}</span><strong>{{ billing.kpis.activeOrganizationSubscriptions }}</strong></button>
+      <button class="finance-kpi-action" type="button" @click="showActiveSubscriptions('users')"><span>{{ t('adminBilling.view.activeUserSubscriptions') }}</span><strong>{{ billing.kpis.activeUserSubscriptions }}</strong></button>
+      <div><span>{{ t('adminBilling.view.expiringSevenDays') }}</span><strong>{{ billing.kpis.expiringSubscriptions7Days }}</strong></div>
     </div>
 
     <div v-if="!isDetail" class="finance-tabs">
-      <button type="button" :class="{ active: activeTab === 'payments' }" @click="showPayments">Платежи</button>
-      <button type="button" :class="{ active: activeTab === 'purchases' }" @click="showPurchases">Покупки и чеки НПД</button>
-      <button type="button" :class="{ active: activeTab === 'subscriptions' }" @click="showSubscriptions">Подписки</button>
+      <button type="button" :class="{ active: activeTab === 'payments' }" @click="showPayments">{{ t('adminBilling.view.paymentsTab') }}</button>
+      <button type="button" :class="{ active: activeTab === 'purchases' }" @click="showPurchases">{{ t('adminBilling.view.purchasesTab') }}</button>
+      <button type="button" :class="{ active: activeTab === 'subscriptions' }" @click="showSubscriptions">{{ t('adminBilling.view.subscriptionsTab') }}</button>
     </div>
 
     <div v-if="!isDetail" class="finance-toolbar">
-      <input v-model="search" type="search" placeholder="Поиск">
+      <input v-model="search" type="search" :placeholder="t('adminBilling.view.search')">
       <SearchSelect v-if="activeTab === 'payments'" v-model="paymentStatus" :options="[
-        { value: '', label: 'Все статусы' },
-        { value: 'success', label: 'Успешные' },
-        { value: 'pending', label: 'Ожидают' },
-        { value: 'problem', label: 'Проблемные' },
-        { value: 'canceled', label: 'Отменённые' },
-        { value: 'refunded', label: 'Возвраты' },
-        { value: 'unknown', label: 'Без статуса' },
-        { value: 'other', label: 'Другие' }
+        { value: '', label: t('adminBilling.view.allStatuses') },
+        { value: 'success', label: t('adminBilling.view.successStatuses') },
+        { value: 'pending', label: t('adminBilling.view.waitingStatuses') },
+        { value: 'problem', label: t('adminBilling.view.problemStatuses') },
+        { value: 'canceled', label: t('adminBilling.view.canceledStatuses') },
+        { value: 'refunded', label: t('adminBilling.view.refunds') },
+        { value: 'unknown', label: t('adminBilling.view.statusUnknown') },
+        { value: 'other', label: t('adminBilling.view.otherStatuses') }
       ]" />
       <template v-else-if="activeTab === 'purchases'">
         <SearchSelect v-model="purchaseBuyerType" :options="[
-          { value: '', label: 'Все покупатели' },
-          { value: 'individual', label: 'Физические лица' },
-          { value: 'business', label: 'Организации и ИП' },
-          { value: 'unknown', label: 'Тип не указан' }
+          { value: '', label: t('adminBilling.view.allBuyers') },
+          { value: 'individual', label: t('adminBilling.view.individuals') },
+          { value: 'business', label: t('adminBilling.view.businesses') },
+          { value: 'unknown', label: t('adminBilling.view.buyerTypeUnknown') }
         ]" />
         <SearchSelect v-model="purchaseReceiptStatus" :options="[
-          { value: '', label: 'Все чеки' },
-          { value: 'pending', label: 'Чек не отмечен' },
-          { value: 'issued', label: 'Чек выдан' }
+          { value: '', label: t('adminBilling.view.allReceipts') },
+          { value: 'pending', label: t('adminBilling.view.receiptPending') },
+          { value: 'issued', label: t('adminBilling.view.receiptIssued') }
         ]" />
         <SearchSelect v-model="purchaseQueueFilter" :options="[
-          { value: 'attention', label: 'Требуют внимания' },
-          { value: 'all', label: 'Все покупки' },
-          { value: 'overdue', label: 'Просроченные чеки' },
-          { value: 'email_failed', label: 'Ошибка отправки' },
-          { value: 'email_queued', label: 'В очереди отправки' },
-          { value: 'email_sent', label: 'Переданы почтовому сервису' },
-          { value: 'refunded', label: 'Возвраты' }
+          { value: 'attention', label: t('adminBilling.view.attentionQueue') },
+          { value: 'all', label: t('adminBilling.view.allPurchases') },
+          { value: 'overdue', label: t('adminBilling.view.overdueReceipts') },
+          { value: 'email_failed', label: t('adminBilling.view.emailFailed') },
+          { value: 'email_queued', label: t('adminBilling.view.emailQueued') },
+          { value: 'email_sent', label: t('adminBilling.view.emailSent') },
+          { value: 'refunded', label: t('adminBilling.view.refunds') }
         ]" />
       </template>
       <template v-else>
         <div class="finance-segmented">
-          <button type="button" :class="{ active: subscriptionScope === 'users' }" @click="setSubscriptionScope('users')">Пользователи</button>
-          <button type="button" :class="{ active: subscriptionScope === 'organizations' }" @click="setSubscriptionScope('organizations')">Организации</button>
+          <button type="button" :class="{ active: subscriptionScope === 'users' }" @click="setSubscriptionScope('users')">{{ t('adminBilling.view.usersScope') }}</button>
+          <button type="button" :class="{ active: subscriptionScope === 'organizations' }" @click="setSubscriptionScope('organizations')">{{ t('adminBilling.view.organizationsScope') }}</button>
         </div>
         <SearchSelect v-model="subscriptionStatus" :options="[
-          { value: '', label: 'Все статусы' },
-          { value: 'active', label: 'Действуют' },
-          { value: 'expiring', label: 'Скоро истекут' },
-          { value: 'ended', label: 'Завершены' }
+          { value: '', label: t('adminBilling.view.allStatuses') },
+          { value: 'active', label: t('adminBilling.view.activeFilter') },
+          { value: 'expiring', label: t('adminBilling.view.expiringFilter') },
+          { value: 'ended', label: t('adminBilling.view.endedFilter') }
         ]" />
         <SearchSelect v-model="subscriptionPlan" :options="[
-          { value: '', label: 'Все тарифы' },
+          { value: '', label: t('adminBilling.view.allPlans') },
           ...subscriptionPlans.map(plan => ({ value: plan, label: plan }))
         ]" />
         <SearchSelect v-model="subscriptionSource" :options="[
-          { value: '', label: 'Все источники' },
-          { value: 'paid', label: 'Оплата' },
-          { value: 'demo', label: 'Демо' },
-          { value: 'promo', label: 'Подарочный доступ' },
-          { value: 'manual', label: 'Администратор' },
-          { value: 'unknown', label: 'Неизвестен' }
+          { value: '', label: t('adminBilling.view.allSources') },
+          { value: 'paid', label: t('adminBilling.view.sourcePaidLabel') },
+          { value: 'demo', label: t('adminBilling.view.sourceDemoLabel') },
+          { value: 'promo', label: t('adminBilling.view.sourcePromoLabel') },
+          { value: 'manual', label: t('adminBilling.view.sourceAdminLabel') },
+          { value: 'unknown', label: t('adminBilling.view.unknownFilter') }
         ]" />
       </template>
-      <button class="secondary-button" type="button" :disabled="isLoading" @click="loadBilling">Обновить</button>
+      <button class="secondary-button" type="button" :disabled="isLoading" @click="loadBilling">{{ t('adminBilling.view.refresh') }}</button>
     </div>
 
     <div v-if="activeTab === 'purchases' && !isDetail" class="finance-kpis">
-      <div><span>Оплачено до возвратов</span><strong>{{ formatMoney(purchaseKpis.paidAmount) }}</strong></div>
-      <div><span>Возвращено</span><strong>{{ formatMoney(purchaseKpis.refundedAmount) }}</strong></div>
-      <div><span>После возвратов</span><strong>{{ formatMoney(purchaseKpis.netAmount) }}</strong></div>
-      <div><span>Требуют внимания</span><strong>{{ purchaseKpis.attentionCount }}</strong></div>
-      <div><span>Просрочены больше суток</span><strong>{{ purchaseKpis.overdueCount }}</strong></div>
+      <div><span>{{ t('adminBilling.view.paidBeforeRefunds') }}</span><strong>{{ formatMoney(purchaseKpis.paidAmount) }}</strong></div>
+      <div><span>{{ t('adminBilling.view.refunded') }}</span><strong>{{ formatMoney(purchaseKpis.refundedAmount) }}</strong></div>
+      <div><span>{{ t('adminBilling.view.netAfterRefunds') }}</span><strong>{{ formatMoney(purchaseKpis.netAmount) }}</strong></div>
+      <div><span>{{ t('adminBilling.view.needsAttention') }}</span><strong>{{ purchaseKpis.attentionCount }}</strong></div>
+      <div><span>{{ t('adminBilling.view.overdueMoreThanDay') }}</span><strong>{{ purchaseKpis.overdueCount }}</strong></div>
     </div>
 
     <div v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</div>
     <div v-if="successMessage" class="form-message form-message--success">{{ successMessage }}</div>
-    <div v-if="isLoading && !billing" class="panel-state">Загрузка…</div>
+    <div v-if="isLoading && !billing" class="panel-state">{{ t('adminBilling.view.loading') }}</div>
 
     <div v-else-if="billing" class="finance-workspace" :class="{ 'finance-workspace--detail': isDetail }">
       <div v-if="!isDetail" class="finance-table-panel">
         <div class="table-wrap">
           <table v-if="activeTab === 'payments'" class="data-table finance-table">
-            <thead><tr><th>Пользователь</th><th>Тариф</th><th>Сумма</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
+            <thead><tr><th>{{ t('adminBilling.view.user') }}</th><th>{{ t('adminBilling.view.plan') }}</th><th>{{ t('adminBilling.view.amount') }}</th><th>{{ t('adminBilling.view.date') }}</th><th>{{ t('adminBilling.view.status') }}</th><th></th></tr></thead>
             <tbody>
               <tr v-for="payment in filteredPayments" :key="payment.id" @click="openRecord('payments', payment.id)">
-                <td><strong>{{ payment.user }}</strong><small>{{ payment.paymentMethodName }}</small></td>
+                <td><strong>{{ payment.user }}</strong><small>{{ getAdminRecordLabel('paymentMethod', payment.paymentMethod ?? '', payment.paymentMethodName, locale) }}</small></td>
                 <td>{{ payment.planName }}<small v-if="payment.promoCodeSnapshot">{{ payment.promoCodeSnapshot }}</small></td>
                 <td>{{ formatMoney(payment.amount) }}</td>
                 <td>
                   {{ formatDate(payment.createdAt) }}
-                  <small v-if="payment.statusUpdatedAt">Статус: {{ formatDate(payment.statusUpdatedAt) }}</small>
+                  <small v-if="payment.statusUpdatedAt">{{ t('adminBilling.view.statusValue', { status: formatDate(payment.statusUpdatedAt) }) }}</small>
                 </td>
-                <td><span class="status-badge" :class="`status-badge--${payment.statusGroup}`">{{ payment.statusName }}</span></td>
+                <td><span class="status-badge" :class="`status-badge--${payment.statusGroup}`">{{ getAdminPaymentStatusLabel(payment, locale) }}</span></td>
                 <td>
-                  <button class="table-action" type="button" @click.stop="openRecord('payments', payment.id)">Открыть</button>
-                  <button v-if="payment.statusGroup === 'canceled'" class="table-action" type="button" @click.stop="showPaymentSubscriptions(payment)">Проверить доступ</button>
+                  <button class="table-action" type="button" @click.stop="openRecord('payments', payment.id)">{{ t('adminBilling.view.open') }}</button>
+                  <button v-if="payment.statusGroup === 'canceled'" class="table-action" type="button" @click.stop="showPaymentSubscriptions(payment)">{{ t('adminBilling.view.checkAccess') }}</button>
                 </td>
               </tr>
             </tbody>
           </table>
 
           <table v-else-if="activeTab === 'purchases'" class="data-table finance-table finance-table--receipt-queue">
-            <thead><tr><th>Покупатель</th><th>Тариф</th><th>Сумма</th><th>Оплачено</th><th>Возраст</th><th>Чек НПД</th><th>Отправка</th><th>Действия</th></tr></thead>
+            <thead><tr><th>{{ t('adminBilling.view.buyer') }}</th><th>{{ t('adminBilling.view.plan') }}</th><th>{{ t('adminBilling.view.amount') }}</th><th>{{ t('adminBilling.view.paidAt') }}</th><th>{{ t('adminBilling.view.age') }}</th><th>{{ t('adminBilling.view.npdReceipt') }}</th><th>{{ t('adminBilling.view.receiptSending') }}</th><th>{{ t('adminBilling.view.actions') }}</th></tr></thead>
             <tbody>
               <tr v-for="purchase in filteredPurchases" :key="purchase.paymentId" :class="{ 'finance-receipt-overdue-row': isReceiptOverdue(purchase), 'finance-receipt-refunded-row': isRefundedPurchase(purchase) }" @click="openRecord('purchases', purchase.paymentId)">
                 <td>
                   <RouterLink :to="`/users/${encodeURIComponent(purchase.userId)}`" @click.stop>{{ purchase.user }}</RouterLink>
                   <small>{{ getBuyerTypeName(purchase.buyerType) }}</small>
-                  <small v-if="purchase.buyerType === 'business'">{{ purchase.buyerName || 'Название не указано' }}<template v-if="purchase.buyerInn"> · ИНН {{ purchase.buyerInn }}</template></small>
-                  <small>{{ purchase.userEmail || purchase.userPhone || 'Контакты не указаны' }}</small>
+                  <small v-if="purchase.buyerType === 'business'">{{ purchase.buyerName || t('adminBilling.view.noName') }}<template v-if="purchase.buyerInn"> · {{ t('adminBilling.view.inn') }} {{ purchase.buyerInn }}</template></small>
+                  <small>{{ purchase.userEmail || purchase.userPhone || t('adminBilling.view.noContacts') }}</small>
                 </td>
                 <td>{{ purchase.planName }}</td>
-                <td>{{ formatMoney(purchase.amount) }}<small v-if="getRefundedAmount(purchase) > 0">Возвращено {{ formatMoney(getRefundedAmount(purchase)) }}</small></td>
+                <td>{{ formatMoney(purchase.amount) }}<small v-if="getRefundedAmount(purchase) > 0">{{ t('adminBilling.view.refundedAmount', { amount: formatMoney(getRefundedAmount(purchase)) }) }}</small></td>
                 <td>{{ formatDate(purchase.paidAt) }}<small v-if="purchase.paymentStatus !== 'completed'">{{ getStatusName(purchase.paymentStatus) }}</small></td>
-                <td><span :class="{ 'finance-receipt-age--overdue': isReceiptOverdue(purchase) }">{{ getReceiptAge(purchase) }}</span><small v-if="isReceiptOverdue(purchase)" class="finance-receipt-age--overdue">Просрочен</small></td>
+                <td><span :class="{ 'finance-receipt-age--overdue': isReceiptOverdue(purchase) }">{{ getReceiptAge(purchase) }}</span><small v-if="isReceiptOverdue(purchase)" class="finance-receipt-age--overdue">{{ t('adminBilling.view.receiptOverdue') }}</small></td>
                 <td>
-                  <span class="status-badge" :class="purchase.npdReceiptIssued ? 'status-badge--success' : 'status-badge--pending'">{{ purchase.npdReceiptIssued ? 'Выдан клиенту' : 'Не отмечен' }}</span>
+                  <span class="status-badge" :class="purchase.npdReceiptIssued ? 'status-badge--success' : 'status-badge--pending'">{{ purchase.npdReceiptIssued ? t('adminBilling.view.receiptIssued') : t('adminBilling.view.receiptNotMarked') }}</span>
                   <small v-if="purchase.npdReceiptIssuedAt">{{ formatDate(purchase.npdReceiptIssuedAt) }}</small>
                   <small v-if="purchase.npdReceiptMarkedBy">{{ purchase.npdReceiptMarkedBy }}</small>
-                  <small v-if="purchase.npdReceiptUrl"><a :href="purchase.npdReceiptUrl" target="_blank" rel="noopener noreferrer" @click.stop>Ссылка на чек</a></small>
-                  <small v-if="purchase.npdReceiptFileUrl"><a :href="purchase.npdReceiptFileUrl" target="_blank" rel="noopener noreferrer" @click.stop>{{ purchase.npdReceiptFileName || 'Вложение' }}</a></small>
+                  <small v-if="purchase.npdReceiptUrl"><a :href="purchase.npdReceiptUrl" target="_blank" rel="noopener noreferrer" @click.stop>{{ t('adminBilling.view.receiptLink') }}</a></small>
+                  <small v-if="purchase.npdReceiptFileUrl"><a :href="purchase.npdReceiptFileUrl" target="_blank" rel="noopener noreferrer" @click.stop>{{ purchase.npdReceiptFileName || t('adminBilling.view.attachment') }}</a></small>
                   <small v-if="purchase.npdReceiptComment">{{ purchase.npdReceiptComment }}</small>
                 </td>
                 <td>
@@ -954,18 +939,18 @@ function getBuyerTypeName(buyerType: AdminBillingPurchase['buyerType']): string 
                   <small v-if="purchase.npdReceiptSendError" class="finance-delivery-error">{{ purchase.npdReceiptSendError }}</small>
                 </td>
                 <td class="finance-receipt-actions">
-                  <button v-if="canManage" class="table-action" type="button" :disabled="sendingReceiptPaymentId === purchase.paymentId || getDeliveryStatus(purchase) === 'queued' || isRefundedPurchase(purchase) || !purchase.userEmail || (!purchase.npdReceiptFileUrl && !purchase.npdReceiptUrl)" @click.stop="sendNpdReceipt(purchase)">{{ sendingReceiptPaymentId === purchase.paymentId ? 'Ставим в очередь…' : getDeliveryStatus(purchase) === 'queued' ? 'В очереди' : ['sent', 'delivered'].includes(getDeliveryStatus(purchase)) ? 'Отправить обновлённый чек' : getDeliveryStatus(purchase) === 'failed' ? 'Повторить отправку' : 'Отправить чек покупателю' }}</button>
-                  <button class="table-action" type="button" @click.stop="openRecord('purchases', purchase.paymentId)">Открыть</button>
-                  <small v-if="!purchase.userEmail">Нет email покупателя</small>
-                  <small v-else-if="!purchase.npdReceiptFileUrl && !purchase.npdReceiptUrl">Добавьте ссылку или файл</small>
+                  <button v-if="canManage" class="table-action" type="button" :disabled="sendingReceiptPaymentId === purchase.paymentId || getDeliveryStatus(purchase) === 'queued' || isRefundedPurchase(purchase) || !purchase.userEmail || (!purchase.npdReceiptFileUrl && !purchase.npdReceiptUrl)" @click.stop="sendNpdReceipt(purchase)">{{ sendingReceiptPaymentId === purchase.paymentId ? t('adminBilling.view.sending') : getDeliveryStatus(purchase) === 'queued' ? t('adminBilling.view.sentQueued') : ['sent', 'delivered'].includes(getDeliveryStatus(purchase)) ? t('adminBilling.view.sendUpdatedReceipt') : getDeliveryStatus(purchase) === 'failed' ? t('adminBilling.view.retrySend') : t('adminBilling.view.issueReceiptButton') }}</button>
+                  <button class="table-action" type="button" @click.stop="openRecord('purchases', purchase.paymentId)">{{ t('adminBilling.view.open') }}</button>
+                  <small v-if="!purchase.userEmail">{{ t('adminBilling.view.noBuyerEmail') }}</small>
+                  <small v-else-if="!purchase.npdReceiptFileUrl && !purchase.npdReceiptUrl">{{ t('adminBilling.view.addReceiptLinkOrFile') }}</small>
                 </td>
               </tr>
-              <tr v-if="filteredPurchases.length === 0"><td colspan="8" class="finance-empty">Покупки по выбранному фильтру не найдены.</td></tr>
+              <tr v-if="filteredPurchases.length === 0"><td colspan="8" class="finance-empty">{{ t('adminBilling.view.noPurchasesMatch') }}</td></tr>
             </tbody>
           </table>
 
           <table v-else class="data-table finance-table">
-            <thead><tr><th>{{ subscriptionScope === 'users' ? 'Пользователь' : 'Организация' }}</th><th>Тариф</th><th>Источник</th><th>Период</th><th>Остаток</th><th>Статус</th><th></th></tr></thead>
+            <thead><tr><th>{{ subscriptionScope === 'users' ? t('adminBilling.view.user') : t('adminBilling.view.organization') }}</th><th>{{ t('adminBilling.view.plan') }}</th><th>{{ t('adminBilling.view.source') }}</th><th>{{ t('adminBilling.view.period') }}</th><th>{{ t('adminBilling.view.remaining') }}</th><th>{{ t('adminBilling.view.status') }}</th><th></th></tr></thead>
             <tbody>
               <tr v-for="subscription in filteredSubscriptions" :key="`${subscriptionScope}-${subscription.id}`" @click="openRecord(subscriptionScope === 'users' ? 'user-subscriptions' : 'organization-subscriptions', subscription.id)">
                 <td>
@@ -976,52 +961,52 @@ function getBuyerTypeName(buyerType: AdminBillingPurchase['buyerType']): string 
                 </td>
                 <td>{{ subscription.planName }}</td>
                 <td>{{ getSourceName(subscription.source) }}</td>
-                <td>{{ formatDate(subscription.startDate) }}<small>до {{ formatDate(subscription.endDate) }}</small></td>
-                <td :class="{ 'finance-expiring': subscription.isExpiringSoon }">{{ subscription.isActive ? formatDaysLeft(subscription.daysLeft) : 'Завершена' }}</td>
-                <td><span class="status-badge" :class="subscription.isActive ? (subscription.isExpiringSoon ? 'status-badge--pending' : 'status-badge--success') : 'status-badge--problem'">{{ subscription.isActive ? (subscription.isExpiringSoon ? 'Истекает' : 'Активна') : 'Завершена' }}</span></td>
-                <td><button class="table-action" type="button" @click.stop="openRecord(subscriptionScope === 'users' ? 'user-subscriptions' : 'organization-subscriptions', subscription.id)">Открыть</button></td>
+                <td>{{ formatDate(subscription.startDate) }}<small>{{ t('adminBilling.view.until', { date: formatDate(subscription.endDate) }) }}</small></td>
+                <td :class="{ 'finance-expiring': subscription.isExpiringSoon }">{{ subscription.isActive ? formatDaysLeft(subscription.daysLeft) : t('adminBilling.view.subscriptionFinished') }}</td>
+                <td><span class="status-badge" :class="subscription.isActive ? (subscription.isExpiringSoon ? 'status-badge--pending' : 'status-badge--success') : 'status-badge--problem'">{{ subscription.isActive ? (subscription.isExpiringSoon ? t('adminBilling.view.subscriptionExpiring') : t('adminBilling.view.subscriptionActive')) : t('adminBilling.view.subscriptionFinished') }}</span></td>
+                <td><button class="table-action" type="button" @click.stop="openRecord(subscriptionScope === 'users' ? 'user-subscriptions' : 'organization-subscriptions', subscription.id)">{{ t('adminBilling.view.open') }}</button></td>
               </tr>
-              <tr v-if="filteredSubscriptions.length === 0"><td colspan="7" class="finance-empty">Подписки не найдены.</td></tr>
+              <tr v-if="filteredSubscriptions.length === 0"><td colspan="7" class="finance-empty">{{ t('adminBilling.view.noSubscriptions') }}</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
       <form v-if="selectedPurchase" class="finance-editor finance-editor--page" @submit.prevent="saveNpdReceiptStatus">
-        <div class="finance-editor__heading"><strong>Покупка #{{ selectedPurchase.paymentId }}</strong></div>
+        <div class="finance-editor__heading"><strong>{{ t('adminBilling.view.purchaseNumber', { id: selectedPurchase.paymentId }) }}</strong></div>
         <div class="finance-subscription-summary">
           <strong>{{ selectedPurchase.user }}</strong>
           <span>{{ selectedPurchase.planName }} · {{ formatMoney(selectedPurchase.amount) }}</span>
           <span>{{ getBuyerTypeName(selectedPurchase.buyerType) }}</span>
-          <span v-if="selectedPurchase.buyerType === 'business'">{{ selectedPurchase.buyerName || 'Название не указано' }}<template v-if="selectedPurchase.buyerInn"> · ИНН {{ selectedPurchase.buyerInn }}</template></span>
-          <span>Оплачено: {{ formatDate(selectedPurchase.paidAt) }}</span>
-          <span>Статус: {{ getStatusName(selectedPurchase.paymentStatus) }}</span>
-          <span>Возвращено: {{ formatMoney(getRefundedAmount(selectedPurchase)) }}</span>
-          <span>Чек НПД: {{ selectedPurchase.npdReceiptIssued ? `выдан ${formatDate(selectedPurchase.npdReceiptIssuedAt || selectedPurchase.paidAt)}` : 'не отмечен' }}</span>
-          <span>Отправка чека: {{ getDeliveryStatusName(getDeliveryStatus(selectedPurchase)) }}</span>
-          <span v-if="selectedPurchase.npdReceiptSentTo">Адрес: {{ selectedPurchase.npdReceiptSentTo }}</span>
-          <span v-if="selectedPurchase.npdReceiptSendError">Ошибка: {{ selectedPurchase.npdReceiptSendError }}</span>
+          <span v-if="selectedPurchase.buyerType === 'business'">{{ selectedPurchase.buyerName || t('adminBilling.view.noName') }}<template v-if="selectedPurchase.buyerInn"> · {{ t('adminBilling.view.inn') }} {{ selectedPurchase.buyerInn }}</template></span>
+          <span>{{ t('adminBilling.view.paidOn', { date: formatDate(selectedPurchase.paidAt) }) }}</span>
+          <span>{{ t('adminBilling.view.statusValue', { status: getStatusName(selectedPurchase.paymentStatus) }) }}</span>
+          <span>{{ t('adminBilling.view.refundValue', { amount: formatMoney(getRefundedAmount(selectedPurchase)) }) }}</span>
+          <span>{{ t('adminBilling.view.receiptValue', { status: selectedPurchase.npdReceiptIssued ? t('adminBilling.view.receiptIssuedAt', { date: formatDate(selectedPurchase.npdReceiptIssuedAt || selectedPurchase.paidAt) }) : t('adminBilling.view.receiptNotMarked') }) }}</span>
+          <span>{{ t('adminBilling.view.sendingValue', { status: getDeliveryStatusName(getDeliveryStatus(selectedPurchase)) }) }}</span>
+          <span v-if="selectedPurchase.npdReceiptSentTo">{{ t('adminBilling.view.address', { address: selectedPurchase.npdReceiptSentTo }) }}</span>
+          <span v-if="selectedPurchase.npdReceiptSendError">{{ t('adminBilling.view.error', { message: selectedPurchase.npdReceiptSendError }) }}</span>
         </div>
         <template v-if="canManage">
-        <button class="secondary-button" type="button" :disabled="sendingReceiptPaymentId === selectedPurchase.paymentId || getDeliveryStatus(selectedPurchase) === 'queued' || isRefundedPurchase(selectedPurchase) || !selectedPurchase.userEmail || (!selectedPurchase.npdReceiptFileUrl && !selectedPurchase.npdReceiptUrl)" @click="sendNpdReceipt(selectedPurchase)">Отправить чек покупателю</button>
-        <div class="finance-warning">Ставьте отметку после того, как создали чек в «Моём налоге» и передали его покупателю. Здесь чек не создаётся.</div>
-        <label><span>Ссылка на чек из «Моего налога»</span><input v-model="receiptUrl" type="url" maxlength="2048" placeholder="https://..." /></label>
-        <label><span>Комментарий</span><textarea v-model="receiptComment" maxlength="1000" rows="3" placeholder="Например, чек отправлен на почту клиента"></textarea></label>
-        <button class="secondary-button" type="button" :disabled="isSaving" @click="saveNpdReceiptDetails">Сохранить ссылку и комментарий</button>
-        <label><span>Вложить файл чека (PDF, PNG или JPG, до 5 МБ)</span><input type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" :disabled="isUploadingReceipt" @change="uploadNpdReceiptFile" /></label>
+        <button class="secondary-button" type="button" :disabled="sendingReceiptPaymentId === selectedPurchase.paymentId || getDeliveryStatus(selectedPurchase) === 'queued' || isRefundedPurchase(selectedPurchase) || !selectedPurchase.userEmail || (!selectedPurchase.npdReceiptFileUrl && !selectedPurchase.npdReceiptUrl)" @click="sendNpdReceipt(selectedPurchase)">{{ t('adminBilling.view.issueReceiptButton') }}</button>
+        <div class="finance-warning">{{ t('adminBilling.view.receiptManualWarning') }}</div>
+        <label><span>{{ t('adminBilling.view.receiptLink') }}</span><input v-model="receiptUrl" type="url" maxlength="2048" placeholder="https://..." /></label>
+        <label><span>{{ t('adminBilling.view.comment') }}</span><textarea v-model="receiptComment" maxlength="1000" rows="3" :placeholder="t('adminBilling.view.receiptCommentPlaceholder')"></textarea></label>
+        <button class="secondary-button" type="button" :disabled="isSaving" @click="saveNpdReceiptDetails">{{ t('adminBilling.view.saveReceiptDetails') }}</button>
+        <label><span>{{ t('adminBilling.view.attachReceiptFile') }}</span><input type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" :disabled="isUploadingReceipt" @change="uploadNpdReceiptFile" /></label>
         <div v-if="selectedPurchase.npdReceiptFileUrl" class="finance-subscription-summary">
-          <a :href="selectedPurchase.npdReceiptFileUrl" target="_blank" rel="noopener noreferrer">{{ selectedPurchase.npdReceiptFileName || 'Открыть файл чека' }}</a>
-          <button class="danger-button" type="button" :disabled="isSaving" @click="removeNpdReceiptFile">Открепить файл</button>
+          <a :href="selectedPurchase.npdReceiptFileUrl" target="_blank" rel="noopener noreferrer">{{ selectedPurchase.npdReceiptFileName || t('adminBilling.view.openReceiptFile') }}</a>
+          <button class="danger-button" type="button" :disabled="isSaving" @click="removeNpdReceiptFile">{{ t('adminBilling.view.detachFile') }}</button>
         </div>
         <div v-else-if="selectedPurchase.npdReceiptFileName" class="finance-subscription-summary">
-          <span>Вложен файл: {{ selectedPurchase.npdReceiptFileName }}</span>
-          <button class="danger-button" type="button" :disabled="isSaving" @click="removeNpdReceiptFile">Открепить файл</button>
+          <span>{{ t('adminBilling.view.attachedFilename', { filename: selectedPurchase.npdReceiptFileName }) }}</span>
+          <button class="danger-button" type="button" :disabled="isSaving" @click="removeNpdReceiptFile">{{ t('adminBilling.view.detachFile') }}</button>
         </div>
-        <label><span>Причина {{ selectedPurchase.npdReceiptIssued ? 'снятия отметки' : 'отметки о выдаче' }}</span><textarea v-model="receiptChangeReason" maxlength="500" rows="3" required></textarea></label>
-        <button :class="selectedPurchase.npdReceiptIssued ? 'danger-button' : 'primary-button'" type="submit" :disabled="isSaving || !receiptChangeReason.trim()">{{ isSaving ? 'Сохраняем…' : selectedPurchase.npdReceiptIssued ? 'Снять отметку' : 'Отметить чек выданным' }}</button>
+        <label><span>{{ t('adminBilling.view.reasonFor', { reason: selectedPurchase.npdReceiptIssued ? t('adminBilling.view.revokeIssuedMark') : t('adminBilling.view.markIssued') }) }}</span><textarea v-model="receiptChangeReason" maxlength="500" rows="3" required></textarea></label>
+        <button :class="selectedPurchase.npdReceiptIssued ? 'danger-button' : 'primary-button'" type="submit" :disabled="isSaving || !receiptChangeReason.trim()">{{ isSaving ? t('adminBilling.view.saving') : selectedPurchase.npdReceiptIssued ? t('adminBilling.view.removeMark') : t('adminBilling.view.markIssuedButton') }}</button>
         </template>
         <div v-if="selectedPurchase.npdReceiptReason" class="payment-audits">
-          <strong>Последняя причина</strong>
+          <strong>{{ t('adminBilling.view.lastReason') }}</strong>
           <small>{{ selectedPurchase.npdReceiptReason }}</small>
         </div>
       </form>
@@ -1039,69 +1024,69 @@ function getBuyerTypeName(buyerType: AdminBillingPurchase['buyerType']): string 
         @updated="selectPayment(selectedPayment)"
       />
       <form v-else-if="selectedPayment" class="finance-editor finance-editor--page" @submit.prevent="savePaymentStatus">
-        <div class="finance-editor__heading"><strong>Платёж #{{ selectedPayment.id }}</strong></div>
+        <div class="finance-editor__heading"><strong>{{ t('adminBilling.view.paymentNumber', { id: selectedPayment.id }) }}</strong></div>
         <div class="finance-subscription-summary">
           <strong>{{ selectedPayment.user }}</strong>
           <span>{{ selectedPayment.planName }} · {{ formatMoney(selectedPayment.amount) }}</span>
-          <span>{{ selectedPayment.statusName }} · {{ selectedPayment.paymentMethodName }}</span>
-          <span>Создан: {{ formatDate(selectedPayment.createdAt) }}</span>
-          <span v-if="selectedPayment.statusUpdatedAt">Статус изменён: {{ formatDate(selectedPayment.statusUpdatedAt) }}</span>
+          <span>{{ getAdminPaymentStatusLabel(selectedPayment, locale) }} · {{ getAdminRecordLabel('paymentMethod', selectedPayment.paymentMethod ?? '', selectedPayment.paymentMethodName, locale) }}</span>
+          <span>{{ t('adminBilling.view.created', { date: formatDate(selectedPayment.createdAt) }) }}</span>
+          <span v-if="selectedPayment.statusUpdatedAt">{{ t('adminBilling.view.statusChanged', { date: formatDate(selectedPayment.statusUpdatedAt) }) }}</span>
           <span v-if="selectedPayment.externalPaymentId">YooKassa: {{ selectedPayment.externalPaymentId }}</span>
-          <span v-if="selectedPayment.transactionId">Транзакция: {{ selectedPayment.transactionId }}</span>
+          <span v-if="selectedPayment.transactionId">{{ t('adminBilling.view.transaction', { id: selectedPayment.transactionId }) }}</span>
         </div>
-        <button v-if="canManage && selectedPayment.paymentProviderCode !== 'payments-service' && selectedPayment.hasExternalId" class="secondary-button" type="button" :disabled="isSyncing" @click="syncPayment">{{ isSyncing ? 'Проверяем…' : 'Сверить с YooKassa' }}</button>
+        <button v-if="canManage && selectedPayment.paymentProviderCode !== 'payments-service' && selectedPayment.hasExternalId" class="secondary-button" type="button" :disabled="isSyncing" @click="syncPayment">{{ isSyncing ? t('adminBilling.view.checking') : t('adminBilling.view.reconcileYooKassa') }}</button>
         <template v-if="canCorrectPaymentStatus">
-          <div class="finance-warning">Ручная корректировка изменяет только локальный статус и записывается в журнал.</div>
-          <label><span>Статус</span><SearchSelect v-model="selectedStatus" :options="[{ value: 'completed', label: 'Оплачено' }, { value: 'pending', label: 'Ожидание' }, { value: 'failed', label: 'Ошибка' }, { value: 'canceled', label: 'Отменено' }, { value: 'refunded', label: 'Возврат' }]" /></label>
-          <label><span>Причина корректировки</span><textarea v-model="statusChangeReason" maxlength="500" rows="3" required></textarea></label>
-          <button class="danger-button" type="submit" :disabled="isSaving || !statusChangeReason.trim()">Изменить локальный статус</button>
+          <div class="finance-warning">{{ t('adminBilling.view.manualStatusWarning') }}</div>
+          <label><span>{{ t('adminBilling.view.status') }}</span><SearchSelect v-model="selectedStatus" :options="[{ value: 'completed', label: t('adminBilling.view.statusCompleted') }, { value: 'pending', label: t('adminBilling.view.statusPending') }, { value: 'failed', label: t('adminBilling.view.statusFailed') }, { value: 'canceled', label: t('adminBilling.view.statusCanceled') }, { value: 'refunded', label: t('adminBilling.view.statusRefunded') }]" /></label>
+          <label><span>{{ t('adminBilling.view.reasonCorrection') }}</span><textarea v-model="statusChangeReason" maxlength="500" rows="3" required></textarea></label>
+          <button class="danger-button" type="submit" :disabled="isSaving || !statusChangeReason.trim()">{{ t('adminBilling.view.changeLocalStatus') }}</button>
         </template>
         <div v-if="paymentStatusAudits.length > 0" class="payment-audits">
-          <strong>Журнал статусов</strong>
+          <strong>{{ t('adminBilling.view.statusJournal') }}</strong>
           <div v-for="audit in paymentStatusAudits" :key="audit.id">
             <span>{{ getStatusName(audit.previousStatus) }} → {{ getStatusName(audit.newStatus) }}</span>
             <small>{{ formatDate(audit.changedAt) }} · {{ audit.changedBy }}</small>
-            <small>{{ audit.source === 'manual' ? audit.reason : 'Сверка с YooKassa' }}</small>
+            <small>{{ audit.source === 'manual' ? audit.reason : t('adminBilling.view.reconcileFromYooKassa') }}</small>
           </div>
         </div>
       </form>
 
       <form v-if="selectedSubscription" class="finance-editor finance-editor--page" @submit.prevent="saveSubscriptionAction">
-        <div class="finance-editor__heading"><strong>Подписка #{{ selectedSubscription.id }}</strong></div>
+        <div class="finance-editor__heading"><strong>{{ t('adminBilling.view.subscriptionNumber', { id: selectedSubscription.id }) }}</strong></div>
         <div class="finance-subscription-summary">
           <strong>{{ selectedSubscription.planName }}</strong>
-          <span>{{ getSourceName(selectedSubscription.source) }} · {{ selectedSubscription.isActive ? 'Действует' : 'Завершена' }}</span>
-          <span>Сейчас: до {{ formatDate(selectedSubscription.endDate) }}</span>
-          <span>Начало: {{ formatDate(selectedSubscription.startDate) }}</span>
+          <span>{{ getSourceName(selectedSubscription.source) }} · {{ selectedSubscription.isActive ? t('adminBilling.view.subscriptionActive') : t('adminBilling.view.subscriptionFinished') }}</span>
+          <span>{{ t('adminBilling.view.nowUntil', { date: formatDate(selectedSubscription.endDate) }) }}</span>
+          <span>{{ t('adminBilling.view.startDate', { date: formatDate(selectedSubscription.startDate) }) }}</span>
         </div>
         <template v-if="canManage && (!('isHistorical' in selectedSubscription && selectedSubscription.isHistorical) || !hasActiveSubscriptionForClient(selectedSubscription))">
-        <label><span>Действие</span><SearchSelect v-model="subscriptionAction" :options="[
-          ...(!('isHistorical' in selectedSubscription && selectedSubscription.isHistorical) ? [{ value: 'extend', label: 'Продлить без оплаты' }] : []),
-          ...(selectedSubscription.isActive ? [{ value: 'stop', label: 'Завершить подписку' }] : []),
-          ...(!hasActiveSubscriptionForClient(selectedSubscription) && (!('organizationId' in selectedSubscription) || !usesFreePro(selectedSubscription.primaryScenarioCode)) ? [{ value: 'grantDemo', label: 'Выдать демо' }] : []),
-          ...(!hasActiveSubscriptionForClient(selectedSubscription) && grantablePlans.length ? [{ value: 'grantPlan', label: 'Выдать тариф без оплаты' }] : []),
-          ...(selectedSubscription.isDemoPlan && selectedSubscription.isActive ? [{ value: 'revokeDemo', label: 'Отозвать демо' }] : [])
+        <label><span>{{ t('adminBilling.view.action') }}</span><SearchSelect v-model="subscriptionAction" :options="[
+          ...(!('isHistorical' in selectedSubscription && selectedSubscription.isHistorical) ? [{ value: 'extend', label: t('adminBilling.view.extendWithoutPayment') }] : []),
+          ...(selectedSubscription.isActive ? [{ value: 'stop', label: t('adminBilling.view.finishSubscription') }] : []),
+          ...(!hasActiveSubscriptionForClient(selectedSubscription) && (!('organizationId' in selectedSubscription) || !usesFreePro(selectedSubscription.primaryScenarioCode)) ? [{ value: 'grantDemo', label: t('adminBilling.view.grantDemo') }] : []),
+          ...(!hasActiveSubscriptionForClient(selectedSubscription) && grantablePlans.length ? [{ value: 'grantPlan', label: t('adminBilling.view.grantPlanWithoutPayment') }] : []),
+          ...(selectedSubscription.isDemoPlan && selectedSubscription.isActive ? [{ value: 'revokeDemo', label: t('adminBilling.view.revokeDemo') }] : [])
         ]" /></label>
-        <label v-if="subscriptionAction === 'grantPlan'"><span>Тариф</span><SearchSelect v-model="grantPlanId" :options="[{ value: 0, label: 'Выберите тариф' }, ...grantablePlans.map(plan => ({ value: plan.id, label: plan.name }))]" /></label>
-        <label v-if="subscriptionAction === 'extend' || subscriptionAction === 'grantPlan'"><span>Срок в днях</span><input v-model.number="extensionDays" type="number" min="1" max="366" required></label>
+        <label v-if="subscriptionAction === 'grantPlan'"><span>{{ t('adminBilling.view.plan') }}</span><SearchSelect v-model="grantPlanId" :options="[{ value: 0, label: t('adminBilling.view.selectPlan') }, ...grantablePlans.map(plan => ({ value: plan.id, label: plan.name }))]" /></label>
+        <label v-if="subscriptionAction === 'extend' || subscriptionAction === 'grantPlan'"><span>{{ t('adminBilling.view.termDays') }}</span><input v-model.number="extensionDays" type="number" min="1" max="366" required></label>
         <div class="finance-warning">
-          <template v-if="subscriptionAction === 'extend'">Итоговый срок: {{ previewEndDate ? formatDate(previewEndDate) : 'укажите срок' }}. Платёж не создаётся.</template>
-          <template v-else-if="subscriptionAction === 'grantPlan'">Новый тариф начнётся сейчас и закончится {{ previewEndDate ? formatDate(previewEndDate) : 'после выбора тарифа и срока' }}. Платёж не создаётся.</template>
-          <template v-else-if="subscriptionAction === 'stop'">Все действующие подписки клиента будут остановлены сразу. Неиспользованный оплаченный срок не восстанавливается автоматически.</template>
-          <template v-else-if="subscriptionAction === 'grantDemo'">Клиенту будет предоставлен демо-доступ. Срок определяется настройками демо-тарифа.</template>
-          <template v-else>Демо-доступ будет отозван.</template>
+          <template v-if="subscriptionAction === 'extend'">{{ t('adminBilling.view.finalTerm', { date: previewEndDate ? formatDate(previewEndDate) : t('adminBilling.view.specifyTerm') }) }}</template>
+          <template v-else-if="subscriptionAction === 'grantPlan'">{{ t('adminBilling.view.newPlanTerm', { date: previewEndDate ? formatDate(previewEndDate) : t('adminBilling.view.afterPlanChoice') }) }}</template>
+          <template v-else-if="subscriptionAction === 'stop'">{{ t('adminBilling.view.stopSubscriptionWarning') }}</template>
+          <template v-else-if="subscriptionAction === 'grantDemo'">{{ t('adminBilling.view.grantDemoWarning') }}</template>
+          <template v-else>{{ t('adminBilling.view.revokeDemoWarning') }}</template>
           <p v-if="'organizationId' in selectedSubscription && ['stop', 'revokeDemo'].includes(subscriptionAction)">{{ subscriptionFallback(selectedSubscription.primaryScenarioCode) }}</p>
         </div>
-        <label><span>Причина</span><textarea v-model="subscriptionReason" maxlength="500" rows="3" required></textarea></label>
-        <button :class="subscriptionAction === 'stop' || subscriptionAction === 'revokeDemo' ? 'danger-button' : 'primary-button'" type="submit" :disabled="isSaving || !subscriptionReason.trim() || (['extend', 'grantPlan'].includes(subscriptionAction) && !previewEndDate)">{{ isSaving ? 'Сохраняем…' : 'Подтвердить действие' }}</button>
+        <label><span>{{ t('adminBilling.view.reason') }}</span><textarea v-model="subscriptionReason" maxlength="500" rows="3" required></textarea></label>
+        <button :class="subscriptionAction === 'stop' || subscriptionAction === 'revokeDemo' ? 'danger-button' : 'primary-button'" type="submit" :disabled="isSaving || !subscriptionReason.trim() || (['extend', 'grantPlan'].includes(subscriptionAction) && !previewEndDate)">{{ isSaving ? t('adminBilling.view.saving') : t('adminBilling.view.confirmAction') }}</button>
         </template>
         <div class="payment-audits">
-          <strong>Журнал действий</strong>
-          <div v-if="subscriptionAudits.length === 0"><small>Пока нет записей.</small></div>
+          <strong>{{ t('adminBilling.view.journalActions') }}</strong>
+          <div v-if="subscriptionAudits.length === 0"><small>{{ t('adminBilling.view.noAuditRecords') }}</small></div>
           <div v-for="audit in subscriptionAudits" :key="audit.id">
             <span>{{ getAuditActionName(audit.action) }}</span>
             <small>{{ formatDate(audit.changedAt) }} · {{ audit.changedBy }}</small>
-            <small v-if="audit.previousEndDate || audit.newEndDate">{{ audit.previousEndDate ? formatDate(audit.previousEndDate) : 'Без срока' }} → {{ audit.newEndDate ? formatDate(audit.newEndDate) : 'Без срока' }}</small>
+            <small v-if="audit.previousEndDate || audit.newEndDate">{{ audit.previousEndDate ? formatDate(audit.previousEndDate) : t('adminBilling.view.noTerm') }} → {{ audit.newEndDate ? formatDate(audit.newEndDate) : t('adminBilling.view.noTerm') }}</small>
             <small>{{ audit.reason }}</small>
           </div>
         </div>

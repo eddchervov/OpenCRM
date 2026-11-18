@@ -1,3 +1,6 @@
+import '../packages/workspace/src/bookingFormMessages.ts'
+import '../packages/workspace/src/maintenanceCardMessages.ts'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -13,10 +16,11 @@ const code = ts.transpileModule(script.content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
 
-function form({ photos = false, readOnly = false, edit = false } = {}) {
+function form({ photos = false, readOnly = false, edit = false, currencyCode, canChangeFinancialData, organizationCurrencyCode = 'RUB' } = {}) {
   const module = { exports: {} }
   const calls = []
   const resolve = id => {
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onMounted() {}, watch() {}, provide() {}, inject() {} }
     if (id === '@opencrm/ui') return { formatDateOnly: () => '2026-10-29' }
     if (id === '../utils/maintenanceWorkflow') return { isSimpleMaintenanceWorkflow }
@@ -28,8 +32,9 @@ function form({ photos = false, readOnly = false, edit = false } = {}) {
     }
     if (id === '../api/clients') return { loadClientOptions: async () => [] }
     if (id === '../api/maintenance') return {
-      loadMaintenance: async () => ({ vehicleId: 'vehicle-1', status: 1, type: 1, date: '2026-10-29', maintenanceDetails: [] }),
+      loadMaintenance: async () => ({ vehicleId: 'vehicle-1', status: 1, type: 1, date: '2026-10-29', currencyCode, canChangeFinancialData, maintenanceDetails: [] }),
       createMaintenance: async (...args) => { calls.push(['create', ...args]); return 'new-order' },
+      updateMaintenance: async (...args) => { calls.push(['update', ...args]) },
       uploadMaintenancePhotos: async () => calls.push(['upload']),
       deleteMaintenancePhoto: async () => calls.push(['delete']),
       loadMaintenancePhotos: async () => { calls.push(['photos']); return [{ photoId: 'saved-photo' }] }
@@ -39,7 +44,7 @@ function form({ photos = false, readOnly = false, edit = false } = {}) {
   new Function('require', 'module', 'exports', code)(resolve, module, module.exports)
   const props = vue.reactive({
     context: {
-      organization: { id: 'org-1', primaryScenarioCode: 'detailing' },
+      organization: { id: 'org-1', currencyCode: organizationCurrencyCode, primaryScenarioCode: 'detailing' },
       shell: { scenario: { code: 'detailing', modules: { photos } } },
       workspaceAccess: { isReadOnly: readOnly }
     },
@@ -105,4 +110,16 @@ test('PRO сохраняет загрузку и удаление фото в ф
 test('Фото в PRO остаются недоступны в режиме чтения', () => {
   const { state } = form({ photos: true, readOnly: true })
   assert.equal(state.canEditPhotos.value, false)
+})
+
+test('Историческая валюта переводит форму обслуживания в режим чтения до обновления', async () => {
+  const { state, calls } = form({ edit: true, currencyCode: 'RUB', organizationCurrencyCode: 'CNY' })
+  await state.loadForm()
+
+  assert.equal(state.isReadOnly.value, true)
+  assert.match(state.readOnlyMessage.value, /RUB.*CNY/)
+
+  await state.saveMaintenance()
+
+  assert.equal(calls.some(call => call[0] === 'update'), false)
 })

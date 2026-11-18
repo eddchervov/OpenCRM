@@ -10,6 +10,11 @@ import {
   getCrmImportUsers
 } from '@/api/adminCrmImportApi'
 import type { CrmImportOrganization, CrmImportPreview, CrmImportPreviewRow, CrmImportResult, CrmImportUser } from '@/api/adminCrmImportApi'
+import { useLocalization } from '@opencrm/ui/i18n'
+import { importRowMessage } from '@opencrm/workspace/importRowMessage'
+import '../adminOperationsMessages'
+
+const { t } = useLocalization()
 
 const userSearch = ref('')
 const users = ref<CrmImportUser[]>([])
@@ -44,7 +49,7 @@ async function searchUsers(): Promise<void> {
   try {
     users.value = await getCrmImportUsers(userSearch.value.trim())
   } catch {
-    error.value = 'Не удалось загрузить пользователей.'
+    error.value = t('adminOperations.importUsersError')
   } finally {
     isLoadingUsers.value = false
   }
@@ -66,7 +71,7 @@ async function loadOrganizations(): Promise<void> {
   try {
     organizations.value = await getCrmImportOrganizations(userId.value)
   } catch {
-    error.value = 'Не удалось загрузить организации пользователя.'
+    error.value = t('adminOperations.importOrganizationsError')
   } finally {
     isLoadingOrganizations.value = false
   }
@@ -98,7 +103,7 @@ async function createPreview(): Promise<void> {
   } catch (requestError) {
     error.value = requestError instanceof ApiError
       ? requestError.message
-      : 'Не удалось проверить файл. Убедитесь, что его формат и содержимое поддерживаются.'
+      : t('adminOperations.importPreviewError')
   } finally {
     isPreviewing.value = false
   }
@@ -123,7 +128,7 @@ async function downloadReport(kind: 'preview' | 'result'): Promise<void> {
     link.click()
     window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   } catch {
-    error.value = 'Не удалось скачать отчёт.'
+    error.value = t('adminOperations.importReportError')
   } finally {
     isDownloading.value = false
   }
@@ -143,7 +148,7 @@ async function confirmImport(): Promise<void> {
   } catch (requestError) {
     error.value = requestError instanceof ApiError
       ? requestError.message
-      : 'Не удалось выполнить импорт. Предпросмотр можно скачать и проверить.'
+      : t('adminOperations.importConfirmError')
   } finally {
     isImporting.value = false
   }
@@ -152,73 +157,73 @@ async function confirmImport(): Promise<void> {
 function rowLabel(row: CrmImportPreviewRow): string {
   const values = row.type === 'client'
     ? [row.name, row.phone]
-    : [row.name, row.brand, row.model, row.vin, row.plate]
+    : [row.name, row.brand, row.model, row.vin, row.registrationCountryCode, row.plate]
 
   return values.filter(Boolean).join(' · ') || '—'
 }
 
 function statusLabel(status: string): string {
-  if (status === 'create') return 'Будет добавлено'
-  if (status === 'duplicate') return 'Дубль'
-  return 'Ошибка'
+  if (status === 'create') return t('adminOperations.willAdd')
+  if (status === 'duplicate') return t('adminOperations.duplicate')
+  return t('adminOperations.rowError')
 }
 </script>
 
 <template>
   <section class="operations-page crm-import-page">
-    <h1>Импорт из другой CRM</h1>
+    <h1>{{ t('adminOperations.crmImport') }}</h1>
 
     <div v-if="error" class="form-message form-message--error">{{ error }}</div>
     <div v-if="preview?.alreadyImported && !result" class="form-message form-message--warning">
-      Эти данные уже импортировались. Повторная запись не выполняется.
+      {{ t('adminOperations.alreadyImportedWarning') }}
     </div>
     <div v-if="result" class="form-message form-message--success">
-      Импорт завершён: клиентов добавлено — {{ result.createdClients }}, автомобилей — {{ result.createdVehicles }}, дублей пропущено — {{ result.skippedDuplicates }}, ошибок — {{ result.errors }}.
+      {{ t('adminOperations.importResult', { clients: result.createdClients, vehicles: result.createdVehicles, duplicates: result.skippedDuplicates, errors: result.errors }) }}
     </div>
 
     <div class="crm-import-form">
       <div class="crm-import-user-search">
-        <label for="crm-import-user-search">Пользователь</label>
+        <label for="crm-import-user-search">{{ t('adminOperations.user') }}</label>
         <div class="operations-toolbar">
-          <input id="crm-import-user-search" v-model="userSearch" type="search" placeholder="Email или телефон" @keyup.enter="searchUsers">
+          <input id="crm-import-user-search" v-model="userSearch" type="search" :placeholder="t('adminOperations.emailOrPhone')" @keyup.enter="searchUsers">
           <button class="secondary-button" type="button" :disabled="isLoadingUsers" @click="searchUsers">
-            {{ isLoadingUsers ? 'Поиск…' : 'Найти' }}
+            {{ isLoadingUsers ? t('adminOperations.searching') : t('adminOperations.find') }}
           </button>
         </div>
-        <SearchSelect v-model="userId" :options="userOptions" placeholder="Выберите пользователя" @change="loadOrganizations" />
+        <SearchSelect v-model="userId" :options="userOptions" :placeholder="t('adminOperations.chooseUser')" @change="loadOrganizations" />
       </div>
 
       <label>
-        <span>Организация</span>
-        <SearchSelect v-model="organizationId" :disabled="!userId || isLoadingOrganizations" :options="organizationOptions" placeholder="Выберите организацию" @change="changeOrganization" />
-        <small v-if="isLoadingOrganizations">Загружаем организации…</small>
+        <span>{{ t('adminOperations.organization') }}</span>
+        <SearchSelect v-model="organizationId" :disabled="!userId || isLoadingOrganizations" :options="organizationOptions" :placeholder="t('adminOperations.chooseOrganization')" @change="changeOrganization" />
+        <small v-if="isLoadingOrganizations">{{ t('adminOperations.loadingOrganizations') }}</small>
       </label>
 
       <label>
-        <span>Файл экспорта</span>
+        <span>{{ t('adminOperations.exportFile') }}</span>
         <input type="file" accept=".csv,.xlsx,.json,.xml,text/csv,application/json,application/xml,text/xml,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" @change="selectFile">
-        <small>Поддерживаются CSV, Excel (.xlsx), JSON и XML.</small>
-        <small>Поля: type (client или vehicle), name, phone, clientPhone, brand, model, vin, plate, year. Подходят и русские названия.</small>
+        <small>{{ t('adminOperations.supportedFormats') }}</small>
+        <small>{{ t('adminOperations.supportedFields') }}</small>
       </label>
 
       <button class="primary-button" type="button" :disabled="!canPreview" @click="createPreview">
-        {{ isPreviewing ? 'Проверяем файл…' : 'Проверить и показать предпросмотр' }}
+        {{ isPreviewing ? t('adminOperations.checkingFile') : t('adminOperations.showPreview') }}
       </button>
     </div>
 
     <section v-if="preview" class="crm-import-preview" aria-labelledby="preview-title">
       <div class="crm-import-preview__heading">
         <div>
-          <h2 id="preview-title">Предпросмотр: {{ preview.fileName }}</h2>
-          <p>Клиенты: {{ preview.summary.clients }} · Автомобили: {{ preview.summary.vehicles }} · К добавлению: {{ preview.summary.create }} · Дубли: {{ preview.summary.duplicate }} · Ошибки: {{ preview.summary.error }}</p>
+          <h2 id="preview-title">{{ t('adminOperations.preview', { fileName: preview.fileName }) }}</h2>
+          <p>{{ t('adminOperations.clients', { count: preview.summary.clients }) }} · {{ t('adminOperations.vehicles', { count: preview.summary.vehicles }) }} · {{ t('adminOperations.toCreate', { count: preview.summary.create }) }} · {{ t('adminOperations.duplicates', { count: preview.summary.duplicate }) }} · {{ t('adminOperations.errors', { count: preview.summary.error }) }}</p>
         </div>
-        <button class="secondary-button" type="button" :disabled="isDownloading" @click="downloadReport('preview')">Скачать предпросмотр CSV</button>
+        <button class="secondary-button" type="button" :disabled="isDownloading" @click="downloadReport('preview')">{{ t('adminOperations.downloadPreview') }}</button>
       </div>
 
       <div class="table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Строка</th><th>Тип</th><th>Запись</th><th>Результат проверки</th><th>Подробности</th></tr>
+            <tr><th>{{ t('adminOperations.row') }}</th><th>{{ t('adminOperations.type') }}</th><th>{{ t('adminOperations.record') }}</th><th>{{ t('adminOperations.validationResult') }}</th><th>{{ t('adminOperations.details') }}</th></tr>
           </thead>
           <tbody>
             <tr v-for="row in preview.rows" :key="row.number">
@@ -226,26 +231,26 @@ function statusLabel(status: string): string {
               <td>{{ row.type }}</td>
               <td>{{ rowLabel(row) }}</td>
               <td><span class="crm-import-status" :class="`crm-import-status--${row.status}`">{{ statusLabel(row.status) }}</span></td>
-              <td>{{ row.message || '—' }}</td>
+              <td>{{ importRowMessage(row) || '—' }}</td>
             </tr>
-            <tr v-if="preview.rows.length === 0"><td colspan="5">В файле не найдены записи для импорта.</td></tr>
+            <tr v-if="preview.rows.length === 0"><td colspan="5">{{ t('adminOperations.noImportRows') }}</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="crm-import-preview__actions">
-        <span v-if="preview.alreadyImported">Файл уже был обработан. Повторный импорт заблокирован.</span>
-        <span v-else-if="preview.summary.error > 0">Исправьте ошибки в источнике и загрузите файл снова.</span>
-        <span v-else>Проверьте скачиваемый отчёт перед подтверждением импорта.</span>
+        <span v-if="preview.alreadyImported">{{ t('adminOperations.alreadyProcessed') }}</span>
+        <span v-else-if="preview.summary.error > 0">{{ t('adminOperations.fixImportSource') }}</span>
+        <span v-else>{{ t('adminOperations.reviewImportReport') }}</span>
         <button class="primary-button" type="button" :disabled="!canConfirm" @click="confirmImport">
-          {{ isImporting ? 'Импортируем…' : 'Подтвердить импорт' }}
+          {{ isImporting ? t('adminOperations.importing') : t('adminOperations.confirmImport') }}
         </button>
       </div>
     </section>
 
     <div v-if="result" class="crm-import-result">
-      <h2>Итог импорта</h2>
-      <button class="secondary-button" type="button" :disabled="isDownloading" @click="downloadReport('result')">Скачать итоговый CSV-отчёт</button>
+      <h2>{{ t('adminOperations.importSummary') }}</h2>
+      <button class="secondary-button" type="button" :disabled="isDownloading" @click="downloadReport('result')">{{ t('adminOperations.downloadResultReport') }}</button>
     </div>
   </section>
 </template>

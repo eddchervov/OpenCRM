@@ -1,4 +1,5 @@
 using OpenCRM.Modules.Planning.Contracts;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -31,11 +32,62 @@ using OpenCRM.Services.Interfaces.Defects;
 using OpenCRM.Services.Interfaces.Organizations;
 using OpenCRM.Testing;
 using OpenCRM.WebApp.Controllers.Api.V1.Maintenance;
+using OpenCRM.WebApp.Infrastructure.Api;
+using OpenCRM.WebApp.Infrastructure.Localization;
 
 namespace OpenCRM.Modules.Maintenance.Tests.Integration;
 
 public sealed class MaintenanceHttpAcceptanceTests(MaintenanceDatabaseFixture fixture) : IClassFixture<MaintenanceDatabaseFixture>
 {
+    [Theory]
+    [InlineData("en-US", "ru-RU", "The amount exceeds the outstanding balance: 1500,5 CNY. Refresh the card.")]
+    [InlineData("zh-Hans", "en-US", "金额超过待支付余额：1500.5 CNY。请刷新卡片。")]
+    public async Task OverpaymentValidationUsesUiAndFormattingCultures(
+        string uiCulture,
+        string formattingCulture,
+        string expectedMessage)
+    {
+        await using var context = fixture.CreateContext();
+        var owner = new ApplicationUser();
+        var organization = new Organization
+        {
+            OwnerUser = owner,
+            Name = "CNY HTTP",
+            CurrencyCode = CurrencyCodes.Cny,
+            Members = [new OrganizationMember { User = owner, RoleCode = OrganizationRoleCodes.Owner }]
+        };
+        var work = new MaintenanceEntity
+        {
+            User = owner,
+            Vehicle = new Vehicle { User = owner, Organization = organization },
+            Status = MaintenanceStatus.Planned,
+            CurrencyCode = CurrencyCodes.Cny,
+            Date = new DateTime(2026, 10, 11, 0, 0, 0, DateTimeKind.Utc),
+            DateTimeCreation = new DateTime(2026, 10, 10, 0, 0, 0, DateTimeKind.Utc),
+            Details = [new MaintenanceDetail { Name = "Service", Price = 1500.5m }]
+        };
+        context.Maintenance.Add(work);
+        await context.SaveChangesAsync();
+
+        using var host = this.CreateServer();
+        using var client = host.GetTestClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", owner.Id);
+        client.DefaultRequestHeaders.Add("X-Test-Ui-Culture", uiCulture);
+        client.DefaultRequestHeaders.Add("X-Test-Formatting-Culture", formattingCulture);
+        using var response = await client.PostAsJsonAsync(
+            $"/api/v1/maintenance/{work.Id}/payments?organizationId={organization.Id}",
+            new AddMaintenancePaymentDto { Id = Guid.NewGuid(), Amount = 1501.5m });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var body = json.RootElement;
+        Assert.False(body.GetProperty("success").GetBoolean());
+        Assert.Equal("bad_request", body.GetProperty("errorCode").GetString());
+        Assert.Equal(expectedMessage, body.GetProperty("message").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("traceId").GetString()));
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("errors").ValueKind);
+    }
+
     [Fact]
     public async Task PersonalOrderUsesModuleThroughHttpAndPreservesAuthorizationAndJson()
     {
@@ -152,6 +204,7 @@ public sealed class MaintenanceHttpAcceptanceTests(MaintenanceDatabaseFixture fi
         var builder = new HostBuilder().ConfigureWebHost(web => web.UseTestServer().ConfigureServices(services =>
         {
             services.AddScoped<OpenCRMContext>(_ => fixture.CreateContext());
+            services.AddLocalization(options => options.ResourcesPath = "Resources");
             services.AddScoped<IMaintenanceRepository, MaintenanceRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();
             services.AddSingleton(Mock.Of<IMaintenancePhotoRepository>());
@@ -178,9 +231,38 @@ public sealed class MaintenanceHttpAcceptanceTests(MaintenanceDatabaseFixture fi
             services.AddAuthentication("MaintenanceTest")
                 .AddScheme<AuthenticationSchemeOptions, HeaderAuthenticationHandler>("MaintenanceTest", _ => { });
             services.AddAuthorization();
-            services.AddControllers().AddApplicationPart(typeof(MaintenanceApiController).Assembly);
+            services.AddControllers(options => options.Filters.Add<ApiErrorResultFilter>())
+                .AddApplicationPart(typeof(MaintenanceApiController).Assembly);
         }).Configure(application =>
         {
+            application.Use(async (context, next) =>
+            {
+                var previousCulture = CultureInfo.CurrentCulture;
+                var previousUiCulture = CultureInfo.CurrentUICulture;
+                var uiCultureName = context.Request.Headers["X-Test-Ui-Culture"].FirstOrDefault();
+                var formattingCultureName = context.Request.Headers["X-Test-Formatting-Culture"].FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(uiCultureName))
+                {
+                    var uiCulture = CultureInfo.GetCultureInfo(uiCultureName);
+                    CultureInfo.CurrentUICulture = uiCulture;
+                    context.Items[SupportedUiLanguages.RequestCultureItemKey] = uiCulture.Name;
+                }
+
+                if (!string.IsNullOrWhiteSpace(formattingCultureName))
+                {
+                    CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(formattingCultureName);
+                }
+
+                try
+                {
+                    await next();
+                }
+                finally
+                {
+                    CultureInfo.CurrentCulture = previousCulture;
+                    CultureInfo.CurrentUICulture = previousUiCulture;
+                }
+            });
             application.UseRouting();
             application.UseAuthentication();
             application.UseAuthorization();

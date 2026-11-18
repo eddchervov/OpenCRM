@@ -2,9 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
         xmlns:views="using:OpenCRM.Admin.App.Views"
+        xmlns:loc="using:OpenCRM.Admin.App.Localization"
+        xmlns:api="using:OpenCRM.Admin.Api"
         x:Class="OpenCRM.Admin.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Администрирование"
+        Title="{loc:LocalizedText Key=app.title}"
         Icon="/Assets/OpenCRM.ico"
         Width="1160" Height="800" MinWidth="900" MinHeight="650"
         WindowStartupLocation="CenterScreen">
@@ -25,42 +27,47 @@
       <Border Background="#0E0E0E" BorderBrush="#262626" BorderThickness="0,0,1,0">
         <Grid RowDefinitions="Auto,*,Auto" Margin="16,24,16,18">
           <StackPanel Margin="14,0,0,24" Spacing="5">
-            <TextBlock Text="Администрирование" FontSize="22" FontWeight="Bold" LetterSpacing="2" />
-            <TextBlock Text="Панель управления сервисом" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=app.title}" FontSize="22" FontWeight="Bold" LetterSpacing="2" />
+            <TextBlock Text="{loc:LocalizedText Key=app.subtitle}" Classes="caption" />
+            <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" Margin="0,8,14,0">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="api:AdminUiLanguageOption"><TextBlock Text="{Binding NativeName}" /></DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
           </StackPanel>
           <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Spacing="5">
               <Button Classes="navigation" Classes.active="{Binding IsProfileOpen}" Command="{Binding ShowProfileCommand}" AutomationProperties.AutomationId="ProfileNavigation">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="Мой профиль" FontWeight="SemiBold" />
+                  <TextBlock Text="{loc:LocalizedText Key=nav.profile}" FontWeight="SemiBold" />
                   <TextBlock Grid.Column="1" Text="●" IsVisible="{Binding IsProfileOpen}" Foreground="#C5C5C5" FontSize="9" VerticalAlignment="Center" />
                 </Grid>
               </Button>
-              <TextBlock Text="РАЗДЕЛЫ" Classes="caption" Margin="14,20,0,8" LetterSpacing="1" />
-              <Button Content="Дашборд" Classes="navigation" Classes.active="{Binding IsDashboardOpen}"
+              <TextBlock Text="{loc:LocalizedText Key=nav.sections}" Classes="caption" Margin="14,20,0,8" LetterSpacing="1" />
+              <Button Content="{loc:LocalizedText Key=nav.dashboard}" Classes="navigation" Classes.active="{Binding IsDashboardOpen}"
                       IsVisible="{Binding CanViewDashboard}" Command="{Binding ShowDashboardCommand}"
                       AutomationProperties.AutomationId="DashboardNavigation" />
               <Button Classes="navigation" Classes.active="{Binding IsUsersOpen}"
                       IsVisible="{Binding CanViewUsers}" Command="{Binding ShowUsersCommand}"
                       AutomationProperties.AutomationId="UsersNavigation">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="Пользователи" />
+                  <TextBlock Text="{loc:LocalizedText Key=nav.users}" />
                   <Border Grid.Column="1" IsVisible="{Binding HasTodayUsers}" Background="#36312A" CornerRadius="9"
-                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="Новых записей с последнего просмотра">
+                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="{loc:LocalizedText Key=nav.newSinceLastVisit}">
                     <TextBlock Text="{Binding TodayUsersCount}" Foreground="#F0C58B" FontSize="11" HorizontalAlignment="Center" />
                   </Border>
                 </Grid>
               </Button>
-              <Button Content="Организации" Classes="navigation" Classes.active="{Binding IsOrganizationsOpen}"
+              <Button Content="{loc:LocalizedText Key=nav.organizations}" Classes="navigation" Classes.active="{Binding IsOrganizationsOpen}"
                       IsVisible="{Binding CanViewOrganizations}" Command="{Binding ShowOrganizationsCommand}"
                       AutomationProperties.AutomationId="OrganizationsNavigation" />
               <Button Classes="navigation" Classes.active="{Binding IsBillingOpen}"
                       IsVisible="{Binding CanViewBilling}" Command="{Binding ShowBillingCommand}"
                       AutomationProperties.AutomationId="BillingNavigation">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="Платежи и подписки" />
+                  <TextBlock Text="{loc:LocalizedText Key=nav.billing}" />
                   <Border Grid.Column="1" IsVisible="{Binding HasTodayBilling}" Background="#36312A" CornerRadius="9"
-                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="Оплаченных платежей без чека или с незавершённой обработкой">
+                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="{loc:LocalizedText Key=nav.billingAttention}">
                     <TextBlock Text="{Binding TodayBillingCount}" Foreground="#F0C58B" FontSize="11" HorizontalAlignment="Center" />
                   </Border>
                 </Grid>
@@ -69,9 +76,9 @@
                       IsVisible="{Binding CanViewSupportMessages}" Command="{Binding ShowSupportMessagesCommand}"
                       AutomationProperties.AutomationId="SupportMessagesNavigation">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="Обращения" />
+                  <TextBlock Text="{loc:LocalizedText Key=nav.support}" />
                   <Border Grid.Column="1" IsVisible="{Binding HasTodaySupportMessages}" Background="#36312A" CornerRadius="9"
-                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="Новых записей с последнего просмотра">
+                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="{loc:LocalizedText Key=nav.newSinceLastVisit}">
                     <TextBlock Text="{Binding TodaySupportMessagesCount}" Foreground="#F0C58B" FontSize="11" HorizontalAlignment="Center" />
                   </Border>
                 </Grid>
@@ -80,20 +87,20 @@
                       IsVisible="{Binding CanViewEmailHistory}" Command="{Binding ShowEmailHistoryCommand}"
                       AutomationProperties.AutomationId="EmailHistoryNavigation">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="История email" />
+                  <TextBlock Text="{loc:LocalizedText Key=nav.emailHistory}" />
                   <Border Grid.Column="1" IsVisible="{Binding HasTodayEmailHistory}" Background="#36312A" CornerRadius="9"
-                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="Новых записей с последнего просмотра">
+                          MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip.Tip="{loc:LocalizedText Key=nav.newSinceLastVisit}">
                     <TextBlock Text="{Binding TodayEmailHistoryCount}" Foreground="#F0C58B" FontSize="11" HorizontalAlignment="Center" />
                   </Border>
                 </Grid>
               </Button>
-              <Button Content="Тарифы" Classes="navigation" Classes.active="{Binding IsSubscriptionPlansOpen}"
+              <Button Content="{loc:LocalizedText Key=nav.plans}" Classes="navigation" Classes.active="{Binding IsSubscriptionPlansOpen}"
                       IsVisible="{Binding CanManageConfiguration}" Command="{Binding ShowSubscriptionPlansCommand}"
                       AutomationProperties.AutomationId="SubscriptionPlansNavigation" />
-              <Button Content="Промокоды" Classes="navigation" Classes.active="{Binding IsPromoCodesOpen}"
+              <Button Content="{loc:LocalizedText Key=nav.promoCodes}" Classes="navigation" Classes.active="{Binding IsPromoCodesOpen}"
                       IsVisible="{Binding CanManageConfiguration}" Command="{Binding ShowPromoCodesCommand}"
                       AutomationProperties.AutomationId="PromoCodesNavigation" />
-              <Button Content="Роли и права" Classes="navigation" Classes.active="{Binding IsRolesOpen}"
+              <Button Content="{loc:LocalizedText Key=nav.roles}" Classes="navigation" Classes.active="{Binding IsRolesOpen}"
                       IsVisible="{Binding CanViewRoles}" Command="{Binding ShowRolesCommand}"
                       AutomationProperties.AutomationId="RolesNavigation" />
               <ItemsControl ItemsSource="{Binding VisibleOperationSections}">
@@ -106,7 +113,7 @@
                         <TextBlock Text="{Binding Title}" />
                         <Border Grid.Column="1" IsVisible="{Binding HasBadge}" Background="#36312A" CornerRadius="9"
                                 MinWidth="22" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center"
-                                ToolTip.Tip="Предложений ожидает модерации">
+                                ToolTip.Tip="{loc:LocalizedText Key=nav.pendingCatalog}">
                           <TextBlock Text="{Binding BadgeCount}" Foreground="#F0C58B" FontSize="11" HorizontalAlignment="Center" />
                         </Border>
                       </Grid>
@@ -114,7 +121,7 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <TextBlock Text="РАЗДЕЛЫ ПРОДУКТА" Classes="caption" Margin="14,20,0,8" LetterSpacing="1"
+              <TextBlock Text="{loc:LocalizedText Key=nav.productSections}" Classes="caption" Margin="14,20,0,8" LetterSpacing="1"
                          IsVisible="{Binding HasVisibleProductSections}" />
               <ItemsControl ItemsSource="{Binding VisibleProductSections}">
                 <ItemsControl.ItemTemplate>
@@ -128,10 +135,10 @@
               <ItemsControl ItemsSource="{Binding NavigationItems}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:NavigationItem">
-                    <Border IsVisible="{Binding IsPlaceholder}" Padding="14,11" Margin="0,2" ToolTip.Tip="Раздел будет перенесён на следующем этапе">
+                    <Border IsVisible="{Binding IsPlaceholder}" Padding="14,11" Margin="0,2" ToolTip.Tip="{loc:LocalizedText Key=nav.placeholderTooltip}">
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="{Binding Title}" Foreground="#929292" />
-                        <TextBlock Grid.Column="1" Text="позже" Foreground="#858585" FontSize="10" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{loc:LocalizedText Key=nav.placeholderLater}" Foreground="#858585" FontSize="10" Margin="8,0,0,0" VerticalAlignment="Center" />
                       </Grid>
                     </Border>
                   </DataTemplate>
@@ -146,7 +153,7 @@
                 <TextBlock Text="{Binding AccessLabel}" Classes="caption" TextWrapping="Wrap" />
               </StackPanel>
             </Border>
-            <Button Content="Выйти из аккаунта" Command="{Binding LogoutCommand}"
+            <Button Content="{loc:LocalizedText Key=nav.logout}" Command="{Binding LogoutCommand}"
                     HorizontalAlignment="Stretch" AutomationProperties.AutomationId="LogoutButton" />
           </StackPanel>
         </Grid>

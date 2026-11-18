@@ -10,6 +10,7 @@ public sealed class MaintenanceFinancialTotalEntityTypeConfiguration : IEntityTy
     /// <summary> Настраивает точность сумм, связи и индексы чтения сводки. </summary>
     public void Configure(EntityTypeBuilder<MaintenanceFinancialTotal> builder)
     {
+        builder.Property(total => total.CurrencyCode).HasMaxLength(3).HasDefaultValue("RUB").IsRequired();
         builder.ToTable("MaintenanceFinancialTotals", table => table.HasComment(
             "Готовые финансовые показатели одного обслуживания. C# обновляет проекцию в транзакции исходного заказа и работ; " +
             "оплаты, заказ и строки работ остаются источником данных. Финансовые триггеры не используются."));

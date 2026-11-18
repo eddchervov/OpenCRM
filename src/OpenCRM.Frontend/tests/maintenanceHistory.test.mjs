@@ -1,3 +1,5 @@
+import * as localization from '@opencrm/ui/i18n'
+import '../packages/workspace/src/apiMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -9,7 +11,11 @@ const code = ts.transpileModule(readFileSync(new URL('../packages/workspace/src/
 
 function createApi(fetch) {
   const module = { exports: {} }
-  new Function('module', 'exports', 'fetch', 'window', code)(module, module.exports, fetch, { location: { origin: 'https://localhost' } })
+  new Function('require', 'module', 'exports', 'fetch', 'window', code)(id => {
+    if (id === '@opencrm/ui/i18n') return localization
+    if (id === '@opencrm/workspace/apiMessages') return {}
+    throw new Error(id)
+  }, module, module.exports, fetch, { location: { origin: 'https://localhost' } })
   return module.exports
 }
 

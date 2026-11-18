@@ -5,6 +5,10 @@ import { parse, compileScript } from '@vue/compiler-sfc'
 import { renderToString } from '@vue/server-renderer'
 import ts from 'typescript'
 import * as vue from 'vue'
+import * as localization from '../packages/ui/src/i18n.ts'
+import '../packages/workspace/src/schedulerMessages.ts'
+import '../packages/workspace/src/schedulerControlMessages.ts'
+import '../packages/workspace/src/schedulerCalendarMessages.ts'
 
 const rendererModule = { exports: {} }
 const rendererCode = ts.transpileModule(readFileSync(new URL('../packages/workspace/src/utils/schedulerCalendarEvent.ts', import.meta.url), 'utf8'), {
@@ -38,7 +42,11 @@ const record = {
 
 const preview = compile('../packages/workspace/src/components/SchedulerRecordPreview.vue', {
   vue,
+  '@opencrm/ui/i18n': localization,
   '@opencrm/ui': { UiButton: (props, { slots }) => vue.h('a', props, slots.default?.()) },
+  '../schedulerMessages': {},
+  '../schedulerControlMessages': {},
+  '../schedulerCalendarMessages': {},
   './SchedulerBookingDialog.vue': { default: (props, { slots }) => props.open ? vue.h('div', slots.default?.()) : null },
   '../utils/vehicleBrandLogo': { getVehicleBrandLogo: () => null }
 }, true)
@@ -57,6 +65,54 @@ test('Просмотр сохраняет окончание многоднев�
   assert.ok(html.includes('<h3>Запись</h3>'))
   assert.ok(html.includes('Без времени'))
   assert.ok(html.includes('22.10.2026'))
+})
+
+test('Стабильный код определяет статус, пользовательскую подпись неизвестного статуса оставляет без перевода', async () => {
+  localization.i18n.global.locale.value = 'en'
+  localization.formattingCulture.value = 'en-US'
+  const knownStatus = await renderToString(vue.createSSRApp(preview, { item: { ...record, status: 2, statusName: 'Пользовательская подпись' } }))
+  assert.ok(knownStatus.includes('In progress'))
+  assert.ok(!knownStatus.includes('Пользовательская подпись'))
+
+  const customStatus = await renderToString(vue.createSSRApp(preview, { item: { ...record, status: 99, statusName: 'Custom status label' } }))
+  assert.ok(customStatus.includes('Custom status label'))
+  assert.ok(customStatus.includes('10/22/26'))
+  localization.i18n.global.locale.value = 'ru'
+  localization.formattingCulture.value = 'ru-RU'
+})
+
+test('Заголовок списка дня локализует дату через formattingCulture', async () => {
+  localization.i18n.global.locale.value = 'en'
+  localization.formattingCulture.value = 'en-US'
+  const component = compile('../packages/workspace/src/components/SchedulerDayRecords.vue', {
+    vue,
+    '@opencrm/ui/i18n': localization,
+    '@opencrm/ui': { UiButton: (props, { slots }) => vue.h('button', props, slots.default?.()) },
+    '../schedulerCalendarMessages': {},
+    './SchedulerBookingDialog.vue': { default: (props, { slots }) => props.open ? vue.h('div', { title: props.title }, slots.default?.()) : null },
+    './SchedulerList.vue': { default: (props) => vue.h('div', props.items.length) }
+  }, true)
+  const html = await renderToString(vue.createSSRApp(component, {
+    open: true, date: '2026-10-22', items: [], organizationId: 'org-1', canCreate: false
+  }))
+  assert.ok(html.includes('Appointments for October 22, 2026'))
+  localization.i18n.global.locale.value = 'ru'
+  localization.formattingCulture.value = 'ru-RU'
+})
+
+test('Все статические ключи календарных компонентов доступны на трёх языках', () => {
+  const componentFiles = [
+    'SchedulerDayCalendar.vue', 'SchedulerSlots.vue', 'SchedulerRecordPreview.vue', 'SchedulerDayRecords.vue'
+  ]
+  const source = componentFiles.map(name => readFileSync(new URL(`../packages/workspace/src/components/${name}`, import.meta.url), 'utf8')).join('\n')
+  const keys = [...new Set([...source.matchAll(/\bt\(['"]([^'"]+)['"]\)/g)].map(match => match[1]))]
+
+  for (const locale of ['ru', 'en', 'zh-Hans']) {
+    localization.i18n.global.locale.value = locale
+    for (const key of keys) assert.notEqual(localization.translate(key), key, `${key} отсутствует для ${locale}`)
+  }
+
+  localization.i18n.global.locale.value = 'ru'
 })
 
 class Element {
@@ -93,7 +149,17 @@ for (const scenario of ['detailing', 'autoservice', 'fleet']) {
     const component = compile(`../Scenarios/${scenario}-client/src/components/MaintenanceCalendar.vue`, {
       vue: { ...vue, onMounted: callback => { mount = callback }, onBeforeUnmount() {}, watch() {} },
       '@opencrm/workspace': { scheduleBusinessHours: () => false },
-      '@opencrm/ui': { formatDateOnly: () => '2026-10-21' },
+      '@opencrm/workspace/calendarLocale': {
+        fullCalendarLocaleCode: locale => locale,
+        getFullCalendarLocales: () => []
+      },
+      '@opencrm/workspace/schedulerMessages': {},
+      '@opencrm/ui/i18n': { formatLocaleDate: () => '' },
+      '@opencrm/ui': {
+        formatDateOnly: () => '2026-10-21',
+        formatLocalDateTime: () => '2026-10-21T12:00:00',
+        useLocalization: () => ({ t: key => key, locale: vue.ref('ru') })
+      },
       [`@/api/${scenario}Bff`]: {}
     })
     globalThis.window = {

@@ -45,13 +45,14 @@ internal sealed class MaintenanceConsumptionCommandService(
         await context.Database.ExecuteSqlInterpolatedAsync(
             $"""SELECT 1 FROM "Organizations" WHERE "Id" = {organizationId} FOR NO KEY UPDATE""");
         await context.Database.ExecuteSqlInterpolatedAsync($"""SELECT 1 FROM "Maintenance" WHERE "Id" = {maintenanceId} FOR UPDATE""");
-        var maintenanceExists = await context.Maintenance.AsNoTracking()
-            .AnyAsync(item => item.Id == maintenanceId
-                && item.Vehicle.OrganizationId == organizationId);
-        if (!maintenanceExists)
-        {
-            throw new KeyNotFoundException("Обслуживание не найдено.");
-        }
+        var maintenance = await context.Maintenance.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == maintenanceId && item.Vehicle.OrganizationId == organizationId)
+            ?? throw new KeyNotFoundException("Обслуживание не найдено.");
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
 
         var previousMovements = await context.OrganizationMaterialMovements
             .AsNoTracking()
@@ -140,6 +141,7 @@ internal sealed class MaintenanceConsumptionCommandService(
             var movement = new OrganizationMaterialMovement
             {
                 OrganizationId = organizationId,
+                CurrencyCode = stock.CurrencyCode,
                 StockId = stock.Id,
                 CatalogItemId = stock.CatalogItemId,
                 MaintenanceId = maintenanceId,

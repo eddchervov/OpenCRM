@@ -45,7 +45,7 @@ public sealed class OrganizationShiftsApiController(IOrganizationShiftService sh
     {
         return await ExecuteAsync(async () =>
         {
-            await shiftService.SetTimeZoneAsync(this.GetRequiredUserId(), organizationId, request.TimeZoneId);
+            await shiftService.SetTimeZoneAsync(this.GetRequiredUserId(), organizationId, request.TimeZoneId, request.ExpectedTimeZoneId);
             return new { saved = true };
         });
     }
@@ -123,7 +123,7 @@ public sealed class OrganizationShiftsApiController(IOrganizationShiftService sh
     }
 
     /// <summary> Запрос на установку часового пояса смен. </summary>
-    public sealed record ShiftTimeZoneRequest(string TimeZoneId);
+    public sealed record ShiftTimeZoneRequest(string TimeZoneId, string? ExpectedTimeZoneId = null);
 
     /// <summary> Запрос на отмену смены с версией и причиной. </summary>
     public sealed record CancelShiftRequest(uint Version, string? Reason);

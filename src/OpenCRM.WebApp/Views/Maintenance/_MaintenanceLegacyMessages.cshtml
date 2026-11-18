@@ -1,0 +1,13 @@
+@{
+    var maintenanceLegacyMessages = Text.GetAllStrings(includeParentCultures: true)
+        .Where(item => item.Name.StartsWith("maintenance.legacy.", StringComparison.Ordinal))
+        .ToDictionary(
+            item => string.Concat(item.Name["maintenance.legacy.".Length..]
+                .Split('.')
+                .Select((segment, index) => index == 0 ? segment : char.ToUpperInvariant(segment[0]) + segment[1..])),
+            item => item.Value);
+}
+
+<div id="maintenance-legacy-messages" hidden
+     data-messages="@System.Text.Json.JsonSerializer.Serialize(maintenanceLegacyMessages)">
+</div>

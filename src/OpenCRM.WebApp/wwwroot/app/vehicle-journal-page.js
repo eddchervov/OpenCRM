@@ -6,6 +6,7 @@
             vehicleId: page.vehicleId || '',
             organizationId: page.organizationId || '',
             returnUrl: page.returnUrl || '',
+            dateFormat: page.dateFormat || 'DD.MM.YYYY HH:mm',
             events: [],
             loading: true
         };
@@ -39,7 +40,7 @@
                 ? moment(value)
                 : moment(value.substring(0, 10), 'YYYY-MM-DD', true);
 
-            return date.isValid() ? date.format('DD.MM.YYYY HH:mm') : '—';
+            return date.isValid() ? date.format(this.dateFormat) : '—';
         },
         getVehicleHistoryIcon: function (event) {
             var type = event && event.eventType ? event.eventType : '';

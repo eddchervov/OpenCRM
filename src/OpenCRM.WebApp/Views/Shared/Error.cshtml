@@ -2,12 +2,12 @@
     var statusCode = Context.Response.StatusCode;
     var (title, message) = statusCode switch
     {
-        400 => ("Не удалось обработать запрос", "Проверьте введённые данные и адрес страницы. Если ошибка повторяется, обратитесь в поддержку."),
-        401 => ("Требуется вход", "Войдите в свой аккаунт, чтобы открыть эту страницу."),
-        403 => ("Доступ запрещён", "У вашего аккаунта нет доступа к этой странице. Проверьте выбранную организацию или уточните права у её владельца."),
-        429 => ("Слишком много запросов", "Подождите немного и повторите попытку. Это временное ограничение частоты обращений к сайту."),
-        503 => ("Сервис временно недоступен", "Попробуйте открыть страницу позже. Если проблема сохраняется, обратитесь в поддержку."),
-        _ => ("Произошла ошибка", "При обработке вашего запроса возникла непредвиденная ошибка. Пожалуйста, попробуйте позже.")
+        400 => (Text["entry.badRequest"].Value, Text["entry.badRequestHelp"].Value),
+        401 => (Text["entry.loginRequired"].Value, Text["entry.loginHelp"].Value),
+        403 => (Text["entry.forbidden"].Value, Text["entry.forbiddenHelp"].Value),
+        429 => (Text["entry.tooMany"].Value, Text["entry.tooManyHelp"].Value),
+        503 => (Text["entry.unavailable"].Value, Text["entry.unavailableHelp"].Value),
+        _ => (Text["entry.error"].Value, Text["entry.errorHelp"].Value)
     };
     ViewData["Title"] = title;
     Layout = "/Views/Shared/_Layout.cshtml";
@@ -21,7 +21,7 @@
     <div class="container platform-page-shell">
         <nav aria-label="breadcrumb" class="platform-page-breadcrumbs">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Главная</a></li>
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">@Text["entry.home"]</a></li>
                 <li class="breadcrumb-item active" aria-current="page">@title</li>
             </ol>
         </nav>
@@ -38,16 +38,16 @@
 
             @if (ViewBag.ErrorId != null)
             {
-                <p class="text-muted mb-4">Код ошибки: <strong>@ViewBag.ErrorId</strong></p>
+                <p class="text-muted mb-4">@Text["entry.errorId"] <strong>@ViewBag.ErrorId</strong></p>
             }
 
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 <a href="~/" class="btn btn-dark">
-                    <i class="fa fa-home me-2"></i>На главную
+                    <i class="fa fa-home me-2"></i>@Text["entry.homeAction"]
                 </a>
                 @if (statusCode == 401)
                 {
-                    <a href="~/auth/login" class="btn btn-outline-dark">Войти</a>
+                    <a href="~/auth/login" class="btn btn-outline-dark">@Text["entry.login"]</a>
                 }
             </div>
         </div>

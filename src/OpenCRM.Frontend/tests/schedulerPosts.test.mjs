@@ -5,6 +5,10 @@ import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 import * as scheduler from '../packages/workspace/src/utils/schedulerDay.ts'
+import * as localization from '../packages/ui/src/i18n.ts'
+import '../packages/workspace/src/schedulerMessages.ts'
+import '../packages/workspace/src/schedulerControlMessages.ts'
+import '../packages/workspace/src/schedulerCalendarMessages.ts'
 
 const date = '2026-10-30'
 const booking = { id:'record', vehicleId:'car', vehicleDisplayName:'Исторический автомобиль', status:1, date, location:'Закрытый пост', plannedStartTime:'10:00', plannedEndTime:'11:00' }
@@ -16,6 +20,7 @@ function component(name) {
   const module = {exports:{}}
   new Function('require','module','exports',code)(id=>{
     if(id==='vue') return {...vue,onMounted(){},onBeforeUnmount(){},useModel:(_,name)=>vue.ref(name==='duration'?60:'')}
+    if(id==='@opencrm/ui/i18n') return localization
     if(id==='../utils/schedulerDay') return scheduler
     if(id==='../utils/vehicleBrandLogo') return {getVehicleBrandLogo:()=>null}
     if(id==='../utils/workdayCard') return {shouldOpenRecord:()=>true}
@@ -53,4 +58,43 @@ test('Свободные слоты закрытого поста не пред�
   assert.equal(events.length,0)
   state.create('Открытый пост',12*60)
   assert.equal(events[0][1].location,'Открытый пост')
+})
+
+test('Placeholder поста сравнивается целиком и локализуется, реальные пользовательские названия сохраняются', () => {
+  localization.i18n.global.locale.value = 'en'
+  const { state, props } = component('SchedulerDayCalendar')
+  props.posts = ['Без подъёмника']
+  assert.equal(state.placeholderPost.value, 'No bay')
+  assert.deepEqual(state.postOptions.value, ['Без подъёмника'])
+  props.posts = ['Без поста']
+  assert.equal(state.placeholderPost.value, 'Без поста')
+  localization.i18n.global.locale.value = 'ru'
+})
+
+test('Свободный слот по локализованному placeholder работает с пустой локацией у записи', () => {
+  localization.i18n.global.locale.value = 'en'
+  const { state, props } = component('SchedulerSlots')
+  props.posts = ['No bay']
+  props.items = [{ ...booking, location: undefined, plannedStartTime: '10:00', plannedEndTime: '11:00' }]
+  assert.equal(state.columns.value[0].busy.length, 1)
+  assert.equal(state.columns.value[0].starts.includes(10 * 60), false)
+  assert.equal(state.columns.value[0].starts.includes(11 * 60), true)
+  localization.i18n.global.locale.value = 'ru'
+})
+
+test('Статус календаря переводится по коду, неизвестная подпись сервера сохраняется', () => {
+  localization.i18n.global.locale.value = 'en'
+  const { state } = component('SchedulerDayCalendar')
+  assert.equal(state.statusText({ status: 2, statusName: 'Серверная подпись' }), 'In progress')
+  assert.equal(state.statusText({ status: 99, statusName: 'Custom status' }), 'Custom status')
+  localization.i18n.global.locale.value = 'ru'
+})
+
+test('Длительность свободных слотов переводится независимо для каждого варианта', () => {
+  localization.i18n.global.locale.value = 'en'
+  const { state } = component('SchedulerSlots')
+  assert.deepEqual(state.durationOptions.value.map(option => option.label), [
+    '30 minutes', '1 hour', '1 hour 30 minutes', '2 hours', '3 hours', '4 hours'
+  ])
+  localization.i18n.global.locale.value = 'ru'
 })

@@ -38,7 +38,7 @@ internal sealed class MaintenanceReportDocxRenderer(string projectName)
             if (model.Maintenance?.MaintenanceDetails?.Any() == true)
             {
                 WordDocumentComponents.AddSectionHeading(body, "Работы и материалы");
-                WordTableComponents.AddServicesTable(body, model.Maintenance.MaintenanceDetails);
+                WordTableComponents.AddServicesTable(body, model.Maintenance.MaintenanceDetails, currencyCode: model.Maintenance.CurrencyCode);
             }
 
             if (!string.IsNullOrWhiteSpace(model.Maintenance?.Comment))

@@ -1,9 +1,13 @@
 ﻿<script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../billingMessages'
 import { computed, ref, watch } from 'vue'
 import { UiButton, UiTooltip } from '@opencrm/ui'
 import type { WorkspaceBillingData, WorkspacePlan } from '../api/workspaceAdmin'
 import WorkspacePromoCodeSection from './WorkspacePromoCodeSection.vue'
 import WorkspaceProOverview from './WorkspaceProOverview.vue'
+
+const { t } = useLocalization()
 
 const props = defineProps<{
   historyOnly?: boolean
@@ -33,23 +37,37 @@ const hasActiveRegularPlan = computed(() => Boolean(props.billing.currentSubscri
   && !isGiftAccess.value
   && !props.billing.effectivePlan.isDemoPlan
   && !props.billing.effectivePlan.isDefaultPlan))
-const testSubscriptionMessage = 'Тарифы для этого аккаунта назначаются в административной панели.'
+const testSubscriptionMessage = computed(() => t('billing.testAccount'))
+const renewalMessage = computed(() => {
+  if (!props.billing.currentSubscription) return t('billing.noActiveSubscription')
+  if (props.billing.effectivePlan?.isDemoPlan) return t('billing.demoNotRenewable')
+  if (props.billing.effectivePlan?.isDefaultPlan) return t('billing.baseNotRenewable')
+  if (isGiftAccess.value) return t('billing.giftRenewal')
+  const count = props.billing.businessDaysUntilExpiry
+  if (Number.isFinite(count)) {
+    return props.billing.canExtendBusinessSubscription
+      ? t('billing.renewalAvailable', { count })
+      : t('billing.renewalUpcoming', { count })
+  }
+
+  return props.billing.businessExtensionMessage || t('billing.extensionWindow')
+})
 const extensionUnavailableMessage = computed(() => {
   if (props.billing.canUseTestSubscriptions) {
-    return testSubscriptionMessage
+    return testSubscriptionMessage.value
   }
 
   return props.billing.canExtendBusinessSubscription
     ? ''
-    : props.billing.businessExtensionMessage || 'Продление откроется за 7 дней до окончания тарифа.'
+    : renewalMessage.value
 })
 const purchaseUnavailableMessage = computed(() => {
   if (props.billing.canUseTestSubscriptions) {
-    return testSubscriptionMessage
+    return testSubscriptionMessage.value
   }
 
   return hasActiveRegularPlan.value
-    ? `Другой тариф можно подключить после окончания текущего: ${formatDate(props.billing.currentSubscription?.endDate)}.`
+    ? t('billing.otherPlanAfter', { date: formatDate(props.billing.currentSubscription?.endDate) })
     : ''
 })
 
@@ -59,7 +77,7 @@ function formatDate(value?: string | null) {
   }
 
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU')
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(formattingCulture.value, { timeZone: props.billing.organization.timeZoneId || 'UTC' })
 }
 
 function formatMoney(value?: number | null) {
@@ -67,7 +85,7 @@ function formatMoney(value?: number | null) {
     return ''
   }
 
-  return new Intl.NumberFormat('ru-RU').format(value)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value)
 }
 
 function getPlanPrice(plan: { effectivePrice?: number, pricePerMonth?: number, price?: number }) {
@@ -80,14 +98,14 @@ function getPlanDurationText(durationDays?: number) {
   }
 
   if (durationDays >= 365) {
-    return 'за год'
+    return t('billing.yearly')
   }
 
   if (durationDays >= 28 && durationDays <= 31) {
-    return 'в месяц'
+    return t('billing.monthly')
   }
 
-  return `на ${durationDays} дн.`
+  return t('billing.duration', { count: durationDays })
 }
 
 function canShowPurchaseButton(plan: WorkspacePlan) {
@@ -110,21 +128,16 @@ function purchaseFromOverview(plan: WorkspacePlan) {
   emit('purchasePlan', plan)
 }
 
-function pluralize(value: number, forms: [string, string, string]) {
-  const count = Math.abs(value) % 100
-  return forms[count >= 11 && count <= 14 ? 2 : count % 10 === 1 ? 0 : count % 10 >= 2 && count % 10 <= 4 ? 1 : 2]
-}
-
 function getPlanHighlights(plan: WorkspacePlan) {
   const enabled = new Set(plan.features?.filter(feature => feature.boolValue === true).map(feature => feature.code))
   return [
-    ['workspace.maintenance.intake', 'Приёмка со схемой повреждений'],
-    ['workspace.module.members', 'Команда и смены'],
-    ['workspace.client_messaging', 'Сообщения и боты Telegram / MAX'],
-    ['workspace.module.analytics', 'Статистика работы'],
-    ['workspace.assistant', 'ИИ-помощник'],
-    ['workspace.documents.styling', 'Оформление документов'],
-    ['workspace.data.import', 'Импорт данных']
+    ['workspace.maintenance.intake', t('billing.intake')],
+    ['workspace.module.members', t('billing.team')],
+    ['workspace.client_messaging', t('billing.messaging')],
+    ['workspace.module.analytics', t('billing.analytics')],
+    ['workspace.assistant', t('billing.assistant')],
+    ['workspace.documents.styling', t('billing.documents')],
+    ['workspace.data.import', t('billing.import')]
   ].filter(([code]) => enabled.has(code)).map(([, title]) => title).slice(0, 3)
 }
 
@@ -134,46 +147,47 @@ watch(() => props.historyOnly, () => { overviewOpen.value = false })
 
 <template>
   <template v-if="historyOnly">
-    <WorkspacePromoCodeSection v-if="billing.canManageBilling" :organization-id="billing.organization.id" :disabled="isSaving" history-only />
+    <WorkspacePromoCodeSection v-if="billing.canManageBilling" :organization-id="billing.organization.id" :time-zone-id="billing.organization.timeZoneId" :disabled="isSaving" history-only />
     <section v-else class="workspace-common-subpanel">
-      <p role="status">Недостаточно прав для просмотра истории промокодов.</p>
-      <a href="#billing">← К тарифам</a>
+      <p role="status">{{ t('billing.historyForbidden') }}</p>
+      <a href="#billing">{{ t('billing.backToPlans') }}</a>
     </section>
   </template>
   <div v-else class="workspace-common-stack workspace-billing">
     <section class="workspace-billing-current">
       <div>
-        <span>{{ isGiftAccess ? 'Подарочный доступ' : 'Текущий пакет' }}</span>
-        <strong>{{ isFreePlan ? 'Бесплатный' : billing.effectivePlan?.name ?? 'Не подключен' }}</strong>
+        <span>{{ isGiftAccess ? t('billing.giftAccess') : t('billing.currentPackage') }}</span>
+        <strong>{{ isFreePlan ? t('billing.freePlan') : billing.effectivePlan?.name ?? t('billing.notConnected') }}</strong>
         <div v-if="billing.currentSubscription?.endDate" class="workspace-billing-expiry">
-          <small>Активен до {{ formatDate(billing.currentSubscription.endDate) }}</small>
+          <small>{{ t('billing.activeUntil', { date: formatDate(billing.currentSubscription.endDate) }) }}</small>
           <UiTooltip
             v-if="hasActiveRegularPlan"
-            :text="['Продление вручную за 7 дней до окончания. Автопродления нет.', billing.businessExtensionMessage].filter(Boolean).join(' ')"
+            :text="[t('billing.renewalHint'), renewalMessage].filter(Boolean).join(' ')"
           >
-            <button type="button" class="ui-field-label__help" aria-label="Условия продления тарифа">?</button>
+            <button type="button" class="ui-field-label__help" :aria-label="t('billing.renewalTerms')">?</button>
           </UiTooltip>
         </div>
-        <small v-if="isGiftAccess">При покупке тарифа оставшиеся подарочные дни добавятся к оплаченному сроку.</small>
+        <small v-if="isGiftAccess">{{ t('billing.giftHint') }}</small>
       </div>
-      <div class="workspace-billing-limits" aria-label="Лимиты тарифа">
-        <span v-if="clientsLimit != null"><b>{{ clientsLimit >= 2147483647 ? 'Без ограничения' : clientsLimit }}</b> {{ clientsLimit >= 2147483647 ? 'клиентов' : pluralize(clientsLimit, ['клиент', 'клиента', 'клиентов']) }}</span>
-        <span><b>{{ billing.workspaceVehicleLimit }}</b> авто</span>
-        <span><b>{{ billing.workspaceMembersLimit }}</b> {{ pluralize(billing.workspaceMembersLimit, ['участник', 'участника', 'участников']) }}</span>
+      <div class="workspace-billing-limits" :aria-label="t('billing.limits')">
+        <span v-if="clientsLimit != null">{{ clientsLimit >= 2147483647 ? t('billing.unlimitedClients') : t('billing.clients', { count: clientsLimit }) }}</span>
+        <span>{{ t('billing.vehicles', { count: billing.workspaceVehicleLimit }) }}</span>
+        <span>{{ t('billing.members', { count: billing.workspaceMembersLimit }) }}</span>
       </div>
     </section>
 
     <WorkspacePromoCodeSection
       v-if="billing.canManageBilling"
       :organization-id="billing.organization.id"
+      :time-zone-id="billing.organization.timeZoneId"
       :disabled="isSaving"
       @applied="$emit('promoApplied')"
     />
 
     <section class="workspace-common-subpanel">
       <header class="ui-section-header workspace-billing__plans-heading">
-        <h3>Тарифы</h3>
-        <UiButton v-if="featuredPlan" variant="secondary" @click="showPlanOverview(featuredPlan)">Что даёт PRO</UiButton>
+        <h3>{{ t('billing.plans') }}</h3>
+        <UiButton v-if="featuredPlan" variant="secondary" @click="showPlanOverview(featuredPlan)">{{ t('billing.proBenefits') }}</UiButton>
       </header>
       <div class="workspace-plan-grid">
         <article
@@ -182,14 +196,14 @@ watch(() => props.historyOnly, () => { overviewOpen.value = false })
           class="workspace-plan-card"
           :class="{ 'workspace-plan-card--active': billing.effectivePlan?.id === plan.id }"
         >
-          <span class="workspace-plan-card__eyebrow">Тариф организации</span>
+          <span class="workspace-plan-card__eyebrow">{{ t('billing.organizationPlan') }}</span>
           <div class="workspace-plan-card__head">
             <div>
               <strong>{{ plan.name }}</strong>
-              <span v-if="plan.isDemoPlan">Демо-доступ</span>
-              <span v-else-if="plan.isDefaultPlan">Базовый пакет</span>
+              <span v-if="plan.isDemoPlan">{{ t('billing.demo') }}</span>
+              <span v-else-if="plan.isDefaultPlan">{{ t('billing.base') }}</span>
             </div>
-            <b v-if="billing.effectivePlan?.id === plan.id">Сейчас</b>
+            <b v-if="billing.effectivePlan?.id === plan.id">{{ t('billing.current') }}</b>
           </div>
 
           <div class="workspace-plan-card__price">
@@ -197,21 +211,21 @@ watch(() => props.historyOnly, () => { overviewOpen.value = false })
               v-if="plan.hasPromoDiscount && plan.originalEffectivePrice"
               class="workspace-plan-card__old-price"
             >
-              <s>{{ formatMoney(plan.originalEffectivePrice) }} руб.</s>
+              <s>{{ formatMoney(plan.originalEffectivePrice) }}</s>
             </span>
-            <strong v-if="getPlanPrice(plan)">{{ formatMoney(getPlanPrice(plan)) }} руб.</strong>
-            <strong v-else>Бесплатно</strong>
+            <strong v-if="getPlanPrice(plan)">{{ formatMoney(getPlanPrice(plan)) }}</strong>
+            <strong v-else>{{ t('billing.free') }}</strong>
             <span v-if="getPlanPrice(plan)">{{ getPlanDurationText(plan.durationDays) }}</span>
           </div>
 
           <div v-if="plan.hasPromoDiscount" class="workspace-plan-card__meta">
-            <span class="workspace-plan-card__promo">Промокод {{ plan.promoCode }}</span>
+            <span class="workspace-plan-card__promo">{{ t('billing.promoCode', { code: plan.promoCode ?? '' }) }}</span>
           </div>
 
           <ul v-if="getPlanHighlights(plan).length" class="workspace-plan-card__benefits">
             <li v-for="highlight in getPlanHighlights(plan)" :key="highlight">{{ highlight }}</li>
           </ul>
-          <button type="button" class="workspace-plan-card__details" @click="showPlanOverview(plan)">Подробнее о тарифе</button>
+          <button type="button" class="workspace-plan-card__details" @click="showPlanOverview(plan)">{{ t('billing.details') }}</button>
 
           <div
             v-if="billing.canManageBilling && hasActiveRegularPlan && billing.effectivePlan?.id === plan.id"
@@ -226,7 +240,7 @@ watch(() => props.historyOnly, () => { overviewOpen.value = false })
                   :disabled="isSaving || Boolean(extensionUnavailableMessage)"
                   @click="$emit('extendPlan')"
                 >
-                  Продлить
+                  {{ t('billing.extend') }}
                 </UiButton>
               </span>
             </UiTooltip>
@@ -245,7 +259,7 @@ watch(() => props.historyOnly, () => { overviewOpen.value = false })
                   :disabled="isSaving || Boolean(purchaseUnavailableMessage)"
                   @click="$emit('purchasePlan', plan)"
                 >
-                  {{ plan.isDemoPlan ? 'Подключить демо' : 'Подключить' }}
+                  {{ plan.isDemoPlan ? t('billing.activateDemo') : t('billing.activate') }}
                 </UiButton>
               </span>
             </UiTooltip>

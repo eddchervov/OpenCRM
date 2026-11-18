@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { UiButton, UiDatePicker, UiSelect } from '@opencrm/ui'
+import { UiButton, UiDatePicker, UiSelect, useLocalization } from '@opencrm/ui'
+import { formatLocaleDate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/schedulerMessages'
 import { BookingTimeFields } from '@opencrm/workspace'
 import { changeMaintenanceWorkflow } from '@opencrm/workspace/api/maintenance'
 import type { DetailingCatalogItem, DetailingMaintenanceMove } from '@/api/detailingBff'
@@ -11,6 +13,7 @@ const props = defineProps<{
   posts: DetailingCatalogItem[]
   canWrite: boolean
 }>()
+const { t } = useLocalization()
 const emit = defineEmits<{ close: [], saved: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const timeFields = ref<InstanceType<typeof BookingTimeFields> | null>(null)
@@ -24,13 +27,22 @@ const error = ref('')
 const postOptions = computed(() => {
   const names = props.posts.filter(post => post.isActive).map(post => post.name)
   if (props.move.item.location) names.push(props.move.item.location)
-  return [{ value: '', label: 'Без поста' }, ...Array.from(new Set(names)).map(name => ({ value: name, label: name }))]
+  return [{ value: '', label: t('maintenanceCalendar.noPost') }, ...Array.from(new Set(names)).map(name => ({ value: name, label: name }))]
 })
 const previousPeriod = computed(() => {
   const item = props.move.item
-  const from = item.date.slice(0, 10).split('-').reverse().join('.')
-  const to = (item.plannedEndDate || item.date).slice(0, 10).split('-').reverse().join('.')
-  return `${from} ${item.plannedStartTime?.slice(0, 5) || 'без времени'} — ${to !== from ? to + ' ' : ''}${item.plannedEndTime?.slice(0, 5) || 'без времени'}`
+  const formatDate = (value: string) => {
+    const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+    return formatLocaleDate(new Date(Date.UTC(year, month - 1, day, 12)), { dateStyle: 'short', timeZone: 'UTC' })
+  }
+  const startDate = item.date.slice(0, 10)
+  const endDate = (item.plannedEndDate || item.date).slice(0, 10)
+  const from = formatDate(startDate)
+  const to = formatDate(endDate)
+  const noTime = t('maintenanceCalendar.noTime')
+  const period = `${from} ${item.plannedStartTime?.slice(0, 5) || noTime} — ${endDate !== startDate ? `${to} ` : ''}${item.plannedEndTime?.slice(0, 5) || noTime}`
+
+  return t('maintenanceCalendar.now', { period, location: item.location || t('maintenanceCalendar.noPost') })
 })
 
 watch(date, (value, previous) => {
@@ -49,7 +61,7 @@ async function save() {
   if (saving.value || !props.canWrite || !props.move.item.canReschedule) return
   error.value = ''
   if (!date.value || !endDate.value || !start.value || !end.value) {
-    error.value = 'Укажите даты и время начала и окончания.'
+    error.value = t('maintenanceCalendar.invalidPeriod')
     return
   }
   saving.value = true
@@ -63,7 +75,7 @@ async function save() {
     })
     emit('saved')
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось перенести запись.'
+    error.value = cause instanceof Error ? cause.message : t('maintenanceCalendar.moveError')
   } finally {
     saving.value = false
   }
@@ -76,29 +88,29 @@ onMounted(() => dialog.value?.showModal())
   <Teleport to="body">
     <dialog ref="dialog" class="maintenance-move" aria-labelledby="maintenance-move-title" @cancel.prevent="close">
       <header class="ui-modal__header">
-        <h2 id="maintenance-move-title">Перенести запись</h2>
-        <button type="button" class="ui-modal__close" aria-label="Закрыть" :disabled="saving" @click="close">×</button>
+        <h2 id="maintenance-move-title">{{ t('maintenanceCalendar.moveTitle') }}</h2>
+        <button type="button" class="ui-modal__close" :aria-label="t('maintenanceCalendar.close')" :disabled="saving" @click="close">×</button>
       </header>
       <form @submit.prevent="save">
         <div class="ui-modal__body maintenance-move__body">
           <div class="maintenance-move__previous">
             <strong>{{ move.item.vehicleDisplayName }}</strong>
             <span>{{ move.item.typeName }}</span>
-            <span>Сейчас: {{ previousPeriod }} · {{ move.item.location || 'Без поста' }}</span>
+            <span>{{ previousPeriod }}</span>
           </div>
           <div class="maintenance-move__dates">
-            <UiDatePicker v-model="date" label="Дата начала" required :disabled="saving" />
-            <UiDatePicker v-model="endDate" label="Дата окончания" required :disabled="saving" />
+            <UiDatePicker v-model="date" :label="t('maintenanceCalendar.startDate')" required :disabled="saving" />
+            <UiDatePicker v-model="endDate" :label="t('maintenanceCalendar.endDate')" required :disabled="saving" />
           </div>
-          <UiSelect v-model="location" label="Пост / место" :options="postOptions" :disabled="saving" />
+          <UiSelect v-model="location" :label="t('maintenanceCalendar.postLabel')" :options="postOptions" :disabled="saving" />
           <BookingTimeFields ref="timeFields" v-model:start="start" v-model:end="end" v-model:end-date="endDate"
             :organization-id="organizationId" :date="date" :location="location || ''"
             :exclude-maintenance-id="move.item.id" :disabled="saving" />
           <div v-if="error" class="maintenance-move__error" role="alert">{{ error }}</div>
         </div>
         <footer class="ui-modal__footer">
-          <UiButton variant="secondary" :disabled="saving" @click="close">Отмена</UiButton>
-          <UiButton type="submit" :disabled="saving || !canWrite">{{ saving ? 'Переносим…' : 'Подтвердить перенос' }}</UiButton>
+          <UiButton variant="secondary" :disabled="saving" @click="close">{{ t('maintenanceCalendar.cancel') }}</UiButton>
+          <UiButton type="submit" :disabled="saving || !canWrite">{{ saving ? t('maintenanceCalendar.moving') : t('maintenanceCalendar.confirmMove') }}</UiButton>
         </footer>
       </form>
     </dialog>

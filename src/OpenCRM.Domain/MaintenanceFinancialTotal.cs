@@ -7,6 +7,8 @@ namespace OpenCRM.Domain;
 /// </summary>
 public sealed class MaintenanceFinancialTotal
 {
+    /// <summary>Код валюты финансового итога обслуживания.</summary>
+    public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
     public Guid MaintenanceId { get; set; }
 
     /// <summary> Сумма цен работ до скидки; отсутствующая цена считается нулевой. </summary>

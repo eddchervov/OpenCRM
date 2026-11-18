@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OpenCRM.WebApp.Infrastructure.Localization;
 
 namespace OpenCRM.WebApp.Infrastructure.Api;
 
@@ -61,7 +62,10 @@ public sealed class ApiExceptionHandlingMiddleware(
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json; charset=utf-8";
 
-        var response = ApiErrorResponse.Create(statusCode, message, errors, context.TraceIdentifier);
+        var cultureName = context.Items.TryGetValue(SupportedUiLanguages.RequestCultureItemKey, out var value)
+            ? value as string
+            : null;
+        var response = ApiErrorResponse.Create(statusCode, message, errors, context.TraceIdentifier, cultureName);
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase

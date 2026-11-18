@@ -37,6 +37,10 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
         DateTime fromUtc,
         DateTime toUtc)
     {
+        var currencyCode = await opencrmContext.Organizations.AsNoTracking()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
         var firstUtcDay = (int)(fromUtc.Ticks / TimeSpan.TicksPerDay);
         var lastUtcDay = (int)((toUtc.Ticks - 1) / TimeSpan.TicksPerDay);
 
@@ -61,6 +65,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                     COALESCE(sum("ProfitAmount"), 0) AS "ProfitAmount"
                 FROM "MaintenanceFinancialTotals"
                 WHERE "OrganizationId" = {organizationId} AND "IsVisible"
+                    AND "CurrencyCode" = {currencyCode}
                     AND "EffectiveDate" >= {fromUtc} AND "EffectiveDate" < {toUtc}
                 GROUP BY GROUPING SETS ((), ("UtcDay"))
             ), debtor_groups AS NOT MATERIALIZED (
@@ -68,6 +73,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                     sum("DebtAmount") AS "Amount", min("FirstKey" COLLATE "C") AS "FirstKey"
                 FROM "MaintenanceFinancialTotals"
                 WHERE "OrganizationId" = {organizationId} AND "IsVisible" AND "IsAccruable" AND "DebtAmount" > 0
+                    AND "CurrencyCode" = {currencyCode}
                     AND "EffectiveDate" >= {fromUtc} AND "EffectiveDate" < {toUtc}
                 GROUP BY "ClientId", "ClientName" COLLATE "C"
             ), service_edges AS NOT MATERIALIZED (
@@ -83,6 +89,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                 SELECT "Name", "Count", "Amount", "FirstKey"
                 FROM "OrganizationServiceHourlyTotals"
                 WHERE "OrganizationId" = {organizationId}
+                    AND "CurrencyCode" = {currencyCode}
                     AND "UtcHour" >= {firstCompleteHour} AND "UtcHour" < {lastCompleteHour}
                 UNION ALL
                 SELECT detail."Name", 1::bigint, detail."Price",
@@ -91,6 +98,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                 CROSS JOIN LATERAL (
                     SELECT "MaintenanceId", "FirstKey" FROM "MaintenanceFinancialTotals"
                     WHERE "OrganizationId" = {organizationId} AND "IsVisible" AND "IsAccruable"
+                        AND "CurrencyCode" = {currencyCode}
                         AND "EffectiveDate" >= edge."From" AND "EffectiveDate" < edge."To" OFFSET 0
                 ) AS total
                 CROSS JOIN LATERAL (
@@ -101,6 +109,17 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                 SELECT "Name" COLLATE "C" AS "Name", sum("Count")::integer AS "Count", sum("Amount") AS "Amount",
                     min("FirstKey" COLLATE "C") AS "FirstKey"
                 FROM service_inputs GROUP BY "Name" COLLATE "C"
+            ), other_currency_totals AS MATERIALIZED (
+                SELECT "CurrencyCode", COALESCE(SUM("GrossAmount") FILTER (WHERE "IsAccruable"), 0) AS "GrossAmount",
+                    COALESCE(SUM("NetAmount") FILTER (WHERE "IsAccruable"), 0) AS "NetAmount",
+                    COALESCE(SUM("PaidAmount"), 0) AS "PaidAmount", COALESCE(SUM("DebtAmount"), 0) AS "DebtAmount",
+                    COALESCE(SUM("DiscountAmount") FILTER (WHERE "IsAccruable"), 0) AS "DiscountAmount",
+                    COALESCE(SUM("MaterialCostAmount" + "LaborCostAmount"), 0) AS "CostAmount",
+                    COALESCE(SUM("ProfitAmount"), 0) AS "ProfitAmount"
+                FROM "MaintenanceFinancialTotals"
+                WHERE "OrganizationId" = {organizationId} AND "IsVisible" AND "CurrencyCode" <> {currencyCode}
+                    AND "EffectiveDate" >= {fromUtc} AND "EffectiveDate" < {toUtc}
+                GROUP BY "CurrencyCode"
             )
             SELECT jsonb_build_object(
                 'Kpis', (SELECT to_jsonb(totals) FROM (
@@ -108,6 +127,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                         "MaterialCostAmount", "LaborCostAmount", "CostAmount", "ProfitAmount"
                     FROM financial_groups WHERE "GroupKind" = 1
                 ) AS totals),
+                'OtherCurrencyTotals', COALESCE((SELECT jsonb_agg(to_jsonb(other_currency_totals)) FROM other_currency_totals), '[]'::jsonb),
                 'Days', COALESCE((SELECT jsonb_agg(to_jsonb(day)) FROM (
                     SELECT TIMESTAMP '0001-01-01' + "UtcDay" * INTERVAL '1 day' AS "Date", "PaidAmount", "NetAmount"
                     FROM financial_groups WHERE "GroupKind" = 0
@@ -115,7 +135,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                 'DebtorGroups', COALESCE((SELECT jsonb_agg(to_jsonb(debtor_groups)) FROM debtor_groups), '[]'::jsonb),
                 'ServiceGroups', COALESCE((SELECT jsonb_agg(to_jsonb(service_groups)) FROM service_groups), '[]'::jsonb),
                 'Orders', COALESCE((SELECT jsonb_agg(to_jsonb(orders) ORDER BY orders."Date" DESC, orders."Id" DESC) FROM (
-                    SELECT selected."MaintenanceId" AS "Id", maintenance."VehicleId", maintenance."Status" = 4 AS "IsCancelled",
+                    SELECT selected."MaintenanceId" AS "Id", selected."CurrencyCode", maintenance."VehicleId", maintenance."Status" = 4 AS "IsCancelled",
                         TIMESTAMP '0001-01-01' + selected."UtcDay" * INTERVAL '1 day' AS "Date",
                         selected."ClientId", selected."ClientName",
                         selected."GrossAmount", selected."NetAmount", selected."PaidAmount", selected."DebtAmount",
@@ -133,7 +153,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                         vehicle."BrandId" IS NOT NULL OR vehicle."ModelId" IS NOT NULL AS "HasCatalogIdentity"
                     FROM (
                         SELECT * FROM "MaintenanceFinancialTotals"
-                        WHERE "OrganizationId" = {organizationId} AND "IsVisible"
+                        WHERE "OrganizationId" = {organizationId} AND "IsVisible" AND "CurrencyCode" = {currencyCode}
                             AND "UtcDay" >= {firstUtcDay} AND "UtcDay" <= {lastUtcDay}
                             AND "EffectiveDate" >= {fromUtc} AND "EffectiveDate" < {toUtc}
                         ORDER BY "UtcDay" DESC, "MaintenanceId" DESC
@@ -173,6 +193,8 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
 
         return new OrganizationFinanceSummaryDto
         {
+            CurrencyCode = currencyCode,
+            OtherCurrencyTotals = aggregates.OtherCurrencyTotals,
             DateFrom = from,
             DateTo = to,
             Kpis = kpis,
@@ -237,6 +259,7 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
                 return new OrganizationFinanceOrderItemDto
                 {
                     Id = item.Id,
+                    CurrencyCode = item.CurrencyCode,
                     Date = DateTime.SpecifyKind(item.Date, DateTimeKind.Utc),
                     VehicleId = item.VehicleId,
                     VehicleDisplayName = VehicleDisplayName.Format(item.BrandName, item.ModelName, item.RegistrationPlate),
@@ -268,6 +291,8 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
     private sealed class FinanceAggregates
     {
         public OrganizationFinanceKpisDto Kpis { get; set; } = new();
+
+        public List<OrganizationFinanceCurrencyTotalsDto> OtherCurrencyTotals { get; set; } = [];
 
         public List<FinanceDay> Days { get; set; } = [];
 
@@ -303,6 +328,8 @@ public sealed class OrganizationFinanceQueryService(OpenCRMContext opencrmContex
     private sealed class FinanceOrder
     {
         public Guid Id { get; set; }
+
+        public string CurrencyCode { get; set; } = "RUB";
 
         public Guid VehicleId { get; set; }
 

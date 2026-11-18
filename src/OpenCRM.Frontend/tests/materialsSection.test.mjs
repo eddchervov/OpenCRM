@@ -1,10 +1,13 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import '../packages/workspace/src/materialMessages.ts'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 import { Mask } from 'maska'
+import { formattingCulture, i18n, translate } from '@opencrm/ui/i18n'
 import { inquiryUtcTime as organizationUtcTime } from '../packages/workspace/src/utils/inquiryTime.ts'
 
 const maskModule = { exports: {} }
@@ -25,6 +28,8 @@ function component(scenario, loadMaterials, actions = {}, timeZoneId = 'Asia/Nov
   const watchers = []
   let timerId = 0
   const resolve = id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
+    if (id === '@opencrm/workspace/materialMessages') return {}
     if (id === 'vue') return {
       ...vue,
       onMounted() {},
@@ -44,8 +49,8 @@ function component(scenario, loadMaterials, actions = {}, timeZoneId = 'Asia/Nov
     }
     if (id === '@/api/materials') return { loadMaterials, ...actions }
     if (id.startsWith('@/api/')) return { loadScenarioCatalog: async () => ({ materials: [] }) }
-    if (id === '@opencrm/ui') return { formatDateOnly: () => '2026-10-21' }
-    if (id === '@opencrm/workspace') return { organizationUtcTime, createMaterialNumberMask, isDiscreteMaterialUnit: unit => ['шт', 'уп', 'компл'].includes(unit), normalizeMaterialUnit: value => value }
+    if (id === '@opencrm/ui') return { ...regionalTestDependencies['@opencrm/ui/i18n'], formatDateOnly: () => '2026-10-21' }
+    if (id === '@opencrm/workspace') return { ...regionalTestDependencies['../workspaceCurrency'], organizationUtcTime, createMaterialNumberMask, materialUnitOptions: [{ value: 'шт', label: 'шт' }, { value: 'л', label: 'л' }], isDiscreteMaterialUnit: unit => ['шт', 'уп', 'компл'].includes(unit), normalizeMaterialUnit: value => value }
     return {}
   }
   new Function('require', 'module', 'exports', 'setTimeout', 'clearTimeout', compiled)(
@@ -68,6 +73,25 @@ function component(scenario, loadMaterials, actions = {}, timeZoneId = 'Asia/Nov
     },
     get pendingTimers() { return timers.size }
   }
+}
+
+function materialsApi(scenario, fetchImplementation) {
+  const filename = new URL(`../Scenarios/${scenario}-client/src/api/materials.ts`, import.meta.url)
+  const source = readFileSync(filename, 'utf8')
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
+  }).outputText
+  const module = { exports: {} }
+  const resolve = id => regionalTestDependencies[id] ?? {}
+  new Function('require', 'module', 'exports', 'fetch', 'document', compiled)(
+    resolve,
+    module,
+    module.exports,
+    fetchImplementation,
+    { querySelector: () => null }
+  )
+
+  return module.exports
 }
 
 const inventory = (id, total = 37) => ({ stocks: [{ id }], stocksTotalCount: total, allStocksCount: 37 })
@@ -229,6 +253,28 @@ for (const scenario of ['detailing', 'autoservice', 'fleet']) {
   })
 }
 
+test('API fallback ошибки склада переводятся, а сообщение сервера сохраняется', async () => {
+  const previousLocale = i18n.global.locale.value
+  try {
+    for (const [locale, expectedLoad, expectedReceipt] of [
+      ['en', 'Could not load stock.', 'Could not add the receipt.'],
+      ['zh-Hans', '无法加载库存。', '无法添加入库记录。']
+    ]) {
+      i18n.global.locale.value = locale
+      for (const scenario of ['autoservice', 'detailing', 'fleet']) {
+        const api = materialsApi(scenario, async () => ({ ok: false, json: async () => null }))
+        await assert.rejects(api.loadMaterials('org-1'), error => error.message === expectedLoad)
+        await assert.rejects(api.createMaterialReceipt('org-1', {}), error => error.message === expectedReceipt)
+      }
+    }
+
+    const api = materialsApi('autoservice', async () => ({ ok: false, json: async () => ({ message: 'A server supplied message.' }) }))
+    await assert.rejects(api.loadMaterials('org-1'), error => error.message === 'A server supplied message.')
+  } finally {
+    i18n.global.locale.value = previousLocale
+  }
+})
+
 for (const scenario of ['detailing', 'autoservice', 'fleet']) {
   test(`${scenario}: приход не отправляет неверные значения и принимает границы`, async () => {
     const saved = []
@@ -294,5 +340,31 @@ for (const scenario of ['detailing', 'autoservice', 'fleet']) {
     Object.assign(view.state.adjustmentForm, { quantity: 5, reason: 'Пересчёт без изменения цены' })
     await view.state.saveAdjustment()
     assert.equal(saved[1].averageUnitCost, null)
+  })
+
+  test(`${scenario}: подписи остатков и единицы следуют языку, а коды единиц остаются исходными`, async () => {
+    const previousLocale = i18n.global.locale.value
+    const previousCulture = formattingCulture.value
+    try {
+      i18n.global.locale.value = 'en'
+      formattingCulture.value = 'en-GB'
+      const saved = []
+      const view = component(scenario, async () => inventory('stock'), {
+        createMaterialReceipt: async (_, payload) => { saved.push(payload); return {} }
+      })
+      assert.equal(view.state.currentTitle.value, 'Stock')
+      assert.equal(view.state.movementTypeOptions.value[0].label, 'All types')
+      assert.equal(view.state.stockFilterOptions.value[1].label, 'Out of stock')
+      assert.equal(view.state.localizedMaterialUnitOptions.value[0].label, 'pcs')
+      assert.equal(view.state.formatQuantity(1234.5), '1,234.5')
+      assert.equal(view.state.formatDate('2026-10-21'), '21/10/2026')
+      assert.match(view.state.formatDateTime('2026-10-25T01:30:00Z'), /08:30/)
+      Object.assign(view.state.receiptForm, { name: 'Sample material', unit: 'шт', quantity: '2', unitCost: '1' })
+      await view.state.addReceipt()
+      assert.equal(saved[0].unit, 'шт')
+    } finally {
+      i18n.global.locale.value = previousLocale
+      formattingCulture.value = previousCulture
+    }
   })
 }

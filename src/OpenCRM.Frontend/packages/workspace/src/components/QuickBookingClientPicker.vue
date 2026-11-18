@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../pickerMessages'
+import { translate as t } from '@opencrm/ui/i18n'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { UiButton, UiInput, UiLoader, UiPhoneInput } from '@opencrm/ui'
 import { loadClientLookup, type WorkspaceClientLookupItem } from '../api/clients'
@@ -28,7 +30,7 @@ const errorMessage = ref('')
 const phoneValidity = ref<boolean | null>(null)
 const page = ref(1)
 const totalCount = ref(0)
-const selectedLabel = computed(() => selected.value?.id === props.modelValue ? selected.value.name : props.selectedName || 'Клиент выбран')
+const selectedLabel = computed(() => selected.value?.id === props.modelValue ? selected.value.name : props.selectedName || t('pickers.clientSelected'))
 const selectedPhone = computed(() => selected.value?.id === props.modelValue ? selected.value.phone : null)
 const name = computed({ get: () => props.clientName, set: value => emit('update:clientName', value) })
 const phone = computed({ get: () => props.clientPhone, set: value => { phoneValidity.value = null; emit('update:clientPhone', value) } })
@@ -64,7 +66,7 @@ async function search(append = false) {
     totalCount.value = result.totalCount
   } catch (error) {
     if (request !== requestId) return
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось найти клиентов.'
+    errorMessage.value = error instanceof Error ? error.message : t('pickers.clientsError')
   } finally {
     if (request === requestId) isLoading.value = false
   }
@@ -118,10 +120,10 @@ function startNewClient() {
 function validate() {
   if (props.modelValue) return null
   if (!isCreating.value) return query.value.trim()
-    ? props.canCreate ? 'Выберите клиента из списка или нажмите «Новый клиент».' : 'Выберите клиента из списка.'
+    ? props.canCreate ? t('pickers.chooseOrCreate') : t('pickers.chooseClient')
     : null
-  if (!props.clientName.trim() && !props.clientPhone.trim()) return 'Укажите телефон или имя нового клиента.'
-  if (props.clientPhone.trim() && phoneValidity.value === false) return 'Проверьте номер телефона нового клиента.'
+  if (!props.clientName.trim() && !props.clientPhone.trim()) return t('pickers.newClientRequired')
+  if (props.clientPhone.trim() && phoneValidity.value === false) return t('pickers.phoneInvalid')
   return null
 }
 
@@ -159,34 +161,34 @@ defineExpose({ validate })
 <template>
   <div ref="root" class="booking-client-picker" @focusout="closeOnBlur">
     <template v-if="modelValue">
-      <span class="ui-field-label booking-client-picker__label">Клиент</span>
+      <span class="ui-field-label booking-client-picker__label">{{ t('pickers.client') }}</span>
       <div class="booking-client-picker__selected">
         <div><strong>{{ selectedLabel }}</strong><span v-if="selectedPhone">{{ selectedPhone }}</span></div>
-        <UiButton variant="ghost" :disabled="disabled" @click="clearClient">Изменить</UiButton>
+        <UiButton variant="ghost" :disabled="disabled" @click="clearClient">{{ t('pickers.change') }}</UiButton>
       </div>
     </template>
     <template v-else-if="isCreating">
-      <div class="booking-client-picker__heading"><strong>Новый клиент</strong><UiButton variant="ghost" :disabled="disabled" @click="clearClient">Отмена</UiButton></div>
+      <div class="booking-client-picker__heading"><strong>{{ t('pickers.newClient') }}</strong><UiButton variant="ghost" :disabled="disabled" @click="clearClient">{{ t('pickers.cancel') }}</UiButton></div>
       <div class="booking-client-picker__new-fields">
-        <UiPhoneInput v-model="phone" :disabled="disabled" label="Телефон" @validity-change="phoneValidity = $event" />
-        <UiInput v-model="name" :disabled="disabled" label="Имя" placeholder="Необязательно" :maxlength="120" />
+        <UiPhoneInput v-model="phone" :disabled="disabled" :label="t('pickers.phone')" @validity-change="phoneValidity = $event" />
+        <UiInput v-model="name" :disabled="disabled" :label="t('pickers.name')" :placeholder="t('pickers.optional')" :maxlength="120" />
       </div>
     </template>
     <template v-else>
       <div @keydown.down.prevent="focusFirstResult" @keydown.enter.prevent="focusFirstResult" @keydown.esc.stop.prevent="isOpen = false">
-        <UiInput v-model="query" label="Клиент" placeholder="Имя или телефон" :disabled="disabled" :maxlength="120" @focusin="openSearch" />
+        <UiInput v-model="query" :label="t('pickers.client')" :placeholder="t('pickers.namePhone')" :disabled="disabled" :maxlength="120" @focusin="openSearch" />
       </div>
       <div v-if="isOpen && !disabled" class="booking-client-picker__results">
-        <UiLoader v-if="isLoading && !items.length" compact text="Ищем клиентов…" />
-        <p v-else-if="errorMessage" role="alert">{{ errorMessage }} <button type="button" @click="search()">Повторить</button></p>
-        <p v-else-if="!items.length">{{ query.trim().length < 2 ? 'Введите имя или телефон' : 'Клиенты не найдены' }}</p>
-        <div v-if="items.length" class="booking-client-picker__list" role="group" aria-label="Найденные клиенты">
+        <UiLoader v-if="isLoading && !items.length" compact :text="t('pickers.searching')" />
+        <p v-else-if="errorMessage" role="alert">{{ errorMessage }} <button type="button" @click="search()">{{ t('pickers.retry') }}</button></p>
+        <p v-else-if="!items.length">{{ query.trim().length < 2 ? t('pickers.enterQuery') : t('pickers.notFound') }}</p>
+        <div v-if="items.length" class="booking-client-picker__list" role="group" :aria-label="t('pickers.foundClients')">
           <button v-for="client in items" :key="client.id" type="button" data-client-result @click="selectClient(client)">
             <strong>{{ client.name }}</strong><span v-if="client.phone">{{ client.phone }}</span>
           </button>
-          <UiButton v-if="items.length < totalCount" variant="ghost" :disabled="isLoading" @click="search(true)">Показать ещё</UiButton>
+          <UiButton v-if="items.length < totalCount" variant="ghost" :disabled="isLoading" @click="search(true)">{{ t('pickers.more') }}</UiButton>
         </div>
-        <UiButton v-if="canCreate" variant="secondary" class="booking-client-picker__create" @click="startNewClient">＋ Новый клиент</UiButton>
+        <UiButton v-if="canCreate" variant="secondary" class="booking-client-picker__create" @click="startNewClient">{{ t('pickers.createClient') }}</UiButton>
       </div>
     </template>
   </div>

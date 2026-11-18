@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../interactionMessages'
 import { computed, ref } from 'vue'
 import { UiButton } from '@opencrm/ui'
 import SchedulerBookingDialog from './SchedulerBookingDialog.vue'
@@ -20,19 +22,19 @@ const busy = computed(() => maxBusy.value || telegramBusy.value)
 </script>
 
 <template>
-  <UiButton variant="secondary" @click="open = true">Связь с ботом{{ isLocked ? ' · PRO' : '' }}</UiButton>
-  <SchedulerBookingDialog :open="open" :busy="busy" :dismiss-on-backdrop="false" title="Связь клиента с ботом" @close="open = false">
-    <section v-if="open" class="client-bot-connection" aria-label="Мессенджеры клиента">
+  <UiButton variant="secondary" @click="open = true">{{ isLocked ? t('interaction.botLinkPro') : t('interaction.botLink') }}</UiButton>
+  <SchedulerBookingDialog :open="open" :busy="busy" :dismiss-on-backdrop="false" :title="t('interaction.botTitle')" @close="open = false">
+    <section v-if="open" class="client-bot-connection" :aria-label="t('interaction.clientMessengers')">
       <div class="client-bot-connection__intro">
-        <p v-if="isLocked" role="status">Подключение клиента и отправка сообщений — <a href="#billing">доступно в PRO</a>. Историю можно просматривать.</p>
+        <i18n-t v-if="isLocked" keypath="interaction.lockedInfo" tag="p" role="status"><template #pro><a href="#billing">{{ t('interaction.pro') }}</a></template></i18n-t>
         <strong>{{ clientName }}</strong>
-        <p>Выберите мессенджер и передайте клиенту персональную ссылку. Подключение появится после запуска бота клиентом.</p>
+        <p>{{ t('interaction.botHelp') }}</p>
       </div>
       <div class="client-bot-connection__channels">
         <ClientBotChannel :key="organizationId + ':' + clientId + ':telegram'" channel="telegram" :organization-id="organizationId" :time-zone-id="timeZoneId" :client-id="clientId" :can-write="canWrite" :is-locked="isLocked" @busy-changed="telegramBusy = $event" />
         <ClientBotChannel :key="organizationId + ':' + clientId + ':max'" channel="max" :organization-id="organizationId" :time-zone-id="timeZoneId" :client-id="clientId" :can-write="canWrite" :is-locked="isLocked" @busy-changed="maxBusy = $event" />
       </div>
-      <footer class="client-bot-connection__footer"><UiButton variant="secondary" :disabled="busy" @click="open = false">Закрыть</UiButton></footer>
+      <footer class="client-bot-connection__footer"><UiButton variant="secondary" :disabled="busy" @click="open = false">{{ t('interaction.close') }}</UiButton></footer>
     </section>
   </SchedulerBookingDialog>
 </template>

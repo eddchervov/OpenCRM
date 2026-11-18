@@ -76,6 +76,7 @@ internal sealed partial class StockCommandService(
         {
             Id = movementId,
             OrganizationId = organizationId,
+            CurrencyCode = stock.CurrencyCode,
             Stock = stock,
             CatalogItemId = material.CatalogItemId,
             TypeCode = OrganizationMaterialMovementTypeCodes.Receipt,

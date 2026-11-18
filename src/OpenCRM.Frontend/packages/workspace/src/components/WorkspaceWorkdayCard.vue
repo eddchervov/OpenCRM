@@ -1,5 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../workdayCardMessages'
 import { formatDateOnly, parseDateOnly } from '@opencrm/ui'
 import type { WorkspaceWorkdayItem } from '../api/workday'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
@@ -19,26 +21,29 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   open: [id: string]
 }>()
+const { t } = useLocalization()
 const isFinished = computed(() => props.stage === 'ready' || props.stage === 'handedOver')
 const handoverTime = computed(() => {
   const value = props.item.handedOverAt ?? props.item.readyForHandoverAt
-  return value ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: props.timeZoneId || 'UTC' }).format(new Date(value)) : ''
+  return value ? new Intl.DateTimeFormat(formattingCulture.value, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: props.timeZoneId || 'UTC' }).format(new Date(value)) : ''
 })
 const href = computed(() => `#maintenance/${props.item.id}`)
 const brandLogo = computed(() => getVehicleBrandLogo(props.item.vehicleBrandLogoKey))
 const progress = computed(() => getWorkdayProgress(props.item.workTotalCount, props.item.workCompletedCount))
 const date = computed(() => props.item.date.slice(0, 10))
 const endDate = computed(() => props.item.endDate?.slice(0, 10) || date.value)
+const formattedEndDate = computed(() => parseDateOnly(endDate.value)?.toLocaleDateString(formattingCulture.value, { year: 'numeric', month: '2-digit', day: '2-digit' }) ?? '')
+const plannedEnd = computed(() => [props.item.endDate && endDate.value !== props.today ? formattedEndDate.value : '', props.item.endTime?.slice(0, 5)].filter(Boolean).join(' '))
 const isPastBooking = computed(() => props.stage === 'planned' && endDate.value < props.today)
 const isContinuing = computed(() => date.value < props.today && endDate.value >= props.today)
 const endsToday = computed(() => isContinuing.value && endDate.value === props.today)
 const phone = computed(() => props.item.clientPhone?.replace(/[^+\d]/g, '') ?? '')
 const dateLabel = computed(() => {
-  if (date.value === props.today) return 'Сегодня'
+  if (date.value === props.today) return t('workdayCard.today')
   const tomorrow = parseDateOnly(props.today)!
   tomorrow.setDate(tomorrow.getDate() + 1)
-  if (date.value === formatDateOnly(tomorrow)) return 'Завтра'
-  return parseDateOnly(date.value)?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) ?? ''
+  if (date.value === formatDateOnly(tomorrow)) return t('workdayCard.tomorrow')
+  return parseDateOnly(date.value)?.toLocaleDateString(formattingCulture.value, { day: 'numeric', month: 'short' }) ?? ''
 })
 
 function openRecord(event: MouseEvent) {
@@ -52,9 +57,9 @@ function openRecord(event: MouseEvent) {
 <template>
   <article class="day-job" :class="[`day-job--${stage}`, { 'day-job--past': isPastBooking }]">
     <div class="day-job__timing">
-      <span v-if="stage === 'planned'" class="day-job__time">{{ item.startTime?.slice(0, 5) || 'Без времени' }}</span>
-      <span v-else-if="stage === 'inProgress'" class="day-job__state"><i></i>В работе</span>
-      <span v-else class="day-job__state">{{ stage === 'ready' ? 'Готов к выдаче' : 'Выдан' }}</span>
+      <span v-if="stage === 'planned'" class="day-job__time">{{ item.startTime?.slice(0, 5) || t('workdayCard.noTime') }}</span>
+      <span v-else-if="stage === 'inProgress'" class="day-job__state"><i></i>{{ t('workdayCard.inProgress') }}</span>
+      <span v-else class="day-job__state">{{ stage === 'ready' ? t('workdayCard.ready') : t('workdayCard.handedOver') }}</span>
       <span v-if="isFinished" class="day-job__date">{{ handoverTime }}</span>
       <span v-if="!isFinished" class="day-job__date">{{ dateLabel }}</span>
     </div>
@@ -63,47 +68,47 @@ function openRecord(event: MouseEvent) {
         v-if="brandLogo"
         class="day-job__brand-logo"
         :src="brandLogo.src"
-        :alt="`Логотип ${brandLogo.name}`"
+        :alt="t('workdayCard.logo', { name: brandLogo.name })"
       >
       <a v-if="canOpen" :href="href" @click="openRecord">{{ item.vehicleName }}</a>
       <span v-else class="day-job__vehicle-name">{{ item.vehicleName }}</span>
       <span v-if="item.registrationPlate && !item.vehicleName.includes(item.registrationPlate)" class="day-job__plate">{{ item.registrationPlate }}</span>
     </div>
-    <p class="day-job__services">{{ item.services.slice(0, 3).join(' · ') || 'Услуги не указаны' }}<span v-if="item.services.length > 3"> · ещё {{ item.services.length - 3 }}</span></p>
+    <p class="day-job__services">{{ item.services.slice(0, 3).join(' · ') || t('workdayCard.noServices') }}<span v-if="item.services.length > 3"> · {{ t('workdayCard.more', { count: item.services.length - 3 }) }}</span></p>
     <div v-if="item.hasTrackedWork !== false && progress.total && stage !== 'planned'" class="day-job__progress">
       <div
         class="day-job__progressbar"
         :class="{ 'day-job__progressbar--complete': progress.isComplete }"
         role="progressbar"
-        :aria-label="`Выполнение работ: ${progress.completed} из ${progress.total}`"
+        :aria-label="t('workdayCard.progressLabel', progress)"
         :aria-valuemin="0"
         :aria-valuemax="progress.total"
         :aria-valuenow="progress.completed"
-        :aria-valuetext="`Выполнено ${progress.completed} из ${progress.total} работ`"
+        :aria-valuetext="t('workdayCard.progressValue', progress)"
       >
         <span :style="{ width: `${progress.percent}%` }"></span>
       </div>
       <p class="day-job__progress-label">
-        {{ progress.isComplete && stage === 'inProgress' ? 'Работы завершены · ждёт проверки' : `Выполнено ${progress.completed} из ${progress.total}` }}
-        <span v-if="item.workPausedCount"> · На паузе: {{ item.workPausedCount }}</span>
+        {{ progress.isComplete && stage === 'inProgress' ? t('workdayCard.awaitingReview') : t('workdayCard.progress', progress) }}
+        <span v-if="item.workPausedCount"> · {{ t('workdayCard.paused', { count: item.workPausedCount }) }}</span>
       </p>
     </div>
     <div v-if="item.clientName || phone" class="day-job__client">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></svg>
-      <span>{{ item.clientName || 'Клиент' }}</span>
-      <a v-if="phone" :href="`tel:${phone}`" :aria-label="`Позвонить: ${item.clientPhone}`" class="day-job__call" title="Позвонить клиенту">
+      <span>{{ item.clientName || t('workdayCard.client') }}</span>
+      <a v-if="phone" :href="`tel:${phone}`" :aria-label="t('workdayCard.call', { phone: item.clientPhone ?? '' })" class="day-job__call" :title="t('workdayCard.callClient')">
         {{ item.clientPhone }}
       </a>
     </div>
     <div v-if="item.location || item.performer || (item.endTime && !isFinished)" class="day-job__details">
       <span v-if="item.location">{{ item.location }}</span>
       <span v-if="item.performer">{{ item.performer }}</span>
-      <span v-if="item.endTime && !isFinished">План до <template v-if="item.endDate && item.endDate.slice(0, 10) !== today">{{ item.endDate.slice(0, 10).split('-').reverse().join('.') }} </template>{{ item.endTime.slice(0, 5) }}</span>
+      <span v-if="item.endTime && !isFinished">{{ t('workdayCard.plannedUntil', { time: plannedEnd }) }}</span>
     </div>
     <div class="day-job__footer">
-      <span v-if="isPastBooking" class="day-job__attention">Прошлая запись</span>
-      <span v-else-if="isContinuing && !isFinished">{{ endsToday ? 'Плановое окончание сегодня' : 'Продолжается' }}</span>
-      <a v-if="canOpen" :href="href" @click="openRecord">{{ isPastBooking ? 'Уточнить запись' : stage === 'planned' ? 'Открыть запись' : 'Открыть работу' }}</a>
+      <span v-if="isPastBooking" class="day-job__attention">{{ t('workdayCard.past') }}</span>
+      <span v-else-if="isContinuing && !isFinished">{{ endsToday ? t('workdayCard.endsToday') : t('workdayCard.continuing') }}</span>
+      <a v-if="canOpen" :href="href" @click="openRecord">{{ isPastBooking ? t('workdayCard.clarify') : stage === 'planned' ? t('workdayCard.openBooking') : t('workdayCard.openWork') }}</a>
     </div>
   </article>
 </template>

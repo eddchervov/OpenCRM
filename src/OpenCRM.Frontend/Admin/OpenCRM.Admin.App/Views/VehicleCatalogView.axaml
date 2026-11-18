@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.VehicleCatalogView"
@@ -7,12 +8,12 @@
   <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="14">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
       <StackPanel Spacing="4">
-        <TextBlock Text="Каталог техники" Classes="heading" />
-        <TextBlock Text="Марки и модели, доступные в приложении." Classes="caption" />
+        <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.katalog.tekhniki}" Classes="heading" />
+        <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.marki.i.modeli.dostupnye.v.prilozhenii}" Classes="caption" />
       </StackPanel>
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-        <Button Content="Дополнить каталог" Command="{Binding RequestSeedCommand}" />
-        <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+        <Button Content="{loc:LocalizedText Key=native.vehicleCatalog.dopolnit.katalog}" Command="{Binding RequestSeedCommand}" />
+        <Button Content="{loc:LocalizedText Key=native.billing.obnovit}" Command="{Binding RefreshCommand}" />
       </StackPanel>
     </Grid>
 
@@ -24,10 +25,10 @@
 
     <Border Grid.Row="2" Classes="configurationSection" Padding="14" IsVisible="{Binding HasNoSelectedBrand}">
       <WrapPanel>
-        <TextBox Width="300" Text="{Binding Search}" PlaceholderText="Поиск по названию марки" Margin="0,0,8,8" />
+        <TextBox Width="300" Text="{Binding Search}" PlaceholderText="{loc:LocalizedText Key=native.vehicleCatalog.poisk.po.nazvaniyu.marki}" Margin="0,0,8,8" />
         <ComboBox Width="220" ItemsSource="{Binding KindOptions}" SelectedItem="{Binding SelectedKind}" Margin="0,0,8,8" />
-        <Button Content="Найти" Command="{Binding ApplyFiltersCommand}" Margin="0,0,8,8" />
-        <Button Content="Новая марка" Classes="configurationPrimary" Command="{Binding CreateBrandCommand}" Margin="0,0,0,8" />
+        <Button Content="{loc:LocalizedText Key=native.billing.nayti}" Command="{Binding ApplyFiltersCommand}" Margin="0,0,8,8" />
+        <Button Content="{loc:LocalizedText Key=native.vehicleCatalog.novaya.marka}" Classes="configurationPrimary" Command="{Binding CreateBrandCommand}" Margin="0,0,0,8" />
       </WrapPanel>
     </Border>
 
@@ -37,11 +38,11 @@
           <StackPanel>
             <Grid ColumnDefinitions="*,Auto" Margin="18,16,18,12">
               <StackPanel Spacing="3">
-                <TextBlock Text="Марки" Classes="configurationHeading" />
-                <TextBlock Text="Откройте марку, чтобы управлять её моделями." Classes="caption" />
+                <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.marki}" Classes="configurationHeading" />
+                <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.otkroyte.marku.chtoby.upravlyat.eyo.modelyami}" Classes="caption" />
               </StackPanel>
               <Border Grid.Column="1" Classes="configurationBadge" VerticalAlignment="Center">
-                <TextBlock Text="{Binding Brands.Count, StringFormat='Всего: {0:N0}'}" />
+                <TextBlock Text="{loc:LocalizedFormat Key=native.vehicleCatalog.vsego.0.n0, Path=Brands.Count}" />
               </Border>
             </Grid>
             <ItemsControl ItemsSource="{Binding Brands}">
@@ -54,15 +55,15 @@
                         <StackPanel Orientation="Horizontal" Spacing="8">
                           <TextBlock Text="{Binding KindText}" Classes="caption" />
                           <TextBlock Text="·" Classes="caption" />
-                          <TextBlock Text="{Binding ModelsCount, StringFormat='{}{0} моделей'}" Classes="caption" />
+                          <TextBlock Text="{loc:LocalizedFormat Key=native.vehicleCatalog.0.modeley, Path=ModelsCount}" Classes="caption" />
                         </StackPanel>
                       </StackPanel>
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
-                        <Button Content="Модели" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).SelectBrandCommand}"
+                        <Button Content="{loc:LocalizedText Key=native.vehicleCatalog.modeli}" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).SelectBrandCommand}"
                                 CommandParameter="{Binding}" Classes="configurationPrimary" />
-                        <Button Content="Изменить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).EditBrandCommand}"
+                        <Button Content="{loc:LocalizedText Key=native.siteNotifications.izmenit}" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).EditBrandCommand}"
                                 CommandParameter="{Binding}" />
-                        <Button Content="Удалить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).RequestDeleteBrandCommand}"
+                        <Button Content="{loc:LocalizedText Key=native.plans.udalit}" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).RequestDeleteBrandCommand}"
                                 CommandParameter="{Binding}" />
                       </StackPanel>
                     </Grid>
@@ -71,7 +72,7 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
             <Border IsVisible="{Binding IsEmpty}" Padding="18,24">
-              <TextBlock Text="Марки не найдены. Измените фильтр или добавьте новую марку." Classes="caption" TextWrapping="Wrap" />
+              <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.marki.ne.naydeny.izmenite.filtr.ili.dobavte.novuyu.marku}" Classes="caption" TextWrapping="Wrap" />
             </Border>
           </StackPanel>
         </Border>
@@ -80,12 +81,12 @@
           <StackPanel>
             <Grid ColumnDefinitions="*,Auto" Margin="18,16,18,12" ColumnSpacing="12">
               <StackPanel Spacing="3">
-                <TextBlock Text="{Binding SelectedBrand.Name, FallbackValue='Модели'}" Classes="configurationHeading" TextWrapping="Wrap" />
-                <TextBlock Text="Модели выбранной марки" Classes="caption" />
+                <TextBlock Text="{loc:LocalizedFormat Path=SelectedBrand.Name, FallbackKey=native.vehicleCatalog.modeli}" Classes="configurationHeading" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.modeli.vybrannoy.marki}" Classes="caption" />
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button Content="← К маркам" Command="{Binding CloseModelsCommand}" />
-                <Button Content="Новая модель" Classes="configurationPrimary" Command="{Binding CreateModelCommand}" />
+                <Button Content="{loc:LocalizedText Key=native.vehicleCatalog.k.markam}" Command="{Binding CloseModelsCommand}" />
+                <Button Content="{loc:LocalizedText Key=native.vehicleCatalog.novaya.model}" Classes="configurationPrimary" Command="{Binding CreateModelCommand}" />
               </StackPanel>
             </Grid>
             <ItemsControl ItemsSource="{Binding Models}">
@@ -95,12 +96,12 @@
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                       <StackPanel Spacing="4" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding VehiclesCount, StringFormat='{}{0} единиц техники'}" Classes="caption" />
+                        <TextBlock Text="{loc:LocalizedFormat Key=native.vehicleCatalog.0.edinits.tekhniki, Path=VehiclesCount}" Classes="caption" />
                       </StackPanel>
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
-                        <Button Content="Изменить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).EditModelCommand}"
+                        <Button Content="{loc:LocalizedText Key=native.siteNotifications.izmenit}" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).EditModelCommand}"
                                 CommandParameter="{Binding}" />
-                        <Button Content="Удалить" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).RequestDeleteModelCommand}"
+                        <Button Content="{loc:LocalizedText Key=native.plans.udalit}" Command="{Binding $parent[UserControl].((vm:VehicleCatalogViewModel)DataContext).RequestDeleteModelCommand}"
                                 CommandParameter="{Binding}" />
                       </StackPanel>
                     </Grid>
@@ -108,7 +109,7 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Text="У этой марки пока нет моделей. Добавьте первую модель кнопкой выше." IsVisible="{Binding HasNoModels}"
+            <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.u.etoy.marki.poka.net.modeley.dobavte.pervuyu.model.knopkoy.vysh}" IsVisible="{Binding HasNoModels}"
                        Classes="caption" Margin="18,16" TextWrapping="Wrap" />
           </StackPanel>
         </Border>
@@ -121,21 +122,21 @@
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
             <StackPanel Spacing="4">
               <TextBlock Text="{Binding EditorTitle}" Classes="configurationHeading" />
-              <TextBlock Text="Изменения сразу появятся в каталоге." Classes="caption" />
+              <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.izmeneniya.srazu.poyavyatsya.v.kataloge}" Classes="caption" />
             </StackPanel>
-            <Button Grid.Column="1" Content="Отмена" Command="{Binding CancelEditCommand}" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelEditCommand}" VerticalAlignment="Center" />
           </Grid>
           <StackPanel Spacing="7">
-            <TextBlock Text="Название" Classes="caption" />
-            <TextBox Text="{Binding Name}" PlaceholderText="Введите название" />
+            <TextBlock Text="{loc:LocalizedText Key=native.plans.nazvanie}" Classes="caption" />
+            <TextBox Text="{Binding Name}" PlaceholderText="{loc:LocalizedText Key=native.vehicleCatalog.vvedite.nazvanie}" />
           </StackPanel>
           <StackPanel Spacing="7" IsVisible="{Binding IsBrandEditor}">
-            <TextBlock Text="Вид техники" Classes="caption" />
+            <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.vid.tekhniki}" Classes="caption" />
             <ComboBox ItemsSource="{Binding KindOptions}" SelectedItem="{Binding SelectedEditKind}" />
           </StackPanel>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Сохранить" Classes="configurationPrimary" Command="{Binding SaveCommand}" />
-            <Button Content="Отмена" Command="{Binding CancelEditCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.vehicleCatalog.sokhranit}" Classes="configurationPrimary" Command="{Binding SaveCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelEditCommand}" />
           </StackPanel>
         </StackPanel>
       </Border>
@@ -144,11 +145,11 @@
     <Border Grid.RowSpan="4" IsVisible="{Binding IsConfirmationOpen}" Background="#CC000000" ZIndex="10" Padding="20">
       <Border Classes="configurationSection" MaxWidth="480" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="22">
         <StackPanel Spacing="14">
-          <TextBlock Text="Подтверждение" Classes="configurationHeading" />
+          <TextBlock Text="{loc:LocalizedText Key=native.vehicleCatalog.podtverzhdenie}" Classes="configurationHeading" />
           <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Продолжить" Classes="configurationPrimary" Command="{Binding ConfirmCommand}" />
-            <Button Content="Отмена" Command="{Binding CancelConfirmationCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.email.prodolzhit}" Classes="configurationPrimary" Command="{Binding ConfirmCommand}" />
+            <Button Content="{loc:LocalizedText Key=native.billing.otmena}" Command="{Binding CancelConfirmationCommand}" />
           </StackPanel>
         </StackPanel>
       </Border>

@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import { resolveFrontendOutputDir } from '../../build/frontendOutput'
 
 export default defineConfig({
+  define: { 'process.env.NODE_ENV': '"production"' },
   build: {
     outDir: resolveFrontendOutputDir(fileURLToPath(new URL('../../../OpenCRM.WebApp/wwwroot/app', import.meta.url)), 'app'),
     emptyOutDir: false,

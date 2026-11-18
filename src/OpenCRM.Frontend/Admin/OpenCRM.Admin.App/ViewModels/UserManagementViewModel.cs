@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -24,6 +25,11 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
     private bool _lastCanImpersonate;
     private bool _lastCanManageTests;
     private bool _lastCanManageBilling;
+    private string? _errorDetails;
+    private string? _errorSuffixKey;
+    private string? _errorDetailsTranslationKey;
+    private string? _successTranslationKey;
+    private bool _isRefreshingLocalizedValues;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(BeginActionCommand))]
@@ -126,24 +132,24 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
         && this.HasPermission("Admin.Billing.Manage");
 
     /// <summary> Подпись текущего доступа к тестовым подпискам. </summary>
-    public string TestSubscriptionsLabel => this._overview?.Profile.CanUseTestSubscriptions == true
-        ? "Включены"
-        : "Выключены";
+    public string TestSubscriptionsLabel => AdminLocalization.Instance[this._overview?.Profile.CanUseTestSubscriptions == true
+        ? "userManagement.enabled"
+        : "userManagement.disabled"];
 
     /// <summary> Признак наличия организаций для управления подписками. </summary>
     public bool HasTargets => this.Targets.Count > 0;
 
     /// <summary> Сводка выбранной цели и её активного тарифа. </summary>
     public string CurrentTargetSummary => this.SelectedTarget == null
-        ? "Выберите получателя доступа."
+        ? AdminLocalization.Instance["userManagement.chooseTarget"]
         : string.IsNullOrWhiteSpace(this.SelectedTarget.CurrentPlanLabel)
-            ? this.SelectedTarget.Name
-            : $"{this.SelectedTarget.Name} · {this.SelectedTarget.CurrentPlanLabel}";
+            ? this.SelectedTarget.DisplayName
+            : $"{this.SelectedTarget.DisplayName} · {this.SelectedTarget.CurrentPlanLabel}";
 
     /// <summary> Подпись выдачи тарифа с учётом действующей модели организации. </summary>
     public string GrantPlanButtonLabel => this.SelectedTarget?.UsesFreeAfterSubscription == true
-        ? "Выдать PRO без оплаты"
-        : "Выдать тариф без оплаты";
+        ? AdminLocalization.Instance["userManagement.grantPro"]
+        : AdminLocalization.Instance["userManagement.grantPlan"];
 
     /// <summary> Тарифы, подходящие для выбранной организации. </summary>
     public IReadOnlyList<AdminAvailablePlan> TargetPlans => this.Plans;
@@ -197,8 +203,9 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
 
     /// <summary> Текстовое представление рассчитанной даты окончания тарифа. </summary>
     public string PreviewEndDateLabel => this.PreviewEndDate is { } endDate
-        ? $"Новая дата окончания: {endDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))}"
-        : "Укажите тариф и срок от 1 до 366 дней.";
+        ? string.Format(System.Globalization.CultureInfo.CurrentCulture, AdminLocalization.Instance["userManagement.newEndDate"],
+            endDate.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture))
+        : AdminLocalization.Instance["userManagement.planAndDaysRequired"];
 
     /// <summary> Устанавливает обзор и сохраняет выбранную цель для той же карточки. </summary>
     public void SetOverview(AdminUserOverview? overview, bool canViewBilling)
@@ -263,6 +270,90 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
     }
 
     /// <summary> Останавливает действия карточки и при необходимости очищает данные. </summary>
+    public void RefreshLocalizedValues()
+    {
+        var selectedScope = this.SelectedTarget?.Scope;
+        var selectedTargetId = this.SelectedTarget?.TargetId;
+        if (this._overview != null)
+        {
+            this._isRefreshingLocalizedValues = true;
+            this.Targets = this.CreateTargets(this._overview, this._canViewBilling);
+            this.SelectedTarget = this.Targets.FirstOrDefault(target => target.Scope == selectedScope
+                && target.TargetId == selectedTargetId);
+            this._isRefreshingLocalizedValues = false;
+        }
+
+        this.OnPropertyChanged(nameof(this.TestSubscriptionsLabel));
+        this.OnPropertyChanged(nameof(this.CurrentTargetSummary));
+        this.OnPropertyChanged(nameof(this.GrantPlanButtonLabel));
+        this.OnPropertyChanged(nameof(this.PreviewEndDateLabel));
+        this.UpdateErrorMessage();
+        if (this._successTranslationKey != null)
+        {
+            this.SuccessMessage = AdminLocalization.Instance[this._successTranslationKey];
+        }
+        this.UpdateConfirmationText();
+        this.OnPropertyChanged(nameof(this.TargetPlans));
+    }
+
+    private void UpdateErrorMessage()
+    {
+        if (this._errorSuffixKey == null)
+        {
+            return;
+        }
+
+        var details = this._errorDetailsTranslationKey == null
+            ? this._errorDetails
+            : AdminLocalization.Instance[this._errorDetailsTranslationKey];
+
+        this.ErrorMessage = this._errorSuffixKey == "userManagement.error.browser"
+            ? AdminLocalization.Instance.Format(this._errorSuffixKey, details ?? string.Empty)
+            : string.IsNullOrEmpty(details)
+                ? AdminLocalization.Instance[this._errorSuffixKey]
+                : $"{details} {AdminLocalization.Instance[this._errorSuffixKey]}";
+    }
+
+    private void SetErrorKey(string key, string? details = null)
+    {
+        this._errorDetails = details;
+        this._errorDetailsTranslationKey = null;
+        this._errorSuffixKey = key;
+        this.UpdateErrorMessage();
+    }
+
+    private void AppendErrorTranslation(string key)
+    {
+        var detailsKey = this._errorDetailsTranslationKey ?? (this._errorDetails == null ? this._errorSuffixKey : null);
+        this.SetErrorKey(key, this._errorDetails ?? this.ErrorMessage);
+        this._errorDetailsTranslationKey = detailsKey;
+        this.UpdateErrorMessage();
+    }
+
+    private void SetSuccessKey(string key)
+    {
+        this._successTranslationKey = key;
+        this.SuccessMessage = AdminLocalization.Instance[key];
+    }
+
+    partial void OnErrorMessageChanging(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            this._errorDetails = null;
+            this._errorDetailsTranslationKey = null;
+            this._errorSuffixKey = null;
+        }
+    }
+
+    partial void OnSuccessMessageChanging(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            this._successTranslationKey = null;
+        }
+    }
+
     public void Stop(bool clear = true)
     {
         this._version++;
@@ -334,7 +425,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
                 this.SelectedPlan = this.AvailablePlansForTarget().FirstOrDefault();
                 if (this.SelectedPlan == null)
                 {
-                    this.ErrorMessage = "Для выбранной цели нет доступных тарифов.";
+                    this.SetErrorKey("userManagement.error.noPlans");
                     this._pendingAction = null;
                     return;
                 }
@@ -347,7 +438,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             {
                 if (this.IsCurrent(userId, version, cancellationToken))
                 {
-                    this.ErrorMessage = "Сервер не ответил вовремя при загрузке тарифов. Повторите попытку.";
+                    this.SetErrorKey("userManagement.error.planTimeout");
                 }
 
                 return;
@@ -365,7 +456,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             {
                 if (this.IsCurrent(userId, version, cancellationToken))
                 {
-                    this.ErrorMessage = "Не удалось загрузить тарифы. Обновите карточку и повторите попытку.";
+                    this.SetErrorKey("userManagement.error.planLoad");
                 }
 
                 return;
@@ -411,7 +502,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             {
                 if (this.ImpersonationRequested == null)
                 {
-                    this.ErrorMessage = "Вход от имени пользователя недоступен в текущем окне.";
+                    this.SetErrorKey("userManagement.error.impersonationUnavailable");
                     return;
                 }
 
@@ -430,7 +521,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             this.SuccessMessage = result.Message;
             if (this.UserChanged == null)
             {
-                this.SuccessMessage = "Операция выполнена на сервере. Обновите карточку перед следующими действиями.";
+                this.SetSuccessKey("userManagement.success.refreshRequired");
                 return;
             }
 
@@ -446,7 +537,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
                     }
                     else
                     {
-                        this.SuccessMessage = "Операция выполнена на сервере, но карточка не обновилась. Обновите её перед следующими действиями.";
+                        this.SetSuccessKey("userManagement.success.refreshMissing");
                     }
                 }
             }
@@ -458,21 +549,21 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             {
                 if (this.IsCurrent(operation.UserId, version, cancellationToken))
                 {
-                    this.SuccessMessage = "Операция выполнена на сервере, но карточку не удалось обновить. Обновите её перед следующими действиями.";
+                    this.SetSuccessKey("userManagement.success.refreshFailed");
                 }
             }
             catch (ApiException)
             {
                 if (this.IsCurrent(operation.UserId, version, cancellationToken))
                 {
-                    this.SuccessMessage = "Операция выполнена на сервере, но карточку не удалось обновить. Обновите её перед следующими действиями.";
+                    this.SetSuccessKey("userManagement.success.refreshFailed");
                 }
             }
             catch (HttpRequestException)
             {
                 if (this.IsCurrent(operation.UserId, version, cancellationToken))
                 {
-                    this.SuccessMessage = "Операция выполнена на сервере, но карточку не удалось обновить. Обновите её перед следующими действиями.";
+                    this.SetSuccessKey("userManagement.success.refreshFailed");
                 }
             }
         }
@@ -491,7 +582,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
         {
             if (this.IsCurrent(operation.UserId, version, cancellationToken))
             {
-                this.ErrorMessage = "Не удалось связаться с сервером. Обновите карточку перед повтором операции.";
+                this.SetErrorKey("userManagement.error.connectionRefresh");
                 await this.RefreshAfterUncertainFailureAsync(operation.UserId, version, cancellationToken);
             }
         }
@@ -500,14 +591,14 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
         {
             if (this.IsCurrent(operation.UserId, version, cancellationToken))
             {
-                this.ErrorMessage = $"Не удалось открыть сайт в браузере. {exception.Message}";
+                this.SetErrorKey("userManagement.error.browser", exception.Message);
             }
         }
         catch (OperationCanceledException)
         {
             if (this.IsCurrent(operation.UserId, version, cancellationToken))
             {
-                this.ErrorMessage = "Сервер не ответил вовремя. Обновите карточку перед повтором операции.";
+                this.SetErrorKey("userManagement.error.timeoutRefresh");
                 await this.RefreshAfterUncertainFailureAsync(operation.UserId, version, cancellationToken);
             }
         }
@@ -582,36 +673,44 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
         this.NeedsDays = action is "grant-plan" or "extend";
         this.Reason = string.Empty;
         this.Days = 30;
-        var target = this.SelectedTarget;
-        var targetName = target?.Name ?? "Пользователь";
-        var userName = this._overview!.Profile.Email ?? this._overview.Profile.Phone ?? this._overview.Profile.Id;
-        (this.ConfirmationTitle, this.ConfirmationText) = action switch
-        {
-            "test-subscriptions" => ("Изменить доступ к тестовым тарифам?",
-                this._overview!.Profile.CanUseTestSubscriptions
-                    ? $"Для пользователя {userName} тестовые подписки будут запрещены."
-                    : $"Для пользователя {userName} тестовые подписки будут разрешены."),
-            "impersonate" => ("Открыть браузерную админку?",
-                $"Откроется карточка {userName}. Войдите в браузере как администратор, затем используйте действие «Войти от имени пользователя». Авторизация из приложения в браузер не передаётся."),
-            "grant-demo" => ("Выдать демо-доступ?",
-                $"Для цели «{targetName}» будет выдан демонстрационный тариф. Срок определяется настройками тарифа."),
-            "revoke-demo" => ("Отозвать демо-доступ?",
-                this.SelectedTarget?.UsesFreeAfterSubscription == true
-                    ? $"Демо-подписка организации «{targetName}» будет отозвана. Для детейлинга и СТО останется бесплатный тариф Free, история и данные сохранятся."
-                    : $"Демонстрационная подписка цели «{targetName}» будет отозвана."),
-            "grant-plan" => (this.SelectedTarget?.UsesFreeAfterSubscription == true ? "Выдать PRO без оплаты?" : "Выдать тариф без оплаты?",
-                $"Цель: «{targetName}». Тариф начнётся сейчас, платёж не создаётся."),
-            "extend" => ("Продлить подписку?",
-                $"Цель: «{targetName}». Подписка № {target?.SubscriptionId} будет продлена."),
-            "stop" => ("Остановить подписки?",
-                this.SelectedTarget?.UsesFreeAfterSubscription == true
-                    ? $"Все подписки организации «{targetName}» будут остановлены. Для детейлинга и СТО останется бесплатный тариф Free, история и данные сохранятся. Неиспользованный оплаченный срок автоматически не возвращается."
-                    : $"Все действующие подписки цели «{targetName}» будут остановлены. Неиспользованный оплаченный срок автоматически не возвращается."),
-            _ => (string.Empty, string.Empty)
-        };
-
+        this.UpdateConfirmationText();
         this.IsConfirmationOpen = true;
         this.NotifyState();
+    }
+
+    private void UpdateConfirmationText()
+    {
+        if (this._pendingAction == null || this._overview == null)
+        {
+            return;
+        }
+
+        var target = this.SelectedTarget;
+        var targetName = target?.DisplayName ?? string.Empty;
+        var userName = this._overview.Profile.Email ?? this._overview.Profile.Phone ?? this._overview.Profile.Id;
+        var isFreeTarget = target?.UsesFreeAfterSubscription == true;
+        var keySuffix = this._pendingAction switch
+        {
+            "test-subscriptions" => this._overview.Profile.CanUseTestSubscriptions ? "tests.disable" : "tests.enable",
+            "impersonate" => "impersonate",
+            "grant-demo" => "grantDemo",
+            "revoke-demo" => isFreeTarget ? "revokeDemoFree" : "revokeDemo",
+            "grant-plan" => isFreeTarget ? "grantPro" : "grantPlan",
+            "extend" => "extend",
+            "stop" => isFreeTarget ? "stopFree" : "stop",
+            _ => string.Empty
+        };
+
+        this.ConfirmationTitle = AdminLocalization.Instance[$"userManagement.confirm.{keySuffix}.title"];
+        var template = AdminLocalization.Instance[$"userManagement.confirm.{keySuffix}.text"];
+        this.ConfirmationText = this._pendingAction switch
+        {
+            "test-subscriptions" => string.Format(System.Globalization.CultureInfo.CurrentCulture, template, userName),
+            "impersonate" => string.Format(System.Globalization.CultureInfo.CurrentCulture, template, userName),
+            "grant-demo" or "revoke-demo" or "grant-plan" or "stop" => string.Format(System.Globalization.CultureInfo.CurrentCulture, template, targetName),
+            "extend" => string.Format(System.Globalization.CultureInfo.CurrentCulture, template, targetName, target?.SubscriptionId),
+            _ => string.Empty
+        };
     }
 
     private PendingOperation CreateOperationSnapshot()
@@ -653,7 +752,18 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
 
     private async Task HandleApiErrorAsync(ApiException exception, CancellationToken cancellationToken, bool refreshOnConflict)
     {
-        this.ErrorMessage = exception.Message;
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportKey)
+        {
+            this.SetErrorKey(transportKey);
+        }
+        else
+        {
+            this._errorSuffixKey = null;
+            this._errorDetails = null;
+            this._errorDetailsTranslationKey = null;
+            this.ErrorMessage = exception.Message;
+        }
+
         if (exception.StatusCode == HttpStatusCode.Unauthorized || !this._sessionClient.HasSession)
         {
             this.SessionExpired?.Invoke();
@@ -676,7 +786,7 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             var overviewRevision = this._overviewRevision;
             if (this.UserChanged == null)
             {
-                this.ErrorMessage += " Обновите карточку перед следующими действиями.";
+                this.AppendErrorTranslation("userManagement.errorSuffix.refreshBeforeActions");
                 return;
             }
 
@@ -686,13 +796,13 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
                 if (this._overviewRevision > overviewRevision)
                 {
                     this._refreshRequired = false;
-                    this.ErrorMessage += exception.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict
-                        ? " Обновите цель и проверьте её состояние перед повтором."
-                        : " Проверьте состояние цели перед повтором.";
+                    this.AppendErrorTranslation(exception.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict
+                        ? "userManagement.errorSuffix.refreshTarget"
+                        : "userManagement.errorSuffix.checkTarget");
                 }
                 else
                 {
-                    this.ErrorMessage += " Карточка не обновилась. Обновите её перед следующими действиями.";
+                    this.AppendErrorTranslation("userManagement.errorSuffix.cardNotUpdated");
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -700,15 +810,15 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
             }
             catch (OperationCanceledException)
             {
-                this.ErrorMessage += " Обновите карточку перед повтором операции.";
+                this.AppendErrorTranslation("userManagement.errorSuffix.retryAfterRefresh");
             }
             catch (ApiException)
             {
-                this.ErrorMessage += " Обновите карточку перед повтором операции.";
+                this.AppendErrorTranslation("userManagement.errorSuffix.retryAfterRefresh");
             }
             catch (HttpRequestException)
             {
-                this.ErrorMessage += " Обновите карточку перед повтором операции.";
+                this.AppendErrorTranslation("userManagement.errorSuffix.retryAfterRefresh");
             }
         }
     }
@@ -815,6 +925,13 @@ public partial class UserManagementViewModel(AdminSessionClient sessionClient) :
 
     partial void OnSelectedTargetChanged(UserManagementTarget? value)
     {
+        if (this._isRefreshingLocalizedValues)
+        {
+            this.OnPropertyChanged(nameof(this.CurrentTargetSummary));
+            this.UpdateConfirmationText();
+            return;
+        }
+
         if (this._pendingAction != null)
         {
             this.InvalidateConfirmation();

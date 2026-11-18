@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/notificationMessages'
+
 export type MaxBotSettings = {
   botUsername?: string | null
   isConfigured: boolean
@@ -46,15 +49,15 @@ async function request<T>(url: string, method = 'GET', body?: unknown): Promise<
       body: body === undefined ? undefined : JSON.stringify(body)
     })
   } catch {
-    throw new Error('Не удалось связаться с CRM. Проверьте соединение и повторите попытку.')
+    throw new Error(translate('notifications.networkError'))
   }
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error('Сайт отклонил запрос к настройкам MAX (HTTP 401). Обновите страницу и войдите снова.')
+      throw new Error(translate('notifications.maxSessionExpired'))
     }
 
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось выполнить действие с MAX.')
+    throw new Error(error?.message ?? translate('notifications.maxError'))
   }
 
   return response.status === 204 ? undefined as T : response.json()

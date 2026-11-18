@@ -23,6 +23,7 @@ public sealed partial class AdminSessionClient : IDisposable
 
     /// <summary> HTTP-клиент для обращений к административному API. </summary>
     private readonly HttpClient _httpClient;
+    private string _uiLanguage = "ru";
 
     /// <summary> Поставщик времени для управления сроками токенов. </summary>
     private readonly TimeProvider _timeProvider;
@@ -64,6 +65,12 @@ public sealed partial class AdminSessionClient : IDisposable
 
     /// <summary> Ключ хоста и администратора для локального черновика финансовой операции. </summary>
     public string PendingActionScope => $"{this._httpClient.BaseAddress?.GetLeftPart(UriPartial.Authority)}{this._httpClient.BaseAddress?.AbsolutePath.TrimEnd('/')}:{this.CurrentProfile?.Id}";
+
+    public string UiLanguage
+    {
+        get => this._uiLanguage;
+        set => this._uiLanguage = AdminUiLanguage.Normalize(value);
+    }
 
     /// <summary> Выполняет вход администратора по почте и паролю. </summary>
     public async Task<AdminProfile> LoginAsync(
@@ -180,7 +187,7 @@ public sealed partial class AdminSessionClient : IDisposable
         {
             if (this._tokens == null)
             {
-                throw new ApiException("Войдите в административную панель.", HttpStatusCode.Unauthorized);
+                throw new ApiException(this.LocalizeFallback("Войдите в административную панель."), HttpStatusCode.Unauthorized);
             }
 
             return await this.GetProfileCoreAsync(cancellationToken);
@@ -494,7 +501,7 @@ public sealed partial class AdminSessionClient : IDisposable
         {
             if (this._tokens == null)
             {
-                throw new ApiException("Войдите в административную панель.", HttpStatusCode.Unauthorized);
+                throw new ApiException(this.LocalizeFallback("Войдите в административную панель."), HttpStatusCode.Unauthorized);
             }
 
             await this.EnsureValidAccessTokenAsync(cancellationToken);
@@ -522,7 +529,7 @@ public sealed partial class AdminSessionClient : IDisposable
             {
                 await this.RefreshTokensAsync(cancellationToken);
                 tokens = this._tokens
-                    ?? throw new ApiException("Срок действия сессии истек. Войдите снова.", HttpStatusCode.Unauthorized);
+                    ?? throw new ApiException(this.LocalizeFallback("Срок действия сессии истек. Войдите снова."), HttpStatusCode.Unauthorized);
             }
 
             return tokens;
@@ -570,11 +577,11 @@ public sealed partial class AdminSessionClient : IDisposable
                 }
 
                 return await response.Content.ReadFromJsonAsync<TReport>(s_jsonOptions, cancellationToken)
-                    ?? throw new ApiException("Сервер вернул пустой ответ.", response.StatusCode);
+                ?? throw new ApiException(this.LocalizeFallback("Сервер вернул пустой ответ."), response.StatusCode);
             }
             catch (JsonException exception)
             {
-                throw new ApiException("Сервер вернул некорректный ответ.", response.StatusCode, exception);
+            throw new ApiException(this.LocalizeFallback("Сервер вернул некорректный ответ."), response.StatusCode, exception);
             }
         }
         finally
@@ -588,7 +595,7 @@ public sealed partial class AdminSessionClient : IDisposable
     {
         if (this._sessionVersion != sessionVersion || this._tokens == null)
         {
-            throw new ApiException("Сессия изменилась. Войдите в административную панель снова.", HttpStatusCode.Unauthorized);
+            throw new ApiException(this.LocalizeFallback("Сессия изменилась. Войдите в административную панель снова."), HttpStatusCode.Unauthorized);
         }
     }
 
@@ -604,7 +611,7 @@ public sealed partial class AdminSessionClient : IDisposable
                 await this.TryRevokeAsync(tokens);
             }
 
-            throw new ApiException("У учетной записи нет доступа к административной панели.", response.StatusCode);
+            throw new ApiException(this.LocalizeFallback("У учетной записи нет доступа к административной панели."), response.StatusCode);
         }
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -625,7 +632,7 @@ public sealed partial class AdminSessionClient : IDisposable
         catch (JsonException exception)
         {
             this.ClearSession();
-            throw new ApiException("Сервер вернул некорректный профиль администратора.", response.StatusCode, exception);
+            throw new ApiException(this.LocalizeFallback("Сервер вернул некорректный профиль администратора."), response.StatusCode, exception);
         }
 
         if (profile == null || string.IsNullOrWhiteSpace(profile.Id) || profile.Roles == null
@@ -633,7 +640,7 @@ public sealed partial class AdminSessionClient : IDisposable
             || !string.Equals(profile.Id, this._tokens.User.Id, StringComparison.Ordinal))
         {
             this.ClearSession();
-            throw new ApiException("Сервер вернул неполный или несогласованный профиль администратора.", response.StatusCode);
+            throw new ApiException(this.LocalizeFallback("Сервер вернул неполный или несогласованный профиль администратора."), response.StatusCode);
         }
 
         if (!profile.IsSystem && !profile.Permissions.Contains("Admin.Access", StringComparer.Ordinal))
@@ -645,7 +652,7 @@ public sealed partial class AdminSessionClient : IDisposable
                 await this.TryRevokeAsync(tokens);
             }
 
-            throw new ApiException("У учетной записи нет права Admin.Access.", HttpStatusCode.Forbidden);
+            throw new ApiException(this.LocalizeFallback("У учетной записи нет права Admin.Access."), HttpStatusCode.Forbidden);
         }
 
         this._currentProfile = profile;
@@ -655,14 +662,14 @@ public sealed partial class AdminSessionClient : IDisposable
     /// <summary> Отправляет запрос на получение профиля. </summary>
     private async Task<HttpResponseMessage> SendProfileRequestAsync(CancellationToken cancellationToken)
     {
-        var tokens = this._tokens ?? throw new ApiException("Войдите в административную панель.", HttpStatusCode.Unauthorized);
+        var tokens = this._tokens ?? throw new ApiException(this.LocalizeFallback("Войдите в административную панель."), HttpStatusCode.Unauthorized);
         return await this.SendAsync(HttpMethod.Get, "api/v1/admin/current-user", null, tokens.AccessToken, cancellationToken);
     }
 
     /// <summary> Обновляет токен доступа, если срок его действия истекает. </summary>
     private async Task EnsureValidAccessTokenAsync(CancellationToken cancellationToken)
     {
-        var tokens = this._tokens ?? throw new ApiException("Войдите в административную панель.", HttpStatusCode.Unauthorized);
+        var tokens = this._tokens ?? throw new ApiException(this.LocalizeFallback("Войдите в административную панель."), HttpStatusCode.Unauthorized);
         if (tokens.AccessTokenExpiresAt <= this._timeProvider.GetUtcNow().Add(s_tokenRefreshWindow))
         {
             await this.RefreshTokensAsync(cancellationToken);
@@ -675,7 +682,7 @@ public sealed partial class AdminSessionClient : IDisposable
         var currentTokens = this._tokens;
         if (currentTokens == null)
         {
-            throw new ApiException("Срок действия сессии истек. Войдите снова.", HttpStatusCode.Unauthorized);
+            throw new ApiException(this.LocalizeFallback("Срок действия сессии истек. Войдите снова."), HttpStatusCode.Unauthorized);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -709,7 +716,7 @@ public sealed partial class AdminSessionClient : IDisposable
         catch (OperationCanceledException exception) when (refreshTimeout.IsCancellationRequested)
         {
             this.ClearSession(false);
-            throw new ApiException("Превышено время ожидания обновления сессии. Повторите вход.", innerException: exception);
+            throw new ApiException(this.LocalizeFallback("Превышено время ожидания обновления сессии. Повторите вход."), innerException: exception);
         }
         catch (ApiException exception) when (exception.StatusCode is HttpStatusCode.BadRequest
             or HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
@@ -775,6 +782,8 @@ public sealed partial class AdminSessionClient : IDisposable
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(method, path) { Content = content };
+        request.Headers.AcceptLanguage.ParseAdd(AdminUiLanguage.GetAcceptLanguage(this.UiLanguage));
+        request.Headers.TryAddWithoutValidation("X-OpenCRM-UI-Language", this.UiLanguage);
         if (!string.IsNullOrWhiteSpace(accessToken))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -790,11 +799,11 @@ public sealed partial class AdminSessionClient : IDisposable
         }
         catch (HttpRequestException exception)
         {
-            throw new ApiException("Не удалось связаться с сервером. Проверьте подключение и повторите попытку.", null, exception);
+            throw new ApiException(this.LocalizeFallback("Не удалось связаться с сервером. Проверьте подключение и повторите попытку."), null, exception);
         }
         catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new ApiException("Превышено время ожидания ответа сервера. Повторите попытку.", null, exception);
+            throw new ApiException(this.LocalizeFallback("Превышено время ожидания ответа сервера. Повторите попытку."), null, exception);
         }
     }
 
@@ -804,11 +813,11 @@ public sealed partial class AdminSessionClient : IDisposable
         try
         {
             return await response.Content.ReadFromJsonAsync<ApiTokenResponse>(s_jsonOptions, cancellationToken)
-                ?? throw new ApiException("Сервер вернул пустой ответ авторизации.", response.StatusCode);
+                ?? throw new ApiException(this.LocalizeFallback("Сервер вернул пустой ответ авторизации."), response.StatusCode);
         }
         catch (JsonException exception)
         {
-            throw new ApiException("Сервер вернул некорректный ответ авторизации.", response.StatusCode, exception);
+            throw new ApiException(this.LocalizeFallback("Сервер вернул некорректный ответ авторизации."), response.StatusCode, exception);
         }
     }
 
@@ -825,7 +834,7 @@ public sealed partial class AdminSessionClient : IDisposable
             || tokens.RefreshTokenExpiresAt <= this._timeProvider.GetUtcNow()
             || (expectedUserId != null && !string.Equals(tokens.User.Id, expectedUserId, StringComparison.Ordinal)))
         {
-            throw new ApiException("Сервер вернул неполные или некорректные данные авторизации.", HttpStatusCode.BadGateway);
+            throw new ApiException(this.LocalizeFallback("Сервер вернул неполные или некорректные данные авторизации."), HttpStatusCode.BadGateway);
         }
     }
 
@@ -863,17 +872,22 @@ public sealed partial class AdminSessionClient : IDisposable
         {
         }
 
-        if (string.IsNullOrWhiteSpace(message) || !message.Any(character => character is >= '\u0400' and <= '\u04FF'))
+        if (string.IsNullOrWhiteSpace(message))
         {
             message = response.StatusCode switch
             {
-                HttpStatusCode.Unauthorized => "Неверный email или пароль либо сессия истекла.",
-                HttpStatusCode.Forbidden => "У учетной записи нет доступа к административной панели.",
-                _ => fallbackMessage
+                HttpStatusCode.Unauthorized => this.LocalizeFallback("Неверный email или пароль либо сессия истекла."),
+                HttpStatusCode.Forbidden => this.LocalizeFallback("У учетной записи нет доступа к административной панели."),
+                _ => this.LocalizeFallback(fallbackMessage)
             };
         }
 
         return new ApiException(message, response.StatusCode, errorCode: errorCode);
+    }
+
+    private string LocalizeFallback(string message)
+    {
+        return AdminApiLocalization.Localize(this.UiLanguage, message);
     }
 
     /// <summary> Очищает данные текущей сессии. </summary>

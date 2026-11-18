@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { formattingCulture, translate as t } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+import '../workMessages'
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { UiButton, UiLoader, formatDateOnly, parseDateOnly } from '@opencrm/ui'
 import {
@@ -12,6 +16,8 @@ import type { WorkspaceContext } from '../types'
 import { loadOwnShifts, type Shift } from '../api/shifts'
 import { formatWorkDuration } from '../formatWorkDuration'
 
+const workspaceCurrency = useWorkspaceCurrency()
+
 const props = withDefaults(defineProps<{ context: WorkspaceContext, previewOnly?: boolean }>(), { previewOnly: false })
 const works = ref<AssignedWork[]>([])
 const ownShifts = ref<Shift[]>([])
@@ -22,11 +28,11 @@ const error = ref('')
 const actionError = ref('')
 const tab = ref<'today' | 'active' | 'assigned' | 'available' | 'completed'>('today')
 const tabs = [
-  { code: 'today', name: 'Сегодня' },
-  { code: 'active', name: 'Активные' },
-  { code: 'assigned', name: 'Назначенные' },
-  { code: 'available', name: 'Свободные' },
-  { code: 'completed', name: 'Завершённые' }
+  { code: 'today' },
+  { code: 'active' },
+  { code: 'assigned' },
+  { code: 'available' },
+  { code: 'completed' }
 ] as const
 const pauseReasons = ref<Record<string, string>>({})
 const materialPanelId = ref('')
@@ -56,7 +62,7 @@ let pendingReportRequestId = 0
 
 const today = ref(formatDateOnly(undefined, props.context.organization.timeZoneId || 'UTC'))
 const timeZoneId = computed(() => props.context.organization.timeZoneId || 'UTC')
-const formatInstant = (value: string) => new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: timeZoneId.value }).format(new Date(value))
+const formatInstant = (value: string) => new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short', timeStyle: 'short', timeZone: timeZoneId.value }).format(new Date(value))
 const visibleWorks = computed(() => (tab.value === 'available' ? availableWorks.value : works.value).filter(work => {
   if (tab.value === 'available') return true
   if (tab.value === 'active') return work.status === 2 || work.status === 3
@@ -71,13 +77,17 @@ const completedTodayCount = computed(() => works.value.filter(work => work.statu
 const activeCount = computed(() => works.value.filter(work => work.status === 2 || work.status === 3).length)
 const canWrite = computed(() => props.context.workspaceAccess?.isReadOnly === false)
 const canSelfAssign = computed(() => props.context.organization.allowWorkSelfAssignment === true)
-const emptyState = computed(() => ({
-  today: { title: 'На сегодня работ нет', description: 'Назначенные на сегодня и текущие работы появятся здесь.' },
-  active: { title: 'Нет активных работ', description: 'Здесь будут начатые и приостановленные работы.' },
-  assigned: { title: 'Нет назначенных работ', description: 'Здесь появятся работы, назначенные вам.' },
-  available: { title: 'Нет свободных работ', description: 'Доступные для самостоятельного назначения работы появятся здесь.' },
-  completed: { title: 'Сегодня пока нет завершённых работ', description: 'Здесь будут работы, которые вы завершили сегодня.' }
-})[tab.value])
+const emptyState = computed(() => {
+  const emptyStateKey = tab.value === 'active' ? 'active'
+    : tab.value === 'assigned' ? 'assigned'
+      : tab.value === 'available' ? 'available'
+        : tab.value === 'completed' ? 'completed' : 'today'
+
+  return {
+    title: t(`work.empty.${emptyStateKey}Title`),
+    description: t(`work.empty.${emptyStateKey}Description`)
+  }
+})
 
 async function load(silent = false) {
   if (props.previewOnly) return
@@ -109,7 +119,7 @@ async function load(silent = false) {
     if (reportWork && !savingId.value && !pendingReportRequestId) void refreshReports(reportWork)
   } catch (cause) {
     if (currentRequestId !== requestId) return
-    error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить работы.'
+    error.value = cause instanceof Error ? cause.message : t('work.errors.load')
   } finally {
     if (currentRequestId === requestId) loading.value = false
   }
@@ -125,7 +135,7 @@ async function claim(work: AssignedWork) {
     works.value = [...works.value, assigned]
     tab.value = 'assigned'
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось взять работу.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.claim')
     await load(true)
   } finally {
     savingId.value = ''
@@ -136,7 +146,7 @@ async function act(work: AssignedWork, action: 'start' | 'pause' | 'resume' | 'c
   if (props.previewOnly || savingId.value) return
   const reason = pauseReasons.value[work.detailId]?.trim()
   if (action === 'pause' && !reason) {
-    actionError.value = 'Укажите причину паузы.'
+    actionError.value = t('work.validation.pauseReason')
     return
   }
 
@@ -153,7 +163,7 @@ async function act(work: AssignedWork, action: 'start' | 'pause' | 'resume' | 'c
     }
     pauseReasons.value[work.detailId] = ''
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось изменить состояние работы.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.transition')
     await load(true)
   } finally {
     savingId.value = ''
@@ -192,7 +202,7 @@ async function refreshMaterials(work: AssignedWork, showLoading = false) {
   if (issues.status === 'fulfilled') materialIssues.value = issues.value
   materialStocks.value = stocks.status === 'fulfilled' ? stocks.value : []
   const failure = stocks.status === 'rejected' ? stocks.reason : issues.status === 'rejected' ? issues.reason : null
-  materialError.value = failure instanceof Error ? failure.message : failure ? 'Не удалось загрузить материалы.' : ''
+  materialError.value = failure instanceof Error ? failure.message : failure ? t('work.errors.loadMaterials') : ''
   materialLoading.value = false
 }
 
@@ -202,11 +212,11 @@ function retryMaterials(work: AssignedWork) {
 }
 
 async function issueMaterial(work: AssignedWork) {
-  if (props.previewOnly) return
+  if (props.previewOnly || !canManageWorkMaterials(work)) return
 
   const stock = materialStocks.value.find(item => item.id === selectedStockId.value)
   if (!stock || !Number.isFinite(materialQuantity.value) || materialQuantity.value <= 0) {
-    actionError.value = 'Выберите материал и укажите положительное количество.'
+    actionError.value = t('work.validation.materialRequired')
     return
   }
 
@@ -222,17 +232,17 @@ async function issueMaterial(work: AssignedWork) {
     materialUnit.value = ''
     materialQuantity.value = 1
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось списать материал.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.issueMaterial')
   } finally {
     savingId.value = ''
   }
 }
 
 async function returnMaterial(work: AssignedWork, issue: OperationMaterialIssue) {
-  if (props.previewOnly) return
+  if (props.previewOnly || !canManageWorkMaterials(work)) return
 
   if (!materialReturnReason.value.trim()) {
-    actionError.value = 'Укажите причину возврата материала.'
+    actionError.value = t('work.validation.returnReason')
     return
   }
 
@@ -247,7 +257,7 @@ async function returnMaterial(work: AssignedWork, issue: OperationMaterialIssue)
     materialReturnId.value = ''
     materialReturnReason.value = ''
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось вернуть материал.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.returnMaterial')
   } finally {
     savingId.value = ''
   }
@@ -266,6 +276,13 @@ const materialUnitOptions = computed(() => {
     : [stock.unit]
   return stock.packageQuantity ? [...units, 'уп'] : units
 })
+
+function formatUnit(unit: string) {
+  const unitKeys: Record<string, string> = { г: 'g', кг: 'kg', мл: 'ml', л: 'l', уп: 'package' }
+  const unitKey = unitKeys[unit]
+
+  return unitKey ? t(`work.units.${unitKey}`) : unit
+}
 
 async function toggleReports(work: AssignedWork) {
   if (props.previewOnly) return
@@ -295,7 +312,7 @@ async function refreshReports(work: AssignedWork, showLoading = false) {
     reports.value = nextReports
   } catch (cause) {
     if (currentRequestId !== reportRequestId || reportPanelId.value !== work.detailId) return
-    if (showLoading) actionError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить замечания.'
+    if (showLoading) actionError.value = cause instanceof Error ? cause.message : t('work.errors.loadReports')
   } finally {
     if (currentRequestId === reportRequestId) reportLoading.value = false
     if (currentRequestId === pendingReportRequestId) pendingReportRequestId = 0
@@ -306,7 +323,7 @@ async function sendReport(work: AssignedWork) {
   if (props.previewOnly) return
 
   if (!reportText.value.trim()) {
-    actionError.value = 'Опишите замечание или дополнительную работу.'
+    actionError.value = t('work.validation.reportText')
     return
   }
 
@@ -318,17 +335,14 @@ async function sendReport(work: AssignedWork) {
     reports.value = [report, ...reports.value]
     reportText.value = ''
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось сохранить сообщение.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.saveReport')
   } finally {
     savingId.value = ''
   }
 }
 
 function reportKindName(kind: WorkReport['kind']) {
-  return kind === 'defect' ? 'Дефект'
-    : kind === 'extra' ? 'Дополнительная работа'
-    : kind === 'time' ? 'Корректировка времени'
-    : 'Комментарий'
+  return t(`work.reportKind.${kind}`)
 }
 
 async function togglePhotos(work: AssignedWork) {
@@ -347,7 +361,7 @@ async function togglePhotos(work: AssignedWork) {
     const nextPhotos = await loadWorkPhotos(props.context.organization.id, work)
     if (photoPanelId.value === work.detailId) photos.value = nextPhotos
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить фотографии.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.loadPhotos')
   } finally {
     photoLoading.value = false
   }
@@ -360,7 +374,7 @@ async function sendPhotos(work: AssignedWork, event: Event) {
   const files = Array.from(input.files ?? [])
   if (!files.length) return
   if (files.length > 10 || files.reduce((total, file) => total + file.size, 0) > 100 * 1024 * 1024) {
-    actionError.value = 'Выберите до 10 изображений общим размером не более 100 МБ.'
+    actionError.value = t('work.validation.photoLimit')
     input.value = ''
     return
   }
@@ -371,7 +385,7 @@ async function sendPhotos(work: AssignedWork, event: Event) {
     await uploadWorkPhotos(props.context.organization.id, work, files, photoStage.value)
     photos.value = await loadWorkPhotos(props.context.organization.id, work)
   } catch (cause) {
-    actionError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить фотографии.'
+    actionError.value = cause instanceof Error ? cause.message : t('work.errors.loadPhotos')
   } finally {
     input.value = ''
     savingId.value = ''
@@ -379,30 +393,36 @@ async function sendPhotos(work: AssignedWork, event: Event) {
 }
 
 function statusName(status: number) {
-  return status === 2 ? 'В работе' : status === 3 ? 'Пауза' : status === 4 ? 'Выполнена' : 'Назначена'
+  const statusKey = status === 2 ? 'active' : status === 3 ? 'paused' : status === 4 ? 'completed' : 'assigned'
+
+  return t(`work.status.${statusKey}`)
 }
 
-function formatPrice(price?: number | null) {
-  return price == null ? 'Не указана' : new Intl.NumberFormat('ru-RU', {
-    style: 'currency', currency: 'RUB', maximumFractionDigits: 2
+function canManageWorkMaterials(work: AssignedWork) {
+  return canWrite.value && (!work.currencyCode || work.currencyCode === (props.context.organization.currencyCode ?? workspaceCurrency.value))
+}
+
+function formatPrice(price?: number | null, currencyCode = workspaceCurrency.value) {
+  return price == null ? t('work.notSpecified') : new Intl.NumberFormat(formattingCulture.value, {
+    style: 'currency', currency: currencyCode, maximumFractionDigits: 2
   }).format(price)
 }
 
 function formatPlan(work: AssignedWork) {
-  if (!work.plannedDate) return 'Время не назначено'
-  const date = parseDateOnly(work.plannedDate.slice(0, 10))?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) ?? ''
+  if (!work.plannedDate) return t('work.noScheduledTime')
+  const date = parseDateOnly(work.plannedDate.slice(0, 10))?.toLocaleDateString(formattingCulture.value, { day: 'numeric', month: 'short' }) ?? ''
   const start = work.plannedStartTime?.slice(0, 5)
   const end = work.plannedEndTime?.slice(0, 5)
   const endDate = work.plannedEndDate?.slice(0, 10)
   const endLabel = endDate && endDate !== work.plannedDate.slice(0, 10)
-    ? `${parseDateOnly(endDate)?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) ?? ''} ${end ?? ''}`
+    ? `${parseDateOnly(endDate)?.toLocaleDateString(formattingCulture.value, { day: 'numeric', month: 'short' }) ?? ''} ${end ?? ''}`
     : end
 
   return [date, start && endLabel ? `${start}–${endLabel}` : start ?? endLabel].filter(Boolean).join(' · ')
 }
 
 function formatShiftStart(value: string) {
-  const date = parseDateOnly(value.slice(0, 10))?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) ?? ''
+  const date = parseDateOnly(value.slice(0, 10))?.toLocaleDateString(formattingCulture.value, { day: 'numeric', month: 'short' }) ?? ''
 
   return `${date} ${value.slice(11, 16)}`
 }
@@ -429,8 +449,8 @@ watch(() => [props.context.organization.id, props.context.organization.timeZoneI
 
 <template>
   <div v-if="previewOnly" class="my-work my-work--preview" aria-hidden="true">
-    <div class="my-work__summary"><span>В работе <strong>—</strong></span><span>Завершено сегодня <strong>—</strong></span></div>
-    <nav class="my-work__tabs" aria-label="Мои работы"><button v-for="item in tabs" :key="item.code" type="button" disabled>{{ item.name }}</button></nav>
+    <div class="my-work__summary"><span>{{ t('work.activeCount') }} <strong>—</strong></span><span>{{ t('work.completedToday') }} <strong>—</strong></span></div>
+    <nav class="my-work__tabs" :aria-label="t('work.summary')"><button v-for="item in tabs" :key="item.code" type="button" disabled>{{ t(`work.tabs.${item.code}`) }}</button></nav>
     <div class="my-work__preview-card">
       <header><i></i><span></span></header>
       <p><i></i></p>
@@ -440,25 +460,25 @@ watch(() => [props.context.organization.id, props.context.organization.timeZoneI
     <div class="my-work__preview-card"><header><i></i><span></span></header><p><i></i><i></i></p></div>
   </div>
   <div v-else class="my-work">
-    <dl v-if="!loading && !error" class="my-work__summary" :class="{ 'my-work__summary--with-shift': ownShifts.length }" aria-label="Сводка моих работ">
+    <dl v-if="!loading && !error" class="my-work__summary" :class="{ 'my-work__summary--with-shift': ownShifts.length }" :aria-label="t('work.summary')">
       <div v-if="ownShifts.length" class="my-work__shift">
-        <dt>Ближайшая смена</dt>
+        <dt>{{ t('work.nextShift') }}</dt>
         <dd>{{ formatShiftStart(ownShifts[0].startLocal) }} <span>— {{ ownShifts[0].endLocal.slice(11, 16) }}</span></dd>
       </div>
       <div>
-        <dt>В работе</dt>
+        <dt>{{ t('work.activeCount') }}</dt>
         <dd>{{ activeCount }}</dd>
       </div>
       <div>
-        <dt>Завершено сегодня</dt>
+        <dt>{{ t('work.completedToday') }}</dt>
         <dd>{{ completedTodayCount }}</dd>
       </div>
     </dl>
-    <nav class="my-work__tabs" aria-label="Мои работы">
-      <button v-for="item in tabs" v-show="item.code !== 'available' || canSelfAssign" :key="item.code" type="button" :aria-current="tab === item.code ? 'page' : undefined" @click="tab = item.code">{{ item.name }}</button>
+    <nav class="my-work__tabs" :aria-label="t('work.summary')">
+      <button v-for="item in tabs" v-show="item.code !== 'available' || canSelfAssign" :key="item.code" type="button" :aria-current="tab === item.code ? 'page' : undefined" @click="tab = item.code">{{ t(`work.tabs.${item.code}`) }}</button>
     </nav>
-    <UiLoader v-if="loading" text="Загружаем работы…" />
-    <p v-else-if="error" role="alert">{{ error }} <UiButton variant="secondary" @click="load()">Повторить</UiButton></p>
+    <UiLoader v-if="loading" :text="t('work.load')" />
+    <p v-else-if="error" role="alert">{{ error }} <UiButton variant="secondary" @click="load()">{{ t('work.retry') }}</UiButton></p>
     <div v-else-if="!visibleWorks.length" class="my-work__empty" role="status">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H6a2 2 0 0 0-2 2v13h16V7a2 2 0 0 0-2-2h-3M9 3h6v4H9zM8 12h8M8 16h5" /></svg>
       <strong>{{ emptyState.title }}</strong>
@@ -467,107 +487,108 @@ watch(() => [props.context.organization.id, props.context.organization.timeZoneI
     <div v-else class="my-work__list">
       <article v-for="work in visibleWorks" :key="work.detailId" class="my-work__item">
         <header><strong>{{ work.name }}</strong><span class="my-work__status" :data-status="work.status">{{ statusName(work.status) }}</span></header>
-        <p class="my-work__vehicle">{{ work.vehicleName || work.registrationPlate || 'Техника без названия' }}<span v-if="work.registrationPlate && work.vehicleName"> · {{ work.registrationPlate }}</span></p>
+        <p class="my-work__vehicle">{{ work.vehicleName || work.registrationPlate || t('work.workFallback') }}<span v-if="work.registrationPlate && work.vehicleName"> · {{ work.registrationPlate }}</span></p>
         <div class="my-work__facts">
-          <div><span>План</span><strong>{{ formatPlan(work) }}</strong></div>
-          <div><span>Пост</span><strong>{{ work.location || 'Не назначен' }}</strong></div>
-          <div><span>Стоимость работы</span><strong>{{ formatPrice(work.price) }}</strong></div>
-          <div><span>Количество</span><strong>{{ work.quantity || 1 }}</strong></div>
+          <div><span>{{ t('work.plan') }}</span><strong>{{ formatPlan(work) }}</strong></div>
+          <div><span>{{ t('work.location') }}</span><strong>{{ work.location || t('work.unnamedLocation') }}</strong></div>
+          <div><span>{{ t('work.price') }}</span><strong>{{ formatPrice(work.price, work.currencyCode) }}</strong></div>
+          <div><span>{{ t('work.quantity') }}</span><strong>{{ work.quantity || 1 }}</strong></div>
         </div>
         <p v-if="work.description" class="my-work__description">{{ work.description }}</p>
         <div v-if="work.intakeNotes || work.intakeCompleteness || work.intakeVisibleDamage || work.workComment || work.reworkReason" class="my-work__context">
-          <strong>Что учесть</strong>
-          <p v-if="work.reworkReason">Возврат на исправление: {{ work.reworkReason }}</p>
-          <p v-if="work.intakeNotes">Приёмка: {{ work.intakeNotes }}</p>
-          <p v-if="work.intakeCompleteness">Комплектность: {{ work.intakeCompleteness }}</p>
-          <p v-if="work.intakeVisibleDamage">Повреждения: {{ work.intakeVisibleDamage }}</p>
-          <p v-if="work.workComment">Комментарий к заказу: {{ work.workComment }}</p>
+          <strong>{{ t('work.consider') }}</strong>
+          <p v-if="work.reworkReason">{{ t('work.rework') }}: {{ work.reworkReason }}</p>
+          <p v-if="work.intakeNotes">{{ t('work.intake') }}: {{ work.intakeNotes }}</p>
+          <p v-if="work.intakeCompleteness">{{ t('work.completeness') }}: {{ work.intakeCompleteness }}</p>
+          <p v-if="work.intakeVisibleDamage">{{ t('work.damage') }}: {{ work.intakeVisibleDamage }}</p>
+          <p v-if="work.workComment">{{ t('work.workComment') }}: {{ work.workComment }}</p>
         </div>
-        <p v-if="work.startedAt" class="my-work__time">Начата: {{ formatInstant(work.startedAt) }} · Активное время: {{ formatWorkDuration(work.activeTime) }}</p>
+        <p v-if="work.startedAt" class="my-work__time">{{ t('work.started') }}: {{ formatInstant(work.startedAt) }} · {{ t('work.activeTime') }}: {{ formatWorkDuration(work.activeTime) }}</p>
         <div v-if="canWrite" class="my-work__actions">
-          <UiButton v-if="tab === 'available'" :disabled="!!savingId" @click="claim(work)">Взять работу</UiButton>
-          <UiButton v-else-if="work.status === 1" :disabled="!!savingId" @click="act(work, 'start')">Начать</UiButton>
+          <UiButton v-if="tab === 'available'" :disabled="!!savingId" @click="claim(work)">{{ t('work.takeWork') }}</UiButton>
+          <UiButton v-else-if="work.status === 1" :disabled="!!savingId" @click="act(work, 'start')">{{ t('work.start') }}</UiButton>
           <template v-else-if="work.status === 2">
-            <input v-model="pauseReasons[work.detailId]" maxlength="1000" placeholder="Причина паузы" aria-label="Причина паузы" :disabled="!!savingId">
-            <UiButton variant="secondary" :disabled="!!savingId" @click="act(work, 'pause')">Пауза</UiButton>
-            <UiButton :disabled="!!savingId" @click="act(work, 'complete')">Завершить</UiButton>
+            <input v-model="pauseReasons[work.detailId]" maxlength="1000" :placeholder="t('work.pauseReason')" :aria-label="t('work.pauseReason')" :disabled="!!savingId">
+            <UiButton variant="secondary" :disabled="!!savingId" @click="act(work, 'pause')">{{ t('work.pause') }}</UiButton>
+            <UiButton :disabled="!!savingId" @click="act(work, 'complete')">{{ t('work.complete') }}</UiButton>
           </template>
-          <UiButton v-else-if="work.status === 3" :disabled="!!savingId" @click="act(work, 'resume')">Продолжить</UiButton>
+          <UiButton v-else-if="work.status === 3" :disabled="!!savingId" @click="act(work, 'resume')">{{ t('work.resume') }}</UiButton>
         </div>
         <div v-if="tab !== 'available'" class="my-work__materials">
-          <UiButton variant="secondary" @click="toggleMaterials(work)">{{ materialPanelId === work.detailId ? 'Скрыть материалы' : 'Материалы' }}</UiButton>
+          <UiButton variant="secondary" @click="toggleMaterials(work)">{{ t(materialPanelId === work.detailId ? 'work.hideMaterials' : 'work.materials') }}</UiButton>
           <div v-if="materialPanelId === work.detailId" class="my-work__material-panel">
-            <UiLoader v-if="materialLoading" text="Загружаем материалы…" />
+            <UiLoader v-if="materialLoading" :text="t('work.loadMaterials')" />
             <template v-else>
-              <p v-if="materialError" class="my-work__error" role="alert">{{ materialError }} <UiButton variant="secondary" @click="retryMaterials(work)">Повторить</UiButton></p>
-              <strong>Списано на работу</strong>
-              <p v-if="!materialIssues.length">Материалы ещё не списаны.</p>
+              <p v-if="materialError" class="my-work__error" role="alert">{{ materialError }} <UiButton variant="secondary" @click="retryMaterials(work)">{{ t('work.retry') }}</UiButton></p>
+              <strong>{{ t('work.issuedMaterials') }}</strong>
+              <p v-if="!materialIssues.length">{{ t('work.noIssuedMaterials') }}</p>
               <ul v-else>
                 <li v-for="issue in materialIssues" :key="issue.id">
-                  {{ issue.isReturn ? 'Возврат' : 'Списано' }}: {{ issue.materialName }} · {{ issue.quantity }} {{ issue.unit }} · {{ formatInstant(issue.createdAt) }}
-                  <UiButton v-if="canWrite && work.status === 2 && !issue.isReturn && !materialIssues.some(item => item.sourceMovementId === issue.id)" variant="secondary" :disabled="!!savingId" @click="materialReturnId = issue.id; materialReturnReason = ''">Вернуть</UiButton>
-                  <div v-if="canWrite && work.status === 2 && materialReturnId === issue.id" class="my-work__material-return">
-                    <input v-model="materialReturnReason" maxlength="1000" placeholder="Причина возврата" aria-label="Причина возврата материала" :disabled="!!savingId">
-                    <UiButton :disabled="!!savingId" @click="returnMaterial(work, issue)">Подтвердить</UiButton>
-                    <UiButton variant="secondary" :disabled="!!savingId" @click="materialReturnId = ''">Отмена</UiButton>
+                  {{ t(issue.isReturn ? 'work.returned' : 'work.issued') }}: {{ issue.materialName }} · {{ issue.quantity }} {{ formatUnit(issue.unit) }} · {{ formatInstant(issue.createdAt) }}
+                  <UiButton v-if="canManageWorkMaterials(work) && work.status === 2 && !issue.isReturn && !materialIssues.some(item => item.sourceMovementId === issue.id)" variant="secondary" :disabled="!!savingId" @click="materialReturnId = issue.id; materialReturnReason = ''">{{ t('work.return') }}</UiButton>
+                  <div v-if="canManageWorkMaterials(work) && work.status === 2 && materialReturnId === issue.id" class="my-work__material-return">
+                    <input v-model="materialReturnReason" maxlength="1000" :placeholder="t('work.returnReason')" :aria-label="t('work.materialReturnLabel')" :disabled="!!savingId">
+                    <UiButton :disabled="!!savingId" @click="returnMaterial(work, issue)">{{ t('work.confirm') }}</UiButton>
+                    <UiButton variant="secondary" :disabled="!!savingId" @click="materialReturnId = ''">{{ t('work.cancel') }}</UiButton>
                   </div>
                 </li>
               </ul>
-              <p v-if="canWrite && work.status === 3">Чтобы списать материалы, продолжите работу.</p>
-              <div v-if="canWrite && work.status === 2" class="my-work__material-form">
-                <p v-if="!materialStocks.length && !materialError">На складе нет доступных материалов.</p>
-                <select v-model="selectedStockId" aria-label="Материал" :disabled="!!savingId" @change="chooseMaterialUnit">
-                  <option value="">Выберите материал</option>
-                  <option v-for="stock in materialStocks" :key="stock.id" :value="stock.id">{{ stock.name }} · {{ stock.availableQuantity }} {{ stock.unit }}</option>
+              <p v-if="canManageWorkMaterials(work) && work.status === 3">{{ t('work.continueBeforeIssue') }}</p>
+              <p v-if="canWrite && !canManageWorkMaterials(work)" role="note">{{ t('work.materialCurrencyMismatch', { orderCurrency: work.currencyCode ?? workspaceCurrency, workspaceCurrency: context.organization.currencyCode ?? workspaceCurrency }) }}</p>
+              <div v-if="canManageWorkMaterials(work) && work.status === 2" class="my-work__material-form">
+                <p v-if="!materialStocks.length && !materialError">{{ t('work.noStock') }}</p>
+                <select v-model="selectedStockId" :aria-label="t('work.material')" :disabled="!!savingId" @change="chooseMaterialUnit">
+                  <option value="">{{ t('work.chooseMaterial') }}</option>
+                  <option v-for="stock in materialStocks" :key="stock.id" :value="stock.id">{{ stock.name }} · {{ stock.availableQuantity }} {{ formatUnit(stock.unit) }}</option>
                 </select>
-                <input v-model.number="materialQuantity" type="number" min="0.001" step="0.001" aria-label="Количество материала" :disabled="!!savingId">
-                <select v-model="materialUnit" aria-label="Единица количества" :disabled="!!savingId || !selectedStockId"><option v-for="unit in materialUnitOptions" :key="unit" :value="unit">{{ unit }}</option></select>
-                <small v-if="selectedMaterialStock?.packageQuantity">1 уп = {{ selectedMaterialStock.packageQuantity }} {{ selectedMaterialStock.unit }}</small>
-                <UiButton :disabled="!!savingId || !selectedStockId" @click="issueMaterial(work)">Списать</UiButton>
+                <input v-model.number="materialQuantity" type="number" min="0.001" step="0.001" :aria-label="t('work.materialQuantity')" :disabled="!!savingId">
+                <select v-model="materialUnit" :aria-label="t('work.unit')" :disabled="!!savingId || !selectedStockId"><option v-for="unit in materialUnitOptions" :key="unit" :value="unit">{{ formatUnit(unit) }}</option></select>
+                <small v-if="selectedMaterialStock?.packageQuantity">{{ t('work.packageEquals', { quantity: selectedMaterialStock.packageQuantity, unit: formatUnit(selectedMaterialStock.unit) }) }}</small>
+                <UiButton :disabled="!!savingId || !selectedStockId" @click="issueMaterial(work)">{{ t('work.issue') }}</UiButton>
               </div>
             </template>
           </div>
         </div>
         <div v-if="tab !== 'available'" class="my-work__reports">
-          <UiButton variant="secondary" @click="toggleReports(work)">{{ reportPanelId === work.detailId ? 'Скрыть замечания' : 'Замечания и допработы' }}</UiButton>
+          <UiButton variant="secondary" @click="toggleReports(work)">{{ t(reportPanelId === work.detailId ? 'work.hideReports' : 'work.reports') }}</UiButton>
           <div v-if="reportPanelId === work.detailId" class="my-work__report-panel">
-            <UiLoader v-if="reportLoading" text="Загружаем замечания…" />
+            <UiLoader v-if="reportLoading" :text="t('work.loadReports')" />
             <template v-else>
-              <p v-if="!reports.length">Сообщений пока нет.</p>
+              <p v-if="!reports.length">{{ t('work.noReports') }}</p>
               <ul v-else>
                 <li v-for="report in reports" :key="report.id">
                   <strong>{{ reportKindName(report.kind) }}</strong> · {{ formatInstant(report.createdAt) }}
                   <p>{{ report.text }}</p>
-                  <small v-if="report.kind === 'extra'">{{ report.decision === 'approved' ? `Согласована: ${formatPrice(report.approvedPrice)}` : report.decision === 'rejected' ? `Отклонена: ${report.decisionReason || ''}` : 'Ожидает согласования' }}</small>
+                  <small v-if="report.kind === 'extra'">{{ report.decision === 'approved' ? t('work.decision.approved', { price: formatPrice(report.approvedPrice, work.currencyCode) }) : report.decision === 'rejected' ? t('work.decision.rejected', { reason: report.decisionReason || '' }) : t('work.decision.pending') }}</small>
                 </li>
               </ul>
               <div v-if="canWrite && work.status !== 4" class="my-work__report-form">
-                <select v-model="reportKind" aria-label="Тип сообщения" :disabled="!!savingId">
-                  <option value="comment">Комментарий</option>
-                  <option value="defect">Дефект</option>
-                  <option value="extra">Запрос дополнительной работы</option>
+                <select v-model="reportKind" :aria-label="t('work.reportType')" :disabled="!!savingId">
+                  <option value="comment">{{ t('work.comment') }}</option>
+                  <option value="defect">{{ t('work.defect') }}</option>
+                  <option value="extra">{{ t('work.extraWorkRequest') }}</option>
                 </select>
-                <textarea v-model="reportText" rows="3" maxlength="2000" aria-label="Текст сообщения" :disabled="!!savingId" />
-                <UiButton :disabled="!!savingId || !reportText.trim()" @click="sendReport(work)">Отправить</UiButton>
+                <textarea v-model="reportText" rows="3" maxlength="2000" :aria-label="t('work.reportText')" :disabled="!!savingId" />
+                <UiButton :disabled="!!savingId || !reportText.trim()" @click="sendReport(work)">{{ t('work.send') }}</UiButton>
               </div>
             </template>
           </div>
         </div>
         <div v-if="tab !== 'available'" class="my-work__photos">
-          <UiButton variant="secondary" @click="togglePhotos(work)">{{ photoPanelId === work.detailId ? 'Скрыть фото' : 'Фото' }}</UiButton>
+          <UiButton variant="secondary" @click="togglePhotos(work)">{{ t(photoPanelId === work.detailId ? 'work.hidePhotos' : 'work.photos') }}</UiButton>
           <div v-if="photoPanelId === work.detailId" class="my-work__photo-panel">
-            <UiLoader v-if="photoLoading" text="Загружаем фото…" />
+            <UiLoader v-if="photoLoading" :text="t('work.loadPhotos')" />
             <template v-else>
-              <p v-if="!photos.length">Фотографий пока нет.</p>
+              <p v-if="!photos.length">{{ t('work.noPhotos') }}</p>
               <div v-else class="my-work__photo-grid">
                 <a v-for="photo in photos" :key="photo.photoId" :href="photo.url" target="_blank" rel="noopener noreferrer">
-                  <img :src="photo.url" :alt="photo.stage === 1 ? 'До работы' : photo.stage === 2 ? 'После работы' : 'Фото работы'" loading="lazy">
-                  <span>{{ photo.stage === 1 ? 'До' : photo.stage === 2 ? 'После' : 'Фото' }}</span>
+                  <img :src="photo.url" :alt="photo.stage === 1 ? t('work.beforeWork') : photo.stage === 2 ? t('work.afterWork') : t('work.workPhoto')" loading="lazy">
+                  <span>{{ photo.stage === 1 ? t('work.before') : photo.stage === 2 ? t('work.after') : t('work.photo') }}</span>
                 </a>
               </div>
               <div v-if="canWrite && work.status !== 4" class="my-work__photo-form">
-                <select v-model.number="photoStage" aria-label="Этап съёмки" :disabled="!!savingId"><option :value="1">До работы</option><option :value="2">После работы</option></select>
-                <input type="file" accept="image/*" multiple aria-label="Загрузить фотографии" :disabled="!!savingId" @change="sendPhotos(work, $event)">
+                <select v-model.number="photoStage" :aria-label="t('work.photoStage')" :disabled="!!savingId"><option :value="1">{{ t('work.beforeWork') }}</option><option :value="2">{{ t('work.afterWork') }}</option></select>
+                <input type="file" accept="image/*" multiple :aria-label="t('work.uploadPhotos')" :disabled="!!savingId" @change="sendPhotos(work, $event)">
               </div>
             </template>
           </div>

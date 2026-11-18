@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import UiFieldLabel from './UiFieldLabel.vue'
+import { useLocalization } from '../i18n'
 
 const model = defineModel<string>({ default: '' })
 const fieldId = useId()
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   id?: string
@@ -17,9 +19,9 @@ const props = withDefaults(defineProps<{
   unavailableReason?: (value: string) => string
 }>(), {
   id: undefined,
-  label: 'Время',
+  label: '',
   labelHelp: '',
-  placeholder: 'Выберите время',
+  placeholder: undefined,
   disabled: false,
   required: false,
   align: 'start',
@@ -239,14 +241,14 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="root" class="ui-field ui-date-picker ui-time-picker" @focusout="handleFocusOut">
-    <UiFieldLabel :label="label" :required="required" :help="labelHelp" :for-id="id || fieldId" />
+    <UiFieldLabel :label="label || t('common.time')" :required="required" :help="labelHelp" :for-id="id || fieldId" />
     <span class="ui-time-picker__control">
       <input
         ref="input"
         :id="id || fieldId"
         class="ui-date-picker__input ui-time-picker__input"
         :value="inputValue"
-        :placeholder="placeholder"
+        :placeholder="placeholder ?? t('common.timePlaceholder')"
         :disabled="disabled"
         :required="required"
         inputmode="numeric"
@@ -263,7 +265,7 @@ onBeforeUnmount(() => {
         type="button"
         class="ui-time-picker__button"
         :disabled="disabled"
-        aria-label="Выбрать время"
+        :aria-label="t('common.chooseTime')"
         @click.prevent="openPicker"
       >
         <span></span>
@@ -273,7 +275,7 @@ onBeforeUnmount(() => {
     <div v-if="isOpen && !disabled" class="ui-time-picker__popover" :class="{ 'ui-time-picker__popover--end': align === 'end' }">
       <div class="ui-time-picker__wheel-value">{{ displayValue }}</div>
       <div class="ui-time-picker__columns">
-        <div ref="hoursColumn" class="ui-time-picker__column" aria-label="Часы">
+        <div ref="hoursColumn" class="ui-time-picker__column" :aria-label="t('common.hours')">
           <button
             v-for="hour in hourOptions"
             :key="hour"
@@ -291,7 +293,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div class="ui-time-picker__separator">:</div>
-        <div ref="minutesColumn" class="ui-time-picker__column" aria-label="Минуты">
+        <div ref="minutesColumn" class="ui-time-picker__column" :aria-label="t('common.minutes')">
           <button
             v-for="minute in minuteOptions"
             :key="minute"
@@ -311,8 +313,8 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="optionHint" class="ui-time-picker__hint" role="status">{{ optionHint }}</div>
       <div class="ui-time-picker__actions">
-        <button type="button" class="ui-time-picker__action" @click="clearValue">Очистить</button>
-        <button type="button" class="ui-time-picker__action ui-time-picker__action--primary" @click="confirmPicker">Готово</button>
+        <button type="button" class="ui-time-picker__action" @click="clearValue">{{ t('common.clear') }}</button>
+        <button type="button" class="ui-time-picker__action ui-time-picker__action--primary" @click="confirmPicker">{{ t('common.done') }}</button>
       </div>
     </div>
   </div>

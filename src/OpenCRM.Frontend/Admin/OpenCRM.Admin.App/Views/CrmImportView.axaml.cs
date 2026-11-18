@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using OpenCRM.Admin.App.ViewModels;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.Views;
 
@@ -22,8 +23,8 @@ public partial class CrmImportView : UserControl
         {
             var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Выбрать файл CRM", AllowMultiple = false,
-                FileTypeFilter = [new FilePickerFileType("Файл CRM") { Patterns = ["*.csv", "*.xlsx", "*.json", "*.xml"] }]
+                Title = AdminLocalization.Instance["native.crmImport.vybrat.fayl.crm"], AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType(AdminLocalization.Instance["native.crmImport.fayl.crm"]) { Patterns = ["*.csv", "*.xlsx", "*.json", "*.xml"] }]
             });
             if (files.Count == 0)
             {
@@ -39,7 +40,7 @@ public partial class CrmImportView : UserControl
             {
                 if (content.Length + read > 10 * 1024 * 1024)
                 {
-                    model.ErrorMessage = "Файл превышает 10 МБ.";
+                    model.ErrorMessage = AdminLocalization.Instance["native.crmImport.fayl.prevyshaet.10.mb"];
                     return;
                 }
 
@@ -53,7 +54,7 @@ public partial class CrmImportView : UserControl
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            model.ErrorMessage = "Не удалось прочитать файл. Проверьте доступ.";
+            model.ErrorMessage = AdminLocalization.Instance["native.crmImport.ne.udalos.prochitat.fayl.proverte.dostup"];
         }
     }
 
@@ -79,7 +80,7 @@ public partial class CrmImportView : UserControl
 
             using var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Сохранить отчёт CRM", SuggestedFileName = result ? "crm-import-result.csv" : "crm-import-preview.csv",
+                Title = AdminLocalization.Instance["native.crmImport.sokhranit.otchyot.crm"], SuggestedFileName = result ? "crm-import-result.csv" : "crm-import-preview.csv",
                 ShowOverwritePrompt = true
             });
             if (file == null || !model.CanDownload || !ReferenceEquals(preview, model.Preview))
@@ -93,7 +94,7 @@ public partial class CrmImportView : UserControl
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            model.ErrorMessage = "Не удалось сохранить отчёт. Проверьте доступ.";
+            model.ErrorMessage = AdminLocalization.Instance["native.crmImport.ne.udalos.sokhranit.otchyot.proverte.dostup"];
         }
     }
 }

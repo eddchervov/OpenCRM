@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using OpenCRM.Services.Interfaces.Admin
 @using OpenCRM.WebApp.Product
+@using OpenCRM.WebApp.Infrastructure.Localization
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IAuthorizationService AuthorizationService
 @{
@@ -22,7 +23,7 @@
 
             @if (!isSignedIn)
             {
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Открыть меню">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="@Text["nav.menu"]">
                     <span class="navbar-toggler-icon"></span>
                 </button>
             }
@@ -37,33 +38,33 @@
                             <form id="stopImpersonationForm" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <button type="button" class="btn btn-warning btn-sm js-stop-impersonation" data-stop-impersonation-url="/Auth/StopImpersonation">
-                                    <i class="fa fa-undo me-1"></i> Вернуться к админке
+                                    <i class="fa fa-undo me-1"></i> @Text["nav.stopImpersonation"]
                                 </button>
                             </form>
                         }
 
-                        <a href="~/organizations" class="text-dark text-decoration-none fw-semibold px-1 me-3" title="Организации">
-                            Организации
+                        <a href="~/organizations" class="text-dark text-decoration-none fw-semibold px-1 me-3" title="@Text["nav.organizations"]">
+                            @Text["nav.organizations"]
                         </a>
 
-                        <button type="button" class="entry-theme-toggle" data-entry-theme aria-label="Переключить тему" title="Переключить тему"><i class="fa fa-adjust" aria-hidden="true"></i></button>
+                        <button type="button" class="entry-theme-toggle" data-entry-theme aria-label="@Text["nav.theme"]" title="@Text["nav.theme"]"><i class="fa fa-adjust" aria-hidden="true"></i></button>
 
                         <div class="dropdown site-notification-bell" data-site-notification-bell>
                             <button type="button" class="btn btn-dark btn-icon d-flex align-items-center justify-content-center position-relative"
-                                    id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Уведомления"
-                                    aria-label="Уведомления">
+                                    id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="@Text["nav.notifications"]"
+                                    aria-label="@Text["nav.notifications"]">
                                 <i class="fa fa-bell-o" aria-hidden="true"></i>
                                 <span class="site-notification-count" data-site-notification-count hidden></span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="notificationDropdown">
-                                <div class="fw-semibold mb-2">Уведомления</div>
+                                <div class="fw-semibold mb-2">@Text["nav.notifications"]</div>
                                 <div data-site-notification-preview></div>
-                                <a class="d-block mt-3 text-decoration-none" href="~/notifications">Вся история</a>
+                                <a class="d-block mt-3 text-decoration-none" href="~/notifications">@Text["nav.notificationHistory"]</a>
                             </div>
                         </div>
 
                         <div class="dropdown">
-                            <button type="button" class="btn btn-dark btn-icon dropdown-toggle d-flex align-items-center justify-content-center menu-profile-button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Профиль">
+                            <button type="button" class="btn btn-dark btn-icon dropdown-toggle d-flex align-items-center justify-content-center menu-profile-button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="@Text["nav.profile"]">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
@@ -77,7 +78,7 @@
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E67337" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
                                                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                                             </svg>
-                                            Админ панель
+                                            @Text["nav.adminPanel"]
                                         </a>
                                     </li>
                                 }
@@ -89,7 +90,7 @@
                                             <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                                         </svg>
-                                        Организации
+                                        @Text["nav.organizations"]
                                     </a>
                                 </li>
                                 <li>
@@ -98,7 +99,7 @@
                                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                             <circle cx="12" cy="7" r="4"></circle>
                                         </svg>
-                                        Профиль
+                                        @Text["nav.profile"]
                                     </a>
                                 </li>
                                 <li>
@@ -110,7 +111,7 @@
                                             <circle cx="17" cy="17" r="2"></circle>
                                             <path d="M7 11h10"></path>
                                         </svg>
-                                        Личная техника
+                                        @Text["nav.personalVehicles"]
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
@@ -122,7 +123,7 @@
                                                 <polyline points="16 17 21 12 16 7"></polyline>
                                                 <line x1="21" y1="12" x2="9" y2="12"></line>
                                             </svg>
-                                            Выйти
+                                            @Text["nav.signOut"]
                                         </button>
                                     </form>
                                 </li>
@@ -135,12 +136,12 @@
                     <div class="site-header-actions d-flex align-items-center justify-content-end gap-2 py-2 py-lg-0">
                         @if (Configuration.GetValue<bool>("PlatformPolicy:Commercial:Enabled"))
                         {
-                            <a href="~/subscription" class="text-dark text-decoration-none fw-semibold px-1 me-2" title="Тарифные планы">
-                                Тарифы
+                            <a href="~/subscription" class="text-dark text-decoration-none fw-semibold px-1 me-2" title="@Text["nav.plans"]">
+                                @Text["nav.plans"]
                             </a>
                         }
-                        <a href="~/auth/login" class="btn btn-outline-dark btn-sm">Вход</a>
-                        <a href="~/auth/register" class="btn btn-dark btn-sm">Зарегистрироваться</a>
+                        <a href="~/auth/login" class="btn btn-outline-dark btn-sm">@Text["nav.signIn"]</a>
+                        <a href="~/auth/register" class="btn btn-dark btn-sm">@Text["auth.registerButton"]</a>
                     </div>
                 }
             </div>

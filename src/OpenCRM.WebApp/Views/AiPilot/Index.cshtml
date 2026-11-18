@@ -1,7 +1,11 @@
 @{
+    const string assistantPrefix = "assistant.ui.";
+    var assistantMessages = Text.GetAllStrings(includeParentCultures: true)
+        .Where(resource => resource.Name.StartsWith(assistantPrefix, StringComparison.Ordinal))
+        .ToDictionary(resource => resource.Name[assistantPrefix.Length..], resource => resource.Value);
     var isPreview = ViewData["AssistantPreviewOnly"] is true;
     var workspaceUrl = ViewData["AssistantWorkspaceUrl"] as string;
-    ViewData["Title"] = $"ИИ помощник — {Brand.DisplayName}";
+    ViewData["Title"] = Text["assistant.ui.pageTitle", Brand.DisplayName].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     var isEmbedded = ViewData["AssistantEmbedded"] is true;
     ViewData["BodyClass"] = isEmbedded
@@ -33,16 +37,16 @@
     }
 }
 
-    <div class="pilot" data-ai-pilot data-embedded="@(isEmbedded ? "true" : "false")" data-organization-id="@ViewData["OrganizationId"]" data-api-url="@Url.Content("~/api/v1/assistant")" data-token-url="@Url.Content("~/api/v1/antiforgery/token")">
+    <div class="pilot" data-ai-pilot data-ui-messages="@System.Text.Json.JsonSerializer.Serialize(assistantMessages)" data-format-culture="@System.Globalization.CultureInfo.CurrentCulture.Name" data-time-zone-id="@ViewData["OrganizationTimeZoneId"]" data-embedded="@(isEmbedded ? "true" : "false")" data-organization-id="@ViewData["OrganizationId"]" data-api-url="@Url.Content("~/api/v1/assistant")" data-token-url="@Url.Content("~/api/v1/antiforgery/token")">
         @if (!isEmbedded)
         {
             <section class="intro">
                 <div class="intro-heading">
-                    <h1>ИИ помощник</h1>
+                    <h1>@Text["assistant.ui.title"]</h1>
                 </div>
                 <div class="workspace-chip" aria-live="polite">
                     <span class="chip-icon" aria-hidden="true">⌂</span>
-                    <span><strong data-organization>@(isPreview ? ViewData["AssistantOrganizationName"] : "Загружаем…")</strong></span>
+                    <span><strong data-organization>@(isPreview ? ViewData["AssistantOrganizationName"] : Text["assistant.ui.loading"].Value)</strong></span>
                 </div>
             </section>
         }
@@ -52,41 +56,41 @@
         }
 
         <div class="@(isPreview ? "assistant-preview" : null)" inert="@(isPreview ? "" : null)" aria-hidden="@(isPreview ? "true" : null)">
-        <nav class="assistant-tabs" role="tablist" aria-label="Разделы помощника">
-            <button class="assistant-tab is-active" type="button" role="tab" id="assistant-tab-conversation" aria-controls="assistant-panel-conversation" aria-selected="true" data-assistant-tab="conversation" disabled>Разговор</button>
-            <button class="assistant-tab" type="button" role="tab" id="assistant-tab-history" aria-controls="assistant-panel-history" aria-selected="false" data-assistant-tab="history" disabled>История разговоров</button>
-            <button class="assistant-tab" type="button" role="tab" id="assistant-tab-usage" aria-controls="assistant-panel-usage" aria-selected="false" data-assistant-tab="usage" disabled>Лимиты и использование</button>
+        <nav class="assistant-tabs" role="tablist" aria-label="@Text["assistant.ui.tabs"]">
+            <button class="assistant-tab is-active" type="button" role="tab" id="assistant-tab-conversation" aria-controls="assistant-panel-conversation" aria-selected="true" data-assistant-tab="conversation" disabled>@Text["assistant.ui.conversation"]</button>
+            <button class="assistant-tab" type="button" role="tab" id="assistant-tab-history" aria-controls="assistant-panel-history" aria-selected="false" data-assistant-tab="history" disabled>@Text["assistant.ui.history"]</button>
+            <button class="assistant-tab" type="button" role="tab" id="assistant-tab-usage" aria-controls="assistant-panel-usage" aria-selected="false" data-assistant-tab="usage" disabled>@Text["assistant.ui.usage"]</button>
         </nav>
 
         <section class="assistant-tab-panel" role="tabpanel" id="assistant-panel-conversation" aria-labelledby="assistant-tab-conversation" data-assistant-panel="conversation">
-        <section class="work-grid" aria-label="Создание действия голосом или текстом">
+        <section class="work-grid" aria-label="@Text["assistant.ui.createAction"]">
             <div class="conversation-column">
                 <section class="panel conversation-panel" aria-labelledby="chat-title">
                     <div class="conversation-heading">
-                        <h2 id="chat-title">Переписка</h2>
-                        <button class="button button-secondary" type="button" data-new-conversation>Новый разговор</button>
+                        <h2 id="chat-title">@Text["assistant.ui.chat"]</h2>
+                        <button class="button button-secondary" type="button" data-new-conversation>@Text["assistant.ui.newConversation"]</button>
                     </div>
                     <div class="conversation-toolbar">
-                        <label class="speech-option"><input type="checkbox" data-speak-replies disabled /> Озвучивать ответы</label>
+                        <label class="speech-option"><input type="checkbox" data-speak-replies disabled /> @Text["assistant.ui.speak"]</label>
                         <button class="button button-secondary" type="button" data-telegram-connect hidden aria-haspopup="dialog" aria-controls="telegram-dialog">Telegram</button>
                     </div>
-                    <div class="chat-messages" data-chat-messages role="log" aria-live="polite" aria-label="Разговор с помощником">
-                        <div class="chat-message chat-assistant"><strong>Помощник</strong><p>Расскажите про автомобиль и работы. Если чего-то не хватит, я спрошу. Можно отвечать голосом или текстом.</p></div>
+                    <div class="chat-messages" data-chat-messages role="log" aria-live="polite" aria-label="@Text["assistant.ui.chatLabel"]">
+                        <div class="chat-message chat-assistant"><strong>@Text["assistant.ui.assistant"]</strong><p>@Text["assistant.ui.welcome"]</p></div>
                     </div>
                     <div class="target-choice" data-clarification hidden>
-                        <strong class="field-label" data-clarification-message>Уточните выбор</strong>
+                        <strong class="field-label" data-clarification-message>@Text["assistant.ui.clarify"]</strong>
                         <div class="clarification-choices" data-clarification-choices></div>
                     </div>
 
                     <div class="conversation-actions">
-                        <button class="button button-primary" type="button" data-open-composer aria-haspopup="dialog" aria-controls="composer-dialog" disabled>Новое сообщение</button>
-                        <span class="field-help" data-conversation-status role="status">Ожидает сообщения</span>
+                        <button class="button button-primary" type="button" data-open-composer aria-haspopup="dialog" aria-controls="composer-dialog" disabled>@Text["assistant.ui.newMessage"]</button>
+                        <span class="field-help" data-conversation-status role="status">@Text["assistant.ui.waitingMessage"]</span>
                     </div>
                     <aside class="pending-action" data-pending-action hidden>
-                        <div><strong>Действие готово к проверке</strong><span data-pending-target></span></div>
-                        <button class="button button-secondary" type="button" data-open-draft aria-haspopup="dialog" aria-controls="draft-dialog">Проверить действие</button>
+                        <div><strong>@Text["assistant.ui.actionReady"]</strong><span data-pending-target></span></div>
+                        <button class="button button-secondary" type="button" data-open-draft aria-haspopup="dialog" aria-controls="draft-dialog">@Text["assistant.ui.reviewAction"]</button>
                     </aside>
-                    <p class="field-help">Переписка сохраняется в истории разговоров.</p>
+                    <p class="field-help">@Text["assistant.ui.savedHistory"]</p>
                 </section>
 
             </div>
@@ -95,60 +99,60 @@
 
         <dialog class="panel input-panel composer-panel assistant-dialog" id="composer-dialog" aria-labelledby="composer-title" data-composer-dialog>
             <div class="dialog-heading">
-                <h2 id="composer-title">Ваше сообщение</h2>
-                <button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть сообщение" autofocus>×</button>
+                <h2 id="composer-title">@Text["assistant.ui.yourMessage"]</h2>
+                <button class="dialog-close" type="button" data-close-dialog aria-label="@Text["assistant.ui.closeMessage"]" autofocus>×</button>
             </div>
             <p class="dialog-feedback" data-dialog-feedback hidden role="status"></p>
 
-            <div class="input-tabs" role="tablist" aria-label="Способ ввода">
-                <button class="input-tab is-active" type="button" role="tab" aria-selected="true" data-tab="voice">Голос</button>
-                <button class="input-tab" type="button" role="tab" aria-selected="false" data-tab="text">Текстом</button>
+            <div class="input-tabs" role="tablist" aria-label="@Text["assistant.ui.inputMode"]">
+                <button class="input-tab is-active" type="button" role="tab" aria-selected="true" data-tab="voice">@Text["assistant.ui.voice"]</button>
+                <button class="input-tab" type="button" role="tab" aria-selected="false" data-tab="text">@Text["assistant.ui.text"]</button>
             </div>
 
             <div class="voice-pane" data-pane="voice">
                 <div class="recorder-box">
-                    <button class="record-button" type="button" data-record aria-label="Начать запись голоса">
+                    <button class="record-button" type="button" data-record aria-label="@Text["assistant.ui.startRecording"]">
                         <span class="record-glyph" aria-hidden="true"></span>
                     </button>
-                    <strong data-record-title>Записать голосовое</strong>
-                    <span class="muted" data-record-hint>Говорите свободно, как привыкли на работе</span>
+                    <strong data-record-title>@Text["assistant.ui.recordVoice"]</strong>
+                    <span class="muted" data-record-hint>@Text["assistant.ui.recordHint"]</span>
                     <span class="record-timer" data-record-timer hidden>00:00</span>
                 </div>
                 <label class="upload-control">
                     <input type="file" accept="audio/*" data-audio-file />
-                    <span aria-hidden="true">↑</span> Загрузить аудио
-                    <small data-audio-limit>Поддерживаемые аудиоформаты</small>
+                    <span aria-hidden="true">↑</span> @Text["assistant.ui.uploadAudio"]
+                    <small data-audio-limit>@Text["assistant.ui.audioFormats"]</small>
                 </label>
             </div>
 
             <div class="transcript-block">
-                <div class="transcript-heading"><label class="field-label" for="transcript">Текст сообщения</label><span class="editable-tag">проверьте перед отправкой</span></div>
-                <textarea id="transcript" rows="3" placeholder="Введите фразу или запишите голосом…" data-transcript></textarea>
+                <div class="transcript-heading"><label class="field-label" for="transcript">@Text["assistant.ui.messageText"]</label><span class="editable-tag">@Text["assistant.ui.reviewBeforeSending"]</span></div>
+                <textarea id="transcript" rows="3" placeholder="@Text["assistant.ui.messagePlaceholder"]" data-transcript></textarea>
                 <div class="transcript-actions">
                     <span class="field-help" data-transcribe-cost></span>
-                    <button class="button button-primary" type="button" data-prepare disabled>Отправить в чат</button>
+                    <button class="button button-primary" type="button" data-prepare disabled>@Text["assistant.ui.send"]</button>
                 </div>
             </div>
 
             <details class="examples">
-                <summary>Примеры фраз</summary>
-                <button type="button" class="example" data-example="А123ВС154, заменили масло и фильтр. Взял 6 500 рублей наличными."><span>01</span> «А123ВС154, масло и фильтр, взял 6 500»</button>
-                <button type="button" class="example" data-example="М456ОР154 приехала сейчас. Начинаем диагностику."><span>02</span> «М456ОР154 приехала, начинаем диагностику»</button>
-                <button type="button" class="example" data-example="Запиши В789КТ154 завтра в 10:30 на замену колодок. Стоимость 4 000 рублей."><span>03</span> «Запиши В789КТ154 завтра в 10:30»</button>
+                <summary>@Text["assistant.ui.examples"]</summary>
+                <button type="button" class="example" data-example="@Text["assistant.ui.example1"]"><span>01</span> @Text["assistant.ui.example1Short"]</button>
+                <button type="button" class="example" data-example="@Text["assistant.ui.example2"]"><span>02</span> @Text["assistant.ui.example2Short"]</button>
+                <button type="button" class="example" data-example="@Text["assistant.ui.example3"]"><span>03</span> @Text["assistant.ui.example3Short"]</button>
             </details>
         </dialog>
 
         <dialog class="panel draft-panel assistant-dialog" id="draft-dialog" aria-labelledby="draft-title" data-draft-dialog>
             <div class="dialog-heading">
-                <h2 id="draft-title">Подтверждение действия</h2>
-                <button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть подтверждение" autofocus>×</button>
+                <h2 id="draft-title">@Text["assistant.ui.confirmAction"]</h2>
+                <button class="dialog-close" type="button" data-close-dialog aria-label="@Text["assistant.ui.closeConfirmation"]" autofocus>×</button>
             </div>
-            <span class="draft-status" data-draft-status>Ожидает команды</span>
+            <span class="draft-status" data-draft-status>@Text["assistant.ui.waitingCommand"]</span>
             <p class="dialog-feedback" data-dialog-feedback hidden role="status"></p>
             <div class="draft-empty" data-draft-empty>
                 <div class="empty-illustration" aria-hidden="true"><span>✓</span></div>
-                <strong>Здесь появится действие</strong>
-                <p>Обсудите задачу в переписке. Здесь вы проверите и подтвердите подготовленное действие.</p>
+                <strong>@Text["assistant.ui.emptyAction"]</strong>
+                <p>@Text["assistant.ui.emptyActionHelp"]</p>
             </div>
             <div class="draft-content" data-draft hidden>
                 <div class="summary" data-summary></div>
@@ -158,55 +162,55 @@
                     <div class="read-result" data-read-result hidden></div>
                     <label class="destructive-confirm" data-destructive-confirm hidden>
                         <input type="checkbox" data-confirm-destructive />
-                        <span>Проверил объект и подтверждаю перечисленное действие.</span>
+                        <span>@Text["assistant.ui.destructiveConfirm"]</span>
                     </label>
                 </div>
-                <button class="button button-confirm" type="button" data-execute disabled>Подтвердить</button>
-                <p class="confirm-help">Данные сохранятся только после вашего подтверждения.</p>
+                <button class="button button-confirm" type="button" data-execute disabled>@Text["assistant.ui.confirm"]</button>
+                <p class="confirm-help">@Text["assistant.ui.confirmHelp"]</p>
             </div>
             <div class="result" data-result hidden role="status"></div>
         </dialog>
         <dialog class="panel assistant-dialog telegram-dialog" id="telegram-dialog" aria-labelledby="telegram-title" data-telegram-dialog>
             <div class="dialog-heading">
-                <h2 id="telegram-title">Подключения Telegram</h2>
-                <button class="dialog-close" type="button" data-telegram-close aria-label="Закрыть Telegram" autofocus>×</button>
+                <h2 id="telegram-title">@Text["assistant.ui.telegramConnections"]</h2>
+                <button class="dialog-close" type="button" data-telegram-close aria-label="@Text["assistant.ui.closeTelegram"]" autofocus>×</button>
             </div>
-            <p class="field-help">Подключается аккаунт Telegram. Телефон и компьютер с этим аккаунтом отдельно не учитываются.</p>
+            <p class="field-help">@Text["assistant.ui.telegramHelp"]</p>
             <p class="dialog-feedback" data-telegram-feedback hidden role="status"></p>
             <section class="telegram-section" aria-labelledby="telegram-self-title">
-                <h3 id="telegram-self-title">Моё подключение</h3>
-                <p class="telegram-connection-status" data-telegram-status role="status">Проверяем подключение…</p>
+                <h3 id="telegram-self-title">@Text["assistant.ui.myConnection"]</h3>
+                <p class="telegram-connection-status" data-telegram-status role="status">@Text["assistant.ui.checkingConnection"]</p>
                 <dl class="telegram-binding" data-telegram-binding hidden>
                     <div><dt>Telegram ID</dt><dd data-telegram-user-id></dd></div>
-                    <div><dt>Подключён</dt><dd data-telegram-connected-at></dd></div>
+                    <div><dt>@Text["assistant.ui.connected"]</dt><dd data-telegram-connected-at></dd></div>
                 </dl>
-                <p class="field-help">Бот: <strong data-telegram-bot>—</strong></p>
+                <p class="field-help">@Text["assistant.ui.bot"] <strong data-telegram-bot>—</strong></p>
                 <p class="field-help" data-telegram-selection hidden></p>
-                <p class="field-help" data-telegram-unavailable hidden>Подключение новых аккаунтов сейчас недоступно. Существующую привязку можно отключить.</p>
+                <p class="field-help" data-telegram-unavailable hidden>@Text["assistant.ui.telegramUnavailable"]</p>
                 <div class="telegram-actions">
-                    <button class="button button-primary" type="button" data-telegram-create-link disabled>Подключить Telegram</button>
-                    <button class="button button-secondary" type="button" data-telegram-refresh>Обновить</button>
+                    <button class="button button-primary" type="button" data-telegram-create-link disabled>@Text["assistant.ui.connectTelegram"]</button>
+                    <button class="button button-secondary" type="button" data-telegram-refresh>@Text["assistant.ui.refresh"]</button>
                 </div>
                 <div class="telegram-link-panel" data-telegram-link-panel hidden>
-                    <a class="button button-primary" data-telegram-link target="_blank" rel="noopener noreferrer">Открыть Telegram и подключить</a>
+                    <a class="button button-primary" data-telegram-link target="_blank" rel="noopener noreferrer">@Text["assistant.ui.openTelegram"]</a>
                     <span class="field-help" data-telegram-link-expiry></span>
-                    <p class="field-help">Прежняя привязка заменится только после подключения по новой ссылке.</p>
+                    <p class="field-help">@Text["assistant.ui.replaceConnection"]</p>
                 </div>
                 <details class="telegram-disconnect" data-telegram-disconnect-section hidden>
-                    <summary>Отключить аккаунт</summary>
-                    <label><input type="checkbox" data-telegram-disconnect-confirm>Отключить мой Telegram-помощник во всех организациях. История разговоров сохранится.</label>
-                    <button class="button button-secondary" type="button" data-telegram-disconnect disabled>Отключить Telegram</button>
+                    <summary>@Text["assistant.ui.disconnectAccount"]</summary>
+                    <label><input type="checkbox" data-telegram-disconnect-confirm>@Text["assistant.ui.disconnectHelp"]</label>
+                    <button class="button button-secondary" type="button" data-telegram-disconnect disabled>@Text["assistant.ui.disconnectTelegram"]</button>
                 </details>
             </section>
             <section class="telegram-section" data-telegram-team hidden aria-labelledby="telegram-team-title">
-                <h3 id="telegram-team-title">Подключения сотрудников</h3>
-                <p class="field-help">Аккаунты участников, у которых в боте сейчас выбрана эта организация.</p>
+                <h3 id="telegram-team-title">@Text["assistant.ui.teamConnections"]</h3>
+                <p class="field-help">@Text["assistant.ui.teamConnectionsHelp"]</p>
                 <ul class="telegram-team-list" data-telegram-team-list></ul>
-                <p class="field-help" data-telegram-team-empty hidden>Подключённых аккаунтов для этой организации пока нет.</p>
+                <p class="field-help" data-telegram-team-empty hidden>@Text["assistant.ui.noConnections"]</p>
                 <div class="dashboard-pagination" data-telegram-team-pagination hidden>
-                    <button class="button button-secondary" type="button" data-telegram-team-prev>Назад</button>
+                    <button class="button button-secondary" type="button" data-telegram-team-prev>@Text["assistant.ui.back"]</button>
                     <span data-telegram-team-page></span>
-                    <button class="button button-secondary" type="button" data-telegram-team-next>Дальше</button>
+                    <button class="button button-secondary" type="button" data-telegram-team-next>@Text["assistant.ui.next"]</button>
                 </div>
             </section>
         </dialog>
@@ -214,22 +218,22 @@
 
         <section class="assistant-tab-panel assistant-dashboard" role="tabpanel" id="assistant-panel-history" aria-labelledby="assistant-tab-history" data-assistant-panel="history" hidden>
             <div class="panel dashboard-panel">
-                <div class="panel-heading"><h2>История разговоров</h2></div>
+                <div class="panel-heading"><h2>@Text["assistant.ui.history"]</h2></div>
                 <div class="dashboard-toolbar history-toolbar">
-                    <label><span>Канал</span><select data-history-channel disabled><option value="">Все каналы</option><option value="web">Сайт</option><option value="telegram">Telegram</option></select></label>
+                    <label><span>@Text["assistant.ui.channel"]</span><select data-history-channel disabled><option value="">@Text["assistant.ui.allChannels"]</option><option value="web">@Text["assistant.ui.web"]</option><option value="telegram">Telegram</option></select></label>
                     <span class="field-help history-retention" data-history-retention></span>
-                    <button class="button button-secondary" type="button" data-history-refresh disabled>Обновить</button>
+                    <button class="button button-secondary" type="button" data-history-refresh disabled>@Text["assistant.ui.refresh"]</button>
                 </div>
-                <div class="dashboard-message" data-history-status role="status" aria-live="polite">Загрузка истории…</div>
+                <div class="dashboard-message" data-history-status role="status" aria-live="polite">@Text["assistant.ui.loadingHistory"]</div>
                 <div class="history-layout" data-history-content hidden>
                     <div class="history-sidebar">
-                        <div class="history-list" data-history-list aria-label="Разговоры"></div>
-                        <nav class="history-pagination" data-history-pagination aria-label="Страницы разговоров" hidden><button type="button" data-history-prev aria-label="Предыдущая страница разговоров" disabled>‹</button><div class="history-page-numbers" data-history-page></div><button type="button" data-history-next aria-label="Следующая страница разговоров" disabled>›</button></nav>
+                        <div class="history-list" data-history-list aria-label="@Text["assistant.ui.conversations"]"></div>
+                        <nav class="history-pagination" data-history-pagination aria-label="@Text["assistant.ui.conversationPages"]" hidden><button type="button" data-history-prev aria-label="@Text["assistant.ui.previousConversationPage"]" disabled>‹</button><div class="history-page-numbers" data-history-page></div><button type="button" data-history-next aria-label="@Text["assistant.ui.nextConversationPage"]" disabled>›</button></nav>
                     </div>
-                    <section class="history-detail" aria-label="Выбранный разговор">
-                        <div class="history-detail-heading"><div><strong data-history-title>Выберите разговор</strong><span class="field-help" data-history-meta></span></div><button class="button button-secondary" type="button" data-history-resume hidden>Продолжить разговор</button></div>
+                    <section class="history-detail" aria-label="@Text["assistant.ui.selectedConversation"]">
+                        <div class="history-detail-heading"><div><strong data-history-title>@Text["assistant.ui.selectConversation"]</strong><span class="field-help" data-history-meta></span></div><button class="button button-secondary" type="button" data-history-resume hidden>@Text["assistant.ui.resume"]</button></div>
                         <div class="history-messages" data-history-messages aria-live="polite"></div>
-                        <nav class="history-pagination history-message-pagination" data-history-message-pagination aria-label="Страницы сообщений" hidden><button type="button" data-history-message-prev aria-label="Предыдущая страница сообщений" disabled>‹</button><div class="history-page-numbers" data-history-message-page></div><button type="button" data-history-message-next aria-label="Следующая страница сообщений" disabled>›</button></nav>
+                        <nav class="history-pagination history-message-pagination" data-history-message-pagination aria-label="@Text["assistant.ui.messagePages"]" hidden><button type="button" data-history-message-prev aria-label="@Text["assistant.ui.previousMessagePage"]" disabled>‹</button><div class="history-page-numbers" data-history-message-page></div><button type="button" data-history-message-next aria-label="@Text["assistant.ui.nextMessagePage"]" disabled>›</button></nav>
                     </section>
                 </div>
             </div>
@@ -237,30 +241,30 @@
 
         <section class="assistant-tab-panel assistant-dashboard" role="tabpanel" id="assistant-panel-usage" aria-labelledby="assistant-tab-usage" data-assistant-panel="usage" hidden>
             <div class="panel dashboard-panel">
-                <div class="panel-heading"><h2>Лимиты и использование</h2></div>
+                <div class="panel-heading"><h2>@Text["assistant.ui.usage"]</h2></div>
                 <div class="dashboard-toolbar usage-filters">
-                    <div class="usage-date-field" data-ui-date-picker data-label="С" data-input-id="usage-from"><input type="hidden" data-usage-from disabled /></div>
-                    <div class="usage-date-field" data-ui-date-picker data-label="По" data-input-id="usage-to"><input type="hidden" data-usage-to disabled /></div>
-                    <label><span>Канал</span><select data-usage-channel disabled><option value="">Все каналы</option><option value="web">Сайт</option><option value="telegram">Telegram</option></select></label>
-                    <button class="button button-secondary" type="button" data-usage-apply disabled>Применить</button>
-                    <button class="button button-secondary" type="button" data-usage-refresh disabled>Обновить</button>
+                    <div class="usage-date-field" data-ui-date-picker data-label="@Text["assistant.ui.from"]" data-input-id="usage-from"><input type="hidden" data-usage-from disabled /></div>
+                    <div class="usage-date-field" data-ui-date-picker data-label="@Text["assistant.ui.to"]" data-input-id="usage-to"><input type="hidden" data-usage-to disabled /></div>
+                    <label><span>@Text["assistant.ui.channel"]</span><select data-usage-channel disabled><option value="">@Text["assistant.ui.allChannels"]</option><option value="web">@Text["assistant.ui.web"]</option><option value="telegram">Telegram</option></select></label>
+                    <button class="button button-secondary" type="button" data-usage-apply disabled>@Text["assistant.ui.apply"]</button>
+                    <button class="button button-secondary" type="button" data-usage-refresh disabled>@Text["assistant.ui.refresh"]</button>
                 </div>
-                <div class="dashboard-message" data-usage-status role="status" aria-live="polite">Откройте вкладку, чтобы загрузить данные.</div>
+                <div class="dashboard-message" data-usage-status role="status" aria-live="polite">@Text["assistant.ui.openTab"]</div>
                 <div data-usage-content hidden>
                     <div class="usage-budget-grid" data-usage-budgets></div>
-                    <h3 class="dashboard-subheading">За выбранный период</h3>
+                    <h3 class="dashboard-subheading">@Text["assistant.ui.selectedPeriod"]</h3>
                     <div class="usage-summary" data-usage-summary></div>
-                    <h3 class="dashboard-subheading">По каналу</h3>
-                    <div class="table-scroll"><table class="dashboard-table"><thead><tr><th>Канал</th><th>Запросы</th><th>Расход</th><th>Резерв</th><th>Токены</th></tr></thead><tbody data-usage-channels></tbody></table></div>
-                    <h3 class="dashboard-subheading">По сотрудникам</h3>
-                    <div class="table-scroll"><table class="dashboard-table"><thead><tr><th>Сотрудник</th><th>Запросы</th><th>Расход</th><th>Резерв</th><th>Токены</th></tr></thead><tbody data-usage-users></tbody></table></div>
+                    <h3 class="dashboard-subheading">@Text["assistant.ui.byChannel"]</h3>
+                    <div class="table-scroll"><table class="dashboard-table"><thead><tr><th>@Text["assistant.ui.channel"]</th><th>@Text["assistant.ui.requests"]</th><th>@Text["assistant.ui.cost"]</th><th>@Text["assistant.ui.reserved"]</th><th>@Text["assistant.ui.tokens"]</th></tr></thead><tbody data-usage-channels></tbody></table></div>
+                    <h3 class="dashboard-subheading">@Text["assistant.ui.byEmployee"]</h3>
+                    <div class="table-scroll"><table class="dashboard-table"><thead><tr><th>@Text["assistant.ui.employee"]</th><th>@Text["assistant.ui.requests"]</th><th>@Text["assistant.ui.cost"]</th><th>@Text["assistant.ui.reserved"]</th><th>@Text["assistant.ui.tokens"]</th></tr></thead><tbody data-usage-users></tbody></table></div>
                 </div>
             </div>
         </section>
 
-        <div class="capabilities-actions"><button class="button button-secondary" type="button" data-open-capabilities aria-haspopup="dialog">Доступные команды</button></div>
+        <div class="capabilities-actions"><button class="button button-secondary" type="button" data-open-capabilities aria-haspopup="dialog">@Text["assistant.ui.commands"]</button></div>
         <dialog class="capabilities-dialog" data-capabilities-dialog aria-labelledby="capabilities-title">
-            <div class="capabilities-dialog-heading"><h2 id="capabilities-title">Доступные команды</h2><button class="button button-secondary" type="button" data-close-capabilities aria-label="Закрыть окно">Закрыть</button></div>
+            <div class="capabilities-dialog-heading"><h2 id="capabilities-title">@Text["assistant.ui.commands"]</h2><button class="button button-secondary" type="button" data-close-capabilities aria-label="@Text["assistant.ui.closeWindow"]">@Text["assistant.ui.close"]</button></div>
             <div data-actions-list></div>
         </dialog>
 
@@ -271,7 +275,7 @@
             <div class="assistant-pro-overlay">
                 <a class="assistant-pro-notice" href="@(workspaceUrl + "#billing")">
                     <span class="assistant-pro-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></svg></span>
-                    <span>ИИ помощник доступен в PRO</span>
+                    <span>@Text["assistant.ui.proOnly"]</span>
                     <svg class="assistant-pro-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
                 </a>
             </div>

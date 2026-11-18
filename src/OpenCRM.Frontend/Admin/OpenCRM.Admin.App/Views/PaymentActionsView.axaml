@@ -1,47 +1,48 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:api="using:OpenCRM.Admin.Api.Models"
              x:Class="OpenCRM.Admin.App.Views.PaymentActionsView"
              x:DataType="vm:PaymentActionsViewModel">
   <Border Classes="card" IsVisible="{Binding IsVisible}">
     <StackPanel Spacing="12">
-      <TextBlock Text="Действия с платежом" FontSize="18" FontWeight="SemiBold" />
+      <TextBlock Text="{loc:LocalizedText Key=native.billing.deystviya.s.platezhom}" FontSize="18" FontWeight="SemiBold" />
       <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#F4CACA" TextWrapping="Wrap" />
       <TextBlock Text="{Binding SuccessMessage}" IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#A7D8B1" TextWrapping="Wrap" />
       <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3" />
       <StackPanel Spacing="10" IsEnabled="{Binding !IsBusy}" IsVisible="{Binding !IsConfirmationOpen}">
         <TextBlock Text="{Binding PendingServiceRequestHint}" IsVisible="{Binding HasUnresolvedServiceRequest}" TextWrapping="Wrap" Classes="caption" />
-        <Button Content="Повторить ту же операцию" Command="{Binding RetryUnresolvedServiceActionCommand}"
+        <Button Content="{loc:LocalizedText Key=native.billing.povtorit.tu.zhe.operatsiyu}" Command="{Binding RetryUnresolvedServiceActionCommand}"
                 IsVisible="{Binding CanRetryUnresolvedServiceRequest}" HorizontalAlignment="Left"
-                ToolTip.Tip="Повторяет прежний запрос с тем же номером, если сервер не подтвердил приём команды." />
+                ToolTip.Tip="{loc:LocalizedText Key=native.billing.povtoryaet.prezhniy.zapros.s.tem.zhe.nomerom.esli.server.ne.podt}" />
         <StackPanel Spacing="8" IsVisible="{Binding IsServicePayment}">
-          <TextBlock Text="Причина действия" FontWeight="SemiBold" />
-          <TextBlock Text="Коротко опишите, почему выполняете операцию. Причина останется в журнале." Classes="caption" TextWrapping="Wrap" />
-          <TextBox Text="{Binding Reason}" MaxLength="500" PlaceholderText="Укажите причину" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" />
+          <TextBlock Text="{loc:LocalizedText Key=native.billing.prichina.deystviya}" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:LocalizedText Key=native.billing.korotko.opishite.pochemu.vypolnyaete.operatsiyu.prichina.ostanet}" Classes="caption" TextWrapping="Wrap" />
+          <TextBox Text="{Binding Reason}" MaxLength="500" PlaceholderText="{loc:LocalizedText Key=native.billing.ukazhite.prichinu}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" />
           <UniformGrid Columns="2">
             <StackPanel Spacing="5" Margin="0,0,12,10">
-              <Button Content="Проверить платёж" Command="{Binding RequestServiceActionCommand}" CommandParameter="check" ToolTip.Tip="{Binding CheckHint}" IsEnabled="{Binding CanCheck}" />
+              <Button Content="{loc:LocalizedText Key=native.billing.proverit.platyozh}" Command="{Binding RequestServiceActionCommand}" CommandParameter="check" ToolTip.Tip="{Binding CheckHint}" IsEnabled="{Binding CanCheck}" />
               <TextBlock Text="{Binding CheckHint}" Classes="caption" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Spacing="5" Margin="0,0,12,10">
-              <Button Content="Вернуть деньги" Command="{Binding RequestServiceActionCommand}" CommandParameter="refund" ToolTip.Tip="{Binding RefundHint}" IsEnabled="{Binding CanRefund}" />
-              <TextBlock Text="Вернуть, ₽ (можно часть суммы)" Classes="caption" />
+              <Button Content="{loc:LocalizedText Key=native.billing.vernut.dengi}" Command="{Binding RequestServiceActionCommand}" CommandParameter="refund" ToolTip.Tip="{Binding RefundHint}" IsEnabled="{Binding CanRefund}" />
+              <TextBlock Text="{loc:LocalizedText Key=native.billing.vernut.mozhno.chast.summy}" Classes="caption" />
               <NumericUpDown Value="{Binding RefundAmount}" IsEnabled="{Binding CanRefund}" Minimum="0" Maximum="{Binding RefundableAmount}" Increment="0.01" FormatString="0.00" />
-              <TextBlock Text="{Binding RefundableAmount, StringFormat='Доступно к возврату: {0:N2} ₽'}" Classes="caption" />
+              <TextBlock Text="{loc:LocalizedFormat Key=native.billing.dostupno.k.vozvratu.0.n2, Path=RefundableAmount}" Classes="caption" />
               <TextBlock Text="{Binding RefundHint}" Classes="caption" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Spacing="5" Margin="0,0,12,10">
-              <Button Content="Повторить выдачу доступа" Command="{Binding RequestServiceActionCommand}" CommandParameter="retry-access" ToolTip.Tip="{Binding RetryAccessHint}" IsEnabled="{Binding CanRetryAccess}" />
+              <Button Content="{loc:LocalizedText Key=native.billing.povtorit.vydachu.dostupa}" Command="{Binding RequestServiceActionCommand}" CommandParameter="retry-access" ToolTip.Tip="{Binding RetryAccessHint}" IsEnabled="{Binding CanRetryAccess}" />
               <TextBlock Text="{Binding RetryAccessHint}" Classes="caption" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Spacing="5" Margin="0,0,12,10">
-              <Button Content="Завершить разбор" Command="{Binding RequestServiceActionCommand}" CommandParameter="resolve-review" ToolTip.Tip="{Binding ResolveReviewHint}" IsEnabled="{Binding CanResolveReview}" />
+              <Button Content="{loc:LocalizedText Key=native.billing.zavershit.razbor}" Command="{Binding RequestServiceActionCommand}" CommandParameter="resolve-review" ToolTip.Tip="{Binding ResolveReviewHint}" IsEnabled="{Binding CanResolveReview}" />
               <TextBlock Text="{Binding ResolveReviewHint}" Classes="caption" TextWrapping="Wrap" />
             </StackPanel>
           </UniformGrid>
-          <TextBlock Text="Возврат не меняет ранее выданный срок доступа. Продление и остановка — в разделе «Пользователи» → карточка покупателя → «Управление». Выберите получателя доступа." Classes="caption" TextWrapping="Wrap" />
-          <Expander Header="Последние действия администратора (до 30)" IsExpanded="False" AutomationProperties.AutomationId="PaymentServiceActionHistory">
+          <TextBlock Text="{loc:LocalizedText Key=native.billing.vozvrat.ne.menyaet.ranee.vydannyy.srok.dostupa.prodlenie.i.ostan}" Classes="caption" TextWrapping="Wrap" />
+          <Expander Header="{loc:LocalizedText Key=native.billing.poslednie.deystviya.administratora.do.30}" IsExpanded="False" AutomationProperties.AutomationId="PaymentServiceActionHistory">
             <ItemsControl ItemsSource="{Binding ServiceOperations}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="api:AdminBillingPaymentServiceActionOperation">
@@ -51,8 +52,8 @@
                       <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
                       <TextBlock Text="{Binding StatusName}" Classes="caption" />
                       <TextBlock Text="{Binding Actor}" Classes="caption" />
-                      <TextBlock Text="{Binding LocalCreatedAt, StringFormat='Создано: {0:dd.MM.yyyy HH:mm}'}" Classes="caption" />
-                      <TextBlock Text="{Binding Amount, StringFormat='Сумма: {0:N2} ₽'}" IsVisible="{Binding Amount, Converter={x:Static ObjectConverters.IsNotNull}}" Classes="caption" />
+                      <TextBlock Text="{loc:LocalizedFormat Key=native.billing.sozdano.0.dd.mm.yyyy.hh.mm, Path=LocalCreatedAt}" Classes="caption" />
+                      <TextBlock Text="{loc:LocalizedFormat Key=native.billing.summa.0.n2, Path=Amount}" IsVisible="{Binding Amount, Converter={x:Static ObjectConverters.IsNotNull}}" Classes="caption" />
                       <TextBlock Text="{Binding Reason}" Classes="caption" TextWrapping="Wrap" />
                     </StackPanel>
                   </Border>
@@ -62,17 +63,17 @@
           </Expander>
         </StackPanel>
         <StackPanel Spacing="8" IsVisible="{Binding !IsServicePayment}">
-          <Button Content="Сверить с YooKassa" Command="{Binding RequestSyncCommand}"
+          <Button Content="{loc:LocalizedText Key=native.billing.sverit.s.yookassa}" Command="{Binding RequestSyncCommand}"
                   IsVisible="{Binding CanManage}" HorizontalAlignment="Left"
-                  ToolTip.Tip="Обновляет legacy-платёж по данным YooKassa. Для новых платежей МС доступна отдельная проверка." />
-          <TextBlock Text="У платежа нет внешнего идентификатора для сверки." Classes="caption" IsVisible="{Binding !HasExternalId}" TextWrapping="Wrap" />
+                  ToolTip.Tip="{loc:LocalizedText Key=native.billing.obnovlyaet.legacy.platyozh.po.dannym.yookassa.dlya.novykh.platez}" />
+          <TextBlock Text="{loc:LocalizedText Key=native.billing.u.platezha.net.vneshnego.identifikatora.dlya.sverki}" Classes="caption" IsVisible="{Binding !HasExternalId}" TextWrapping="Wrap" />
           <StackPanel Spacing="8" IsVisible="{Binding CanChangeStatus}">
-            <TextBlock Text="Локальная корректировка статуса" FontWeight="SemiBold" />
-            <TextBlock Text="Используйте только для старых платежей: это не возвращает деньги и не выдаёт подписку." Classes="caption" TextWrapping="Wrap" />
+            <TextBlock Text="{loc:LocalizedText Key=native.billing.lokalnaya.korrektirovka.statusa}" FontWeight="SemiBold" />
+            <TextBlock Text="{loc:LocalizedText Key=native.billing.ispolzuyte.tolko.dlya.starykh.platezhey.eto.ne.vozvrashchaet.den}" Classes="caption" TextWrapping="Wrap" />
             <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="220" />
-            <TextBox Text="{Binding Reason}" MaxLength="500" PlaceholderText="Обязательная причина изменения" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" />
-            <Button Content="Изменить локальную отметку…" Command="{Binding RequestStatusChangeCommand}" HorizontalAlignment="Left"
-                    ToolTip.Tip="Меняет только локальный статус legacy-платежа. Не используйте это как подтверждение оплаты или возврата." />
+            <TextBox Text="{Binding Reason}" MaxLength="500" PlaceholderText="{loc:LocalizedText Key=native.billing.obyazatelnaya.prichina.izmeneniya}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" />
+            <Button Content="{loc:LocalizedText Key=native.billing.izmenit.lokalnuyu.otmetku}" Command="{Binding RequestStatusChangeCommand}" HorizontalAlignment="Left"
+                    ToolTip.Tip="{loc:LocalizedText Key=native.billing.menyaet.tolko.lokalnyy.status.legacy.platezha.ne.ispolzuyte.eto.}" />
           </StackPanel>
         </StackPanel>
       </StackPanel>
@@ -80,8 +81,8 @@
         <StackPanel Spacing="12">
           <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap" />
           <WrapPanel>
-            <Button Content="Подтвердить" Classes="primary" Command="{Binding ConfirmCommand}" Margin="0,0,8,0" />
-            <Button Content="Закрыть подтверждение" Command="{Binding CancelConfirmationCommand}" ToolTip.Tip="Закрывает форму. Если запрос уже отправлен, это не отменяет платёжную операцию." />
+            <Button Content="{loc:LocalizedText Key=native.billing.podtverdit}" Classes="primary" Command="{Binding ConfirmCommand}" Margin="0,0,8,0" />
+            <Button Content="{loc:LocalizedText Key=native.billing.zakryt.podtverzhdenie}" Command="{Binding CancelConfirmationCommand}" ToolTip.Tip="{loc:LocalizedText Key=native.billing.zakryvaet.formu.esli.zapros.uzhe.otpravlen.eto.ne.otmenyaet.plat}" />
           </WrapPanel>
         </StackPanel>
       </Border>

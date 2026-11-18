@@ -22,7 +22,7 @@ public sealed class MaintenanceChangeRulesTests
             current.VatRateCode = "vat20";
         }
 
-        var description = Assert.Single(MaintenanceChangeRules.BuildDetailChanges([previous], [current]));
+        var description = Assert.Single(MaintenanceChangeRules.BuildDetailChanges([previous], [current], CurrencyCodes.Rub));
 
         Assert.Contains(changeIdentity ? "идентификатор строки:" : "НДС:", description);
         Assert.Contains(" -> ", description);
@@ -61,6 +61,19 @@ public sealed class MaintenanceChangeRulesTests
     }
 
     [Fact]
+    public void BuildFieldChangesFormatsMoneyUsingMaintenanceSnapshotCurrency()
+    {
+        var maintenance = CreateMaintenance();
+        maintenance.CurrencyCode = CurrencyCodes.Cny;
+        var previous = MaintenanceSnapshot.From(maintenance);
+        maintenance.PaidAmount = 25;
+
+        var changes = MaintenanceChangeRules.BuildFieldChanges(previous, maintenance);
+
+        Assert.Contains(changes, change => change == "Оплачено: 0 CNY -> 25 CNY");
+    }
+
+    [Fact]
     public void BuildDetailChangesReportsEditsAdditionsAndRemovalsInOrder()
     {
         var previous = new[] { CreateDetailSnapshot(name: "Старая работа", materialName: null) };
@@ -82,7 +95,7 @@ public sealed class MaintenanceChangeRulesTests
             new MaintenanceDetail { DetailId = Guid.NewGuid(), Name = "Добавленная работа" }
         };
 
-        var changes = MaintenanceChangeRules.BuildDetailChanges(previous, current);
+        var changes = MaintenanceChangeRules.BuildDetailChanges(previous, current, CurrencyCodes.Rub);
 
         Assert.Equal(2, changes.Count);
         Assert.StartsWith("Изменена услуга #1:", changes[0]);
@@ -90,7 +103,7 @@ public sealed class MaintenanceChangeRulesTests
         Assert.Contains("материал: не указано -> Полироль", changes[0]);
         Assert.StartsWith("Добавлена услуга: Добавленная работа", changes[1]);
 
-        var removed = MaintenanceChangeRules.BuildDetailChanges(previous, []);
+        var removed = MaintenanceChangeRules.BuildDetailChanges(previous, [], CurrencyCodes.Rub);
         Assert.Single(removed);
         Assert.StartsWith("Удалена услуга: Старая работа", removed[0]);
     }
@@ -202,16 +215,16 @@ public sealed class MaintenanceChangeRulesTests
             EmployeeName = "Мастер"
         };
 
-        var text = MaintenanceChangeRules.FormatDetail(detail);
+        var text = MaintenanceChangeRules.FormatDetail(detail, CurrencyCodes.Rub);
 
         Assert.Contains("Полировка", text);
         Assert.Contains("описание: Капот", text);
-        Assert.Contains("стоимость: 1200", text);
+        Assert.Contains("стоимость: 1200 RUB", text);
         Assert.Contains("НДС: vat20", text);
         Assert.Contains($"услуга из справочника: {detail.CatalogItemId}", text);
         Assert.Contains("материал: Полироль", text);
         Assert.Contains($"расход: {0.5m:0.###} л", text);
-        Assert.Contains($"себестоимость единицы: {300m:0.###}; всего: {150m:0.###}", text);
+        Assert.Contains($"себестоимость единицы: {300m:0.##} RUB; всего: {150m:0.##} RUB", text);
         Assert.Contains($"сотрудник: Мастер [{detail.EmployeeId}]", text);
     }
 
@@ -223,9 +236,28 @@ public sealed class MaintenanceChangeRulesTests
             Name = "Работа",
             Quantity = 1,
             Description = "   "
-        });
+        }, CurrencyCodes.Rub);
 
         Assert.Equal("Работа; количество: 1", text);
+    }
+
+    [Fact]
+    public void FormatDetailUsesCurrencyCodeForServiceAndMaterialCosts()
+    {
+        var text = MaintenanceChangeRules.FormatDetail(new MaintenanceDetail
+        {
+            Name = "Работа",
+            Quantity = 1,
+            Price = 500,
+            MaterialName = "Тестовый материал",
+            MaterialQuantity = 1,
+            MaterialUnitCost = 20,
+            MaterialTotalCost = 20
+        }, CurrencyCodes.Cny);
+
+        Assert.Contains("стоимость: 500 CNY", text);
+        Assert.Contains("себестоимость единицы: 20 CNY; всего: 20 CNY", text);
+        Assert.DoesNotContain("₽", text);
     }
 
     [Fact]
@@ -233,7 +265,7 @@ public sealed class MaintenanceChangeRulesTests
     {
         var snapshot = CreateDetailSnapshot();
 
-        var text = MaintenanceChangeRules.FormatDetail(snapshot);
+        var text = MaintenanceChangeRules.FormatDetail(snapshot, CurrencyCodes.Rub);
 
         Assert.Contains($"сотрудник: {snapshot.EmployeeName} [{snapshot.EmployeeId}]", text);
     }
@@ -295,11 +327,11 @@ public sealed class MaintenanceChangeRulesTests
         Assert.Equal("09:30", MaintenanceChangeRules.FormatTime(TimeSpan.FromMinutes(570)));
         Assert.Equal("не указано", MaintenanceChangeRules.FormatNullableNumber(null));
         Assert.Equal("123", MaintenanceChangeRules.FormatNullableNumber(123));
-        Assert.Equal("не указано", MaintenanceChangeRules.FormatNullableMoney(null));
-        Assert.Equal(12.5.ToString("0.##"), MaintenanceChangeRules.FormatNullableMoney(12.5m));
+        Assert.Equal("не указано", MaintenanceChangeRules.FormatNullableMoney(null, CurrencyCodes.Rub));
+        Assert.Equal($"{12.5m:0.##} RUB", MaintenanceChangeRules.FormatNullableMoney(12.5m, CurrencyCodes.Rub));
         Assert.Equal("не указано", MaintenanceChangeRules.FormatNullableText("  "));
         Assert.Equal("работа", MaintenanceChangeRules.FormatNullableText(" работа "));
-        Assert.Equal($"{12.5m:0.##} ₽", MaintenanceChangeRules.FormatDecimalMoney(12.5m));
+        Assert.Equal($"{12.5m:0.##} RUB", MaintenanceChangeRules.FormatDecimalMoney(12.5m, CurrencyCodes.Rub));
         Assert.Null(MaintenanceChangeRules.FormatNullableDecimal(null));
         Assert.Equal(1.235m.ToString("0.###"), MaintenanceChangeRules.FormatNullableDecimal(1.2345m));
         Assert.Equal("Мастер", MaintenanceChangeRules.FormatEmployee(null, "Мастер"));

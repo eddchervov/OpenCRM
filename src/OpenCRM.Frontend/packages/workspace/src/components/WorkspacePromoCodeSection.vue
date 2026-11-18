@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../billingMessages'
 import { computed, ref, watch } from 'vue'
 import { UiButton, UiInput, UiPagination, UiLoader } from '@opencrm/ui'
 import {
@@ -7,8 +9,11 @@ import {
   type WorkspacePromoApplication
 } from '../api/workspacePromotions'
 
+const { t } = useLocalization()
+
 const props = defineProps<{
   organizationId: string
+  timeZoneId?: string | null
   disabled: boolean
   historyOnly?: boolean
 }>()
@@ -43,21 +48,21 @@ function formatDate(value?: string | null, includeTime = false) {
   }
 
   return includeTime
-    ? date.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
-    : date.toLocaleDateString('ru-RU')
+    ? date.toLocaleString(formattingCulture.value, { dateStyle: 'short', timeStyle: 'short', timeZone: props.timeZoneId || 'UTC' })
+    : date.toLocaleDateString(formattingCulture.value, { timeZone: props.timeZoneId || 'UTC' })
 }
 
 function getBenefitText(item: WorkspacePromoApplication) {
   if (item.benefitTypeCode === 'bonus_days' && item.bonusDays) {
-    return `+${item.bonusDays} дн.`
+    return t('billing.bonusDays', { count: item.bonusDays })
   }
 
   if (item.benefitTypeCode === 'percentage' && item.discountValue != null) {
-    return `${item.discountValue}%`
+    return new Intl.NumberFormat(formattingCulture.value, { style: 'percent', maximumFractionDigits: 2 }).format(item.discountValue / 100)
   }
 
   if (item.benefitTypeCode === 'fixed_amount' && item.discountValue != null) {
-    return `${item.discountValue} ₽`
+    return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: 'RUB', currencyDisplay: 'code' }).format(item.discountValue)
   }
 
   return ''
@@ -65,23 +70,23 @@ function getBenefitText(item: WorkspacePromoApplication) {
 
 function getStatusText(item: WorkspacePromoApplication) {
   if (item.status === 'consumed') {
-    return item.benefitTypeCode === 'bonus_days' ? 'Подарок начислен' : 'Скидка использована'
+    return item.benefitTypeCode === 'bonus_days' ? t('billing.giftCredited') : t('billing.discountUsed')
   }
 
   if (item.status === 'claimed') {
     // Срок не отменяет уже созданный платеж.
-    return 'В платеже'
+    return t('billing.inPayment')
   }
 
   if (item.status === 'assigned' && item.benefitTypeCode !== 'bonus_days') {
     const deadline = Date.parse(item.discountValidUntil ?? '')
     if (Number.isFinite(deadline) && deadline <= Date.now()) {
-      return 'Срок скидки истёк'
+      return t('billing.discountExpired')
     }
   }
 
   if (item.status === 'assigned') {
-    return 'Закреплён'
+    return t('billing.assigned')
   }
 
   return item.status
@@ -89,16 +94,16 @@ function getStatusText(item: WorkspacePromoApplication) {
 
 function getSuccessMessage(item: WorkspacePromoApplication) {
   if (item.benefitTypeCode === 'bonus_days') {
-    const days = item.bonusDays ? `+${item.bonusDays} дн.` : ''
-    const until = item.accessUntil ? ` Доступ до ${formatDate(item.accessUntil)}.` : ''
-    return `Подарок «${item.name}»: ${days}.${until}`
+    const days = item.bonusDays ? t('billing.bonusDays', { count: item.bonusDays }) : ''
+    const until = item.accessUntil ? t('billing.accessUntil', { date: formatDate(item.accessUntil) }) : ''
+    return t('billing.giftSuccess', { name: item.name, days, until })
   }
 
   const deadlineText = item.discountValidUntil
-    ? ` Используйте скидку при создании нового платежа до ${formatDate(item.discountValidUntil, true)}.`
-    : ' Срок использования скидки не ограничен.'
+    ? t('billing.discountDeadline', { date: formatDate(item.discountValidUntil, true) })
+    : t('billing.noDiscountDeadline')
 
-  return `Промокод закреплён за этой организацией. Скидка действует при создании нового платежа; ранее созданные платежи сохраняют свою цену.${deadlineText}`
+  return t('billing.discountSuccess', { deadline: deadlineText })
 }
 
 async function loadHistory() {
@@ -124,7 +129,7 @@ async function loadHistory() {
       return
     }
 
-    historyError.value = error instanceof Error ? error.message : 'Не удалось загрузить историю промокодов.'
+    historyError.value = error instanceof Error ? error.message : t('billing.promoHistoryError')
   }
   finally {
     if (currentOrganizationVersion === organizationVersion && currentHistoryRequestVersion === historyRequestVersion) {
@@ -163,7 +168,7 @@ async function applyPromoCode() {
       return
     }
 
-    errorMessage.value = error instanceof Error ? error.message : 'Не удалось применить промокод.'
+    errorMessage.value = error instanceof Error ? error.message : t('billing.promoError')
   }
   finally {
     if (currentOrganizationVersion === organizationVersion) {
@@ -194,24 +199,24 @@ watch(() => [props.organizationId, props.historyOnly, historyPage.value] as cons
   <section class="workspace-common-subpanel workspace-promo">
     <template v-if="!historyOnly">
       <header class="ui-section-header workspace-promo__heading">
-        <h3><label for="workspace-promo-code">Промокод</label></h3>
-        <UiButton href="#billing?tab=promocodes" variant="secondary">История</UiButton>
+        <h3><label for="workspace-promo-code">{{ t('billing.promo') }}</label></h3>
+        <UiButton href="#billing?tab=promocodes" variant="secondary">{{ t('billing.history') }}</UiButton>
       </header>
 
       <form class="workspace-promo__form" @submit.prevent="applyPromoCode">
         <UiInput
           v-model="codeValue"
           id="workspace-promo-code"
-          placeholder="Введите код"
+          :placeholder="t('billing.enterCode')"
           :disabled="disabled || applyBusy"
           required
         />
         <UiButton type="submit" variant="secondary" :disabled="!canApply">
-          {{ applyBusy ? 'Применяем…' : 'Применить' }}
+          {{ applyBusy ? t('billing.applying') : t('billing.apply') }}
         </UiButton>
       </form>
       <p class="workspace-promo__rule">
-        <a href="/promo-code-rules" target="_blank" rel="noopener">Правила использования промокодов</a>
+        <a href="/promo-code-rules" target="_blank" rel="noopener">{{ t('billing.promoRules') }}</a>
       </p>
 
       <p v-if="errorMessage" class="workspace-promo__error" role="alert" aria-live="assertive">{{ errorMessage }}</p>
@@ -219,21 +224,21 @@ watch(() => [props.organizationId, props.historyOnly, historyPage.value] as cons
 
     </template>
     <template v-else>
-      <p><a href="#billing">← К тарифам</a></p>
-      <UiLoader v-if="historyLoading" compact text="Загружаем историю…" />
-      <div v-else-if="historyError" role="alert"><p class="workspace-promo__error">{{ historyError }}</p><UiButton variant="secondary" @click="loadHistory">Повторить</UiButton></div>
-      <p v-else-if="!history.length">Промокоды ещё не применялись.</p>
+      <p><a href="#billing">{{ t('billing.backToPlans') }}</a></p>
+      <UiLoader v-if="historyLoading" compact :text="t('billing.loadingHistory')" />
+      <div v-else-if="historyError" role="alert"><p class="workspace-promo__error">{{ historyError }}</p><UiButton variant="secondary" @click="loadHistory">{{ t('billing.retry') }}</UiButton></div>
+      <p v-else-if="!history.length">{{ t('billing.noPromos') }}</p>
       <div v-else class="workspace-promo__history">
         <div v-for="item in history" :key="item.id" class="workspace-promo__history-row">
           <span class="workspace-promo__history-code">{{ item.code }}</span>
           <span v-if="getBenefitText(item)">{{ getBenefitText(item) }}</span>
           <span>{{ getStatusText(item) }}</span>
           <span class="workspace-promo__history-date">{{ formatDate(item.appliedAt) }}</span>
-          <span v-if="item.benefitTypeCode !== 'bonus_days'" class="workspace-promo__history-date">{{ item.discountValidUntil ? `Для нового платежа до ${formatDate(item.discountValidUntil, true)}` : 'Без срока использования' }}</span>
-          <span v-if="item.benefitTypeCode === 'bonus_days' && item.accessUntil" class="workspace-promo__history-date">до {{ formatDate(item.accessUntil) }}</span>
+          <span v-if="item.benefitTypeCode !== 'bonus_days'" class="workspace-promo__history-date">{{ item.discountValidUntil ? t('billing.newPaymentUntil', { date: formatDate(item.discountValidUntil, true) }) : t('billing.noUseDeadline') }}</span>
+          <span v-if="item.benefitTypeCode === 'bonus_days' && item.accessUntil" class="workspace-promo__history-date">{{ t('billing.until', { date: formatDate(item.accessUntil) }) }}</span>
         </div>
       </div>
-      <UiPagination v-model="historyPage" :total-items="totalCount" :items-per-page="20" :disabled="historyLoading" label="История промокодов" />
+      <UiPagination v-model="historyPage" :total-items="totalCount" :items-per-page="20" :disabled="historyLoading" :label="t('billing.promoHistory')" />
     </template>
   </section>
 </template>

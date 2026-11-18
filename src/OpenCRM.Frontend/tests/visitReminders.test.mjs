@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/notificationMessages.ts'
+import { formattingCulture, i18n, setFormattingCulture } from '@opencrm/ui/i18n'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -33,6 +36,8 @@ function loadApi(fetch, getMutationHeaders = () => ({ 'X-Request-Token': 'token'
   const module = { exports: {} }
   new Function('require', 'module', 'exports', 'fetch', compileTypeScript(source, 'api'))(
     id => {
+      if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+      if (id === '@opencrm/workspace/notificationMessages') return {}
       assert.equal(id, './maintenance')
       return { getMutationHeaders }
     },
@@ -65,8 +70,12 @@ function setupComponent(name, props, apiDependencies) {
   }
   const module = { exports: {} }
   const resolve = id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../notificationMessages' || id === '@opencrm/workspace/notificationMessages') return {}
     if (id === 'vue') return lifecycle
-    if (id === '@opencrm/ui') return { UiButton: {}, UiLoader: {}, UiSelect: {}, UiTextarea: {} }
+    if (id === '@opencrm/ui') return { UiButton: {}, UiLoader: {}, UiSelect: {}, UiTextarea: {}, useLocalization: () => ({ t: key => key }) }
+    if (id === '@opencrm/ui/i18n') return { formatLocaleDate: (value, options) => new Intl.DateTimeFormat('en-US', options).format(new Date(value)) }
+    if (id === '../notificationMessages') return {}
     if (Object.hasOwn(apiDependencies, id)) return apiDependencies[id]
     throw new Error(`Не задана зависимость компонента: ${id}`)
   }
@@ -156,6 +165,46 @@ test('Настройки блокируют новое расписание бе
   assert.equal(state.canSave.value, true)
   await state.save()
   assert.equal(saved.hoursBefore, null)
+})
+
+test('Предпросмотр форматирует фиктивную дату по культуре в UTC и не изменяет шаблон пользователя', async t => {
+  const originalCulture = formattingCulture.value
+  t.after(() => setFormattingCulture(originalCulture))
+  setFormattingCulture('en-US')
+  const userTemplate = 'Hello {client}, visit us on {date} at {time}.'
+  const { state, lifecycle } = setupComponent('WorkspaceVisitReminderSettings', { organizationId: 'org', canWrite: true }, {
+    '../api/visitReminders': { loadVisitReminderSettings: async () => ({ ...pendingSettings, template: userTemplate }) }
+  })
+  await lifecycle.initialLoad
+  assert.equal(state.template.value, userTemplate)
+  state.template.value = 'Date: {date}'
+  assert.match(state.preview.value, /^Date: October 25, 2026$/)
+  assert.equal(state.template.value, 'Date: {date}')
+})
+
+test('Статус напоминания использует код и время API, сохраняя пользовательский текст', async () => {
+  const originalLocale = i18n.global.locale.value
+  const originalCulture = formattingCulture.value
+  try {
+    i18n.global.locale.value = 'zh-Hans'
+    setFormattingCulture('en-GB')
+    const { state, lifecycle } = setupComponent('MaintenanceVisitReminder', { organizationId: 'org', maintenanceId: 'maintenance' }, {
+      '../api/visitReminders': { loadMaintenanceVisitReminder: async () => ({
+        ...pendingReminder, scheduledAtUtc: '2026-11-16T09:30:00Z', timeZoneId: 'Asia/Shanghai',
+        statusDetailCode: 'scheduled', preview: 'Пользовательский шаблон — 客户消息'
+      }) }
+    })
+    await lifecycle.initialLoad
+    assert.match(state.statusDetail.value, /16\/11\/2026, 17:30/)
+    assert.match(state.statusDetail.value, /组织时间/)
+    assert.equal(state.reminder.value.preview, 'Пользовательский шаблон — 客户消息')
+    state.reminder.value.statusCode = 'disabled'
+    state.reminder.value.statusDetailCode = 'disabled_organization'
+    assert.equal(state.statusDetail.value, '组织设置已停用提醒。')
+    state.reminder.value.statusDetailCode = 'custom'
+    state.reminder.value.statusText = 'Неизвестное состояние сервера'
+    assert.equal(state.statusDetail.value, 'Неизвестное состояние сервера')
+  } finally { i18n.global.locale.value = originalLocale; setFormattingCulture(originalCulture) }
 })
 
 test('Предпросмотр напоминания в Free не читает и не изменяет платные данные', async () => {

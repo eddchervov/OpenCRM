@@ -31,13 +31,13 @@ public partial class MainWindowViewModel
     public OrganizationsViewModel Organizations { get; private set; } = null!;
 
     /// <summary> Признак открытого списка организаций. </summary>
-    public bool IsOrganizationsOpen => this.AdditionalPage == "Организации";
+    public bool IsOrganizationsOpen => this.AdditionalPage == "organizations";
 
     /// <summary> Признак открытого раздела тарифов. </summary>
-    public bool IsSubscriptionPlansOpen => this.AdditionalPage == "Тарифы";
+    public bool IsSubscriptionPlansOpen => this.AdditionalPage == "plans";
 
     /// <summary> Признак открытого раздела промокодов. </summary>
-    public bool IsPromoCodesOpen => this.AdditionalPage == "Промокоды";
+    public bool IsPromoCodesOpen => this.AdditionalPage == "promo-codes";
 
     /// <summary> Доступ к настройке тарифов и промокодов. </summary>
     public bool CanManageConfiguration => this.HasPermission("Admin.Configuration.Manage");
@@ -58,16 +58,16 @@ public partial class MainWindowViewModel
     public UserActivityViewModel UserActivity { get; private set; } = null!;
 
     /// <summary> Признак открытого раздела ролей. </summary>
-    public bool IsRolesOpen => this.AdditionalPage == "Роли и права";
+    public bool IsRolesOpen => this.AdditionalPage == "roles";
 
     /// <summary> Признак открытой истории электронной почты. </summary>
-    public bool IsEmailHistoryOpen => this.AdditionalPage == "История email";
+    public bool IsEmailHistoryOpen => this.AdditionalPage == "email-history";
 
     /// <summary> Признак открытого раздела обращений. </summary>
-    public bool IsSupportMessagesOpen => this.AdditionalPage == "Обращения";
+    public bool IsSupportMessagesOpen => this.AdditionalPage == "support";
 
     /// <summary> Признак открытого журнала активности. </summary>
-    public bool IsUserActivityOpen => this.AdditionalPage == "Активность";
+    public bool IsUserActivityOpen => this.AdditionalPage == "user-activity";
 
     /// <summary> Доступ к управлению ролями. </summary>
     public bool CanViewRoles => this.HasPermission("Admin.Permissions.Manage");
@@ -117,7 +117,7 @@ public partial class MainWindowViewModel
     private void OnSectionSessionExpired()
     {
         this.SetProfile(null);
-        this.ErrorMessage = "Срок действия сессии истёк. Войдите снова.";
+        this.SetLocalizedError("error.sessionExpired");
     }
 
     /// <summary> Обновляет права после отказа сервера в доступе. </summary>
@@ -128,7 +128,7 @@ public partial class MainWindowViewModel
         await this.RefreshPermissionsAsync();
         if (this.IsAuthenticated)
         {
-            this.ErrorMessage = "Нет доступа к операции. Права пользователя обновлены.";
+            this.SetLocalizedError("core.navigation.accessDenied");
         }
     }
 
@@ -139,31 +139,31 @@ public partial class MainWindowViewModel
     /// <summary> Открывает управление тарифами. </summary>
     [RelayCommand]
     private Task ShowSubscriptionPlansAsync() =>
-        this.ShowSectionAsync("Тарифы", this.CanManageCommercialConfiguration, this.SubscriptionPlans.ActivateAsync);
+        this.ShowSectionAsync("plans", this.CanManageCommercialConfiguration, this.SubscriptionPlans.ActivateAsync);
 
     /// <summary> Открывает управление промокодами. </summary>
     [RelayCommand]
     private Task ShowPromoCodesAsync() =>
-        this.ShowSectionAsync("Промокоды", this.CanManageCommercialConfiguration, this.PromoCodes.ActivateAsync);
+        this.ShowSectionAsync("promo-codes", this.CanManageCommercialConfiguration, this.PromoCodes.ActivateAsync);
 
     /// <summary> Открывает список организаций. </summary>
     [RelayCommand]
     private Task ShowOrganizationsAsync() =>
-        this.ShowSectionAsync("Организации", this.CanViewOrganizations, this.Organizations.ActivateAsync);
+        this.ShowSectionAsync("organizations", this.CanViewOrganizations, this.Organizations.ActivateAsync);
 
     /// <summary> Открывает управление ролями. </summary>
     [RelayCommand]
-    private Task ShowRolesAsync() => this.ShowSectionAsync("Роли и права", this.CanViewRoles, this.Roles.ActivateAsync);
+    private Task ShowRolesAsync() => this.ShowSectionAsync("roles", this.CanViewRoles, this.Roles.ActivateAsync);
 
     /// <summary> Открывает историю электронной почты. </summary>
     [RelayCommand]
     private Task ShowEmailHistoryAsync() =>
-        this.ShowSectionAsync("История email", this.CanViewEmailHistory, this.EmailHistory.ActivateAsync);
+        this.ShowSectionAsync("email-history", this.CanViewEmailHistory, this.EmailHistory.ActivateAsync);
 
     /// <summary> Открывает обращения в поддержку. </summary>
     [RelayCommand]
     private Task ShowSupportMessagesAsync() =>
-        this.ShowSectionAsync("Обращения", this.CanViewSupportMessages, this.SupportMessages.ActivateAsync);
+        this.ShowSectionAsync("support", this.CanViewSupportMessages, this.SupportMessages.ActivateAsync);
 
     /// <summary> Открывает журнал активности всех пользователей. </summary>
     [RelayCommand]
@@ -172,7 +172,7 @@ public partial class MainWindowViewModel
         var userId = this._activityUserId;
         this._activityUserId = null;
 
-        return this.ShowSectionAsync("Активность", this.CanViewUserActivity, () => this.UserActivity.ActivateAsync(userId));
+        return this.ShowSectionAsync("user-activity", this.CanViewUserActivity, () => this.UserActivity.ActivateAsync(userId));
     }
 
     /// <summary> Переключает раздел с отменой незавершённых загрузок. </summary>
@@ -200,15 +200,15 @@ public partial class MainWindowViewModel
     }
 
     /// <summary> Проверяет актуальный доступ к выбранному разделу. </summary>
-    private bool CanViewSection(string title) => title switch
+    private bool CanViewSection(string sectionId) => sectionId switch
     {
-        "Тарифы" or "Промокоды" => this.CanManageCommercialConfiguration,
-        "Роли и права" => this.CanViewRoles,
-        "Организации" => this.CanViewOrganizations,
-        "История email" => this.CanViewEmailHistory,
-        "Обращения" => this.CanViewSupportMessages,
-        "Активность" => this.CanViewUserActivity,
-        _ => this.CanViewOperation(title)
+        "plans" or "promo-codes" => this.CanManageCommercialConfiguration,
+        "roles" => this.CanViewRoles,
+        "organizations" => this.CanViewOrganizations,
+        "email-history" => this.CanViewEmailHistory,
+        "support" => this.CanViewSupportMessages,
+        "user-activity" => this.CanViewUserActivity,
+        _ => this.CanViewOperation(sectionId)
     };
 
     /// <summary> Останавливает операции дополнительных разделов. </summary>

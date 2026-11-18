@@ -42,10 +42,17 @@ internal sealed partial class OperationMaterialCommandService
         ReverseOperationMaterialDto request,
         string reason)
     {
+        await context.Database.ExecuteSqlInterpolatedAsync(
+            $"""SELECT 1 FROM "Organizations" WHERE "Id" = {organizationId} FOR NO KEY UPDATE""");
         var assignment = await assignmentLoader.LoadAsync(userId, organizationId, maintenanceId, detailId);
         var maintenance = assignment.Maintenance;
         var member = assignment.Member;
         var employee = assignment.Employee;
+        var organizationCurrencyCode = await context.Organizations
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync();
+        MaintenanceCurrencyRules.EnsureMatchesOrganizationCurrency(maintenance, organizationCurrencyCode);
         var original = await context.OrganizationMaterialMovements.AsNoTracking()
             .SingleOrDefaultAsync(item => item.Id == movementId && item.OrganizationId == organizationId
                 && item.MaintenanceId == maintenanceId && item.OperationId == detailId
@@ -95,6 +102,7 @@ internal sealed partial class OperationMaterialCommandService
         var movement = new OrganizationMaterialMovement
         {
             OrganizationId = organizationId,
+            CurrencyCode = stock.CurrencyCode,
             StockId = stock.Id,
             CatalogItemId = stock.CatalogItemId,
             MaintenanceId = maintenanceId,

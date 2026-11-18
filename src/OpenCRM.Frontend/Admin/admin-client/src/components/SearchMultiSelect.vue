@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { formattingCulture, useLocalization } from '@opencrm/ui/i18n'
+import '../adminOperationsMessages'
+
+const { t } = useLocalization()
 
 const props = withDefaults(defineProps<{
   options: Array<{ value: string; label: string }>
   placeholder?: string
 }>(), {
-  placeholder: 'Выберите аудиторию'
 })
 
 const model = defineModel<string[]>({ required: true })
@@ -15,9 +18,9 @@ const search = ref('')
 const isOpen = ref(false)
 const selectedLabels = computed(() => props.options.filter(option => model.value.includes(option.value)).map(option => option.label))
 const filteredOptions = computed(() => {
-  const query = search.value.trim().toLocaleLowerCase('ru')
+  const query = search.value.trim().toLocaleLowerCase(formattingCulture.value)
   return query
-    ? props.options.filter(option => option.label.toLocaleLowerCase('ru').includes(query))
+    ? props.options.filter(option => option.label.toLocaleLowerCase(formattingCulture.value).includes(query))
     : props.options
 })
 
@@ -56,21 +59,21 @@ function closeFromOutside(event: MouseEvent): void {
 <template>
   <div ref="root" class="search-multi-select">
     <button class="search-multi-select__toggle" type="button" :aria-expanded="isOpen" @click="isOpen ? close() : open()">
-      <span>{{ selectedLabels.length ? selectedLabels.join(', ') : placeholder }}</span>
+      <span>{{ selectedLabels.length ? selectedLabels.join(', ') : placeholder || t('adminOperations.searchMultiSelect.selectAudience') }}</span>
       <span aria-hidden="true">{{ isOpen ? '▴' : '▾' }}</span>
     </button>
     <div v-if="isOpen" class="search-multi-select__menu" @keydown="handleKeydown">
-      <input ref="searchInput" v-model="search" class="search-multi-select__search" type="search" placeholder="Поиск" aria-label="Поиск аудитории">
+      <input ref="searchInput" v-model="search" class="search-multi-select__search" type="search" :placeholder="t('adminOperations.searchMultiSelect.search')" :aria-label="t('adminOperations.searchMultiSelect.searchAudience')">
       <div class="search-multi-select__options">
         <label v-for="option in filteredOptions" :key="option.value">
           <input type="checkbox" :checked="model.includes(option.value)" @change="toggle(option.value)">
           <span>{{ option.label }}</span>
         </label>
-        <small v-if="filteredOptions.length === 0">Ничего не найдено</small>
+        <small v-if="filteredOptions.length === 0">{{ t('adminOperations.searchMultiSelect.noResults') }}</small>
       </div>
       <div class="search-multi-select__footer">
-        <span>Выбрано: {{ model.length }}</span>
-        <button type="button" @click="close">Готово</button>
+        <span>{{ t('adminOperations.searchMultiSelect.selectedCount', { count: model.length }) }}</span>
+        <button type="button" @click="close">{{ t('adminOperations.searchMultiSelect.done') }}</button>
       </div>
     </div>
   </div>

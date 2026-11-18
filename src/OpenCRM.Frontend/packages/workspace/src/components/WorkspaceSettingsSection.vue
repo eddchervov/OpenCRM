@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../settingsMessages'
+import { translate as t } from '@opencrm/ui/i18n'
 import { computed, nextTick, ref, useSlots, watch } from 'vue'
 import { UiButton, UiInput, UiSelect, UiTextarea, UiPhoneInput } from '@opencrm/ui'
 import type { WorkspaceSettingsData } from '../api/workspaceAdmin'
@@ -7,6 +9,7 @@ import WorkspaceSettingsChoices from './WorkspaceSettingsChoices.vue'
 import WorkspaceOrganizationExport from './WorkspaceOrganizationExport.vue'
 import WorkspaceProLock from './WorkspaceProLock.vue'
 import OrganizationTimeZoneSettings from './OrganizationTimeZoneSettings.vue'
+import CurrencySettings from './CurrencySettings.vue'
 import { supportsMaintenanceWorkflow } from '../utils/maintenanceWorkflow'
 
 const props = defineProps<{
@@ -55,6 +58,7 @@ const emit = defineEmits<{
   cancelRequisitesEdit: []
   archiveOrganization: []
   timeZoneSaved: []
+  currencySaved: []
 }>()
 
 type SettingsSection = 'profile' | 'workflow' | 'documents' | 'notifications' | 'requisites' | 'imports' | 'export' | 'archive'
@@ -66,6 +70,7 @@ const notificationsVisited = ref(false)
 const workflowSection = ref<'rules' | 'hours' | null>(null)
 const hoursSaving = ref(false)
 const timeZoneBusy = ref(false)
+const currencyBusy = ref(false)
 const workflowChoices = ref<InstanceType<typeof WorkspaceSettingsChoices> | null>(null)
 const workflowBack = ref<InstanceType<typeof UiButton> | null>(null)
 const isOwner = computed(() => props.settings.organization.currentUserRoleCode === 'owner')
@@ -77,24 +82,24 @@ const isSelfAssignmentLocked = computed(() => !hasWorkspaceFeature('workspace.mo
 const isDocumentStylingLocked = computed(() => !hasWorkspaceFeature('workspace.documents.styling'))
 const isDataImportLocked = computed(() => !hasWorkspaceFeature('workspace.data.import'))
 const isMessagingLocked = computed(() => props.messagingAvailable === false)
-const isBusy = computed(() => props.isSaving || hoursSaving.value || timeZoneBusy.value || Object.values(notificationBusy.value).some(Boolean))
+const isBusy = computed(() => props.isSaving || hoursSaving.value || timeZoneBusy.value || currencyBusy.value || Object.values(notificationBusy.value).some(Boolean))
 const isSectionLocked = computed(() => isBusy.value || props.isEditingProfile || props.isEditingRequisites || workflowSection.value === 'hours')
 const workflowGroups = computed(() => [{ items: [
-  { code: 'rules', title: 'Правила работы', symbol: 'rules', description: 'Режим заказ-нарядов и самостоятельное назначение мастеров.',
-    detail: [supportsMaintenanceWorkflow(props.settings.organization) ? (props.settings.organization.maintenanceWorkflowMode === 'simple' ? 'Простой режим' : 'Работа по этапам') : '',
-      props.settings.organization.allowWorkSelfAssignment ? 'Мастера могут брать работы' : 'Ручное назначение работ'].filter(Boolean).join(' · ') },
-  ...(slots.workingHours ? [{ code: 'hours', title: 'Рабочие часы и перерывы', symbol: 'clock', description: 'Рабочие дни, время открытия и закрытия, перерывы.' }] : [])
+  { code: 'rules', title: t('settings.rules'), symbol: 'rules', description: t('settings.rulesDescription'),
+    detail: [supportsMaintenanceWorkflow(props.settings.organization) ? (props.settings.organization.maintenanceWorkflowMode === 'simple' ? t('settings.simpleMode') : t('settings.stagedMode')) : '',
+      props.settings.organization.allowWorkSelfAssignment ? t('settings.selfAssignOn') : t('settings.manualAssign')].filter(Boolean).join(' · ') },
+  ...(slots.workingHours ? [{ code: 'hours', title: t('settings.hours'), symbol: 'clock', description: t('settings.hoursDescription') }] : [])
 ] }])
 const sections = computed<SettingsMenuItem[]>(() => [
-  { code: 'profile', title: 'Общие', group: 'Организация', description: 'Название, описание и часовой пояс', isPro: false },
-  { code: 'requisites', title: 'Реквизиты и контакты', group: 'Организация', description: 'Юридические данные и связь', isPro: false },
-  { code: 'workflow', title: 'Работа и расписание', group: 'Рабочий процесс', description: 'Режим работы и назначения', isPro: false },
-  { code: 'documents', title: 'Документы', group: 'Рабочий процесс', description: 'Оформление печатных форм', isPro: isFreePlan.value && isDocumentStylingLocked.value },
-  ...(canReadNotifications.value ? [{ code: 'notifications' as const, title: 'Уведомления', group: 'Связь с клиентами', description: 'Telegram и MAX', isPro: isFreePlan.value && isMessagingLocked.value }] : []),
+  { code: 'profile', title: t('settings.general'), group: t('settings.organization'), description: t('settings.profileDescription'), isPro: false },
+  { code: 'requisites', title: t('settings.requisites'), group: t('settings.organization'), description: t('settings.requisitesDescription'), isPro: false },
+  { code: 'workflow', title: t('settings.workflow'), group: t('settings.workflowGroup'), description: t('settings.workflowDescription'), isPro: false },
+  { code: 'documents', title: t('settings.documents'), group: t('settings.workflowGroup'), description: t('settings.documentsDescription'), isPro: isFreePlan.value && isDocumentStylingLocked.value },
+  ...(canReadNotifications.value ? [{ code: 'notifications' as const, title: t('settings.notifications'), group: t('settings.clientCommunication'), description: t('settings.channels'), isPro: isFreePlan.value && isMessagingLocked.value }] : []),
   ...(slots.imports && (props.isReadOnly || canImport.value || isDataImportLocked.value && props.settings.canManageProfile)
-    ? [{ code: 'imports' as const, title: 'Импорт данных', group: 'Данные', description: 'Загрузка в организацию', isPro: isFreePlan.value && isDataImportLocked.value }]
+    ? [{ code: 'imports' as const, title: t('settings.import'), group: t('settings.data'), description: t('settings.importDescription'), isPro: isFreePlan.value && isDataImportLocked.value }]
     : []),
-  ...(isOwner.value ? [{ code: 'export' as const, title: 'Экспорт данных', group: 'Данные', description: 'Резервная выгрузка', isPro: false }] : []),
+  ...(isOwner.value ? [{ code: 'export' as const, title: t('settings.export'), group: t('settings.data'), description: t('settings.backup'), isPro: false }] : []),
 ])
 const menuGroups = computed(() => Array.from(new Set(sections.value.map(section => section.group)))
   .map(title => ({ title, items: sections.value.filter(section => section.group === title) })))
@@ -105,22 +110,22 @@ const activeSection = computed<SettingsSection>(() => {
   return sections.value.find(section => section.code === props.selectedSection)?.code ?? 'profile'
 })
 const documentOptions = [
-  { value: 'auto', label: 'Автоматическое' },
-  { value: 'detailing', label: 'Детейлинг' },
-  { value: 'fleet', label: 'Универсальное' },
-  { value: 'minimal', label: 'Минимальное' }
+  { value: 'auto', label: t('settings.auto') },
+  { value: 'detailing', label: t('settings.detailing') },
+  { value: 'fleet', label: t('settings.universal') },
+  { value: 'minimal', label: t('settings.minimal') }
 ]
-const documentStyleName = computed(() => documentOptions.find(option => option.value === props.settings.organization.documentStyleCode)?.label ?? 'Автоматическое')
+const documentStyleName = computed(() => documentOptions.find(option => option.value === props.settings.organization.documentStyleCode)?.label ?? t('settings.auto'))
 const requisitesLimits: Partial<Record<string, number>> = { legalName: 240, legalAddress: 400, actualAddress: 400, phone: 40, email: 320, signatoryPosition: 120, signatoryName: 160, signatoryBasis: 160 }
 const requisitesHelp: Record<string, string> = {
-  inn: 'ИНН юридического лица — 10 цифр, ИП или физического лица — 12 цифр.',
-  kpp: 'КПП организации — 9 знаков. ИП и физические лица оставляют поле пустым.',
-  ogrn: 'ОГРН юридического лица — 13 цифр, ОГРНИП индивидуального предпринимателя — 15 цифр. Физические лица оставляют поле пустым.'
+  inn: t('settings.innHelp'),
+  kpp: t('settings.kppHelp'),
+  ogrn: t('settings.ogrnHelp')
 }
 const requisitesGroups = [
-  { title: 'Юридические данные', fields: [{ key: 'legalName', label: 'Юридическое название' }, { key: 'inn', label: 'ИНН' }, { key: 'kpp', label: 'КПП' }, { key: 'ogrn', label: 'ОГРН / ОГРНИП' }] },
-  { title: 'Контакты и адреса', fields: [{ key: 'phone', label: 'Телефон' }, { key: 'email', label: 'Email' }, { key: 'legalAddress', label: 'Юридический адрес' }, { key: 'actualAddress', label: 'Фактический адрес' }] },
-  { title: 'Подпись в документах', fields: [{ key: 'signatoryPosition', label: 'Должность подписанта' }, { key: 'signatoryName', label: 'Подписант' }, { key: 'signatoryBasis', label: 'Основание подписи' }] }
+  { title: t('settings.legalDetails'), fields: [{ key: 'legalName', label: t('settings.legalName') }, { key: 'inn', label: t('settings.inn') }, { key: 'kpp', label: t('settings.kpp') }, { key: 'ogrn', label: t('settings.ogrn') }] },
+  { title: t('settings.contacts'), fields: [{ key: 'phone', label: t('settings.phone') }, { key: 'email', label: 'Email' }, { key: 'legalAddress', label: t('settings.legalAddress') }, { key: 'actualAddress', label: t('settings.actualAddress') }] },
+  { title: t('settings.signatures'), fields: [{ key: 'signatoryPosition', label: t('settings.signatoryPosition') }, { key: 'signatoryName', label: t('settings.signatory') }, { key: 'signatoryBasis', label: t('settings.signatoryBasis') }] }
 ] as const
 
 function hasWorkspaceFeature(code: string): boolean {
@@ -163,13 +168,14 @@ watch(() => props.settings.organization.id, () => {
   workflowSection.value = null
   hoursSaving.value = false
   timeZoneBusy.value = false
+  currencyBusy.value = false
 })
 </script>
 
 <template>
   <div class="organization-settings">
-    <div class="organization-settings__mobile-menu"><UiSelect :model-value="activeSection" label="Раздел настроек" :options="sections.map(section => ({ value: section.code, label: section.isPro ? `${section.title} · PRO` : section.title }))" required :searchable="false" :disabled="isSectionLocked" @update:model-value="selectSection($event as SettingsSection)" /></div>
-    <nav class="organization-settings__menu" aria-label="Разделы настроек организации">
+    <div class="organization-settings__mobile-menu"><UiSelect :model-value="activeSection" :label="t('settings.section')" :options="sections.map(section => ({ value: section.code, label: section.isPro ? `${section.title} · PRO` : section.title }))" required :searchable="false" :disabled="isSectionLocked" @update:model-value="selectSection($event as SettingsSection)" /></div>
+    <nav class="organization-settings__menu" :aria-label="t('settings.sections')">
       <section v-for="group in menuGroups" :key="group.title">
         <h3>{{ group.title }}</h3>
         <button v-for="section in group.items" :key="section.code" type="button"
@@ -182,52 +188,53 @@ watch(() => props.settings.organization.id, () => {
     </nav>
     <div :key="settings.organization.id" class="organization-settings__content">
       <section v-show="activeSection === 'profile'" class="organization-panel">
-        <header class="ui-section-header"><div><h3>Общие настройки</h3><p>Основные данные вашей организации</p></div><UiButton v-if="canEditProfile && !isEditingProfile" variant="secondary" :disabled="isBusy" @click="$emit('startProfileEdit')">Редактировать</UiButton></header>
+        <header class="ui-section-header"><div><h3>{{ t('settings.generalSettings') }}</h3><p>{{ t('settings.basicDetails') }}</p></div><UiButton v-if="canEditProfile && !isEditingProfile" variant="secondary" :disabled="isBusy" @click="$emit('startProfileEdit')">{{ t('settings.edit') }}</UiButton></header>
         <form v-if="canEditProfile && isEditingProfile" class="organization-form" @submit.prevent="$emit('saveProfile')">
-          <UiInput v-model="profileForm.name" label="Название организации" required :disabled="isBusy" />
-          <UiTextarea v-model="profileForm.description" label="Описание" :disabled="isBusy" />
-          <footer><UiButton variant="secondary" :disabled="isBusy" @click="$emit('cancelProfileEdit')">Отмена</UiButton><UiButton type="submit" :disabled="isBusy || !profileForm.name.trim()">{{ isSaving ? 'Сохраняем…' : 'Сохранить изменения' }}</UiButton></footer>
+          <UiInput v-model="profileForm.name" :label="t('settings.organizationName')" required :disabled="isBusy" />
+          <UiTextarea v-model="profileForm.description" :label="t('settings.description')" :disabled="isBusy" />
+          <footer><UiButton variant="secondary" :disabled="isBusy" @click="$emit('cancelProfileEdit')">{{ t('settings.cancel') }}</UiButton><UiButton type="submit" :disabled="isBusy || !profileForm.name.trim()">{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</UiButton></footer>
         </form>
-        <dl v-else class="organization-info"><div><dt>Название</dt><dd>{{ settings.organization.name }}</dd></div><div><dt>Направление</dt><dd>{{ settings.organization.primaryScenarioName || scenarioTitle }}</dd></div><div v-if="settings.organization.description"><dt>Описание</dt><dd>{{ settings.organization.description }}</dd></div></dl>
-        <OrganizationTimeZoneSettings v-if="activeSection === 'profile'" :key="settings.organization.id" :organization-id="settings.organization.id" :disabled="isReadOnly || isSaving || isEditingProfile || isEditingRequisites" @busy-changed="timeZoneBusy = $event" @saved="emit('timeZoneSaved')" />
+        <dl v-else class="organization-info"><div><dt>{{ t('settings.name') }}</dt><dd>{{ settings.organization.name }}</dd></div><div><dt>{{ t('settings.scenario') }}</dt><dd>{{ settings.organization.primaryScenarioName || scenarioTitle }}</dd></div><div v-if="settings.organization.description"><dt>{{ t('settings.description') }}</dt><dd>{{ settings.organization.description }}</dd></div></dl>
+        <OrganizationTimeZoneSettings v-if="activeSection === 'profile'" :key="settings.organization.id" :organization-id="settings.organization.id" :disabled="isReadOnly || isSaving || isEditingProfile || isEditingRequisites || currencyBusy" @busy-changed="timeZoneBusy = $event" @saved="emit('timeZoneSaved')" />
+        <CurrencySettings v-if="activeSection === 'profile'" :key="`currency-${settings.organization.id}`" :organization-id="settings.organization.id" :disabled="isReadOnly || isSaving || isEditingProfile || isEditingRequisites || timeZoneBusy" @busy-changed="currencyBusy = $event" @saved="emit('currencySaved')" />
       </section>
 
       <section v-show="activeSection === 'workflow'" class="workflow-settings">
-        <WorkspaceSettingsChoices v-show="!workflowSection" ref="workflowChoices" title="Работа и расписание" :groups="workflowGroups" :disabled="isBusy" @select="selectWorkflowSection($event as 'rules' | 'hours')" />
-        <nav v-if="workflowSection" class="workflow-settings__back" aria-label="Раздел работы и расписания"><UiButton ref="workflowBack" variant="secondary" :disabled="isBusy" @click="selectWorkflowSection(null)">← Работа и расписание</UiButton></nav>
+        <WorkspaceSettingsChoices v-show="!workflowSection" ref="workflowChoices" :title="t('settings.workflow')" :groups="workflowGroups" :disabled="isBusy" @select="selectWorkflowSection($event as 'rules' | 'hours')" />
+        <nav v-if="workflowSection" class="workflow-settings__back" :aria-label="t('settings.workflowSection')"><UiButton ref="workflowBack" variant="secondary" :disabled="isBusy" @click="selectWorkflowSection(null)">{{ t('settings.backWorkflow') }}</UiButton></nav>
         <section v-if="workflowSection === 'rules'" class="organization-panel" aria-labelledby="workflow-rules-title">
-          <header class="ui-section-header"><h3 id="workflow-rules-title">Правила работы</h3></header>
+          <header class="ui-section-header"><h3 id="workflow-rules-title">{{ t('settings.rules') }}</h3></header>
           <form v-if="canEditProfile && isEditingProfile" class="organization-form" @submit.prevent="$emit('saveProfile')">
             <fieldset v-if="supportsMaintenanceWorkflow(settings.organization)" class="workflow-settings__modes">
-              <legend>Режим заказ-нарядов</legend>
-              <label :class="{ 'is-selected': profileForm.maintenanceWorkflowMode === 'simple' }"><input v-model="profileForm.maintenanceWorkflowMode" type="radio" name="maintenance-workflow-mode" value="simple" :disabled="isBusy" /><span><strong>Простой</strong><small>Запись и выдача автомобиля без промежуточных этапов.</small></span></label>
-              <label :class="{ 'is-selected': profileForm.maintenanceWorkflowMode === 'staged' }"><input v-model="profileForm.maintenanceWorkflowMode" type="radio" name="maintenance-workflow-mode" value="staged" :disabled="isBusy" /><span><strong>По этапам</strong><small>Пошаговое выполнение работ и подготовка автомобиля к выдаче.</small></span></label>
+              <legend>{{ t('settings.workOrderMode') }}</legend>
+              <label :class="{ 'is-selected': profileForm.maintenanceWorkflowMode === 'simple' }"><input v-model="profileForm.maintenanceWorkflowMode" type="radio" name="maintenance-workflow-mode" value="simple" :disabled="isBusy" /><span><strong>{{ t('settings.simple') }}</strong><small>{{ t('settings.simpleHint') }}</small></span></label>
+              <label :class="{ 'is-selected': profileForm.maintenanceWorkflowMode === 'staged' }"><input v-model="profileForm.maintenanceWorkflowMode" type="radio" name="maintenance-workflow-mode" value="staged" :disabled="isBusy" /><span><strong>{{ t('settings.staged') }}</strong><small>{{ t('settings.stagedHint') }}</small></span></label>
             </fieldset>
-            <WorkspaceProLock v-if="isSelfAssignmentLocked" compact :locked="true" message="Самостоятельное назначение доступно в PRO" feature="selfAssignment">
-              <label class="organization-check workflow-settings__assignment"><input v-model="profileForm.allowWorkSelfAssignment" type="checkbox" disabled /><span><strong>Мастера могут брать свободные работы</strong><small>Включено — мастер сам берёт работу. Выключено — работы назначаются вручную.</small></span></label>
+            <WorkspaceProLock v-if="isSelfAssignmentLocked" compact :locked="true" :message="t('settings.selfAssignPro')" feature="selfAssignment">
+              <label class="organization-check workflow-settings__assignment"><input v-model="profileForm.allowWorkSelfAssignment" type="checkbox" disabled /><span><strong>{{ t('settings.selfAssign') }}</strong><small>{{ t('settings.selfAssignHint') }}</small></span></label>
             </WorkspaceProLock>
-            <label v-else class="organization-check workflow-settings__assignment"><input v-model="profileForm.allowWorkSelfAssignment" type="checkbox" :disabled="isBusy" /><span><strong>Мастера могут брать свободные работы</strong><small>Включено — мастер сам берёт работу. Выключено — работы назначаются вручную.</small></span></label>
-            <footer><UiButton variant="secondary" :disabled="isBusy" @click="selectWorkflowSection(null)">Отмена</UiButton><UiButton type="submit" :disabled="isBusy">{{ isSaving ? 'Сохраняем…' : 'Сохранить правила' }}</UiButton></footer>
+            <label v-else class="organization-check workflow-settings__assignment"><input v-model="profileForm.allowWorkSelfAssignment" type="checkbox" :disabled="isBusy" /><span><strong>{{ t('settings.selfAssign') }}</strong><small>{{ t('settings.selfAssignHint') }}</small></span></label>
+            <footer><UiButton variant="secondary" :disabled="isBusy" @click="selectWorkflowSection(null)">{{ t('settings.cancel') }}</UiButton><UiButton type="submit" :disabled="isBusy">{{ isSaving ? t('settings.saving') : t('settings.saveRules') }}</UiButton></footer>
           </form>
-          <dl v-else class="organization-info"><div v-if="!isSelfAssignmentLocked"><dt>Самостоятельное назначение</dt><dd>{{ settings.organization.allowWorkSelfAssignment ? 'Разрешено' : 'Выключено' }}</dd></div><div v-if="supportsMaintenanceWorkflow(settings.organization)"><dt>Режим заказ-нарядов</dt><dd>{{ settings.organization.maintenanceWorkflowMode === 'simple' ? 'Простой' : 'По этапам' }}</dd></div></dl>
-          <WorkspaceProLock v-if="isSelfAssignmentLocked && !(canEditProfile && isEditingProfile)" compact :locked="true" message="Самостоятельное назначение доступно в PRO" feature="selfAssignment">
-            <label class="organization-check workflow-settings__assignment"><input type="checkbox" :checked="settings.organization.allowWorkSelfAssignment" disabled /><span><strong>Мастера могут брать свободные работы</strong><small>Включено — мастер сам берёт работу. Выключено — работы назначаются вручную.</small></span></label>
+          <dl v-else class="organization-info"><div v-if="!isSelfAssignmentLocked"><dt>{{ t('settings.selfAssignment') }}</dt><dd>{{ settings.organization.allowWorkSelfAssignment ? t('settings.allowed') : t('settings.disabled') }}</dd></div><div v-if="supportsMaintenanceWorkflow(settings.organization)"><dt>{{ t('settings.workOrderMode') }}</dt><dd>{{ settings.organization.maintenanceWorkflowMode === 'simple' ? t('settings.simple') : t('settings.staged') }}</dd></div></dl>
+          <WorkspaceProLock v-if="isSelfAssignmentLocked && !(canEditProfile && isEditingProfile)" compact :locked="true" :message="t('settings.selfAssignPro')" feature="selfAssignment">
+            <label class="organization-check workflow-settings__assignment"><input type="checkbox" :checked="settings.organization.allowWorkSelfAssignment" disabled /><span><strong>{{ t('settings.selfAssign') }}</strong><small>{{ t('settings.selfAssignHint') }}</small></span></label>
           </WorkspaceProLock>
         </section>
         <slot v-if="workflowSection === 'hours'" name="workingHours" :on-close="() => selectWorkflowSection(null)" :on-busy-change="(value: boolean) => hoursSaving = value" />
       </section>
 
       <section v-show="activeSection === 'documents'" class="organization-panel">
-        <header class="ui-section-header"><div><h3>Документы</h3><p>Оформление печатных PDF и Word</p></div><UiButton v-if="canEditProfile && !isEditingProfile && !isDocumentStylingLocked" variant="secondary" :disabled="isBusy" @click="$emit('startProfileEdit')">Редактировать</UiButton></header>
-        <WorkspaceProLock centered :locked="isDocumentStylingLocked" message="Оформление документов доступно в PRO" feature="documentStyling">
-          <form v-if="(canEditProfile && isEditingProfile) || isDocumentStylingLocked" class="organization-form" @submit.prevent="$emit('saveProfile')"><UiSelect v-model="profileForm.documentStyleCode" label="Оформление документов" :options="documentOptions" required :searchable="false" :disabled="isBusy" /><p class="organization-hint">Выбранный стиль применяется к формируемым документам организации.</p><footer><UiButton variant="secondary" :disabled="isBusy" @click="$emit('cancelProfileEdit')">Отмена</UiButton><UiButton type="submit" :disabled="isBusy">{{ isSaving ? 'Сохраняем…' : 'Сохранить оформление' }}</UiButton></footer></form>
-          <dl v-else class="organization-info"><div><dt>Стиль оформления</dt><dd>{{ documentStyleName }}</dd></div><div><dt>Используется в</dt><dd>Печатных документах организации</dd></div></dl>
+        <header class="ui-section-header"><div><h3>{{ t('settings.documents') }}</h3><p>{{ t('settings.pdfWord') }}</p></div><UiButton v-if="canEditProfile && !isEditingProfile && !isDocumentStylingLocked" variant="secondary" :disabled="isBusy" @click="$emit('startProfileEdit')">{{ t('settings.edit') }}</UiButton></header>
+        <WorkspaceProLock centered :locked="isDocumentStylingLocked" :message="t('settings.documentPro')" feature="documentStyling">
+          <form v-if="(canEditProfile && isEditingProfile) || isDocumentStylingLocked" class="organization-form" @submit.prevent="$emit('saveProfile')"><UiSelect v-model="profileForm.documentStyleCode" :label="t('settings.documentStyle')" :options="documentOptions" required :searchable="false" :disabled="isBusy" /><p class="organization-hint">{{ t('settings.documentStyleHint') }}</p><footer><UiButton variant="secondary" :disabled="isBusy" @click="$emit('cancelProfileEdit')">{{ t('settings.cancel') }}</UiButton><UiButton type="submit" :disabled="isBusy">{{ isSaving ? t('settings.saving') : t('settings.saveStyle') }}</UiButton></footer></form>
+          <dl v-else class="organization-info"><div><dt>{{ t('settings.style') }}</dt><dd>{{ documentStyleName }}</dd></div><div><dt>{{ t('settings.usedIn') }}</dt><dd>{{ t('settings.printedDocuments') }}</dd></div></dl>
         </WorkspaceProLock>
-        <a v-if="canViewWiki && !isEditingProfile" href="#wiki?slug=materials-and-documents" class="organization-link">Посмотреть примеры оформления →</a>
+        <a v-if="canViewWiki && !isEditingProfile" href="#wiki?slug=materials-and-documents" class="organization-link">{{ t('settings.styleExamples') }}</a>
       </section>
 
       <section v-show="activeSection === 'requisites'" class="organization-panel">
-        <header class="ui-section-header"><div><h3>Реквизиты и контакты</h3><p>Данные организации и подпись в документах</p></div><UiButton v-if="canEditRequisites && !isEditingRequisites" variant="secondary" :disabled="isBusy" @click="$emit('startRequisitesEdit')">Редактировать</UiButton></header>
+        <header class="ui-section-header"><div><h3>{{ t('settings.requisites') }}</h3><p>{{ t('settings.signatureHint') }}</p></div><UiButton v-if="canEditRequisites && !isEditingRequisites" variant="secondary" :disabled="isBusy" @click="$emit('startRequisitesEdit')">{{ t('settings.edit') }}</UiButton></header>
         <form v-if="canEditRequisites && isEditingRequisites" class="organization-form organization-form--wide" @submit.prevent="$emit('saveRequisites')">
           <fieldset v-for="group in requisitesGroups" :key="group.title">
             <legend class="ui-section-header">{{ group.title }}</legend>
@@ -239,42 +246,42 @@ watch(() => props.settings.organization.id, () => {
               </div>
             </div>
           </fieldset>
-          <p v-if="requisitesErrors && Object.keys(requisitesErrors).some(key => !(key in requisitesForm))" class="ui-field__error" role="alert">Не удалось проверить реквизиты. Проверьте заполнение формы и повторите сохранение.</p>
-          <footer><UiButton variant="secondary" :disabled="isBusy" @click="$emit('cancelRequisitesEdit')">Отмена</UiButton><UiButton type="submit" :disabled="isBusy">{{ isSaving ? 'Сохраняем…' : 'Сохранить реквизиты' }}</UiButton></footer>
+          <p v-if="requisitesErrors && Object.keys(requisitesErrors).some(key => !(key in requisitesForm))" class="ui-field__error" role="alert">{{ t('settings.requisitesError') }}</p>
+          <footer><UiButton variant="secondary" :disabled="isBusy" @click="$emit('cancelRequisitesEdit')">{{ t('settings.cancel') }}</UiButton><UiButton type="submit" :disabled="isBusy">{{ isSaving ? t('settings.saving') : t('settings.saveRequisites') }}</UiButton></footer>
         </form>
-        <div v-else class="organization-requisites"><section v-for="group in requisitesGroups" :key="group.title"><h4 class="ui-section-header">{{ group.title }}</h4><dl class="organization-info"><div v-for="field in group.fields" :key="field.key"><dt>{{ field.label }}</dt><dd>{{ settings.organization[field.key] || 'Не указано' }}</dd></div></dl></section></div>
+        <div v-else class="organization-requisites"><section v-for="group in requisitesGroups" :key="group.title"><h4 class="ui-section-header">{{ group.title }}</h4><dl class="organization-info"><div v-for="field in group.fields" :key="field.key"><dt>{{ field.label }}</dt><dd>{{ settings.organization[field.key] || t('settings.unspecified') }}</dd></div></dl></section></div>
       </section>
 
       <section v-if="canReadNotifications && notificationsVisited" v-show="activeSection === 'notifications'" class="organization-notifications">
-        <WorkspaceProLock v-if="isMessagingLocked" centered :locked="true" message="Уведомления доступны в PRO" feature="notifications">
+        <WorkspaceProLock v-if="isMessagingLocked" centered :locked="true" :message="t('settings.notificationsPro')" feature="notifications">
           <WorkspaceNotificationSettings preview-only :organization-id="settings.organization.id" :can-write="false" @busy-changed="notificationBusy.notifications = $event" />
         </WorkspaceProLock>
         <WorkspaceNotificationSettings v-else :organization-id="settings.organization.id" :can-write="canEditProfile && messagingAvailable !== false" @busy-changed="notificationBusy.notifications = $event" />
       </section>
       <div v-show="activeSection === 'imports'" class="organization-imports">
-        <WorkspaceProLock v-if="isDataImportLocked" centered :locked="true" message="Импорт данных доступен в PRO" feature="dataImport">
+        <WorkspaceProLock v-if="isDataImportLocked" centered :locked="true" :message="t('settings.importPro')" feature="dataImport">
           <section class="organization-panel organization-import-preview">
-            <header class="ui-section-header"><div><h3>Загрузка данных</h3><p>Импорт клиентов, автомобилей и истории работ.</p></div></header>
+            <header class="ui-section-header"><div><h3>{{ t('settings.uploadData') }}</h3><p>{{ t('settings.importHint') }}</p></div></header>
             <div class="organization-import-preview__upload" aria-hidden="true">
-              <strong>Выберите файл для импорта</strong>
-              <span>CSV, XLSX или ZIP</span>
-              <input type="file" accept=".csv,.xlsx,.zip" disabled aria-label="Файл для импорта" />
-              <UiButton variant="secondary" disabled>Выбрать файл</UiButton>
+              <strong>{{ t('settings.chooseImport') }}</strong>
+              <span>{{ t('settings.formats') }}</span>
+              <input type="file" accept=".csv,.xlsx,.zip" disabled :aria-label="t('settings.importFile')" />
+              <UiButton variant="secondary" disabled>{{ t('settings.chooseFile') }}</UiButton>
             </div>
           </section>
         </WorkspaceProLock>
         <section v-else-if="isReadOnly" class="organization-panel">
-          <header class="ui-section-header"><div><h3>Импорт данных</h3><p>Загрузка клиентов, автомобилей и истории работ.</p></div></header>
-          <p class="organization-hint" role="status">Организация доступна только для чтения. Загрузка файлов и применение импорта недоступны до подключения тарифа с возможностью изменения данных.</p>
-          <UiButton variant="secondary" disabled>Загрузить файл</UiButton>
+          <header class="ui-section-header"><div><h3>{{ t('settings.import') }}</h3><p>{{ t('settings.uploadHint') }}</p></div></header>
+          <p class="organization-hint" role="status">{{ t('settings.readOnlyImport') }}</p>
+          <UiButton variant="secondary" disabled>{{ t('settings.uploadFile') }}</UiButton>
         </section>
         <slot v-else name="imports" :on-access-change="(value: boolean) => canImport = value" />
       </div>
       <WorkspaceOrganizationExport v-if="isOwner" v-show="activeSection === 'export'" :organization-id="settings.organization.id" />
       <section v-if="settings.canArchive && activeSection === 'archive'" class="organization-panel organization-panel--archive">
-        <header class="ui-section-header"><div><h3>Архив организации</h3><p>Организация исчезнет из рабочих разделов.</p></div></header>
-        <p>Данные сохранятся. Восстановление будет доступно в списке организаций в течение срока хранения архива.</p>
-        <UiButton variant="secondary" :disabled="isBusy" @click="$emit('archiveOrganization')">Архивировать организацию</UiButton>
+        <header class="ui-section-header"><div><h3>{{ t('settings.archive') }}</h3><p>{{ t('settings.archiveHint') }}</p></div></header>
+        <p>{{ t('settings.archiveRetention') }}</p>
+        <UiButton variant="secondary" :disabled="isBusy" @click="$emit('archiveOrganization')">{{ t('settings.archiveAction') }}</UiButton>
       </section>
     </div>
   </div>

@@ -7,6 +7,26 @@ namespace OpenCRM.Modules.Catalog.Tests.Integration;
 [Collection(CatalogDatabaseCollection.Name)]
 public sealed class CatalogDefaultsTests(CatalogDatabaseFixture fixture)
 {
+    [Theory]
+    [InlineData("CNY")]
+    [InlineData("USD")]
+    public async Task NewDefaultsUseOrganizationCurrencyWithoutInventingPrices(string currencyCode)
+    {
+        await using var context = fixture.CreateContext();
+        var organization = await fixture.CreateOrganizationAsync(context, OrganizationTypeCodes.Detailing);
+        organization.CurrencyCode = currencyCode;
+        await context.SaveChangesAsync();
+        var service = new CatalogDefaultsService(context);
+
+        await service.EnsureDefaultsAsync(organization.Id);
+        var items = await context.OrganizationScenarioCatalogItems.AsNoTracking()
+            .Where(item => item.OrganizationId == organization.Id).ToListAsync();
+
+        Assert.NotEmpty(items);
+        Assert.All(items, item => Assert.Equal(currencyCode, item.CurrencyCode));
+        Assert.All(items, item => Assert.Null(item.UnitPrice));
+    }
+
     [Fact]
     public async Task EnsureDefaultsCreatesCatalogAndIsIdempotent()
     {

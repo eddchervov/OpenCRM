@@ -245,6 +245,114 @@ public sealed class CrmImportBatchTests(ImportDatabaseFixture fixture) : IClassF
         Assert.False(preview.AlreadyImported);
     }
 
+    [Fact]
+    public async Task CrmImportKeepsSameForeignPlateSeparateAcrossCountriesAndPersistsCountry()
+    {
+        var (targetUserId, adminUserId, organizationId) = await this.CreateOrganizationAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context, maxVehicles: 5).Service;
+        var content = "Тип;Имя;Телефон;Телефон клиента;VIN;Страна регистрации;Госномер\r\n" +
+            "client;Владелец;79990000001;;;;\r\n" +
+            "vehicle;Автомобиль CN;;79990000001;VIN123;cn;京A·2\r\n" +
+            "vehicle;Автомобиль ZZ;;79990000001;VIN456;zz;京A·2";
+
+        var preview = await service.CreatePreviewAsync(
+            targetUserId, organizationId, "foreign-cars.csv", Encoding.UTF8.GetBytes(content), default);
+        var vehicles = preview.Rows.Where(row => row.Type == "vehicle").ToList();
+
+        Assert.Equal(2, vehicles.Count);
+        Assert.All(vehicles, row => Assert.Equal("create", row.Status));
+        Assert.Equal(new[] { "CN", "ZZ" }, vehicles.Select(row => row.RegistrationCountryCode).OrderBy(code => code).ToArray());
+        Assert.All(vehicles, row => Assert.Equal("京A·2", row.Plate));
+
+        var result = await service.ConfirmAsync(preview.Id, adminUserId, default);
+
+        Assert.Equal(2, result.CreatedVehicles);
+        var savedVehicles = await context.Vehicles.Where(item => item.OrganizationId == organizationId)
+            .OrderBy(item => item.RegistrationCountryCode).ToListAsync();
+        Assert.Equal(new[] { "CN", "ZZ" }, savedVehicles.Select(vehicle => vehicle.RegistrationCountryCode).ToArray());
+        Assert.All(savedVehicles, vehicle => Assert.Equal("京A·2", vehicle.RegistrationPlate));
+    }
+
+    [Theory]
+    [InlineData("crm.json", "[{\"type\":\"vehicle\",\"name\":\"Car\",\"vin\":\"VIN123\",\"registrationCountryCode\":\"cn\",\"plate\":\"京A·2\"}]")]
+    [InlineData("crm.xml", "<vehicles><vehicle name=\"Car\" vin=\"VIN123\" registrationCountryCode=\"cn\" plate=\"京A·2\" /></vehicles>")]
+    public async Task CrmImportReadsRegistrationCountryFromJsonAndXml(string fileName, string content)
+    {
+        var (targetUserId, _, organizationId) = await this.CreateOrganizationAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context, maxVehicles: 5).Service;
+
+        var preview = await service.CreatePreviewAsync(
+            targetUserId, organizationId, fileName, Encoding.UTF8.GetBytes(content), default);
+        var row = Assert.Single(preview.Rows);
+
+        Assert.Equal("vehicle", row.Type);
+        Assert.Equal("CN", row.RegistrationCountryCode);
+        Assert.Equal("京A·2", row.Plate);
+        Assert.Equal("create", row.Status);
+    }
+
+    [Fact]
+    public async Task CrmImportFingerprintIncludesRegistrationCountry()
+    {
+        var (targetUserId, adminUserId, organizationId) = await this.CreateOrganizationAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context, maxVehicles: 5).Service;
+        var cnPreview = await service.CreatePreviewAsync(targetUserId, organizationId, "cn.csv", Encoding.UTF8.GetBytes(
+            "Тип;Имя;VIN;Страна регистрации;Госномер\r\nvehicle;Car;VIN123;CN;京A·2"), default);
+        await service.ConfirmAsync(cnPreview.Id, adminUserId, default);
+
+        var zzPreview = await service.CreatePreviewAsync(targetUserId, organizationId, "zz.csv", Encoding.UTF8.GetBytes(
+            "Тип;Имя;VIN;Страна регистрации;Госномер\r\nvehicle;Car;VIN123;ZZ;京A·2"), default);
+
+        Assert.False(zzPreview.AlreadyImported);
+        Assert.Equal("error", Assert.Single(zzPreview.Rows).Status);
+        Assert.Contains("противоречат", zzPreview.Rows[0].Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("RU")]
+    [InlineData(" ru ")]
+    public async Task ExplicitRussianCountryPreservesLegacyFingerprintAndRepeatProtection(string countryCode)
+    {
+        var (targetUserId, adminUserId, organizationId) = await this.CreateOrganizationAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context, maxVehicles: 5).Service;
+        var original = await service.CreatePreviewAsync(targetUserId, organizationId, "original.csv", Encoding.UTF8.GetBytes(
+            "Тип;Имя;VIN;Госномер\r\nvehicle;Car;VIN123;A123AA"), default);
+        await service.ConfirmAsync(original.Id, adminUserId, default);
+
+        var repeated = await service.CreatePreviewAsync(targetUserId, organizationId, "repeated.csv", Encoding.UTF8.GetBytes(
+            $"Тип;Имя;VIN;Страна регистрации;Госномер\r\nvehicle;Car;VIN123;{countryCode};A123AA"), default);
+
+        Assert.True(repeated.AlreadyImported);
+        var originalBatch = await context.CrmImportBatches.SingleAsync(batch => batch.Id == original.Id);
+        var repeatedBatch = await context.CrmImportBatches.SingleAsync(batch => batch.Id == repeated.Id);
+        Assert.Equal(originalBatch.Fingerprint, repeatedBatch.Fingerprint);
+        await Assert.ThrowsAsync<InvalidDataException>(() => service.ConfirmAsync(repeated.Id, adminUserId, default));
+        Assert.Equal(1, await context.Vehicles.CountAsync(vehicle => vehicle.OrganizationId == organizationId));
+    }
+
+    [Fact]
+    public async Task ForeignCountryAliasesHaveTheSameFingerprint()
+    {
+        var (targetUserId, adminUserId, organizationId) = await this.CreateOrganizationAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context, maxVehicles: 5).Service;
+        var original = await service.CreatePreviewAsync(targetUserId, organizationId, "original.csv", Encoding.UTF8.GetBytes(
+            "Тип;Имя;VIN;Страна регистрации;Госномер\r\nvehicle;Car;VIN123;CN;京A·2"), default);
+        await service.ConfirmAsync(original.Id, adminUserId, default);
+
+        var repeated = await service.CreatePreviewAsync(targetUserId, organizationId, "repeated.csv", Encoding.UTF8.GetBytes(
+            "Тип;Имя;VIN;Страна регистрации;Госномер\r\nvehicle;Car;VIN123; cn ;京A·2"), default);
+
+        Assert.True(repeated.AlreadyImported);
+        await Assert.ThrowsAsync<InvalidDataException>(() => service.ConfirmAsync(repeated.Id, adminUserId, default));
+        Assert.Equal(1, await context.Vehicles.CountAsync(vehicle => vehicle.OrganizationId == organizationId));
+    }
+
     private async Task<(string TargetUserId, string AdminUserId, Guid OrganizationId)> CreateOrganizationAsync()
     {
         await using var context = fixture.CreateContext();

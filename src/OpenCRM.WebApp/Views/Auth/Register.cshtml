@@ -3,7 +3,7 @@
 @inject IConfiguration Configuration
 
 @{
-    ViewData["Title"] = $"Регистрация аккаунта {Brand.DisplayNameLower}";
+    ViewData["Title"] = $"{Text["auth.registerButton"]} {Brand.DisplayNameLower}";
     var isEmailDeliveryAvailable = EmailDeliveryPolicy.IsAvailable(Configuration);
 }
 
@@ -14,8 +14,8 @@
                 <!-- Блок формы регистрации -->
                 <div class="auth-form-wrapper">
                     <div class="auth-form-kicker">@Brand.DisplayName</div>
-                    <h1 class="auth-title">Создать аккаунт</h1>
-                    <p class="auth-subtitle">Один аккаунт для работы с организациями.</p>
+                    <h1 class="auth-title">@Text["auth.createAccount"]</h1>
+                    <p class="auth-subtitle">@Text["auth.registerSubtitle"]</p>
 
                     @if (isEmailDeliveryAvailable)
                     {
@@ -24,9 +24,9 @@
                            asp-controller="Auth"
                            asp-route-returnUrl="@Model.ReturnUrl"
                            class="w-100 btn btn-lg rounded-4 btn-light auth-email-code-link"
-                           title="Войти без пароля по коду из email">
+                           title="@Text["auth.signInByEmailCodeTitle"]">
                                 <i class="fa fa-envelope-o me-3" aria-hidden="true"></i>
-                                Войти по коду из email
+                                @Text["auth.signInByEmailCode"]
                             </a>
                         </div>
                     }
@@ -34,7 +34,7 @@
                     @if (isEmailDeliveryAvailable)
                     {
                         <div class="auth-divider">
-                            <span>или зарегистрироваться через email/пароль</span>
+                            <span>@Text["auth.orRegisterByEmail"]</span>
                         </div>
                     }
 
@@ -44,25 +44,25 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="form-floating mb-3">
-                            <input type="email" asp-for="Email" class="form-control" placeholder="Введите email адрес">
-                            <label asp-for="Email">Email</label>
+                            <input type="email" asp-for="Email" class="form-control" placeholder="@Text["auth.emailPlaceholder"]">
+                            <label asp-for="Email">@Text["auth.email"]</label>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="password" asp-for="Password" class="form-control" placeholder="Пароль" autocomplete="new-password" aria-describedby="password-requirements">
-                            <label asp-for="Password">Пароль</label>
+                            <input type="password" asp-for="Password" class="form-control" placeholder="@Text["auth.password"]" autocomplete="new-password" aria-describedby="password-requirements">
+                            <label asp-for="Password">@Text["auth.password"]</label>
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
                         <partial name="_PasswordRequirements" />
 
                         <partial name="_RegistrationConsentFields" model="Model.PersonalDataProcessingConsent" />
 
-                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">Зарегистрироваться</button>
+                        <button class="w-100 btn btn-dark btn-lg auth-btn mb-3" type="submit">@Text["auth.registerButton"]</button>
 
                         <div class="auth-links text-center">
                             <div>
-                                Уже есть аккаунт? <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Войдите</a>
+                                @Text["auth.haveAccount"] <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">@Text["auth.signInLink"]</a>
                             </div>
                         </div>
                     </form>

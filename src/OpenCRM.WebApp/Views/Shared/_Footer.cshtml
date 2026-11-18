@@ -10,26 +10,26 @@
             <div class="col-auto mb-4 mb-md-0">
                 <h6 class="fw-bold mb-3">@Brand.DisplayName</h6>
                 <div class="d-flex flex-column gap-2">
-                    <a href="~/" class="text-white text-decoration-none small">Главная</a>
-                    <a href="@Helpers.ProjectBrand.GitHubUrl" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none small">GitHub</a>
+                    <a href="~/" class="text-white text-decoration-none small">@Text["footer.home"]</a>
+                    <a href="@Helpers.ProjectBrand.GitHubUrl" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none small">@Text["footer.github"]</a>
                 </div>
             </div>
             <div class="col-auto mb-4 mb-md-0">
                 @if (isSignedIn)
                 {
-                    <h6 class="fw-bold mb-3">Рабочее пространство</h6>
+                    <h6 class="fw-bold mb-3">@Text["footer.workspace"]</h6>
                     <div class="d-flex flex-column gap-2">
-                        <a href="~/organizations" class="text-white text-decoration-none small">Организации</a>
-                        <a href="~/personal" class="text-white text-decoration-none small">Личный кабинет</a>
-                        <a href="~/personal/support" class="text-white text-decoration-none small">Обращения и поддержка</a>
+                        <a href="~/organizations" class="text-white text-decoration-none small">@Text["footer.organizations"]</a>
+                        <a href="~/personal" class="text-white text-decoration-none small">@Text["footer.personal"]</a>
+                        <a href="~/personal/support" class="text-white text-decoration-none small">@Text["footer.support"]</a>
                     </div>
                 }
                 else
                 {
-                    <h6 class="fw-bold mb-3">Аккаунт</h6>
+                    <h6 class="fw-bold mb-3">@Text["footer.account"]</h6>
                     <div class="d-flex flex-column gap-2">
-                        <a href="~/auth/login" class="text-white text-decoration-none small">Вход</a>
-                        <a href="~/auth/register" class="text-white text-decoration-none small">Регистрация</a>
+                        <a href="~/auth/login" class="text-white text-decoration-none small">@Text["footer.signIn"]</a>
+                        <a href="~/auth/register" class="text-white text-decoration-none small">@Text["footer.register"]</a>
                     </div>
                 }
             </div>

@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+import { useLocalization } from '@opencrm/ui'
+import '../schedulerMessages'
+
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiCard, UiDatePicker, UiLoader, UiPagination, UiSearchInput, UiSelect, formatDateOnly, parseDateOnly } from '@opencrm/ui'
 import WorkspacePageHelpButton from './WorkspacePageHelpButton.vue'
 import { loadMaintenanceJournal, type MaintenanceJournalData, type MaintenanceJournalItem } from '../api/maintenanceJournal'
 import type { WorkspaceContext } from '../types'
 
+const workspaceCurrency = useWorkspaceCurrency()
+
 const props = defineProps<{ context: WorkspaceContext }>()
+const { t } = useLocalization()
 const status = ref('0')
 const period = ref('month')
 const search = ref('')
@@ -23,28 +31,28 @@ let searchTimer: number | undefined
 let latestRequest = 0
 let controller: AbortController | undefined
 let isRestoringState = false
-const title = computed(() => props.context.shell.scenario?.code === 'detailing' ? 'Журнал услуг' : 'Журнал обслуживаний')
+const title = computed(() => props.context.shell.scenario?.code === 'detailing' ? t('maintenanceJournal.serviceJournal') : t('maintenanceJournal.maintenanceJournal'))
 const storageKey = computed(() => `opencrm:${props.context.user.id}:${props.context.organization.id}:maintenance-journal:v1`)
 const createAction = computed(() => props.context.workspaceAccess?.isReadOnly === false
   ? props.context.shell.quickActions?.find(action => action.isVisible && (action.code === 'create-maintenance' || action.formCode === 'maintenance-create')) : undefined)
-const statusOptions = [
-  { value: '0', label: 'Все статусы' }, { value: '1', label: 'Запланировано' },
-  { value: '2', label: 'В работе' }, { value: '3', label: 'Все выполненные' },
-  { value: 'ready', label: 'Готовы к выдаче' }, { value: 'handedOver', label: 'Выданы' }, { value: '4', label: 'Отменено' }
-]
-const periodOptions = [
-  { value: 'all', label: 'Всё время' }, { value: 'today', label: 'Сегодня' },
-  { value: 'week', label: 'Последние 7 дней' }, { value: 'month', label: 'Этот месяц' },
-  { value: 'custom', label: 'Свой интервал' }
-]
+const statusOptions = computed(() => [
+  { value: '0', label: t('maintenanceJournal.allStatuses') }, { value: '1', label: t('maintenanceJournal.scheduled') },
+  { value: '2', label: t('maintenanceJournal.inProgress') }, { value: '3', label: t('maintenanceJournal.allCompleted') },
+  { value: 'ready', label: t('maintenanceJournal.ready') }, { value: 'handedOver', label: t('maintenanceJournal.handedOver') }, { value: '4', label: t('maintenanceJournal.cancelled') }
+])
+const periodOptions = computed(() => [
+  { value: 'all', label: t('maintenanceJournal.allTime') }, { value: 'today', label: t('maintenanceJournal.today') },
+  { value: 'week', label: t('maintenanceJournal.lastSevenDays') }, { value: 'month', label: t('maintenanceJournal.thisMonth') },
+  { value: 'custom', label: t('maintenanceJournal.customRange') }
+])
 const pageSizeOptions = ['10', '25', '50', '100'].map(value => ({ value, label: value }))
-const performerOptions = computed(() => [{ value: '', label: 'Все исполнители' }, ...(data.value?.performers ?? []).map(item => ({ value: item.id, label: item.name }))])
+const performerOptions = computed(() => [{ value: '', label: t('maintenanceJournal.allPerformers') }, ...(data.value?.performers ?? []).map(item => ({ value: item.id, label: item.name }))])
 const hasFilters = computed(() => status.value !== '0' || period.value !== 'month' || Boolean(search.value || employeeId.value))
 const showPayments = computed(() => data.value?.items.some(item => item.paymentStatus != null || item.paidAmount != null))
 const rangeText = computed(() => {
-  if (!data.value?.totalCount) return '0 записей'
+  if (!data.value?.totalCount) return t('maintenanceJournal.recordCount', { count: 0 })
   const from = (data.value.page - 1) * data.value.pageSize + 1
-  return `${from}–${Math.min(data.value.page * data.value.pageSize, data.value.totalCount)} из ${data.value.totalCount}`
+  return t('maintenanceJournal.range', { from, to: Math.min(data.value.page * data.value.pageSize, data.value.totalCount), count: data.value.totalCount })
 })
 const dateRange = computed(() => {
   if (period.value === 'all') return {}
@@ -55,23 +63,37 @@ const dateRange = computed(() => {
   return { dateFrom: formatDateOnly(from), dateTo: formatDateOnly(undefined, props.context.organization.timeZoneId || 'UTC') }
 })
 const intervalText = computed(() => dateRange.value.dateFrom && dateRange.value.dateTo
-  ? `${formatDate(dateRange.value.dateFrom)} — ${formatDate(dateRange.value.dateTo)}` : 'За всё время')
+  ? t('maintenanceJournal.dateRange', { from: formatDate(dateRange.value.dateFrom), to: formatDate(dateRange.value.dateTo) }) : t('maintenanceJournal.allTimeRange'))
 
 function formatDate(value?: string | null) {
   const date = value ? parseDateOnly(value) : null
-  return date ? new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date) : '—'
+  return date ? new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short' }).format(date) : '—'
 }
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value)
+function formatMoney(value: number, item?: MaintenanceJournalItem) {
+  const rowCurrency = item && typeof item.currencyCode === 'string' && item.currencyCode ? item.currencyCode : workspaceCurrency.value
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: rowCurrency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value)
+}
+
+function statusLabel(item: MaintenanceJournalItem) {
+  if (/выдан|handed over|已交付/i.test(item.statusName)) return t('maintenanceJournal.handedOver')
+  if (/готов.*выдач|ready for handover|已准备交付/i.test(item.statusName)) return t('maintenanceJournal.ready')
+  const names: Record<number, string> = {
+    1: t('maintenanceJournal.scheduled'),
+    2: t('maintenanceJournal.inProgress'),
+    3: t('maintenanceJournal.completed'),
+    4: t('maintenanceJournal.cancelled')
+  }
+
+  return names[item.status] ?? t('maintenanceJournal.statusNotSpecified')
 }
 
 function paymentLabel(item: MaintenanceJournalItem) {
-  if (item.paymentStatus === 'no_payment_required') return 'Оплата не требуется'
+  if (item.paymentStatus === 'no_payment_required') return t('maintenanceJournal.noPaymentRequired')
   if (item.paidAmount == null) return ''
-  if (item.paymentStatus === 'unpaid' || item.paidAmount === 0) return 'Не оплачено'
-  if (item.paidAmount > item.amount) return 'Переплата: ' + formatMoney(item.paidAmount - item.amount)
-  return debt(item) === 0 ? 'Оплачено' : 'Оплачено: ' + formatMoney(item.paidAmount)
+  if (item.paymentStatus === 'unpaid' || item.paidAmount === 0) return t('maintenanceJournal.unpaid')
+  if (item.paidAmount > item.amount) return t('maintenanceJournal.overpaid', { amount: formatMoney(item.paidAmount - item.amount, item) })
+  return debt(item) === 0 ? t('maintenanceJournal.paid') : t('maintenanceJournal.paidAmount', { amount: formatMoney(item.paidAmount, item) })
 }
 
 function debt(item: MaintenanceJournalItem) {
@@ -105,8 +127,8 @@ function restoreState() {
   try {
     const state = JSON.parse(window.sessionStorage.getItem(storageKey.value) ?? 'null')
     if (!state || typeof state !== 'object') return
-    if (statusOptions.some(item => item.value === state.status)) status.value = state.status
-    if (periodOptions.some(item => item.value === state.period)) period.value = state.period
+    if (statusOptions.value.some(item => item.value === state.status)) status.value = state.status
+    if (periodOptions.value.some(item => item.value === state.period)) period.value = state.period
     if (typeof state.search === 'string') search.value = state.search.slice(0, 200)
     if (typeof state.employeeId === 'string') employeeId.value = state.employeeId
     if (Number.isSafeInteger(state.page) && state.page > 0) page.value = state.page
@@ -128,7 +150,7 @@ async function loadItems() {
   const range = dateRange.value
   errorMessage.value = ''
   if (period.value === 'custom' && (!range.dateFrom || !range.dateTo || range.dateFrom > range.dateTo)) {
-    errorMessage.value = 'Укажите начало и окончание интервала. Дата начала должна быть не позже окончания.'
+    errorMessage.value = t('maintenanceJournal.invalidRange')
     isLoading.value = false
     return
   }
@@ -148,7 +170,7 @@ async function loadItems() {
     expandedIds.value = []
     saveState()
   } catch (error) {
-    if (request === latestRequest && !requestController.signal.aborted) errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить журнал.'
+    if (request === latestRequest && !requestController.signal.aborted) errorMessage.value = error instanceof Error ? error.message : t('maintenanceJournal.loadError')
   } finally {
     if (request === latestRequest) isLoading.value = false
   }
@@ -201,60 +223,60 @@ onBeforeUnmount(() => {
 <template>
   <UiCard page class="maintenance-journal" :title="title">
     <template #actions>
-      <UiButton v-if="createAction" :href="createAction.urlTemplate">＋ Новое обслуживание</UiButton>
+      <UiButton v-if="createAction" :href="createAction.urlTemplate">＋ {{ t('maintenanceJournal.newMaintenance') }}</UiButton>
       <WorkspacePageHelpButton section-code="maintenance-journal" :title="title" />
     </template>
     <div class="maintenance-journal__toolbar" :class="{ 'has-reset': hasFilters }">
-      <UiSearchInput v-model="search" label="Поиск" placeholder="Автомобиль, клиент или работа" :maxlength="200" />
-      <UiSelect v-model="period" label="Период" :options="periodOptions" :searchable="false" required />
-      <UiSelect v-model="status" label="Статус" :options="statusOptions" :searchable="false" required />
-      <UiSelect v-model="employeeId" label="Исполнитель" :options="performerOptions" />
-      <UiButton v-if="hasFilters" class="maintenance-journal__reset" variant="secondary" @click="resetFilters">Сбросить фильтры</UiButton>
+      <UiSearchInput v-model="search" :label="t('maintenanceJournal.search')" :placeholder="t('maintenanceJournal.searchPlaceholder')" :maxlength="200" />
+      <UiSelect v-model="period" :label="t('maintenanceJournal.period')" :options="periodOptions" :searchable="false" required />
+      <UiSelect v-model="status" :label="t('maintenanceJournal.status')" :options="statusOptions" :searchable="false" required />
+      <UiSelect v-model="employeeId" :label="t('maintenanceJournal.performer')" :options="performerOptions" />
+      <UiButton v-if="hasFilters" class="maintenance-journal__reset" variant="secondary" @click="resetFilters">{{ t('maintenanceJournal.resetFilters') }}</UiButton>
     </div>
     <div class="maintenance-journal__interval">
-      <template v-if="period === 'custom'"><UiDatePicker v-model="dateFrom" label="С" /><UiDatePicker v-model="dateTo" label="По" /></template>
+      <template v-if="period === 'custom'"><UiDatePicker v-model="dateFrom" :label="t('maintenanceJournal.from')" /><UiDatePicker v-model="dateTo" :label="t('maintenanceJournal.to')" /></template>
       <span v-else>{{ intervalText }}</span>
     </div>
-    <div v-if="errorMessage" class="maintenance-journal__error" role="alert"><span>{{ errorMessage }}</span><UiButton variant="secondary" @click="loadItems">Повторить</UiButton></div>
-    <UiLoader v-else-if="isLoading && !data" text="Загружаем журнал…" />
+    <div v-if="errorMessage" class="maintenance-journal__error" role="alert"><span>{{ errorMessage }}</span><UiButton variant="secondary" @click="loadItems">{{ t('maintenanceJournal.retry') }}</UiButton></div>
+    <UiLoader v-else-if="isLoading && !data" :text="t('maintenanceJournal.loading')" />
     <template v-else-if="data">
       <div class="maintenance-journal__list" :aria-busy="isLoading" :class="{ 'is-loading': isLoading }">
         <table v-if="data.items.length" :aria-label="title">
           <colgroup><col style="width: 11%" /><col style="width: 13%" /><col style="width: 10%" /><col style="width: 14%" /><col style="width: 11%" /><col style="width: 13%" /><col style="width: 11%" /><col style="width: 17%" /></colgroup>
-          <thead><tr><th>Дата / №</th><th>Автомобиль</th><th>{{ context.shell.scenario?.code === 'fleet' ? 'Подразделение / ответственный' : 'Клиент' }}</th><th>Работы</th><th>Исполнитель</th><th>Статус</th><th>{{ showPayments ? 'Оплата' : 'Сумма' }}</th><th><span class="maintenance-journal__sr-only">Действие</span></th></tr></thead>
+          <thead><tr><th>{{ t('maintenanceJournal.dateNumber') }}</th><th>{{ t('maintenanceJournal.vehicle') }}</th><th>{{ context.shell.scenario?.code === 'fleet' ? t('maintenanceJournal.departmentContact') : t('maintenanceJournal.client') }}</th><th>{{ t('maintenanceJournal.work') }}</th><th>{{ t('maintenanceJournal.performer') }}</th><th>{{ t('maintenanceJournal.status') }}</th><th>{{ showPayments ? t('maintenanceJournal.payment') : t('maintenanceJournal.amount') }}</th><th><span class="maintenance-journal__sr-only">{{ t('maintenanceJournal.action') }}</span></th></tr></thead>
           <tbody>
             <template v-for="item in data.items" :key="item.id">
               <tr class="maintenance-journal__row">
-                <td data-label="Дата / №" class="maintenance-journal__date"><span>{{ formatDate(item.date || item.completedDate || item.plannedDate) }}</span><small v-if="item.workActNumber">Акт № {{ item.workActNumber }}</small><small v-if="item.status !== 3 && item.plannedStartTime">{{ item.plannedStartTime.slice(0, 5) }}</small></td>
+                <td :data-label="t('maintenanceJournal.dateNumber')" class="maintenance-journal__date"><span>{{ formatDate(item.date || item.completedDate || item.plannedDate) }}</span><small v-if="item.workActNumber">{{ t('maintenanceJournal.actNumber', { number: item.workActNumber }) }}</small><small v-if="item.status !== 3 && item.plannedStartTime">{{ item.plannedStartTime.slice(0, 5) }}</small></td>
                 <th scope="row" class="maintenance-journal__vehicle"><a :href="`#maintenance/${item.id}`">{{ item.vehicleDisplayName }}</a><small v-if="item.registrationPlate && !item.vehicleDisplayName.includes(item.registrationPlate)">{{ item.registrationPlate }}</small></th>
-                <td class="maintenance-journal__client" :data-label="context.shell.scenario?.code === 'fleet' ? 'Подразделение' : 'Клиент'">{{ item.clientName || '—' }}</td>
-                <td data-label="Работы" class="maintenance-journal__services">{{ item.services[0] || 'Состав работ' }}<small v-if="item.services.length > 1">ещё {{ item.services.length - 1 }}</small></td>
-                <td data-label="Исполнитель" class="maintenance-journal__performer">{{ item.performerNames?.join(', ') || 'Не назначен' }}</td>
-                <td data-label="Статус" class="maintenance-journal__state"><span class="maintenance-journal__status" :data-status="item.status">{{ item.statusName }}</span></td>
-                <td data-label="Оплата" class="maintenance-journal__payment">
-                  <strong>{{ formatMoney(item.amount) }}</strong>
+                <td class="maintenance-journal__client" :data-label="context.shell.scenario?.code === 'fleet' ? t('maintenanceJournal.department') : t('maintenanceJournal.client')">{{ item.clientName || '—' }}</td>
+                <td :data-label="t('maintenanceJournal.work')" class="maintenance-journal__services">{{ item.services[0] || t('maintenanceJournal.serviceComposition') }}<small v-if="item.services.length > 1">{{ t('maintenanceJournal.moreServices', { count: item.services.length - 1 }) }}</small></td>
+                <td :data-label="t('maintenanceJournal.performer')" class="maintenance-journal__performer">{{ item.performerNames?.join(', ') || t('maintenanceJournal.unassigned') }}</td>
+                <td :data-label="t('maintenanceJournal.status')" class="maintenance-journal__state"><span class="maintenance-journal__status" :data-status="item.status">{{ statusLabel(item) }}</span></td>
+                <td :data-label="t('maintenanceJournal.payment')" class="maintenance-journal__payment">
+                  <strong>{{ formatMoney(item.amount, item) }}</strong>
                   <small v-if="item.paymentStatus != null || item.paidAmount != null" :class="{ 'is-paid': item.paymentStatus === 'no_payment_required' || (item.paidAmount != null && item.paidAmount > 0 && debt(item) === 0) }">{{ paymentLabel(item) }}</small>
-                  <small v-if="item.paidAmount != null && debt(item) > 0" class="is-debt">{{ item.status === 4 ? 'Остаток' : 'К оплате' }}: {{ formatMoney(debt(item)) }}</small>
+                  <small v-if="item.paidAmount != null && debt(item) > 0" class="is-debt">{{ item.status === 4 ? t('maintenanceJournal.remaining') : t('maintenanceJournal.due') }}: {{ formatMoney(debt(item), item) }}</small>
                 </td>
-                <td data-label="Действие" class="maintenance-journal__action">
+                <td :data-label="t('maintenanceJournal.action')" class="maintenance-journal__action">
                   <div class="maintenance-journal__actions">
-                    <button class="maintenance-journal__expand" type="button" :aria-label="`${expandedIds.includes(item.id) ? 'Свернуть' : 'Раскрыть'} состав работ: ${item.vehicleDisplayName}`" :aria-expanded="expandedIds.includes(item.id)" :aria-controls="`journal-details-${item.id}`" @click="toggleDetails(item.id)"><span class="maintenance-journal__chevron" aria-hidden="true"></span></button>
-                    <UiButton variant="secondary" :href="`#maintenance/${item.id}`" :aria-label="`Открыть обслуживание: ${item.vehicleDisplayName}`">Открыть</UiButton>
+                    <button class="maintenance-journal__expand" type="button" :aria-label="t(expandedIds.includes(item.id) ? 'maintenanceJournal.collapseWork' : 'maintenanceJournal.expandWork', { vehicle: item.vehicleDisplayName })" :aria-expanded="expandedIds.includes(item.id)" :aria-controls="`journal-details-${item.id}`" @click="toggleDetails(item.id)"><span class="maintenance-journal__chevron" aria-hidden="true"></span></button>
+                    <UiButton variant="secondary" :href="`#maintenance/${item.id}`" :aria-label="t('maintenanceJournal.openMaintenanceFor', { vehicle: item.vehicleDisplayName })">{{ t('maintenanceJournal.open') }}</UiButton>
                   </div>
                 </td>
               </tr>
-              <tr v-if="expandedIds.includes(item.id)" :id="`journal-details-${item.id}`" class="maintenance-journal__details"><td colspan="8"><section :aria-label="`Состав работ: ${item.vehicleDisplayName}`"><h4>Состав работ</h4><div v-for="(line, index) in item.serviceLines ?? []" :key="index" class="maintenance-journal__line"><strong>{{ line.name }}</strong><span>{{ line.employeeName || 'Не назначен' }}</span><span>{{ line.amount == null ? '—' : formatMoney(line.amount) }}</span></div><template v-if="!item.serviceLines?.length"><div v-for="(service, index) in item.services" :key="index" class="maintenance-journal__line"><strong>{{ service }}</strong></div><p v-if="!item.services.length">Состав услуг не указан.</p></template></section></td></tr>
+              <tr v-if="expandedIds.includes(item.id)" :id="`journal-details-${item.id}`" class="maintenance-journal__details"><td colspan="8"><section :aria-label="t('maintenanceJournal.workCompositionFor', { vehicle: item.vehicleDisplayName })"><h4>{{ t('maintenanceJournal.serviceComposition') }}</h4><div v-for="(line, index) in item.serviceLines ?? []" :key="index" class="maintenance-journal__line"><strong>{{ line.name }}</strong><span>{{ line.employeeName || t('maintenanceJournal.unassigned') }}</span><span>{{ line.amount == null ? '—' : formatMoney(line.amount, item) }}</span></div><template v-if="!item.serviceLines?.length"><div v-for="(service, index) in item.services" :key="index" class="maintenance-journal__line"><strong>{{ service }}</strong></div><p v-if="!item.services.length">{{ t('maintenanceJournal.noServices') }}</p></template></section></td></tr>
             </template>
           </tbody>
         </table>
-        <div v-else class="maintenance-journal__empty"><strong>Записи не найдены</strong><span>Измените поиск, статус или интервал дат.</span><UiButton v-if="hasFilters" variant="secondary" @click="resetFilters">Сбросить фильтры</UiButton></div>
+        <div v-else class="maintenance-journal__empty"><strong>{{ t('maintenanceJournal.noRecords') }}</strong><span>{{ t('maintenanceJournal.changeFilters') }}</span><UiButton v-if="hasFilters" variant="secondary" @click="resetFilters">{{ t('maintenanceJournal.resetFilters') }}</UiButton></div>
       </div>
       <div v-if="data.totalCount" class="maintenance-journal__footer">
         <div class="maintenance-journal__summary">
-          <span aria-live="polite">{{ rangeText }}<template v-if="isLoading"> · Обновляем…</template></span>
-          <div class="maintenance-journal__page-size"><span>На странице</span><UiSelect v-model="pageSize" :options="pageSizeOptions" :searchable="false" aria-label="Записей на странице" required /></div>
+          <span aria-live="polite">{{ rangeText }}<template v-if="isLoading"> · {{ t('maintenanceJournal.updating') }}</template></span>
+          <div class="maintenance-journal__page-size"><span>{{ t('maintenanceJournal.perPage') }}</span><UiSelect v-model="pageSize" :options="pageSizeOptions" :searchable="false" :aria-label="t('maintenanceJournal.recordsPerPage')" required /></div>
         </div>
-        <UiPagination :model-value="page" :total-items="data.totalCount" :items-per-page="data.pageSize" :max-pages-shown="3" :disabled="isLoading" label="Страницы журнала" @update:model-value="changePage" />
+        <UiPagination :model-value="page" :total-items="data.totalCount" :items-per-page="data.pageSize" :max-pages-shown="3" :disabled="isLoading" :label="t('maintenanceJournal.pages')" @update:model-value="changePage" />
       </div>
     </template>
   </UiCard>

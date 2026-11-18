@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -17,6 +18,11 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
     private Task _operation = Task.CompletedTask;
     private long _version;
     private bool _isMutationUncertain;
+    private string? _errorTranslationKey;
+    private string? _successTranslationKey;
+    private string? _confirmationTranslationKey;
+    private object?[] _confirmationArguments = [];
+    private bool _isSettingLocalizedMessage;
     private IReadOnlyList<AdminPromoCode> _promoCodes = [];
     private IReadOnlyList<AdminSubscriptionPlan> _plans = [];
     private int? _selectedId;
@@ -113,7 +119,7 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
     [NotifyPropertyChangedFor(nameof(CanEditScope))]
     [NotifyPropertyChangedFor(nameof(AvailablePaidPlans))]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
-    private PromoCodeOption _selectedBenefit = new(BonusDaysCode, "Подарочные дни");
+    private PromoCodeOption _selectedBenefit = PromoCodeOption.Localized(BonusDaysCode, "native.promoCodes.podarochnye.dni");
 
     [ObservableProperty]
     private string _bonusDaysText = "30";
@@ -203,34 +209,34 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
 
     public bool SelectedPromoCodeIsActive => this.SelectedPromoCode?.IsActive == true;
 
-    public string StatusActionLabel => this.SelectedPromoCodeIsActive ? "Отключить" : "Включить";
+    public string StatusActionLabel => this.SelectedPromoCodeIsActive ? AdminLocalization.Instance["native.plans.otklyuchit"] : AdminLocalization.Instance["native.plans.vklyuchit"];
 
     public bool HasUsages => this.Usages.Count > 0;
 
-    public string UsageCountLabel => $"Применений: {this.Usages.Count}";
+    public string UsageCountLabel => AdminLocalization.Instance.Format("native.promoCodes.primeneniy.this.usages.count", this.Usages.Count);
 
     public string LegacyBenefit => this.SelectedPromoCode?.DemoDurationDays is int days
-        ? $"Исторический регистрационный бонус: {days} дн."
+        ? AdminLocalization.Instance.Format("native.promoCodes.istoricheskiy.registratsionnyy.bonus.days.dn", days)
         : this.SelectedPromoCode?.DiscountTypeCode switch
         {
-            "percentage" => $"Скидка: {this.SelectedPromoCode.DiscountValue}%",
-            "fixed_amount" or "fixed_price" => $"Скидка: {this.SelectedPromoCode.DiscountValue:N2} ₽",
-            _ => "Без бонуса"
+            "percentage" => AdminLocalization.Instance.Format("native.promoCodes.skidka.this.selectedpromocode.discountvalue", this.SelectedPromoCode.DiscountValue),
+            "fixed_amount" or "fixed_price" => AdminLocalization.Instance.Format("native.promoCodes.skidka.this.selectedpromocode.discountvalue.n2", this.SelectedPromoCode.DiscountValue),
+            _ => AdminLocalization.Instance["native.promoCodes.bez.bonusa"]
         };
 
     public IReadOnlyList<PromoCodeOption> BenefitOptions { get; } =
     [
-        new(BonusDaysCode, "Подарочные дни"),
-        new("percentage", "Скидка в процентах"),
-        new("fixed_amount", "Скидка в рублях")
+        PromoCodeOption.Localized(BonusDaysCode, "native.promoCodes.podarochnye.dni"),
+        PromoCodeOption.Localized("percentage", "native.promoCodes.skidka.v.protsentakh"),
+        PromoCodeOption.Localized("fixed_amount", "native.promoCodes.skidka.v.rublyakh")
     ];
 
     public IReadOnlyList<PromoCodeOption> StatusOptions { get; } =
-    [new("all", "Все статусы"), new("active", "Активные"), new("inactive", "Отключённые")];
+    [PromoCodeOption.Localized("all", "native.promoCodes.vse.statusy"), PromoCodeOption.Localized("active", "native.billing.aktivnye"), PromoCodeOption.Localized("inactive", "native.promoCodes.otklyuchyonnye")];
 
     // HIDDEN_FLEET: служебный редактор сохраняет область старых промокодов. См. docs/hidden-fleet-scenario.md.
     public IReadOnlyList<PromoCodeOption> ScenarioOptions { get; } =
-    [new("detailing", "Детейлинг"), new("service-station", "СТО"), new("fleet", "Автопарк")];
+    [PromoCodeOption.Localized("detailing", "native.promoCodes.deteyling"), PromoCodeOption.Localized("service-station", "native.promoCodes.sto"), PromoCodeOption.Localized("fleet", "native.promoCodes.avtopark")];
 
     public IReadOnlyList<AdminSubscriptionPlan> AvailablePaidPlans => this._plans
         .Where(plan => plan.IsActive && plan.PlanTypeCode == "business" && !plan.IsDemoPlan && !plan.IsDefaultPlan)
@@ -254,6 +260,27 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
     }
 
     public string SelectedPlanNames => string.Join(", ", this.SelectedPlans.Select(plan => plan.Name));
+
+    public void RefreshLocalizedValues()
+    {
+        this.RefreshLocalizedMessages();
+        foreach (var option in this.BenefitOptions.Concat(this.StatusOptions).Concat(this.ScenarioOptions))
+        {
+            option.RefreshLocalizedValues();
+        }
+
+        this.OnPropertyChanged((string?)null);
+        foreach (var row in this.Rows)
+        {
+            row.RefreshLocalizedValues();
+        }
+
+        if (this.IsConfirmationOpen && this.SelectedPromoCode != null)
+        {
+            this.SetLocalizedConfirmation(
+                "native.promoCodes.udalit.promokod.this.selectedpromocode.code.eto.deystvie.nelzya.", this.SelectedPromoCode.Code);
+        }
+    }
 
     public IReadOnlyList<PromoCodeUsageRow> UsageRows => this.Usages
         .Select(usage => new PromoCodeUsageRow(
@@ -467,7 +494,7 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
             }
 
             await this.LoadDataAsync(this._selectedId, token);
-            this.SuccessMessage = "Промокод сохранён.";
+            this.SetLocalizedSuccess("native.promoCodes.promokod.sokhranyon");
         });
     }
 
@@ -485,7 +512,7 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
             await this.RunMutationAsync(() => this._sessionClient.SetPromoCodeStatusAsync(promoCode.Id, !promoCode.IsActive, token));
             this._selectedId = promoCode.Id;
             await this.LoadDataAsync(this._selectedId, token);
-            this.SuccessMessage = promoCode.IsActive ? "Промокод отключён." : "Промокод включён.";
+            this.SetLocalizedSuccess(promoCode.IsActive ? "native.promoCodes.promokod.otklyuchyon" : "native.promoCodes.promokod.vklyuchyon");
         });
     }
 
@@ -494,11 +521,11 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
     {
         if (!this.CanDelete)
         {
-            this.ErrorMessage = "Промокод уже использован. Его можно отключить, но нельзя удалить.";
+            this.SetLocalizedError("native.promoCodes.promokod.uzhe.ispolzovan.ego.mozhno.otklyuchit.no.nelzya.udalit");
             return;
         }
 
-        this.ConfirmationMessage = $"Удалить промокод «{this.SelectedPromoCode!.Code}»? Это действие нельзя отменить.";
+        this.SetLocalizedConfirmation("native.promoCodes.udalit.promokod.this.selectedpromocode.code.eto.deystvie.nelzya.", this.SelectedPromoCode!.Code);
         this.IsConfirmationOpen = true;
     }
 
@@ -516,7 +543,7 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
             await this.RunMutationAsync(() => this._sessionClient.DeletePromoCodeAsync(promoCode.Id, token));
             this._selectedId = null;
             this.CloseEditor();
-            this.SuccessMessage = "Промокод удалён.";
+            this.SetLocalizedSuccess("native.promoCodes.promokod.udalyon");
             await this.LoadDataAsync(null, token);
         });
     }
@@ -525,33 +552,33 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
     {
         if (this.Code.Trim().Length is < 1 or > 64)
         {
-            return "Код промокода должен содержать от 1 до 64 символов.";
+            return AdminLocalization.Instance["native.promoCodes.kod.promokoda.dolzhen.soderzhat.ot.1.do.64.simvolov"];
         }
 
         if (this.Name.Trim().Length is < 1 or > 160)
         {
-            return "Название должно содержать от 1 до 160 символов.";
+            return AdminLocalization.Instance["native.promoCodes.nazvanie.dolzhno.soderzhat.ot.1.do.160.simvolov"];
         }
 
         if (this.Description.Length > 1000)
         {
-            return "Описание не должно превышать 1000 символов.";
+            return AdminLocalization.Instance["native.promoCodes.opisanie.ne.dolzhno.prevyshat.1000.simvolov"];
         }
 
         if (!TryParseLocalDate(this.ValidFromText, out var validFrom)
             || !TryParseLocalDate(this.ValidUntilText, out var validUntil))
         {
-            return "Введите дату и время в формате ГГГГ-ММ-ДД ЧЧ:ММ.";
+            return AdminLocalization.Instance["native.promoCodes.vvedite.datu.i.vremya.v.formate.gggg.mm.dd.chch.mm"];
         }
 
         if (validFrom.HasValue && validUntil.HasValue && validFrom.Value >= validUntil.Value)
         {
-            return "Дата окончания должна быть позже даты начала.";
+            return AdminLocalization.Instance["native.promoCodes.data.okonchaniya.dolzhna.byt.pozzhe.daty.nachala"];
         }
 
         if (!TryParseOptionalPositiveInt(this.MaximumRedemptionsText, out var maximumRedemptions))
         {
-            return "Лимит регистраций должен быть целым числом не меньше 1.";
+            return AdminLocalization.Instance["native.promoCodes.limit.registratsiy.dolzhen.byt.tselym.chislom.ne.menshe.1"];
         }
 
         if (this.IsLegacySelected)
@@ -563,12 +590,12 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
         {
             if (this.GiftPlan is not { IsActive: true, IsDemoPlan: false, IsDefaultPlan: false, PlanTypeCode: "business" })
             {
-                return "Выберите активный платный бизнес-тариф для подарочного доступа.";
+                return AdminLocalization.Instance["native.promoCodes.vyberite.aktivnyy.platnyy.biznes.tarif.dlya.podarochnogo.dostupa"];
             }
 
             if (!TryParseBoundedInt(this.BonusDaysText, 1, 3650, out _))
             {
-                return "Количество подарочных дней должно быть от 1 до 3650.";
+                return AdminLocalization.Instance["native.promoCodes.kolichestvo.podarochnykh.dney.dolzhno.byt.ot.1.do.3650"];
             }
         }
         else
@@ -579,29 +606,29 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
                 || (this.SelectedBenefit.Code == "percentage" && value > 99))
             {
                 return this.SelectedBenefit.Code == "percentage"
-                    ? "Процент скидки должен быть больше 0 и не превышать 99."
-                    : "Укажите положительный размер скидки.";
+                    ? AdminLocalization.Instance["native.promoCodes.protsent.skidki.dolzhen.byt.bolshe.0.i.ne.prevyshat.99"]
+                    : AdminLocalization.Instance["native.promoCodes.ukazhite.polozhitelnyy.razmer.skidki"];
             }
 
             if (this.SelectedPlans.Count == 0)
             {
-                return "Выберите хотя бы один платный бизнес-тариф.";
+                return AdminLocalization.Instance["native.promoCodes.vyberite.khotya.by.odin.platnyy.biznes.tarif"];
             }
 
             if (!TryParseOptionalBoundedInt(this.DiscountValidityDaysText, 1, 3650, out _))
             {
-                return "Срок скидки должен быть целым числом от 1 до 3650 дней.";
+                return AdminLocalization.Instance["native.promoCodes.srok.skidki.dolzhen.byt.tselym.chislom.ot.1.do.3650.dney"];
             }
         }
 
         if (!this.AppliesToAllScenarios && !this.HasSelectedScenario)
         {
-            return "Выберите хотя бы одно направление или включите все направления.";
+            return AdminLocalization.Instance["native.promoCodes.vyberite.khotya.by.odno.napravlenie.ili.vklyuchite.vse.napravlen"];
         }
 
         if (!TryParseOptionalPositiveInt(this.OrganizationLimitText, out _))
         {
-            return "Лимит применений организациями должен быть целым числом не меньше 1.";
+            return AdminLocalization.Instance["native.promoCodes.limit.primeneniy.organizatsiyami.dolzhen.byt.tselym.chislom.ne.m"];
         }
 
         return string.Empty;
@@ -711,7 +738,7 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
                 this.IsCreating = false;
             }
 
-            this.ErrorMessage = "Не удалось подтвердить результат операции. Обновите список перед следующими изменениями.";
+            this.SetLocalizedError("native.promoCodes.ne.udalos.podtverdit.rezultat.operatsii.obnovite.spisok.pered.sl");
             throw;
         }
     }
@@ -783,16 +810,29 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
         }
         catch (ApiException exception) when (version == this._version && this._isActive)
         {
-            this.ErrorMessage = this.IsMutationUncertain
-                ? "Не удалось подтвердить результат операции. Обновите список перед следующими изменениями."
-                : exception.Message;
             if (exception.StatusCode == HttpStatusCode.Unauthorized)
             {
                 this.SessionExpired?.Invoke();
+                return;
             }
-            else if (exception.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
+
+            if (exception.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
             {
                 await this.AccessDenied.Invoke();
+                return;
+            }
+
+            if (this.IsMutationUncertain)
+            {
+                this.SetLocalizedError("native.promoCodes.ne.udalos.podtverdit.rezultat.operatsii.obnovite.spisok.pered.sl");
+            }
+            else if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportErrorKey)
+            {
+                this.SetLocalizedError(transportErrorKey);
+            }
+            else
+            {
+                this.ErrorMessage = exception.Message;
             }
         }
         catch (ApiException) when (version != this._version || !this._isActive)
@@ -801,7 +841,7 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
         }
         catch (HttpRequestException) when (version == this._version && this._isActive)
         {
-            this.ErrorMessage = "Не удалось связаться с сервером. Проверьте подключение.";
+            this.SetLocalizedError("native.promoCodes.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie");
         }
         finally
         {
@@ -1006,4 +1046,75 @@ public partial class PromoCodesViewModel(AdminSessionClient sessionClient) : Obs
     private bool CanConfirmDelete() => this.CanEdit && this.IsConfirmationOpen && this.CanDelete;
 
     private bool CanAddPlan() => this.CanEdit && this.SelectedPlanToAdd != null && this.CanEditScope;
+
+    private void SetLocalizedError(string key)
+    {
+        this._errorTranslationKey = key;
+        this._isSettingLocalizedMessage = true;
+        this.ErrorMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedMessage = false;
+    }
+
+    private void SetLocalizedSuccess(string key)
+    {
+        this._successTranslationKey = key;
+        this._isSettingLocalizedMessage = true;
+        this.SuccessMessage = AdminLocalization.Instance[key];
+        this._isSettingLocalizedMessage = false;
+    }
+
+    private void SetLocalizedConfirmation(string key, params object?[] arguments)
+    {
+        this._confirmationTranslationKey = key;
+        this._confirmationArguments = arguments;
+        this._isSettingLocalizedMessage = true;
+        this.ConfirmationMessage = AdminLocalization.Instance.Format(key, arguments);
+        this._isSettingLocalizedMessage = false;
+    }
+
+    private void RefreshLocalizedMessages()
+    {
+        this._isSettingLocalizedMessage = true;
+        if (this._errorTranslationKey is { } errorKey)
+        {
+            this.ErrorMessage = AdminLocalization.Instance[errorKey];
+        }
+
+        if (this._successTranslationKey is { } successKey)
+        {
+            this.SuccessMessage = AdminLocalization.Instance[successKey];
+        }
+
+        if (this._confirmationTranslationKey is { } confirmationKey)
+        {
+            this.ConfirmationMessage = AdminLocalization.Instance.Format(confirmationKey, this._confirmationArguments);
+        }
+
+        this._isSettingLocalizedMessage = false;
+    }
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedMessage)
+        {
+            this._errorTranslationKey = null;
+        }
+    }
+
+    partial void OnSuccessMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedMessage)
+        {
+            this._successTranslationKey = null;
+        }
+    }
+
+    partial void OnConfirmationMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedMessage)
+        {
+            this._confirmationTranslationKey = null;
+            this._confirmationArguments = [];
+        }
+    }
 }

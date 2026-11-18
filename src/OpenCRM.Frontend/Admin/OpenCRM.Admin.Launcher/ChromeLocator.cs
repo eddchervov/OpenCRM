@@ -33,7 +33,7 @@ internal static class ChromeLocator
         var chromePath = candidates.FirstOrDefault(File.Exists);
         if (chromePath == null)
         {
-            throw new FileNotFoundException("Google Chrome не установлен.");
+            throw new FileNotFoundException(LauncherText.Get("ChromeNotInstalled"));
         }
 
         return chromePath;

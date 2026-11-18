@@ -92,7 +92,10 @@ public sealed class VehicleReportWorkflow(
 
             model.GeneratedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
             model.TotalMaintenanceCount = maintenanceHistory.Count;
-            model.TotalSpent = maintenanceHistory.Sum(maintenance => maintenance.Price ?? 0);
+            model.CurrencyTotals = maintenanceHistory
+                .GroupBy(maintenance => maintenance.CurrencyCode)
+                .ToDictionary(group => group.Key, group => group.Sum(maintenance => maintenance.Price ?? 0));
+            model.TotalSpent = model.CurrencyTotals.Count == 1 ? model.CurrencyTotals.Values.Single() : 0;
             documentBytes = await pdfGeneratorService.GenerateVehiclePdfAsync(model, includePhotos);
             contentType = "application/pdf";
             await vehicleService.TrackDocumentGenerated(
@@ -110,6 +113,11 @@ public sealed class VehicleReportWorkflow(
             {
                 model.MaintenanceHistory.Add(VehicleReportModelAdapter.CreateWordMaintenance(maintenance));
             }
+
+            model.CurrencyTotals = maintenanceHistory
+                .GroupBy(maintenance => maintenance.CurrencyCode)
+                .ToDictionary(group => group.Key, group => group.Sum(maintenance => maintenance.Price ?? 0));
+            model.TotalSpent = model.CurrencyTotals.Count == 1 ? model.CurrencyTotals.Values.Single() : 0;
 
             documentBytes = await docxGeneratorService.GenerateVehicleHistoryDocxAsync(model, includePhotos);
             contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";

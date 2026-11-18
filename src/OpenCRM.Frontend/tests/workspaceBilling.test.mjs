@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '@opencrm/workspace/billingMessages'
+import { i18n, formattingCulture, setFormattingCulture } from '@opencrm/ui/i18n'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -22,6 +25,8 @@ const button = vue.defineComponent({
 function component(inlineTemplate = false) {
   const module = { exports: {} }
   new Function('require', 'module', 'exports', compile(inlineTemplate))(id => {
+    if (regionalTestDependencies[id]) return regionalTestDependencies[id]
+    if (id === '../billingMessages') return {}
     if (id === 'vue') return vue
     if (id === '@opencrm/ui') return { UiButton: button, UiTooltip: passthrough }
     return { default: vue.defineComponent({ setup: () => () => null }) }
@@ -96,6 +101,41 @@ test('Страница тарифов показывает понятные за
   assert.match(html, /Что даёт PRO/)
   assert.match(html, /Подробнее о тарифе/)
   assert.match(html, />Тарифы<\/h3>/)
-  assert.match(html, /1<\/b> участник/)
+  assert.match(html, /Участников: 1/)
   assert.doesNotMatch(html, /30days|Что включено|Без ограничения срока\. Расширенная/)
+})
+
+test('Перевод тарифов сохраняет валюту подписки RUB при валюте организации CNY', async () => {
+  const originalLocale = i18n.global.locale.value
+  const originalCulture = formattingCulture.value
+  try {
+    const { props } = setup()
+    props.billing.organization.currencyCode = 'CNY'
+    for (const [locale, label] of [['en', 'Members: 1'], ['zh-Hans', '成员：1']]) {
+      i18n.global.locale.value = locale
+      setFormattingCulture('en-GB')
+      const html = await renderToString(vue.createSSRApp({ render: () => vue.h(component(true), props) }))
+      assert.ok(html.includes(label))
+      assert.match(html, /RUB/)
+      assert.doesNotMatch(html, /CNY|руб\./)
+    }
+  } finally { i18n.global.locale.value = originalLocale; setFormattingCulture(originalCulture) }
+})
+
+test('Срок продления переводится по данным тарифа без разбора русского текста сервера', () => {
+  const originalLocale = i18n.global.locale.value
+  try {
+    const { props, state } = setup()
+    props.billing.effectivePlan = { id: 2, name: 'PRO' }
+    props.billing.currentSubscription = { endDate: '2026-12-01T00:00:00Z' }
+    props.billing.businessDaysUntilExpiry = 20
+    props.billing.canExtendBusinessSubscription = false
+    props.billing.businessExtensionMessage = 'Продление откроется за 7 дней до окончания. Осталось дней: 20.'
+    i18n.global.locale.value = 'en'
+    assert.equal(state.extensionUnavailableMessage.value, 'Renewal becomes available 7 days before expiry. Days remaining: 20.')
+    i18n.global.locale.value = 'zh-Hans'
+    assert.equal(state.extensionUnavailableMessage.value, '到期前 7 天可续订。剩余天数：20。')
+    props.billing.canExtendBusinessSubscription = true
+    assert.equal(state.extensionUnavailableMessage.value, '')
+  } finally { i18n.global.locale.value = originalLocale }
 })

@@ -2,6 +2,14 @@
     var root = document.querySelector('[data-ai-pilot]');
     if (!root) return;
 
+    var uiMessages = JSON.parse(root.dataset.uiMessages || '{}');
+    function uiText(key, parameters) {
+        return (uiMessages[key] || key).replace(/\{(\w+)\}/g, function (_, name) {
+            return parameters && parameters[name] !== undefined ? parameters[name] : '{' + name + '}';
+        });
+    }
+
+
     var apiBase = root.dataset.apiUrl || '';
     var organizationId = root.dataset.organizationId || '';
     var tabs = Array.from(root.querySelectorAll('[data-assistant-tab]'));
@@ -50,7 +58,7 @@
         var payload = {};
         try { payload = await response.json(); } catch (error) { payload = {}; }
         if (!response.ok) {
-            throw new Error(payload.message || 'Не удалось загрузить данные. Попробуйте ещё раз.');
+            throw new Error(payload.message || uiText('loadDataFailed'));
         }
 
         return payload;
@@ -109,18 +117,18 @@
             ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
             : new Date(value);
         if (Number.isNaN(date.getTime())) return '—';
-        return new Intl.DateTimeFormat('ru-RU', includeTime
-            ? { dateStyle: 'short', timeStyle: 'short' }
+        return new Intl.DateTimeFormat(root.dataset.formatCulture || 'ru-RU', includeTime
+            ? { dateStyle: 'short', timeStyle: 'short', timeZone: root.dataset.timeZoneId || 'UTC' }
             : { dateStyle: 'short' }).format(date);
     }
 
     function formatMoney(value) {
-        if (value === null || value === undefined || !Number.isFinite(Number(value))) return 'Неизвестно';
-        return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(Number(value));
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) return uiText('unknown');
+        return new Intl.NumberFormat(root.dataset.formatCulture || 'ru-RU', { style: 'currency', currency: 'RUB', currencyDisplay: 'code', maximumFractionDigits: 2 }).format(Number(value));
     }
 
     function formatNumber(value) {
-        return new Intl.NumberFormat('ru-RU').format(Number(value) || 0);
+        return new Intl.NumberFormat(root.dataset.formatCulture || 'ru-RU').format(Number(value) || 0);
     }
 
     function setMessage(element, message, isError) {
@@ -132,21 +140,21 @@
     async function loadHistory() {
         if (isBusy) return;
         setBusy(true);
-        setMessage(historyStatus, 'Загружаем историю…', false);
+        setMessage(historyStatus, uiText('loadingHistoryNow'), false);
         try {
             var result = await getJson('history?' + params({ page: historyPage, channel: historyChannel.value }));
             historyPage = result.page || 1;
             historyPageSize = result.pageSize || historyPageSize;
             historyContent.hidden = false;
             root.querySelector('[data-history-retention]').textContent = result.retentionDays
-                ? 'История хранится ' + formatNumber(result.retentionDays) + ' дн.'
+                ? uiText('retention', { count: formatNumber(result.retentionDays) })
                 : '';
             renderHistoryItems(result.items || []);
             renderPagination('history', historyPage, historyPageSize, result.totalCount, function (page) {
                 historyPage = page;
                 void loadHistory();
             });
-            setMessage(historyStatus, result.items && result.items.length ? '' : 'Разговоров пока нет.', false);
+            setMessage(historyStatus, result.items && result.items.length ? '' : uiText('noConversations'), false);
             historyLoaded = true;
             var conversationId = '';
             if (selectedConversationId && result.items.some(function (item) { return item.id === selectedConversationId; })) {
@@ -160,7 +168,7 @@
             setBusy(false);
             if (conversationId) await loadConversation(conversationId, conversationId === selectedConversationId ? messagePage : 1);
         } catch (error) {
-            setMessage(historyStatus, error.message || 'Не удалось загрузить историю.', true);
+            setMessage(historyStatus, error.message || uiText('loadHistoryFailed'), true);
         } finally {
             setBusy(false);
         }
@@ -184,7 +192,7 @@
             button.type = 'button';
             button.textContent = String(number);
             button.dataset.page = String(number);
-            button.setAttribute('aria-label', 'Страница ' + number);
+            button.setAttribute('aria-label', uiText('page', { number: number }));
             if (number === page) button.setAttribute('aria-current', 'page');
             button.addEventListener('click', function (event) {
                 if (!isBusy) navigate(Number(event.currentTarget.dataset.page));
@@ -203,11 +211,11 @@
             button.setAttribute('aria-current', item.id === selectedConversationId ? 'true' : 'false');
 
             var heading = document.createElement('strong');
-            heading.textContent = item.userName || 'Сотрудник';
+            heading.textContent = item.userName || uiText('employee');
             var meta = document.createElement('span');
-            meta.textContent = (item.channel === 'telegram' ? 'Telegram' : 'Сайт') + ' · ' + formatDate(item.updatedAt || item.createdAt, true);
+            meta.textContent = (item.channel === 'telegram' ? 'Telegram' : uiText('web')) + ' · ' + formatDate(item.updatedAt || item.createdAt, true);
             var preview = document.createElement('p');
-            preview.textContent = item.preview || 'Пустой разговор';
+            preview.textContent = item.preview || uiText('emptyConversation');
             button.append(heading, meta, preview);
             button.addEventListener('click', function () { void loadConversation(item.id, 1); });
             historyList.appendChild(button);
@@ -215,7 +223,7 @@
     }
 
     function resetHistoryDetail() {
-        root.querySelector('[data-history-title]').textContent = 'Выберите разговор';
+        root.querySelector('[data-history-title]').textContent = uiText('selectConversation');
         root.querySelector('[data-history-meta]').textContent = '';
         historyMessages.replaceChildren();
         historyResume.hidden = true;
@@ -236,15 +244,15 @@
             messagePage = result.page || 1;
             messagePageSize = result.pageSize || messagePageSize;
             messageTotalCount = result.totalCount || 0;
-            root.querySelector('[data-history-title]').textContent = result.userName || 'Сотрудник';
-            root.querySelector('[data-history-meta]').textContent = (result.channel === 'telegram' ? 'Telegram' : 'Сайт') +
-                ' · ' + formatDate(result.createdAt, true) + (result.isClosed ? ' · завершён' : '');
+            root.querySelector('[data-history-title]').textContent = result.userName || uiText('employee');
+            root.querySelector('[data-history-meta]').textContent = (result.channel === 'telegram' ? 'Telegram' : uiText('web')) +
+                ' · ' + formatDate(result.createdAt, true) + (result.isClosed ? uiText('closedSuffix') : '');
             historyMessages.replaceChildren();
             (result.messages || []).forEach(function (message) {
                 var bubble = document.createElement('article');
                 bubble.className = 'history-message ' + (message.role === 'user' ? 'is-user' : 'is-assistant');
                 var role = document.createElement('strong');
-                role.textContent = message.role === 'user' ? 'Сотрудник' : 'Помощник';
+                role.textContent = message.role === 'user' ? uiText('employee') : uiText('assistant');
                 var text = document.createElement('p');
                 text.textContent = message.text || '';
                 var time = document.createElement('time');
@@ -263,7 +271,7 @@
                 button.setAttribute('aria-current', String(selected));
             });
         } catch (error) {
-            setMessage(historyStatus, error.message || 'Не удалось открыть разговор.', true);
+            setMessage(historyStatus, error.message || uiText('openConversationFailed'), true);
         } finally {
             setBusy(false);
         }
@@ -288,15 +296,15 @@
         };
         var budgets = root.querySelector('[data-usage-budgets]');
         budgets.replaceChildren(
-            card('Расход сегодня', formatMoney(day.costRub), 'Лимит организации: ' + formatMoney(limits.dailyBudgetRub)),
-            card('Остаток за день', formatMoney(day.remainingRub), formatNumber(day.requestCount) + ' запросов'),
-            card('Расход за месяц', formatMoney(month.costRub), 'Лимит организации: ' + formatMoney(limits.monthlyBudgetRub)),
-            card('Остаток за месяц', formatMoney(month.remainingRub), 'С учётом резервов' + (month.unknownCount ? ' · Уточнить: ' + formatNumber(month.unknownCount) : ''))
+            card(uiText('todayCost'), formatMoney(day.costRub), uiText('organizationLimit', { amount: formatMoney(limits.dailyBudgetRub) })),
+            card(uiText('dayRemaining'), formatMoney(day.remainingRub), uiText('requestCount', { count: formatNumber(day.requestCount) })),
+            card(uiText('monthCost'), formatMoney(month.costRub), uiText('organizationLimit', { amount: formatMoney(limits.monthlyBudgetRub) })),
+            card(uiText('monthRemaining'), formatMoney(month.remainingRub), uiText('withReserves') + (month.unknownCount ? uiText('unknownCount', { count: formatNumber(month.unknownCount) }) : ''))
         );
         if (scope === 'self') {
             var note = document.createElement('p');
             note.className = 'field-help';
-            note.textContent = 'Личные запросы и расходы. Остатки показывают общий лимит организации.';
+            note.textContent = uiText('personalUsageHelp');
             budgets.appendChild(note);
         }
     }
@@ -304,12 +312,12 @@
     function usageSummary(totals) {
         var summary = root.querySelector('[data-usage-summary]');
         var values = [
-            ['Фактический расход', formatMoney(totals.costRub)],
-            ['Зарезервировано', formatMoney(totals.reservedRub)],
-            ['Запросы', formatNumber(totals.requestCount)],
-            ['Входные токены', formatNumber(totals.inputTokens)],
-            ['Выходные токены', formatNumber(totals.outputTokens)],
-            ['Неизвестные расходы', formatNumber(totals.unknownCount)]
+            [uiText('actualCost'), formatMoney(totals.costRub)],
+            [uiText('reservedCost'), formatMoney(totals.reservedRub)],
+            [uiText('requests'), formatNumber(totals.requestCount)],
+            [uiText('inputTokens'), formatNumber(totals.inputTokens)],
+            [uiText('outputTokens'), formatNumber(totals.outputTokens)],
+            [uiText('unknownCosts'), formatNumber(totals.unknownCount)]
         ];
         summary.replaceChildren();
         values.forEach(function (item) {
@@ -347,7 +355,7 @@
             var empty = document.createElement('tr');
             var cell = document.createElement('td');
             cell.colSpan = 5;
-            cell.textContent = 'За выбранный период запросов нет.';
+            cell.textContent = uiText('noRequests');
             empty.appendChild(cell);
             body.appendChild(empty);
         }
@@ -356,7 +364,7 @@
     async function loadUsage(useFilters) {
         if (isBusy) return;
         setBusy(true);
-        setMessage(usageStatus, 'Загружаем использование…', false);
+        setMessage(usageStatus, uiText('loadingUsage'), false);
         try {
             var filters = useFilters ? { from: usageFrom.value, to: usageTo.value, channel: usageChannel.value } : {};
             var result = await getJson('usage?' + params(filters));
@@ -372,15 +380,15 @@
             usageCards(selected.scope, selected.day, selected.month, selected.limits);
             usageSummary(selected.totals);
             renderUsageTable('[data-usage-channels]', selected.byChannel, function (item) {
-                return item.channel === 'telegram' ? 'Telegram' : 'Сайт';
+                return item.channel === 'telegram' ? 'Telegram' : uiText('web');
             });
             renderUsageTable('[data-usage-users]', selected.byUser, function (item) {
-                return item.userName || item.userId || 'Сотрудник';
+                return item.userName || item.userId || uiText('employee');
             }, true);
             setMessage(usageStatus, '', false);
             usageLoaded = true;
         } catch (error) {
-            setMessage(usageStatus, error.message || 'Не удалось загрузить расходы.', true);
+            setMessage(usageStatus, error.message || uiText('loadUsageFailed'), true);
         } finally {
             setBusy(false);
         }

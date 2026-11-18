@@ -1,4 +1,6 @@
-﻿export type WorkspaceScenarioCatalogItem = {
+﻿import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
+export type WorkspaceScenarioCatalogItem = {
   id: string
   kindCode: string
   code: string
@@ -82,7 +84,7 @@ export async function loadScenarioCatalog(organizationId: string, signal?: Abort
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить справочники.')
+    throw new Error(error?.message ?? translate('workspaceApi.loadCatalog'))
   }
 
   return response.json()
@@ -101,7 +103,7 @@ export async function createScenarioCatalogItem(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось добавить элемент справочника.')
+    throw new Error(error?.message ?? translate('workspaceApi.createCatalogItem'))
   }
 
   return response.json()
@@ -121,7 +123,7 @@ export async function updateScenarioCatalogItem(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось сохранить элемент справочника.')
+    throw new Error(error?.message ?? translate('workspaceApi.saveCatalogItem'))
   }
 
   return response.json()
@@ -139,7 +141,7 @@ export async function deleteScenarioCatalogItem(
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось удалить элемент справочника.')
+    throw new Error(error?.message ?? translate('workspaceApi.deleteCatalogItem'))
   }
 }
 
@@ -158,7 +160,7 @@ export async function loadWorkPostAffectedMaintenances(organizationId: string, i
     return { totalCount: 0, items: [], canViewMaintenances: false }
   }
   if (!response.ok) {
-    throw new Error('Не удалось проверить назначения на пост. Повторите попытку.')
+    throw new Error(translate('workspaceApi.checkPostAssignments'))
   }
 
   return response.json()

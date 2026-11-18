@@ -1,4 +1,5 @@
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -180,36 +181,46 @@ public sealed record UserActivityRow(AdminUserActivityItem Item)
     public string OccurredAt => UserDisplayFormatting.DateTime(this.Item.OccurredAt);
 
     public string User => string.IsNullOrWhiteSpace(this.Item.UserLabel) || this.Item.UserLabel == this.Item.UserId
-        ? "Пользователь без email"
+        ? AdminLocalization.Instance["activity.userMissingEmail"]
         : this.Item.UserLabel;
 
     public string Organization => this.Item.OrganizationName
-        ?? (this.Item.OrganizationId.HasValue ? "Организация недоступна" : "Без организации");
+        ?? AdminLocalization.Instance[this.Item.OrganizationId.HasValue ? "activity.organizationUnavailable" : "activity.noOrganization"];
 
     public string Event => this.Item.Kind switch
     {
-        "page" => "Открытие страницы",
+        "page" => AdminLocalization.Instance["activity.event.page"],
         "operation" => this.GetOperationLabel(),
-        "click" when this.Item.Action == "button" => "Нажатие кнопки",
-        "click" => s_actionLabels.GetValueOrDefault(this.Item.Action, "Нажатие кнопки"),
-        _ => s_actionLabels.GetValueOrDefault(this.Item.Action, "Действие")
+        "click" when this.Item.Action == "button" => AdminLocalization.Instance["activity.event.clickButton"],
+        "click" => s_actionLabels.ContainsKey(this.Item.Action)
+            ? AdminLocalization.Instance[$"activity.action.{this.Item.Action}"]
+            : this.Item.Action,
+        _ => s_actionLabels.ContainsKey(this.Item.Action)
+            ? AdminLocalization.Instance[$"activity.action.{this.Item.Action}"]
+            : this.Item.Action
     };
 
     public string Location
     {
         get
         {
-            var scenario = s_scenarioLabels.GetValueOrDefault(this.Item.Scenario, string.Empty);
+            var scenario = s_scenarioLabels.ContainsKey(this.Item.Scenario)
+                ? AdminLocalization.Instance[$"activity.scenario.{this.Item.Scenario.ToLowerInvariant()}"]
+                : this.Item.Scenario;
             var parts = this.Item.Page.Split('/', StringSplitOptions.RemoveEmptyEntries);
             var skip = parts.Length > 1 && parts[0] == "clients" && s_scenarioLabels.ContainsKey(parts[1]) ? 2 : 0;
             var pageLabels = parts.Skip(skip)
-                .Select(part => s_sectionLabels.GetValueOrDefault(part, string.Empty))
+                .Select(part => s_sectionLabels.ContainsKey(part)
+                    ? AdminLocalization.Instance[$"activity.section.{part.ToLowerInvariant()}"]
+                    : string.Empty)
                 .Where(label => !string.IsNullOrEmpty(label) && label != scenario)
                 .Distinct()
                 .ToArray();
             var page = pageLabels.Length > 0
                 ? string.Join(" · ", pageLabels)
-                : s_sectionLabels.GetValueOrDefault(this.Item.Section, string.Empty);
+                : s_sectionLabels.ContainsKey(this.Item.Section)
+                    ? AdminLocalization.Instance[$"activity.section.{this.Item.Section.ToLowerInvariant()}"]
+                    : this.Item.Section;
 
             return string.IsNullOrEmpty(page) || page == scenario ? scenario
                 : string.IsNullOrEmpty(scenario) ? page
@@ -222,11 +233,14 @@ public sealed record UserActivityRow(AdminUserActivityItem Item)
         var parts = this.Item.Action.Split(':');
         var action = parts[0] switch
         {
-            "DELETE" => "Удаление",
-            "PUT" or "PATCH" => "Сохранение изменений",
-            _ => "Отправка данных"
+            "DELETE" => AdminLocalization.Instance["activity.operation.delete"],
+            "PUT" or "PATCH" => AdminLocalization.Instance["activity.operation.save"],
+            _ => AdminLocalization.Instance["activity.operation.submit"]
         };
 
-        return parts.Length > 1 && parts[1] == "error" ? $"{action} — ошибка" : action;
+        return parts.Length > 1 && parts[1] == "error"
+            ? string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                AdminLocalization.Instance["activity.operation.error"], action)
+            : action;
     }
 }

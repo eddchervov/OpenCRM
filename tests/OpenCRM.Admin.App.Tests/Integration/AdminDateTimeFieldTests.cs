@@ -12,11 +12,61 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using OpenCRM.Admin.App.Views;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
+[Collection("Admin localization")]
 public sealed class AdminDateTimeFieldTests
 {
+    [AvaloniaFact]
+    public void ChangingLanguageKeepsDraftAndRegionalDateFormat()
+    {
+        var localization = AdminLocalization.Instance;
+        var previousLanguage = localization.Language;
+        var previousCulture = CultureInfo.CurrentCulture;
+        using var preference = localization.UsePreferencePath(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "language.txt"));
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-GB");
+        localization.Language = "ru";
+        var value = new DateTime(2026, 7, 14, 15, 37, 0, DateTimeKind.Unspecified);
+        var field = new AdminDateTimeField { Value = value };
+        var window = new Window { Width = 620, Height = 700, Content = field };
+        window.Show();
+
+        try
+        {
+            AdminDateTimeFieldTests.Click(window, "AdminDateTimeFieldOpen");
+            var calendar = window.GetVisualDescendants().OfType<Avalonia.Controls.Calendar>().Single();
+            var time = window.GetVisualDescendants().OfType<TimePicker>().Single();
+            calendar.SelectedDate = value.AddDays(2);
+            time.SelectedTime = new TimeSpan(18, 25, 0);
+
+            foreach (var language in new[] { "en", "zh-Hans", "ru" })
+            {
+                localization.Language = language;
+                Dispatcher.UIThread.RunJobs();
+                var culture = CultureInfo.GetCultureInfo(language == "en" ? "en-US" : language == "ru" ? "ru-RU" : "zh-CN");
+                var header = calendar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "PART_HeaderButton");
+                Assert.Equal(calendar.DisplayDate.ToString("Y", culture), header.Content);
+                Assert.Equal(value.AddDays(2).Date, calendar.SelectedDate);
+                Assert.Equal(new TimeSpan(18, 25, 0), time.SelectedTime);
+                Assert.Equal(value, field.Value);
+                Assert.True(field.IsPickerOpen);
+                Assert.Equal("en-GB", CultureInfo.CurrentCulture.Name);
+                Assert.Contains(value.ToString("g", CultureInfo.CurrentCulture), window.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+            }
+
+            AdminDateTimeFieldTests.Click(window, "AdminDateTimeDone");
+            Assert.Equal(new DateTime(2026, 7, 16, 18, 25, 0, DateTimeKind.Unspecified), field.Value);
+        }
+        finally
+        {
+            window.Close();
+            localization.Language = previousLanguage;
+            CultureInfo.CurrentCulture = previousCulture;
+        }
+    }
+
     [AvaloniaFact]
     public void DateAndTimeCanBeSelectedClearedAndUpdatedThroughTwoWayBinding()
     {
@@ -57,13 +107,13 @@ public sealed class AdminDateTimeFieldTests
             var expected = new DateTime(2026, 7, 14, 15, 37, 0, DateTimeKind.Unspecified);
             Assert.Equal(expected, model.Value);
             Assert.Equal(expected, field.Value);
-            Assert.Contains("14.07.2026 15:37", window.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+            Assert.Contains(expected.ToString("g", CultureInfo.CurrentCulture), window.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
             Assert.False(field.IsPickerOpen);
 
             model.Value = new DateTime(2027, 1, 2, 8, 10, 0, DateTimeKind.Unspecified);
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(model.Value, field.Value);
-            Assert.Contains("02.01.2027 08:10", window.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+            Assert.Contains(model.Value.Value.ToString("g", CultureInfo.CurrentCulture), window.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
 
             AdminDateTimeFieldTests.Click(window, "AdminDateTimeFieldClear");
             Assert.Null(model.Value);

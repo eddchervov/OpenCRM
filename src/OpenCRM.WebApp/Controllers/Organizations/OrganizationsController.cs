@@ -12,6 +12,8 @@ using OpenCRM.WebApp.Infrastructure;
 using OpenCRM.WebApp.Navigation;
 using OpenCRM.WebApp.Product;
 using OpenCRM.WebApp.Models.Organizations;
+using OpenCRM.WebApp.Infrastructure.Localization;
+using Microsoft.Extensions.Localization;
 
 namespace OpenCRM.WebApp.Controllers.Organizations;
 
@@ -26,7 +28,8 @@ public class OrganizationsController(
     IOrganizationInvitationQueryService invitationQueries,
     IOrganizationSubscriptionService organizationSubscriptionService,
     IOrganizationTypeCatalog organizationTypeCatalog,
-    ILogger<OrganizationsController> logger) : Controller
+    ILogger<OrganizationsController> logger,
+    IStringLocalizer<LocalizationStrings> text) : Controller
 {
     /// <summary> Отображает список организаций пользователя. </summary>
     [HttpGet("/organizations")]
@@ -56,7 +59,7 @@ public class OrganizationsController(
         }
 
         model.OrganizationTypeOptions = await GetOrganizationTypeOptionsAsync(user.Id);
-        ApplyOrganizationCreationAccess(model.OrganizationTypeOptions, out var canCreateOrganization, out var createMessage);
+        this.ApplyOrganizationCreationAccess(model.OrganizationTypeOptions, out var canCreateOrganization, out var createMessage);
         model.CanCreateOrganization = canCreateOrganization;
         model.CreateOrganizationMessage = createMessage;
 
@@ -109,7 +112,7 @@ public class OrganizationsController(
             var viewModel = await BuildCreateViewModelAsync(
                 user.Id,
                 model,
-                errorMessage: "Проверьте название организации и тип организации.");
+                errorMessage: text["organization.create.invalid"]);
             return View(nameof(Create), viewModel);
         }
 
@@ -119,10 +122,12 @@ public class OrganizationsController(
             {
                 Name = model.Name,
                 Description = model.Description,
-                PrimaryScenarioCode = model.PrimaryScenarioCode
+                PrimaryScenarioCode = model.PrimaryScenarioCode,
+                CurrencyCode = model.CurrencyCode,
+                TimeZoneId = model.TimeZoneId
             });
 
-            TempData["Success"] = "Организация создана.";
+            TempData["Success"] = text["organization.create.success"];
             TempData["AnalyticsGoal"] = "organization_created";
             TempData["AnalyticsParams"] = System.Text.Json.JsonSerializer.Serialize(new
             {
@@ -133,7 +138,7 @@ public class OrganizationsController(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Unable to create organization for user {UserId}", user.Id);
-            var viewModel = await BuildCreateViewModelAsync(user.Id, model, errorMessage: ex.Message);
+            var viewModel = await BuildCreateViewModelAsync(user.Id, model, errorMessage: text[ex.Message].Value);
             return View(nameof(Create), viewModel);
         }
     }
@@ -152,12 +157,12 @@ public class OrganizationsController(
         try
         {
             await organizationArchive.RestoreAsync(user.Id, organizationId);
-            TempData["Success"] = "Организация восстановлена из архива.";
+            TempData["Success"] = text["organization.restoreSuccess"].Value;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Unable to restore organization {OrganizationId} by user {UserId}", organizationId, user.Id);
-            TempData["Error"] = ex.Message;
+            TempData["Error"] = text[ex.Message].Value;
         }
 
         return RedirectToAction(nameof(Index));
@@ -192,8 +197,8 @@ public class OrganizationsController(
                 UnavailableMessage = isAvailable
                     ? null
                     : archivedOrganizationExists
-                        ? "Организация этого типа находится в архиве. Восстановите её вместо создания новой."
-                        : "У вас уже есть организация этого типа."
+                        ? text["organization.archivedType"].Value
+                        : text["organization.existingType"].Value
             };
         }).ToArray();
     }
@@ -214,7 +219,7 @@ public class OrganizationsController(
             ErrorMessage = errorMessage
         };
 
-        ApplyOrganizationCreationAccess(model.OrganizationTypeOptions, out var canCreateOrganization, out var createMessage);
+        this.ApplyOrganizationCreationAccess(model.OrganizationTypeOptions, out var canCreateOrganization, out var createMessage);
         model.CanCreateOrganization = canCreateOrganization;
         model.CreateOrganizationMessage = createMessage;
 
@@ -222,7 +227,7 @@ public class OrganizationsController(
     }
 
     /// <summary> Определяет, может ли пользователь создавать организации, и текст сообщения. </summary>
-    private static void ApplyOrganizationCreationAccess(
+    private void ApplyOrganizationCreationAccess(
         IReadOnlyList<OrganizationTypeChoiceViewModel> organizationTypeOptions,
         out bool canCreateOrganization,
         out string? createMessage)
@@ -236,8 +241,8 @@ public class OrganizationsController(
 
         canCreateOrganization = false;
         createMessage = organizationTypeOptions.Any(option => option.HasArchivedOrganization)
-            ? "Для каждого типа уже есть организация. Архивную организацию можно восстановить на странице «Организации»."
-            : "У вас уже есть организация каждого доступного типа.";
+            ? text["organization.allTypesArchived"].Value
+            : text["organization.allTypesExist"].Value;
     }
 
     private static string NormalizeOrganizationTypeCode(string code) => code.Trim().Replace('_', '-').ToLowerInvariant();

@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/conversationMessages'
+
 export type MessageTemplate = { id: string; groupId: string; name: string; body: string; version: number; sortOrder: number; isArchived: boolean }
 export type MessageTemplateGroup = { id: string; name: string; version: number; sortOrder: number; isArchived: boolean; templates: MessageTemplate[] }
 export type MessageTemplateCatalog = { groups: MessageTemplateGroup[]; canManage: boolean; canViewWorkspaceCatalog: boolean }
@@ -14,7 +17,7 @@ async function request<T>(organizationId: string, path: string, options: { metho
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? (response.status === 409 ? 'Шаблон уже изменён. Обновите список и проверьте текст.' : 'Не удалось выполнить действие с шаблоном.'))
+    throw new Error(error?.message ?? (response.status === 409 ? translate('conversations.templateConflict') : translate('conversations.templateRequestError')))
   }
   return response.status === 204 ? undefined as T : response.json()
 }
@@ -34,9 +37,9 @@ export const previewMessageTemplate = (organizationId: string, conversationId: s
   request<MessageTemplatePreview>(organizationId, '/preview', { method: 'POST', body: { conversationId, templateId: template.id, templateVersion: template.version, maintenanceId }, signal })
 
 export const messageTemplateVariables = [
-  { code: '{{organization.name}}', label: 'Название студии' },
-  { code: '{{client.name}}', label: 'Имя клиента' },
-  { code: '{{maintenance.date}}', label: 'Дата обслуживания' },
-  { code: '{{maintenance.time}}', label: 'Время обслуживания' },
-  { code: '{{maintenance.vehicle}}', label: 'Автомобиль' }
+  { code: '{{organization.name}}', get label() { return translate('conversations.organizationName') } },
+  { code: '{{client.name}}', get label() { return translate('conversations.clientName') } },
+  { code: '{{maintenance.date}}', get label() { return translate('conversations.maintenanceDate') } },
+  { code: '{{maintenance.time}}', get label() { return translate('conversations.maintenanceTime') } },
+  { code: '{{maintenance.vehicle}}', get label() { return translate('conversations.vehicle') } }
 ]

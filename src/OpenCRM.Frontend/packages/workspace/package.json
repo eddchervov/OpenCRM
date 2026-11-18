@@ -6,9 +6,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "vite build --config vite.vehicle-plate.config.ts"
+    "build": "vite build --config vite.vehicle-plate.config.ts && vite build --config vite.personal-currency.config.ts"
   },
   "exports": {
+    "./scenarioAppMessages": "./src/scenarioAppMessages.ts",
     "./components/WorkspaceAssistantSection": "./src/components/WorkspaceAssistantSection.vue",
     "./components/WorkspaceVisualizationSection": "./src/components/WorkspaceVisualizationSection.vue",
     ".": "./src/index.ts",
@@ -26,6 +27,34 @@
     "./api/maintenance": "./src/api/maintenance.ts",
     "./api/intakeDamages": "./src/api/intakeDamages.ts",
     "./api/setup": "./src/api/setup.ts",
+    "./workspaceApiMessages": "./src/workspaceApiMessages.ts",
+    "./workdayBoardMessages": "./src/workdayBoardMessages.ts",
+    "./workdayActionMessages": "./src/workdayActionMessages.ts",
+    "./setupMessages": "./src/setupMessages.ts",
+    "./materialMessages": "./src/materialMessages.ts",
+    "./workJournalMessages": "./src/workJournalMessages.ts",
+    "./workJournalFormatting": "./src/workJournalFormatting.ts",
+    "./conversationMessages": "./src/conversationMessages.ts",
+    "./counterMessages": "./src/counterMessages.ts",
+    "./defectMessages": "./src/defectMessages.ts",
+    "./proLandingMessages": "./src/proLandingMessages.ts",
+    "./proDetailsMessages": "./src/proDetailsMessages.ts",
+    "./billingMessages": "./src/billingMessages.ts",
+    "./calendarLocale": "./src/calendarLocale.ts",
+    "./apiMessages": "./src/apiMessages.ts",
+    "./vehicleApiMessages": "./src/vehicleApiMessages.ts",
+    "./workingHoursMessages": "./src/workingHoursMessages.ts",
+    "./quickBookingMessages": "./src/quickBookingMessages.ts",
+    "./schedulerMessages": "./src/schedulerMessages.ts",
+    "./schedulerControlMessages": "./src/schedulerControlMessages.ts",
+    "./notificationMessages": "./src/notificationMessages.ts",
+    "./timeZoneMessages": "./src/timeZoneMessages.ts",
+    "./bookingTimeMessages": "./src/bookingTimeMessages.ts",
+    "./clientMessages": "./src/clientMessages.ts",
+    "./plateMessages": "./src/plateMessages.ts",
+    "./importMessages": "./src/importMessages.ts",
+    "./importRowMessage": "./src/importRowMessage.ts",
+    "./importBusinessMessages": "./src/importBusinessMessages.ts",
     "./quick-booking.css": "./src/components/QuickBookingForm.css",
     "./styles.css": "./src/styles.css",
     "./components/MessagesSection": "./src/components/MessagesSection.vue",
@@ -37,6 +66,7 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
     "vite": "^7.3.3"
   },
   "peerDependencies": {

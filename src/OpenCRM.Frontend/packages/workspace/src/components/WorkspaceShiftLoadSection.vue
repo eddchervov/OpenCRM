@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { formatDateOnly } from '@opencrm/ui'
+import { formatDateOnly, useLocalization } from '@opencrm/ui'
 import type { ShiftWeek } from '../api/shifts'
+import '../shiftMessages'
 
 type Day = { key: string, title: string }
 type Interval = { start: number, end: number }
@@ -9,6 +10,7 @@ type WorkBlock = Interval & { maintenanceId: string, vehicleName: string, isOuts
 type Row = { key: string, title: string, shifts: Interval[], works: WorkBlock[], unscheduled: Array<{ maintenanceId: string, vehicleName: string }>, planned: number, outside: number, free: number, lanes: number }
 
 const props = defineProps<{ week: ShiftWeek, days: Day[] }>()
+const { t } = useLocalization()
 const mode = ref<'employee' | 'team'>('employee')
 const selectedEmployeeId = ref('')
 const selectedDay = ref('')
@@ -101,25 +103,25 @@ function time(minutes: number) {
 }
 
 function hoursText(minutes: number) {
-  return `${Math.floor(minutes / 60)} ч ${minutes % 60} мин`
+  return t('shiftLoad.hours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 })
 }
 </script>
 
 <template>
   <section class="load">
     <div class="load__controls">
-      <div class="load__modes" role="group" aria-label="Режим просмотра загрузки">
-        <button type="button" :class="{ active: mode === 'employee' }" :aria-pressed="mode === 'employee'" @click="mode = 'employee'">Один сотрудник</button>
-        <button type="button" :class="{ active: mode === 'team' }" :aria-pressed="mode === 'team'" @click="mode = 'team'">Все сотрудники</button>
+      <div class="load__modes" role="group" :aria-label="t('shiftLoad.viewMode')">
+        <button type="button" :class="{ active: mode === 'employee' }" :aria-pressed="mode === 'employee'" @click="mode = 'employee'">{{ t('shiftLoad.oneEmployee') }}</button>
+        <button type="button" :class="{ active: mode === 'team' }" :aria-pressed="mode === 'team'" @click="mode = 'team'">{{ t('shiftLoad.allEmployees') }}</button>
       </div>
-      <label v-if="mode === 'employee'">Сотрудник<select v-model="selectedEmployeeId"><option v-for="employee in week.employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option></select></label>
-      <label v-else>День<select v-model="selectedDay"><option v-for="day in days" :key="day.key" :value="day.key">{{ day.title }}</option></select></label>
+      <label v-if="mode === 'employee'">{{ t('shiftLoad.employee') }}<select v-model="selectedEmployeeId"><option v-for="employee in week.employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option></select></label>
+      <label v-else>{{ t('shiftLoad.day') }}<select v-model="selectedDay"><option v-for="day in days" :key="day.key" :value="day.key">{{ day.title }}</option></select></label>
     </div>
-    <p v-if="!week.canViewAssignments" class="load__note">Для просмотра назначенных обслуживаний нужен доступ к записям.</p>
+    <p v-if="!week.canViewAssignments" class="load__note">{{ t('shiftLoad.assignmentsAccess') }}</p>
     <div v-else class="load__totals">
-      <span>Запланировано: <strong>{{ hoursText(totals.planned) }}</strong></span>
-      <span>Без записей в смене: <strong>{{ hoursText(totals.free) }}</strong></span>
-      <span :class="{ 'load__warning': totals.outside }">Вне смены: <strong>{{ hoursText(totals.outside) }}</strong></span>
+      <span>{{ t('shiftLoad.planned') }} <strong>{{ hoursText(totals.planned) }}</strong></span>
+      <span>{{ t('shiftLoad.freeInShift') }} <strong>{{ hoursText(totals.free) }}</strong></span>
+      <span :class="{ 'load__warning': totals.outside }">{{ t('shiftLoad.outsideShift') }} <strong>{{ hoursText(totals.outside) }}</strong></span>
     </div>
     <div v-if="week.canViewAssignments" class="load__scroll">
       <div class="load__chart">
@@ -128,14 +130,14 @@ function hoursText(minutes: number) {
           <strong class="load__label">{{ row.title }}</strong>
           <div class="load__track" :style="{ height: `${Math.max(44, 20 + row.lanes * 30)}px` }">
             <span v-for="hour in hours" :key="hour" class="load__hour" :style="{ left: `${(hour * 60 - range.start) / (range.end - range.start) * 100}%` }"></span>
-            <div v-for="(shift, index) in row.shifts" :key="`shift-${index}`" class="load__shift" :style="position(shift)" :title="`Смена ${time(shift.start)}–${time(shift.end)}`"></div>
-            <a v-for="(work, index) in row.works" :key="`work-${index}`" class="load__work" :class="{ 'load__work--outside': work.isOutsideShift }" :style="{ ...position(work), top: `${17 + work.lane * 30}px` }" :href="`#maintenance/${work.maintenanceId}`" :title="`${work.vehicleName}: ${time(work.start)}–${time(work.end)}${work.isOutsideShift ? ' · вне смены' : ''}`">{{ time(work.start) }}–{{ time(work.end) }} · {{ work.vehicleName }}</a>
+            <div v-for="(shift, index) in row.shifts" :key="`shift-${index}`" class="load__shift" :style="position(shift)" :title="t('shiftLoad.shiftTitle', { start: time(shift.start), end: time(shift.end) })"></div>
+            <a v-for="(work, index) in row.works" :key="`work-${index}`" class="load__work" :class="{ 'load__work--outside': work.isOutsideShift }" :style="{ ...position(work), top: `${17 + work.lane * 30}px` }" :href="`#maintenance/${work.maintenanceId}`" :title="`${work.vehicleName}: ${time(work.start)}–${time(work.end)}${work.isOutsideShift ? t('shiftLoad.outsideShiftTitle') : ''}`">{{ time(work.start) }}–{{ time(work.end) }} · {{ work.vehicleName }}</a>
           </div>
-          <div v-if="row.unscheduled.length" class="load__unscheduled"><span>Без времени:</span><a v-for="work in row.unscheduled" :key="work.maintenanceId" :href="`#maintenance/${work.maintenanceId}`">{{ work.vehicleName }}</a></div>
+          <div v-if="row.unscheduled.length" class="load__unscheduled"><span>{{ t('shiftLoad.noTime') }}</span><a v-for="work in row.unscheduled" :key="work.maintenanceId" :href="`#maintenance/${work.maintenanceId}`">{{ work.vehicleName }}</a></div>
         </div>
       </div>
     </div>
-    <p v-if="week.canViewAssignments" class="load__note">Время записей показывает план, а не фактически отработанные часы. Перерыв из смены на шкале не размещён.</p>
+    <p v-if="week.canViewAssignments" class="load__note">{{ t('shiftLoad.note') }}</p>
   </section>
 </template>
 

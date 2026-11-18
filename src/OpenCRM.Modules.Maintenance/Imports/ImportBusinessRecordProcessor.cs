@@ -6,6 +6,7 @@ using OpenCRM.Infrastructure.Data;
 using OpenCRM.Modules.Maintenance.Contracts.Imports;
 using OpenCRM.Modules.Maintenance.Contracts.Dtos;
 using OpenCRM.Modules.Maintenance.Rules;
+using OpenCRM.Services.Interfaces.Imports;
 using Microsoft.EntityFrameworkCore;
 
 namespace OpenCRM.Modules.Maintenance.Imports;
@@ -41,13 +42,23 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
 
         foreach (var record in records)
         {
-            if (!IsBusinessKind(record.Kind) || record.Excluded)
+            if (!IsBusinessKind(record.Kind))
             {
+                continue;
+            }
+
+            record.MessageDetails = null;
+            if (record.Excluded)
+            {
+                record.MessageCode = null;
+                record.MessageParameters = null;
                 continue;
             }
 
             record.Status = "create";
             record.Message = string.Empty;
+            record.MessageCode = ImportRowMessageCodes.WillCreate;
+            record.MessageParameters = null;
         }
 
         foreach (var duplicateTarget in records.Where(record => record.TargetId.HasValue)
@@ -56,7 +67,7 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
         {
             foreach (var record in duplicateTarget)
             {
-                MarkError(record, "Идентификатор целевой записи повторяется в пакете.");
+                MarkError(record, "Идентификатор целевой записи повторяется в пакете.", ImportBusinessMessageCodes.DuplicateTargetId);
             }
         }
 
@@ -78,63 +89,63 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
             var externalId = NormalizeKey(order.ExternalId ?? string.Empty);
             if (externalId.Length == 0)
             {
-                MarkError(order, "Укажите внешний идентификатор заказа.");
+                MarkError(order, "Укажите внешний идентификатор заказа.", ImportBusinessMessageCodes.OrderExternalIdRequired);
                 continue;
             }
 
             if (duplicateOrderIds.Contains(externalId))
             {
-                MarkError(order, "В пакете повторяется внешний идентификатор заказа.");
+                MarkError(order, "В пакете повторяется внешний идентификатор заказа.", ImportBusinessMessageCodes.DuplicateOrderExternalId);
                 continue;
             }
 
             newOrderByExternalId[externalId] = order;
             if (order.OrderComment?.Length > 4000)
             {
-                MarkError(order, "Комментарий заказа не должен превышать 4000 символов.");
+                MarkError(order, "Комментарий заказа не должен превышать 4000 символов.", ImportBusinessMessageCodes.OrderCommentTooLong);
             }
 
             ValidateClientReference(order, normalizedClientIds);
 
             if (!TryGetId(normalizedVehicleIds, order.VehicleExternalId, out _))
             {
-                MarkError(order, "Не найдена техника с указанным внешним идентификатором.");
+                MarkError(order, "Не найдена техника с указанным внешним идентификатором.", ImportBusinessMessageCodes.VehicleReferenceNotFound);
             }
 
             if (!TryParseDate(order.OccurredAt, out _))
             {
-                MarkError(order, "Укажите дату заказа в формате ГГГГ-ММ-ДД или ISO 8601.");
+                MarkError(order, "Укажите дату заказа в формате ГГГГ-ММ-ДД или ISO 8601.", ImportBusinessMessageCodes.OrderDateInvalid);
             }
 
             if (!TryParseOrderStatus(order.OrderStatus, out _))
             {
-                MarkError(order, "Поддерживаются только статусы completed и cancelled; плановые и активные записи не импортируются.");
+                MarkError(order, "Поддерживаются только статусы completed и cancelled; плановые и активные записи не импортируются.", ImportBusinessMessageCodes.OrderStatusInvalid);
             }
 
             if (!TryParseOrderType(order.OrderType, out _))
             {
-                MarkError(order, "Укажите известный тип обслуживания: maintenance, repair, refill или other.");
+                MarkError(order, "Укажите известный тип обслуживания: maintenance, repair, refill или other.", ImportBusinessMessageCodes.OrderTypeInvalid);
             }
 
             if (!TryParseOptionalMoney(order.DiscountAmount, out var discount) || discount < 0)
             {
-                MarkError(order, "Скидка должна быть неотрицательной суммой с точностью до копеек.");
+                MarkError(order, "Скидка должна быть неотрицательной суммой с точностью до копеек.", ImportBusinessMessageCodes.DiscountInvalid);
             }
 
             var children = rowsByOrder.GetValueOrDefault(externalId, []);
             if (children.Count > MaximumChildrenPerOrder)
             {
-                MarkError(order, "В одном заказе больше 1000 дочерних строк. Разделите заказ перед импортом.");
+                MarkError(order, "В одном заказе больше 1000 дочерних строк. Разделите заказ перед импортом.", ImportBusinessMessageCodes.TooManyOrderChildren);
                 foreach (var child in children)
                 {
-                    MarkError(child, "Заказ содержит больше 1000 дочерних строк.");
+                    MarkError(child, "Заказ содержит больше 1000 дочерних строк.", ImportBusinessMessageCodes.TooManyOrderChildrenOnChild);
                 }
             }
 
             var lines = children.Where(record => record.Kind == "order-line").ToList();
             if (lines.Count == 0)
             {
-                MarkError(order, "Для заказа нужна хотя бы одна строка работ или услуг.");
+                MarkError(order, "Для заказа нужна хотя бы одна строка работ или услуг.", ImportBusinessMessageCodes.OrderLineRequired);
             }
 
             var grossAmount = 0m;
@@ -142,24 +153,24 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
             {
                 if (string.IsNullOrWhiteSpace(line.DetailName))
                 {
-                    MarkError(line, "Укажите название работы или услуги.");
+                    MarkError(line, "Укажите название работы или услуги.", ImportBusinessMessageCodes.OrderLineNameRequired);
                 }
 
                 if (!int.TryParse(line.Quantity, NumberStyles.None, CultureInfo.InvariantCulture, out var quantity) || quantity < 1)
                 {
-                    MarkError(line, "Количество должно быть положительным целым числом.");
+                    MarkError(line, "Количество должно быть положительным целым числом.", ImportBusinessMessageCodes.OrderLineQuantityInvalid);
                     continue;
                 }
 
                 if (!TryParseMoney(line.UnitPrice, out var unitPrice) || unitPrice < 0)
                 {
-                    MarkError(line, "Цена единицы должна быть неотрицательной суммой с точностью до копеек.");
+                    MarkError(line, "Цена единицы должна быть неотрицательной суммой с точностью до копеек.", ImportBusinessMessageCodes.OrderLineUnitPriceInvalid);
                     continue;
                 }
 
                 if (unitPrice != 0 && quantity > MaximumMoneyAmount / unitPrice)
                 {
-                    MarkError(line, "Сумма строки превышает допустимый диапазон.");
+                    MarkError(line, "Сумма строки превышает допустимый диапазон.", ImportBusinessMessageCodes.OrderLineAmountOutOfRange);
                     continue;
                 }
 
@@ -175,7 +186,7 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
                 }
                 if (grossAmount > MaximumMoneyAmount - lineAmount)
                 {
-                    MarkError(line, "Сумма строк заказа превышает допустимый денежный диапазон.");
+                    MarkError(line, "Сумма строк заказа превышает допустимый денежный диапазон.", ImportBusinessMessageCodes.OrderLineTotalOutOfRange);
                     continue;
                 }
 
@@ -188,22 +199,22 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
             {
                 if (!TryParseMoney(payment.Amount, out var amount) || amount <= 0)
                 {
-                    MarkError(payment, "Сумма оплаты должна быть положительной и иметь точность до копеек.");
+                    MarkError(payment, "Сумма оплаты должна быть положительной и иметь точность до копеек.", ImportBusinessMessageCodes.PaymentAmountInvalid);
                 }
 
                 if (!TryParseDate(payment.OccurredAt, out var paidAt))
                 {
-                    MarkError(payment, "Укажите дату оплаты в формате ГГГГ-ММ-ДД или ISO 8601.");
+                    MarkError(payment, "Укажите дату оплаты в формате ГГГГ-ММ-ДД или ISO 8601.", ImportBusinessMessageCodes.PaymentDateInvalid);
                 }
 
                 if (!string.IsNullOrWhiteSpace(payment.PaymentMethod) && !IsPaymentMethod(payment.PaymentMethod))
                 {
-                    MarkError(payment, "Способ оплаты должен быть cash, card, bank или other.");
+                    MarkError(payment, "Способ оплаты должен быть cash, card, bank или other.", ImportBusinessMessageCodes.PaymentMethodInvalid);
                 }
 
                 if (payment.ActorName?.Length > 256 || CreatePaymentComment(payment).Length > 1000)
                 {
-                    MarkError(payment, "Имя кассира должно быть не длиннее 256 символов, комментарий оплаты — 1000.");
+                    MarkError(payment, "Имя кассира должно быть не длиннее 256 символов, комментарий оплаты — 1000.", ImportBusinessMessageCodes.PaymentMetadataTooLong);
                 }
 
                 ValidateClientReference(payment, normalizedClientIds);
@@ -212,14 +223,14 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
                 if (cancelled && (!TryParseDate(payment.CancelledAt, out var cancelledAt) ||
                     TryParseDate(payment.OccurredAt, out paidAt) && cancelledAt < paidAt))
                 {
-                    MarkError(payment, "Дата отмены оплаты не может быть раньше даты оплаты и должна быть в ISO-формате.");
+                    MarkError(payment, "Дата отмены оплаты не может быть раньше даты оплаты и должна быть в ISO-формате.", ImportBusinessMessageCodes.PaymentCancellationDateInvalid);
                 }
 
                 if (!cancelled && TryParseMoney(payment.Amount, out amount) && amount > 0)
                 {
                     if (paidAmount > MaximumMoneyAmount - amount)
                     {
-                        MarkError(payment, "Сумма оплат превышает допустимый денежный диапазон.");
+                        MarkError(payment, "Сумма оплат превышает допустимый денежный диапазон.", ImportBusinessMessageCodes.PaymentTotalOutOfRange);
                     }
                     else
                     {
@@ -233,41 +244,41 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
             {
                 if (!TryParseDate(eventRecord.OccurredAt, out _))
                 {
-                    MarkError(eventRecord, "Укажите дату события истории в формате ГГГГ-ММ-ДД или ISO 8601.");
+                    MarkError(eventRecord, "Укажите дату события истории в формате ГГГГ-ММ-ДД или ISO 8601.", ImportBusinessMessageCodes.HistoryDateInvalid);
                 }
 
                 if (string.IsNullOrWhiteSpace(eventRecord.EventType) || eventRecord.EventType.Length > 64)
                 {
-                    MarkError(eventRecord, "Укажите тип события истории длиной не более 64 символов.");
+                    MarkError(eventRecord, "Укажите тип события истории длиной не более 64 символов.", ImportBusinessMessageCodes.HistoryTypeInvalid);
                 }
 
                 if (eventRecord.ActorName?.Length > 250)
                 {
-                    MarkError(eventRecord, "Имя автора события истории не должно превышать 250 символов.");
+                    MarkError(eventRecord, "Имя автора события истории не должно превышать 250 символов.", ImportBusinessMessageCodes.HistoryAuthorTooLong);
                 }
             }
 
             if (!TryParseOptionalMoney(order.DiscountAmount, out discount) || discount > grossAmount)
             {
-                MarkError(order, "Скидка не может превышать сумму строк заказа.");
+                MarkError(order, "Скидка не может превышать сумму строк заказа.", ImportBusinessMessageCodes.DiscountExceedsOrderLines);
             }
 
             var netAmount = grossAmount - (TryParseOptionalMoney(order.DiscountAmount, out discount) ? discount : 0);
             if (!string.IsNullOrWhiteSpace(order.Amount) &&
                 (!TryParseMoney(order.Amount, out var expectedAmount) || expectedAmount != netAmount))
             {
-                MarkError(order, "Итоговая сумма заказа не совпадает с суммой строк за вычетом скидки.");
+                MarkError(order, "Итоговая сумма заказа не совпадает с суммой строк за вычетом скидки.", ImportBusinessMessageCodes.OrderAmountMismatch);
             }
 
             if (paidAmount > netAmount)
             {
-                MarkError(order, "Сумма действующих оплат превышает итог заказа.");
+                MarkError(order, "Сумма действующих оплат превышает итог заказа.", ImportBusinessMessageCodes.PaymentsExceedOrderAmount);
             }
 
             if (TryParseOrderStatus(order.OrderStatus, out var status) && status == MaintenanceStatus.Cancelled &&
                 payments.Any(payment => string.IsNullOrWhiteSpace(payment.CancelledAt)))
             {
-                MarkError(order, "Для отменённого заказа все импортируемые оплаты должны быть отменены.");
+                MarkError(order, "Для отменённого заказа все импортируемые оплаты должны быть отменены.", ImportBusinessMessageCodes.CancelledOrderHasActivePayments);
             }
         }
 
@@ -276,13 +287,13 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
             var orderExternalId = NormalizeKey(child.OrderExternalId ?? string.Empty);
             if (orderExternalId.Length == 0)
             {
-                MarkError(child, "Укажите внешний идентификатор связанного заказа.");
+                MarkError(child, "Укажите внешний идентификатор связанного заказа.", ImportBusinessMessageCodes.ChildOrderExternalIdRequired);
                 continue;
             }
 
             if (!newOrderByExternalId.ContainsKey(orderExternalId) && !TryGetId(normalizedOrderIds, orderExternalId, out _))
             {
-                MarkError(child, "Связанный заказ не найден в пакете или журнале импорта.");
+                MarkError(child, "Связанный заказ не найден в пакете или журнале импорта.", ImportBusinessMessageCodes.ChildOrderNotFound);
             }
         }
 
@@ -300,6 +311,15 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
         IDictionary<string, Guid> orderIds,
         CancellationToken cancellationToken)
     {
+        var currencyCode = await context.Organizations.AsNoTracking()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.CurrencyCode)
+            .SingleAsync(cancellationToken);
+        if (currencyCode != CurrencyCodes.Rub)
+        {
+            throw new InvalidDataException("Формат импорта не содержит валюту. Для этой организации импорт денежных сумм невозможен.");
+        }
+
         var pendingOrders = records.Where(record => record.Kind == "order" && !record.Excluded && record.Status == "create")
             .Where(record => !TryGetId(orderIds, record.ExternalId, out _))
             .ToList();
@@ -424,6 +444,7 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
                     Id = GetTargetId(record),
                     MaintenanceId = orderId,
                     Amount = amount,
+                    CurrencyCode = currencyCode,
                     MethodCode = NormalizePaymentMethod(record.PaymentMethod),
                     PayerClientId = GetExplicitClientId(record, normalizedClientIds, organizationClients),
                     PayerName = record.PartyName?.Trim(),
@@ -462,6 +483,7 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
             var maintenance = new MaintenanceEntity
             {
                 Id = orderId,
+                CurrencyCode = currencyCode,
                 UserId = userId,
                 VehicleId = vehicleId,
                 Status = status,
@@ -539,17 +561,21 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
     private static bool IsChildKind(string kind) => kind is "order-line" or "payment" or "history";
     private static string NormalizeKey(string value) => value.Trim();
 
-    private static void MarkError(ImportBusinessRecord record, string message)
+    private static void MarkError(ImportBusinessRecord record, string message, string? messageCode = null)
     {
         record.Status = "error";
         record.Message = string.IsNullOrWhiteSpace(record.Message) ? message : $"{record.Message} {message}";
+        record.MessageCode = null;
+        record.MessageParameters = null;
+        record.MessageDetails ??= [];
+        record.MessageDetails.Add(new ImportRowMessageDetail { Message = message, MessageCode = messageCode });
     }
 
     private static void ValidateClientReference(ImportBusinessRecord record, IReadOnlyDictionary<string, Guid> clientIds)
     {
         if (record.PartyName?.Length > 250)
         {
-            MarkError(record, "Имя покупателя или плательщика не должно превышать 250 символов.");
+            MarkError(record, "Имя покупателя или плательщика не должно превышать 250 символов.", ImportBusinessMessageCodes.PartyNameTooLong);
         }
 
         if (string.IsNullOrWhiteSpace(record.ClientExternalId))
@@ -559,12 +585,12 @@ public sealed class ImportBusinessRecordProcessor(OpenCRMContext context) : IImp
 
         if (string.IsNullOrWhiteSpace(record.PartyName))
         {
-            MarkError(record, "Для связанного клиента укажите имя из исходной записи, чтобы сохранить исторический снимок.");
+            MarkError(record, "Для связанного клиента укажите имя из исходной записи, чтобы сохранить исторический снимок.", ImportBusinessMessageCodes.PartySnapshotRequired);
         }
 
         if (!TryGetId(clientIds, record.ClientExternalId, out _))
         {
-            MarkError(record, "Связанный клиент не найден в импортированных клиентах или журнале импорта.");
+            MarkError(record, "Связанный клиент не найден в импортированных клиентах или журнале импорта.", ImportBusinessMessageCodes.PartyClientNotFound);
         }
     }
 

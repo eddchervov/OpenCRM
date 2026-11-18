@@ -16,6 +16,48 @@ namespace OpenCRM.Modules.Vehicles.Tests.Integration;
 public sealed class VehicleServicesTests(VehicleDatabaseFixture fixture) : IClassFixture<VehicleDatabaseFixture>
 {
     [Fact]
+    public async Task CreatingPersonalVehicleWaitsForUserCurrencyLock()
+    {
+        await using var lockContext = fixture.CreateContext();
+        var user = new ApplicationUser();
+        lockContext.Users.Add(user);
+        await lockContext.SaveChangesAsync();
+        await using var transaction = await lockContext.Database.BeginTransactionAsync();
+        await lockContext.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT 1 FROM identity.\"AspNetUsers\" WHERE \"Id\" = {user.Id} FOR NO KEY UPDATE");
+
+        await using var commandContext = fixture.CreateContext();
+        var clock = new Mock<ISystemClock>();
+        clock.SetupGet(value => value.UtcNow).Returns(DateTime.UtcNow);
+        var access = Mock.Of<IOrganizationSubscriptionService>();
+        var features = new Mock<IFeatureAccessService>();
+        features.Setup(value => value.GetIntValueAsync(user.Id, It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(3);
+        var repository = new VehicleRepository(commandContext);
+        var limits = new VehicleLimitQueryService(repository, Mock.Of<IPersonalSubscriptionQueryService>(), access, features.Object,
+            Mock.Of<IPlatformCommercialPolicy>(policy => policy.CommercialEnabled == true));
+        var commands = new VehicleCommandService(repository, new ModelRepository(commandContext), clock.Object,
+            new VehicleCatalogSuggestionRepository(commandContext), commandContext, access,
+            new VehicleHistoryWriter(commandContext, clock.Object, repository, access), limits);
+
+        var createTask = commands.Create(user.Id, new CreateVehicleDto { RegistrationPlate = "А123АА154" });
+        await using var observerContext = fixture.CreateContext();
+        var lockWaitObserved = false;
+        for (var attempt = 0; attempt < 50 && !lockWaitObserved; attempt++)
+        {
+            await Task.Delay(100);
+            lockWaitObserved = await observerContext.Database.SqlQueryRaw<int>(
+                "SELECT CASE WHEN EXISTS (SELECT 1 FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND wait_event_type = 'Lock' AND query ILIKE '%AspNetUsers%') THEN 1 ELSE 0 END AS \"Value\"")
+                .SingleAsync() == 1;
+        }
+
+        await transaction.CommitAsync();
+
+        var vehicleId = await createTask.WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.True(lockWaitObserved, "Создание личной техники должно ожидать блокировку строки пользователя.");
+        Assert.True(await commandContext.Vehicles.AnyAsync(vehicle => vehicle.Id == vehicleId && vehicle.UserId == user.Id));
+    }
+
+    [Fact]
     public async Task CommandsQueriesAndHistoryPreservePersonalAndOrganizationLifecycle()
     {
         await using var context = fixture.CreateContext();

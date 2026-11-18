@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../workdayActionMessages'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiModal, UiPagination } from '@opencrm/ui'
 import { completeInquiryAction, loadInquiries, rescheduleInquiryAction, type Inquiry, type InquiryPage } from '../api/inquiries'
@@ -20,7 +22,7 @@ async function load() {
   request = active
   error.value = ''
   try { result.value = await loadInquiries(props.organizationId, { actionDue: 'through-day', date: props.date, responsibleUserId: props.userId, page: page.value, pageSize: 5 }, active.signal) }
-  catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить следующие действия.' }
+  catch (caught) { if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('workdayActions.loadInquiryError') }
 }
 watch(() => [props.organizationId, props.userId, props.date], () => { isOpen.value = false; result.value = null; page.value = 1; void load() }, { immediate: true })
 watch(page, () => { void load() })
@@ -49,7 +51,7 @@ async function runAction(item: Inquiry, action: () => Promise<Inquiry>) {
     page.value = 1
     await load()
   } catch (caught) {
-    actionError.value = caught instanceof Error ? caught.message : 'Не удалось обновить действие.'
+    actionError.value = caught instanceof Error ? caught.message : t('workdayActions.updateError')
   } finally {
     busyId.value = ''
   }
@@ -68,24 +70,24 @@ function rescheduleForTomorrow(item: Inquiry) {
 </script>
 
 <template>
-  <UiButton variant="secondary" aria-haspopup="dialog" :aria-expanded="isOpen" @click="isOpen = true">Обращения <span class="workday-inquiries__count">{{ error ? '!' : result?.totalCount ?? '…' }}</span></UiButton>
-  <UiModal :open="isOpen" title="Связаться по обращениям" @close="!busyId && (isOpen = false)">
-    <section class="workday-inquiries" aria-label="Связаться с клиентами">
-      <header><h3>Обращения <span v-if="result">{{ result.totalCount }}</span></h3><a href="#inquiries">Все обращения →</a></header>
-      <p v-if="!result && !error" role="status">Загружаем действия…</p>
-      <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">Повторить</button></p>
+  <UiButton variant="secondary" aria-haspopup="dialog" :aria-expanded="isOpen" @click="isOpen = true">{{ t('workdayActions.inquiries') }} <span class="workday-inquiries__count">{{ error ? '!' : result?.totalCount ?? '…' }}</span></UiButton>
+  <UiModal :open="isOpen" :title="t('workdayActions.contactInquiry')" @close="!busyId && (isOpen = false)">
+    <section class="workday-inquiries" :aria-label="t('workdayActions.contactCustomers')">
+      <header><h3>{{ t('workdayActions.inquiries') }} <span v-if="result">{{ result.totalCount }}</span></h3><a href="#inquiries">{{ t('workdayActions.allInquiries') }}</a></header>
+      <p v-if="!result && !error" role="status">{{ t('workdayActions.loading') }}</p>
+      <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">{{ t('workdayActions.retry') }}</button></p>
       <p v-if="actionError" role="alert">{{ actionError }}</p>
-      <p v-else-if="result && !result.items.length">Нет действий на выбранный день и просроченных</p>
+      <p v-else-if="result && !result.items.length">{{ t('workdayActions.empty') }}</p>
       <article v-for="item in result?.items" :key="item.id" class="workday-inquiries__row">
         <strong><a :href="`#inquiries/${item.id}`">{{ item.contactName }}</a></strong>
         <span>{{ item.nextActionText }}</span>
-        <small>{{ formatInquiryTime(item.nextActionAt, result!.timeZoneId) }} · {{ item.responsibleUserName || 'Без ответственного' }}<span v-if="isOverdue(item)" class="workday-inquiries__overdue"> · Просрочено</span><span v-else-if="isDueSoon(item)" class="workday-inquiries__soon"> · Скоро срок</span></small>
+        <small>{{ formatInquiryTime(item.nextActionAt, result!.timeZoneId) }} · {{ item.responsibleUserName || t('workdayActions.unassigned') }}<span v-if="isOverdue(item)" class="workday-inquiries__overdue"> · {{ t('workdayActions.overdue') }}</span><span v-else-if="isDueSoon(item)" class="workday-inquiries__soon"> · {{ t('workdayActions.dueSoon') }}</span></small>
         <div v-if="item.canManage" class="workday-inquiries__actions">
-          <UiButton variant="secondary" :disabled="!!busyId" @click="runAction(item, () => completeInquiryAction(organizationId, item.id, item.version))">{{ busyId === item.id ? 'Сохраняем…' : 'Выполнено' }}</UiButton>
-          <UiButton variant="secondary" :disabled="!!busyId" @click="rescheduleForTomorrow(item)">На завтра, 09:00</UiButton>
+          <UiButton variant="secondary" :disabled="!!busyId" @click="runAction(item, () => completeInquiryAction(organizationId, item.id, item.version))">{{ busyId === item.id ? t('workdayActions.saving') : t('workdayActions.done') }}</UiButton>
+          <UiButton variant="secondary" :disabled="!!busyId" @click="rescheduleForTomorrow(item)">{{ t('workdayActions.tomorrow') }}</UiButton>
         </div>
       </article>
-      <UiPagination v-model="page" :total-items="result?.totalCount || 0" :items-per-page="5" label="Следующие действия" />
+      <UiPagination v-model="page" :total-items="result?.totalCount || 0" :items-per-page="5" :label="t('workdayActions.nextActions')" />
     </section>
   </UiModal>
 </template>

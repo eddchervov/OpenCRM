@@ -1,3 +1,6 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/billingMessages'
+
 export interface OrganizationExportStatus {
   id: string | null
   state: 'idle' | 'queued' | 'running' | 'ready' | 'failed' | 'expired'
@@ -14,7 +17,7 @@ async function readStatus(response: Response): Promise<OrganizationExportStatus>
   if (!response.ok || !result || typeof result.state !== 'string') {
     throw new Error(typeof result?.message === 'string' && result.message.trim()
       ? result.message
-      : 'Не удалось получить выгрузку. Попробуйте позже.')
+      : translate('billing.exportError'))
   }
 
   return result

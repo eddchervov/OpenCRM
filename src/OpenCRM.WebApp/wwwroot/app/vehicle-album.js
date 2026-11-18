@@ -1,3 +1,5 @@
+var vehicleAlbumMessages = document.getElementById('vehicle-album-detail').dataset;
+
 new Vue({
     el: '#vehicle-album-detail',
     data: function () {
@@ -10,12 +12,18 @@ new Vue({
             deleteSaving: false,
             pendingDeleteType: '',
             pendingDeletePhoto: null,
+            photoOpenAria: vehicleAlbumMessages.openPhotoAria,
+            photoAlt: vehicleAlbumMessages.photoAlt,
+            primaryTitle: vehicleAlbumMessages.primaryTitle,
+            primarySetTitle: vehicleAlbumMessages.primarySetTitle,
+            coverLabel: vehicleAlbumMessages.coverLabel,
+            setCoverLabel: vehicleAlbumMessages.setCoverLabel,
             errorMessage: ''
         };
     },
     computed: {
         albumTitle: function () {
-            return this.album && this.album.title ? this.album.title : 'Альбом';
+            return this.album && this.album.title ? this.album.title : vehicleAlbumMessages.albumFallbackTitle;
         },
         currentViewerPhoto: function () {
             if (!this.album || !this.album.photos || !this.album.photos.length) {
@@ -28,12 +36,12 @@ new Vue({
             return !!(this.album && this.album.photos && this.album.photos.length > 1);
         },
         deleteModalTitle: function () {
-            return this.pendingDeleteType === 'album' ? 'Удалить альбом?' : 'Удалить фото?';
+            return this.pendingDeleteType === 'album' ? vehicleAlbumMessages.deleteTitleAlbum : vehicleAlbumMessages.deleteTitlePhoto;
         },
         deleteModalText: function () {
             return this.pendingDeleteType === 'album'
-                ? 'Альбом будет удален вместе со всеми фотографиями внутри него.'
-                : 'Фото будет удалено из этого альбома.';
+                ? vehicleAlbumMessages.deleteTextAlbum
+                : vehicleAlbumMessages.deleteTextPhoto;
         }
     },
     methods: {
@@ -61,7 +69,7 @@ new Vue({
                     this.album.photos = [];
                 }
             } catch (error) {
-                this.handleApiError(error, 'Не удалось загрузить альбом');
+                this.handleApiError(error, vehicleAlbumMessages.errorLoad);
             } finally {
                 this.albumLoading = false;
             }
@@ -84,7 +92,7 @@ new Vue({
         uploadFiles: async function (url, files) {
             var total = files.reduce(function (sum, file) { return sum + file.size; }, 0);
             if (total > 100 * 1024 * 1024) {
-                this.showError('Превышен лимит загрузки: до 100 МБ за раз.');
+                this.showError(vehicleAlbumMessages.errorMaxSize);
                 return false;
             }
 
@@ -95,7 +103,7 @@ new Vue({
                 await axios.post(url, form, { params: this.getWorkspaceParams() });
                 return true;
             } catch (error) {
-                this.handleApiError(error, 'Не удалось загрузить фотографии');
+                this.handleApiError(error, vehicleAlbumMessages.errorUpload);
                 return false;
             }
         },
@@ -131,7 +139,7 @@ new Vue({
                 await axios.delete('/api/v1/media/vehicles/' + vehicleId + '/albums/' + this.album.albumId, { params: this.getWorkspaceParams() });
                 window.location.href = this.getAlbumsUrl();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось удалить альбом');
+                this.handleApiError(error, vehicleAlbumMessages.errorDelete);
             } finally {
                 this.deleteSaving = false;
             }
@@ -143,7 +151,7 @@ new Vue({
                 await axios.post('/api/v1/media/vehicles/' + vehicleId + '/albums/' + this.album.albumId + '/photos/' + photo.photoId + '/primary', null, { params: this.getWorkspaceParams() });
                 await this.loadAlbum();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось выставить главное фото альбома');
+                this.handleApiError(error, vehicleAlbumMessages.errorPrimary);
             }
         },
         openPhotoViewer: function (index) {
@@ -201,7 +209,7 @@ new Vue({
                 this.pendingDeletePhoto = null;
                 await this.loadAlbum();
             } catch (error) {
-                this.handleApiError(error, 'Не удалось удалить фото альбома');
+                this.handleApiError(error, vehicleAlbumMessages.errorDeletePhoto);
             } finally {
                 this.deleteSaving = false;
             }

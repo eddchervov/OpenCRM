@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { translate as t } from '@opencrm/ui/i18n'
+import '../workspaceChromeMessages'
+import '../interactionMessages'
 import { computed, inject, ref, watch } from 'vue'
 import { commercialModuleEnabledKey, proFeatureBillingAccessKey } from '../proFeatureAccess'
 import type { ProFeatureKey } from '../proFeatureDetails'
@@ -26,9 +29,9 @@ watch(() => [props.locked, props.feature], () => { detailsOpen.value = false })
       <div class="workspace-pro-lock__notice">
         <div class="workspace-pro-lock__heading">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></svg>
-          <span>{{ commercialEnabled ? message : 'Функция отключена в настройках установки' }}</span>
+          <span>{{ commercialEnabled ? message : t('workspaceChrome.featureDisabled') }}</span>
         </div>
-        <button v-if="commercialEnabled && feature" class="workspace-pro-lock__details" type="button" aria-haspopup="dialog" :aria-expanded="detailsOpen" @click="detailsOpen = true">Посмотреть возможности <span aria-hidden="true">→</span></button>
+        <button v-if="commercialEnabled && feature" class="workspace-pro-lock__details" type="button" aria-haspopup="dialog" :aria-expanded="detailsOpen" @click="detailsOpen = true">{{ t('interaction.viewFeatures') }} <span aria-hidden="true">→</span></button>
       </div>
     </div>
     <WorkspaceProFeatureDialog v-if="commercialEnabled && locked && feature && detailsOpen" :open="detailsOpen" :feature="feature" :can-manage-billing="canManageBilling" @close="detailsOpen = false" />

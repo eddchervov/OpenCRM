@@ -1,3 +1,6 @@
+import { formattingCulture, translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workdayActionMessages'
+
 export function resolveInquiryTimeZone(timeZoneId?: string | null): string {
   return timeZoneId || 'UTC'
 }
@@ -16,7 +19,7 @@ export function inquiryUtcTime(value: string, timeZoneId: string, originalValue?
   if (!value) return null
   if (originalValue && inquiryLocalTime(originalValue, timeZoneId) === value) return originalValue
   const target = Date.parse(`${value}:00Z`)
-  if (!Number.isFinite(target)) throw new Error('Укажите корректный срок действия.')
+  if (!Number.isFinite(target)) throw new Error(translate('workdayActions.invalidTime'))
   let instant = target
   for (let attempt = 0; attempt < 4; attempt++) {
     const local = inquiryLocalTime(new Date(instant).toISOString(), timeZoneId)
@@ -24,9 +27,9 @@ export function inquiryUtcTime(value: string, timeZoneId: string, originalValue?
     if (difference === 0) return new Date(instant).toISOString()
     instant += difference
   }
-  throw new Error('Такого времени нет в часовом поясе организации. Выберите другой срок.')
+  throw new Error(translate('workdayActions.missingTime'))
 }
 
 export function formatInquiryTime(value: string | null | undefined, timeZoneId?: string | null): string {
-  return value ? new Intl.DateTimeFormat('ru-RU', { timeZone: resolveInquiryTimeZone(timeZoneId), day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : ''
+  return value ? new Intl.DateTimeFormat(formattingCulture.value, { timeZone: resolveInquiryTimeZone(timeZoneId), day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : ''
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocalization, formattingCulture } from '@opencrm/ui/i18n'
+import '../conversationMessages'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
@@ -10,6 +12,8 @@ import ConversationTemplatePicker from './ConversationTemplatePicker.vue'
 import ConversationDeliveryHealth from './ConversationDeliveryHealth.vue'
 import { conversationChannelName } from '../api/conversations'
 import type { MessageTemplatePreview } from '../api/messageTemplates'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ context: WorkspaceContext; conversationId: string; maintenanceId?: string; showBack?: boolean }>()
 const emit = defineEmits<{ changed: [reason: 'read' | 'sent' | 'linked']; back: [] }>()
@@ -35,33 +39,33 @@ let draftKey = ''
 let readThrough = 0
 let reading = false
 let generation = 0
-const title = computed(() => page.value?.conversation?.clientName || page.value?.conversation?.externalDisplayName || page.value?.conversation?.telegramDisplayName || 'Диалог')
+const title = computed(() => page.value?.conversation?.clientName || page.value?.conversation?.externalDisplayName || page.value?.conversation?.telegramDisplayName || t('conversations.conversation'))
 const channelName = computed(() => conversationChannelName(page.value?.conversation?.channelCode))
 const writable = computed(() => page.value?.canSend && !page.value.isReadOnly && !props.context.workspaceAccess?.isReadOnly
   && props.context.shell.scenario?.modules?.messaging !== false)
 const textLimit = computed(() => page.value?.conversation?.channelCode?.toLowerCase() === 'max' ? 4000 : attachment.value ? 1024 : 4096)
 const ordered = computed(() => [...items.value].sort((a, b) => a.sequence - b.sequence))
 const outgoing = (item: ConversationMessage) => item.direction === 1 || String(item.direction).toLowerCase() === 'outgoing'
-const statusNames = computed(() => ['В очереди', 'Отправляем…', `Принято ${channelName.value}`, 'Ошибка отправки', 'Результат не подтверждён', 'Отменено'])
+const statusNames = computed(() => [t('conversations.queued'), t('conversations.sending'), t('conversations.channelAccepted', { channel: channelName.value }), t('conversations.sendFailed'), t('conversations.unconfirmed'), t('conversations.cancelled')])
 const statusCodes = ['queued', 'sending', 'accepted', 'failed', 'uncertain', 'cancelled']
 function status(item: ConversationMessage) { return typeof item.status === 'number' ? statusNames.value[item.status] : statusNames.value[statusCodes.indexOf(item.status.toLowerCase())] || item.status }
 function deliveryHint(item: ConversationMessage) {
-  if (item.status === 4 || String(item.status).toLowerCase() === 'uncertain') return 'Мессенджер не подтвердил результат. Перед повторной отправкой проверьте, получил ли клиент сообщение.'
+  if (item.status === 4 || String(item.status).toLowerCase() === 'uncertain') return t('conversations.uncertainMessageHint')
   if (!item.deliveryErrorCode) return ''
   const hints: Record<string, string> = {
-    'rate-limited': 'Мессенджер ограничил частоту отправки. Сервис повторит попытку.',
-    'delivery-expired': 'Истёк срок ожидания доставки.',
-    'bot-unavailable': 'Бот отключён или заменён.',
-    'attachment-unavailable': 'Вложение недоступно для отправки.',
-    'invalid-message-content': 'Мессенджер отклонил содержимое сообщения.',
-    'client-link-changed': 'Отправка отменена после изменения связи с клиентом.',
-    'client-channel-disconnected': 'Отправка отменена после отключения клиента.',
-    'telegram-http-403': 'Клиент запретил сообщения или отключил бота.'
+    'rate-limited': t('conversations.rateLimited'),
+    'delivery-expired': t('conversations.deliveryExpired'),
+    'bot-unavailable': t('conversations.botUnavailable'),
+    'attachment-unavailable': t('conversations.attachmentUnavailable'),
+    'invalid-message-content': t('conversations.invalidContent'),
+    'client-link-changed': t('conversations.clientLinkChanged'),
+    'client-channel-disconnected': t('conversations.clientDisconnected'),
+    'telegram-http-403': t('conversations.clientBlocked')
   }
-  return hints[item.deliveryErrorCode] || 'Не удалось завершить доставку. Подробности доступны ответственному за подключение мессенджера.'
+  return hints[item.deliveryErrorCode] || t('conversations.genericDeliveryHint')
 }
 function formatTime(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: page.value?.timeZoneId || 'UTC' }).format(new Date(value))
+  return new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'medium', timeStyle: 'short', timeZone: page.value?.timeZoneId || 'UTC' }).format(new Date(value))
 }
 async function markVisibleRead() {
   if (!page.value || reading || !atBottom.value || document.visibilityState !== 'visible' || !document.hasFocus()) return
@@ -111,7 +115,7 @@ async function load(initial = false) {
     if (shouldScroll) await scrollToEnd()
   } catch (caught) {
     if (!active.signal.aborted) {
-      error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить диалог.'
+      error.value = caught instanceof Error ? caught.message : t('conversations.loadConversationError')
       if (caught instanceof ConversationRequestError && [401, 403, 404].includes(caught.status)) { page.value = null; items.value = [] }
     }
   } finally { if (request === active) loading.value = false }
@@ -129,7 +133,7 @@ async function older() {
     page.value.nextBeforeSequence = result.nextBeforeSequence
     await nextTick()
     if (element) element.scrollTop += element.scrollHeight - height
-  } catch (caught) { if (current === generation) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить сообщения.' }
+  } catch (caught) { if (current === generation) error.value = caught instanceof Error ? caught.message : t('conversations.loadMessagesError') }
   finally { if (current === generation) loadingOlder.value = false }
 }
 async function send() {
@@ -154,7 +158,7 @@ async function send() {
     emit('changed', 'sent')
   } catch (caught) {
     if (current === generation) {
-      sendError.value = caught instanceof Error ? caught.message : 'Не удалось сохранить сообщение. Повторите запрос.'
+      sendError.value = caught instanceof Error ? caught.message : t('conversations.saveMessageError')
       if (caught instanceof ConversationRequestError && caught.status >= 400 && caught.status < 500 && ![408, 429].includes(caught.status)) pendingSend.value = undefined
       saveDraft()
     }
@@ -166,7 +170,7 @@ function saveDraft() {
 function insertTemplate(preview: MessageTemplatePreview) {
   if (sending.value || pendingSend.value) return
   const text = [draft.value.trimEnd(), preview.text].filter(Boolean).join('\n\n')
-  if (text.length > textLimit.value) { sendError.value = `Сообщение с шаблоном превышает ${textLimit.value} символов. Сократите черновик.`; return }
+  if (text.length > textLimit.value) { sendError.value = t('conversations.templateLimit', { limit: textLimit.value }); return }
   draft.value = text; template.value = { messageTemplateId: preview.templateId, messageTemplateVersion: preview.templateVersion }; sendError.value = ''; saveDraft()
 }
 async function upload(event: Event) {
@@ -174,14 +178,14 @@ async function upload(event: Event) {
   const file = input.files?.[0]
   if (!file || uploading.value || sending.value || pendingSend.value) return
   input.value = ''
-  if (file.size === 0 || file.size > 20 * 1024 * 1024) { sendError.value = 'Выберите непустой файл размером до 20 МБ.'; return }
+  if (file.size === 0 || file.size > 20 * 1024 * 1024) { sendError.value = t('conversations.fileLimit'); return }
   uploading.value = true
   sendError.value = ''
   const current = generation
   try {
     const result = await uploadConversationFile(props.context.organization.id, props.conversationId, file)
     if (current === generation) { attachment.value = result; saveDraft() }
-  } catch (caught) { if (current === generation) sendError.value = caught instanceof Error ? caught.message : 'Не удалось загрузить файл.' }
+  } catch (caught) { if (current === generation) sendError.value = caught instanceof Error ? caught.message : t('conversations.uploadError') }
   finally { if (current === generation) uploading.value = false }
 }
 function linked() { linking.value = false; updates.refresh(); emit('changed', 'linked'); void load() }
@@ -199,50 +203,50 @@ onBeforeUnmount(() => { saveDraft(); generation++; request?.abort(); window.remo
 </script>
 
 <template>
-  <section class="conversation" aria-label="Переписка с клиентом">
+  <section class="conversation" :aria-label="t('conversations.clientConversation')">
     <header class="conversation__heading">
-      <button v-if="showBack" type="button" class="conversation__back" aria-label="К списку диалогов" @click="emit('back')">←</button>
+      <button v-if="showBack" type="button" class="conversation__back" :aria-label="t('conversations.backToList')" @click="emit('back')">←</button>
       <div><h3>{{ title }}</h3><p>{{ channelName }} <span v-if="page?.conversation?.botUsername">· @{{ page.conversation.botUsername }}</span></p></div>
       <div class="conversation__actions">
         <UiButton v-if="page?.canViewClient && page.conversation?.clientId" variant="secondary" :href="`#clients/${page.conversation.clientId}`">
           <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 10a3.25 3.25 0 1 0 0-6.5A3.25 3.25 0 0 0 10 10Zm-6 6.5a6 6 0 0 1 12 0" /></svg>
-          Карточка клиента
+          {{ t('conversations.clientProfile') }}
         </UiButton>
         <ConversationDeliveryHealth v-if="page?.canManage" :key="context.organization.id" :organization-id="context.organization.id" />
         <UiButton v-if="page?.canManage && page.canViewClient && !context.workspaceAccess?.isReadOnly" variant="secondary" :aria-expanded="linking" @click="linking = true">
           <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M8 12 12 8m-6 7H5a3 3 0 0 1 0-6h3m4-4h3a3 3 0 0 1 0 6h-3m-2 2 2 2m-2-2 2-2" /></svg>
-          {{ page.conversation?.clientId ? 'Изменить связь' : 'Связать с клиентом' }}
+          {{ page.conversation?.clientId ? t('conversations.changeLink') : t('conversations.linkClient') }}
         </UiButton>
       </div>
     </header>
     <ConversationClientLink v-if="linking && page?.canManage && page.canViewClient" :key="`${context.organization.id}:${conversationId}`" :organization-id="context.organization.id" :conversation-id="conversationId" :current-client-id="page.conversation.clientId" :current-client-name="page.conversation.clientName" @changed="linked" @close="linking = false" />
-    <div v-if="loading" class="conversation__empty"><UiLoader text="Загружаем диалог…" /></div>
-    <p v-if="error" class="conversation__error" role="alert">{{ error }} <button type="button" @click="load()">Повторить</button></p>
-    <div v-if="page" ref="viewport" class="conversation__messages" tabindex="0" aria-label="Сообщения диалога" @scroll="onScroll">
-      <p v-if="historyWindowReset" class="conversation__hint">Пришло много сообщений. Показаны последние; предыдущие доступны по кнопке «Ранее».</p>
-      <UiButton v-if="page.nextBeforeSequence" class="conversation__older" variant="secondary" :disabled="loadingOlder" @click="older">{{ loadingOlder ? 'Загружаем…' : 'Ранее' }}</UiButton>
-      <p v-if="!ordered.length" class="conversation__empty">Сообщений пока нет.</p>
+    <div v-if="loading" class="conversation__empty"><UiLoader :text="t('conversations.loadingConversation')" /></div>
+    <p v-if="error" class="conversation__error" role="alert">{{ error }} <button type="button" @click="load()">{{ t('conversations.retry') }}</button></p>
+    <div v-if="page" ref="viewport" class="conversation__messages" tabindex="0" :aria-label="t('conversations.conversationMessages')" @scroll="onScroll">
+      <p v-if="historyWindowReset" class="conversation__hint">{{ t('conversations.historyReset') }}</p>
+      <UiButton v-if="page.nextBeforeSequence" class="conversation__older" variant="secondary" :disabled="loadingOlder" @click="older">{{ loadingOlder ? t('conversations.loading') : t('conversations.earlier') }}</UiButton>
+      <p v-if="!ordered.length" class="conversation__empty">{{ t('conversations.noMessages') }}</p>
       <article v-for="item in ordered" :key="item.id" class="conversation__message" :class="{ 'conversation__message--outgoing': outgoing(item) }">
-        <span class="conversation__author">{{ outgoing(item) ? item.actorDisplayName || 'Сотрудник' : title }}</span>
+        <span class="conversation__author">{{ outgoing(item) ? item.actorDisplayName || t('conversations.employee') : title }}</span>
         <p v-if="item.text" class="conversation__text">{{ item.text }}</p>
-        <template v-for="file in item.attachments" :key="file.id"><a v-if="file.sizeBytes <= 20 * 1024 * 1024" class="conversation__file" :href="conversationUrl(context.organization.id, `/attachments/${file.id}`)" target="_blank" rel="noopener">📎 {{ file.fileName }}</a><span v-else class="conversation__hint">📎 {{ file.fileName }} · Больше 20 МБ, загрузка недоступна</span></template>
-        <a v-if="item.maintenanceId && page.canViewMaintenance" :href="`#maintenance/${item.maintenanceId}`" class="conversation__context">{{ item.maintenanceTitle || 'Обслуживание' }} ↗</a>
-        <p v-if="outgoing(item) && deliveryHint(item)" class="conversation__delivery-hint">{{ deliveryHint(item) }}<span v-if="item.retryAt"> Следующая попытка: {{ formatTime(item.retryAt) }}.</span></p>
+        <template v-for="file in item.attachments" :key="file.id"><a v-if="file.sizeBytes <= 20 * 1024 * 1024" class="conversation__file" :href="conversationUrl(context.organization.id, `/attachments/${file.id}`)" target="_blank" rel="noopener">📎 {{ file.fileName }}</a><span v-else class="conversation__hint">📎 {{ t('conversations.largeFile', { name: file.fileName }) }}</span></template>
+        <a v-if="item.maintenanceId && page.canViewMaintenance" :href="`#maintenance/${item.maintenanceId}`" class="conversation__context">{{ item.maintenanceTitle || t('conversations.maintenance') }} ↗</a>
+        <p v-if="outgoing(item) && deliveryHint(item)" class="conversation__delivery-hint">{{ deliveryHint(item) }}<span v-if="item.retryAt">{{ t('conversations.nextRetry', { time: formatTime(item.retryAt) }) }}</span></p>
         <footer><time :datetime="item.createdAt">{{ formatTime(item.createdAt) }}</time><span v-if="outgoing(item)">{{ status(item) }}</span></footer>
       </article>
     </div>
-    <button v-if="page && !atBottom" type="button" class="conversation__latest" @click="scrollToEnd">К последним сообщениям ↓</button>
+    <button v-if="page && !atBottom" type="button" class="conversation__latest" @click="scrollToEnd">{{ t('conversations.latest') }}</button>
     <form v-if="writable" class="conversation__composer" @submit.prevent="send">
-      <div class="conversation__composer-heading"><label :for="`conversation-draft-${conversationId}`">Сообщение клиенту</label><ConversationTemplatePicker v-if="!sending && !pendingSend" :organization-id="context.organization.id" :conversation-id="conversationId" :maintenance-id="maintenanceId" :text-limit="textLimit" @select="insertTemplate" /></div>
-      <textarea :id="`conversation-draft-${conversationId}`" v-model="draft" rows="3" :maxlength="textLimit" :disabled="sending || !!pendingSend" placeholder="Напишите сообщение…" />
-      <div v-if="attachment" class="conversation__attachment"><span>📎 {{ attachment.fileName }}</span><button type="button" :disabled="sending || !!pendingSend" @click="attachment = undefined">Убрать</button></div>
-      <p v-if="attachment" class="conversation__hint">Неотправленный файл хранится сутки.</p>
-      <p v-if="draft.length > textLimit" class="conversation__error" role="alert">Сократите текст до {{ textLimit }} символов.</p>
-      <p v-if="maintenanceId" class="conversation__hint">Сообщение будет связано с этим обслуживанием.</p>
+      <div class="conversation__composer-heading"><label :for="`conversation-draft-${conversationId}`">{{ t('conversations.messageToClient') }}</label><ConversationTemplatePicker v-if="!sending && !pendingSend" :organization-id="context.organization.id" :conversation-id="conversationId" :maintenance-id="maintenanceId" :text-limit="textLimit" @select="insertTemplate" /></div>
+      <textarea :id="`conversation-draft-${conversationId}`" v-model="draft" rows="3" :maxlength="textLimit" :disabled="sending || !!pendingSend" :placeholder="t('conversations.writeMessage')" />
+      <div v-if="attachment" class="conversation__attachment"><span>📎 {{ attachment.fileName }}</span><button type="button" :disabled="sending || !!pendingSend" @click="attachment = undefined">{{ t('conversations.remove') }}</button></div>
+      <p v-if="attachment" class="conversation__hint">{{ t('conversations.unsentFileHint') }}</p>
+      <p v-if="draft.length > textLimit" class="conversation__error" role="alert">{{ t('conversations.textLimit', { limit: textLimit }) }}</p>
+      <p v-if="maintenanceId" class="conversation__hint">{{ t('conversations.maintenanceLinkHint') }}</p>
       <p v-if="sendError" class="conversation__error" role="alert">{{ sendError }}</p>
-      <div class="conversation__send"><label class="conversation__upload"><input type="file" :disabled="sending || uploading || !!pendingSend || !!attachment" aria-label="Прикрепить файл до 20 МБ" @change="upload" />{{ uploading ? 'Загружаем…' : 'Прикрепить файл' }}</label><span>{{ draft.length }} / {{ textLimit }}</span><UiButton type="submit" :disabled="sending || uploading || (!draft.trim() && !attachment) || draft.length > textLimit">{{ sending ? 'Сохраняем…' : pendingSend ? 'Повторить запрос' : 'Отправить' }}</UiButton></div>
+      <div class="conversation__send"><label class="conversation__upload"><input type="file" :disabled="sending || uploading || !!pendingSend || !!attachment" :aria-label="t('conversations.attachLabel')" @change="upload" />{{ uploading ? t('conversations.loading') : t('conversations.attach') }}</label><span>{{ draft.length }} / {{ textLimit }}</span><UiButton type="submit" :disabled="sending || uploading || (!draft.trim() && !attachment) || draft.length > textLimit">{{ sending ? t('conversations.saving') : pendingSend ? t('conversations.retryRequest') : t('conversations.send') }}</UiButton></div>
     </form>
-    <p v-else-if="page" class="conversation__readonly">{{ context.shell.scenario?.modules?.messaging === false ? 'История доступна для просмотра. Отправка сообщений через Telegram и MAX доступна в PRO.' : page.isReadOnly ? 'Отправка недоступна. Проверьте подключение бота организации.' : 'Переписка доступна для просмотра.' }}</p>
+    <p v-else-if="page" class="conversation__readonly">{{ context.shell.scenario?.modules?.messaging === false ? t('conversations.historyProHint') : page.isReadOnly ? t('conversations.botConnectionHint') : t('conversations.readOnlyHint') }}</p>
   </section>
 </template>
 

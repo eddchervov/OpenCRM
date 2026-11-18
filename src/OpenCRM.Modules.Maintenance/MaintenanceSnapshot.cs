@@ -4,6 +4,7 @@ namespace OpenCRM.Modules.Maintenance;
 
 /// <summary> Снимок состояния обслуживания для отслеживания изменений. </summary>
 internal sealed record MaintenanceSnapshot(
+    string CurrencyCode,
     MaintenanceStatus Status,
     MaintenanceType Type,
     DateTime? PlannedDate,
@@ -27,6 +28,7 @@ internal sealed record MaintenanceSnapshot(
     public static MaintenanceSnapshot From(MaintenanceEntity maintenance)
     {
         return new MaintenanceSnapshot(
+            maintenance.CurrencyCode,
             maintenance.Status,
             maintenance.Type,
             MaintenanceDateRules.NormalizeMaintenanceDate(maintenance.PlannedDate),

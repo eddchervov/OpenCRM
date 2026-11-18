@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
 import ts from 'typescript'
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/interactionMessages.ts'
 import { getAssistantPreviewUrl, getAssistantUrl, isAssistantScenario } from '../packages/workspace/src/api/assistantAccess.mjs'
 
 const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/components/WorkspaceAssistantButton.vue', import.meta.url), 'utf8'))
@@ -14,6 +16,8 @@ function setup(props, reader) {
   const hooks = {}
   const module = { exports: {} }
   const resolve = id => {
+    if (id in regionalTestDependencies) return regionalTestDependencies[id]
+    if (id === '../interactionMessages') return {}
     if (id === 'vue') return {
       defineComponent: value => value,
       ref: value => ({ value }),

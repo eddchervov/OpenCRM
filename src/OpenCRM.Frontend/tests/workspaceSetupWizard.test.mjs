@@ -1,3 +1,6 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/workdayBoardMessages.ts'
+import '../packages/workspace/src/setupMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -15,6 +18,9 @@ function compile(path, dependencies, inlineTemplate = false) {
   }).outputText
   const module = { exports: {} }
   new Function('require', 'module', 'exports', 'localStorage', 'window', 'setInterval', code)(id => {
+    if (id === '../workdayBoardMessages') return {}
+    if (id === '../setupMessages') return {}
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id in dependencies) return dependencies[id]
     throw new Error('Не задана зависимость: ' + id)
   }, module, module.exports, { getItem: () => null, setItem() {} }, { localStorage: { getItem: () => null } }, () => 0)

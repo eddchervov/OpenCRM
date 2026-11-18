@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { formattingCulture } from '@opencrm/ui/i18n'
+import { useWorkspaceCurrency } from '../workspaceCurrency'
+
 import { getVehicleDisplayName } from '../api/vehicles'
 import { computed, inject, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { pageBreadcrumbsKey, UiButton, UiCard, UiConfirmDialog, UiImagePreview, UiLoader } from '@opencrm/ui'
+import { useLocalization } from '@opencrm/ui'
+import '../vehicleOverviewMessages'
 import {
   loadVehicle,
   loadVehicleAlbums,
@@ -20,11 +25,14 @@ import { getWorkdayProgress } from '../utils/workdayCard'
 import { loadWorkProgress, type WorkProgress } from '../api/work'
 import WorkspaceProLock from './WorkspaceProLock.vue'
 
+const workspaceCurrency = useWorkspaceCurrency()
+
 const props = defineProps<{
   context: WorkspaceContext
   vehicleId: string
   action?: string
 }>()
+const { t } = useLocalization()
 
 const emit = defineEmits<{
   changed: []
@@ -77,14 +85,14 @@ const organizationId = computed(() => props.context.organization.id)
 const isDetailingScenario = computed(() => props.context.shell.scenario?.code === 'detailing')
 const isJournalView = computed(() => props.action === 'journal')
 const brandLogo = computed(() => getVehicleBrandLogo(vehicle.value?.brandLogoKey))
-const clientInitials = computed(() => vehicle.value?.organizationClientName?.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('') || 'К')
+const clientInitials = computed(() => vehicle.value?.organizationClientName?.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('') || clientLabel.value.slice(0, 1))
 const canOpenClients = computed(() => props.context.shell.menu?.some(item => item.code === 'clients' && item.isVisible))
-const clientLabel = computed(() => props.context.shell.scenario?.code === 'fleet' ? (props.context.shell.scenario.terms?.clients || 'Связь с организацией') : 'Клиент')
+const clientLabel = computed(() => props.context.shell.scenario?.code === 'fleet' ? (props.context.shell.scenario.terms?.clients || t('vehicleOverview.linkedOrganization')) : t('vehicleOverview.client'))
 const canOpenDefects = computed(() => !isDetailingScenario.value && props.context.shell.menu?.some(item => item.code === 'defects' && item.isVisible))
 
 const vehicleTitle = computed(() => {
   if (!vehicle.value) {
-    return isDetailingScenario.value ? 'Карточка авто' : 'Карточка техники'
+    return isDetailingScenario.value ? t('vehicleOverview.cardVehicle') : t('vehicleOverview.cardEquipment')
   }
 
   return [getVehicleDisplayName(vehicle.value), vehicle.value.yearIssue].filter(Boolean).join(' ')
@@ -101,13 +109,13 @@ provide(pageBreadcrumbsKey, computed(() => {
 
 const currentPhoto = computed(() => photos.value[selectedPhotoIndex.value])
 const primaryPhotoUrl = computed(() => currentPhoto.value?.url ?? vehicle.value?.photoUrl ?? '')
-const mileageLabel = computed(() => vehicle.value?.mileageUnit === 2 ? 'Наработка' : 'Пробег')
+const mileageLabel = computed(() => vehicle.value?.mileageUnit === 2 ? t('vehicleOverview.engineHours') : t('vehicleOverview.mileage'))
 const mileageValue = computed(() => {
   if (vehicle.value?.currentMileage === null || vehicle.value?.currentMileage === undefined) {
-    return 'Не заполнено'
+    return t('vehicleOverview.emptyValue')
   }
 
-  return `${vehicle.value.currentMileage.toLocaleString('ru-RU')} ${vehicle.value.mileageUnit === 2 ? 'м/ч' : 'км'}`
+  return `${vehicle.value.currentMileage.toLocaleString(formattingCulture.value)} ${vehicle.value.mileageUnit === 2 ? t('vehicleOverview.mileageHours') : t('vehicleOverview.mileageKilometers')}`
 })
 const photosUrl = computed(() => {
   if (!vehicle.value) {
@@ -154,35 +162,35 @@ const countersUrl = computed(() => {
 })
 const canShowCounters = computed(() => props.context.shell.scenario?.code === 'fleet' && props.context.shell.menu?.some(item => item.code === 'counters' && item.isVisible))
 const showMileageStat = computed(() => !isDetailingScenario.value || hasValue(vehicle.value?.currentMileage))
-const maintenanceHistoryTitle = computed(() => isDetailingScenario.value ? 'История услуг' : 'История обслуживания')
-const addMaintenanceText = computed(() => isDetailingScenario.value ? 'Записать услугу' : 'Добавить обслуживание')
-const noMaintenanceText = computed(() => isDetailingScenario.value ? 'По авто пока нет услуг.' : 'По технике пока нет обслуживаний.')
-const journalText = computed(() => isDetailingScenario.value ? 'Журнал авто' : 'Журнал техники')
+const maintenanceHistoryTitle = computed(() => isDetailingScenario.value ? t('vehicleOverview.serviceHistory') : t('vehicleOverview.maintenanceHistory'))
+const addMaintenanceText = computed(() => isDetailingScenario.value ? t('vehicleOverview.addService') : t('vehicleOverview.addMaintenance'))
+const noMaintenanceText = computed(() => isDetailingScenario.value ? t('vehicleOverview.noServices') : t('vehicleOverview.noMaintenances'))
+const journalText = computed(() => isDetailingScenario.value ? t('vehicleOverview.vehicleJournal') : t('vehicleOverview.equipmentJournal'))
 const cardTitle = computed(() => isJournalView.value ? journalText.value : vehicleTitle.value)
 const exportOptions = computed(() => [
-  { key: 'pdf-photos', format: 'pdf' as const, includePhotos: true, label: 'PDF с фотографиями', icon: 'PDF', tone: 'danger' },
-  { key: 'pdf', format: 'pdf' as const, includePhotos: false, label: 'PDF без фотографий', icon: 'PDF', tone: 'danger' },
-  { key: 'word-photos', format: 'word' as const, includePhotos: true, label: 'Word с фотографиями', icon: 'DOC', tone: 'primary' },
-  { key: 'word', format: 'word' as const, includePhotos: false, label: 'Word без фотографий', icon: 'DOC', tone: 'primary' }
+  { key: 'pdf-photos', format: 'pdf' as const, includePhotos: true, label: t('vehicleOverview.pdfPhotos'), icon: 'PDF', tone: 'danger' },
+  { key: 'pdf', format: 'pdf' as const, includePhotos: false, label: t('vehicleOverview.pdfNoPhotos'), icon: 'PDF', tone: 'danger' },
+  { key: 'word-photos', format: 'word' as const, includePhotos: true, label: t('vehicleOverview.wordPhotos'), icon: 'DOC', tone: 'primary' },
+  { key: 'word', format: 'word' as const, includePhotos: false, label: t('vehicleOverview.wordNoPhotos'), icon: 'DOC', tone: 'primary' }
 ])
 
-function formatDate(value?: string | null, fallback = 'Не указано') {
+function formatDate(value?: string | null, fallback = t('vehicleOverview.notSpecified')) {
   if (!value) {
     return fallback
   }
 
   const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (dateOnlyMatch) {
-    return `${dateOnlyMatch[3]}.${dateOnlyMatch[2]}.${dateOnlyMatch[1]}`
+    return new Intl.DateTimeFormat(formattingCulture.value, { dateStyle: 'short', timeZone: 'UTC' }).format(new Date(`${dateOnlyMatch[1]}-${dateOnlyMatch[2]}-${dateOnlyMatch[3]}T00:00:00Z`))
   }
 
-  return new Intl.DateTimeFormat('ru-RU').format(new Date(value))
+  return new Intl.DateTimeFormat(formattingCulture.value).format(new Date(value))
 }
 
 function formatEventDate(value?: string | null) {
-  if (!value) return 'Не указано'
+  if (!value) return t('vehicleOverview.notSpecified')
 
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     timeZone: props.context.organization.timeZoneId || 'UTC',
     dateStyle: 'short',
     timeStyle: 'short'
@@ -193,16 +201,21 @@ function formatTime(value?: string | null) {
   return value ? value.slice(0, 5) : ''
 }
 
-function formatMoney(value?: number | null) {
+function formatMoney(value?: number | null, currencyCode?: string | null) {
   if (value === null || value === undefined) {
-    return 'Не указана'
+    return t('vehicleOverview.amountNotSpecified')
   }
 
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value)
+  return new Intl.NumberFormat(formattingCulture.value, {
+    style: 'currency',
+    currency: currencyCode || workspaceCurrency.value,
+    currencyDisplay: 'code',
+    maximumFractionDigits: 2
+  }).format(value)
 }
 
 function valueOrEmpty(value?: string | number | null) {
-  return value === null || value === undefined || value === '' ? 'Не указано' : value
+  return value === null || value === undefined || value === '' ? t('vehicleOverview.notSpecified') : value
 }
 
 function hasValue(value?: string | number | null) {
@@ -211,47 +224,47 @@ function hasValue(value?: string | number | null) {
 
 function getVehicleKindName(kind: number) {
   const names: Record<number, string> = {
-    1: 'Легковой автомобиль',
-    2: 'Грузовой автомобиль',
-    3: 'Мотоцикл',
-    4: 'Квадроцикл',
-    5: 'Багги / UTV',
-    6: 'Снегоход',
-    7: 'Гидроцикл',
-    8: 'Лодка / катер',
-    9: 'Спецтехника',
-    10: 'Прицеп',
-    99: 'Другая техника'
+    1: t('vehicleOverview.kind1'),
+    2: t('vehicleOverview.kind2'),
+    3: t('vehicleOverview.kind3'),
+    4: t('vehicleOverview.kind4'),
+    5: t('vehicleOverview.kind5'),
+    6: t('vehicleOverview.kind6'),
+    7: t('vehicleOverview.kind7'),
+    8: t('vehicleOverview.kind8'),
+    9: t('vehicleOverview.kind9'),
+    10: t('vehicleOverview.kind10'),
+    99: t('vehicleOverview.kind99')
   }
 
-  return names[kind] ?? 'Другая техника'
+  return names[kind] ?? t('vehicleOverview.otherVehicle')
 }
 
 function getMaintenanceTypeName(type: number) {
   const names: Record<number, string> = {
-    1: 'ТО',
-    2: 'Ремонт',
-    3: 'Дозаправка',
-    100: 'Другое'
+    1: t('vehicleOverview.maintenanceType1'),
+    2: t('vehicleOverview.maintenanceType2'),
+    3: t('vehicleOverview.maintenanceType3'),
+    100: t('vehicleOverview.maintenanceType100')
   }
 
-  return names[type] ?? 'Обслуживание'
+  return names[type] ?? t('vehicleOverview.maintenanceTypeDefault')
 }
 
 function getMaintenanceStatusName(status: number) {
   const names: Record<number, string> = {
-    1: 'Запланировано',
-    2: 'В работе',
-    3: 'Выполнено',
-    4: 'Отменено'
+    1: t('vehicleOverview.status1'),
+    2: t('vehicleOverview.status2'),
+    3: t('vehicleOverview.status3'),
+    4: t('vehicleOverview.status4')
   }
 
-  return names[status] ?? 'Неизвестно'
+  return names[status] ?? t('vehicleOverview.statusDefault')
 }
 
 function getRecordStatus(item: WorkspaceMaintenance) {
-  if (item.status === 3 && item.handedOverAt) return 'Выдано'
-  if (item.status === 3 && item.readyForHandoverAt) return 'Готово к выдаче'
+  if (item.status === 3 && item.handedOverAt) return t('vehicleOverview.handedOver')
+  if (item.status === 3 && item.readyForHandoverAt) return t('vehicleOverview.readyStatus')
   return getMaintenanceStatusName(item.status)
 }
 
@@ -301,7 +314,7 @@ async function loadHistory(append = false) {
     void loadRecordProgress(result.items, latestRequest)
   } catch (error) {
     if (request !== latestMaintenanceRequest || orgId !== organizationId.value || vehicleId !== props.vehicleId) return
-    maintenanceError.value = error instanceof Error ? error.message : 'Не удалось загрузить историю обслуживания.'
+    maintenanceError.value = error instanceof Error ? error.message : t('vehicleOverview.maintenanceLoadError')
   } finally {
     if (request === latestMaintenanceRequest) maintenanceLoading.value = false
   }
@@ -313,7 +326,7 @@ function showActiveRecords() {
   void loadHistory()
 }
 function getMaintenanceDateLabel(item: WorkspaceMaintenance) {
-  return item.status === 3 ? 'Дата выполнения' : 'Плановая дата'
+  return item.status === 3 ? t('vehicleOverview.completedDate') : t('vehicleOverview.plannedDate')
 }
 
 function getMaintenanceDateValue(item: WorkspaceMaintenance) {
@@ -327,7 +340,7 @@ function getMaintenanceTimeValue(item: WorkspaceMaintenance) {
     return `${formatDate(item.plannedDate ?? item.date)} ${start} — ${formatDate(item.plannedEndDate)} ${end}`
   }
 
-  return start && end ? `${start}-${end}` : start || end || 'Не указано'
+  return start && end ? `${start}-${end}` : start || end || t('vehicleOverview.notSpecified')
 }
 
 function getDocumentUrl(format: 'pdf' | 'word', includePhotos: boolean) {
@@ -364,7 +377,7 @@ async function downloadDocument(option: { key: string, format: 'pdf' | 'word', i
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     if (!response.ok) {
-      throw new Error('Не удалось сформировать отчёт.')
+      throw new Error(t('vehicleOverview.reportError'))
     }
 
     const blob = await response.blob()
@@ -386,7 +399,7 @@ async function downloadDocument(option: { key: string, format: 'pdf' | 'word', i
       exportMenu.value.open = false
     }
   } catch (error) {
-    actionMessage.value = error instanceof Error ? error.message : 'Не удалось сформировать отчёт.'
+    actionMessage.value = error instanceof Error ? error.message : t('vehicleOverview.reportError')
   } finally {
     exportingOptionKey.value = ''
   }
@@ -457,12 +470,12 @@ async function confirmArchiveVehicle() {
     })
 
     if (!response.ok) {
-      throw new Error(isDetailingScenario.value ? 'Не удалось удалить авто.' : 'Не удалось удалить технику.')
+      throw new Error(isDetailingScenario.value ? t('vehicleOverview.deleteVehicleError') : t('vehicleOverview.deleteEquipmentError'))
     }
 
     window.location.hash = '#vehicles'
   } catch (error) {
-    actionMessage.value = error instanceof Error ? error.message : (isDetailingScenario.value ? 'Не удалось удалить авто.' : 'Не удалось удалить технику.')
+    actionMessage.value = error instanceof Error ? error.message : (isDetailingScenario.value ? t('vehicleOverview.deleteVehicleError') : t('vehicleOverview.deleteEquipmentError'))
   } finally {
     isSavingVehicle.value = false
     deleteConfirmOpen.value = false
@@ -493,12 +506,12 @@ async function restoreVehicle() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => null)
-      throw new Error(error?.message ?? (isDetailingScenario.value ? 'Не удалось восстановить авто.' : 'Не удалось восстановить технику.'))
+      throw new Error(error?.message ?? (isDetailingScenario.value ? t('vehicleOverview.restoreVehicleError') : t('vehicleOverview.restoreEquipmentError')))
     }
 
     await loadCard()
   } catch (error) {
-    actionMessage.value = error instanceof Error ? error.message : (isDetailingScenario.value ? 'Не удалось восстановить авто.' : 'Не удалось восстановить технику.')
+    actionMessage.value = error instanceof Error ? error.message : (isDetailingScenario.value ? t('vehicleOverview.restoreVehicleError') : t('vehicleOverview.restoreEquipmentError'))
   } finally {
     isSavingVehicle.value = false
   }
@@ -546,7 +559,7 @@ async function loadCard() {
     if (request !== latestRequest) return
     const [journalResult, maintenanceResult, activeResult] = results
     if (journalResult.status === 'fulfilled') history.value = journalResult.value
-    else historyError.value = 'Не удалось загрузить журнал изменений.'
+    else historyError.value = t('vehicleOverview.journalLoadError')
     await loadSavedMedia()
     if (request !== latestRequest) return
     if (maintenanceResult.status === 'fulfilled') {
@@ -554,16 +567,16 @@ async function loadCard() {
       maintenanceTotalCount.value = maintenanceResult.value.totalCount
       maintenancePage.value = 1
       maintenanceHasMore.value = maintenanceResult.value.hasMore
-    } else maintenanceError.value = 'Не удалось загрузить историю обслуживания.'
+    } else maintenanceError.value = t('vehicleOverview.maintenanceLoadError')
     if (activeResult.status === 'fulfilled') {
       activeRecords.value = activeResult.value.items
       activeRecordCount.value = activeResult.value.totalCount
-    } else activeRecordError.value = 'Не удалось загрузить текущие записи.'
+    } else activeRecordError.value = t('vehicleOverview.currentRecordsError')
     isLoading.value = false
     await loadRecordProgress([...activeRecords.value, ...maintenanceItems.value], request)
   } catch (error) {
     if (request !== latestRequest) return
-    errorMessage.value = error instanceof Error ? error.message : (isDetailingScenario.value ? 'Не удалось загрузить карточку авто.' : 'Не удалось загрузить карточку техники.')
+    errorMessage.value = error instanceof Error ? error.message : (isDetailingScenario.value ? t('vehicleOverview.loadVehicleError') : t('vehicleOverview.loadEquipmentError'))
   } finally {
     if (request === latestRequest) isLoading.value = false
   }
@@ -582,7 +595,7 @@ async function loadSavedMedia() {
     if (orgId !== organizationId.value || vehicleId !== props.vehicleId) return
     if (photoResult.status === 'fulfilled') photos.value = photoResult.value[vehicleId] ?? []
     if (albumResult.status === 'fulfilled') albums.value = albumResult.value?.albums ?? []
-    if (photoResult.status === 'rejected' || albumResult.status === 'rejected') mediaError.value = 'Часть фотографий или альбомов не удалось загрузить.'
+    if (photoResult.status === 'rejected' || albumResult.status === 'rejected') mediaError.value = t('vehicleOverview.mediaLoadError')
   } finally {
     isSavedMediaLoading.value = false
   }
@@ -615,25 +628,25 @@ watch(() => [organizationId.value, props.vehicleId], () => {
   <section class="entity-card-section vehicle-profile">
     <UiCard page :title="cardTitle">
       <template #actions>
-        <UiButton v-if="isJournalView && vehicle" variant="secondary" :href="`#vehicles/${vehicle.id}`">{{ isDetailingScenario ? 'К автомобилю' : 'К технике' }}</UiButton>
+        <UiButton v-if="isJournalView && vehicle" variant="secondary" :href="`#vehicles/${vehicle.id}`">{{ isDetailingScenario ? t('vehicleOverview.backToVehicle') : t('vehicleOverview.backToEquipment') }}</UiButton>
         <template v-else-if="vehicle && !isLoading">
           <UiButton v-if="canCreateMaintenance && !vehicle.isArchived" :href="maintenanceCreateUrl">+ {{ addMaintenanceText }}</UiButton>
-          <UiButton v-if="canEditVehicles" variant="secondary" :href="editVehicleUrl">Редактировать</UiButton>
+          <UiButton v-if="canEditVehicles" variant="secondary" :href="editVehicleUrl">{{ t('vehicleOverview.edit') }}</UiButton>
           <details v-if="canArchiveVehicles" class="vehicle-profile__more">
-            <summary aria-label="Другие действия">•••</summary>
+            <summary :aria-label="t('vehicleOverview.moreActions')">•••</summary>
             <div>
-              <UiButton v-if="vehicle.isArchived" variant="secondary" :disabled="isSavingVehicle" @click="restoreVehicle">Восстановить</UiButton>
-              <UiButton v-else variant="secondary" :disabled="isSavingVehicle" @click="archiveVehicle">В архив</UiButton>
+              <UiButton v-if="vehicle.isArchived" variant="secondary" :disabled="isSavingVehicle" @click="restoreVehicle">{{ t('vehicleOverview.restore') }}</UiButton>
+              <UiButton v-else variant="secondary" :disabled="isSavingVehicle" @click="archiveVehicle">{{ t('vehicleOverview.moveToArchive') }}</UiButton>
             </div>
           </details>
         </template>
       </template>
-      <UiLoader v-if="isLoading" :text="isDetailingScenario ? 'Загружаем карточку авто...' : 'Загружаем карточку техники...'" />
-      <div v-else-if="errorMessage" class="detailing-state detailing-state-error" role="alert">{{ errorMessage }} <button type="button" @click="loadCard">Повторить</button></div>
+      <UiLoader v-if="isLoading" :text="isDetailingScenario ? t('vehicleOverview.loadingVehicle') : t('vehicleOverview.loadingEquipment')" />
+      <div v-else-if="errorMessage" class="detailing-state detailing-state-error" role="alert">{{ errorMessage }} <button type="button" @click="loadCard">{{ t('vehicleOverview.retry') }}</button></div>
       <div v-else-if="vehicle && isJournalView">
-        <p v-if="historyError" class="vehicle-profile__error" role="alert">{{ historyError }} <button type="button" @click="loadCard">Повторить</button></p>
-        <div v-else-if="history.length === 0" class="detailing-empty">Журнал изменений пока пустой.</div>
-        <ol v-else class="vehicle-journal" aria-label="История изменений техники">
+        <p v-if="historyError" class="vehicle-profile__error" role="alert">{{ historyError }} <button type="button" @click="loadCard">{{ t('vehicleOverview.retry') }}</button></p>
+        <div v-else-if="history.length === 0" class="detailing-empty">{{ t('vehicleOverview.emptyJournal') }}</div>
+        <ol v-else class="vehicle-journal" :aria-label="t('vehicleOverview.vehicleJournalLabel')">
           <li v-for="event in history" :key="event.id" class="vehicle-journal__event">
             <div class="vehicle-journal__meta">
               <time :datetime="event.createdAt">{{ formatEventDate(event.createdAt) }}</time>
@@ -642,11 +655,11 @@ watch(() => [organizationId.value, props.vehicleId], () => {
             <div class="vehicle-journal__body">
               <strong>{{ event.title }}</strong>
               <p v-if="event.description">{{ event.description }}</p>
-              <span v-else class="vehicle-journal__missing">Подробности не сохранены</span>
+              <span v-else class="vehicle-journal__missing">{{ t('vehicleOverview.detailsNotSaved') }}</span>
               <a
                 v-if="event.relatedEntityType === 'maintenance' && event.relatedEntityId && event.eventType !== 'maintenance_deleted'"
                 :href="`#maintenance/${event.relatedEntityId}?from=vehicle`"
-              >Открыть обслуживание</a>
+              >{{ t('vehicleOverview.openMaintenance') }}</a>
             </div>
           </li>
         </ol>
@@ -655,64 +668,64 @@ watch(() => [organizationId.value, props.vehicleId], () => {
         <div class="vehicle-profile__overview">
           <aside class="vehicle-profile__media">
             <div class="vehicle-profile__photo">
-              <button v-if="primaryPhotoUrl" type="button" class="vehicle-profile__preview" aria-label="Открыть фото техники" @click="previewPhotoUrl = primaryPhotoUrl"><img :src="primaryPhotoUrl" :alt="vehicleTitle"></button>
-              <div v-else class="vehicle-profile__placeholder"><img v-if="brandLogo" :src="brandLogo.src" :alt="brandLogo.name"><span>Нет фото</span></div>
-              <button v-if="photos.length > 1" class="entity-photo-nav entity-photo-nav--prev" type="button" @click="showPreviousPhoto" aria-label="Предыдущее фото">‹</button>
-              <button v-if="photos.length > 1" class="entity-photo-nav entity-photo-nav--next" type="button" @click="showNextPhoto" aria-label="Следующее фото">›</button>
+              <button v-if="primaryPhotoUrl" type="button" class="vehicle-profile__preview" :aria-label="t('vehicleOverview.openPhoto')" @click="previewPhotoUrl = primaryPhotoUrl"><img :src="primaryPhotoUrl" :alt="vehicleTitle"></button>
+              <div v-else class="vehicle-profile__placeholder"><img v-if="brandLogo" :src="brandLogo.src" :alt="brandLogo.name"><span>{{ t('vehicleOverview.noPhoto') }}</span></div>
+              <button v-if="photos.length > 1" class="entity-photo-nav entity-photo-nav--prev" type="button" @click="showPreviousPhoto" :aria-label="t('vehicleOverview.previousPhoto')">‹</button>
+              <button v-if="photos.length > 1" class="entity-photo-nav entity-photo-nav--next" type="button" @click="showNextPhoto" :aria-label="t('vehicleOverview.nextPhoto')">›</button>
               <div v-if="photos.length > 1" class="entity-photo-counter">{{ selectedPhotoIndex + 1 }} / {{ photos.length }}</div>
             </div>
             <div class="vehicle-profile__thumbnails">
-              <button v-for="(photo, index) in photos.slice(0, 3)" :key="photo.photoId" type="button" :aria-label="`Показать фото ${index + 1}`" :aria-pressed="selectedPhotoIndex === index" @click="selectedPhotoIndex = index"><img :src="photo.url" alt=""></button>
-              <a :href="photosUrl">{{ photos.length ? `Все фото · ${photos.length}` : canWrite ? 'Добавить фото' : 'Фотографии' }}</a>
+              <button v-for="(photo, index) in photos.slice(0, 3)" :key="photo.photoId" type="button" :aria-label="t('vehicleOverview.showPhoto', { index: index + 1 })" :aria-pressed="selectedPhotoIndex === index" @click="selectedPhotoIndex = index"><img :src="photo.url" alt=""></button>
+              <a :href="photosUrl">{{ photos.length ? t('vehicleOverview.allPhotos', { count: photos.length }) : canWrite ? t('vehicleOverview.addPhoto') : t('vehicleOverview.photos') }}</a>
             </div>
           </aside>
           <div class="vehicle-profile__identity">
-            <div class="vehicle-profile__name ui-section-header"><img v-if="brandLogo" :src="brandLogo.src" :alt="`Логотип ${brandLogo.name}`"><h2>{{ getVehicleDisplayName(vehicle) }}</h2></div>
+            <div class="vehicle-profile__name ui-section-header"><img v-if="brandLogo" :src="brandLogo.src" :alt="t('vehicleOverview.logo', { name: brandLogo.name })"><h2>{{ getVehicleDisplayName(vehicle) }}</h2></div>
             <div class="vehicle-profile__headline">
               <strong v-if="vehicle.registrationPlate && (vehicle.brandName || vehicle.modelName || vehicle.manualBrandName || vehicle.manualModelName)" class="vehicle-profile__plate">{{ vehicle.registrationPlate }}</strong>
               <span>{{ getVehicleKindName(vehicle.kind) }}<template v-if="vehicle.yearIssue"> · {{ vehicle.yearIssue }}</template></span>
-              <span v-if="vehicle.isArchived" class="vehicle-profile__archive">В архиве · {{ formatEventDate(vehicle.archiveDate) }}</span>
+              <span v-if="vehicle.isArchived" class="vehicle-profile__archive">{{ t('vehicleOverview.inArchive', { date: formatEventDate(vehicle.archiveDate) }) }}</span>
             </div>
             <dl class="vehicle-profile__facts">
               <div v-if="showMileageStat"><dt>{{ mileageLabel }}</dt><dd><a v-if="canShowCounters" :href="countersUrl">{{ mileageValue }}</a><span v-else>{{ mileageValue }}</span></dd></div>
-              <div v-if="vehicle.color"><dt>Цвет</dt><dd>{{ vehicle.color }}</dd></div>
+              <div v-if="vehicle.color"><dt>{{ t('vehicleOverview.color') }}</dt><dd>{{ vehicle.color }}</dd></div>
               <div v-if="vehicle.vin"><dt>VIN</dt><dd class="vehicle-profile__identifier">{{ vehicle.vin }}</dd></div>
-              <div v-if="vehicle.organizationClientId || vehicle.organizationClientName || context.shell.scenario?.code !== 'fleet'"><dt>{{ clientLabel }}</dt><dd><a v-if="clientCardUrl" :href="clientCardUrl">{{ vehicle.organizationClientName || 'Открыть карточку' }}</a><span v-else>{{ vehicle.organizationClientName || 'Не привязан' }}</span></dd></div>
-              <div v-if="vehicle.name"><dt>Внутренний номер</dt><dd>{{ vehicle.name }}</dd></div>
+              <div v-if="vehicle.organizationClientId || vehicle.organizationClientName || context.shell.scenario?.code !== 'fleet'"><dt>{{ clientLabel }}</dt><dd><a v-if="clientCardUrl" :href="clientCardUrl">{{ vehicle.organizationClientName || t('vehicleOverview.openClientCard') }}</a><span v-else>{{ vehicle.organizationClientName || t('vehicleOverview.unlinked') }}</span></dd></div>
+              <div v-if="vehicle.name"><dt>{{ t('vehicleOverview.internalNumber') }}</dt><dd>{{ vehicle.name }}</dd></div>
             </dl>
             <p v-if="vehicle.description" class="vehicle-profile__note">{{ vehicle.description }}</p>
             <details class="vehicle-profile__documents">
-              <summary>Документы и сведения</summary>
+              <summary>{{ t('vehicleOverview.documentsAndDetails') }}</summary>
               <dl class="vehicle-profile__facts">
-                <div v-if="vehicle.bodyNumber"><dt>Номер кузова</dt><dd>{{ vehicle.bodyNumber }}</dd></div>
-                <div v-if="vehicle.engineNumber"><dt>Номер двигателя</dt><dd>{{ vehicle.engineNumber }}</dd></div>
-                <div v-if="vehicle.registrationCertificate"><dt>СТС</dt><dd>{{ vehicle.registrationCertificate }}</dd></div>
-                <div v-if="vehicle.commissioningDate"><dt>Ввод в эксплуатацию</dt><dd>{{ formatDate(vehicle.commissioningDate) }}</dd></div>
-                <div><dt>Добавлено</dt><dd>{{ formatEventDate(vehicle.dateTimeCreation) }}</dd></div>
+                <div v-if="vehicle.bodyNumber"><dt>{{ t('vehicleOverview.bodyNumber') }}</dt><dd>{{ vehicle.bodyNumber }}</dd></div>
+                <div v-if="vehicle.engineNumber"><dt>{{ t('vehicleOverview.engineNumber') }}</dt><dd>{{ vehicle.engineNumber }}</dd></div>
+                <div v-if="vehicle.registrationCertificate"><dt>{{ t('vehicleOverview.registrationCertificate') }}</dt><dd>{{ vehicle.registrationCertificate }}</dd></div>
+                <div v-if="vehicle.commissioningDate"><dt>{{ t('vehicleOverview.commissioningDate') }}</dt><dd>{{ formatDate(vehicle.commissioningDate) }}</dd></div>
+                <div><dt>{{ t('vehicleOverview.added') }}</dt><dd>{{ formatEventDate(vehicle.dateTimeCreation) }}</dd></div>
               </dl>
             </details>
           </div>
         </div>
         <div v-if="canOpenDefects || canShowCounters" class="vehicle-profile__tools">
-          <UiButton v-if="canOpenDefects" variant="secondary" :href="defectsUrl">Неисправности</UiButton>
-          <UiButton v-if="canShowCounters" variant="secondary" :href="countersUrl">Пробег и наработка</UiButton>
+          <UiButton v-if="canOpenDefects" variant="secondary" :href="defectsUrl">{{ t('vehicleOverview.defects') }}</UiButton>
+          <UiButton v-if="canShowCounters" variant="secondary" :href="countersUrl">{{ t('vehicleOverview.counters') }}</UiButton>
         </div>
-        <p v-if="mediaError" class="vehicle-profile__error" role="alert">{{ mediaError }} <button type="button" @click="loadCard">Повторить</button></p>
+        <p v-if="mediaError" class="vehicle-profile__error" role="alert">{{ mediaError }} <button type="button" @click="loadCard">{{ t('vehicleOverview.retry') }}</button></p>
         <p v-if="actionMessage" class="vehicle-profile__error" role="alert">{{ actionMessage }}</p>
       </div>
     </UiCard>
     <template v-if="vehicle && !isLoading && !isJournalView && !errorMessage">
-      <nav class="vehicle-profile__tabs" aria-label="Разделы карточки техники">
+      <nav class="vehicle-profile__tabs" :aria-label="t('vehicleOverview.vehicleSections')">
         <button type="button" :aria-current="activePanel === 'history' ? 'page' : undefined" @click="activePanel = 'history'">{{ maintenanceHistoryTitle }}</button>
-        <button type="button" :aria-current="activePanel === 'albums' ? 'page' : undefined" @click="activePanel = 'albums'">Альбомы <span>{{ isAlbumPreview ? '—' : albums.length }}</span></button>
-        <a :href="journalUrl">Журнал изменений</a>
+        <button type="button" :aria-current="activePanel === 'albums' ? 'page' : undefined" @click="activePanel = 'albums'">{{ t('vehicleOverview.albums') }} <span>{{ isAlbumPreview ? '—' : albums.length }}</span></button>
+        <a :href="journalUrl">{{ t('vehicleOverview.changeJournal') }}</a>
       </nav>
       <div class="vehicle-profile__layout">
         <div class="vehicle-profile__main">
           <UiCard v-show="activePanel === 'history'" :title="maintenanceHistoryTitle">
-            <template #actions><label class="vehicle-profile__filter"><span class="vehicle-profile__count">Записей: {{ maintenanceTotalCount }}</span><select v-model="maintenanceStatus" aria-label="Статус записей" @change="loadHistory()"><option value="">Все записи</option><option value="1">Запланировано</option><option value="2">В работе</option><option value="3">Выполнено</option><option value="4">Отменено</option></select></label></template>
-            <p v-if="maintenanceError" class="vehicle-profile__error" role="alert">{{ maintenanceError }} <button type="button" @click="loadHistory(maintenanceItems.length > 0)">Повторить</button></p>
-            <div v-if="!maintenanceLoading && !maintenanceError && !maintenanceItems.length" class="detailing-empty">{{ maintenanceStatus ? 'Записей с таким статусом пока нет.' : noMaintenanceText }}</div>
+            <template #actions><label class="vehicle-profile__filter"><span class="vehicle-profile__count">{{ t('vehicleOverview.recordCount', { count: maintenanceTotalCount }) }}</span><select v-model="maintenanceStatus" :aria-label="t('vehicleOverview.recordStatus')" @change="loadHistory()"><option value="">{{ t('vehicleOverview.allRecords') }}</option><option value="1">{{ t('vehicleOverview.status1') }}</option><option value="2">{{ t('vehicleOverview.status2') }}</option><option value="3">{{ t('vehicleOverview.status3') }}</option><option value="4">{{ t('vehicleOverview.status4') }}</option></select></label></template>
+            <p v-if="maintenanceError" class="vehicle-profile__error" role="alert">{{ maintenanceError }} <button type="button" @click="loadHistory(maintenanceItems.length > 0)">{{ t('vehicleOverview.retry') }}</button></p>
+            <div v-if="!maintenanceLoading && !maintenanceError && !maintenanceItems.length" class="detailing-empty">{{ maintenanceStatus ? t('vehicleOverview.noRecordsWithStatus') : noMaintenanceText }}</div>
             <div v-if="maintenanceItems.length" class="entity-maintenance-list">
               <article v-for="item in maintenanceItems" :key="item.id" class="entity-maintenance-item">
                 <button class="entity-maintenance-summary" type="button" @click="toggleMaintenance(item)" :aria-expanded="expandedMaintenanceId === item.id">
@@ -722,32 +735,32 @@ watch(() => [organizationId.value, props.vehicleId], () => {
                   </span>
                   <span class="entity-badge-row">
                     <b class="entity-status-badge" :data-status="item.status">{{ getRecordStatus(item) }}</b>
-                    <b v-if="item.price != null || item.grossAmount != null" class="entity-price-badge">{{ formatMoney(item.status === 4 ? 0 : Math.max(0, (item.grossAmount ?? item.price ?? 0) - (item.discountAmount ?? 0))) }}</b>
+                    <b v-if="item.price != null || item.grossAmount != null" class="entity-price-badge">{{ formatMoney(item.status === 4 ? 0 : Math.max(0, (item.grossAmount ?? item.price ?? 0) - (item.discountAmount ?? 0)), item.currencyCode) }}</b>
                     <span class="entity-maintenance-expand-hint">
                       <span class="entity-maintenance-chevron" :class="{ open: expandedMaintenanceId === item.id }" aria-hidden="true"></span>
                     </span>
                   </span>
-                  <span v-if="getRecordProgress(item)" class="vehicle-record-progress"><progress :value="getRecordProgress(item)!.completed" :max="getRecordProgress(item)!.total" :aria-label="`Выполнено ${getRecordProgress(item)!.completed} из ${getRecordProgress(item)!.total} работ`" /><small>{{ getRecordProgress(item)!.completed }} из {{ getRecordProgress(item)!.total }} работ</small></span>
+                  <span v-if="getRecordProgress(item)" class="vehicle-record-progress"><progress :value="getRecordProgress(item)!.completed" :max="getRecordProgress(item)!.total" :aria-label="t('vehicleOverview.progress', { completed: getRecordProgress(item)!.completed, total: getRecordProgress(item)!.total })" /><small>{{ t('vehicleOverview.progress', { completed: getRecordProgress(item)!.completed, total: getRecordProgress(item)!.total }) }}</small></span>
                 </button>
 
                 <div v-if="expandedMaintenanceId === item.id" class="entity-maintenance-details">
                   <dl class="entity-info-grid">
-                    <div><dt>Время</dt><dd>{{ getMaintenanceTimeValue(item) }}</dd></div>
-                    <div><dt>Исполнитель</dt><dd>{{ valueOrEmpty(item.performer) }}</dd></div>
-                    <div><dt>Место</dt><dd>{{ valueOrEmpty(item.location) }}</dd></div>
-                    <div><dt>{{ mileageLabel }}</dt><dd>{{ item.mileage != null ? `${item.mileage.toLocaleString('ru-RU')} ${vehicle.mileageUnit === 2 ? 'м/ч' : 'км'}` : 'Не указано' }}</dd></div>
+                    <div><dt>{{ t('vehicleOverview.time') }}</dt><dd>{{ getMaintenanceTimeValue(item) }}</dd></div>
+                    <div><dt>{{ t('vehicleOverview.performer') }}</dt><dd>{{ valueOrEmpty(item.performer) }}</dd></div>
+                    <div><dt>{{ t('vehicleOverview.place') }}</dt><dd>{{ valueOrEmpty(item.location) }}</dd></div>
+                    <div><dt>{{ mileageLabel }}</dt><dd>{{ item.mileage != null ? `${item.mileage.toLocaleString(formattingCulture)} ${vehicle.mileageUnit === 2 ? t('vehicleOverview.mileageHours') : t('vehicleOverview.mileageKilometers')}` : t('vehicleOverview.notSpecified') }}</dd></div>
                   </dl>
 
                   <div v-if="item.maintenanceDetails.length" class="entity-service-lines">
-                    <strong>Работы и услуги</strong>
+                    <strong>{{ t('vehicleOverview.workAndServices') }}</strong>
                     <div v-for="detail in item.maintenanceDetails" :key="`${item.id}-${detail.name}`">
                       <span>{{ detail.name }}</span>
-                      <small>{{ detail.description || formatMoney(detail.price) }}</small>
+                      <small>{{ detail.description || formatMoney(detail.price, item.currencyCode) }}</small>
                     </div>
                   </div>
 
                   <div v-if="!isDetailingScenario && item.linkedDefects.length" class="entity-service-lines">
-                    <strong>Связанные неисправности</strong>
+                    <strong>{{ t('vehicleOverview.relatedDefects') }}</strong>
                     <div v-for="defect in item.linkedDefects" :key="defect.id">
                       <span>{{ defect.title }}</span>
                       <small>{{ defect.description || getMaintenanceStatusName(item.status) }}</small>
@@ -757,58 +770,58 @@ watch(() => [organizationId.value, props.vehicleId], () => {
                   <p v-if="item.comment" class="entity-note">{{ item.comment }}</p>
 
                   <div class="entity-card-actions">
-                    <UiButton :href="`#maintenance/${item.id}?from=vehicle`">{{ isDetailingScenario ? 'Открыть запись' : 'Открыть обслуживание' }}</UiButton>
+                    <UiButton :href="`#maintenance/${item.id}?from=vehicle`">{{ isDetailingScenario ? t('vehicleOverview.openAppointment') : t('vehicleOverview.openService') }}</UiButton>
                   </div>
                 </div>
               </article>
             </div>
 
-            <div v-if="maintenanceLoading" class="vehicle-profile__loading" role="status">Загружаем записи…</div>
-            <button v-if="maintenanceHasMore && !maintenanceError" type="button" class="vehicle-profile__load-more" :disabled="maintenanceLoading" @click="loadHistory(true)">Показать ещё</button>
+            <div v-if="maintenanceLoading" class="vehicle-profile__loading" role="status">{{ t('vehicleOverview.loadingRecords') }}</div>
+            <button v-if="maintenanceHasMore && !maintenanceError" type="button" class="vehicle-profile__load-more" :disabled="maintenanceLoading" @click="loadHistory(true)">{{ t('vehicleOverview.showMore') }}</button>
           </UiCard>
-          <UiCard title="Альбомы">
-            <template #actions><UiButton variant="secondary" :href="albumsUrl">Все альбомы →</UiButton></template>
-            <WorkspaceProLock :locked="isAlbumPreview" message="Фотоальбомы доступны в PRO" feature="albums">
+          <UiCard :title="t('vehicleOverview.albums')">
+            <template #actions><UiButton variant="secondary" :href="albumsUrl">{{ t('vehicleOverview.allAlbums') }} →</UiButton></template>
+            <WorkspaceProLock :locked="isAlbumPreview" :message="t('vehicleOverview.albumsPro')" feature="albums">
               <div v-if="isAlbumPreview" class="vehicle-profile__albums-preview" aria-hidden="true">
                 <span v-for="index in 2" :key="index"></span>
               </div>
               <template v-else>
-                <div v-if="!albums.length" class="detailing-empty">{{ mediaError ? 'Альбомы недоступны.' : 'Альбомов пока нет.' }} <a v-if="canWrite && !isAlbumsFeatureLocked" :href="albumsUrl">Создать альбом</a></div>
+                <div v-if="!albums.length" class="detailing-empty">{{ mediaError ? t('vehicleOverview.albumsUnavailable') : t('vehicleOverview.noAlbums') }} <a v-if="canWrite && !isAlbumsFeatureLocked" :href="albumsUrl">{{ t('vehicleOverview.createAlbum') }}</a></div>
                 <div v-if="albums.length" class="entity-album-grid">
                   <a v-for="album in (activePanel === 'albums' ? albums : albums.slice(0, 2))" :key="album.albumId" class="entity-album-item" :href="getAlbumUrl(album)">
                     <img v-if="getAlbumCover(album)" :src="getAlbumCover(album)" :alt="album.title">
-                    <span v-else class="entity-album-placeholder">Альбом</span>
+                    <span v-else class="entity-album-placeholder">{{ t('vehicleOverview.album') }}</span>
                     <strong>{{ album.title }}</strong>
-                    <small>{{ album.photoCount }} фото</small>
+                    <small>{{ t('vehicleOverview.photoCount', { count: album.photoCount }) }}</small>
                   </a>
                 </div>
               </template>
             </WorkspaceProLock>
             <UiButton v-if="isAlbumsFeatureLocked" variant="secondary" :disabled="isSavedMediaLoading" @click="toggleSavedMediaHistory">
-              {{ showSavedMediaHistory ? 'Скрыть сохранённые альбомы' : 'Показать сохранённые альбомы' }}
+              {{ showSavedMediaHistory ? t('vehicleOverview.hideSavedAlbums') : t('vehicleOverview.showSavedAlbums') }}
             </UiButton>
           </UiCard>
         </div>
-        <aside class="vehicle-profile__sidebar" :aria-label="`${clientLabel} и текущие работы`">
+        <aside class="vehicle-profile__sidebar" :aria-label="t('vehicleOverview.clientAndCurrentWork', { client: clientLabel })">
           <UiCard v-if="vehicle.organizationClientId || vehicle.organizationClientName" :title="clientLabel">
-            <div class="vehicle-profile__client"><span class="vehicle-profile__avatar" aria-hidden="true">{{ clientInitials }}</span><div><strong>{{ vehicle.organizationClientName || clientLabel }}</strong><a v-if="clientCardUrl" :href="clientCardUrl">{{ context.shell.scenario?.code === 'fleet' ? 'Открыть карточку' : 'Карточка клиента' }} →</a></div></div>
+            <div class="vehicle-profile__client"><span class="vehicle-profile__avatar" aria-hidden="true">{{ clientInitials }}</span><div><strong>{{ vehicle.organizationClientName || clientLabel }}</strong><a v-if="clientCardUrl" :href="clientCardUrl">{{ context.shell.scenario?.code === 'fleet' ? t('vehicleOverview.openClientCard') : t('vehicleOverview.vehicleCardLink') }} →</a></div></div>
           </UiCard>
-          <UiCard title="В работе">
-            <p v-if="activeRecordError" class="vehicle-profile__error" role="alert">{{ activeRecordError }} <button type="button" @click="loadCard">Повторить</button></p>
-            <p v-else-if="!activeRecords.length" class="vehicle-profile__muted">Активных работ пока нет.</p>
+          <UiCard :title="t('vehicleOverview.activeWork')">
+            <p v-if="activeRecordError" class="vehicle-profile__error" role="alert">{{ activeRecordError }} <button type="button" @click="loadCard">{{ t('vehicleOverview.retry') }}</button></p>
+            <p v-else-if="!activeRecords.length" class="vehicle-profile__muted">{{ t('vehicleOverview.noActiveRecords') }}</p>
             <article v-for="item in activeRecords" :key="item.id" class="vehicle-profile__current">
               <span class="entity-status-badge" :data-status="item.status">{{ getRecordStatus(item) }}</span>
               <strong>{{ getRecordTitle(item) }}</strong>
               <small>{{ formatDate(getMaintenanceDateValue(item)) }} · {{ getMaintenanceTimeValue(item) }}</small>
-              <span v-if="getRecordProgress(item)" class="vehicle-record-progress"><progress :value="getRecordProgress(item)!.completed" :max="getRecordProgress(item)!.total" :aria-label="`Выполнено ${getRecordProgress(item)!.completed} из ${getRecordProgress(item)!.total} работ`" /><small>{{ getRecordProgress(item)!.completed }} из {{ getRecordProgress(item)!.total }}</small></span>
-              <div v-if="item.debtAmount > 0 || item.paidAmount > 0" class="vehicle-profile__debt"><span>{{ item.debtAmount > 0 ? 'Осталось оплатить' : 'Оплачено' }}</span><strong>{{ formatMoney(item.debtAmount > 0 ? item.debtAmount : item.paidAmount) }}</strong></div>
-              <UiButton variant="secondary" :href="`#maintenance/${item.id}?from=vehicle`">{{ isDetailingScenario ? 'Открыть запись' : 'Открыть обслуживание' }} →</UiButton>
+              <span v-if="getRecordProgress(item)" class="vehicle-record-progress"><progress :value="getRecordProgress(item)!.completed" :max="getRecordProgress(item)!.total" :aria-label="t('vehicleOverview.progress', { completed: getRecordProgress(item)!.completed, total: getRecordProgress(item)!.total })" /><small>{{ t('vehicleOverview.progress', { completed: getRecordProgress(item)!.completed, total: getRecordProgress(item)!.total }) }}</small></span>
+              <div v-if="item.debtAmount > 0 || item.paidAmount > 0" class="vehicle-profile__debt"><span>{{ item.debtAmount > 0 ? t('vehicleOverview.remainingToPay') : t('vehicleOverview.paid') }}</span><strong>{{ formatMoney(item.debtAmount > 0 ? item.debtAmount : item.paidAmount, item.currencyCode) }}</strong></div>
+              <UiButton variant="secondary" :href="`#maintenance/${item.id}?from=vehicle`">{{ isDetailingScenario ? t('vehicleOverview.openAppointment') : t('vehicleOverview.openService') }} →</UiButton>
             </article>
-            <button v-if="activeRecordCount > activeRecords.length" type="button" class="vehicle-profile__load-more" @click="showActiveRecords">Все в работе · {{ activeRecordCount }}</button>
+            <button v-if="activeRecordCount > activeRecords.length" type="button" class="vehicle-profile__load-more" @click="showActiveRecords">{{ t('vehicleOverview.allActive', { count: activeRecordCount }) }}</button>
           </UiCard>
-          <UiCard :title="isDetailingScenario ? 'Отчёт по автомобилю' : 'Отчёт по технике'">
+          <UiCard :title="isDetailingScenario ? t('vehicleOverview.vehicleReport') : t('vehicleOverview.equipmentReport')">
         <details ref="exportMenu" class="entity-export-menu">
-          <summary :class="{ disabled: Boolean(exportingOptionKey) }"><span class="entity-export-download-icon">↓</span>{{ exportingOptionKey ? 'Формируем отчёт...' : 'Скачать отчёт' }}</summary>
+          <summary :class="{ disabled: Boolean(exportingOptionKey) }"><span class="entity-export-download-icon">↓</span>{{ exportingOptionKey ? t('vehicleOverview.generatingReport') : t('vehicleOverview.downloadReport') }}</summary>
           <div class="entity-export-menu__list">
             <button
               v-for="option in exportOptions"
@@ -818,7 +831,7 @@ watch(() => [organizationId.value, props.vehicleId], () => {
               @click="downloadDocument(option)"
             >
               <span class="entity-export-format-icon" :class="`entity-export-format-icon--${option.tone}`">{{ option.icon }}</span>
-              <span>{{ exportingOptionKey === option.key ? 'Формируем...' : option.label }}</span>
+              <span>{{ exportingOptionKey === option.key ? t('vehicleOverview.generating') : option.label }}</span>
               <span v-if="exportingOptionKey === option.key" class="entity-export-spinner" aria-hidden="true"></span>
             </button>
           </div>
@@ -828,7 +841,7 @@ watch(() => [organizationId.value, props.vehicleId], () => {
       </div>
     </template>
     <UiImagePreview :src="previewPhotoUrl" :title="vehicleTitle" @close="previewPhotoUrl = ''" />
-    <UiConfirmDialog :open="deleteConfirmOpen" title="Переместить в архив?" :message="isDetailingScenario ? 'Авто перейдет в архив и исчезнет из активного списка.' : 'Техника перейдет в архив и исчезнет из активного списка.'" :busy="isSavingVehicle" confirm-text="В архив" tone="danger" @close="closeDeleteConfirmation" @confirm="confirmArchiveVehicle" />
+    <UiConfirmDialog :open="deleteConfirmOpen" :title="t('vehicleOverview.archiveConfirmTitle')" :message="isDetailingScenario ? t('vehicleOverview.archiveCarMessage') : t('vehicleOverview.archiveEquipmentMessage')" :busy="isSavingVehicle" :confirm-text="t('vehicleOverview.confirmArchive')" tone="danger" @close="closeDeleteConfirmation" @confirm="confirmArchiveVehicle" />
   </section>
 </template>
 

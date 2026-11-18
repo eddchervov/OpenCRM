@@ -1,9 +1,20 @@
 <script setup lang="ts">
-import { inquiryStages, type InquiryHistoryEvent } from '../api/inquiries'
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
+import { inquirySources, inquiryStages, type InquiryHistoryEvent } from '../api/inquiries'
 import type { WorkspaceContext } from '../types'
 import { formatInquiryTime } from '../utils/inquiryTime'
 
+const { t, te } = useLocalization()
+
 const props = defineProps<{ events: InquiryHistoryEvent[]; timeZoneId: string | null; members?: WorkspaceContext['organization']['members']; compact?: boolean }>()
+
+function eventTitle(event: InquiryHistoryEvent) {
+  const key = `inquiries.events.${event.eventType}`
+
+  return te(key) ? t(key) : event.title
+}
 
 function eventDescription(event: InquiryHistoryEvent) {
   if (event.description && event.eventType !== 'stage_changed') return event.description
@@ -11,11 +22,13 @@ function eventDescription(event: InquiryHistoryEvent) {
   if (event.eventType === 'closed') return event.newValue || ''
   if (['client', 'vehicle', 'converted'].includes(event.eventType) || (!event.previousValue && !event.newValue)) return ''
   const displayValue = (value?: string | null) => {
-    if (!value) return 'Не указано'
+    if (!value) return t('inquiries.noValue')
     if (event.eventType === 'stage_changed') return inquiryStages.find(stage => stage.value === value)?.label ?? value
+    if (event.eventType === 'action_rescheduled') return formatInquiryTime(value, props.timeZoneId)
+    if (event.eventType === 'source') return inquirySources.find(source => source.value === value)?.label ?? value
     if (event.eventType === 'responsible') {
       const member = props.members?.find(item => item.userId === value)
-      return member?.employeeName || member?.userName || member?.email || 'Участник организации'
+      return member?.employeeName || member?.userName || member?.email || t('inquiries.member')
     }
     return value
   }
@@ -26,12 +39,12 @@ function eventDescription(event: InquiryHistoryEvent) {
 <template>
   <div class="inquiry-timeline" :class="{ 'inquiry-timeline--compact': compact }">
     <article v-for="event in events" :key="event.id" class="inquiry-event">
-      <header><strong>{{ event.title }}</strong><time :datetime="event.createdAt">{{ formatInquiryTime(event.createdAt, timeZoneId) }}</time></header>
+      <header><strong>{{ eventTitle(event) }}</strong><time :datetime="event.createdAt">{{ formatInquiryTime(event.createdAt, timeZoneId) }}</time></header>
       <p v-if="eventDescription(event)" class="inquiry-event__content">{{ eventDescription(event) }}</p>
       <p v-if="event.eventType === 'stage_changed' && event.description" class="inquiry-event__content inquiry-event__comment">{{ event.description }}</p>
       <small v-if="event.actorName">{{ event.actorName }}</small>
     </article>
-    <p v-if="!events.length" class="inquiry-timeline__empty">История пока пуста</p>
+    <p v-if="!events.length" class="inquiry-timeline__empty">{{ t('inquiries.emptyHistory') }}</p>
   </div>
 </template>
 

@@ -1,7 +1,7 @@
 ﻿@using Microsoft.Extensions.Configuration
 @inject IConfiguration Configuration
 @{
-    ViewData["Title"] = "Аккаунт временно заблокирован";
+    ViewData["Title"] = Text["auth.lockedTitle"].Value;
     var lockoutTimeSpan = TimeSpan.Parse(Configuration["IdentitySettings:Lockout:DefaultLockoutTimeSpan"]);
     var totalMinutes = (int)lockoutTimeSpan.TotalMinutes;
     var totalSeconds = (int)lockoutTimeSpan.TotalSeconds;
@@ -21,24 +21,24 @@
                         </svg>
                     </div>
 
-                    <h1 class="auth-title text-danger">Доступ временно ограничен</h1>
+                    <h1 class="auth-title text-danger">@Text["auth.lockedTitle"]</h1>
 
                     <div class="alert alert-danger auth-alert-message" role="alert">
-                        <p class="mb-2">Возможные причины блокировки:</p>
+                        <p class="mb-2">@Text["auth.lockoutReasons"]</p>
                         <ul class="text-start ps-4">
-                            <li>Слишком много неудачных попыток входа</li>
-                            <li>Подозрительная активность в аккаунте</li>
-                            <li>Технические работы на сервере</li>
-                            <li>Нарушение правил использования сервиса</li>
+                            <li>@Text["auth.lockoutAttempts"]</li>
+                            <li>@Text["auth.lockoutSuspicious"]</li>
+                            <li>@Text["auth.lockoutMaintenance"]</li>
+                            <li>@Text["auth.lockoutRules"]</li>
                         </ul>
                     </div>
 
                     <div class="auth-lock-details mt-4 mb-4">
-                        <p class="text-muted small">Автоматическая разблокировка через:</p>
+                        <p class="text-muted small">@Text["auth.unlockIn"]</p>
                         <div class="auth-timer h4 text-danger" data-seconds="@totalSeconds">
-                            @($"{totalMinutes:00} минут")
+                            @Text["auth.minutes", totalMinutes.ToString("00", System.Globalization.CultureInfo.CurrentCulture)]
                         </div>
-                        <p class="text-muted small mt-2">Если блокировка сохраняется дольше, пожалуйста, обратитесь в поддержку</p>
+                        <p class="text-muted small mt-2">@Text["auth.lockoutContactSupport"]</p>
                     </div>
 
                     <div class="auth-actions d-grid gap-2">
@@ -46,13 +46,13 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-2">
                                 <path d="M18.364 5.636L16.95 7.05C15.8043 5.90432 14.2841 5.20854 12.667 5.07686C11.0498 4.94518 9.43862 5.38591 8.11193 6.32538C6.78524 7.26485 5.82053 8.64357 5.38231 10.2259C4.94409 11.8083 5.05714 13.4924 5.703 14.997L3 17.7V21H6.3L9.003 18.297C10.5076 18.9429 12.1917 19.0559 13.7741 18.6177C15.3564 18.1795 16.7352 17.2148 17.6746 15.8881C18.6141 14.5614 19.0548 12.9502 18.9231 11.333C18.7915 9.71586 18.0957 8.19566 16.95 7.05L18.364 5.636C19.7913 7.06331 20.6566 9.00888 20.7789 11.0799C20.9013 13.1509 20.2713 15.195 19 16.828L21 18.828L18.828 21L16.828 19C15.195 20.2713 13.1509 20.9013 11.0799 20.7789C9.00888 20.6566 7.06331 19.7913 5.636 18.364C4.20869 16.9367 3.34344 14.9911 3.22111 12.9201C3.09877 10.8491 3.72872 8.80499 5 7.172L3 5.172L5.172 3L7.172 5C8.80499 3.72872 10.8491 3.09877 12.9201 3.22111C14.9911 3.34344 16.9367 4.20869 18.364 5.636Z" fill="currentColor" />
                             </svg>
-                            Связаться с поддержкой
+                            @Text["auth.contactSupport"]
                         </a>
                         <a href="~/" class="btn btn-outline-dark">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-2">
                                 <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9.55228 21 10 20.5523 10 20V16C10 15.4477 10.4477 15 11 15H13C13.5523 15 14 15.4477 14 16V20C14 20.5523 14.4477 21 15 21M9 21H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            На главную страницу
+                            @Text["auth.homePage"]
                         </a>
                     </div>
                 </div>

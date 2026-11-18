@@ -1,4 +1,6 @@
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using OpenCRM.Domain;
 using OpenCRM.Modules.Imports;
@@ -75,6 +77,82 @@ public sealed partial class OrganizationImportBatchTests
         await Assert.ThrowsAsync<InvalidDataException>(() => service.StartAsync(userId, organizationId, changed.Id, changed.Revision, false, default));
         Assert.Equal(500m, (await context.MaintenancePayments.SingleAsync(payment => payment.MaintenanceId == order.Id)).Amount);
         await Assert.ThrowsAsync<InvalidDataException>(() => service.SetSourceAsync(userId, organizationId, first.Id, first.Revision, "other", default));
+
+        var invalidChanged = await PrepareSourceAsync(service, userId, organizationId, BusinessSql
+            .Replace("'500'", "'3000'")
+            .Replace("'2020-02-01T11:00:00Z'", "'invalid-date'"));
+
+        Assert.All(invalidChanged.Data.Rows.Where(row => row.Kind is "order" or "order-line" or "payment" or "history"), row =>
+        {
+            Assert.Equal("conflict", row.Status);
+            Assert.Equal(row.Kind == "order" ? ImportRowMessageCodes.IdentityConflict : ImportRowMessageCodes.ChildIdentityConflict, row.MessageCode);
+            Assert.Null(row.MessageDetails);
+        });
+    }
+
+    [Fact]
+    public async Task ExternalIdLengthErrorReplacesEarlierBusinessValidationDetails()
+    {
+        var (userId, organizationId) = await this.SeedAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context);
+        var sql = BusinessSql.Replace("'o1'", $"'{new string('x', 101)}'").Replace("'500'", "'3000'");
+
+        var draft = await PrepareSourceAsync(service, userId, organizationId, sql);
+        var order = draft.Data.Rows.Single(row => row.Kind == "order");
+
+        Assert.Equal("error", order.Status);
+        Assert.Equal(ImportRowMessageCodes.ExternalIdentityTooLong, order.MessageCode);
+        Assert.Null(order.MessageDetails);
+    }
+
+    [Fact]
+    public async Task SourceIdentityKeepsLegacyRussianVehicleFingerprintAcrossCountryFieldAddition()
+    {
+        var (userId, organizationId) = await this.SeedAsync();
+        await using var context = fixture.CreateContext();
+        var service = CreateService(context);
+        const string legacySql = "INSERT INTO cars (vehicleId, vin, plate) VALUES ('v1', 'VIN123', 'A123AA');";
+        const string explicitRussianCountrySql = "INSERT INTO cars (vehicleId, vin, plate, registrationCountryCode) VALUES ('v1', 'VIN123', 'A123AA', 'RU');";
+
+        var first = await PrepareSourceAsync(service, userId, organizationId, legacySql);
+        first = await CompleteSourceAsync(service, userId, organizationId, first);
+        var importedVehicle = Assert.Single(first.Data.Rows, row => row.Kind == "vehicle");
+        var externalId = importedVehicle.ExternalId!.Trim().ToUpperInvariant();
+        var identity = await context.Set<OrganizationImportIdentity>().SingleAsync(item =>
+            item.OrganizationId == organizationId && item.SourceKey == first.SourceKey && item.Kind == "vehicle" && item.ExternalId == externalId);
+        identity.Fingerprint = LegacyFingerprint(importedVehicle);
+        await context.SaveChangesAsync();
+
+        var repeated = await PrepareSourceAsync(service, userId, organizationId, explicitRussianCountrySql);
+
+        Assert.Equal("duplicate", repeated.Data.Rows.Single(row => row.Kind == "vehicle").Status);
+        repeated = await CompleteSourceAsync(service, userId, organizationId, repeated);
+        Assert.Equal("completed", repeated.State);
+        Assert.Equal(0, repeated.Result!.CreatedVehicles);
+    }
+
+    [Fact]
+    public async Task ForeignRegistrationCountryChangesSourceFingerprint()
+    {
+        var (firstUserId, firstOrganizationId) = await this.SeedAsync();
+        var (secondUserId, secondOrganizationId) = await this.SeedAsync();
+        await using var context = fixture.CreateContext();
+        const string sqlTemplate = "INSERT INTO cars (vehicleId, vin, plate, registrationCountryCode) VALUES ('v1', 'VIN123', '京A·2', '{0}');";
+
+        var first = await PrepareSourceAsync(CreateService(context), firstUserId, firstOrganizationId, string.Format(sqlTemplate, "CN"));
+        await CompleteSourceAsync(CreateService(context), firstUserId, firstOrganizationId, first);
+        var firstFingerprint = await context.Set<OrganizationImportIdentity>()
+            .Where(item => item.OrganizationId == firstOrganizationId && item.Kind == "vehicle")
+            .Select(item => item.Fingerprint).SingleAsync();
+
+        var second = await PrepareSourceAsync(CreateService(context), secondUserId, secondOrganizationId, string.Format(sqlTemplate, "ZZ"));
+        await CompleteSourceAsync(CreateService(context), secondUserId, secondOrganizationId, second);
+        var secondFingerprint = await context.Set<OrganizationImportIdentity>()
+            .Where(item => item.OrganizationId == secondOrganizationId && item.Kind == "vehicle")
+            .Select(item => item.Fingerprint).SingleAsync();
+
+        Assert.NotEqual(firstFingerprint, secondFingerprint);
     }
 
     [Fact]
@@ -212,6 +290,25 @@ public sealed partial class OrganizationImportBatchTests
         await service.ProcessPendingAsync(default);
 
         return await PageAsync(service, userId, organizationId, draft.Id);
+    }
+
+    private static string LegacyFingerprint(ImportCandidate row)
+    {
+        var editableFields = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Name", "Excluded", "ExternalId", "ClientExternalId", "ClientPhone", "Phone", "Comment", "Brand", "Model", "Vin", "Plate", "Year",
+            "ExistingClientId", "CreateSeparateClient", "PartyName", "VehicleExternalId", "OrderExternalId", "OccurredAt", "OrderStatus", "OrderType",
+            "DetailDescription", "Quantity", "UnitPrice", "Amount", "DiscountAmount", "PaymentMethod", "CancelledAt", "ActorName", "EventType", "OrderComment", "HistoryComment"
+        };
+        var values = typeof(ImportCandidate).GetProperties()
+            .Where(property => editableFields.Contains(property.Name) && property.Name is not ("Excluded" or "ExistingClientId" or "CreateSeparateClient"))
+            .OrderBy(property => property.Name, StringComparer.Ordinal)
+            .ToDictionary(property => property.Name, property => property.GetValue(row));
+        values["Kind"] = row.Kind;
+
+        var semanticValue = JsonSerializer.Serialize(values);
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[] { semanticValue }))));
     }
 
     private static async Task<ImportDraftDto> CompleteSourceAsync(

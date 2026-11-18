@@ -1,33 +1,46 @@
 @{
     Layout = null;
+    var currentLanguage = SupportedUiLanguages.ResolveLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name);
 }
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="project-brand" content="@Brand.DisplayName" />
     <meta name="project-github" content="@Helpers.ProjectBrand.GitHubUrl" />
     <meta name="color-scheme" content="light" />
-    <meta name="description" content="@Brand.DisplayName — базовая CRM для вашей команды." />
+    <meta name="description" content="@Text["home.description", Brand.DisplayName]" />
     <title>@Brand.DisplayName</title>
     <link rel="stylesheet" href="~/css/platform-home.css" asp-append-version="true" />
 </head>
 <body>
     <header class="home-header">
-        <a class="home-wordmark" href="@Url.Content("~/")" aria-label="@Brand.DisplayName — главная">@Brand.DisplayName</a>
-        <span class="home-label">CRM · Открытая основа</span>
+        <a class="home-wordmark" href="@Url.Content("~/")" aria-label="@Text["home.homeLabel", Brand.DisplayName]">@Brand.DisplayName</a>
+        <span class="home-label">@Text["home.openCore"]</span>
+        <form method="post" action="@Url.Content("~/localization/language")" class="home-language">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@Url.Content("~/")" />
+            <label for="home-language">@Text["auth.language"]</label>
+            <select id="home-language" name="locale">
+                @foreach (var language in SupportedUiLanguages.Languages)
+                {
+                    <option value="@language.Code" selected="@(currentLanguage == language.Code)">@language.NativeName</option>
+                }
+            </select>
+            <button type="submit">@Text["auth.apply"]</button>
+        </form>
     </header>
     <main class="home-main" id="main">
         <div class="home-content">
-            <p class="home-eyebrow">Ваше рабочее пространство</p>
+            <p class="home-eyebrow">@Text["home.workspace"]</p>
             <h1>@Brand.DisplayName</h1>
-            <p class="home-description">Клиенты, записи и заказы.<br />В одном рабочем пространстве.</p>
-            <nav class="home-actions" aria-label="Доступ к системе">
-                <a class="home-button home-button-primary" href="@Url.Content("~/auth/login")">Войти</a>
-                <a class="home-button" href="@Url.Content("~/auth/register")">Регистрация</a>
+            <p class="home-description">@Text["home.introduction"]</p>
+            <nav class="home-actions" aria-label="@Text["home.access"]">
+                <a class="home-button home-button-primary" href="@Url.Content("~/auth/login")">@Text["auth.loginTitle"]</a>
+                <a class="home-button" href="@Url.Content("~/auth/register")">@Text["home.register"]</a>
             </nav>
-            <p class="home-note">Базовая CRM. Настройте её под свою команду.</p>
+            <p class="home-note">@Text["home.note"]</p>
         </div>
         <div class="home-graphic" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
     </main>

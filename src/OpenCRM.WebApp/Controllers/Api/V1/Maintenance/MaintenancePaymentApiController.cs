@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using OpenCRM.Modules.Maintenance.Contracts;
 using OpenCRM.Modules.Maintenance.Contracts.Dtos;
+using OpenCRM.WebApp.Infrastructure.Localization;
 
 namespace OpenCRM.WebApp.Controllers.Api.V1.Maintenance;
 
@@ -9,7 +11,8 @@ namespace OpenCRM.WebApp.Controllers.Api.V1.Maintenance;
 [ApiController]
 [Authorize]
 public class MaintenancePaymentApiController(
-    IMaintenancePaymentService maintenancePaymentService) : MaintenanceApiControllerBase
+    IMaintenancePaymentService maintenancePaymentService,
+    IStringLocalizer<LocalizationStrings> text) : MaintenanceApiControllerBase
 {
     /// <summary> Возвращает список платежей по записи об обслуживании. </summary>
     [HttpGet("api/v1/maintenance/{maintenanceId:guid}/payments")]
@@ -69,6 +72,13 @@ public class MaintenancePaymentApiController(
         catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
         {
             return Conflict(new { message = "Запись уже изменена. Обновите карточку." });
+        }
+        catch (MaintenancePaymentValidationException ex)
+        {
+            var localizedMessage = text[ex.MessageKey, ex.Arguments.ToArray()];
+            var message = localizedMessage.ResourceNotFound ? ex.Message : localizedMessage.Value;
+
+            return BadRequest(new { message });
         }
         catch (InvalidOperationException ex)
         {

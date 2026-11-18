@@ -2,6 +2,7 @@ using System.Net;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -19,6 +20,9 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
     private Task _operation = Task.CompletedTask;
     private int _version;
     private bool _isActive;
+    private string? _errorMessageResourceKey;
+    private object?[] _errorMessageArguments = [];
+    private bool _isSettingLocalizedErrorMessage;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
@@ -43,10 +47,33 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
     [ObservableProperty]
     private int _pageSize = 50;
 
-    public string PageLabel => $"Найдено: {this.TotalCount:N0} · Страница {this.Page} из {Math.Max(1, (int)Math.Ceiling((double)this.TotalCount / Math.Max(1, this.PageSize)))}";
+    public string PageLabel => AdminLocalization.Instance.Format("native.communications.naydeno.this.totalcount.n0.stranitsa.this.page.iz.math.max.1.int", this.TotalCount, this.Page, Math.Max(1, (int)Math.Ceiling((double)this.TotalCount / Math.Max(1, this.PageSize))));
 
     public event Action? SessionExpired;
     public event Func<Task>? AccessDenied;
+
+    public virtual void RefreshLocalizedValues()
+    {
+        this.RefreshLocalizedErrorMessage();
+        this.OnPropertyChanged((string?)null);
+    }
+
+    protected void SetLocalizedErrorMessage(string key, params object?[] arguments)
+    {
+        this._errorMessageResourceKey = key;
+        this._errorMessageArguments = arguments;
+        this._isSettingLocalizedErrorMessage = true;
+        this.ErrorMessage = AdminLocalization.Instance.Format(key, arguments);
+        this._isSettingLocalizedErrorMessage = false;
+    }
+
+    protected static void RefreshLocalizedOptions(params IEnumerable<CommunicationOption>[] groups)
+    {
+        foreach (var option in groups.SelectMany(group => group))
+        {
+            option.RefreshLocalizedValues();
+        }
+    }
 
     public async Task ActivateAsync()
     {
@@ -108,22 +135,26 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
 
         if (exception is ApiException apiException)
         {
-            this.ErrorMessage = apiException.Message;
             if (apiException.StatusCode == HttpStatusCode.Unauthorized)
             {
                 this.SessionExpired?.Invoke();
+                return;
             }
-            else if (apiException.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
+
+            if (apiException.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
             {
                 await this.AccessDenied.Invoke();
+                return;
             }
+
+            this.SetLocalizedApiError(apiException);
 
             return;
         }
 
-        this.ErrorMessage = exception is HttpRequestException
-            ? "Не удалось связаться с сервером. Проверьте подключение."
-            : "Не удалось выполнить запрос. Повторите попытку.";
+        this.SetLocalizedErrorMessage(exception is HttpRequestException
+            ? "native.communications.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori"
+            : "native.communications.ne.udalos.vypolnit.zapros.povtorite.popytku");
     }
 
     private async Task ExecuteOperationAsync(Func<CancellationToken, Task> action, int version, CancellationToken token)
@@ -140,15 +171,19 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
         }
         catch (ApiException exception) when (version == this._version && this._isActive)
         {
-            this.ErrorMessage = exception.Message;
             if (exception.StatusCode == HttpStatusCode.Unauthorized)
             {
                 this.SessionExpired?.Invoke();
+                return;
             }
-            else if (exception.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
+
+            if (exception.StatusCode == HttpStatusCode.Forbidden && this.AccessDenied != null)
             {
                 await this.AccessDenied.Invoke();
+                return;
             }
+
+            this.SetLocalizedApiError(exception);
         }
         catch (ApiException) when (version != this._version || !this._isActive)
         {
@@ -158,14 +193,14 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
         {
             if (version == this._version && this._isActive)
             {
-                this.ErrorMessage = "Превышено время ожидания ответа сервера. Повторите попытку.";
+                this.SetLocalizedErrorMessage("native.roles.prevysheno.vremya.ozhidaniya.otveta.servera.povtorite.popytku");
             }
         }
         catch (HttpRequestException)
         {
             if (version == this._version && this._isActive)
             {
-                this.ErrorMessage = "Не удалось связаться с сервером. Проверьте подключение.";
+                this.SetLocalizedErrorMessage("native.communications.ne.udalos.svyazatsya.s.serverom.proverte.podklyuchenie.i.povtori");
             }
         }
         finally
@@ -195,7 +230,16 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
     }
 
     partial void OnIsBusyChanged(bool value) => this.NotifyCommands();
-    partial void OnErrorMessageChanged(string value) => this.OnPropertyChanged("HasError");
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!this._isSettingLocalizedErrorMessage)
+        {
+            this._errorMessageResourceKey = null;
+            this._errorMessageArguments = [];
+        }
+
+        this.OnPropertyChanged("HasError");
+    }
     partial void OnPageChanged(int value) => this.NotifyPage();
     partial void OnTotalCountChanged(int value) => this.NotifyPage();
     partial void OnPageSizeChanged(int value) => this.NotifyPage();
@@ -205,6 +249,29 @@ public abstract partial class CommunicationsViewModel(AdminSessionClient session
         this.OnPropertyChanged(nameof(PageLabel));
         this.PreviousPageCommand.NotifyCanExecuteChanged();
         this.NextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshLocalizedErrorMessage()
+    {
+        if (this._errorMessageResourceKey is null)
+        {
+            return;
+        }
+
+        this._isSettingLocalizedErrorMessage = true;
+        this.ErrorMessage = AdminLocalization.Instance.Format(this._errorMessageResourceKey, this._errorMessageArguments);
+        this._isSettingLocalizedErrorMessage = false;
+    }
+
+    private void SetLocalizedApiError(ApiException exception)
+    {
+        if (AdminDisplayLabels.TransportErrorKey(exception) is { } transportErrorKey)
+        {
+            this.SetLocalizedErrorMessage(transportErrorKey);
+            return;
+        }
+
+        this.ErrorMessage = exception.Message;
     }
 
     [RelayCommand(CanExecute = nameof(CanLoad))]

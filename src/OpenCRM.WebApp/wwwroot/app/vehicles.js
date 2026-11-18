@@ -9,6 +9,7 @@ if (window['vue-ctk-date-time-picker'] && !Vue.options.components['vue-ctk-date-
 }
 
 var vehicleRoot = document.getElementById('vehicles-form');
+var messages = vehicleRoot.dataset;
 var personalVehicleTransferOrganizations = Array.isArray(window.personalVehicleTransferOrganizations)
     ? window.personalVehicleTransferOrganizations
     : [];
@@ -205,21 +206,21 @@ new Vue({
             pageSizeOptions: [10, 25, 50],
 
             vehicleKindOptions: [
-                { value: 1, text: 'Легковой автомобиль' },
-                { value: 2, text: 'Грузовая техника' },
-                { value: 3, text: 'Мотоцикл' },
-                { value: 4, text: 'Квадроцикл' },
-                { value: 5, text: 'Багги / UTV' },
-                { value: 6, text: 'Снегоход' },
-                { value: 7, text: 'Гидроцикл' },
-                { value: 8, text: 'Лодка / катер' },
-                { value: 9, text: 'Спецтехника' },
-                { value: 10, text: 'Прицеп' },
-                { value: 99, text: 'Другая техника' }
+                { value: 1, text: messages.kindPassenger },
+                { value: 2, text: messages.kindTruck },
+                { value: 3, text: messages.kindMotorcycle },
+                { value: 4, text: messages.kindAtv },
+                { value: 5, text: messages.kindUtv },
+                { value: 6, text: messages.kindSnowmobile },
+                { value: 7, text: messages.kindJetski },
+                { value: 8, text: messages.kindBoat },
+                { value: 9, text: messages.kindSpecial },
+                { value: 10, text: messages.kindTrailer },
+                { value: 99, text: messages.kindOther }
             ],
             mileageUnitOptions: [
-                { value: 1, text: 'Километры' },
-                { value: 2, text: 'Моточасы' }
+                { value: 1, text: messages.mileageKilometers },
+                { value: 2, text: messages.mileageEngineHours }
             ],
 
             loadingLimitInfo: true,
@@ -243,7 +244,7 @@ new Vue({
             return this.searchLoading || this.loadVehicles;
         },
         vehicleKindFilterOptions: function () {
-            var options = [{ value: 'all', text: 'Все типы' }];
+            var options = [{ value: 'all', text: messages.allTypes }];
             var kindMap = {};
             var vm = this;
 
@@ -272,7 +273,7 @@ new Vue({
             return options;
         },
         organizationClientFilterOptions: function () {
-            var options = [{ id: 'all', name: 'Все клиенты' }];
+            var options = [{ id: 'all', name: messages.allClients }];
             if (!Array.isArray(this.organizationClients)) {
                 return options;
             }
@@ -303,14 +304,14 @@ new Vue({
             if (this.pagination.totalCount === 0) return '';
             const start = ((this.pagination.page - 1) * this.pagination.pageSize) + 1;
             const end = Math.min(this.pagination.page * this.pagination.pageSize, this.pagination.totalCount);
-            return `Показано ${start}-${end} из ${this.pagination.totalCount} ед. техники`;
+            return messages.paginationVehicles.replace('{0}', start).replace('{1}', end).replace('{2}', this.pagination.totalCount);
         },
 
         archivedPaginationInfo: function () {
             if (this.archivedPagination.totalCount === 0) return '';
             const start = ((this.archivedPagination.page - 1) * this.archivedPagination.pageSize) + 1;
             const end = Math.min(this.archivedPagination.page * this.archivedPagination.pageSize, this.archivedPagination.totalCount);
-            return `Показано ${start}-${end} из ${this.archivedPagination.totalCount} ед. техники`;
+            return messages.paginationVehicles.replace('{0}', start).replace('{1}', end).replace('{2}', this.archivedPagination.totalCount);
         },
 
         workspaceMaintenanceTotalPages: function () {
@@ -321,7 +322,7 @@ new Vue({
             if (this.workspaceMaintenancePagination.totalCount === 0) return '';
             const start = ((this.workspaceMaintenancePagination.page - 1) * this.workspaceMaintenancePagination.pageSize) + 1;
             const end = Math.min(this.workspaceMaintenancePagination.page * this.workspaceMaintenancePagination.pageSize, this.workspaceMaintenancePagination.totalCount);
-            return `Показано ${start}-${end} из ${this.workspaceMaintenancePagination.totalCount} обслуживаний`;
+            return messages.paginationMaintenance.replace('{0}', start).replace('{1}', end).replace('{2}', this.workspaceMaintenancePagination.totalCount);
         },
 
         quickMaintenanceVehicleOptions: function () {
@@ -331,9 +332,9 @@ new Vue({
         maintenanceCountText: function () {
             var vm = this;
             return function (count) {
-                if (count === 1) return '1 обслуживание';
-                if (count >= 2 && count <= 4) return count + ' обслуживания';
-                return count + ' обслуживаний';
+                if (count === 1) return messages.maintenanceCountOne.replace('{0}', count);
+                if (count >= 2 && count <= 4) return messages.maintenanceCountFew.replace('{0}', count);
+                return messages.maintenanceCountMany.replace('{0}', count);
             };
         },
         totalPages: function () {
@@ -439,11 +440,11 @@ new Vue({
 
         alertMessage: function () {
             if (this.showLimitExceededWarning) {
-                return 'Внимание! Превышен лимит техники на ' + this.exceededCount;
+                return messages.warningLimit.replace('{0}', this.exceededCount);
             } else if (!this.vehicleLimitInfo.hasActiveSubscription) {
-                return 'Бесплатный тариф';
+                return messages.planFree;
             } else {
-                return 'Тариф "' + (this.vehicleLimitInfo.currentPlanName || '') + '"';
+                return messages.planNamed.replace('{0}', this.vehicleLimitInfo.currentPlanName || '');
             }
         }
     },
@@ -542,7 +543,7 @@ new Vue({
                     window.history.replaceState(null, document.title, url);
                 }
             }).catch(function (error) {
-                vm.handleApiError(error, 'Не удалось загрузить обслуживания рабочего стола');
+                vm.handleApiError(error, messages.errorWorkspaceMaintenance);
             }).finally(function () {
                 vm.workspaceMaintenanceLoading = false;
             });
@@ -666,7 +667,7 @@ new Vue({
 
                 return vm.quickMaintenanceVehicles;
             }).catch(function (error) {
-                vm.handleApiError(error, 'Не удалось загрузить технику для обслуживания');
+                vm.handleApiError(error, messages.errorQuickVehicles);
                 throw error;
             }).finally(function () {
                 vm.quickMaintenanceVehiclesLoading = false;
@@ -927,7 +928,7 @@ new Vue({
                     return response.data;
                 })
                 .catch(function (error) {
-                    vm.handleApiError(error, 'Произошла ошибка загрузки архива');
+                    vm.handleApiError(error, messages.errorArchive);
                     throw error;
                 })
                 .finally(function () {
@@ -983,7 +984,7 @@ new Vue({
                 };
             });
 
-            vm.availableArchivedBrands.unshift({ id: 'all', name: 'Все марки' });
+            vm.availableArchivedBrands.unshift({ id: 'all', name: messages.brandAll });
         },
 
         restoreFromArchive: function (vehicle) {
@@ -1013,7 +1014,7 @@ new Vue({
                         showAppModal('#subscriptionModal');
                     } else {
                         // Все остальные ошибки - показываем стандартное сообщение
-                        vm.handleApiError(error, 'Произошла ошибка восстановления техники');
+                        vm.handleApiError(error, messages.errorRestore);
                     }
                     throw error;
                 })
@@ -1048,26 +1049,26 @@ new Vue({
 
         getArchiveDeletionText: function (daysLeft) {
             if (daysLeft === undefined || daysLeft === null) {
-                return 'Срок удаления уточняется';
+                return messages.archiveDeletionUnknown;
             }
 
             if (daysLeft <= 0) {
-                return 'Будет удалена сегодня';
+                return messages.archiveDeletionToday;
             }
 
             if (daysLeft === 1) {
-                return 'Удаление через 1 день';
+                return messages.archiveDeletionOne.replace('{0}', daysLeft);
             }
 
             if (daysLeft >= 2 && daysLeft <= 4) {
-                return 'Удаление через ' + daysLeft + ' дня';
+                return messages.archiveDeletionFew.replace('{0}', daysLeft);
             }
 
-            return 'Удаление через ' + daysLeft + ' дней';
+            return messages.archiveDeletionMany.replace('{0}', daysLeft);
         },
 
         formatDate: function (dateString) {
-            if (!dateString) return 'Не указана';
+            if (!dateString) return messages.dateNotSpecified;
             return moment(dateString).format('DD.MM.YYYY');
         },
 
@@ -1144,7 +1145,7 @@ new Vue({
             return fetch('/api/v1/media/' + photoId + '/path')
                 .then(async function (response) {
                     if (!response.ok) {
-                        throw new Error('Не удалось загрузить фотографию');
+                        throw new Error(messages.errorPhoto);
                     }
 
                     return response.text();
@@ -1372,7 +1373,7 @@ new Vue({
                     });
                 })
                 .catch(function (error) {
-                    vm.handleApiError(error, 'Произошла ошибка загрузки фотографии техники');
+            vm.handleApiError(error, messages.errorPhotoVehicle);
                 })
                 .finally(function () {
                     vm.$delete(vm.uploadingVehicleIds, vehicleId);
@@ -1423,7 +1424,7 @@ new Vue({
                     if (error.response && error.response.status === 402) {
                         showAppModal('#subscriptionModal');
                     } else {
-                        vm.handleApiError(error, 'Произошла ошибка переноса техники');
+                        vm.handleApiError(error, messages.errorTransfer);
                     }
                     throw error;
                 })
@@ -1444,7 +1445,7 @@ new Vue({
                     });
                 })
                 .catch(function (error) {
-                    vm.handleApiError(error, 'Произошла ошибка удаления техники');
+                    vm.handleApiError(error, messages.errorDelete);
                     throw error;
                 })
                 .finally(function () {
@@ -1503,6 +1504,7 @@ new Vue({
                 Vin: vm.vehicle.vin || null,
                 RegistrationPlate: vm.vehicle.registrationPlate || null,
                 AllowOtherRegistrationPlateFormat: vm.vehicle.allowOtherRegistrationPlateFormat === true,
+                RegistrationCountryCode: vm.vehicle.registrationCountryCode,
                 BodyNumber: vm.vehicle.bodyNumber || null,
                 EngineNumber: vm.vehicle.engineNumber || null,
                 Color: vm.vehicle.color || null,
@@ -1520,7 +1522,7 @@ new Vue({
                     });
                 })
                 .catch(function (error) {
-                    vm.handleApiError(error, 'Произошла ошибка изменения техники');
+                    vm.handleApiError(error, messages.errorUpdate);
                     throw error;
                 })
                 .finally(function () {
@@ -1547,6 +1549,7 @@ new Vue({
                 Vin: vm.vehicle.vin || null,
                 RegistrationPlate: vm.vehicle.registrationPlate || null,
                 AllowOtherRegistrationPlateFormat: vm.vehicle.allowOtherRegistrationPlateFormat === true,
+                RegistrationCountryCode: vm.vehicle.registrationCountryCode,
                 BodyNumber: vm.vehicle.bodyNumber || null,
                 EngineNumber: vm.vehicle.engineNumber || null,
                 Color: vm.vehicle.color || null,
@@ -1566,7 +1569,7 @@ new Vue({
                     if (error.response && error.response.status === 402) {
                         showAppModal('#subscriptionModal');
                     } else {
-                        vm.handleApiError(error, 'Произошла ошибка создания техники');
+                        vm.handleApiError(error, messages.errorCreate);
                     }
                     throw error;
                 })
@@ -1629,7 +1632,7 @@ new Vue({
 
         getVehicleKindText: function (kind) {
             var item = this.vehicleKindOptions.find(function (option) { return option.value === kind; });
-            return item ? item.text : 'Другая техника';
+            return item ? item.text : messages.kindOther;
         },
 
         changeYearIssue: function () {
@@ -1657,7 +1660,7 @@ new Vue({
             if (vm.loadingLimitInfo ||
                 vm.vehicleLimitInfo.currentVehicleCount === undefined ||
                 vm.vehicleLimitInfo.maxVehiclesForUser === undefined) {
-                vm.showError('Информация о лимитах еще загружается. Пожалуйста, подождите.');
+                vm.showError(messages.errorLimitLoading);
                 return;
             }
 
@@ -1690,7 +1693,7 @@ new Vue({
                     vm.models = response.data;
                 })
                 .catch(function (error) {
-                    vm.handleApiError(error, 'Произошла ошибка получения моделей техники');
+                    vm.handleApiError(error, messages.errorModels);
                 })
                 .finally(function () {
                     vm.loadModels = false;
@@ -1711,7 +1714,7 @@ new Vue({
                 .catch(function (error) {
                     vm.brands = [];
                     vm.applyCatalogModeAvailability();
-                    vm.handleApiError(error, 'Произошла ошибка получения марок техники');
+                    vm.handleApiError(error, messages.errorBrands);
                 });
         },
         getOrganizationClientOptions: function () {
@@ -1733,7 +1736,7 @@ new Vue({
                     vm.organizationClients = [];
                     vm.organizationClientsEnabled = false;
                     if (!error.response || error.response.status !== 403) {
-                        vm.handleApiError(error, 'Произошла ошибка получения клиентов');
+                        vm.handleApiError(error, messages.errorClients);
                         throw error;
                     }
 
@@ -1772,7 +1775,7 @@ new Vue({
 
                     if (response.data.userBrands) {
                         vm.availableBrands = response.data.userBrands;
-                        vm.availableBrands.unshift({ id: 'all', name: 'Все марки' });
+                        vm.availableBrands.unshift({ id: 'all', name: messages.brandAll });
                     } else {
                         vm.updateAvailableBrandsFromVehicles();
                     }
@@ -1791,7 +1794,7 @@ new Vue({
                     return vm.vehicles;
                 })
                 .catch(function (error) {
-                    vm.handleApiError(error, 'Произошла ошибка получения техники');
+                    vm.handleApiError(error, messages.errorVehicles);
                     throw error;
                 })
                 .finally(function () {
@@ -1844,11 +1847,11 @@ new Vue({
                 var vehicle = vm.vehicles.find(function (c) { return vm.getVehicleBrandFilterId(c) === brandFilterId; });
                 return {
                     id: brandFilterId,
-                    name: vehicle ? vehicle.brandName : 'Unknown'
+                    name: vehicle ? vehicle.brandName : messages.brandUnknown
                 };
             });
 
-            vm.availableBrands.unshift({ id: 'all', name: 'Все марки' });
+            vm.availableBrands.unshift({ id: 'all', name: messages.brandAll });
             return Promise.resolve();
         },
         changePage: function (page) {

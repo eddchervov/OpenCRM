@@ -1,15 +1,35 @@
 <script setup lang="ts">
+import { formattingCulture, translate as t } from '@opencrm/ui/i18n'
+import { provideWorkspaceCurrency, useWorkspaceCurrency } from '../workspaceCurrency'
+import '../maintenanceCardMessages'
+import '../workdayPreviewMessages'
+
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { UiButton, UiLoader } from '@opencrm/ui'
+import { UiButton, UiLoader, parseDateOnly } from '@opencrm/ui'
 import { loadMaintenance, loadMaintenancePhotos, type WorkspaceMaintenance, type WorkspaceMaintenancePhoto } from '../api/maintenance'
 import type { WorkspaceWorkdayItem } from '../api/workday'
 import type { WorkspaceContext } from '../types'
 import { getVehicleBrandLogo } from '../utils/vehicleBrandLogo'
 
+const inheritedCurrency = useWorkspaceCurrency()
+
 const props = defineProps<{ context: WorkspaceContext, item: WorkspaceWorkdayItem }>()
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const maintenance = ref<WorkspaceMaintenance | null>(null)
+const workspaceCurrency = provideWorkspaceCurrency(computed(() => maintenance.value?.currencyCode ?? inheritedCurrency.value))
+const isHistoricalCurrencyReadOnly = computed(() => {
+  const orderCurrency = maintenance.value?.currencyCode
+  const organizationCurrency = props.context.organization.currencyCode
+  const currenciesDiffer = Boolean(orderCurrency && organizationCurrency
+    && orderCurrency.toUpperCase() !== organizationCurrency.toUpperCase())
+
+  return maintenance.value?.canChangeFinancialData === false || currenciesDiffer
+})
+const historicalCurrencyReadOnlyMessage = computed(() => t('maintenanceCard.historicalCurrencyReadOnly', {
+  orderCurrency: maintenance.value?.currencyCode ?? inheritedCurrency.value,
+  workspaceCurrency: props.context.organization.currencyCode ?? inheritedCurrency.value
+}))
 const photos = ref<WorkspaceMaintenancePhoto[]>([])
 const activePanel = ref<'work' | 'photos' | 'finance'>('work')
 const isLoading = ref(false)
@@ -21,21 +41,25 @@ const services = computed(() => maintenance.value?.maintenanceDetails.filter(det
   detail.materialCatalogItemId || detail.materialName || detail.materialQuantity != null
 )) ?? [])
 const totalAmount = computed(() => Math.max(0, (maintenance.value?.grossAmount ?? maintenance.value?.price ?? 0) - (maintenance.value?.discountAmount ?? 0)))
-const balanceLabel = computed(() => maintenance.value?.paymentStatus === 'overpaid' ? 'Переплата' : 'Остаток')
+const balanceLabel = computed(() => maintenance.value?.paymentStatus === 'overpaid' ? t('workdayPreview.overpaid') : t('workdayPreview.balance'))
 const balanceAmount = computed(() => maintenance.value?.paymentStatus === 'overpaid'
   ? Math.max(0, maintenance.value.paidAmount - totalAmount.value)
   : maintenance.value?.debtAmount ?? 0)
 const completedCount = computed(() => Math.min(props.item.workTotalCount, Math.max(0, props.item.workCompletedCount)))
-const status = computed(() => props.item.handedOverAt ? 'Выдан'
-  : props.item.readyForHandoverAt ? 'Готов к выдаче'
-    : maintenance.value?.status === 2 ? 'В работе'
-      : maintenance.value?.status === 3 ? 'Выполнено'
-        : maintenance.value?.status === 4 ? 'Отменено' : 'Запланировано')
+const status = computed(() => props.item.handedOverAt ? t('workdayPreview.handedOver')
+  : props.item.readyForHandoverAt ? t('workdayPreview.ready')
+    : maintenance.value?.status === 2 ? t('workdayPreview.inProgress')
+      : maintenance.value?.status === 3 ? t('workdayPreview.completed')
+        : maintenance.value?.status === 4 ? t('workdayPreview.cancelled') : t('workdayPreview.planned'))
 let isDisposed = false
 let previousOverflow = ''
 
+function formatDate(value: string) {
+  return parseDateOnly(value.slice(0, 10))?.toLocaleDateString(formattingCulture.value, { year: 'numeric', month: '2-digit', day: '2-digit' }) ?? ''
+}
+
 function formatMoney(amount: number) {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(amount)
+  return new Intl.NumberFormat(formattingCulture.value, { style: 'currency', currency: workspaceCurrency.value, maximumFractionDigits: 2 }).format(amount)
 }
 
 async function load() {
@@ -46,7 +70,7 @@ async function load() {
     if (isDisposed) return
     maintenance.value = result
   } catch (cause) {
-    if (!isDisposed) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить запись.'
+    if (!isDisposed) error.value = cause instanceof Error ? cause.message : t('workdayPreview.loadError')
   } finally {
     if (!isDisposed) isLoading.value = false
   }
@@ -57,7 +81,7 @@ async function loadPhotos() {
     const result = await loadMaintenancePhotos(props.context.organization.id, props.item.id)
     if (!isDisposed) photos.value = result
   } catch {
-    if (!isDisposed) photoError.value = 'Не удалось загрузить фото записи.'
+    if (!isDisposed) photoError.value = t('workdayPreview.photoError')
   }
 }
 
@@ -88,48 +112,49 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <dialog ref="dialog" class="workday-preview" aria-labelledby="workday-preview-title" @cancel.prevent="emit('close')" @click="closeFromBackdrop">
       <header class="workday-preview__header ui-form-header">
-        <h2 id="workday-preview-title">Просмотр записи</h2>
-        <button type="button" class="workday-preview__close" aria-label="Закрыть просмотр записи" autofocus @click="emit('close')">×</button>
+        <h2 id="workday-preview-title">{{ t('workdayPreview.title') }}</h2>
+        <button type="button" class="workday-preview__close" :aria-label="t('workdayPreview.closePreview')" autofocus @click="emit('close')">×</button>
       </header>
       <div class="workday-preview__body">
         <div class="workday-preview__summary">
-          <div class="ui-section-header"><h3><img v-if="brandLogo" :src="brandLogo.src" :alt="`Логотип ${brandLogo.name}`" class="workday-preview__brand">{{ item.vehicleName }}</h3><span v-if="item.registrationPlate" class="workday-preview__plate">{{ item.registrationPlate }}</span></div>
+          <div class="ui-section-header"><h3><img v-if="brandLogo" :src="brandLogo.src" :alt="t('workdayPreview.logo', { name: brandLogo.name })" class="workday-preview__brand">{{ item.vehicleName }}</h3><span v-if="item.registrationPlate" class="workday-preview__plate">{{ item.registrationPlate }}</span></div>
           <span class="workday-preview__status">{{ status }}</span>
         </div>
+        <p v-if="isHistoricalCurrencyReadOnly" class="workday-preview__readonly-notice" role="note">{{ historicalCurrencyReadOnlyMessage }}</p>
         <dl class="workday-preview__details">
-          <div v-if="item.clientName"><dt>Клиент</dt><dd>{{ item.clientName }}</dd></div>
-          <div><dt>Дата</dt><dd>{{ item.date.slice(0, 10).split('-').reverse().join('.') }}</dd></div>
-          <div v-if="item.startTime"><dt>Время</dt><dd>{{ item.startTime.slice(0, 5) }}<template v-if="item.endTime"> — <template v-if="item.endDate && item.endDate.slice(0, 10) !== item.date.slice(0, 10)">{{ item.endDate.slice(0, 10).split('-').reverse().join('.') }} </template>{{ item.endTime.slice(0, 5) }}</template></dd></div>
-          <div v-if="item.location"><dt>Пост / место</dt><dd>{{ item.location }}</dd></div>
-          <div v-if="item.performer"><dt>Сотрудник</dt><dd>{{ item.performer }}</dd></div>
+          <div v-if="item.clientName"><dt>{{ t('workdayPreview.client') }}</dt><dd>{{ item.clientName }}</dd></div>
+          <div><dt>{{ t('workdayPreview.date') }}</dt><dd>{{ formatDate(item.date) }}</dd></div>
+          <div v-if="item.startTime"><dt>{{ t('workdayPreview.time') }}</dt><dd>{{ item.startTime.slice(0, 5) }}<template v-if="item.endTime"> — <template v-if="item.endDate && item.endDate.slice(0, 10) !== item.date.slice(0, 10)">{{ formatDate(item.endDate) }} </template>{{ item.endTime.slice(0, 5) }}</template></dd></div>
+          <div v-if="item.location"><dt>{{ t('workdayPreview.location') }}</dt><dd>{{ item.location }}</dd></div>
+          <div v-if="item.performer"><dt>{{ t('workdayPreview.employee') }}</dt><dd>{{ item.performer }}</dd></div>
         </dl>
-        <nav class="workday-preview__tabs" aria-label="Разделы записи">
-          <button type="button" :aria-pressed="activePanel === 'work'" @click="activePanel = 'work'">Работы</button>
-          <button type="button" :aria-pressed="activePanel === 'photos'" @click="activePanel = 'photos'">Приёмка и фото</button>
-          <button type="button" :aria-pressed="activePanel === 'finance'" @click="activePanel = 'finance'">Расчёт</button>
+        <nav class="workday-preview__tabs" :aria-label="t('workdayPreview.sections')">
+          <button type="button" :aria-pressed="activePanel === 'work'" @click="activePanel = 'work'">{{ t('workdayPreview.work') }}</button>
+          <button type="button" :aria-pressed="activePanel === 'photos'" @click="activePanel = 'photos'">{{ t('workdayPreview.photos') }}</button>
+          <button type="button" :aria-pressed="activePanel === 'finance'" @click="activePanel = 'finance'">{{ t('workdayPreview.finance') }}</button>
         </nav>
-        <UiLoader v-if="isLoading" text="Загружаем запись…" />
-        <div v-else-if="error" class="workday-preview__error" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="load">Повторить</UiButton></div>
+        <UiLoader v-if="isLoading" :text="t('workdayPreview.loading')" />
+        <div v-else-if="error" class="workday-preview__error" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="load">{{ t('workdayPreview.retry') }}</UiButton></div>
         <template v-else-if="maintenance">
           <div v-if="activePanel === 'work'" class="workday-preview__work">
             <div>
               <ul class="workday-preview__services">
                 <li v-for="(service, index) in services" :key="service.detailId ?? index">
-                  <div><strong>{{ service.name }}</strong><span v-if="service.quantity != null">Количество: {{ service.quantity }}</span></div>
+                  <div><strong>{{ service.name }}</strong><span v-if="service.quantity != null">{{ t('workdayPreview.quantity', { count: service.quantity }) }}</span></div>
                   <span v-if="service.price != null">{{ formatMoney(service.price) }}</span>
                 </li>
               </ul>
-              <p v-if="!services.length">Услуги не указаны.</p>
+              <p v-if="!services.length">{{ t('workdayPreview.noServices') }}</p>
               <div v-if="item.workTotalCount > 0" class="workday-preview__progress">
-                <progress :value="completedCount" :max="item.workTotalCount" :aria-label="`Выполнено ${completedCount} из ${item.workTotalCount}`" />
-                <span>Выполнено {{ completedCount }} из {{ item.workTotalCount }}</span>
-                <span v-if="item.workPausedCount">На паузе: {{ item.workPausedCount }}</span>
+                <progress :value="completedCount" :max="item.workTotalCount" :aria-label="t('workdayPreview.progress', { completed: completedCount, total: item.workTotalCount })" />
+                <span>{{ t('workdayPreview.progress', { completed: completedCount, total: item.workTotalCount }) }}</span>
+                <span v-if="item.workPausedCount">{{ t('workdayPreview.paused', { count: item.workPausedCount }) }}</span>
               </div>
               <p v-if="maintenance.comment" class="workday-preview__comment">{{ maintenance.comment }}</p>
             </div>
             <dl class="workday-preview__money">
-              <div><dt>Стоимость</dt><dd>{{ formatMoney(totalAmount) }}</dd></div>
-              <div><dt>Оплачено</dt><dd>{{ formatMoney(maintenance.paidAmount) }}</dd></div>
+              <div><dt>{{ t('workdayPreview.cost') }}</dt><dd>{{ formatMoney(totalAmount) }}</dd></div>
+              <div><dt>{{ t('workdayPreview.paid') }}</dt><dd>{{ formatMoney(maintenance.paidAmount) }}</dd></div>
               <div><dt>{{ balanceLabel }}</dt><dd>{{ formatMoney(balanceAmount) }}</dd></div>
             </dl>
           </div>
@@ -137,19 +162,19 @@ onBeforeUnmount(() => {
             <p v-if="maintenance.intakeNotes">{{ maintenance.intakeNotes }}</p>
             <p v-if="photoError" role="alert">{{ photoError }}</p>
             <div v-else-if="photos.length" class="workday-preview__photos">
-              <figure v-for="photo in photos" :key="photo.photoId"><img :src="photo.url" :alt="photo.stage === 1 ? 'До работы' : photo.stage === 2 ? 'После работы' : 'Фото записи'" loading="lazy"><figcaption>{{ photo.stage === 1 ? 'До работы' : photo.stage === 2 ? 'После работы' : 'Фото записи' }}</figcaption></figure>
+              <figure v-for="photo in photos" :key="photo.photoId"><img :src="photo.url" :alt="photo.stage === 1 ? t('workdayPreview.before') : photo.stage === 2 ? t('workdayPreview.after') : t('workdayPreview.photo')" loading="lazy"><figcaption>{{ photo.stage === 1 ? t('workdayPreview.before') : photo.stage === 2 ? t('workdayPreview.after') : t('workdayPreview.photo') }}</figcaption></figure>
             </div>
-            <p v-else>Фотографии не добавлены.</p>
+            <p v-else>{{ t('workdayPreview.noPhotos') }}</p>
           </div>
           <dl v-else class="workday-preview__money">
-            <div><dt>Стоимость работ</dt><dd>{{ formatMoney(maintenance.grossAmount) }}</dd></div>
-            <div><dt>Скидка</dt><dd>{{ formatMoney(maintenance.discountAmount) }}</dd></div>
-            <div><dt>Оплачено</dt><dd>{{ formatMoney(maintenance.paidAmount) }}</dd></div>
+            <div><dt>{{ t('workdayPreview.gross') }}</dt><dd>{{ formatMoney(maintenance.grossAmount) }}</dd></div>
+            <div><dt>{{ t('workdayPreview.discount') }}</dt><dd>{{ formatMoney(maintenance.discountAmount) }}</dd></div>
+            <div><dt>{{ t('workdayPreview.paid') }}</dt><dd>{{ formatMoney(maintenance.paidAmount) }}</dd></div>
             <div><dt>{{ balanceLabel }}</dt><dd>{{ formatMoney(balanceAmount) }}</dd></div>
           </dl>
         </template>
       </div>
-      <footer class="workday-preview__footer"><UiButton variant="secondary" @click="emit('close')">Закрыть</UiButton><UiButton :href="fullHref">Открыть полную карточку ↗</UiButton></footer>
+      <footer class="workday-preview__footer"><UiButton variant="secondary" @click="emit('close')">{{ t('workdayPreview.close') }}</UiButton><UiButton :href="fullHref">{{ t('workdayPreview.openFull') }}</UiButton></footer>
     </dialog>
   </Teleport>
 </template>
@@ -162,6 +187,7 @@ onBeforeUnmount(() => {
 .workday-preview__header h2 { margin: 0; font-size: 17px; }
 .workday-preview__close { width: 32px; height: 32px; border: 0; border-radius: 6px; background: var(--crm-surface-soft, #f5f6f8); color: inherit; font-size: 24px; cursor: pointer; }
 .workday-preview__body { padding: 20px; overflow-wrap: anywhere; }
+.workday-preview__readonly-notice { margin: 12px 0; padding: 12px; border: 1px solid var(--crm-warning-border, #efd18a); border-radius: 8px; background: var(--crm-warning-bg, #fff7e6); color: var(--crm-warning-text, #755100); }
 .workday-preview__summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .workday-preview__summary h3 { margin: 0 0 8px; font-size: 20px; }
 .workday-preview__brand { width: 28px; height: 28px; margin-right: 8px; padding: 3px; vertical-align: middle; object-fit: contain; border-radius: 5px; background: #fff; }

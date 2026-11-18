@@ -9,13 +9,36 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using OpenCRM.Admin.Api;
+using OpenCRM.Admin.App.Localization;
 using OpenCRM.Admin.App.ViewModels;
 using OpenCRM.Admin.App.Views;
 
 namespace OpenCRM.Admin.App.Tests.Integration;
 
-public sealed class UsersTests
+[Collection("Admin localization")]
+public sealed class UsersTests : IDisposable
 {
+    private readonly string _preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-admin-users-language-{Guid.NewGuid():N}.txt");
+    private readonly IDisposable _preferenceScope;
+    private readonly string _previousLanguage;
+
+    public UsersTests()
+    {
+        this._preferenceScope = AdminLocalization.Instance.UsePreferencePath(this._preferencePath);
+        this._previousLanguage = AdminLocalization.Instance.Language;
+        AdminLocalization.Instance.Language = "ru";
+    }
+
+    public void Dispose()
+    {
+        AdminLocalization.Instance.Language = this._previousLanguage;
+        this._preferenceScope.Dispose();
+        if (File.Exists(this._preferencePath))
+        {
+            File.Delete(this._preferencePath);
+        }
+    }
+
     [AvaloniaFact]
     public async Task UsersNavigationRendersListAndCardWithTabsAndReturnsToSamePage()
     {
@@ -170,6 +193,34 @@ public sealed class UsersTests
         Assert.Contains("sort=1", request);
         Assert.Contains("pageSize=50", request);
         Assert.False(model.Users.NextPageCommand.CanExecute(null));
+        await model.ShutdownAsync();
+    }
+
+    [Fact]
+    public async Task RefreshErrorsRelocalizeTheirPrefixAndPreserveServerDetails()
+    {
+        var handler = new UsersApiHandler();
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        using var session = new AdminSessionClient(http);
+        var model = UsersTests.CreateModel(session, http);
+        await model.LoginCommand.ExecuteAsync(null);
+        await model.ShowUsersCommand.ExecuteAsync(null);
+        handler.UsersStatus = HttpStatusCode.ServiceUnavailable;
+        await model.Users.RefreshCommand.ExecuteAsync(null);
+        await model.Users.OpenCardCommand.ExecuteAsync(model.Users.Rows[0]);
+        handler.CardStatus = HttpStatusCode.ServiceUnavailable;
+        await model.Users.RefreshCardCommand.ExecuteAsync(null);
+
+        Assert.StartsWith("Не удалось обновить список. Показаны прежние данные.", model.Users.ErrorMessage);
+        Assert.StartsWith("Не удалось обновить карточку. Показаны прежние данные.", model.Users.CardErrorMessage);
+        var requestCount = handler.Requests.Count;
+        model.Language = "en";
+
+        Assert.Equal(requestCount, handler.Requests.Count);
+        Assert.StartsWith("Could not refresh the list. Previously loaded data is shown.", model.Users.ErrorMessage);
+        Assert.StartsWith("Could not refresh the user card. Previously loaded data is shown.", model.Users.CardErrorMessage);
+        Assert.EndsWith("Данные недоступны.", model.Users.ErrorMessage);
+        Assert.EndsWith("Данные недоступны.", model.Users.CardErrorMessage);
         await model.ShutdownAsync();
     }
 

@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="using:OpenCRM.Admin.App.Localization"
              xmlns:vm="using:OpenCRM.Admin.App.ViewModels"
              xmlns:views="using:OpenCRM.Admin.App.Views"
              x:Class="OpenCRM.Admin.App.Views.UserCardView"
@@ -161,14 +161,14 @@
             </StackPanel>
             <StackPanel Spacing="10" IsVisible="{Binding !IsManagement}">
               <StackPanel IsVisible="{Binding IsOrganizations}" Orientation="Horizontal" Spacing="12" Margin="0,0,0,4">
-                <TextBlock Text="Показать" Classes="caption" VerticalAlignment="Center" />
+                <TextBlock Text="{loc:LocalizedText Key=core.show}" Classes="caption" VerticalAlignment="Center" />
                 <ComboBox Width="190"
                           ItemsSource="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).OrganizationStatuses}"
                           SelectedItem="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).OrganizationStatus}"
                           AutomationProperties.AutomationId="UserOrganizationsStatus" />
               </StackPanel>
               <StackPanel IsVisible="{Binding IsSubscriptions}" Orientation="Horizontal" Spacing="12" Margin="0,0,0,4">
-                <TextBlock Text="Показать" Classes="caption" VerticalAlignment="Center" />
+                <TextBlock Text="{loc:LocalizedText Key=core.show}" Classes="caption" VerticalAlignment="Center" />
                 <ComboBox Width="190"
                           ItemsSource="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).SubscriptionStatuses}"
                           SelectedItem="{Binding $parent[views:UserCardView].((vm:UserCardViewModel)DataContext).SubscriptionStatus}"
@@ -194,7 +194,7 @@
         </DataTemplate>
       </TabControl.ContentTemplate>
     </TabControl>
-    <Expander Header="Последняя активность" IsVisible="{Binding HasTimeline}" HorizontalAlignment="Stretch">
+    <Expander Header="{loc:LocalizedText Key=core.lastActivity}" IsVisible="{Binding HasTimeline}" HorizontalAlignment="Stretch">
       <ItemsControl ItemsSource="{Binding Timeline}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:UserCardItem">

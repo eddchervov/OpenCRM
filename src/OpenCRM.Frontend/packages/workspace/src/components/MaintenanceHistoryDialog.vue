@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiLoader } from '@opencrm/ui'
+import { useLocalization } from '@opencrm/ui'
+import { formattingCulture } from '@opencrm/ui/i18n'
+import '../maintenanceMediaMessages'
 import { loadMaintenanceHistory, type MaintenanceHistoryEvent } from '../api/maintenance'
 
 const props = defineProps<{ organizationId: string; maintenanceId: string; title: string }>()
+const { t } = useLocalization()
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const events = ref<MaintenanceHistoryEvent[]>([])
@@ -23,14 +27,14 @@ async function load() {
     const result = await loadMaintenanceHistory(props.organizationId, props.maintenanceId, active.signal)
     if (!active.signal.aborted) events.value = result
   } catch (caught) {
-    if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить историю обслуживания.'
+    if (!active.signal.aborted) error.value = caught instanceof Error ? caught.message : t('maintenanceHistory.loadError')
   } finally {
     if (request === active) loading.value = false
   }
 }
 
 function formatTime(event: MaintenanceHistoryEvent) {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(formattingCulture.value, {
     timeZone: event.timeZoneId || undefined,
     year: 'numeric', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
   }).format(new Date(event.createdAt))
@@ -66,26 +70,26 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <dialog ref="dialog" class="maintenance-history" aria-labelledby="maintenance-history-title" @cancel.prevent="emit('close')" @click="closeFromBackdrop">
       <header class="maintenance-history__header ui-form-header">
-        <div><h2 id="maintenance-history-title">История обслуживания</h2><p>{{ title }}</p></div>
-        <button type="button" class="maintenance-history__close" aria-label="Закрыть историю обслуживания" autofocus @click="emit('close')">×</button>
+        <div><h2 id="maintenance-history-title">{{ t('maintenanceHistory.title') }}</h2><p>{{ title }}</p></div>
+        <button type="button" class="maintenance-history__close" :aria-label="t('maintenanceHistory.close')" autofocus @click="emit('close')">×</button>
       </header>
       <div class="maintenance-history__body" :aria-busy="loading">
-        <UiLoader v-if="loading" text="Загружаем историю…" />
-        <div v-else-if="error" class="maintenance-history__error" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="load">Повторить</UiButton></div>
+        <UiLoader v-if="loading" :text="t('maintenanceHistory.loading')" />
+        <div v-else-if="error" class="maintenance-history__error" role="alert"><p>{{ error }}</p><UiButton variant="secondary" @click="load">{{ t('maintenanceHistory.retry') }}</UiButton></div>
         <template v-else>
-          <p class="maintenance-history__count">Событий: {{ events.length }}</p>
-          <ol v-if="events.length" class="maintenance-history__events" aria-label="События обслуживания">
+          <p class="maintenance-history__count">{{ t('maintenanceHistory.eventCount', { count: events.length }) }}</p>
+          <ol v-if="events.length" class="maintenance-history__events" :aria-label="t('maintenanceHistory.events')">
             <li v-for="event in events" :key="event.id" class="maintenance-history__event">
               <header><strong>{{ event.title }}</strong><time :datetime="event.createdAt">{{ formatTime(event) }}</time></header>
               <div v-if="event.description" class="maintenance-history__details"><p v-for="(line, index) in descriptionLines(event)" :key="index">{{ line }}</p></div>
-              <a v-if="event.sourceInquiryId" :href="'#inquiries/' + event.sourceInquiryId" @click="emit('close')">Открыть исходное обращение →</a>
+              <a v-if="event.sourceInquiryId" :href="'#inquiries/' + event.sourceInquiryId" @click="emit('close')">{{ t('maintenanceHistory.openInquiry') }}</a>
               <small v-if="event.actorDisplayName">{{ event.actorDisplayName }}</small>
             </li>
           </ol>
-          <p v-else class="maintenance-history__empty">События пока не зафиксированы.</p>
+          <p v-else class="maintenance-history__empty">{{ t('maintenanceHistory.empty') }}</p>
         </template>
       </div>
-      <footer class="maintenance-history__footer"><UiButton variant="secondary" @click="emit('close')">Закрыть</UiButton></footer>
+      <footer class="maintenance-history__footer"><UiButton variant="secondary" @click="emit('close')">{{ t('maintenanceHistory.closeDialog') }}</UiButton></footer>
     </dialog>
   </Teleport>
 </template>

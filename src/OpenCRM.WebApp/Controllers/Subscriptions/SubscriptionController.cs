@@ -1,4 +1,7 @@
-﻿using OpenCRM.WebApp.Infrastructure.Security;
+﻿using System.Globalization;
+using System.Resources;
+using OpenCRM.WebApp.Infrastructure.Localization;
+using OpenCRM.WebApp.Infrastructure.Security;
 using OpenCRM.Modules.Payments.Contracts;
 using OpenCRM.WebApp.Infrastructure.Api;
 using OpenCRM.Modules.Billing.Contracts;
@@ -23,6 +26,14 @@ namespace OpenCRM.WebApp.Controllers.Subscriptions;
 [CommercialModule]
 public class SubscriptionController : Controller
 {
+    private static readonly ResourceManager s_resources = new(
+        "OpenCRM.WebApp.Resources.Infrastructure.Localization.LocalizationStrings",
+        typeof(LocalizationStrings).Assembly);
+
+    private static string Localize(string key) =>
+        SubscriptionController.s_resources.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
+
     /// <summary> Сервис управления подписками. </summary>
     private readonly ISubscriptionService _subscriptionService;
 
@@ -104,19 +115,19 @@ public class SubscriptionController : Controller
         if (overview.Organizations.Count == 1)
         {
             viewModel.BusinessPlansTargetUrl = OrganizationWorkspaceUrlHelper.Resolve(overview.Organizations[0], "billing");
-            viewModel.BusinessPlansTargetText = "Открыть тарифы пространства";
+            viewModel.BusinessPlansTargetText = SubscriptionController.Localize("subscription.openWorkspacePlans");
             return;
         }
 
         if (overview.Organizations.Count == 0)
         {
             viewModel.BusinessPlansTargetUrl = "/organizations/create";
-            viewModel.BusinessPlansTargetText = "Создать рабочее пространство";
+            viewModel.BusinessPlansTargetText = SubscriptionController.Localize("subscription.createWorkspace");
             return;
         }
 
         viewModel.BusinessPlansTargetUrl = "/organizations";
-        viewModel.BusinessPlansTargetText = "Выбрать рабочее пространство";
+        viewModel.BusinessPlansTargetText = SubscriptionController.Localize("subscription.selectWorkspace");
     }
 
     /// <summary> Активирует демо-подписку пользователя. </summary>
@@ -140,7 +151,7 @@ public class SubscriptionController : Controller
         }
         else
         {
-            TempData["Success"] = "Демо-подписка успешно активирована! Доступно на 30 дней.";
+            TempData["Success"] = SubscriptionController.Localize("subscription.demoActivated");
             TempData["AnalyticsGoal"] = "demo_activated";
             TempData["AnalyticsParams"] = """{"scope":"personal"}""";
         }
@@ -166,14 +177,14 @@ public class SubscriptionController : Controller
         {
             var testResult = await _subscriptionService.ActivateSubscriptionForTestingAsync(userId, planId);
             TempData[testResult.Success ? "Success" : "Error"] = testResult.Success
-                ? "Тариф активирован в тестовом режиме без оплаты."
+                ? SubscriptionController.Localize("subscription.testActivated")
                 : testResult.Error;
             return RedirectToAction(nameof(Index));
         }
 
         if (!CheckoutHttpResponse.TryGetOperationId(this.HttpContext, out var operationId))
         {
-            this.TempData["Error"] = "Idempotency-Key должен содержать UUID операции.";
+            this.TempData["Error"] = SubscriptionController.Localize("subscription.invalidIdempotency");
 
             return this.RedirectToAction(nameof(Index));
         }
@@ -185,7 +196,7 @@ public class SubscriptionController : Controller
         }
 
         this.TempData[result.Status == PaymentCreationStatus.Completed ? "Success" : "Error"] =
-            result.Message ?? (result.Status == PaymentCreationStatus.Completed ? "Оплата обработана." : "Оплата ещё не завершена.");
+            result.Message ?? (result.Status == PaymentCreationStatus.Completed ? SubscriptionController.Localize("subscription.paymentProcessed") : SubscriptionController.Localize("subscription.paymentIncomplete"));
 
         return this.RedirectToAction(nameof(Index));
     }
@@ -208,14 +219,14 @@ public class SubscriptionController : Controller
         {
             var testResult = await _subscriptionService.ExtendSubscriptionForTestingAsync(userId);
             TempData[testResult.Success ? "Success" : "Error"] = testResult.Success
-                ? "Подписка продлена в тестовом режиме без оплаты."
+                ? SubscriptionController.Localize("subscription.testExtended")
                 : testResult.Error;
             return RedirectToAction(nameof(Index));
         }
 
         if (!CheckoutHttpResponse.TryGetOperationId(this.HttpContext, out var operationId))
         {
-            this.TempData["Error"] = "Idempotency-Key должен содержать UUID операции.";
+            this.TempData["Error"] = SubscriptionController.Localize("subscription.invalidIdempotency");
 
             return this.RedirectToAction(nameof(Index));
         }
@@ -227,7 +238,7 @@ public class SubscriptionController : Controller
         }
 
         this.TempData[result.Status == PaymentCreationStatus.Completed ? "Success" : "Error"] =
-            result.Message ?? (result.Status == PaymentCreationStatus.Completed ? "Оплата обработана." : "Оплата ещё не завершена.");
+            result.Message ?? (result.Status == PaymentCreationStatus.Completed ? SubscriptionController.Localize("subscription.paymentProcessed") : SubscriptionController.Localize("subscription.paymentIncomplete"));
 
         return this.RedirectToAction(nameof(Index));
     }
@@ -248,13 +259,13 @@ public class SubscriptionController : Controller
         var user = await _userManager.GetUserAsync(User);
         if (user?.CanUseTestSubscriptions != true)
         {
-            TempData["Error"] = "Отмена тарифа без оплаты недоступна для вашего аккаунта.";
+            TempData["Error"] = SubscriptionController.Localize("subscription.cancelUnavailable");
             return RedirectToAction(nameof(Index));
         }
 
         var result = await _subscriptionService.CancelSubscriptionForTestingAsync(userId);
         TempData[result.Success ? "Success" : "Error"] = result.Success
-            ? "Тариф отменен в тестовом режиме."
+            ? SubscriptionController.Localize("subscription.testCanceled")
             : result.Error;
 
         return RedirectToAction(nameof(Index));

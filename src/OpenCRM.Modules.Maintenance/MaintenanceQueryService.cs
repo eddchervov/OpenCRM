@@ -66,7 +66,17 @@ internal sealed class MaintenanceQueryService : IMaintenanceQueryService
         var maintenancePhotos = await this._maintenancePhotoRepository.GetByMaintenanceIdAsync(userId, organizationId, maintenanceId);
         var linkedDefects = await this.LoadLinkedDefectsAsync([maintenance.Id]);
 
-        return MaintenanceQueryService.MapToDto(maintenance, maintenancePhotos, linkedDefects);
+        var result = MaintenanceQueryService.MapToDto(maintenance, maintenancePhotos, linkedDefects);
+        if (organizationId.HasValue)
+        {
+            var workspaceCurrencyCode = await this._context.Organizations.AsNoTracking()
+                .Where(organization => organization.Id == organizationId.Value)
+                .Select(organization => organization.CurrencyCode)
+                .SingleAsync();
+            result.CanChangeFinancialData = string.Equals(maintenance.CurrencyCode, workspaceCurrencyCode, StringComparison.Ordinal);
+        }
+
+        return result;
     }
 
     /// <summary> Возвращает страницу списка обслуживаний техники. </summary>
@@ -232,6 +242,7 @@ internal sealed class MaintenanceQueryService : IMaintenanceQueryService
             Status = maintenance.Status,
             Type = maintenance.Type,
             Price = finance.GrossAmount,
+            CurrencyCode = maintenance.CurrencyCode,
             GrossAmount = finance.GrossAmount,
             DiscountAmount = maintenance.DiscountAmount,
             PaidAmount = maintenance.PaidAmount,
@@ -281,6 +292,7 @@ internal sealed class MaintenanceQueryService : IMaintenanceQueryService
             IntakeVisibleDamage = maintenance.IntakeVisibleDamage,
             IntakeRecordedAt = maintenance.IntakeRecordedAt,
             Id = maintenance.Id,
+            CurrencyCode = maintenance.CurrencyCode,
             Comment = maintenance.Comment,
             Date = MaintenanceReadModelRules.NormalizeMaintenanceDate(maintenance.Date),
             PlannedDate = MaintenanceReadModelRules.NormalizeMaintenanceDate(maintenance.PlannedDate),

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenCRM.Admin.Api;
 using OpenCRM.Admin.Api.Models;
+using OpenCRM.Admin.App.Localization;
 
 namespace OpenCRM.Admin.App.ViewModels;
 
@@ -26,6 +27,15 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
 
     /// <summary> Данные статистики дашборда. </summary>
     private AdminDashboard? _statisticsDashboard;
+
+    private DateTimeOffset? _updatedAt;
+    private DateTimeOffset? _statisticsUpdatedAt;
+    private string? _errorMessageTranslationKey;
+    private string? _errorMessageDetails;
+    private string? _statisticsErrorTranslationKey;
+    private string? _statisticsErrorDetails;
+    private string? _billingErrorTranslationKey;
+    private string? _billingErrorDetails;
 
     /// <summary> Выбранный период в днях. </summary>
     [ObservableProperty]
@@ -123,7 +133,8 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
     public bool HasUrgentPayments => this.CanViewBilling && this.FailedActivationCount > 0;
 
     /// <summary> Сообщение о срочных платежах. </summary>
-    public string UrgentPaymentMessage => $"Оплата получена, но подписка не активирована: {this.FailedActivationCount}. Проверьте обработку платежей.";
+    public string UrgentPaymentMessage => string.Format(System.Globalization.CultureInfo.CurrentCulture,
+        AdminLocalization.Instance["core.dashboard.urgentPayment"], this.FailedActivationCount);
 
     /// <summary> Признак наличия ошибки биллинга. </summary>
     public bool HasBillingError => !string.IsNullOrWhiteSpace(this.BillingErrorMessage);
@@ -134,9 +145,9 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
     /// <summary> Подпись выбранного периода. </summary>
     public string PeriodLabel => this.PeriodDays switch
     {
-        1 => "Сегодня",
-        7 => "Последние 7 дней",
-        _ => "Последние 30 дней"
+        1 => AdminLocalization.Instance["core.dashboard.period.today"],
+        7 => AdminLocalization.Instance["core.dashboard.period.week"],
+        _ => AdminLocalization.Instance["core.dashboard.period.month"]
     };
 
     /// <summary> Признак наличия ошибки статистики. </summary>
@@ -157,9 +168,9 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
     /// <summary> Подпись периода графиков. </summary>
     public string ChartPeriodLabel => this.PeriodDays switch
     {
-        1 => "Сегодня по часам",
-        7 => "За 7 дней",
-        _ => "За месяц"
+        1 => AdminLocalization.Instance["core.dashboard.chartPeriod.today"],
+        7 => AdminLocalization.Instance["core.dashboard.chartPeriod.week"],
+        _ => AdminLocalization.Instance["core.dashboard.chartPeriod.month"]
     };
 
     /// <summary> Активирует дашборд и загружает данные. </summary>
@@ -183,7 +194,7 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
             this._missingReceiptCount = null;
             this._overdueReceiptCount = null;
             this.PaymentMetrics = [];
-            this.BillingErrorMessage = string.Empty;
+            this.ClearBillingError();
         }
         if (this._dashboard != null)
         {
@@ -198,6 +209,47 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
         {
             this.ApplyStatistics(this._statisticsDashboard);
         }
+    }
+
+    public void RefreshLocalizedValues()
+    {
+        if (this._updatedAt is { } updatedAt)
+        {
+            this.UpdatedLabel = DashboardViewModel.FormatTimestamp("core.dashboard.updatedAt", updatedAt);
+        }
+
+        if (this._statisticsUpdatedAt is { } statisticsUpdatedAt)
+        {
+            this.StatisticsUpdatedLabel = DashboardViewModel.FormatTimestamp("core.dashboard.loadedAt", statisticsUpdatedAt);
+        }
+
+        DashboardViewModel.RefreshLocalizedError(
+            this._errorMessageTranslationKey,
+            this._errorMessageDetails,
+            value => this.ErrorMessage = value);
+        DashboardViewModel.RefreshLocalizedError(
+            this._statisticsErrorTranslationKey,
+            this._statisticsErrorDetails,
+            value => this.StatisticsErrorMessage = value);
+        DashboardViewModel.RefreshLocalizedError(
+            this._billingErrorTranslationKey,
+            this._billingErrorDetails,
+            value => this.BillingErrorMessage = value);
+
+        if (this._dashboard != null)
+        {
+            this.ApplyDashboard(this._dashboard);
+        }
+
+        if (this._statisticsDashboard != null)
+        {
+            this.ApplyStatistics(this._statisticsDashboard);
+        }
+
+        this.UpdatePaymentMetrics();
+        this.OnPropertyChanged(nameof(this.UrgentPaymentMessage));
+        this.OnPropertyChanged(nameof(this.PeriodLabel));
+        this.OnPropertyChanged(nameof(this.ChartPeriodLabel));
     }
 
     /// <summary> Деактивирует дашборд и при необходимости очищает данные. </summary>
@@ -220,20 +272,22 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
         {
             this._dashboard = null;
             this._statisticsDashboard = null;
+            this._updatedAt = null;
+            this._statisticsUpdatedAt = null;
             this.StatisticsUpdatedLabel = string.Empty;
-            this.StatisticsErrorMessage = string.Empty;
+            this.ClearStatisticsError();
             this._loadedPeriod = null;
             this.RegistrationMetrics = [];
             this.PaymentMetrics = [];
             this.FailedActivationCount = 0;
             this._missingReceiptCount = null;
             this._overdueReceiptCount = null;
-            this.BillingErrorMessage = string.Empty;
+            this.ClearBillingError();
             this.StatisticGroups = [];
             this.ActivitySeries = [];
             this.PaymentSeries = [];
             this.UpdatedLabel = string.Empty;
-            this.ErrorMessage = string.Empty;
+            this.ClearDashboardError();
         }
     }
 
@@ -255,8 +309,9 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
 
             this._statisticsDashboard = dashboard;
             this.ApplyStatistics(dashboard);
-            this.StatisticsUpdatedLabel = "Загружено: " + dashboard.GeneratedAt.ToLocalTime().ToString("HH:mm:ss");
-            this.StatisticsErrorMessage = string.Empty;
+            this._statisticsUpdatedAt = dashboard.GeneratedAt;
+            this.StatisticsUpdatedLabel = DashboardViewModel.FormatTimestamp("core.dashboard.loadedAt", dashboard.GeneratedAt);
+            this.ClearStatisticsError();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -272,9 +327,12 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
             await this.HandleApiErrorAsync(exception);
             if (this._isActive)
             {
-                this.StatisticsErrorMessage = this._statisticsDashboard == null
-                    ? "Не удалось загрузить общую статистику. " + exception.Message
-                    : "Не удалось обновить общую статистику. Показаны ранее полученные значения. " + exception.Message;
+                var transportKey = AdminDisplayLabels.TransportErrorKey(exception);
+                this.SetStatisticsError(
+                    transportKey ?? (this._statisticsDashboard == null
+                        ? "core.dashboard.statisticsLoadFailed"
+                        : "core.dashboard.statisticsRefreshFailed"),
+                    transportKey == null ? exception.Message : string.Empty);
             }
         }
         finally
@@ -316,8 +374,9 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
             this._dashboard = dashboard;
             this._loadedPeriod = period;
             this.ApplyDashboard(dashboard);
-            this.UpdatedLabel = "Обновлено: " + dashboard.GeneratedAt.ToLocalTime().ToString("HH:mm:ss");
-            this.ErrorMessage = string.Empty;
+            this._updatedAt = dashboard.GeneratedAt;
+            this.UpdatedLabel = DashboardViewModel.FormatTimestamp("core.dashboard.updatedAt", dashboard.GeneratedAt);
+            this.ClearDashboardError();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -336,9 +395,12 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
                 return;
             }
 
-            this.ErrorMessage = this._loadedPeriod == period
-                ? "Не удалось обновить данные. Показаны ранее полученные значения. " + exception.Message
-                : "Не удалось загрузить дашборд. " + exception.Message;
+            var transportKey = AdminDisplayLabels.TransportErrorKey(exception);
+            this.SetDashboardError(
+                transportKey ?? (this._loadedPeriod == period
+                    ? "core.dashboard.refreshFailed"
+                    : "core.dashboard.loadFailed"),
+                transportKey == null ? exception.Message : string.Empty);
         }
     }
 
@@ -364,7 +426,7 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
             {
                 this._missingReceiptCount = null;
                 this._overdueReceiptCount = null;
-                this.BillingErrorMessage = "Сервер не поддерживает статистику чеков за выбранный период. Требуется обновление сервера.";
+                this.SetBillingError("core.dashboard.receiptsUnsupported");
                 this.UpdatePaymentMetrics();
 
                 return;
@@ -372,7 +434,7 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
 
             this._missingReceiptCount = attention.MissingReceiptCount;
             this._overdueReceiptCount = attention.OverdueReceiptCount;
-            this.BillingErrorMessage = string.Empty;
+            this.ClearBillingError();
             this.UpdatePaymentMetrics();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -383,9 +445,12 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
         {
             if (await this.HandleBillingErrorAsync(exception))
             {
-                this.BillingErrorMessage = this._missingReceiptCount.HasValue
-                    ? "Не удалось обновить платежи. Показаны ранее полученные значения. " + exception.Message
-                    : "Не удалось загрузить состояние платежей. " + exception.Message;
+                var transportKey = AdminDisplayLabels.TransportErrorKey(exception);
+                this.SetBillingError(
+                    transportKey ?? (this._missingReceiptCount.HasValue
+                        ? "core.dashboard.paymentsRefreshFailed"
+                        : "core.dashboard.paymentsLoadFailed"),
+                    transportKey == null ? exception.Message : string.Empty);
             }
         }
     }
@@ -438,9 +503,10 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
         this._loadedPeriod = null;
         this._missingReceiptCount = null;
         this._overdueReceiptCount = null;
-        this.BillingErrorMessage = string.Empty;
+        this.ClearBillingError();
+        this._updatedAt = null;
         this.UpdatedLabel = string.Empty;
-        this.ErrorMessage = string.Empty;
+        this.ClearDashboardError();
         this.OnPropertyChanged(nameof(ChartPeriodLabel));
         this.OnPropertyChanged(nameof(PeriodLabel));
         this.RegistrationMetrics = [];
@@ -478,17 +544,17 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
 
         this.UpdatePaymentMetrics();
         this.RegistrationMetrics = hasCurrentPeriod ? [
-            new("Новые пользователи", DashboardFormatting.Value(period.NewUsers), "Регистрации за период"),
-            new("Новые организации", DashboardFormatting.Value(period.NewOrganizations), "Созданы за период")
+            new(AdminLocalization.Instance["core.dashboard.newUsers"], DashboardFormatting.Value(period.NewUsers), AdminLocalization.Instance["core.dashboard.registrationsForPeriod"]),
+            new(AdminLocalization.Instance["core.dashboard.newOrganizations"], DashboardFormatting.Value(period.NewOrganizations), AdminLocalization.Instance["core.dashboard.createdForPeriod"])
         ] : [];
         var charts = dashboard.Charts;
         this.ActivitySeries = hasCurrentPeriod ? [
-            DashboardViewModel.CountSeries("Регистрации", "#3478F6", charts.Registrations),
+            DashboardViewModel.CountSeries(AdminLocalization.Instance["core.dashboard.registrations"], "#3478F6", charts.Registrations),
             DashboardViewModel.CountSeries("Email", "#E67E35", charts.Emails),
-            DashboardViewModel.CountSeries("Обслуживания", "#9974E5", charts.Maintenances)] : [];
+            DashboardViewModel.CountSeries(AdminLocalization.Instance["core.dashboard.maintenance"], "#9974E5", charts.Maintenances)] : [];
 
         this.PaymentSeries = this.CanViewBilling && hasCurrentPeriod
-            ? [new("Платежи", "#1B9368", "money", charts.Payments.Select(point =>
+            ? [new(AdminLocalization.Instance["core.dashboard.payments"], "#1B9368", "money", charts.Payments.Select(point =>
                 new DashboardChartPoint(point.Label, (double)point.Value)).ToArray())]
             : [];
     }
@@ -500,44 +566,44 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
         var attention = dashboard.Attention;
         var groups = new List<DashboardStatisticGroup>
         {
-            new("Пользователи", [
-                DashboardViewModel.Metric("Всего", kpis.UsersTotal),
-                DashboardViewModel.Metric("Новых сегодня", kpis.NewUsersToday),
-                DashboardViewModel.Metric("Новых за 7 дней", kpis.NewUsers7Days)]),
-            new("Организации", [
-                DashboardViewModel.Metric("Всего", kpis.OrganizationsTotal),
-                DashboardViewModel.Metric("Активных", kpis.ActiveOrganizations),
-                DashboardViewModel.Metric("Новых за 7 дней", kpis.NewOrganizations7Days),
-                DashboardViewModel.Metric("Участников", kpis.OrganizationMembers),
-                .. this.CanViewBilling ? new[] { DashboardViewModel.Metric("Активных подписок", kpis.ActiveOrganizationSubscriptions) } : []]),
-            new("Техника и обслуживание", [
-                DashboardViewModel.Metric("Техники", kpis.VehiclesTotal),
-                DashboardViewModel.Metric("Обслуживаний", kpis.MaintenancesTotal),
-                DashboardViewModel.Metric("Запланировано", kpis.PlannedMaintenances),
-                DashboardViewModel.Metric("Документов", kpis.DocumentsTotal),
-                DashboardViewModel.Metric("Открытых дефектов", kpis.OpenDefects)])
+            new(AdminLocalization.Instance["core.dashboard.users"], [
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.total"], kpis.UsersTotal),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.newToday"], kpis.NewUsersToday),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.newForWeek"], kpis.NewUsers7Days)]),
+            new(AdminLocalization.Instance["core.dashboard.organizations"], [
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.total"], kpis.OrganizationsTotal),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.active"], kpis.ActiveOrganizations),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.newForWeek"], kpis.NewOrganizations7Days),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.members"], kpis.OrganizationMembers),
+                .. this.CanViewBilling ? new[] { DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.activeSubscriptions"], kpis.ActiveOrganizationSubscriptions) } : []]),
+            new(AdminLocalization.Instance["core.dashboard.vehiclesAndMaintenance"], [
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.vehicles"], kpis.VehiclesTotal),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.maintenance"], kpis.MaintenancesTotal),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.planned"], kpis.PlannedMaintenances),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.documents"], kpis.DocumentsTotal),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.openDefects"], kpis.OpenDefects)])
         };
 
         if (this.CanViewBilling)
         {
-            groups.Add(new DashboardStatisticGroup("Финансы", [
-                new("Сумма за 30 дней", DashboardFormatting.Value((double)kpis.Payments30DaysAmount, "money")),
-                DashboardViewModel.Metric("Платежей за 30 дней", kpis.Payments30DaysCount),
-                DashboardViewModel.Metric("Проблемных платежей", attention.FailedPayments)]));
+            groups.Add(new DashboardStatisticGroup(AdminLocalization.Instance["core.dashboard.finance"], [
+                new(AdminLocalization.Instance["core.dashboard.amountForMonth"], DashboardFormatting.Value((double)kpis.Payments30DaysAmount, "money")),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.paymentsForMonth"], kpis.Payments30DaysCount),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.problemPayments"], attention.FailedPayments)]));
         }
 
         groups.AddRange([
-            new("Коммуникации", [
-                DashboardViewModel.Metric("Email сегодня", kpis.EmailsToday),
-                DashboardViewModel.Metric("Email за 7 дней", kpis.Emails7Days),
-                DashboardViewModel.Metric("Отправлено за 7 дней", kpis.SentEmails7Days),
-                DashboardViewModel.Metric("Ошибок за 7 дней", kpis.FailedEmails7Days),
-                DashboardViewModel.Metric("Ожидают отправки", kpis.PendingEmails)]),
-            new("Прочие показатели внимания", [
-                DashboardViewModel.Metric("Предложения в каталог", attention.PendingCatalogSuggestions),
-                DashboardViewModel.Metric("Ожидающие приглашения", attention.PendingInvitations),
-                DashboardViewModel.Metric("Просроченные задачи", attention.OverdueTasks),
-                DashboardViewModel.Metric("Низкие остатки", attention.LowStockItems)])
+            new(AdminLocalization.Instance["core.dashboard.communications"], [
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.emailToday"], kpis.EmailsToday),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.emailForWeek"], kpis.Emails7Days),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.sentForWeek"], kpis.SentEmails7Days),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.failedForWeek"], kpis.FailedEmails7Days),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.pendingSend"], kpis.PendingEmails)]),
+            new(AdminLocalization.Instance["core.dashboard.otherAttention"], [
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.catalogSuggestions"], attention.PendingCatalogSuggestions),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.pendingInvitations"], attention.PendingInvitations),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.overdueTasks"], attention.OverdueTasks),
+                DashboardViewModel.Metric(AdminLocalization.Instance["core.dashboard.lowStock"], attention.LowStockItems)])
         ]);
 
         this.StatisticGroups = groups;
@@ -559,20 +625,82 @@ public partial class DashboardViewModel(AdminSessionClient sessionClient, int re
         if (this._dashboard is { } dashboard && this._loadedPeriod == this.PeriodDays)
         {
             metrics.AddRange([
-                new("Поступления", DashboardFormatting.Value((double)dashboard.Period.PaymentsAmount, "money"), "С учётом возвратов"),
-                new("Платежей за период", DashboardFormatting.Value(dashboard.Period.PaymentsCount), this.PeriodLabel)
+                new(AdminLocalization.Instance["core.dashboard.income"], DashboardFormatting.Value((double)dashboard.Period.PaymentsAmount, "money"), AdminLocalization.Instance["core.dashboard.afterRefunds"]),
+                new(AdminLocalization.Instance["core.dashboard.paymentsForPeriod"], DashboardFormatting.Value(dashboard.Period.PaymentsCount), this.PeriodLabel)
             ]);
         }
 
         metrics.AddRange([
-            new("Оплачено без чека", DashboardFormatting.Value(this._missingReceiptCount),
-                "Выдача чека не отмечена", this._missingReceiptCount > 0),
-            new("Просроченные чеки", DashboardFormatting.Value(this._overdueReceiptCount),
-                "Оплачены более 24 ч назад", this._overdueReceiptCount > 0)
+            new(AdminLocalization.Instance["core.dashboard.paidWithoutReceipt"], DashboardFormatting.Value(this._missingReceiptCount),
+                AdminLocalization.Instance["core.dashboard.receiptNotMarked"], this._missingReceiptCount > 0),
+            new(AdminLocalization.Instance["core.dashboard.overdueReceipts"], DashboardFormatting.Value(this._overdueReceiptCount),
+                AdminLocalization.Instance["core.dashboard.paidOver24HoursAgo"], this._overdueReceiptCount > 0)
         ]);
 
         this.PaymentMetrics = metrics;
     }
+
+    private void SetDashboardError(string translationKey, string details)
+    {
+        this._errorMessageTranslationKey = translationKey;
+        this._errorMessageDetails = details;
+        this.ErrorMessage = DashboardViewModel.FormatLocalizedError(translationKey, details);
+    }
+
+    private void SetStatisticsError(string translationKey, string details)
+    {
+        this._statisticsErrorTranslationKey = translationKey;
+        this._statisticsErrorDetails = details;
+        this.StatisticsErrorMessage = DashboardViewModel.FormatLocalizedError(translationKey, details);
+    }
+
+    private void SetBillingError(string translationKey, string? details = null)
+    {
+        this._billingErrorTranslationKey = translationKey;
+        this._billingErrorDetails = details;
+        this.BillingErrorMessage = DashboardViewModel.FormatLocalizedError(translationKey, details);
+    }
+
+    private void ClearDashboardError()
+    {
+        this._errorMessageTranslationKey = null;
+        this._errorMessageDetails = null;
+        this.ErrorMessage = string.Empty;
+    }
+
+    private void ClearStatisticsError()
+    {
+        this._statisticsErrorTranslationKey = null;
+        this._statisticsErrorDetails = null;
+        this.StatisticsErrorMessage = string.Empty;
+    }
+
+    private void ClearBillingError()
+    {
+        this._billingErrorTranslationKey = null;
+        this._billingErrorDetails = null;
+        this.BillingErrorMessage = string.Empty;
+    }
+
+    private static void RefreshLocalizedError(string? translationKey, string? details, Action<string> apply)
+    {
+        if (translationKey == null)
+        {
+            return;
+        }
+
+        apply(DashboardViewModel.FormatLocalizedError(translationKey, details));
+    }
+
+    private static string FormatLocalizedError(string translationKey, string? details)
+    {
+        var message = AdminLocalization.Instance[translationKey];
+        return string.IsNullOrEmpty(details) ? message : $"{message} {details}";
+    }
+
+    private static string FormatTimestamp(string translationKey, DateTimeOffset timestamp) =>
+        string.Format(System.Globalization.CultureInfo.CurrentCulture,
+            AdminLocalization.Instance[translationKey], timestamp.ToLocalTime().ToString("HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
 
     /// <summary> Создаёт серию графика количества. </summary>
     private static DashboardChartSeries CountSeries(string title, string color, IReadOnlyList<AdminDashboardCountPoint> points) =>

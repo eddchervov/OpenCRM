@@ -4,8 +4,10 @@ using Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OpenCRM.Domain;
 using OpenCRM.Domain.Identity;
+using OpenCRM.Infrastructure.Data;
 using OpenCRM.Services.Interfaces.Export1C;
 using OpenCRM.Services.Interfaces.Export1C.Dtos;
 using OpenCRM.Services.Interfaces.Organizations;
@@ -21,6 +23,7 @@ public sealed class Export1CApiController(
     IOrganizationPermissionService organizationPermissionService,
     IExport1CService export1CService,
     ILogger<Export1CApiController> logger,
+    OpenCRMContext context,
     IConfiguration? configuration = null) : ControllerBase
 {
     /// <summary> Возвращает доступные возможности выгрузки в 1С для организации. </summary>
@@ -35,6 +38,11 @@ public sealed class Export1CApiController(
 
         try
         {
+            if (!await this.IsRubOrganizationAsync(organizationId))
+            {
+                return Conflict(new { message = "Формат выгрузки 1С не поддерживает валюту организации." });
+            }
+
             var access = await organizationSubscriptionService.GetWorkspaceAccessAsync(user.Id, organizationId);
             var hasFinance = await organizationSubscriptionService.HasFeatureAsync(
                 user.Id,
@@ -93,6 +101,11 @@ public sealed class Export1CApiController(
 
         try
         {
+            if (!await this.IsRubOrganizationAsync(organizationId))
+            {
+                return Conflict(new { message = "Формат выгрузки 1С не поддерживает валюту организации." });
+            }
+
             var access = await organizationSubscriptionService.GetWorkspaceAccessAsync(user.Id, organizationId);
             if (!access.ExportsEnabled || !await this.CanExportAsync(user.Id, organizationId, options))
             {
@@ -269,4 +282,9 @@ public sealed class Export1CApiController(
 
         return true;
     }
+
+    private Task<bool> IsRubOrganizationAsync(Guid organizationId) => context.Organizations.AsNoTracking()
+        .Where(organization => organization.Id == organizationId)
+        .Select(organization => organization.CurrencyCode == CurrencyCodes.Rub)
+        .SingleOrDefaultAsync();
 }

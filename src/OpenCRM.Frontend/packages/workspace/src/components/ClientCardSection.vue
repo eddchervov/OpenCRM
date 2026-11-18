@@ -7,7 +7,9 @@ import { clientDisplayName, clientInnMask, clientKppMask, normalizeTaxCode, vali
 import ClientVehicles from './ClientVehicles.vue'
 import RepeatVisitRecommendations from './RepeatVisitRecommendations.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
-import { UiButton, UiCard, UiInput, UiLoader, UiPagination, UiPhoneInput, UiSelect, UiTextarea } from '@opencrm/ui'
+import { UiButton, UiCard, UiInput, UiLoader, UiPagination, UiPhoneInput, UiSelect, UiTextarea, useLocalization } from '@opencrm/ui'
+import { formatLocaleCurrency, formatLocaleDate } from '@opencrm/ui/i18n'
+import '../clientMessages'
 import {
   createClient,
   loadClientDetails,
@@ -30,6 +32,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   changed: []
 }>()
+const { t } = useLocalization()
 
 const details = ref<WorkspaceClientDetails | null>(null)
 const isLoading = ref(false)
@@ -43,7 +46,7 @@ const commentError = ref('')
 const isFormSubmitted = ref(false)
 const clientFormElement = ref<HTMLFormElement>()
 const phoneValidity = ref<boolean | null>(null)
-const commentLimitMessage = 'Комментарий не должен превышать 4000 символов.'
+const commentLimitMessage = computed(() => t('clients.commentLimit'))
 const activePanel = ref<'maintenance' | 'defects' | 'messages'>('maintenance')
 const historySearch = ref('')
 const historyStatus = ref('')
@@ -83,13 +86,13 @@ const isReadOnly = computed(() => props.context.workspaceAccess?.isReadOnly === 
 const canWrite = computed(() => !isReadOnly.value)
 const canManageBotConnections = computed(() => canWrite.value && details.value?.canEdit === true)
 const readOnlyMessage = computed(() =>
-  props.context.workspaceAccess?.readOnlyMessage ?? 'Рабочее пространство сейчас доступно только для просмотра.'
+  props.context.workspaceAccess?.readOnlyMessage ?? t('clients.readOnly')
 )
 const billingHref = computed(() => '#billing')
 const client = computed(() => details.value?.client ?? null)
-const vehiclesTitle = computed(() => props.context.shell.scenario?.code === 'detailing' ? 'Автомобили' : (props.context.shell.scenario?.terms?.vehicles ?? 'Автомобили'))
-const maintenanceTitle = computed(() => props.context.shell.scenario?.terms?.maintenances ?? 'История услуг')
-const defectsTitle = computed(() => props.context.shell.scenario?.terms?.defects ?? 'Неисправности')
+const vehiclesTitle = computed(() => props.context.shell.scenario?.code === 'detailing' ? t('clients.vehicles') : (props.context.shell.scenario?.terms?.vehicles ?? t('clients.vehicles')))
+const maintenanceTitle = computed(() => props.context.shell.scenario?.terms?.maintenances ?? t('clients.historyTitle'))
+const defectsTitle = computed(() => props.context.shell.scenario?.terms?.defects ?? t('clients.defectsTitle'))
 const isDetailingScenario = computed(() => props.context.shell.scenario?.code === 'detailing')
 const canOpenVehicles = computed(() => props.context.shell.menu?.some(item => item.code === 'vehicles' && item.isVisible) === true)
 const canOpenMaintenance = computed(() => details.value?.canViewMaintenance === true && props.context.shell.menu?.some(item => item.isVisible && (item.code === 'maintenance' || item.code === 'scheduler' || item.sectionCodes?.includes('maintenance'))) === true)
@@ -100,29 +103,31 @@ const canCreateMaintenance = computed(() => canWrite.value && canOpenMaintenance
 const canCreateVehicle = computed(() => canWrite.value && canOpenVehicles.value && !client.value?.isArchived && props.context.shell.quickActions?.some(action => action.code === 'create-vehicle' && action.isVisible) === true)
 const vehicles = computed(() => client.value?.vehicles ?? [])
 const upcoming = computed(() => details.value?.upcomingMaintenance)
-const createLabel = computed(() => isDetailingScenario.value ? 'Записать' : 'Создать работу')
+const createLabel = computed(() => isDetailingScenario.value ? t('clients.createAppointment') : t('clients.createWork'))
 const historyPaginationInfo = computed(() => {
   const totalCount = historyResult.value?.totalCount ?? 0
   if (totalCount === 0) {
-    return '0 записей'
+    return t('clients.zeroRecords')
   }
 
   const from = (historyPage.value - 1) * historyPageSize + 1
   const to = Math.min(historyPage.value * historyPageSize, totalCount)
-  return `${from}–${to} из ${totalCount}`
+  return t('clients.rangeOf', { from, to, total: totalCount })
 })
 const hasHistoryFilters = computed(() => Boolean(historySearch.value.trim() || historyStatus.value))
 
-function formatMoney(value?: number | null) {
-  return value === undefined || value === null ? '—' : `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`
+function formatMoney(value?: number | null, currencyCode = details.value?.currencyCode ?? props.context.organization.currencyCode ?? 'RUB') {
+  return value === undefined || value === null
+    ? '—'
+    : formatLocaleCurrency(value, currencyCode, { maximumFractionDigits: 2 })
 }
 
 async function copyPhone() {
   try {
     await navigator.clipboard.writeText(client.value?.phone || '')
-    copyMessage.value = 'Телефон скопирован'
+    copyMessage.value = t('clients.phoneCopied')
   } catch {
-    copyMessage.value = 'Не удалось скопировать телефон'
+    copyMessage.value = t('clients.copyPhoneError')
   }
   clearTimeout(copyMessageTimer)
   copyMessageTimer = setTimeout(() => { copyMessage.value = '' }, 2000)
@@ -138,25 +143,25 @@ function createMaintenance() {
 }
 
 function getStatusName(item: WorkspaceClientMaintenanceItem) {
-  if (item.status === 4) return 'Отменено'
-  if (item.handedOverAt) return 'Выдано'
-  if (item.readyForHandoverAt) return 'Готово к выдаче'
+  if (item.status === 4) return t('clients.cancelled')
+  if (item.handedOverAt) return t('clients.handedOver')
+  if (item.readyForHandoverAt) return t('clients.readyForHandover')
   return getMaintenanceStatusName(item.status)
 }
 const statusOptions = [
-  { value: 'active', label: 'Активный' },
-  { value: 'lead', label: 'Лид' },
-  { value: 'attention', label: 'Требует внимания' },
-  { value: 'paused', label: 'Пауза' },
-  { value: 'lost', label: 'Потерян' }
+  { value: 'active', label: t('clients.active') },
+  { value: 'lead', label: t('clients.lead') },
+  { value: 'attention', label: t('clients.attention') },
+  { value: 'paused', label: t('clients.paused') },
+  { value: 'lost', label: t('clients.lost') }
 ]
 const partyTypeOptions = [
-  { value: 'person', label: 'Физлицо' },
-  { value: 'company', label: 'Организация' }
+  { value: 'person', label: t('clients.person') },
+  { value: 'company', label: t('clients.company') }
 ]
 const companyTypeOptions = computed(() => [
-  ...(!isCreateMode.value && client.value?.partyTypeCode === 'company' && !client.value.companyTypeCode ? [{ value: '', label: 'Не указан' }] : []),
-  { value: 'legal_entity', label: 'Юридическое лицо (ООО, АО и др.)' }, { value: 'entrepreneur', label: 'ИП' }
+  ...(!isCreateMode.value && client.value?.partyTypeCode === 'company' && !client.value.companyTypeCode ? [{ value: '', label: t('clients.notSpecified') }] : []),
+  { value: 'legal_entity', label: t('clients.legalEntity') }, { value: 'entrepreneur', label: t('clients.entrepreneur') }
 ])
 const hasLegacyName = computed(() => Boolean(!isCreateMode.value && client.value?.partyTypeCode !== 'company' && !client.value?.firstName && client.value?.name))
 const identityErrors = computed(() => {
@@ -164,9 +169,9 @@ const identityErrors = computed(() => {
     ...form.value,
     name: form.value.partyTypeCode === 'person' && hasLegacyName.value ? client.value!.name : form.value.name
   }
-  return validateClientIdentity(identity, isFormSubmitted.value, hasLegacyName.value)
+  return validateClientIdentity(identity, isFormSubmitted.value, hasLegacyName.value, (key, params) => t(key, params ?? {}))
 })
-function lengthHint(value: string, limit: number) { return `${value.length} / ${limit} символов` }
+function lengthHint(value: string, limit: number) { return t('clients.lengthHint', { current: value.length, limit }) }
 
 const formTags = computed(() => form.value.tagNamesText.split(',').map(tag => tag.trim()).filter(Boolean))
 
@@ -189,14 +194,14 @@ function onTagKeydown(event: KeyboardEvent) {
   commitTagDraft()
 }
 const responsibleOptions = computed(() => [
-  { value: '', label: 'Без ответственного' },
+  { value: '', label: t('clients.noResponsible') },
   ...createMemberSelectOptions((props.context.organization.members ?? []).map(member => ({
     ...member,
     value: member.userId
   })))
 ])
 
-function formatDate(value?: string | null, fallback = 'Нет') {
+function formatDate(value?: string | null, fallback = t('clients.none')) {
   if (!value) {
     return fallback
   }
@@ -206,11 +211,11 @@ function formatDate(value?: string | null, fallback = 'Нет') {
     return `${dateOnlyMatch[3]}.${dateOnlyMatch[2]}.${dateOnlyMatch[1]}`
   }
 
-  return new Intl.DateTimeFormat('ru-RU').format(new Date(value))
+  return formatLocaleDate(value, { timeZone: props.context.organization.timeZoneId || 'UTC' })
 }
 
 function formatEventDate(value?: string | null) {
-  return value ? new Intl.DateTimeFormat('ru-RU', { timeZone: props.context.organization.timeZoneId || 'UTC' }).format(new Date(value)) : 'Нет'
+  return value ? formatLocaleDate(value, { timeZone: props.context.organization.timeZoneId || 'UTC' }) : t('clients.none')
 }
 
 function formatTime(value?: string | null) {
@@ -219,24 +224,24 @@ function formatTime(value?: string | null) {
 
 function getMaintenanceTypeName(type: number) {
   const names: Record<number, string> = {
-    1: 'ТО',
-    2: 'Ремонт',
-    3: 'Дозаправка',
-    100: 'Другое'
+    1: t('clients.maintenance'),
+    2: t('clients.repair'),
+    3: t('clients.refueling'),
+    100: t('clients.other')
   }
 
-  return names[type] ?? 'Обслуживание'
+  return names[type] ?? t('clients.service')
 }
 
 function getMaintenanceStatusName(status: number) {
   const names: Record<number, string> = {
-    1: 'Запланировано',
-    2: 'В работе',
-    3: 'Выполнено',
-    4: 'Отменено'
+    1: t('clients.planned'),
+    2: t('clients.inProgress'),
+    3: t('clients.completed'),
+    4: t('clients.cancelled')
   }
 
-  return names[status] ?? 'Неизвестно'
+  return names[status] ?? t('clients.unknown')
 }
 
 function getMaintenanceDate(item: WorkspaceClientMaintenanceItem) {
@@ -329,7 +334,7 @@ async function loadMaintenanceHistory(page: number) {
     historyPage.value = result.page
   } catch (error) {
     if (request === historyRequest && requestOrganizationId === organizationId.value && requestClientId === props.clientId) {
-      historyError.value = error instanceof Error ? error.message : 'Не удалось загрузить историю работ клиента.'
+      historyError.value = error instanceof Error ? error.message : t('clients.historyLoadError')
     }
   } finally {
     if (request === historyRequest) {
@@ -408,7 +413,7 @@ async function loadCard() {
     }
   } catch (error) {
     if (request === latestRequest) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось загрузить карточку клиента.'
+      errorMessage.value = error instanceof Error ? error.message : t('clients.cardLoadError')
     }
   } finally {
     if (request === latestRequest) {
@@ -511,7 +516,7 @@ function closeComment() {
 async function saveComment() {
   if (!canWrite.value || !client.value || isCommentSaving.value) return
   if (commentDraft.value.length > 4000) {
-    commentError.value = commentLimitMessage
+    commentError.value = commentLimitMessage.value
     return
   }
 
@@ -528,7 +533,7 @@ async function saveComment() {
     emit('changed')
   } catch (error) {
     if (requestOrganizationId === organizationId.value && requestClientId === props.clientId) {
-      commentError.value = error instanceof Error ? error.message : 'Не удалось сохранить комментарий.'
+      commentError.value = error instanceof Error ? error.message : t('clients.commentSaveError')
     }
   } finally {
     isCommentSaving.value = false
@@ -563,12 +568,12 @@ async function saveClient() {
   }
 
   if (!form.value.partyTypeCode) {
-    errorMessage.value = 'Выберите тип клиента.'
+    errorMessage.value = t('clients.clientTypeRequired')
     return
   }
 
   if (form.value.comment.length > 4000) {
-    errorMessage.value = commentLimitMessage
+    errorMessage.value = commentLimitMessage.value
     await focusInvalidField()
     return
   }
@@ -617,7 +622,7 @@ async function saveClient() {
     }
   } catch (error) {
     if (request === latestRequest && requestOrganizationId === organizationId.value && requestClientId === props.clientId) {
-      errorMessage.value = error instanceof Error ? error.message : 'Не удалось сохранить клиента.'
+      errorMessage.value = error instanceof Error ? error.message : t('clients.clientSaveError')
     }
   } finally {
     if (request === latestRequest && requestOrganizationId === organizationId.value && requestClientId === props.clientId) {
@@ -638,7 +643,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UiCard page :title="isCreateMode ? 'Новый клиент' : (isEditing ? 'Редактирование клиента' : (client?.name || 'Карточка клиента'))" class="client-profile">
+  <UiCard page :title="isCreateMode ? t('clients.newClient') : (isEditing ? t('clients.editClient') : (client?.name || t('clients.cardTitle')))" class="client-profile">
     <template #actions>
       <UiButton
         v-if="client && !isEditing && !isLoading"
@@ -646,118 +651,123 @@ onBeforeUnmount(() => {
         variant="secondary"
         :href="canWrite ? undefined : billingHref"
         @click="canWrite ? startEdit() : undefined"
-      >Редактировать</UiButton>
-      <UiButton v-if="client && !isEditing && !isLoading && canCreateMaintenance && vehicles.length" class="profile-create" @click="createMaintenance">+ {{ isDetailingScenario ? 'Новая запись' : 'Новая работа' }}</UiButton>
+      >{{ t('clients.edit') }}</UiButton>
+      <UiButton v-if="client && !isEditing && !isLoading && canCreateMaintenance && vehicles.length" class="profile-create" @click="createMaintenance">+ {{ isDetailingScenario ? t('clients.newAppointment') : t('clients.newWork') }}</UiButton>
     </template>
 
     <WorkspaceAccessNotice v-if="isReadOnly" :can-manage-billing="context.organization.canManageBilling === true" :message="readOnlyMessage" :href="billingHref" />
-    <UiLoader v-if="isLoading" text="Загружаем карточку клиента…" />
+    <UiLoader v-if="isLoading" :text="t('clients.loadingCard')" />
     <div v-else-if="errorMessage && !isEditing" class="profile-empty" role="alert">
       <p>{{ errorMessage }}</p>
-      <UiButton v-if="!isCreateMode" variant="secondary" @click="loadCard">Повторить</UiButton>
+      <UiButton v-if="!isCreateMode" variant="secondary" @click="loadCard">{{ t('clients.retry') }}</UiButton>
     </div>
 
     <form v-else-if="isEditing" ref="clientFormElement" class="profile-form" @submit.prevent="saveClient">
       <div v-if="errorMessage && errorMessage !== commentLimitMessage" class="profile-form__error" role="alert">{{ errorMessage }}</div>
       <div class="profile-form__layout">
         <div class="profile-form__main">
-          <section class="profile-form__panel" aria-label="Контакты и реквизиты">
-            <h3 class="ui-section-header">Контакты и реквизиты</h3>
-            <div class="profile-form__type" role="group" aria-label="Тип клиента">
+          <section class="profile-form__panel" :aria-label="t('clients.contactsAndDetails')">
+            <h3 class="ui-section-header">{{ t('clients.contactsAndDetails') }}</h3>
+            <div class="profile-form__type" role="group" :aria-label="t('clients.clientType')">
               <button v-for="option in partyTypeOptions" :key="option.value" type="button" :aria-pressed="form.partyTypeCode === option.value" :disabled="isSaving || isReadOnly" @click="form.partyTypeCode = option.value">{{ option.label }}</button>
             </div>
             <template v-if="form.partyTypeCode === 'person'">
-              <p v-if="hasLegacyName" class="profile-form__legacy">Клиент: <strong>{{ client?.name }}</strong></p>
+              <p v-if="hasLegacyName" class="profile-form__legacy">{{ t('clients.client') }}: <strong>{{ client?.name }}</strong></p>
               <div class="profile-form__person-name" :data-invalid="!!identityErrors.fullName">
-                <UiInput v-model="form.lastName" label="Фамилия" label-help="До 60 символов" :hint="lengthHint(form.lastName, 60)" :error="identityErrors.lastName" :disabled="isSaving || isReadOnly" />
-                <UiInput v-model="form.firstName" label="Имя" label-help="До 60 символов" :hint="lengthHint(form.firstName, 60)" :error="identityErrors.firstName" :required="!hasLegacyName" :disabled="isSaving || isReadOnly" />
-                <UiInput v-model="form.middleName" label="Отчество" label-help="До 60 символов" :hint="lengthHint(form.middleName, 60)" :error="identityErrors.middleName" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.lastName" :label="t('clients.lastName')" :label-help="t('clients.maxCharacters', { count: 60 })" :hint="lengthHint(form.lastName, 60)" :error="identityErrors.lastName" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.firstName" :label="t('clients.firstName')" :label-help="t('clients.maxCharacters', { count: 60 })" :hint="lengthHint(form.firstName, 60)" :error="identityErrors.firstName" :required="!hasLegacyName" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.middleName" :label="t('clients.middleName')" :label-help="t('clients.maxCharacters', { count: 60 })" :hint="lengthHint(form.middleName, 60)" :error="identityErrors.middleName" :disabled="isSaving || isReadOnly" />
               </div>
               <p v-if="identityErrors.fullName" class="ui-field__error" role="alert">{{ identityErrors.fullName }}</p>
             </template>
             <template v-else>
-              <UiSelect v-model="form.companyTypeCode" label="Вид организации" :options="companyTypeOptions" :searchable="false" :disabled="isSaving || isReadOnly" />
-              <UiInput v-model="form.name" :label="form.companyTypeCode === 'entrepreneur' ? 'Название / ФИО ИП' : 'Название организации'" :error="identityErrors.name" required :disabled="isSaving || isReadOnly" />
+              <UiSelect v-model="form.companyTypeCode" :label="t('clients.organizationType')" :options="companyTypeOptions" :searchable="false" :disabled="isSaving || isReadOnly" />
+              <UiInput v-model="form.name" :label="form.companyTypeCode === 'entrepreneur' ? t('clients.businessName') : t('clients.organizationName')" :error="identityErrors.name" required :disabled="isSaving || isReadOnly" />
             </template>
             <div :data-invalid="!!identityErrors.phone || !!(form.phone && phoneValidity === false)">
-              <UiPhoneInput v-model="form.phone" label="Телефон" :disabled="isSaving || isReadOnly" @validity-change="phoneValidity = $event" />
-              <p v-if="identityErrors.phone || (form.phone && phoneValidity === false)" class="ui-field__error" role="alert">{{ identityErrors.phone || 'Проверьте номер телефона.' }}</p>
+              <UiPhoneInput v-model="form.phone" :label="t('clients.phone')" :disabled="isSaving || isReadOnly" @validity-change="phoneValidity = $event" />
+              <p v-if="identityErrors.phone || (form.phone && phoneValidity === false)" class="ui-field__error" role="alert">{{ identityErrors.phone || t('clients.invalidPhone') }}</p>
             </div>
             <div v-if="form.partyTypeCode === 'company'" class="profile-form__requisites">
-              <h4>Реквизиты</h4>
+              <h4>{{ t('clients.companyDetails') }}</h4>
               <div class="profile-form__requisites-row">
-                <UiInput v-model="form.inn" label="ИНН" inputmode="numeric" :mask="clientInnMask(form.companyTypeCode)" :placeholder="!form.companyTypeCode ? '10 или 12 цифр' : form.companyTypeCode === 'entrepreneur' ? '12 цифр' : '10 цифр'" :label-help="!form.companyTypeCode ? 'ИНН юрлица: 10 цифр; ИНН ИП: 12 цифр' : form.companyTypeCode === 'entrepreneur' ? 'ИНН ИП: 12 цифр' : 'ИНН юрлица: 10 цифр'" :error="identityErrors.inn" :disabled="isSaving || isReadOnly" />
-                <UiInput v-if="form.companyTypeCode !== 'entrepreneur'" v-model="form.kpp" label="КПП" placeholder="9 знаков" label-help="КПП: 9 знаков" :mask="form.companyTypeCode ? clientKppMask : undefined" :error="identityErrors.kpp" :disabled="isSaving || isReadOnly" />
+                <UiInput v-model="form.inn" :label="t('clients.inn')" inputmode="numeric" :mask="clientInnMask(form.companyTypeCode)" :placeholder="!form.companyTypeCode ? t('clients.taxId10Or12') : form.companyTypeCode === 'entrepreneur' ? t('clients.digits12') : t('clients.digits10')" :label-help="!form.companyTypeCode ? t('clients.taxIdHelp') : form.companyTypeCode === 'entrepreneur' ? t('clients.taxIdEntrepreneurHelp') : t('clients.taxIdLegalHelp')" :error="identityErrors.inn" :disabled="isSaving || isReadOnly" />
+                <UiInput v-if="form.companyTypeCode !== 'entrepreneur'" v-model="form.kpp" :label="t('clients.kpp')" :placeholder="t('clients.characters9')" :label-help="t('clients.registrationCodeHelp')" :mask="form.companyTypeCode ? clientKppMask : undefined" :error="identityErrors.kpp" :disabled="isSaving || isReadOnly" />
               </div>
-              <UiInput v-model="form.legalAddress" label="Юридический адрес" label-help="До 500 символов" :hint="lengthHint(form.legalAddress, 500)" :error="identityErrors.legalAddress" :disabled="isSaving || isReadOnly" />
+              <UiInput v-model="form.legalAddress" :label="t('clients.legalAddress')" :label-help="t('clients.maxCharacters', { count: 500 })" :hint="lengthHint(form.legalAddress, 500)" :error="identityErrors.legalAddress" :disabled="isSaving || isReadOnly" />
             </div>
           </section>
-          <section class="profile-form__panel" aria-label="Комментарий" :data-invalid="form.comment.length > 4000">
-            <h3 :id="`${tagInputId}-comment-label`" class="ui-section-header">Комментарий</h3>
+          <section class="profile-form__panel" :aria-label="t('clients.comment')" :data-invalid="form.comment.length > 4000">
+            <h3 :id="`${tagInputId}-comment-label`" class="ui-section-header">{{ t('clients.comment') }}</h3>
             <UiTextarea v-model="form.comment" :labelled-by="`${tagInputId}-comment-label`" :described-by="form.comment.length > 4000 ? `${tagInputId}-comment-error` : undefined" :rows="3" :disabled="isSaving || isReadOnly" />
             <p v-if="form.comment.length > 4000" :id="`${tagInputId}-comment-error`" class="ui-field__error" role="alert">{{ commentLimitMessage }}</p>
           </section>
         </div>
-        <section class="profile-form__panel" aria-label="Работа с клиентом">
-          <h3 class="ui-section-header">Работа с клиентом</h3>
+        <section class="profile-form__panel" :aria-label="t('clients.clientManagement')">
+          <h3 class="ui-section-header">{{ t('clients.clientManagement') }}</h3>
           <div class="profile-form__status" :data-status="form.statusCode">
-            <UiSelect v-model="form.statusCode" label="Статус" :options="statusOptions" :searchable="false" :disabled="isSaving || isReadOnly" />
+            <UiSelect v-model="form.statusCode" :label="t('clients.status')" :options="statusOptions" :searchable="false" :disabled="isSaving || isReadOnly" />
           </div>
-          <UiSelect v-model="form.responsibleUserId" label="Ответственный за клиента" :options="responsibleOptions" :disabled="isSaving || isReadOnly" />
+          <UiSelect v-model="form.responsibleUserId" :label="t('clients.responsible')" :options="responsibleOptions" :disabled="isSaving || isReadOnly" />
           <div class="profile-form__tag-field">
-            <label :for="tagInputId">Теги</label>
+            <label :for="tagInputId">{{ t('clients.tags') }}</label>
             <div class="profile-form__tag-editor">
               <span v-for="(tag, index) in formTags" :key="index" class="profile-form__tag">
-                {{ tag }}<button type="button" :aria-label="`Удалить тег ${tag}`" :disabled="isSaving || isReadOnly" @click="removeTag(index)">×</button>
+                {{ tag }}<button type="button" :aria-label="t('clients.removeTag', { tag })" :disabled="isSaving || isReadOnly" @click="removeTag(index)">×</button>
               </span>
-              <input :id="tagInputId" v-model="tagDraft" placeholder="Добавить тег…" :disabled="isSaving || isReadOnly" :aria-describedby="`${tagInputId}-help`" @keydown="onTagKeydown" @blur="commitTagDraft" />
+              <input :id="tagInputId" v-model="tagDraft" :placeholder="t('clients.addTag')" :disabled="isSaving || isReadOnly" :aria-describedby="`${tagInputId}-help`" @keydown="onTagKeydown" @blur="commitTagDraft" />
             </div>
-            <p :id="`${tagInputId}-help`">Введите теги через запятую или Enter.</p>
+            <p :id="`${tagInputId}-help`">{{ t('clients.tagHelp') }}</p>
           </div>
         </section>
       </div>
       <div class="profile-form__actions">
-        <UiButton type="submit" :disabled="isSaving || isReadOnly">{{ isSaving ? 'Сохраняем…' : (isCreateMode ? 'Создать клиента' : 'Сохранить изменения') }}</UiButton>
-        <UiButton variant="secondary" type="button" :disabled="isSaving" @click="cancelEdit">Отмена</UiButton>
+        <UiButton type="submit" :disabled="isSaving || isReadOnly">{{ isSaving ? t('clients.saving') : (isCreateMode ? t('clients.createClient') : t('clients.saveChanges')) }}</UiButton>
+        <UiButton variant="secondary" type="button" :disabled="isSaving" @click="cancelEdit">{{ t('clients.cancel') }}</UiButton>
       </div>
     </form>
 
     <div v-else-if="client">
-      <div class="profile-summary" aria-label="Сводка по клиенту">
-        <div><span>{{ isDetailingScenario ? 'Записи' : 'Работы' }}</span><strong>{{ client.maintenanceCount }}</strong></div>
-        <div v-if="details?.totalPaidAmount != null"><span>Оплачено</span><strong>{{ formatMoney(details.totalPaidAmount) }}</strong></div>
-        <div><span>Последняя работа</span><strong>{{ formatDate(client.lastMaintenanceDate, 'Ещё не было') }}</strong></div>
+      <div class="profile-summary" :aria-label="t('clients.summary')">
+        <div><span>{{ isDetailingScenario ? t('clients.appointments') : t('clients.workOrders') }}</span><strong>{{ client.maintenanceCount }}</strong></div>
+        <div v-if="details?.totalPaidAmount != null"><span>{{ t('clients.paid') }}</span><strong>{{ formatMoney(details.totalPaidAmount) }}</strong></div>
+        <div v-if="details?.totalDebtAmount != null"><span>{{ t('clients.debt') }}</span><strong>{{ formatMoney(details.totalDebtAmount) }}</strong></div>
+        <template v-for="total in details?.otherCurrencyTotals ?? []" :key="total.currencyCode">
+          <div><span>{{ t('clients.paid') }} · {{ total.currencyCode }}</span><strong>{{ formatMoney(total.totalPaidAmount, total.currencyCode) }}</strong></div>
+          <div><span>{{ t('clients.debt') }} · {{ total.currencyCode }}</span><strong>{{ formatMoney(total.totalDebtAmount, total.currencyCode) }}</strong></div>
+        </template>
+        <div><span>{{ t('clients.lastWork') }}</span><strong>{{ formatDate(client.lastMaintenanceDate, t('clients.never')) }}</strong></div>
       </div>
       <div class="profile-layout">
-      <aside class="profile-sidebar" aria-label="Информация о клиенте">
+      <aside class="profile-sidebar" :aria-label="t('clients.clientInformation')">
         <section class="profile-panel">
         <div class="profile-contact">
-          <h3 class="ui-section-header">Контакты</h3>
+          <h3 class="ui-section-header">{{ t('clients.contacts') }}</h3>
           <div class="profile-contact-row">
-            <span>Телефон</span>
+            <span>{{ t('clients.phone') }}</span>
             <a v-if="client.phone" class="profile-phone" :href="`tel:${client.phone.replace(/[^+\d]/g, '')}`">{{ client.phone }}</a>
-            <span v-else class="profile-muted">Не указан</span>
-            <button v-if="client.phone" type="button" aria-label="Скопировать телефон" @click="copyPhone">⧉</button>
+            <span v-else class="profile-muted">{{ t('clients.notSpecified') }}</span>
+            <button v-if="client.phone" type="button" :aria-label="t('clients.copyPhone')" @click="copyPhone">⧉</button>
             <span v-if="copyMessage" class="profile-copy-message ui-tooltip" role="status">{{ copyMessage }}</span>
           </div>
         </div>
         <dl class="profile-facts">
-          <div><dt>Ответственный за клиента</dt><dd>{{ client.responsibleDisplayName || 'Не назначен' }}</dd></div>
-          <div><dt>Клиент с</dt><dd>{{ formatEventDate(client.createdAt) }}</dd></div>
-          <div v-if="client.partyTypeCode === 'company' && client.inn"><dt>ИНН</dt><dd>{{ client.inn }}</dd></div>
-          <div v-if="client.partyTypeCode === 'company' && client.kpp"><dt>КПП</dt><dd>{{ client.kpp }}</dd></div>
-          <div v-if="client.partyTypeCode === 'company' && client.legalAddress"><dt>Юридический адрес</dt><dd>{{ client.legalAddress }}</dd></div>
-          <div v-if="client.isArchived"><dt>В архиве с</dt><dd>{{ formatEventDate(client.archivedAt) }}</dd></div>
+          <div><dt>{{ t('clients.responsible') }}</dt><dd>{{ client.responsibleDisplayName || t('clients.unassigned') }}</dd></div>
+          <div><dt>{{ t('clients.clientSince') }}</dt><dd>{{ formatEventDate(client.createdAt) }}</dd></div>
+          <div v-if="client.partyTypeCode === 'company' && client.inn"><dt>{{ t('clients.inn') }}</dt><dd>{{ client.inn }}</dd></div>
+          <div v-if="client.partyTypeCode === 'company' && client.kpp"><dt>{{ t('clients.kpp') }}</dt><dd>{{ client.kpp }}</dd></div>
+          <div v-if="client.partyTypeCode === 'company' && client.legalAddress"><dt>{{ t('clients.legalAddress') }}</dt><dd>{{ client.legalAddress }}</dd></div>
+          <div v-if="client.isArchived"><dt>{{ t('clients.archivedSince') }}</dt><dd>{{ formatEventDate(client.archivedAt) }}</dd></div>
         </dl>
-        <div class="profile-tags"><span class="profile-status">{{ client.isArchived ? 'В архиве' : (client.statusName || 'Активный') }}</span><span v-for="tag in client.tags" :key="tag.id">{{ tag.name }}</span></div>
+        <div class="profile-tags"><span class="profile-status">{{ client.isArchived ? t('clients.archive') : (client.statusName || t('clients.active')) }}</span><span v-for="tag in client.tags" :key="tag.id">{{ tag.name }}</span></div>
         </section>
-        <section class="profile-note profile-panel"><h3 class="ui-section-header">Комментарий</h3><p v-if="client.comment" class="profile-note__entry">{{ client.comment }}</p><p v-else class="profile-note__empty">Комментарий не добавлен.</p><UiButton v-if="canWrite" variant="ghost" @click="openComment">{{ client.comment ? 'Изменить комментарий' : 'Добавить комментарий' }}</UiButton></section>
+        <section class="profile-note profile-panel"><h3 class="ui-section-header">{{ t('clients.comment') }}</h3><p v-if="client.comment" class="profile-note__entry">{{ client.comment }}</p><p v-else class="profile-note__empty">{{ t('clients.commentEmpty') }}</p><UiButton v-if="canWrite" variant="ghost" @click="openComment">{{ client.comment ? t('clients.editComment') : t('clients.addComment') }}</UiButton></section>
         <section v-if="upcoming && canOpenMaintenance" class="profile-note profile-upcoming profile-panel">
-          <h3 class="ui-section-header">Ближайшая запись</h3>
+          <h3 class="ui-section-header">{{ t('clients.nextAppointment') }}</h3>
           <div class="profile-upcoming__heading"><strong>{{ formatDate(getMaintenanceDate(upcoming)) }} <span v-if="upcoming.plannedStartTime">· {{ formatTime(upcoming.plannedStartTime) }}</span></strong><span class="profile-work-status" :data-status="upcoming.status">{{ getStatusName(upcoming) }}</span></div>
           <p>{{ upcoming.vehicleDisplayName }}</p>
           <p>{{ upcoming.serviceNames?.join(', ') || getMaintenanceTypeName(upcoming.type) }}</p>
-          <a :href="getMaintenanceUrl(upcoming)">Открыть запись →</a>
+          <a :href="getMaintenanceUrl(upcoming)">{{ t('clients.openAppointment') }} →</a>
         </section>
         <ClientBotConnection :time-zone-id="context.organization.timeZoneId"
           :is-locked="context.shell.scenario?.modules?.messaging === false"
@@ -783,35 +793,35 @@ onBeforeUnmount(() => {
           @add="openCreateVehicleForClient"
         />
 
-        <div class="profile-tabs ui-section-header" role="group" aria-label="Раздел карточки клиента">
-          <button v-if="canOpenMessages" type="button" :aria-pressed="activePanel === 'messages'" @click="activePanel = 'messages'">Переписка</button>
-          <button v-if="canOpenMaintenance" type="button" :aria-pressed="activePanel === 'maintenance'" @click="activePanel = 'maintenance'">{{ isDetailingScenario ? 'История посещений' : maintenanceTitle }} <span>{{ client.maintenanceCount }}</span></button>
+        <div class="profile-tabs ui-section-header" role="group" :aria-label="t('clients.clientCardSections')">
+          <button v-if="canOpenMessages" type="button" :aria-pressed="activePanel === 'messages'" @click="activePanel = 'messages'">{{ t('clients.conversations') }}</button>
+          <button v-if="canOpenMaintenance" type="button" :aria-pressed="activePanel === 'maintenance'" @click="activePanel = 'maintenance'">{{ isDetailingScenario ? t('clients.visitHistory') : maintenanceTitle }} <span>{{ client.maintenanceCount }}</span></button>
           <button v-if="!isDetailingScenario && canOpenDefects && details?.defects.length" type="button" :aria-pressed="activePanel === 'defects'" @click="activePanel = 'defects'">{{ defectsTitle }} <span>{{ details.defects.length }}</span></button>
         </div>
 
         <section v-if="activePanel === 'maintenance' && canOpenMaintenance" :aria-label="maintenanceTitle">
           <div class="profile-history-tools">
-            <div class="profile-history-filters" role="group" aria-label="Фильтр работ">
-              <button v-for="filter in [{ value: '', label: 'Все' }, { value: 'upcoming', label: 'Предстоящие и текущие' }, { value: 'completed', label: 'Завершённые' }]" :key="filter.value" type="button" :aria-pressed="historyStatus === filter.value" @click="setHistoryStatus(filter.value)">{{ filter.label }}</button>
+            <div class="profile-history-filters" role="group" :aria-label="t('clients.workFilter')">
+              <button v-for="filter in [{ value: '', label: t('clients.all') }, { value: 'upcoming', label: t('clients.upcomingAndCurrent') }, { value: 'completed', label: t('clients.completed') }]" :key="filter.value" type="button" :aria-pressed="historyStatus === filter.value" @click="setHistoryStatus(filter.value)">{{ filter.label }}</button>
             </div>
-            <UiInput v-model="historySearch" type="search" label="Поиск по истории работ" placeholder="Автомобиль или работа…" />
+            <UiInput v-model="historySearch" type="search" :label="t('clients.searchWorkHistory')" :placeholder="t('clients.vehicleOrWork')" />
           </div>
-          <div v-if="isHistoryLoading && !historyResult" class="profile-empty"><UiLoader text="Загружаем историю работ…" /></div>
-          <div v-else-if="historyError" class="profile-empty" role="alert"><p>{{ historyError }}</p><UiButton variant="secondary" @click="loadMaintenanceHistory(historyPage)">Повторить</UiButton></div>
-          <div v-else-if="!historyResult?.totalCount" class="profile-empty" role="status"><p>{{ hasHistoryFilters ? 'По заданным условиям работы не найдены.' : 'История работ пока пустая.' }}</p></div>
+          <div v-if="isHistoryLoading && !historyResult" class="profile-empty"><UiLoader :text="t('clients.loadingWorkHistory')" /></div>
+          <div v-else-if="historyError" class="profile-empty" role="alert"><p>{{ historyError }}</p><UiButton variant="secondary" @click="loadMaintenanceHistory(historyPage)">{{ t('clients.retry') }}</UiButton></div>
+          <div v-else-if="!historyResult?.totalCount" class="profile-empty" role="status"><p>{{ hasHistoryFilters ? t('clients.noWorkMatches') : t('clients.emptyWorkHistory') }}</p></div>
           <div v-else class="profile-history profile-history--maintenance" :aria-busy="isHistoryLoading">
-            <div class="profile-history__columns" aria-hidden="true"><span>Дата / автомобиль</span><span>Работы</span><span>Статус</span><span>Сумма</span><span></span></div>
+            <div class="profile-history__columns" aria-hidden="true"><span>{{ t('clients.dateVehicle') }}</span><span>{{ t('clients.work') }}</span><span>{{ t('clients.status') }}</span><span>{{ t('clients.amount') }}</span><span></span></div>
             <article v-for="item in historyResult.items" :key="item.id" class="profile-history__item profile-history__item--maintenance">
               <div class="profile-history__date"><strong>{{ formatDate(getMaintenanceDate(item)) }} <span v-if="getMaintenanceTime(item)">· {{ getMaintenanceTime(item) }}</span></strong><span>{{ item.vehicleDisplayName }}</span></div>
               <div class="profile-history__description"><span>{{ item.serviceNames?.join(', ') || getMaintenanceTypeName(item.type) }}</span><p v-if="item.comment">{{ item.comment }}</p></div>
               <span class="profile-work-status" :data-status="item.status">{{ getStatusName(item) }}</span>
-              <strong class="profile-history__amount">{{ formatMoney(item.netAmount ?? item.grossAmount) }}</strong>
-              <UiButton variant="secondary" :href="getMaintenanceUrl(item)">Открыть</UiButton>
+              <strong class="profile-history__amount">{{ formatMoney(item.netAmount ?? item.grossAmount, item.currencyCode) }}</strong>
+              <UiButton variant="secondary" :href="getMaintenanceUrl(item)">{{ t('clients.open') }}</UiButton>
             </article>
           </div>
           <div v-if="historyResult?.totalCount" class="profile-history-pagination">
-            <p class="profile-history-caption">{{ historyPaginationInfo }} работ</p>
-            <UiPagination :model-value="historyPage" :total-items="historyResult.totalCount" :items-per-page="historyPageSize" :disabled="isHistoryLoading" label="Страницы истории работ" @update:model-value="changeHistoryPage" />
+            <p class="profile-history-caption">{{ historyPaginationInfo }} {{ t('clients.work') }}</p>
+            <UiPagination :model-value="historyPage" :total-items="historyResult.totalCount" :items-per-page="historyPageSize" :disabled="isHistoryLoading" :label="t('clients.workHistoryPages')" @update:model-value="changeHistoryPage" />
           </div>
           <RepeatVisitRecommendations
             v-if="client?.id && !isEditing && canOpenVehicles && canOpenMaintenance
@@ -839,14 +849,14 @@ onBeforeUnmount(() => {
     </div>
     </div>
   </UiCard>
-  <SchedulerBookingDialog :open="isCommentOpen" :busy="isCommentSaving" :dismiss-on-backdrop="false" title="Комментарий" @close="closeComment">
+  <SchedulerBookingDialog :open="isCommentOpen" :busy="isCommentSaving" :dismiss-on-backdrop="false" :title="t('clients.comment')" @close="closeComment">
     <form class="client-comment-dialog" @submit.prevent="saveComment">
       <UiTextarea v-model="commentDraft" labelled-by="scheduler-booking-title" :described-by="commentDraft.length > 4000 || commentError ? `${tagInputId}-modal-comment-error` : `${tagInputId}-modal-comment-hint`" :rows="7" :disabled="isCommentSaving" />
       <p v-if="commentDraft.length > 4000 || commentError" :id="`${tagInputId}-modal-comment-error`" class="ui-field__error" role="alert">{{ commentDraft.length > 4000 ? commentLimitMessage : commentError }}</p>
       <p v-else :id="`${tagInputId}-modal-comment-hint`" class="client-comment-dialog__hint">{{ lengthHint(commentDraft, 4000) }}</p>
       <footer class="client-comment-dialog__actions">
-        <UiButton type="submit" :disabled="isCommentSaving || !canWrite || commentDraft.length > 4000">{{ isCommentSaving ? 'Сохраняем…' : 'Сохранить комментарий' }}</UiButton>
-        <UiButton type="button" variant="secondary" :disabled="isCommentSaving" @click="closeComment">Отмена</UiButton>
+        <UiButton type="submit" :disabled="isCommentSaving || !canWrite || commentDraft.length > 4000">{{ isCommentSaving ? t('clients.saving') : t('clients.saveComment') }}</UiButton>
+        <UiButton type="button" variant="secondary" :disabled="isCommentSaving" @click="closeComment">{{ t('clients.cancel') }}</UiButton>
       </footer>
     </form>
   </SchedulerBookingDialog>

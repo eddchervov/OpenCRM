@@ -3,6 +3,8 @@ namespace OpenCRM.Services.Interfaces.Organizations.Dtos;
 /// <summary> Аналитические показатели рабочего пространства организации. </summary>
 public sealed class OrganizationWorkspaceAnalytics
 {
+    public string CurrencyCode { get; init; } = "RUB";
+
     /// <summary> Ключевые показатели эффективности. </summary>
     public OrganizationWorkspaceAnalyticsKpis Kpis { get; init; } = new();
 

@@ -1,3 +1,5 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
+import '../packages/workspace/src/notificationMessages.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -7,7 +9,7 @@ function api(channel, fetch) {
   const source = readFileSync(new URL(`../packages/workspace/src/api/${channel}Notifications.ts`, import.meta.url), 'utf8')
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const module = { exports: {} }
-  new Function('module', 'exports', 'fetch', 'document', code)(module, module.exports, fetch, { querySelector: () => null })
+  new Function('require', 'module', 'exports', 'fetch', 'document', code)(id => regionalTestDependencies[id] ?? {}, module, module.exports, fetch, { querySelector: () => null })
   return module.exports
 }
 

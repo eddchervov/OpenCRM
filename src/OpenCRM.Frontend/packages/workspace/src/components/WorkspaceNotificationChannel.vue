@@ -1,18 +1,13 @@
 <script setup lang="ts">
 import { getProjectBrand } from '@opencrm/ui'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { UiButton, UiInput } from '@opencrm/ui'
+import { UiButton, UiInput, useLocalization } from '@opencrm/ui'
+import '../notificationMessages'
 import { loadMaxBotSettings, saveMaxBotSettings, type MaxBotSettings } from '../api/maxNotifications'
 import { loadTelegramBotSettings, saveTelegramBotSettings, type TelegramBotSettings } from '../api/telegramNotifications'
 
 const projectBrand = getProjectBrand()
-
-
-
-
-
-
-
+const { t } = useLocalization()
 
 type NotificationSettings = {
   botUsername?: string | null
@@ -41,25 +36,27 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 let requestVersion = 0
 
-const channelName = computed(() => props.channel === 'telegram' ? 'Telegram' : 'MAX')
+const channelName = computed(() => t(`notificationChannel.${props.channel}`))
 const helpUrl = computed(() => props.channel === 'telegram'
   ? 'https://t.me/BotFather'
   : 'https://dev.max.ru/docs/chatbots/bots-create/create')
-const helpLabel = computed(() => props.channel === 'telegram' ? 'BotFather' : 'инструкции MAX')
+const helpLabel = computed(() => t(props.channel === 'telegram' ? 'notificationChannel.telegramHelp' : 'notificationChannel.maxHelp'))
 const isAvailable = computed(() => props.channel !== 'telegram' || settings.value?.isAvailable !== false)
 const statusLabel = computed(() => {
   if (!settings.value) {
-    return error.value && !isLoading.value ? 'Ошибка загрузки' : 'Загрузка'
+    return error.value && !isLoading.value ? t('notificationChannel.loadError') : t('notificationChannel.loading')
   }
   if (!isAvailable.value) {
-    return 'Недоступен'
+    return t('notificationChannel.unavailable')
   }
   if (!settings.value.isConfigured) {
-    return 'Не подключён'
+    return t('notificationChannel.notConnected')
   }
 
-  return settings.value.isEnabled ? 'Настроен' : 'Выключен'
+  return settings.value.isEnabled ? t('notificationChannel.configured') : t('notificationChannel.disabled')
 })
+const isConfigured = computed(() => Boolean(settings.value?.isConfigured && isAvailable.value))
+const isUnavailable = computed(() => Boolean(settings.value && !isAvailable.value))
 const isBusy = computed(() => isLoading.value || isSaving.value)
 const canSave = computed(() => Boolean(settings.value)
   && props.canWrite
@@ -104,7 +101,7 @@ async function loadSettings() {
     settings.value = normalizeSettings(loaded)
   } catch (reason) {
     if (currentVersion === requestVersion && organizationId === props.organizationId && channel === props.channel) {
-      error.value = reason instanceof Error ? reason.message : `Не удалось загрузить настройки ${channelName.value}.`
+      error.value = reason instanceof Error ? reason.message : t('notificationChannel.loadFailure', { channel: channelName.value })
     }
   } finally {
     if (currentVersion === requestVersion && organizationId === props.organizationId && channel === props.channel) {
@@ -158,7 +155,7 @@ async function save() {
     saved.value = true
   } catch (reason) {
     if (currentVersion === requestVersion && organizationId === props.organizationId && channel === props.channel) {
-      error.value = reason instanceof Error ? reason.message : `Не удалось сохранить настройки ${channelName.value}.`
+      error.value = reason instanceof Error ? reason.message : t('notificationChannel.saveFailure', { channel: channelName.value })
     }
   } finally {
     if (currentVersion === requestVersion && organizationId === props.organizationId && channel === props.channel) {
@@ -173,47 +170,49 @@ async function save() {
     <header class="workspace-notification-channel__header ui-section-header">
       <h3 :id="`notification-${channel}-title`">{{ channelName }}</h3>
       <span class="workspace-notification-channel__badge" :class="{
-        'is-configured': statusLabel === 'Настроен',
-        'is-unavailable': statusLabel === 'Недоступен'
+        'is-configured': isConfigured,
+        'is-unavailable': isUnavailable
       }">{{ statusLabel }}</span>
     </header>
 
-    <p v-if="settings?.botUsername" class="workspace-notification-channel__bot">Бот: <strong>@{{ settings.botUsername }}</strong></p>
-    <p v-if="!canWrite" class="workspace-notification-channel__readonly">Только просмотр</p>
+    <p v-if="settings?.botUsername" class="workspace-notification-channel__bot">{{ t('notificationChannel.botLabel') }} <strong>@{{ settings.botUsername }}</strong></p>
+    <p v-if="!canWrite" class="workspace-notification-channel__readonly">{{ t('notificationChannel.readOnly') }}</p>
     <p v-if="error" class="workspace-notification-channel__message is-error" role="alert">{{ error }}</p>
     <UiButton v-if="error && !settings" type="button" variant="secondary" :disabled="isBusy" @click="loadSettings">
-      Повторить загрузку
+      {{ t('notificationChannel.retry') }}
     </UiButton>
-    <p v-if="saved" class="workspace-notification-channel__message is-success" role="status">Настройки сохранены.</p>
-    <p v-if="settings && !isAvailable" class="workspace-notification-channel__readonly">Канал пока недоступен в {{ projectBrand }}.</p>
+    <p v-if="saved" class="workspace-notification-channel__message is-success" role="status">{{ t('notificationChannel.saved') }}</p>
+    <p v-if="settings && !isAvailable" class="workspace-notification-channel__readonly">{{ t('notificationChannel.unavailableForProject', { project: projectBrand }) }}</p>
 
     <form v-if="settings" class="workspace-notification-channel__form" @submit.prevent="save">
       <label class="workspace-notification-channel__toggle">
         <input v-model="settings.isEnabled" type="checkbox" :disabled="!canWrite || isBusy || !isAvailable || (!settings.isConfigured && !token.trim())" />
-        <span>Включить уведомления</span>
+        <span>{{ t('notificationChannel.enable') }}</span>
       </label>
 
       <div class="workspace-notification-channel__events">
         <label>
           <input v-model="settings.notifyBooking" type="checkbox" :disabled="!canWrite || isBusy || !isAvailable" />
-          <span>Запись, перенос и отмена</span>
+          <span>{{ t('notificationChannel.bookingEvents') }}</span>
         </label>
         <label>
           <input v-model="settings.notifyReady" type="checkbox" :disabled="!canWrite || isBusy || !isAvailable" />
-          <span>Автомобиль готов к выдаче</span>
+          <span>{{ t('notificationChannel.readyEvents') }}</span>
         </label>
       </div>
 
       <details class="workspace-notification-channel__connection" :open="!settings.isConfigured">
-        <summary>{{ settings.isConfigured ? 'Изменить подключение' : 'Подключить бота' }}</summary>
+        <summary>{{ t(settings.isConfigured ? 'notificationChannel.changeConnection' : 'notificationChannel.connectBot') }}</summary>
         <div class="workspace-notification-channel__connection-content">
-          <p>Создайте бота через <a :href="helpUrl" target="_blank" rel="noopener noreferrer">{{ helpLabel }}</a>, затем вставьте токен. Сохранённый токен не отображается.</p>
+          <i18n-t keypath="notificationChannel.botInstructions" tag="p">
+            <template #link><a :href="helpUrl" target="_blank" rel="noopener noreferrer">{{ helpLabel }}</a></template>
+          </i18n-t>
           <UiInput
             v-model="token"
             type="password"
             autocomplete="new-password"
-            :label="settings.isConfigured ? 'Новый токен (необязательно)' : 'Токен бота'"
-            :placeholder="settings.isConfigured ? 'Оставьте пустым, чтобы не менять токен' : ''"
+            :label="t(settings.isConfigured ? 'notificationChannel.optionalToken' : 'notificationChannel.botToken')"
+            :placeholder="settings.isConfigured ? t('notificationChannel.tokenPlaceholder') : ''"
             :disabled="!canWrite || isBusy || !isAvailable"
             :required="!settings.isConfigured"
           />
@@ -222,7 +221,7 @@ async function save() {
 
       <footer v-if="canWrite" class="workspace-notification-channel__actions">
         <UiButton type="submit" :disabled="!canSave">
-          {{ isSaving ? 'Сохраняем…' : 'Сохранить настройки' }}
+          {{ t(isSaving ? 'notificationChannel.saving' : 'notificationChannel.save') }}
         </UiButton>
       </footer>
     </form>

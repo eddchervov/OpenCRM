@@ -7,15 +7,15 @@
         <div class="modal-content" v-if="vehicle">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <template v-if="modalType === 'create'">@vehicleScenario.CreateModalTitle</template>
-                    <template v-else-if="modalType === 'edit'">@vehicleScenario.EditModalTitle</template>
+                    <template v-if="modalType === 'create'">@Text["vehicle.modals.title.create"]</template>
+                    <template v-else-if="modalType === 'edit'">@Text["vehicle.modals.title.edit"]</template>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.modals.close"]"></button>
             </div>
             <div class="modal-body">
                 <div class="row mb-3">
                     <div class="col-12">
-                        <label class="form-label">Тип техники</label>
+                        <label class="form-label">@Text["vehicle.edit.kind.label"]</label>
                         <select class="form-select" v-model.number="vehicle.kind" @@change="changeVehicleKind">
                             <option v-for="option in vehicleKindOptions" :key="option.value" :value="option.value">
                                 {{ option.text }}
@@ -26,36 +26,36 @@
 
                 <div class="row mb-3">
                     <div class="col-12">
-                        <label class="form-label">Учет пробега / наработки</label>
+                        <label class="form-label">@Text["vehicle.edit.mileage.label"]</label>
                         <select class="form-select" v-model.number="vehicle.mileageUnit" @@change="changeMileageUnit">
                             <option v-for="option in mileageUnitOptions" :key="option.value" :value="option.value">
                                 {{ option.text }}
                             </option>
                         </select>
                         <small class="text-muted d-block mt-1">
-                            В обслуживании поле будет автоматически подписано как километры или моточасы.
+                            @Text["vehicle.edit.mileage.help"]
                         </small>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-12">
-                        <div class="btn-group w-100" role="group" aria-label="Способ заполнения техники" v-if="catalogModeAvailable">
+                    <div class="btn-group w-100" role="group" aria-label="@Text["vehicle.modals.aria.identityMode"]" v-if="catalogModeAvailable">
                             <button type="button"
                                     class="btn"
                                     :class="!isManualIdentity ? 'btn-dark' : 'btn-outline-dark'"
                                     @@click="toggleIdentityMode(false)">
-                                Из справочника
+                                @Text["vehicle.modals.identity.catalog"]
                             </button>
                             <button type="button"
                                     class="btn"
                                     :class="isManualIdentity ? 'btn-dark' : 'btn-outline-dark'"
                                     @@click="toggleIdentityMode(true)">
-                                Ввести вручную
+                                @Text["vehicle.modals.identity.manual"]
                             </button>
                         </div>
                         <button type="button" class="btn btn-dark w-100" v-else disabled>
-                            Ручной режим
+                            @Text["vehicle.modals.identity.manualMode"]
                         </button>
                     </div>
                 </div>
@@ -63,30 +63,30 @@
                 <template v-if="!isManualIdentity">
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">Марка</label>
+                            <label class="form-label">@Text["vehicle.edit.brand"]</label>
                             <v-select :options="brands"
                                       :reduce="m => m.id"
                                       label="name"
                                       :clearable="false"
                                       @@input="getModelOptions(null)"
                                       v-model="selectedBrandId">
-                                <template slot="no-options">Не найдено</template>
+                                <template slot="no-options">@Text["vehicle.modals.noOptions"]</template>
                             </v-select>
                         </div>
                     </div>
                     <div class="row mb-3" v-if="selectedBrandId">
                         <div class="col-12">
                             <template v-if="loadModels">
-                                <i class="fa fa-spinner fa-spin fa-fw c-blue"></i> Загрузка моделей...
+                                <i class="fa fa-spinner fa-spin fa-fw c-blue"></i> @Text["vehicle.modals.loadingModels"]
                             </template>
                             <template v-else>
-                                <label class="form-label">Модель</label>
+                                <label class="form-label">@Text["vehicle.edit.model"]</label>
                                 <v-select :options="models"
                                           :reduce="m => m.id"
                                           label="name"
                                           :clearable="false"
                                           v-model="vehicle.modelId">
-                                    <template slot="no-options">Не найдено</template>
+                                    <template slot="no-options">@Text["vehicle.modals.noOptions"]</template>
                                 </v-select>
                             </template>
                         </div>
@@ -96,24 +96,24 @@
                 <template v-else>
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">Бренд / производитель</label>
+                            <label class="form-label">@Text["vehicle.edit.manualBrand"]</label>
                             <input class="form-control"
                                    v-model.trim="vehicle.manualBrandName"
-                                   placeholder="Например: Yamaha, Polaris, КамАЗ">
+                                   placeholder="@Text["vehicle.edit.manualBrand.placeholder"]">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">Модель</label>
+                            <label class="form-label">@Text["vehicle.edit.model"]</label>
                             <input class="form-control"
                                    v-model.trim="vehicle.manualModelName"
-                                   placeholder="Например: Grizzly 700, Ranger XP 1000, 65115">
+                                   placeholder="@Text["vehicle.edit.manualModel.placeholder"]">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-12">
                             <small class="text-muted d-block">
-                                Бренд / производитель и модель будут автоматически добавлены в справочники после одобрения модератором.
+                                @Text["vehicle.modals.identity.moderation"]
                             </small>
                         </div>
                     </div>
@@ -121,24 +121,24 @@
 
                 <div class="row mb-3">
                     <div class="col-12">
-                        <label class="form-label">Год выпуска</label>
+                        <label class="form-label">@Text["vehicle.edit.year"]</label>
                         <input class="form-control" type="number" @@input="changeYearIssue" v-model.number="vehicle.yearIssue" />
                     </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-12">
-                        <label class="form-label">Госномер</label>
+                        <label class="form-label">@Text["vehicle.edit.plate"]</label>
                         <input class="form-control mb-3" v-model.trim="vehicle.registrationPlate"
-                           v-registration-plate="vehicle" maxlength="24" placeholder="А123АА154" />
-                        <label class="form-label">Имя / номер</label>
-                        <input class="form-control" v-model.trim="vehicle.name" placeholder="Например: Служебный 01 или А123ВС" />
+                           v-registration-plate="vehicle" maxlength="24" placeholder="@Text["vehicle.edit.plate.placeholder"]" />
+                        <label class="form-label">@Text["vehicle.edit.name"]</label>
+                        <input class="form-control" v-model.trim="vehicle.name" placeholder="@Text["vehicle.edit.name.placeholder"]" />
                     </div>
                 </div>
                 <div class="row mb-3" v-if="isOrganizationWorkspace && organizationClientsEnabled">
                     <div class="col-12">
-                        <label class="form-label">Клиент</label>
+                        <label class="form-label">@Text["vehicle.edit.client"]</label>
                         <select class="form-select" v-model="vehicle.organizationClientId" :disabled="loadOrganizationClients">
-                            <option value="">Без клиента</option>
+                            <option value="">@Text["vehicle.modals.client.none"]</option>
                             <option v-for="client in organizationClients"
                                     :key="'vehicle-client-' + client.id"
                                     :value="client.id">
@@ -146,23 +146,23 @@
                             </option>
                         </select>
                         <small class="text-muted d-block mt-1">
-                            Если техника относится к клиенту, привяжите ее здесь.
+                            @Text["vehicle.modals.client.help"]
                         </small>
                     </div>
                 </div>
                 <div class="row mb-0">
                     <div class="col-12">
-                        <label class="form-label">Описание</label>
+                        <label class="form-label">@Text["vehicle.edit.description"]</label>
                         <textarea class="form-control w-100" rows="4" v-model.trim="vehicle.description"></textarea>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.modals.close"]</button>
                 <button type="button" class="btn btn-dark" :disabled="!canSaveVehicle || saveModal" @@click="save">
-                    <template v-if="modalType === 'create' && !saveModal">Создать</template>
-                    <template v-else-if="modalType === 'edit' && !saveModal">Сохранить</template>
-                    <template v-else-if="saveModal"><i class="fa fa-spinner fa-spin fa-fw"></i> Сохранение</template>
+                    <template v-if="modalType === 'create' && !saveModal">@Text["vehicle.modals.create"]</template>
+                    <template v-else-if="modalType === 'edit' && !saveModal">@Text["vehicle.modals.save"]</template>
+                    <template v-else-if="saveModal"><i class="fa fa-spinner fa-spin fa-fw"></i> @Text["vehicle.modals.saving"]</template>
                 </button>
             </div>
         </div>
@@ -174,17 +174,17 @@
         <div class="modal-content" v-if="deleteVehicle">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    @vehicleScenario.DeleteModalTitle {{ getVehicleDisplayName(deleteVehicle) }}
-                    <span v-if="deleteVehicle.yearIssue">({{ deleteVehicle.yearIssue }} г.)</span>
+                    @Text["vehicle.modals.title.delete"] {{ getVehicleDisplayName(deleteVehicle) }}
+                    <span v-if="deleteVehicle.yearIssue">({{ deleteVehicle.yearIssue }} @Text["vehicle.list.yearSuffix"])</span>
                     <span v-if="deleteVehicle.name"> {{ deleteVehicle.name }}</span>?
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.modals.close"]"></button>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.modals.close"]</button>
                 <button type="button" class="btn btn-dark" @@click="save_deleteVehicle" :disabled="saveModal">
-                    <template v-if="saveModal === false">Удалить</template>
-                    <template v-else-if="saveModal"><i class="fa fa-spinner fa-spin fa-fw"></i> Удаление</template>
+                    <template v-if="saveModal === false">@Text["vehicle.media.button.delete"]</template>
+                    <template v-else-if="saveModal"><i class="fa fa-spinner fa-spin fa-fw"></i> @Text["vehicle.modals.deleting"]</template>
                 </button>
             </div>
         </div>
@@ -196,21 +196,21 @@
         <div class="modal-content" v-if="transferVehicle">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    Перенести в рабочее пространство
+                    @Text["vehicle.modals.title.transfer"]
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.modals.close"]"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-3">
                     <strong>{{ getVehicleDisplayName(transferVehicle) }}</strong>
-                    <span v-if="transferVehicle.yearIssue">({{ transferVehicle.yearIssue }} г.)</span>
-                    будет перенесена из личной техники в организацию.
+                    <span v-if="transferVehicle.yearIssue">({{ transferVehicle.yearIssue }} @Text["vehicle.list.yearSuffix"])</span>
+                    @Text["vehicle.modals.transferText"]
                 </p>
 
                 <div class="mb-3">
-                    <label class="form-label">Рабочее пространство</label>
+                    <label class="form-label">@Text["vehicle.card.workspace"]</label>
                     <select class="form-select" v-model="selectedTransferOrganizationId">
-                        <option value="">Выберите организацию</option>
+                        <option value="">@Text["vehicle.modals.organization.select"]</option>
                         <option v-for="organization in transferOrganizations"
                                 :key="'transfer-org-' + organization.id"
                                 :value="organization.id">
@@ -220,17 +220,17 @@
                 </div>
 
                 <div class="text-muted small">
-                    После переноса техника исчезнет из личного списка и будет доступна в выбранной организации вместе с историей обслуживания и фото.
+                    @Text["vehicle.modals.transferDescription"]
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.media.button.cancel"]</button>
                 <button type="button"
                         class="btn btn-primary"
                         :disabled="!selectedTransferOrganizationId || transferSaveInProgress"
                         @@click="confirmTransferVehicle">
-                    <template v-if="!transferSaveInProgress">Перенести</template>
-                    <template v-else><i class="fa fa-spinner fa-spin fa-fw"></i> Переносим</template>
+                    <template v-if="!transferSaveInProgress">@Text["vehicle.modals.transfer"]</template>
+                    <template v-else><i class="fa fa-spinner fa-spin fa-fw"></i> @Text["vehicle.modals.transferring"]</template>
                 </button>
             </div>
         </div>
@@ -243,20 +243,20 @@
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title">
                     <i class="fa fa-exclamation-triangle me-2"></i>
-                    Проверьте историю обслуживания
+                    @Text["vehicle.modals.title.mileageWarning"]
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Text["vehicle.modals.close"]"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-2">
-                    Вы меняете единицу учета для уже созданной техники.
+                    @Text["vehicle.modals.mileageWarning.body"]
                 </p>
                 <p class="mb-0">
-                    Числа в существующих обслуживаниях останутся прежними, но будут отображаться в новой единице. Например, старое значение пробега может начать показываться как моточасы. Проверьте историю обслуживания после сохранения.
+                    @Text["vehicle.modals.mileageWarning.details"]
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Понятно</button>
+                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">@Text["vehicle.modals.gotIt"]</button>
             </div>
         </div>
     </div>
@@ -268,23 +268,23 @@
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title">
                     <i class="fa fa-crown me-2"></i>
-                    <span v-if="!vehicleLimitInfo.hasActiveSubscription">Выберите тариф</span>
-                    <span v-else>Увеличьте лимит</span>
+                    <span v-if="!vehicleLimitInfo.hasActiveSubscription">@Text["vehicle.modals.limit.choosePlan"]</span>
+                    <span v-else>@Text["vehicle.modals.limit.increase"]</span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="text-center py-3">
                     <i class="fa fa-car fa-4x mb-3 text-orange"></i>
-                    <h4 class="mb-3" v-if="!vehicleLimitInfo.hasActiveSubscription">Превышен лимит стандартного тарифа</h4>
-                    <h4 class="mb-3" v-else>Превышен лимит вашего тарифа</h4>
+                    <h4 class="mb-3" v-if="!vehicleLimitInfo.hasActiveSubscription">@Text["vehicle.modals.limit.standardExceeded"]</h4>
+                    <h4 class="mb-3" v-else>@Text["vehicle.modals.limit.planExceeded"]</h4>
 
                     <div v-if="vehicleLimitInfo.isMaxPlan" class="alert alert-dark">
                         <i class="fa fa-exclamation-triangle me-2"></i>
-                        <strong>Лимит полностью исчерпан</strong>
-                        <p class="mb-0 mt-2">Вы используете максимальный доступный тариф. Для дальнейшего расширения возможностей свяжитесь с поддержкой.</p>
+                        <strong>@Text["vehicle.modals.limit.exhausted"]</strong>
+                        <p class="mb-0 mt-2">@Text["vehicle.modals.limit.exhaustedText"]</p>
                         <a href="~/personal/support" class="btn btn-outline-dark btn-sm mt-2">
-                            <i class="fa fa-headset me-1"></i>Поддержка
+                            <i class="fa fa-headset me-1"></i>@Text["vehicle.modals.limit.support"]
                         </a>
                     </div>
 
@@ -292,29 +292,29 @@
                         <div class="card-body">
                             <h5 class="card-title">
                                 <i class="fa fa-list me-2"></i>
-                                Перейдите на страницу тарифов
+                                @Text["vehicle.modals.limit.goPlans"]
                             </h5>
                             <ul class="list-unstyled">
-                                <li><i class="fa fa-check text-success me-2"></i>Сравните все доступные тарифы</li>
-                                <li><i class="fa fa-check text-success me-2"></i>Посмотрите лимиты по количеству техники</li>
-                                <li><i class="fa fa-check text-success me-2"></i>Выберите подходящий тариф</li>
+                                <li><i class="fa fa-check text-success me-2"></i>@Text["vehicle.modals.limit.comparePlans"]</li>
+                                <li><i class="fa fa-check text-success me-2"></i>@Text["vehicle.modals.limit.vehicleLimits"]</li>
+                                <li><i class="fa fa-check text-success me-2"></i>@Text["vehicle.modals.limit.selectPlan"]</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="mt-4">
                         <a href="/subscription" class="text-orange text-decoration-none">
-                            <i class="fa fa-list me-1"></i>Открыть страницу тарифов
+                            <i class="fa fa-list me-1"></i>@Text["vehicle.modals.limit.openPlans"]
                         </a>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Позже</button>
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">@Text["vehicle.modals.limit.later"]</button>
                 <button v-if="!vehicleLimitInfo.isMaxPlan" type="button" class="btn btn-dark" @@click="goToSubscription">
-                    Перейти к тарифам
+                    @Text["vehicle.modals.limit.toPlans"]
                 </button>
-                <a v-else href="~/personal/support" class="btn btn-dark">Поддержка</a>
+                <a v-else href="~/personal/support" class="btn btn-dark">@Text["vehicle.modals.limit.support"]</a>
             </div>
         </div>
     </div>
@@ -324,14 +324,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Ошибка</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>@Text["vehicle.card.error.title"]</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="@Text["vehicle.modals.close"]"></button>
             </div>
             <div class="modal-body">
                 <p>{{ errorMessage }}</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Text["vehicle.modals.close"]</button>
             </div>
         </div>
     </div>
@@ -341,23 +341,23 @@
     <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fa fa-undo me-2 text-success"></i>@vehicleScenario.RestoreModalTitle</h5>
+                <h5 class="modal-title"><i class="fa fa-undo me-2 text-success"></i>@Text["vehicle.modals.restore.title"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="text-center">
                     <i class="fa fa-car fa-3x text-success mb-3"></i>
-                    <h5>Восстановить технику?</h5>
+                    <h5>@Text["vehicle.modals.restore.title"]</h5>
                     <p class="text-muted mb-2">{{ selectedRestoreVehicle ? getVehicleDisplayName(selectedRestoreVehicle) : '' }}</p>
-                    <p class="text-muted">Запись будет перемещена обратно в список активной техники.</p>
+                    <p class="text-muted">@Text["vehicle.modals.restore.text"]</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="restoreSaving">Отмена</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="restoreSaving">@Text["vehicle.media.button.cancel"]</button>
                 <button type="button" class="btn btn-success" @@click="confirmRestoreFromArchive" :disabled="restoreSaving">
                     <span v-if="restoreSaving" class="spinner-border spinner-border-sm me-1"></span>
                     <i v-else class="fa fa-undo me-1"></i>
-                    {{ restoreSaving ? 'Восстанавливаем...' : 'Восстановить' }}
+                    {{ restoreSaving ? '@Text["vehicle.modals.restore.loading"]' : '@Text["vehicle.modals.restore.button"]' }}
                 </button>
             </div>
         </div>

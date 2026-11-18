@@ -1,3 +1,4 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -21,7 +22,7 @@ function setup(value, min = 0.01, max = 700, componentCode = code) {
   new Function('require', 'module', 'exports', componentCode)(id => id === 'vue' ? {
     ...vue,
     useModel: () => ({ get value() { return props.modelValue }, set value(value) { props.modelValue = value } })
-  } : {}, module, module.exports)
+  } : regionalTestDependencies[id] ?? {}, module, module.exports)
   const state = module.exports.default.setup(props, { expose() {} })
   return { state, props }
 }

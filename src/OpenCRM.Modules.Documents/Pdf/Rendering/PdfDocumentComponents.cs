@@ -211,7 +211,7 @@ internal sealed class PdfDocumentComponents
 
             if (maintenance.MaintenanceDetails?.Count > 0)
             {
-                column.Item().Element(c => RenderSection(c, "Работы и материалы", section => PdfTableComponents.RenderServices(section, maintenance.MaintenanceDetails)));
+                column.Item().Element(c => RenderSection(c, "Работы и материалы", section => PdfTableComponents.RenderServices(section, maintenance.MaintenanceDetails, currencyCode: maintenance.CurrencyCode)));
             }
 
             if (!string.IsNullOrWhiteSpace(maintenance.Comment))
@@ -285,12 +285,15 @@ internal sealed class PdfDocumentComponents
     }
 
     /// <summary> Отрисовывает блок статистики с количеством и суммой. </summary>
-    internal static void RenderStatistics(IContainer container, int totalCount, decimal totalSpent)
+    internal static void RenderStatistics(IContainer container, int totalCount, IReadOnlyDictionary<string, decimal> currencyTotals)
     {
-        container.Element(Card).Row(row =>
+        container.Element(Card).Column(column =>
         {
-            row.RelativeItem().Element(c => RenderMetric(c, "Записей обслуживания", totalCount.ToString()));
-            row.RelativeItem().Element(c => RenderMetric(c, "Общие затраты", FormatMoney(totalSpent), AccentColor));
+            column.Item().Element(c => RenderMetric(c, "Записей обслуживания", totalCount.ToString()));
+            foreach (var currencyTotal in currencyTotals.OrderBy(total => total.Key))
+            {
+                column.Item().Element(c => RenderMetric(c, $"Затраты, {currencyTotal.Key}", FormatMoney(currencyTotal.Value, currencyTotal.Key), AccentColor));
+            }
         });
     }
 
@@ -348,9 +351,9 @@ internal sealed class PdfDocumentComponents
     }
 
     /// <summary> Форматирует денежное значение для отображения. </summary>
-    internal static string FormatMoney(decimal value)
+    internal static string FormatMoney(decimal value, string currencyCode = "RUB")
     {
-        return $"{value:n2} руб.";
+        return $"{value:n2} {currencyCode}";
     }
 
     /// <summary> Оформляет контейнер как карточку с рамкой и фоном. </summary>
@@ -404,7 +407,7 @@ internal sealed class PdfDocumentComponents
             column.Item().Row(row =>
             {
                 row.RelativeItem().Element(c => RenderFact(c, GetMileageLabel(mileageUnit).TrimEnd(':'), maintenance.Mileage.HasValue ? $"{maintenance.Mileage.Value:n0} {GetMileageUnitText(mileageUnit)}" : "-"));
-                row.RelativeItem().Element(c => RenderFact(c, "Стоимость", maintenance.Price.HasValue && maintenance.Price > 0 ? FormatMoney(maintenance.Price.Value) : "-"));
+                row.RelativeItem().Element(c => RenderFact(c, "Стоимость", maintenance.Price.HasValue && maintenance.Price > 0 ? FormatMoney(maintenance.Price.Value, maintenance.CurrencyCode) : "-"));
             });
 
             if (!string.IsNullOrWhiteSpace(maintenance.Location) || !string.IsNullOrWhiteSpace(maintenance.Performer))

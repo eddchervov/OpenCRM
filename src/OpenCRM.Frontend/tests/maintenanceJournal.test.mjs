@@ -1,7 +1,8 @@
+import { regionalTestDependencies } from './regionalTestDependencies.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { parse, compileScript } from '@vue/compiler-sfc'
+import { parse, compileScript, compileTemplate } from '@vue/compiler-sfc'
 import ts from 'typescript'
 import * as vue from 'vue'
 
@@ -9,14 +10,31 @@ const { descriptor } = parse(readFileSync(new URL('../packages/workspace/src/com
 const code = ts.transpileModule(compileScript(descriptor, { id: 'journal-test' }).content, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText
+assert.deepEqual(compileTemplate({ source: descriptor.template?.content ?? '', id: 'journal-test', filename: 'MaintenanceJournalSection.vue' }).errors, [])
+
+const messages = {
+  'maintenanceJournal.invalidRange': 'Укажите начало и окончание интервала. Дата начала должна быть не позже окончания.',
+  'maintenanceJournal.unpaid': 'Не оплачено',
+  'maintenanceJournal.noPaymentRequired': 'Оплата не требуется',
+  'maintenanceJournal.paid': 'Оплачено',
+  'maintenanceJournal.paidAmount': 'Оплачено: {amount}',
+  'maintenanceJournal.overpaid': 'Переплата: {amount}'
+}
+
+function translate(key, parameters = {}) {
+  return (messages[key] ?? key).replace(/\{([^}]+)\}/g, (_, name) => parameters[name] ?? `{${name}}`)
+}
 
 function setup(load, initialState = null) {
   const storage = new Map(initialState ? [['opencrm:user:org:maintenance-journal:v1', JSON.stringify(initialState)]] : [])
   const module = { exports: {} }
   const dateOnly = date => (date ?? new Date()).toISOString().slice(0, 10)
   const resolve = id => {
+    if (Object.hasOwn(regionalTestDependencies, id)) return regionalTestDependencies[id]
     if (id === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {}, watch() {} }
-    if (id === '@opencrm/ui') return { formatDateOnly: dateOnly, parseDateOnly: value => /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(value+'T00:00:00') : null }
+    if (id === '@opencrm/ui') return { formatDateOnly: dateOnly, parseDateOnly: value => /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(value+'T00:00:00') : null, useLocalization: () => ({ t: translate }) }
+    if (id === '@opencrm/ui/i18n') return { formattingCulture: { value: 'en-US' } }
+    if (id === '../schedulerMessages') return {}
     if (id === '../api/maintenanceJournal') return { loadMaintenanceJournal: load }
     return {}
   }
@@ -119,4 +137,19 @@ test('Неоценённый нулевой заказ не считается �
   assert.equal(state.paymentLabel({ amount:100, paidAmount:100, paymentStatus:'paid' }), 'Оплачено')
   assert.match(state.paymentLabel({ amount:100, paidAmount:40, paymentStatus:'partial' }), /^Оплачено:/)
   assert.match(state.paymentLabel({ amount:100, paidAmount:120, paymentStatus:'overpaid' }), /^Переплата:/)
+})
+
+test('Формат суммы использует валюту строки и возвращается к валюте рабочей области для старых DTO', () => {
+  const { state } = setup(async () => result([]))
+  const culture = regionalTestDependencies['@opencrm/ui/i18n'].formattingCulture.value
+  const options = { style: 'currency', minimumFractionDigits: 0, maximumFractionDigits: 2 }
+  assert.equal(state.formatMoney(1200, { currencyCode: 'CNY' }), new Intl.NumberFormat(culture, { ...options, currency: 'CNY' }).format(1200))
+  assert.equal(state.formatMoney(1200), new Intl.NumberFormat(culture, { ...options, currency: 'RUB' }).format(1200))
+})
+
+test('Статусы выдачи журнала переводятся по значению статуса, а не показывают подпись API', () => {
+  const { state } = setup(async () => result([]))
+  assert.equal(state.statusLabel({ status: 3, statusName: 'Готово к выдаче' }), 'maintenanceJournal.ready')
+  assert.equal(state.statusLabel({ status: 3, statusName: 'Выдано' }), 'maintenanceJournal.handedOver')
+  assert.equal(state.statusLabel({ status: 2, statusName: 'В работе' }), 'maintenanceJournal.inProgress')
 })

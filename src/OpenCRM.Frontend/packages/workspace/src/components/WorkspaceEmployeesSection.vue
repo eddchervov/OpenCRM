@@ -1,6 +1,8 @@
 ﻿<script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { UiButton, UiInput, UiLoader, UiPhoneInput, UiSelect, UiTooltip } from '@opencrm/ui'
+import { i18n, translate as t } from '@opencrm/ui/i18n'
+import '../employeeMessages'
 import {
   createEmployeeForMember,
   createEmployeeWithInvitation,
@@ -58,23 +60,33 @@ const cardDraft = reactive({ name: '', phone: '', isActive: true, email: '', rol
 const originalEmployee = ref<OrganizationEmployee | null>(null)
 const cardAction = ref<'invite' | 'link' | 'create' | 'attach' | null>(null)
 
+const builtinRoleKeys: Record<string, string> = {
+  owner: 'employees.roles.owner',
+  admin: 'employees.roles.admin',
+  employee: 'employees.roles.employee',
+  performer: 'employees.roles.performer',
+  viewer: 'employees.roles.viewer'
+}
 const canWrite = computed(() => canManage.value && props.context.workspaceAccess?.isReadOnly === false)
 const canInvite = computed(() => access.value?.canInviteMembers === true && props.context.workspaceAccess?.isReadOnly === false)
 const canLink = computed(() => canLinkMembers.value && props.context.workspaceAccess?.isReadOnly === false)
 const canManageRoles = computed(() => access.value?.canManageRoles === true && props.context.workspaceAccess?.isReadOnly === false)
-const roleOptions = computed(() => (access.value?.roleOptions ?? []).map(role => ({ value: role.code, label: role.name })))
+const roleOptions = computed(() => (access.value?.roleOptions ?? []).map(role => ({
+  value: role.code,
+  label: builtinRoleKeys[role.code.toLowerCase()] ? t(builtinRoleKeys[role.code.toLowerCase()]) : role.name
+})))
 const canViewRoles = computed(() => props.context.shell.menu?.some(item => item.code === 'members' && item.isVisible) === true)
 const canRemove = computed(() => access.value?.canRemoveMembers === true && props.context.workspaceAccess?.isReadOnly === false)
 const canTransfer = computed(() => canManageRoles.value && access.value?.organization.currentUserRoleCode === 'owner')
-const addLabel = computed(() => !canWrite.value ? 'Отправить приглашение'
-  : addAccess.value === 'invite' ? 'Добавить и пригласить'
-    : addAccess.value === 'existing' ? 'Добавить и связать' : 'Добавить сотрудника')
+const addLabel = computed(() => !canWrite.value ? t('employees.addInvite')
+  : addAccess.value === 'invite' ? t('employees.addAndInvite')
+    : addAccess.value === 'existing' ? t('employees.addAndLink') : t('employees.addPerson'))
 const filterOptions = computed(() => [
-  { value: 'all', label: 'Все сотрудники' },
-  { value: 'assignable', label: 'Можно назначать работы' },
-  { value: 'not-assignable', label: 'Не назначаются на работы' },
-  { value: 'no-access', label: 'Без доступа к CRM' },
-  { value: 'invited', label: 'Ожидают принятия' }
+  { value: 'all', label: t('employees.filters.all') },
+  { value: 'assignable', label: t('employees.filters.assignable') },
+  { value: 'not-assignable', label: t('employees.filters.notAssignable') },
+  { value: 'no-access', label: t('employees.filters.noAccess') },
+  { value: 'invited', label: t('employees.filters.invited') }
 ].filter(option => canViewRoles.value || !['no-access', 'invited'].includes(option.value)))
 const availableMembers = computed(() => {
   const linked = new Set(employees.value.map(item => item.memberId).filter(Boolean))
@@ -116,7 +128,9 @@ const rows = computed<TeamRow[]>(() => {
       name: employee.name,
       email: member?.email ?? invitation?.email ?? '',
       role: member?.roleName ?? invitation?.roleName ?? '—',
-      connection: !canViewRoles.value ? 'Нет данных' : member || employee.memberId ? 'Подключён' : invitation ? 'Ожидает принятия' : 'Не предоставлен'
+      connection: !canViewRoles.value ? t('employees.connection.noData')
+        : member || employee.memberId ? t('employees.connection.connected')
+          : invitation ? t('employees.connection.pending') : t('employees.connection.notProvided')
     })
   }
 
@@ -128,7 +142,7 @@ const rows = computed<TeamRow[]>(() => {
       name: member.email || member.userName || member.userId,
       email: member.email ?? '',
       role: member.roleName,
-      connection: 'Подключён'
+      connection: t('employees.connection.connected')
     })
   }
   for (const invitation of invitations) {
@@ -139,20 +153,21 @@ const rows = computed<TeamRow[]>(() => {
       name: invitation.email,
       email: invitation.email,
       role: invitation.roleName,
-      connection: 'Ожидает принятия'
+      connection: t('employees.connection.pending')
     })
   }
 
-  const query = search.value.trim().toLocaleLowerCase('ru')
+  const locale = i18n.global.locale.value
+  const query = search.value.trim().toLocaleLowerCase(locale)
   return result
     .filter(item => !query || [item.name, item.email, item.role, item.connection, item.employee?.phone ?? '']
-      .some(value => value.toLocaleLowerCase('ru').includes(query)))
+      .some(value => value.toLocaleLowerCase(locale).includes(query)))
     .filter(item => teamFilter.value === 'all'
       || (teamFilter.value === 'assignable' && item.employee?.isActive === true)
       || (teamFilter.value === 'not-assignable' && item.employee?.isActive !== true)
       || (teamFilter.value === 'no-access' && !item.member && !item.employee?.memberId && !item.invitation)
       || (teamFilter.value === 'invited' && !!item.invitation))
-    .sort((left, right) => left.name.localeCompare(right.name, 'ru'))
+    .sort((left, right) => left.name.localeCompare(right.name, locale))
 })
 
 async function load() {
@@ -176,10 +191,10 @@ async function load() {
     canManage.value = false
     canLinkMembers.value = false
     const status = (employeesResult.reason as Error & { status?: number })?.status
-    if (status !== 403 || !canViewMembers) error.value = 'Не удалось загрузить сотрудников. Попробуйте ещё раз.'
+    if (status !== 403 || !canViewMembers) error.value = t('employees.errors.loadEmployees')
   }
   access.value = accessResult.status === 'fulfilled' ? accessResult.value : null
-  if (accessResult.status === 'rejected') error.value = 'Не удалось загрузить пользователей CRM. Попробуйте ещё раз.'
+  if (accessResult.status === 'rejected') error.value = t('employees.errors.loadMembers')
   loading.value = false
 }
 
@@ -240,7 +255,7 @@ async function addPerson() {
         email: addDraft.email.trim(), roleCode: addDraft.roleCode
       }),
       () => addDialog.value?.close(),
-      'Не удалось пригласить пользователя CRM.'
+      t('employees.errors.inviteCrmUser')
     )
     return
   }
@@ -263,7 +278,7 @@ async function addPerson() {
     } else {
       await saveEmployee(props.context.organization.id, employee)
     }
-  }, () => addDialog.value?.close(), 'Не удалось добавить человека.')
+  }, () => addDialog.value?.close(), t('employees.errors.addPerson'))
 }
 
 async function saveCard() {
@@ -275,7 +290,7 @@ async function saveCard() {
       ...(hasPendingLink.value ? { memberIdToLink: cardDraft.memberId } : {})
     }) : linkEmployeeMember(props.context.organization.id, row.employee!, cardDraft.memberId),
     closeCard,
-    'Не удалось сохранить карточку.'
+    t('employees.errors.saveCard')
   )
 }
 
@@ -284,7 +299,7 @@ async function applyCardAction() {
   if (!row || !cardAction.value) return
   if (row.employee) {
     if (hasUnsavedDetails.value) {
-      formError.value = 'Сначала сохраните изменения карточки.'
+      formError.value = t('employees.saveDetailsFirst')
       return
     }
     if (cardAction.value === 'invite' && canInvite.value && cardDraft.email.trim()) {
@@ -295,7 +310,7 @@ async function applyCardAction() {
           email: cardDraft.email.trim(), roleCode: cardDraft.roleCode, employeeId: row.employee!.id
         }),
         closeCard,
-        'Не удалось пригласить пользователя.'
+        t('employees.errors.inviteUser')
       )
     }
     return
@@ -307,7 +322,7 @@ async function applyCardAction() {
           memberId: row.member!.id, name: cardDraft.name.trim(), phone: cardDraft.phone
         }),
         closeCard,
-        'Не удалось создать карточку исполнителя.'
+        t('employees.errors.createPerformer')
       )
     } else if (cardAction.value === 'attach' && cardDraft.memberId) {
       const employee = availableEmployees.value.find(item => item.id === cardDraft.memberId)
@@ -315,7 +330,7 @@ async function applyCardAction() {
       await complete(
         () => linkEmployeeMember(props.context.organization.id, employee, row.member!.id),
         closeCard,
-        'Не удалось связать человека с карточкой.'
+        t('employees.errors.linkPerson')
       )
     }
   }
@@ -325,13 +340,13 @@ async function saveRole() {
   const row = selected.value
   if (!row?.member || !canManageRoles.value || row.member.isOwner) return
   if (hasUnsavedDetails.value) {
-    formError.value = 'Сначала сохраните изменения карточки.'
+    formError.value = t('employees.saveDetailsFirst')
     return
   }
   await complete(
     () => updateWorkspaceMemberRole(props.context.organization.id, row.member!.id, { roleCode: cardDraft.roleCode }),
     closeCard,
-    'Не удалось изменить роль.'
+    t('employees.errors.saveRole')
   )
 }
 
@@ -341,7 +356,7 @@ async function revokeInvitation() {
   await complete(
     () => revokeWorkspaceInvitation(props.context.organization.id, row.invitation!.id),
     closeCard,
-    'Не удалось отозвать приглашение.'
+    t('employees.errors.revokeInvitation')
   )
 }
 
@@ -367,7 +382,7 @@ async function confirmMemberAction() {
     await complete(
       () => linkEmployeeMember(props.context.organization.id, row.employee!, null),
       () => { confirmationDialog.value?.close(); memberAction.value = null; closeCard() },
-      'Не удалось отвязать аккаунт.'
+      t('employees.errors.unlinkAccount')
     )
     return
   }
@@ -378,7 +393,7 @@ async function confirmMemberAction() {
       ? removeWorkspaceMember(props.context.organization.id, row.member!.id)
       : transferWorkspaceOwnership(props.context.organization.id, row.member!.id),
     () => { confirmationDialog.value?.close(); memberAction.value = null; closeCard() },
-    'Не удалось изменить доступ сотрудника.'
+    t('employees.errors.changeAccess')
   )
 }
 
@@ -403,20 +418,20 @@ onMounted(() => {
   <div class="employees">
     <div class="employees__heading">
       <div class="employees__heading-actions">
-        <UiButton v-if="canViewRoles" href="#members" variant="secondary" :disabled="previewOnly">Роли и права</UiButton>
-        <UiButton v-if="canWrite || canInvite || previewOnly" :disabled="previewOnly" @click="openAdd">+ Добавить сотрудника</UiButton>
+        <UiButton v-if="canViewRoles" href="#members" variant="secondary" :disabled="previewOnly">{{ t('employees.rolesPermissions') }}</UiButton>
+        <UiButton v-if="canWrite || canInvite || previewOnly" :disabled="previewOnly" @click="openAdd">{{ t('employees.addEmployee') }}</UiButton>
       </div>
     </div>
     <div class="employees__filters">
-      <UiInput v-model="search" placeholder="Имя, телефон или email" aria-label="Поиск по команде" :disabled="previewOnly" />
-      <UiSelect v-model="teamFilter" label="" aria-label="Фильтр команды" :options="filterOptions" required :searchable="false" :disabled="previewOnly" />
+      <UiInput v-model="search" :placeholder="t('employees.searchPlaceholder')" :aria-label="t('employees.searchLabel')" :disabled="previewOnly" />
+      <UiSelect v-model="teamFilter" label="" :aria-label="t('employees.filterLabel')" :options="filterOptions" required :searchable="false" :disabled="previewOnly" />
     </div>
-    <UiLoader v-if="loading" text="Загружаем команду…" />
-    <p v-else-if="error" role="alert">{{ error }} <UiButton variant="secondary" @click="load">Повторить</UiButton></p>
+    <UiLoader v-if="loading" :text="t('employees.loading')" />
+    <p v-else-if="error" role="alert">{{ error }} <UiButton variant="secondary" @click="load">{{ t('employees.retry') }}</UiButton></p>
     <template v-else-if="previewOnly">
-      <div class="employees__table" role="table" aria-label="Команда">
+      <div class="employees__table" role="table" :aria-label="t('employees.team')">
         <div class="employees__table-head" role="row">
-          <span role="columnheader">Сотрудник</span><span role="columnheader">Назначение на работы</span><span role="columnheader">Доступ к CRM</span><span role="columnheader">Роль</span><span role="columnheader" class="employees__action-head">Действие</span>
+          <span role="columnheader">{{ t('employees.employee') }}</span><span role="columnheader">{{ t('employees.assignment') }}</span><span role="columnheader">{{ t('employees.crmAccess') }}</span><span role="columnheader">{{ t('employees.role') }}</span><span role="columnheader" class="employees__action-head">{{ t('employees.action') }}</span>
         </div>
         <div v-for="index in 4" :key="index" class="employees__row employees__preview-row" role="row" aria-hidden="true">
           <div class="employees__identity" role="cell"><i></i><small></small></div>
@@ -425,115 +440,115 @@ onMounted(() => {
       </div>
     </template>
     <template v-else>
-      <p v-if="!rows.length" class="employees__empty">{{ search || teamFilter !== 'all' ? 'Никого не найдено.' : 'В команде пока никого нет.' }}</p>
-      <div v-else class="employees__table" role="table" aria-label="Команда">
+      <p v-if="!rows.length" class="employees__empty">{{ search || teamFilter !== 'all' ? t('employees.noMatches') : t('employees.noEmployees') }}</p>
+      <div v-else class="employees__table" role="table" :aria-label="t('employees.team')">
         <div class="employees__table-head" role="row">
-          <span role="columnheader">Сотрудник</span><span role="columnheader">Назначение на работы</span><span role="columnheader">Доступ к CRM</span><span role="columnheader">Роль</span><span role="columnheader" class="employees__action-head">Действие</span>
+          <span role="columnheader">{{ t('employees.employee') }}</span><span role="columnheader">{{ t('employees.assignment') }}</span><span role="columnheader">{{ t('employees.crmAccess') }}</span><span role="columnheader">{{ t('employees.role') }}</span><span role="columnheader" class="employees__action-head">{{ t('employees.action') }}</span>
         </div>
         <div v-for="row in rows" :key="row.key" class="employees__row" role="row">
           <div class="employees__identity" role="cell"><strong>{{ row.name }}</strong><small v-if="row.employee?.phone">{{ row.employee.phone }}</small></div>
-          <div class="employees__assignment" role="cell"><span class="team-status" :class="{ 'team-status--enabled': row.employee?.isActive }">{{ row.employee?.isActive ? 'Можно назначать' : 'Не назначается' }}</span></div>
+          <div class="employees__assignment" role="cell"><span class="team-status" :class="{ 'team-status--enabled': row.employee?.isActive }">{{ row.employee?.isActive ? t('employees.assignable') : t('employees.notAssignable') }}</span></div>
           <div class="employees__connection" role="cell"><span class="team-status" :class="{ 'team-status--enabled': row.member || row.employee?.memberId, 'team-status--pending': row.invitation }">{{ row.connection }}</span><small v-if="row.email && row.employee">{{ row.email }}</small></div>
-          <span class="employees__role" role="cell">{{ row.role }}</span>
-          <div class="employees__row-action" role="cell"><UiButton variant="secondary" @click="openCard(row)">Открыть</UiButton></div>
+          <span class="employees__role" role="cell" :data-label="`${t('employees.role')}: `">{{ row.role }}</span>
+          <div class="employees__row-action" role="cell"><UiButton variant="secondary" @click="openCard(row)">{{ t('employees.open') }}</UiButton></div>
         </div>
       </div>
     </template>
 
     <dialog id="team-add-person-dialog" ref="addDialog" class="employee-dialog" aria-labelledby="add-person-title" @cancel="saving && $event.preventDefault()">
       <form @submit.prevent="addPerson">
-        <header class="ui-form-header"><h3 id="add-person-title">Добавить сотрудника</h3><button type="button" :disabled="saving" aria-label="Закрыть" @click="addDialog?.close()">×</button></header>
+        <header class="ui-form-header"><h3 id="add-person-title">{{ t('employees.addTitle') }}</h3><button type="button" :disabled="saving" :aria-label="t('employees.close')" @click="addDialog?.close()">×</button></header>
         <div class="employee-dialog__body">
           <section v-if="canWrite" class="employee-dialog__details">
-            <h4 class="ui-section-header">Данные сотрудника</h4>
-            <UiInput v-model="addDraft.name" label="Имя" placeholder="Например, Алексей Смирнов" required maxlength="250" :disabled="saving" />
-            <UiPhoneInput :model-value="addDraft.phone" @update:model-value="addDraft.phone = $event" label="Телефон" :disabled="saving" />
-            <label class="employee-dialog__checkbox"><input v-model="addDraft.isActive" type="checkbox" :disabled="saving" /> Можно назначать работы</label>
+            <h4 class="ui-section-header">{{ t('employees.employeeData') }}</h4>
+            <UiInput v-model="addDraft.name" :label="t('employees.name')" :placeholder="t('employees.exampleName')" required maxlength="250" :disabled="saving" />
+            <UiPhoneInput :model-value="addDraft.phone" @update:model-value="addDraft.phone = $event" :label="t('employees.phone')" :disabled="saving" />
+            <label class="employee-dialog__checkbox"><input v-model="addDraft.isActive" type="checkbox" :disabled="saving" /> {{ t('employees.canAssignWork') }}</label>
           </section>
           <section v-if="canInvite || (canLink && availableMembers.length)" class="employee-dialog__section">
-            <h4 class="ui-section-header">Доступ к CRM <UiTooltip text="Роль определяет доступные разделы и действия."><button type="button" class="ui-field-label__help" aria-label="Подсказка: доступ к CRM">?</button></UiTooltip></h4>
-            <label v-if="canWrite" class="employee-dialog__checkbox"><input type="checkbox" :checked="addAccess !== 'none'" :disabled="saving" @change="changeAddAccess(($event.target as HTMLInputElement).checked)" /> Предоставить доступ к CRM</label>
-            <p v-else class="employee-dialog__hint">Ваши права позволяют пригласить сотрудника в CRM. Данные для назначения на работы можно добавить позже.</p>
+            <h4 class="ui-section-header">{{ t('employees.accessTitle') }} <UiTooltip :text="t('employees.roleHelp')"><button type="button" class="ui-field-label__help" :aria-label="t('employees.roleHelpLabel')">?</button></UiTooltip></h4>
+            <label v-if="canWrite" class="employee-dialog__checkbox"><input type="checkbox" :checked="addAccess !== 'none'" :disabled="saving" @change="changeAddAccess(($event.target as HTMLInputElement).checked)" /> {{ t('employees.grantAccess') }}</label>
+            <p v-else class="employee-dialog__hint">{{ t('employees.inviteOnlyHint') }}</p>
             <template v-if="addAccess === 'invite'">
-              <UiInput v-model="addDraft.email" type="email" label="Email для входа" required :disabled="saving" />
-              <UiSelect append-to="#team-add-person-dialog" v-model="addDraft.roleCode" label="Роль" :options="roleOptions" required :searchable="false" :disabled="saving" />
-              <p class="employee-dialog__hint">На этот email отправим приглашение.</p>
+              <UiInput v-model="addDraft.email" type="email" :label="t('employees.emailForLogin')" required :disabled="saving" />
+              <UiSelect append-to="#team-add-person-dialog" v-model="addDraft.roleCode" :label="t('employees.role')" :options="roleOptions" required :searchable="false" :disabled="saving" />
+              <p class="employee-dialog__hint">{{ t('employees.inviteHint') }}</p>
             </template>
-            <UiSelect v-if="addAccess === 'existing'" append-to="#team-add-person-dialog" v-model="addDraft.memberId" label="Аккаунт в вашей организации" placeholder="Выберите аккаунт" :options="memberSelectOptions" required :disabled="saving" />
-            <button v-if="canWrite && canLink && availableMembers.length && addAccess !== 'existing'" type="button" class="employees__quiet-action" :disabled="saving" @click="addAccess = 'existing'">У сотрудника уже есть аккаунт? Связать аккаунт</button>
-            <button v-if="canInvite && addAccess === 'existing'" type="button" class="employees__quiet-action" :disabled="saving" @click="addAccess = 'invite'">Пригласить по email</button>
+            <UiSelect v-if="addAccess === 'existing'" append-to="#team-add-person-dialog" v-model="addDraft.memberId" :label="t('employees.account')" :placeholder="t('employees.chooseAccount')" :options="memberSelectOptions" required :disabled="saving" />
+            <button v-if="canWrite && canLink && availableMembers.length && addAccess !== 'existing'" type="button" class="employees__quiet-action" :disabled="saving" @click="addAccess = 'existing'">{{ t('employees.linkExisting') }}</button>
+            <button v-if="canInvite && addAccess === 'existing'" type="button" class="employees__quiet-action" :disabled="saving" @click="addAccess = 'invite'">{{ t('employees.inviteByEmail') }}</button>
           </section>
           <p v-if="formError" class="employee-dialog__error" role="alert">{{ formError }}</p>
         </div>
-        <footer><UiButton variant="secondary" :disabled="saving" @click="addDialog?.close()">Отмена</UiButton><UiButton type="submit" :disabled="saving || (canWrite && !addDraft.name.trim()) || (addAccess === 'invite' && !addDraft.email.trim()) || (addAccess === 'existing' && !addDraft.memberId)">{{ saving ? 'Сохраняем…' : addLabel }}</UiButton></footer>
+        <footer><UiButton variant="secondary" :disabled="saving" @click="addDialog?.close()">{{ t('employees.cancel') }}</UiButton><UiButton type="submit" :disabled="saving || (canWrite && !addDraft.name.trim()) || (addAccess === 'invite' && !addDraft.email.trim()) || (addAccess === 'existing' && !addDraft.memberId)">{{ saving ? t('employees.saving') : addLabel }}</UiButton></footer>
       </form>
     </dialog>
 
     <dialog id="team-person-card-dialog" ref="cardDialog" class="employee-dialog" aria-labelledby="person-card-title" @cancel="saving && $event.preventDefault()">
       <form novalidate @submit.prevent="selected?.employee ? saveCard() : applyCardAction()">
         <template v-if="selected">
-          <header class="ui-form-header"><div><p class="employee-dialog__eyebrow">Сотрудник</p><h3 id="person-card-title">{{ selected.name }}</h3></div><button type="button" :disabled="saving" aria-label="Закрыть" @click="closeCard">×</button></header>
+          <header class="ui-form-header"><div><p class="employee-dialog__eyebrow">{{ t('employees.cardEyebrow') }}</p><h3 id="person-card-title">{{ selected.name }}</h3></div><button type="button" :disabled="saving" :aria-label="t('employees.close')" @click="closeCard">×</button></header>
           <div class="employee-dialog__body">
             <section v-if="selected.employee" class="employee-dialog__details">
-              <h4 class="ui-section-header">Данные сотрудника</h4>
-              <UiInput v-model="cardDraft.name" label="Имя" required maxlength="250" :disabled="saving || !canWrite" />
-              <UiPhoneInput :model-value="cardDraft.phone" @update:model-value="cardDraft.phone = $event" label="Телефон" :disabled="saving || !canWrite" />
+              <h4 class="ui-section-header">{{ t('employees.employeeData') }}</h4>
+              <UiInput v-model="cardDraft.name" :label="t('employees.name')" required maxlength="250" :disabled="saving || !canWrite" />
+              <UiPhoneInput :model-value="cardDraft.phone" @update:model-value="cardDraft.phone = $event" :label="t('employees.phone')" :disabled="saving || !canWrite" />
               <div class="employee-dialog__checkbox-line">
-                <label class="employee-dialog__checkbox"><input v-model="cardDraft.isActive" type="checkbox" :disabled="saving || !canWrite" /> Можно назначать работы</label>
-                <UiTooltip text="Доступность для новых работ и смен. Не меняет вход в CRM."><button type="button" class="ui-field-label__help" aria-label="Подсказка: назначение на работы">?</button></UiTooltip>
+                <label class="employee-dialog__checkbox"><input v-model="cardDraft.isActive" type="checkbox" :disabled="saving || !canWrite" /> {{ t('employees.canAssignWork') }}</label>
+                <UiTooltip :text="t('employees.assignmentHelp')"><button type="button" class="ui-field-label__help" :aria-label="t('employees.assignmentHelpLabel')">?</button></UiTooltip>
               </div>
             </section>
             <section class="employee-dialog__section">
-              <div class="employee-dialog__section-heading ui-section-header"><h4>Доступ к CRM <UiTooltip text="Роль определяет доступные разделы и действия."><button type="button" class="ui-field-label__help" aria-label="Подсказка: доступ к CRM">?</button></UiTooltip></h4><span class="team-status" :class="{ 'team-status--enabled': selected.member || selected.employee?.memberId, 'team-status--pending': selected.invitation }">{{ selected.connection }}</span></div>
+              <div class="employee-dialog__section-heading ui-section-header"><h4>{{ t('employees.accessTitle') }} <UiTooltip :text="t('employees.roleHelp')"><button type="button" class="ui-field-label__help" :aria-label="t('employees.roleHelpLabel')">?</button></UiTooltip></h4><span class="team-status" :class="{ 'team-status--enabled': selected.member || selected.employee?.memberId, 'team-status--pending': selected.invitation }">{{ selected.connection }}</span></div>
               <p v-if="selected.email" class="employee-dialog__email">{{ selected.email }}</p>
               <template v-if="selected.member && canManageRoles && !selected.member.isOwner">
-                <UiSelect append-to="#team-person-card-dialog" v-model="cardDraft.roleCode" label="Роль" :options="roleOptions" required :searchable="false" :disabled="saving" />
-                <UiButton v-if="cardDraft.roleCode !== selected.member.roleCode" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="saveRole">Сохранить роль</UiButton>
+                <UiSelect append-to="#team-person-card-dialog" v-model="cardDraft.roleCode" :label="t('employees.role')" :options="roleOptions" required :searchable="false" :disabled="saving" />
+                <UiButton v-if="cardDraft.roleCode !== selected.member.roleCode" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="saveRole">{{ t('employees.saveRole') }}</UiButton>
               </template>
-              <p v-else-if="selected.member || selected.invitation" class="employee-dialog__hint">Роль: {{ selected.role }}</p>
-              <UiButton v-if="selected.employee?.memberId && canLink" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="requestMemberAction('unlink')">Отвязать аккаунт</UiButton>
+              <p v-else-if="selected.member || selected.invitation" class="employee-dialog__hint">{{ t('employees.role') }}: {{ selected.role }}</p>
+              <UiButton v-if="selected.employee?.memberId && canLink" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="requestMemberAction('unlink')">{{ t('employees.unlinkAccount') }}</UiButton>
               <template v-if="selected.employee && !selected.member && !selected.employee.memberId && !selected.invitation && (canInvite || canLink)">
-                <label class="employee-dialog__checkbox"><input type="checkbox" :checked="cardAction === 'invite' || cardAction === 'link'" :disabled="saving" @change="cardAction = ($event.target as HTMLInputElement).checked ? (canInvite ? 'invite' : 'link') : null" /> Предоставить доступ к CRM</label>
+                <label class="employee-dialog__checkbox"><input type="checkbox" :checked="cardAction === 'invite' || cardAction === 'link'" :disabled="saving" @change="cardAction = ($event.target as HTMLInputElement).checked ? (canInvite ? 'invite' : 'link') : null" /> {{ t('employees.grantAccess') }}</label>
                 <template v-if="cardAction === 'invite'">
-                  <UiInput v-model="cardDraft.email" type="email" label="Email для входа" required :disabled="saving" />
-                  <UiSelect append-to="#team-person-card-dialog" v-model="cardDraft.roleCode" label="Роль" :options="roleOptions" required :searchable="false" :disabled="saving" />
+                  <UiInput v-model="cardDraft.email" type="email" :label="t('employees.emailForLogin')" required :disabled="saving" />
+                  <UiSelect append-to="#team-person-card-dialog" v-model="cardDraft.roleCode" :label="t('employees.role')" :options="roleOptions" required :searchable="false" :disabled="saving" />
                 </template>
-                <UiSelect v-if="cardAction === 'link'" append-to="#team-person-card-dialog" v-model="cardDraft.memberId" label="Аккаунт в вашей организации" placeholder="Выберите аккаунт" :options="memberSelectOptions" required :disabled="saving" />
-                <button v-if="canLink && availableMembers.length && cardAction !== 'link'" type="button" class="employees__quiet-action" :disabled="saving" @click="cardAction = 'link'">У сотрудника уже есть аккаунт? Связать аккаунт</button>
-                <button v-if="canInvite && cardAction === 'link'" type="button" class="employees__quiet-action" :disabled="saving" @click="cardAction = 'invite'">Пригласить по email</button>
-                <UiButton v-if="cardAction === 'invite'" variant="secondary" :disabled="saving || hasUnsavedDetails || !cardDraft.email.trim()" @click="applyCardAction">Отправить приглашение</UiButton>
+                <UiSelect v-if="cardAction === 'link'" append-to="#team-person-card-dialog" v-model="cardDraft.memberId" :label="t('employees.account')" :placeholder="t('employees.chooseAccount')" :options="memberSelectOptions" required :disabled="saving" />
+                <button v-if="canLink && availableMembers.length && cardAction !== 'link'" type="button" class="employees__quiet-action" :disabled="saving" @click="cardAction = 'link'">{{ t('employees.linkExisting') }}</button>
+                <button v-if="canInvite && cardAction === 'link'" type="button" class="employees__quiet-action" :disabled="saving" @click="cardAction = 'invite'">{{ t('employees.inviteByEmail') }}</button>
+                <UiButton v-if="cardAction === 'invite'" variant="secondary" :disabled="saving || hasUnsavedDetails || !cardDraft.email.trim()" @click="applyCardAction">{{ t('employees.invite') }}</UiButton>
               </template>
-              <p v-if="hasUnsavedDetails && (cardAction === 'invite' || (selected.member && cardDraft.roleCode !== selected.member.roleCode))" class="employee-dialog__hint">Сначала сохраните изменения данных сотрудника.</p>
+              <p v-if="hasUnsavedDetails && (cardAction === 'invite' || (selected.member && cardDraft.roleCode !== selected.member.roleCode))" class="employee-dialog__hint">{{ t('employees.saveDetailsFirst') }}</p>
             </section>
             <section v-if="!selected.employee && selected.member && canLink" class="employee-dialog__section">
-              <h4 class="ui-section-header">Назначение на работы</h4>
-              <p class="employee-dialog__hint">Сейчас сотрудник входит в CRM без назначения на работы.</p>
-              <label class="employee-dialog__checkbox"><input type="checkbox" :checked="cardAction === 'create'" :disabled="saving" @change="cardAction = ($event.target as HTMLInputElement).checked ? 'create' : null" /> Можно назначать работы</label>
+              <h4 class="ui-section-header">{{ t('employees.assignmentTitle') }}</h4>
+              <p class="employee-dialog__hint">{{ t('employees.noAssignmentHint') }}</p>
+              <label class="employee-dialog__checkbox"><input type="checkbox" :checked="cardAction === 'create'" :disabled="saving" @change="cardAction = ($event.target as HTMLInputElement).checked ? 'create' : null" /> {{ t('employees.canAssignWork') }}</label>
               <template v-if="cardAction === 'create'">
-                <UiInput v-model="cardDraft.name" label="Имя" required maxlength="250" :disabled="saving" />
-                <UiPhoneInput :model-value="cardDraft.phone" @update:model-value="cardDraft.phone = $event" label="Телефон" :disabled="saving" />
+                <UiInput v-model="cardDraft.name" :label="t('employees.name')" required maxlength="250" :disabled="saving" />
+                <UiPhoneInput :model-value="cardDraft.phone" @update:model-value="cardDraft.phone = $event" :label="t('employees.phone')" :disabled="saving" />
               </template>
-              <button v-if="availableEmployees.length && cardAction !== 'attach'" type="button" class="employees__quiet-action" :disabled="saving" @click="cardAction = 'attach'">Сотрудник уже есть в команде? Объединить с аккаунтом</button>
-              <UiSelect v-if="cardAction === 'attach'" append-to="#team-person-card-dialog" v-model="cardDraft.memberId" label="Сотрудник" :options="employeeSelectOptions" required :disabled="saving" />
-              <UiButton v-if="cardAction === 'create' || cardAction === 'attach'" variant="secondary" :disabled="saving || (cardAction === 'create' ? !cardDraft.name.trim() : !cardDraft.memberId)" @click="applyCardAction">{{ cardAction === 'create' ? 'Разрешить назначение' : 'Объединить' }}</UiButton>
+              <button v-if="availableEmployees.length && cardAction !== 'attach'" type="button" class="employees__quiet-action" :disabled="saving" @click="cardAction = 'attach'">{{ t('employees.combineExisting') }}</button>
+              <UiSelect v-if="cardAction === 'attach'" append-to="#team-person-card-dialog" v-model="cardDraft.memberId" :label="t('employees.employee')" :options="employeeSelectOptions" required :disabled="saving" />
+              <UiButton v-if="cardAction === 'create' || cardAction === 'attach'" variant="secondary" :disabled="saving || (cardAction === 'create' ? !cardDraft.name.trim() : !cardDraft.memberId)" @click="applyCardAction">{{ cardAction === 'create' ? t('employees.allowAssignment') : t('employees.combine') }}</UiButton>
             </section>
             <details v-if="(selected.member && !selected.member.isOwner && (canRemove || canTransfer)) || (selected.invitation && canInvite)" class="employee-dialog__section">
-              <summary>Управление доступом</summary>
-              <UiButton v-if="selected.invitation && canInvite" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="revokeInvitation">Отозвать приглашение</UiButton>
-              <UiButton v-if="selected.member && canRemove" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="requestMemberAction('remove')">Удалить доступ к CRM</UiButton>
-              <UiButton v-if="selected.member && canTransfer" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="requestMemberAction('owner')">Передать владение</UiButton>
+              <summary>{{ t('employees.accessManagement') }}</summary>
+              <UiButton v-if="selected.invitation && canInvite" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="revokeInvitation">{{ t('employees.revokeInvitation') }}</UiButton>
+              <UiButton v-if="selected.member && canRemove" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="requestMemberAction('remove')">{{ t('employees.removeAccess') }}</UiButton>
+              <UiButton v-if="selected.member && canTransfer" variant="secondary" :disabled="saving || hasUnsavedDetails" @click="requestMemberAction('owner')">{{ t('employees.transferOwnership') }}</UiButton>
             </details>
             <p v-if="formError" class="employee-dialog__error" role="alert">{{ formError }}</p>
           </div>
-          <footer><UiButton variant="secondary" :disabled="saving" @click="closeCard">Закрыть</UiButton><UiButton v-if="selected.employee && canWrite" type="submit" :disabled="saving || !canSaveCard">{{ saving ? 'Сохраняем…' : 'Сохранить изменения' }}</UiButton></footer>
+          <footer><UiButton variant="secondary" :disabled="saving" @click="closeCard">{{ t('employees.close') }}</UiButton><UiButton v-if="selected.employee && canWrite" type="submit" :disabled="saving || !canSaveCard">{{ saving ? t('employees.saving') : t('employees.saveChanges') }}</UiButton></footer>
         </template>
       </form>
     </dialog>
     <dialog ref="confirmationDialog" class="employee-dialog" aria-labelledby="team-confirm-title" @cancel="saving && $event.preventDefault()">
       <form @submit.prevent="confirmMemberAction">
-        <header class="ui-form-header"><h3 id="team-confirm-title">{{ memberAction === 'unlink' ? 'Отвязать аккаунт?' : memberAction === 'owner' ? 'Передать владение?' : 'Удалить доступ к CRM?' }}</h3></header>
-        <div class="employee-dialog__body"><p>{{ memberAction === 'unlink' ? 'Аккаунт будет отвязан от карточки сотрудника. Сотрудник, его работы и смены сохранятся. Членство аккаунта, роль и доступ к CRM не изменятся.' : memberAction === 'owner' ? 'Сотрудник станет владельцем организации. Ваша роль изменится.' : 'Сотрудник потеряет вход в эту организацию. История работ сохранится.' }}</p><p v-if="formError" class="employee-dialog__error" role="alert">{{ formError }}</p></div>
-        <footer><UiButton variant="secondary" :disabled="saving" @click="confirmationDialog?.close()">Отмена</UiButton><UiButton type="submit" :disabled="saving">{{ saving ? 'Выполняем…' : memberAction === 'unlink' ? 'Отвязать аккаунт' : memberAction === 'owner' ? 'Передать владение' : 'Удалить доступ' }}</UiButton></footer>
+        <header class="ui-form-header"><h3 id="team-confirm-title">{{ memberAction === 'unlink' ? t('employees.unlinkTitle') : memberAction === 'owner' ? t('employees.ownerTitle') : t('employees.removeTitle') }}</h3></header>
+        <div class="employee-dialog__body"><p>{{ memberAction === 'unlink' ? t('employees.unlinkConfirmation') : memberAction === 'owner' ? t('employees.ownerConfirmation') : t('employees.removeConfirmation') }}</p><p v-if="formError" class="employee-dialog__error" role="alert">{{ formError }}</p></div>
+        <footer><UiButton variant="secondary" :disabled="saving" @click="confirmationDialog?.close()">{{ t('employees.cancel') }}</UiButton><UiButton type="submit" :disabled="saving">{{ saving ? t('employees.executing') : memberAction === 'unlink' ? t('employees.confirmUnlink') : memberAction === 'owner' ? t('employees.confirmOwner') : t('employees.confirmRemove') }}</UiButton></footer>
       </form>
     </dialog>
   </div>
@@ -591,7 +606,7 @@ onMounted(() => {
   .employees__identity { grid-column: 1; grid-row: 1; }
   .employees__assignment { grid-column: 1; grid-row: 2; }
   .employees__role { grid-column: 1; grid-row: 4; }
-  .employees__role::before { content: 'Роль: '; color: var(--crm-text-muted, #687386); }
+  .employees__role::before { content: attr(data-label); color: var(--crm-text-muted, #687386); }
   .employees__connection { grid-column: 1; grid-row: 3; }
   .employees__row-action { grid-column: 2; grid-row: 1 / 5; }
 }

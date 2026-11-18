@@ -53,6 +53,7 @@ internal static class OrganizationWorkspaceMaintenanceMapper
             Mileage = maintenance.Mileage,
             MileageUnit = maintenance.Vehicle.MileageUnit,
             Comment = maintenance.Comment,
+            CurrencyCode = maintenance.CurrencyCode,
             Price = Math.Max(0m, Math.Round(
                 maintenance.Details.Sum(detail => (decimal)(detail.Price ?? 0)),
                 2,

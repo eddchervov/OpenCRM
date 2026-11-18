@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useLocalization } from '@opencrm/ui/i18n'
+import '../inquiryMessages'
+
 import { computed, ref } from 'vue'
 import { UiInput, UiPhoneInput } from '@opencrm/ui'
 import type { Inquiry } from '../api/inquiries'
+
+const { t } = useLocalization()
 
 const props = defineProps<{ inquiry: Inquiry; selectedClientId: string }>()
 const createClient = ref(false)
@@ -11,7 +16,7 @@ const showCreate = computed(() => props.inquiry.canCreateClient && !props.select
 
 function getNewClient() {
   if (!showCreate.value || !createClient.value) return undefined
-  if (!name.value.trim()) throw new Error('Укажите имя нового клиента.')
+  if (!name.value.trim()) throw new Error(t('inquiries.newClientNameRequired'))
   return { name: name.value.trim(), phone: phone.value.trim() || null, partyTypeCode: 'person' }
 }
 defineExpose({ getNewClient })
@@ -19,11 +24,11 @@ defineExpose({ getNewClient })
 
 <template>
   <section class="inquiry-booking">
-    <div><a :href="`#inquiries/${inquiry.id}`">Обращение · {{ inquiry.contactName }}</a><span v-if="inquiry.contactPhone">{{ inquiry.contactPhone }}</span></div>
+    <div><a :href="`#inquiries/${inquiry.id}`">{{ t('inquiries.inquiry') }} · {{ inquiry.contactName }}</a><span v-if="inquiry.contactPhone">{{ inquiry.contactPhone }}</span></div>
     <p>{{ inquiry.interestText }}</p>
     <p v-if="inquiry.vehicleDescription">{{ inquiry.vehicleDescription }}</p>
-    <label v-if="showCreate" class="inquiry-booking__toggle"><input v-model="createClient" type="checkbox" /> Создать нового клиента вместе с записью</label>
-    <div v-if="showCreate && createClient" class="inquiry-booking__fields"><UiInput v-model="name" label="Имя нового клиента" required :maxlength="200" /><UiPhoneInput v-model="phone" label="Телефон нового клиента" /></div>
+    <label v-if="showCreate" class="inquiry-booking__toggle"><input v-model="createClient" type="checkbox" /> {{ t('inquiries.createClientWithBooking') }}</label>
+    <div v-if="showCreate && createClient" class="inquiry-booking__fields"><UiInput v-model="name" :label="t('inquiries.newClientName')" required :maxlength="200" /><UiPhoneInput v-model="phone" :label="t('inquiries.newClientPhone')" /></div>
   </section>
 </template>
 

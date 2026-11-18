@@ -2,6 +2,7 @@
 import AppFooter from './AppFooter.vue'
 import { getProjectBrand } from '../projectBrand'
 import AppHeader from './AppHeader.vue'
+import { useLocalization } from '../i18n'
 import {
   defaultFooterSections,
   defaultHeaderLinks,
@@ -11,7 +12,7 @@ import {
   type ProfileLink
 } from '../navigation'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   brand?: string
   brandHref?: string
   displayName?: string
@@ -22,12 +23,13 @@ withDefaults(defineProps<{
 }>(), {
   brand: getProjectBrand(),
   brandHref: '/',
-  displayName: 'Профиль',
+  displayName: '',
   headerLinks: () => defaultHeaderLinks,
   profileLinks: () => defaultProfileLinks,
   footerSections: () => defaultFooterSections,
   year: () => new Date().getFullYear()
 })
+const { t } = useLocalization()
 </script>
 
 <template>
@@ -35,7 +37,7 @@ withDefaults(defineProps<{
     <AppHeader
       :brand="brand"
       :brand-href="brandHref"
-      :display-name="displayName"
+      :display-name="displayName || t('common.profile')"
       :links="headerLinks"
       :profile-links="profileLinks"
     />

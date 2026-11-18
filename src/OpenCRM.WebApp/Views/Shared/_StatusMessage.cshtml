@@ -2,9 +2,12 @@
 
 @if (!string.IsNullOrEmpty(Model))
 {
-    var statusMessageClass = Model.ToLower().Contains("ошибка") ? "danger" : "success";
+    var isError = ViewData["StatusMessageIsError"] is true
+        || string.Equals(Model, TempData.Peek("Error") as string, StringComparison.Ordinal)
+        || !ViewData.ModelState.IsValid;
+    var statusMessageClass = isError ? "danger" : "success";
     <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="@Text["entry.close"]"></button>
         @Model
     </div>
 }

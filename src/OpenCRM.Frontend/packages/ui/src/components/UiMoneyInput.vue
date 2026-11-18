@@ -1,5 +1,8 @@
 ﻿<script setup lang="ts">
 import UiFieldLabel from './UiFieldLabel.vue'
+import { useLocalization } from '../i18n'
+
+const { t } = useLocalization()
 
 const model = defineModel<string>({ default: '' })
 
@@ -15,7 +18,7 @@ withDefaults(defineProps<{
   step?: number
 }>(), {
   id: undefined,
-  label: 'Стоимость',
+  label: '',
   labelHelp: '',
   placeholder: '0',
   disabled: false,
@@ -47,7 +50,7 @@ function handleBlur() {
 
 <template>
   <label class="ui-field ui-money-input">
-    <UiFieldLabel :label="label" :required="required" :help="labelHelp" />
+    <UiFieldLabel :label="label || t('common.price')" :required="required" :help="labelHelp" />
     <input
       v-model="model"
       :id="id"

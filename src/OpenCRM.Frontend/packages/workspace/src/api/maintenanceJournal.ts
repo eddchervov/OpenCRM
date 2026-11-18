@@ -1,3 +1,5 @@
+import { translate } from '@opencrm/ui/i18n'
+import '@opencrm/workspace/workspaceApiMessages'
 export type MaintenanceJournalItem = {
   id: string
   date?: string | null
@@ -14,6 +16,7 @@ export type MaintenanceJournalItem = {
   plannedStartTime?: string | null
   completedDate?: string | null
   amount: number
+  currencyCode?: string | null
   paidAmount?: number | null
   paymentStatus?: string | null
 }
@@ -40,7 +43,7 @@ export async function loadMaintenanceJournal(
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? 'Не удалось загрузить журнал обслуживаний.')
+    throw new Error(error?.message ?? translate('workspaceApi.loadMaintenanceJournal'))
   }
 
   return response.json()

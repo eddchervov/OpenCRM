@@ -4,7 +4,7 @@
     Layout = "/Views/Personal/_PersonalLayout.cshtml";
     ViewData["PersonalVehiclePage"] = true;
     var vehicleScenario = ViewData["VehicleScenario"] as OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel ?? new OpenCRM.WebApp.Models.Vehicles.VehicleScenarioViewModel();
-    ViewData["Title"] = vehicleScenario.PageTitle;
+    ViewData["Title"] = Text["vehicle.list.title"].Value;
     ViewData["SeoRobots"] = "noindex,nofollow";
     ViewData["BodyClass"] = "vehicle-page-body";
     var emailConfirmed = ViewData["EmailConfirmed"] as bool? ?? false;
@@ -17,24 +17,70 @@
     }
 </style>
 
-<div id="vehicles-form" v-cloak>
+<div id="vehicles-form" v-cloak
+     data-kind-passenger="@Text["vehicle.edit.kind.passenger"]"
+     data-kind-truck="@Text["vehicle.edit.kind.truck"]"
+     data-kind-motorcycle="@Text["vehicle.edit.kind.motorcycle"]"
+     data-kind-atv="@Text["vehicle.edit.kind.atv"]"
+     data-kind-utv="@Text["vehicle.edit.kind.utv"]"
+     data-kind-snowmobile="@Text["vehicle.edit.kind.snowmobile"]"
+     data-kind-jetski="@Text["vehicle.edit.kind.jetski"]"
+     data-kind-boat="@Text["vehicle.edit.kind.boat"]"
+     data-kind-special="@Text["vehicle.edit.kind.special"]"
+     data-kind-trailer="@Text["vehicle.edit.kind.trailer"]"
+     data-kind-other="@Text["vehicle.edit.kind.other"]"
+     data-mileage-kilometers="@Text["vehicle.edit.mileage.kilometers"]"
+     data-mileage-engine-hours="@Text["vehicle.edit.mileage.engineHours"]"
+     data-all-types="@Text["vehicle.list.filter.allKinds"]"
+     data-all-clients="@Text["vehicle.list.filter.allClients"]"
+     data-pagination-vehicles="@Text["vehicle.list.pagination.vehicles"]"
+     data-pagination-maintenance="@Text["vehicle.list.pagination.maintenance"]"
+     data-maintenance-count-one="@Text["vehicle.list.pagination.maintenance.one"]"
+     data-maintenance-count-few="@Text["vehicle.list.pagination.maintenance.few"]"
+     data-maintenance-count-many="@Text["vehicle.list.pagination.maintenance.many"]"
+     data-brand-all="@Text["vehicle.list.brand.all"]"
+     data-brand-unknown="@Text["vehicle.list.brand.unknown"]"
+     data-warning-limit="@Text["vehicle.list.warning.limit"]"
+     data-plan-free="@Text["vehicle.list.plan.free"]"
+     data-plan-named="@Text["vehicle.list.plan.named"]"
+     data-error-workspace-maintenance="@Text["vehicle.list.error.workspaceMaintenance"]"
+     data-error-quick-vehicles="@Text["vehicle.list.error.quickVehicles"]"
+     data-error-archive="@Text["vehicle.list.error.archive"]"
+     data-error-restore="@Text["vehicle.list.error.restore"]"
+     data-archive-deletion-unknown="@Text["vehicle.list.archive.deletionUnknown"]"
+     data-archive-deletion-today="@Text["vehicle.list.archive.deletionToday"]"
+     data-archive-deletion-one="@Text["vehicle.list.archive.deletion.one"]"
+     data-archive-deletion-few="@Text["vehicle.list.archive.deletion.few"]"
+     data-archive-deletion-many="@Text["vehicle.list.archive.deletion.many"]"
+     data-date-not-specified="@Text["vehicle.list.date.notSpecified"]"
+     data-error-photo="@Text["vehicle.list.error.photo"]"
+     data-error-photo-vehicle="@Text["vehicle.list.error.photoVehicle"]"
+     data-error-transfer="@Text["vehicle.list.error.transfer"]"
+     data-error-delete="@Text["vehicle.list.error.delete"]"
+     data-error-update="@Text["vehicle.list.error.update"]"
+     data-error-create="@Text["vehicle.list.error.create"]"
+     data-error-limit-loading="@Text["vehicle.list.error.limitLoading"]"
+     data-error-models="@Text["vehicle.list.error.models"]"
+     data-error-brands="@Text["vehicle.list.error.brands"]"
+     data-error-clients="@Text["vehicle.list.error.clients"]"
+     data-error-vehicles="@Text["vehicle.list.error.vehicles"]">
     <div class="container py-3">
         <div class="personal-fleet-heading">
-            <span class="text-muted">Автомобили и другая техника вашего аккаунта</span>
-            <button type="button" class="btn btn-dark" @@click="click_addVehicle"><i class="fa fa-plus me-2" aria-hidden="true"></i>@vehicleScenario.AddButtonText</button>
+            <span class="text-muted">@Text["vehicle.list.subtitle"]</span>
+            <button type="button" class="btn btn-dark" @@click="click_addVehicle"><i class="fa fa-plus me-2" aria-hidden="true"></i>@Text["vehicle.list.add"]</button>
         </div>
 
         @if (EmailDeliveryPolicy.IsAvailable(Configuration) && !emailConfirmed)
         {
             <div class="email-confirm-card alert alert-warning">
-                Подтвердите email, чтобы не потерять доступ к аккаунту и быстрее восстановить его при необходимости.
+                @Text["vehicle.list.emailConfirmation"]
             </div>
         }
 
         <div class="personal-fleet-limit" v-if="!loadingLimitInfo && !vehicleLimitInfo.canAddMoreVehicles">
             <i class="fa fa-info-circle" aria-hidden="true"></i>
-            <span>Достигнут лимит личной техники: {{ activeVehiclesCount }} / {{ vehicleLimitInfo.maxVehiclesForUser }}.</span>
-            <a href="/organizations">Перейти к организациям</a>
+            <span>@Text["vehicle.list.limitReached"] {{ activeVehiclesCount }} / {{ vehicleLimitInfo.maxVehiclesForUser }}.</span>
+            <a href="/organizations">@Text["vehicle.list.organizations"]</a>
         </div>
 
         <div class="nav-tabs-container mb-4">
@@ -49,7 +95,7 @@
                             aria-controls="active-fleet"
                             aria-selected="true"
                             @@click="switchToActiveTab">
-                        @vehicleScenario.ActiveTabText
+                        @Text["vehicle.list.active"]
                         <span class="badge bg-success ms-2">{{ activeVehiclesCount }}</span>
                     </button>
                 </li>
@@ -63,7 +109,7 @@
                             aria-controls="archive"
                             aria-selected="false"
                             @@click="switchToArchiveTab">
-                        Архив
+                        @Text["vehicle.list.archive"]
                         <span class="badge bg-secondary ms-2">{{ archivedVehiclesCount }}</span>
                     </button>
                 </li>
@@ -79,7 +125,7 @@
                                   label="name"
                                   :clearable="false"
                                   v-model="selectedBrandFilter">
-                            <template slot="no-options">Нет доступных марок</template>
+                            <template slot="no-options">@Text["vehicle.list.brand.none"]</template>
                         </v-select>
                     </div>
 
@@ -89,7 +135,7 @@
                                   label="text"
                                   :clearable="false"
                                   v-model="selectedKindFilter">
-                            <template slot="no-options">Нет доступных типов</template>
+                            <template slot="no-options">@Text["vehicle.list.kind.none"]</template>
                         </v-select>
                     </div>
 
@@ -99,13 +145,13 @@
                                type="text"
                                class="form-control"
                                v-model.trim="searchQuery"
-                               placeholder="@vehicleScenario.SearchPlaceholder"
+                               placeholder="@Text["vehicle.list.search.placeholder"]"
                                @@input="handleSearchInput">
                         <i v-if="searchLoading" class="fa fa-spinner fa-spin"></i>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary" @@click="resetFilters" v-if="hasActiveFilters">Сбросить</button>
+                        <button type="button" class="btn btn-outline-secondary" @@click="resetFilters" v-if="hasActiveFilters">@Text["vehicle.list.reset"]</button>
                     </div>
                 </div>
 
@@ -113,41 +159,41 @@
                     <div class="vehicles-view-title">
                         <span>{{ paginationInfo }}</span>
                     </div>
-                    <div class="vehicles-view-toggle" role="group" aria-label="Вид отображения техники">
+                    <div class="vehicles-view-toggle" role="group" aria-label="@Text["vehicle.list.view.aria"]">
                         <button type="button"
                                 class="vehicles-view-button"
                                 :class="{ active: viewMode === 'cards' }"
                                 @@click="setVehicleViewMode('cards')">
                             <i class="fa fa-th-large me-1"></i>
-                            Карточки
+                            @Text["vehicle.list.view.cards"]
                         </button>
                         <button type="button"
                                 class="vehicles-view-button"
                                 :class="{ active: viewMode === 'list' }"
                                 @@click="setVehicleViewMode('list')">
                             <i class="fa fa-list me-1"></i>
-                            Список
+                            @Text["vehicle.list.view.list"]
                         </button>
                     </div>
                 </div>
 
                 <div class="empty-state text-center py-5" v-if="initialVehiclesLoaded && vehicles.length === 0 && !loadVehicles">
                     <i class="fa fa-car fa-3x mb-3 text-muted"></i>
-                    <h4 class="mb-2">@vehicleScenario.EmptyTitle</h4>
-                    <p class="text-muted mb-3">@vehicleScenario.EmptyText</p>
-                    <button type="button" class="btn btn-dark" @@click="click_addVehicle">@vehicleScenario.AddButtonText</button>
+                    <h4 class="mb-2">@Text["vehicle.list.noVehicles.title"]</h4>
+                    <p class="text-muted mb-3">@Text["vehicle.list.noVehicles.text"]</p>
+                    <button type="button" class="btn btn-dark" @@click="click_addVehicle">@Text["vehicle.list.add"]</button>
                 </div>
 
                 <div class="empty-state text-center py-5" v-else-if="initialVehiclesLoaded && filteredVehicles.length === 0 && hasActiveFilters">
                     <i class="fa fa-search fa-3x mb-3 text-muted"></i>
-                    <h4 class="mb-2">Ничего не найдено</h4>
-                    <p class="text-muted mb-3">Попробуйте изменить фильтры или очистить поиск.</p>
-                    <button type="button" class="btn btn-outline-dark" @@click="resetFilters">Сбросить фильтры</button>
+                    <h4 class="mb-2">@Text["vehicle.list.empty.title"]</h4>
+                    <p class="text-muted mb-3">@Text["vehicle.list.empty.text"]</p>
+                    <button type="button" class="btn btn-outline-dark" @@click="resetFilters">@Text["vehicle.list.empty.reset"]</button>
                 </div>
 
                 <div class="text-center py-5" v-else-if="loadVehicles">
                     <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
-                    <p class="text-muted mt-3 mb-0">@vehicleScenario.LoadingText</p>
+                    <p class="text-muted mt-3 mb-0">@Text["vehicle.list.loading"]</p>
                 </div>
 
                 <template v-else>
@@ -166,14 +212,14 @@
                                                 type="button"
                                                 class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
                                                 @@click.stop="showPreviousVehiclePhoto(vehicle)"
-                                                title="Предыдущее фото">
+                                                title="@Text["vehicle.list.photo.previous"]">
                                             <i class="fa fa-chevron-left"></i>
                                         </button>
                                         <button v-if="hasMultipleVehiclePhotos(vehicle)"
                                                 type="button"
                                                 class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
                                                 @@click.stop="showNextVehiclePhoto(vehicle)"
-                                                title="Следующее фото">
+                                                title="@Text["vehicle.list.photo.next"]">
                                             <i class="fa fa-chevron-right"></i>
                                         </button>
                                         <div v-if="hasMultipleVehiclePhotos(vehicle)" class="vehicle-card-photo-counter">
@@ -201,7 +247,7 @@
                                                 <a :href="getVehicleDetailsUrl(vehicle)">{{ getVehicleDisplayName(vehicle) }}</a>
                                             </h5>
                                             <div class="vehicle-name" v-if="vehicle.yearIssue || vehicle.name">
-                                                <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                                <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"]</span>
                                                 <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
                                                 <span v-if="vehicle.name">{{ vehicle.name }}</span>
                                             </div>
@@ -210,12 +256,12 @@
                                         <span class="badge text-bg-light border">{{ getVehicleKindText(vehicle.kind) }}</span>
                                     </div>
 
-                                    <p class="vehicle-description mb-3">{{ vehicle.description || 'Описание не заполнено.' }}</p>
+                                    <p class="vehicle-description mb-3">{{ vehicle.description || '@Text["vehicle.list.descriptionMissing"]' }}</p>
 
                                     <div class="vehicle-card-footer">
                                         <a :href="getVehicleDetailsUrl(vehicle)" class="btn-view-maintenance">
                                             <i class="fa fa-folder-open me-2"></i>
-                                            Открыть карточку
+                                            @Text["vehicle.list.openCard"]
                                         </a>
                                     </div>
                                 </div>
@@ -235,14 +281,14 @@
                                             type="button"
                                             class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
                                             @@click.stop="showPreviousVehiclePhoto(vehicle)"
-                                            title="Предыдущее фото">
+                                            title="@Text["vehicle.list.photo.previous"]">
                                         <i class="fa fa-chevron-left"></i>
                                     </button>
                                     <button v-if="hasMultipleVehiclePhotos(vehicle)"
                                             type="button"
                                             class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
                                             @@click.stop="showNextVehiclePhoto(vehicle)"
-                                            title="Следующее фото">
+                                            title="@Text["vehicle.list.photo.next"]">
                                         <i class="fa fa-chevron-right"></i>
                                     </button>
                                 </template>
@@ -261,7 +307,7 @@
                                             <a :href="getVehicleDetailsUrl(vehicle)">{{ getVehicleDisplayName(vehicle) }}</a>
                                         </h5>
                                         <div class="vehicle-name" v-if="vehicle.yearIssue || vehicle.name">
-                                            <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                            <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"]</span>
                                             <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
                                             <span v-if="vehicle.name">{{ vehicle.name }}</span>
                                         </div>
@@ -279,7 +325,7 @@
                             <div class="vehicle-list-actions">
                                 <a :href="getVehicleDetailsUrl(vehicle)" class="btn btn-outline-dark btn-sm">
                                     <i class="fa fa-folder-open me-1"></i>
-                                    Открыть
+                                    @Text["vehicle.list.open"]
                                 </a>
                             </div>
                         </div>
@@ -337,8 +383,8 @@
                 <div class="alert alert-warning d-flex align-items-start gap-3 mb-4">
                     <i class="fa fa-info-circle mt-1"></i>
                     <div>
-                        <div class="fw-semibold">Архив временный</div>
-                        <div>Удаленная техника хранится ограниченное время, а затем удаляется окончательно. Для каждой записи ниже показан оставшийся срок.</div>
+                        <div class="fw-semibold">@Text["vehicle.list.archive.bannerTitle"]</div>
+                        <div>@Text["vehicle.list.archive.bannerText"]</div>
                     </div>
                 </div>
 
@@ -349,7 +395,7 @@
                                   label="name"
                                   :clearable="false"
                                   v-model="selectedArchivedBrandFilter">
-                            <template slot="no-options">Нет доступных марок</template>
+                            <template slot="no-options">@Text["vehicle.list.brand.none"]</template>
                         </v-select>
                     </div>
 
@@ -358,14 +404,14 @@
                         <input type="text"
                                class="form-control"
                                v-model.trim="archiveSearchQuery"
-                               placeholder="Поиск по архиву"
+                               placeholder="@Text["vehicle.list.archive.search"]"
                                @@input="handleArchiveSearchInput">
                         <i v-if="archiveSearchLoading" class="fa fa-spinner fa-spin"></i>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-dark" @@click="applyArchiveSearch">Найти</button>
-                        <button type="button" class="btn btn-outline-secondary" @@click="resetArchiveFilters" v-if="hasActiveArchiveFilters">Сбросить</button>
+                        <button type="button" class="btn btn-outline-dark" @@click="applyArchiveSearch">@Text["vehicle.list.archive.find"]</button>
+                        <button type="button" class="btn btn-outline-secondary" @@click="resetArchiveFilters" v-if="hasActiveArchiveFilters">@Text["vehicle.list.reset"]</button>
                     </div>
                 </div>
 
@@ -373,33 +419,33 @@
                     <div class="vehicles-view-title">
                         <span>{{ paginationInfo }}</span>
                     </div>
-                    <div class="vehicles-view-toggle" role="group" aria-label="Вид отображения техники">
+                    <div class="vehicles-view-toggle" role="group" aria-label="@Text["vehicle.list.view.aria"]">
                         <button type="button"
                                 class="vehicles-view-button"
                                 :class="{ active: viewMode === 'cards' }"
                                 @@click="setVehicleViewMode('cards')">
                             <i class="fa fa-th-large me-1"></i>
-                            Карточки
+                            @Text["vehicle.list.view.cards"]
                         </button>
                         <button type="button"
                                 class="vehicles-view-button"
                                 :class="{ active: viewMode === 'list' }"
                                 @@click="setVehicleViewMode('list')">
                             <i class="fa fa-list me-1"></i>
-                            Список
+                            @Text["vehicle.list.view.list"]
                         </button>
                     </div>
                 </div>
 
                 <div class="empty-state text-center py-5" v-if="!loadArchivedVehicles && archivedVehicles.length === 0">
                     <i class="fa fa-archive fa-3x mb-3 text-muted"></i>
-                    <h4 class="mb-2">Архив пуст</h4>
-                    <p class="text-muted mb-0">@vehicleScenario.ArchiveEmptyText</p>
+                    <h4 class="mb-2">@Text["vehicle.list.archive.empty"]</h4>
+                    <p class="text-muted mb-0">@Text["vehicle.list.archive.emptyText"]</p>
                 </div>
 
                 <div class="text-center py-5" v-else-if="loadArchivedVehicles">
                     <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
-                    <p class="text-muted mt-3 mb-0">Загружаем архив...</p>
+                    <p class="text-muted mt-3 mb-0">@Text["vehicle.list.archive.loading"]</p>
                 </div>
 
                 <template v-else>
@@ -421,14 +467,14 @@
                                                 type="button"
                                                 class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
                                                 @@click.stop="showPreviousVehiclePhoto(vehicle)"
-                                                title="Предыдущее фото">
+                                                title="@Text["vehicle.list.photo.previous"]">
                                             <i class="fa fa-chevron-left"></i>
                                         </button>
                                         <button v-if="hasMultipleVehiclePhotos(vehicle)"
                                                 type="button"
                                                 class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
                                                 @@click.stop="showNextVehiclePhoto(vehicle)"
-                                                title="Следующее фото">
+                                                title="@Text["vehicle.list.photo.next"]">
                                             <i class="fa fa-chevron-right"></i>
                                         </button>
                                         <div v-if="hasMultipleVehiclePhotos(vehicle)" class="vehicle-card-photo-counter">
@@ -445,23 +491,23 @@
                                 <div class="vehicle-card-body">
                                     <h5 class="vehicle-title mb-1">{{ getVehicleDisplayName(vehicle) }}</h5>
                                     <div class="vehicle-name mb-2" v-if="vehicle.yearIssue || vehicle.name">
-                                        <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                        <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"]</span>
                                         <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
                                         <span v-if="vehicle.name">{{ vehicle.name }}</span>
                                     </div>
 
                                     <div class="archive-info">
                                         <i class="fa fa-info-circle me-1"></i>
-                                        Дата архивации: <strong>{{ formatDate(vehicle.archiveDate) }}</strong>
+                                        @Text["vehicle.list.archive.date"] <strong>{{ formatDate(vehicle.archiveDate) }}</strong>
                                     </div>
                                     <div class="d-flex flex-wrap gap-2 mt-auto">
                                         <button type="button" class="btn btn-success btn-sm" @@click="restoreFromArchive(vehicle)">
                                             <i class="fa fa-undo me-1"></i>
-                                            Восстановить
+                                            @Text["vehicle.list.archive.restore"]
                                         </button>
                                         <button type="button" class="btn btn-outline-secondary btn-sm" @@click="viewArchivedVehicleDetails(vehicle)">
                                             <i class="fa fa-folder-open me-1"></i>
-                                            Открыть
+                                            @Text["vehicle.list.open"]
                                         </button>
                                     </div>
                                 </div>
@@ -481,14 +527,14 @@
                                             type="button"
                                             class="vehicle-card-photo-nav vehicle-card-photo-nav-prev"
                                             @@click.stop="showPreviousVehiclePhoto(vehicle)"
-                                            title="Предыдущее фото">
+                                            title="@Text["vehicle.list.photo.previous"]">
                                         <i class="fa fa-chevron-left"></i>
                                     </button>
                                     <button v-if="hasMultipleVehiclePhotos(vehicle)"
                                             type="button"
                                             class="vehicle-card-photo-nav vehicle-card-photo-nav-next"
                                             @@click.stop="showNextVehiclePhoto(vehicle)"
-                                            title="Следующее фото">
+                                            title="@Text["vehicle.list.photo.next"]">
                                         <i class="fa fa-chevron-right"></i>
                                     </button>
                                 </template>
@@ -502,7 +548,7 @@
                                     <div>
                                         <h5 class="vehicle-title mb-1">{{ getVehicleDisplayName(vehicle) }}</h5>
                                         <div class="vehicle-name" v-if="vehicle.yearIssue || vehicle.name">
-                                            <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} г.</span>
+                                            <span v-if="vehicle.yearIssue">{{ vehicle.yearIssue }} @Text["vehicle.list.yearSuffix"]</span>
                                             <span v-if="vehicle.yearIssue && vehicle.name"> • </span>
                                             <span v-if="vehicle.name">{{ vehicle.name }}</span>
                                         </div>
@@ -511,7 +557,7 @@
 
                                 <div class="archive-info mb-0">
                                     <i class="fa fa-info-circle me-1"></i>
-                                    Дата архивации: <strong>{{ formatDate(vehicle.archiveDate) }}</strong>
+                                    @Text["vehicle.list.archive.date"] <strong>{{ formatDate(vehicle.archiveDate) }}</strong>
                                 </div>
                                 <div class="archive-info mt-2">
                                     <span class="archive-list-badge" :class="getTimerClass(vehicle.daysLeft)">
@@ -524,11 +570,11 @@
                             <div class="vehicle-list-actions">
                                 <button type="button" class="btn btn-success btn-sm" @@click="restoreFromArchive(vehicle)">
                                     <i class="fa fa-undo me-1"></i>
-                                    Восстановить
+                                    @Text["vehicle.list.archive.restore"]
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm" @@click="viewArchivedVehicleDetails(vehicle)">
                                     <i class="fa fa-folder-open me-1"></i>
-                                    Открыть
+                                    @Text["vehicle.list.open"]
                                 </button>
                             </div>
                         </div>
@@ -581,7 +627,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="fa fa-image me-2"></i>
-                            Фото техники
+                            @Text["vehicle.list.photo.title"]
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -589,7 +635,7 @@
                         <div v-if="currentPhotos.length > 0">
                             <img :src="currentPhotos[currentPhotoIndex]"
                                  class="img-fluid rounded vehicle-photo-viewer-image"
-                                 :alt="'Фото техники ' + (currentPhotoIndex + 1)">
+                                 :alt="'@Text["vehicle.list.photo.alt"]'.replace('{0}', currentPhotoIndex + 1)">
 
                             <div class="mt-3 d-flex justify-content-center align-items-center">
                                 <button class="btn btn-outline-secondary me-2"
@@ -610,13 +656,13 @@
                             </div>
                         </div>
                         <div v-else>
-                            <p>Нет фотографий для отображения</p>
+                            <p>@Text["vehicle.list.photo.empty"]</p>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fa fa-times me-1"></i>
-                            Закрыть
+                            @Text["vehicle.list.close"]
                         </button>
                     </div>
                 </div>
@@ -655,5 +701,5 @@
 
 
 @section Breadcrumbs {
-    <nav aria-label="Хлебные крошки"><ol><li><h1 aria-current="page">Личная техника</h1></li></ol></nav>
+    <nav aria-label="@Text["vehicle.list.breadcrumb"]"><ol><li><h1 aria-current="page">@Text["vehicle.list.breadcrumb"]</h1></li></ol></nav>
 }
