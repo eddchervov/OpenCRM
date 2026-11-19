@@ -2,9 +2,15 @@
 
 **English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
-**Self-hosted CRM for automotive businesses, with no license fee.**
+**A ready-to-use CRM for automotive businesses and a modular core for your own CRM. Run it on your own server with no license fee.**
 
 OpenCRM combines a working web application, shared business modules, administration interfaces, and independent notification and payment microservices. Detailing studios and repair shops can start with customers, vehicles, bay schedules, intake, and work orders. Fleet teams can use the core to build their own maintenance tools.
+
+## Video tour
+
+[![Watch the OpenCRM video tour](docs/media/opencrm-demo-en.jpg)](https://www.youtube.com/watch?v=dsb6p__El6s)
+
+[Watch on YouTube (2:30)](https://www.youtube.com/watch?v=dsb6p__El6s). Follow one visit to a detailing shop from the first appointment to vehicle handover.
 
 ## CRM interface
 
