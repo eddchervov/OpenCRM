@@ -68,15 +68,17 @@
 }
 
 .opencrm-language-switcher {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+  max-width: 640px;
   color: var(--crm-text, #202833);
   font-size: 13px;
 }
 
 .opencrm-language-switcher select {
-  max-width: 138px;
+  width: 100%;
+  min-width: 0;
   min-height: 34px;
   padding: 4px 8px;
   border: 1px solid var(--crm-line, #dce2e9);
@@ -84,6 +86,8 @@
   color: inherit;
   background: var(--crm-surface, #fff);
 }
+
+.opencrm-language-switcher > label { display: grid; gap: 6px; }
 
 .opencrm-language-switcher select:focus-visible {
   outline: 2px solid var(--opencrm-accent);

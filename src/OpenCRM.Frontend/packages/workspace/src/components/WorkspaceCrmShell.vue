@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
-import { formatLocaleDate, getProjectBrand, LanguageSwitcher, pageBreadcrumbsKey, toggleWorkspaceTheme, useLocalization, workspaceTheme, type ProfileLink } from '@opencrm/ui'
+import { formatLocaleDate, getProjectBrand, pageBreadcrumbsKey, toggleWorkspaceTheme, useLocalization, workspaceTheme, type ProfileLink } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
 import { provideWorkspaceCurrency } from '../workspaceCurrency'
 import type { WorkspaceBreadcrumbItem } from './WorkspaceBreadcrumbs.vue'
@@ -225,7 +225,6 @@ onBeforeUnmount(() => {
         <span class="crm-organization__scenario">{{ context?.shell.scenario?.title }}</span>
       </div>
       <div class="crm-topbar__actions">
-        <LanguageSwitcher />
         <WorkspaceAssistantButton
           v-if="context && context.shell.scenario?.modules?.assistantVisible !== false"
           :organization-id="context.organization.id"

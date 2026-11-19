@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
+import SettingsView from '@/views/SettingsView.vue'
 import CrmImportView from '@/views/CrmImportView.vue'
 import BillingView from '@/views/BillingView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
@@ -35,6 +36,7 @@ const permissionRoutes = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
+    { path: '/settings', name: 'settings', component: SettingsView },
     {
       path: '/',
       name: 'dashboard',

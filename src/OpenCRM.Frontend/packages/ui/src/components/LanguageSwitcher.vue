@@ -26,15 +26,19 @@ function changeFormat(event: Event) {
 </script>
 
 <template>
-  <label class="opencrm-language-switcher">
-    <span class="opencrm-language-switcher__label">{{ t('common.language') }}</span>
-    <select :value="locale" :aria-label="t('common.language')" @change="changeLanguage">
-      <option v-for="language in uiLanguages" :key="language.code" :value="language.code">{{ language.name }}</option>
-    </select>
-    <span class="opencrm-language-switcher__label">{{ t('common.numberFormat') }}</span>
-    <select v-model="formatCulture" :aria-label="t('common.numberFormat')" @change="changeFormat">
-      <option v-for="culture in formatCultures" :key="culture" :value="culture">{{ culture }}</option>
-    </select>
+  <div class="opencrm-language-switcher">
+    <label>
+      <span class="opencrm-language-switcher__label">{{ t('common.language') }}</span>
+      <select :value="locale" :aria-label="t('common.language')" @change="changeLanguage">
+        <option v-for="language in uiLanguages" :key="language.code" :value="language.code">{{ language.name }}</option>
+      </select>
+    </label>
+    <label>
+      <span class="opencrm-language-switcher__label">{{ t('common.numberFormat') }}</span>
+      <select v-model="formatCulture" :aria-label="t('common.numberFormat')" @change="changeFormat">
+        <option v-for="culture in formatCultures" :key="culture" :value="culture">{{ culture }}</option>
+      </select>
+    </label>
     <span v-if="submitError" class="opencrm-language-switcher__error" role="alert">{{ submitError }}</span>
-  </label>
+  </div>
 </template>

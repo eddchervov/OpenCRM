@@ -2,7 +2,7 @@
 import '../settingsMessages'
 import { translate as t } from '@opencrm/ui/i18n'
 import { computed, nextTick, ref, useSlots, watch } from 'vue'
-import { UiButton, UiInput, UiSelect, UiTextarea, UiPhoneInput } from '@opencrm/ui'
+import { UiButton, UiInput, UiSelect, UiTextarea, UiPhoneInput, RegionalPreferences } from '@opencrm/ui'
 import type { WorkspaceSettingsData } from '../api/workspaceAdmin'
 import WorkspaceNotificationSettings from './WorkspaceNotificationSettings.vue'
 import WorkspaceSettingsChoices from './WorkspaceSettingsChoices.vue'
@@ -61,7 +61,7 @@ const emit = defineEmits<{
   currencySaved: []
 }>()
 
-type SettingsSection = 'profile' | 'workflow' | 'documents' | 'notifications' | 'requisites' | 'imports' | 'export' | 'archive'
+type SettingsSection = 'profile' | 'workflow' | 'documents' | 'notifications' | 'requisites' | 'imports' | 'export' | 'archive' | 'interface'
 type SettingsMenuItem = { code: SettingsSection, title: string, group: string, description: string, isPro: boolean }
 const slots = useSlots()
 const canImport = ref(false)
@@ -91,6 +91,7 @@ const workflowGroups = computed(() => [{ items: [
   ...(slots.workingHours ? [{ code: 'hours', title: t('settings.hours'), symbol: 'clock', description: t('settings.hoursDescription') }] : [])
 ] }])
 const sections = computed<SettingsMenuItem[]>(() => [
+  { code: 'interface', title: t('common.regionalPreferences'), group: t('common.personalSettings'), description: t('common.regionalPreferencesHint'), isPro: false },
   { code: 'profile', title: t('settings.general'), group: t('settings.organization'), description: t('settings.profileDescription'), isPro: false },
   { code: 'requisites', title: t('settings.requisites'), group: t('settings.organization'), description: t('settings.requisitesDescription'), isPro: false },
   { code: 'workflow', title: t('settings.workflow'), group: t('settings.workflowGroup'), description: t('settings.workflowDescription'), isPro: false },
@@ -187,6 +188,9 @@ watch(() => props.settings.organization.id, () => {
       </section>
     </nav>
     <div :key="settings.organization.id" class="organization-settings__content">
+      <section v-if="activeSection === 'interface'" class="organization-panel">
+        <RegionalPreferences />
+      </section>
       <section v-show="activeSection === 'profile'" class="organization-panel">
         <header class="ui-section-header"><div><h3>{{ t('settings.generalSettings') }}</h3><p>{{ t('settings.basicDetails') }}</p></div><UiButton v-if="canEditProfile && !isEditingProfile" variant="secondary" :disabled="isBusy" @click="$emit('startProfileEdit')">{{ t('settings.edit') }}</UiButton></header>
         <form v-if="canEditProfile && isEditingProfile" class="organization-form" @submit.prevent="$emit('saveProfile')">

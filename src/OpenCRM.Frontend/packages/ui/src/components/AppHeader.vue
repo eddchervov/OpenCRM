@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { getProjectBrand } from '../projectBrand'
 import type { HeaderLink, ProfileLink } from '../navigation'
 import UiTooltip from './UiTooltip.vue'
-import LanguageSwitcher from './LanguageSwitcher.vue'
 import { useLocalization } from '../i18n'
 
 const props = withDefaults(defineProps<{
@@ -32,7 +31,6 @@ const requestToken = document.querySelector<HTMLMetaElement>('meta[name="request
         <a class="opencrm-header__brand" :href="brandHref">{{ brand }}</a>
 
         <div class="opencrm-header__menu">
-          <LanguageSwitcher />
           <a v-for="link in links" :key="link.href" :href="link.href" class="opencrm-header__link">
             {{ link.labelKey ? t(link.labelKey) : link.label }}
           </a>

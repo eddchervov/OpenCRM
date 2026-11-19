@@ -4,7 +4,6 @@ import { getAdminBillingAttention } from '@/api/adminBillingApi'
 import { logoutAdminSession } from '@/api/adminSessionApi'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
 import { getProjectBrand } from '../../../packages/ui/src/projectBrand'
-import LanguageSwitcher from '../../../packages/ui/src/components/LanguageSwitcher.vue'
 import { useLocalization } from '@opencrm/ui/i18n'
 import './localization'
 
@@ -199,7 +198,7 @@ onUnmounted(() => {
         {{ theme === 'dark' ? t('admin.lightTheme') : t('admin.darkTheme') }}
       </button>
 
-      <div class="admin-language-preferences"><LanguageSwitcher /></div>
+      <RouterLink to="/settings" class="admin-navigation__link">{{ t('common.personalSettings') }}</RouterLink>
 
       <nav class="admin-navigation" :aria-label="t('admin.navigation')">
         <RouterLink
@@ -290,10 +289,3 @@ onUnmounted(() => {
     </main>
   </div>
 </template>
-
-<style scoped>
-.admin-language-preferences { margin: 12px 0; }
-.admin-language-preferences :deep(.opencrm-language-switcher) { display: grid; gap: 6px; }
-.admin-language-preferences :deep(select) { width: 100%; min-width: 0; padding: 6px; border: 1px solid var(--admin-border, #667085); border-radius: 6px; color: inherit; background: var(--admin-panel-bg, transparent); }
-.admin-language-preferences :deep(.opencrm-language-switcher__error) { color: var(--admin-danger, #e75151); font-size: 12px; }
-</style>
