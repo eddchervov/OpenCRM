@@ -108,7 +108,7 @@ onBeforeUnmount(() => { scopeVersion++; request?.abort(); emit('busyChanged', fa
         <strong>{{ options.find(option => option.value === settings?.currencyCode)?.label ?? settings.currencyCode }}</strong>
         <UiButton v-if="settings.canManage && settings.canChange" type="button" variant="secondary" :disabled="disabled || saving" @click="startEdit">{{ t('currency.change') }}</UiButton>
       </div>
-      <p v-if="!settings.canChange">{{ t('currency.locked') }}</p>
+      <p v-if="!settings.canChange" class="currency-settings__locked">{{ t('currency.locked') }}</p>
     </template>
     <p v-else-if="loading" role="status">{{ t('currency.loading') }}</p>
     <div v-if="error" role="alert"><p class="currency-settings__error">{{ error }}</p><UiButton type="button" variant="secondary" :disabled="saving || loading" @click="load">{{ t('currency.retry') }}</UiButton></div>
@@ -122,5 +122,7 @@ onBeforeUnmount(() => { scopeVersion++; request?.abort(); emit('busyChanged', fa
 .currency-settings form { display: grid; gap: 12px; max-width: 720px; }
 .currency-settings p { color: var(--crm-text-muted, #687386); font-size: 13px; line-height: 1.5; }
 .currency-settings__actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.currency-settings .currency-settings__error { color: var(--crm-danger-text, #b42318); }
+.currency-settings .currency-settings__error,
+.currency-settings .currency-settings__locked { color: var(--crm-danger-text, #b42318); }
+.currency-settings__locked { font-weight: 600; }
 </style>
