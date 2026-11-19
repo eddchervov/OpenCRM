@@ -8,9 +8,9 @@ OpenCRM объединяет готовое веб-приложение, общ�
 
 ## Видеообзор
 
-[![Открыть видеообзор OpenCRM](docs/media/opencrm-demo-ru.jpg)](docs/media/opencrm-demo-ru.mp4)
+[![Открыть видеообзор OpenCRM](docs/media/opencrm-demo-ru.jpg)](https://www.youtube.com/watch?v=gx-Jx2mkacU)
 
-[Смотреть видеообзор (2:46)](docs/media/opencrm-demo-ru.mp4). В ролике показан один визит в детейлинг-студию от записи клиента до выдачи автомобиля.
+[Смотреть на YouTube (2:46)](https://www.youtube.com/watch?v=gx-Jx2mkacU). В ролике показан один визит в детейлинг-студию от записи клиента до выдачи автомобиля.
 
 ## Интерфейс CRM
 
