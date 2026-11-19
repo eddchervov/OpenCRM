@@ -2,9 +2,15 @@
 
 [English](README.md) | [Русский](README.ru.md) | **简体中文**
 
-**自行部署的汽车服务 CRM，无需支付许可费。**
+**开箱即用的汽车服务 CRM，也可作为自建 CRM 的模块化核心。支持自行部署，无需支付许可费。**
 
 OpenCRM 为汽车美容门店和维修厂提供客户、车辆、工位预约、接车检查和维修工单管理。车队管理团队也可以用它作为自建车辆台账和维保工具的基础。应用部署在自己的服务器上，团队可以配置品牌和集成，并按业务需要扩展代码。
+
+## 视频演示
+
+[![观看 OpenCRM 视频演示](docs/media/opencrm-demo-zh-CN.jpg)](https://www.youtube.com/watch?v=cxJ-XmhH_Pg)
+
+[在 YouTube 观看（2 分 30 秒）](https://www.youtube.com/watch?v=cxJ-XmhH_Pg)。跟随一次汽车美容服务，了解从客户预约到车辆交付的完整流程。
 
 ## 界面预览
 
