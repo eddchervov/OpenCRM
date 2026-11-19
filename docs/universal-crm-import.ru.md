@@ -1,6 +1,6 @@
 # Перенос данных из другой CRM
 
-[English](universal-crm-import.md) | **Русский**
+[English](universal-crm-import.md) | **Русский** | [简体中文](universal-crm-import.zh-CN.md)
 
 ## Модули и вход в интерфейс
 

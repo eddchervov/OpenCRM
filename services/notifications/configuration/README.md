@@ -1,6 +1,6 @@
 # Notification service configuration
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 Configure individual notification service processes through environment variables and local configuration excluded from the repository.
 

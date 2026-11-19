@@ -1,6 +1,6 @@
 # Organizations in the OpenCRM admin interfaces
 
-**English** | [Русский](admin-organizations.ru.md)
+**English** | [Русский](admin-organizations.ru.md) | [简体中文](admin-organizations.zh-CN.md)
 
 The web and desktop administration clients list organizations across supported and legacy scenarios. Search and organization details include the owner, status, members, usage counts, and audit information. Reading requires `Admin.Users.View`; changing organization status also requires `Admin.Users.Manage`.
 

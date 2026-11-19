@@ -1,6 +1,6 @@
 # Подключение OpenCRM через RabbitMQ
 
-[English](opencrm-integration.md) | **Русский**
+[English](opencrm-integration.md) | **Русский** | [简体中文](opencrm-integration.zh-CN.md)
 
 OpenCRM уже использует исходящую очередь EmailMessages и обработчики результатов.
 Рабочие приложения зависят только от Notifications.Contracts. В текущем решении это

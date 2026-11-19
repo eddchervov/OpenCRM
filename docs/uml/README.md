@@ -1,6 +1,6 @@
 # UML diagrams
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 PlantUML source diagrams illustrating the application model and interactions. They are architectural illustrations; check current code and the [architecture guide](../architecture-current.md) before changing contracts.
 

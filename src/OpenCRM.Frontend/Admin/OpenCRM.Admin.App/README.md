@@ -1,6 +1,6 @@
 # OpenCRM Admin — Avalonia
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 The AI assistant administration section controls availability, channels, models, budgets, organization access, audit, spending, and reconciliation of unknown costs. Configuration and spending permissions are checked separately; a settings version conflict requires the administrator to review again. See [assistant documentation](../../../../docs/ai-assistant.md).
 

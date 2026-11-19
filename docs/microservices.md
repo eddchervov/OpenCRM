@@ -1,6 +1,6 @@
 # OpenCRM microservices
 
-**English** | [Русский](microservices.ru.md)
+**English** | [Русский](microservices.ru.md) | [简体中文](microservices.zh-CN.md)
 
 OpenCRM combines a modular CRM core with separate notification and payment services. The application CRM runs in an ASP.NET Core host; background integration tasks run in their own applications.
 

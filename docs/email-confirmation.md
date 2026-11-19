@@ -1,6 +1,6 @@
 # Optional email confirmation
 
-**English** | [Русский](email-confirmation.ru.md)
+**English** | [Русский](email-confirmation.ru.md) | [简体中文](email-confirmation.zh-CN.md)
 
 Email confirmation is disabled by default (`EmailConfirmation:Required=false`). Password registration and sign-in do not require SMTP or mailbox confirmation in the base installation. To require confirmation, first configure and verify notification delivery, then set `EmailConfirmation__Required=true`. The flag does not configure mail delivery by itself.
 

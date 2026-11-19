@@ -1,6 +1,6 @@
 # Razor system emails
 
-**English** | [Русский](templates.ru.md)
+**English** | [Русский](templates.ru.md) | [简体中文](templates.zh-CN.md)
 
 NotificationService system emails are stored as .cshtml files in the repository. OpenCRM sends the template key, exact version, and Data through SendNotification. The service converts Data into a typed model, validates it, and renders the email. Before acknowledging queued, the rendered subject, body, and version are persisted with the notification and outbox. Delivery, deferred sending, and retries use this snapshot.
 

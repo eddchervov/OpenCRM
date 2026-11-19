@@ -1,6 +1,6 @@
 # Shared CRM Shell
 
-**English** | [Русский](crm-workspace-shell.ru.md)
+**English** | [Русский](crm-workspace-shell.ru.md) | [简体中文](crm-workspace-shell.zh-CN.md)
 
 The shell is used by the detailing, auto service, and fleet clients. The public website and administration interfaces do not use it.
 

@@ -1,6 +1,6 @@
 # Свой продукт на основе OpenCRM
 
-[English](extending-opencrm.md) | **Русский**
+[English](extending-opencrm.md) | **Русский** | [简体中文](extending-opencrm.zh-CN.md)
 
 OpenCRM — общая CRM-основа. Сначала используйте готовые настройки, затем добавляйте отличия своего продукта, сохраняя общие исправления в ядре.
 

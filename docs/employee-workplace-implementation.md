@@ -1,6 +1,6 @@
 # Implementation: Employee Workspace and Administrator Oversight
 
-**English** | [Русский](employee-workplace-implementation.ru.md)
+**English** | [Русский](employee-workplace-implementation.ru.md) | [简体中文](employee-workplace-implementation.zh-CN.md)
 
 Basis: [employee workspace requirements](employee-workplace.md), the [overall plan](plan.md), and current [employee rules](organization-employees.md). This plan clarifies the technical scope. Completed invitations, the intake form, and data migration are not implemented again. Mobile navigation and the completed part of the CRM are out of scope. After this priority, the next items are end-to-end auto service verification and replacing the post-build script with the Vite manifest.
 

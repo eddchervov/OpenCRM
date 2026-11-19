@@ -1,6 +1,6 @@
 # OpenCRM subscription payment service
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 Standalone Payments on .NET 10 with its own PostgreSQL and RabbitMQ. All three projects are included in `OpenCRM.sln`: `Payments.Contracts` and `Payments.Service` are in `Services/Payments`, and `Payments.Tests` is in `Tests`. They do not reference OpenCRM. Checkout and Billing connect through a separate financial transport; see the [integration and recovery guide](../../docs/payments-service-integration.md). Production requirements are listed in [Server setup](../../docs/payments-service-integration.md#server-setup).
 

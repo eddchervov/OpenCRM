@@ -1,6 +1,6 @@
 # Перенос записей из расписания
 
-[English](calendar-rescheduling.md) | **Русский**
+[English](calendar-rescheduling.md) | **Русский** | [简体中文](calendar-rescheduling.zh-CN.md)
 
 В разделе «Записи» детейлинга:
 

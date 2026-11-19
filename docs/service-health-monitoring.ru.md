@@ -1,6 +1,6 @@
 # Проверки готовности сервисов
 
-[English](service-health-monitoring.md) | **Русский**
+[English](service-health-monitoring.md) | **Русский** | [简体中文](service-health-monitoring.zh-CN.md)
 
 Сервисы платежей и уведомлений предоставляют внутренние HTTP-маршруты:
 

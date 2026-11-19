@@ -1,6 +1,6 @@
 # Developing OpenCRM
 
-**English** | [Русский](CONTRIBUTING.ru.md)
+**English** | [Русский](CONTRIBUTING.ru.md) | [简体中文](CONTRIBUTING.zh-CN.md)
 
 Develop improvements to the shared CRM foundation in the core; keep features specific to a website or product in your own customization layer. The [extension guide](docs/extending-opencrm.md) describes the separation and update workflow.
 

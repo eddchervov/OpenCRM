@@ -1,6 +1,6 @@
 # Удаление сценариев и возможностей аккаунта
 
-[English](profile-removal.md) | **Русский**
+[English](profile-removal.md) | **Русский** | [简体中文](profile-removal.zh-CN.md)
 
 ## Действующая модель
 

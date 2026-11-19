@@ -1,6 +1,6 @@
 # Выгрузка данных организации в ZIP
 
-[English](organization-data-export.md) | **Русский**
+[English](organization-data-export.md) | **Русский** | [简体中文](organization-data-export.zh-CN.md)
 
 Экспорт доступен текущему владельцу организации независимо от Free/PRO; право проверяется при запросе, перед сборкой, перед публикацией и при каждом скачивании.
 

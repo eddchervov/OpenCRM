@@ -1,6 +1,6 @@
 # Vehicle brand logos
 
-**English** | [Русский](SOURCES.ru.md)
+**English** | [Русский](SOURCES.ru.md) | [简体中文](SOURCES.zh-CN.md)
 
 The SVG files come from the `icons/` directory of [`simple-icons@16.35.0`](https://www.npmjs.com/package/simple-icons), except Mercedes: its icon comes from [`simple-icons@12.1.0`](https://www.npmjs.com/package/simple-icons), when it was still part of the collection. The packages' metadata lists no separate license for these icons. The Simple Icons project's CC0 license does not waive trademark rights; source information and usage guidance are available in [`DISCLAIMER.md`](https://github.com/simple-icons/simple-icons/blob/16.35.0/DISCLAIMER.md).
 

@@ -1,6 +1,6 @@
 # Shared simplified Detailing and Service Station workflow
 
-**English** | [Русский](simple-maintenance-workflow.ru.md)
+**English** | [Русский](simple-maintenance-workflow.ru.md) | [简体中文](simple-maintenance-workflow.zh-CN.md)
 
 Implemented and checked locally. Development of the second-stage CRM inquiries feature has not started.
 

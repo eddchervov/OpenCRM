@@ -1,6 +1,6 @@
 # Bay availability for appointments
 
-**English** | [Русский](booking-availability.ru.md)
+**English** | [Русский](booking-availability.ru.md) | [简体中文](booking-availability.zh-CN.md)
 
 The shared `BookingTimeFields` component is used for quick Detailing and Service Station appointments and in the shared maintenance create/edit form.
 

@@ -1,6 +1,6 @@
 # Local setup
 
-**English** | [Русский](local-run.ru.md)
+**English** | [Русский](local-run.ru.md) | [简体中文](local-run.zh-CN.md)
 
 This guide runs the basic OpenCRM web application with your own PostgreSQL instance. SMTP, RabbitMQ, the notification service, AI, and payments are not required for registration or basic CRM work.
 

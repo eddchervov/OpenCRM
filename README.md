@@ -1,14 +1,14 @@
 # OpenCRM
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
-**A CRM core you can use to launch and grow your own product.**
+**Self-hosted CRM for automotive businesses, with no license fee.**
 
-OpenCRM combines a working web application, shared business modules, administration interfaces, and independent notification and payment microservices. Start with the core CRM, configure it for your team, and extend it with the features you need.
+OpenCRM combines a working web application, shared business modules, administration interfaces, and independent notification and payment microservices. Detailing studios and repair shops can start with customers, vehicles, bay schedules, intake, and work orders. Fleet teams can use the core to build their own maintenance tools.
 
 ## CRM interface
 
-Real screenshots from a local OpenCRM installation with fictitious demonstration data and commercial mode disabled. The interface shown is Russian; both documentation languages share the same images.
+Real screenshots from a local OpenCRM installation with fictitious demonstration data and commercial mode disabled. The interface shown is Russian; the translated guides share the same images.
 
 Expand a section below to explore that screen without leaving this README.
 
@@ -130,7 +130,7 @@ Once the application is running, open **https://localhost:7142**, register an ac
 
 ## Documentation
 
-All project guides are available in English and Russian. Use the language links at the top of each document; navigation stays in the selected language. Code samples and screenshots preserve their original content.
+Project guides are available in English, Russian, and [Simplified Chinese](docs/README.zh-CN.md). Use the language links at the top of each document; navigation stays in the selected language. Code samples and screenshots preserve their original content.
 
 | Task | Guide |
 | --- | --- |

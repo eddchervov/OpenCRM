@@ -1,6 +1,6 @@
 # Employee Workspace
 
-**English** | [Русский](employee-workplace.ru.md)
+**English** | [Русский](employee-workplace.ru.md) | [简体中文](employee-workplace.zh-CN.md)
 
 Implementation plan and verifiable scenarios: [Employee workspace and administrator oversight](employee-workplace-implementation.md).
 

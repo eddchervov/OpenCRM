@@ -1,6 +1,6 @@
 # Команда и доступ в организацию
 
-[English](team-and-access-design.md) | **Русский**
+[English](team-and-access-design.md) | **Русский** | [简体中文](team-and-access-design.zh-CN.md)
 
 ## Единый список
 

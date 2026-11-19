@@ -1,6 +1,6 @@
 # Service Station and Fleet development
 
-**English** | [Русский](sto-fleet-development.ru.md)
+**English** | [Русский](sto-fleet-development.ru.md) | [简体中文](sto-fleet-development.zh-CN.md)
 
 This document describes the shared domain model for auto repair shops and vehicle fleets. Scenarios available to new organizations are determined by installation configuration; hiding a scenario does not delete existing organizations or their data.
 

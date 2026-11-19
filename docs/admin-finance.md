@@ -1,6 +1,6 @@
 # Subscription payments and self-employed receipts
 
-**English** | [Русский](admin-finance.ru.md)
+**English** | [Русский](admin-finance.ru.md) | [简体中文](admin-finance.zh-CN.md)
 
 This guide describes the optional commercial module. It is available only when `PlatformPolicy:Commercial:Enabled=true`; the setting defaults to `false`. A deployment must configure its payment provider, notification service, Hangfire, and private file storage before using the corresponding workflows.
 

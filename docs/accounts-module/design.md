@@ -1,6 +1,6 @@
 # Accounts module: technical design
 
-**English** | [Русский](design.ru.md)
+**English** | [Русский](design.ru.md) | [简体中文](design.zh-CN.md)
 
 > Historical document for a completed extraction. Old stages, commands, and intermediate statuses are not current assignments. Open work is listed in the [index](../README.md); current boundaries are described in the current architecture.
 

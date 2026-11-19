@@ -1,6 +1,6 @@
 # Payment service boundaries
 
-**English** | [Русский](payments-service-design.ru.md)
+**English** | [Русский](payments-service-design.ru.md) | [简体中文](payments-service-design.zh-CN.md)
 
 The payment service implements technical communication with a payment provider. The web application owns organization permissions and commercial policy; the payment service does not assign roles or independently grant CRM access.
 

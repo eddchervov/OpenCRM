@@ -1,6 +1,6 @@
 # OpenCRM.Admin.Launcher
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 This Windows application opens the existing Vue admin interface through Google Chrome in application mode, without tabs or an address bar. Forms, APIs, authentication, and business logic remain shared with the web application.
 

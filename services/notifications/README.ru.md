@@ -1,6 +1,6 @@
 # NotificationService
 
-[English](README.md) | **Русский**
+[English](README.md) | **Русский** | [简体中文](README.zh-CN.md)
 
 Микросервис уведомлений для OpenCRM и других приложений. Один процесс Worker принимает
 команды через RabbitMQ, хранит состояние в PostgreSQL, отправляет email/SMS и возвращает

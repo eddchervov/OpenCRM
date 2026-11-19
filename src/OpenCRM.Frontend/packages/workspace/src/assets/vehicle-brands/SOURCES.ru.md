@@ -1,6 +1,6 @@
 # Логотипы марок автомобилей
 
-[English](SOURCES.md) | **Русский**
+[English](SOURCES.md) | **Русский** | [简体中文](SOURCES.zh-CN.md)
 
 SVG-файлы взяты из пакета [`simple-icons@16.35.0`](https://www.npmjs.com/package/simple-icons), папка `icons/`, кроме Mercedes: его значок взят из [`simple-icons@12.1.0`](https://www.npmjs.com/package/simple-icons), когда он ещё входил в набор. В metadata пакетов для этих значков не указана отдельная лицензия. Лицензия CC0 самого проекта Simple Icons не означает отказа от прав на товарные знаки; сведения об источнике и рекомендации по использованию доступны в [`DISCLAIMER.md`](https://github.com/simple-icons/simple-icons/blob/16.35.0/DISCLAIMER.md).
 

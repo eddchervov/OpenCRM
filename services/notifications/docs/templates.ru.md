@@ -1,6 +1,6 @@
 # Системные письма на Razor
 
-[English](templates.md) | **Русский**
+[English](templates.md) | **Русский** | [简体中文](templates.zh-CN.md)
 
 Системные письма NotificationService хранятся как .cshtml в репозитории.
 OpenCRM отправляет ключ шаблона, точную версию и Data через SendNotification.

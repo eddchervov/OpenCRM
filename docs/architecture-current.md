@@ -1,6 +1,6 @@
 # Application architecture
 
-**English** | [Русский](architecture-current.ru.md)
+**English** | [Русский](architecture-current.ru.md) | [简体中文](architecture-current.zh-CN.md)
 
 The solution separates the web host, business modules, client applications, and background services.
 

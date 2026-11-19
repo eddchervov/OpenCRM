@@ -1,6 +1,6 @@
 # Сервис оплаты подписок OpenCRM
 
-[English](README.md) | **Русский**
+[English](README.md) | **Русский** | [简体中文](README.zh-CN.md)
 
 Автономный Payments на .NET 10 со своей PostgreSQL и RabbitMQ. Все три проекта включены в `OpenCRM.sln`: `Payments.Contracts` и `Payments.Service` находятся в `Services/Payments`, `Payments.Tests` — в `Tests`. Проекты не ссылаются на OpenCRM. Checkout и Billing подключены через отдельный финансовый транспорт; [инструкция интеграции и восстановления](../../docs/payments-service-integration.ru.md), требования production описаны в разделе [«Серверная установка»](../../docs/payments-service-integration.ru.md#серверная-установка).
 

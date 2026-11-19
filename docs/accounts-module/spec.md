@@ -1,6 +1,6 @@
 # Accounts module: extraction specification
 
-**English** | [Русский](spec.ru.md)
+**English** | [Русский](spec.ru.md) | [简体中文](spec.zh-CN.md)
 
 > **Model change.** The extraction described below is a historical specification. Account scenarios, modes, recommendations, and capabilities, along with their API and storage, have been removed. Accounts owns registration, sign-in, user deletion, and personal records. The organization type catalog belongs to Organizations. Former requirements for saving account profiles and registering their services are no longer current. The current model, database preparation, and recovery process are in [profile removal](profile-removal.md).
 

@@ -1,6 +1,6 @@
 # Шапки форм и внутренних блоков
 
-[English](form-headers.md) | **Русский**
+[English](form-headers.md) | **Русский** | [简体中文](form-headers.zh-CN.md)
 
 Общие компоненты `UiCard page` и `UiModal` оформляют основные заголовки форм классом `ui-form-header`. Обычный `UiCard` использует `ui-section-header` для внутренних групп. Переменные цвета тем находятся в общем пакете `packages/ui`.
 

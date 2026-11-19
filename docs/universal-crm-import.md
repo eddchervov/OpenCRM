@@ -1,6 +1,6 @@
 # Importing data from another CRM
 
-**English** | [Русский](universal-crm-import.ru.md)
+**English** | [Русский](universal-crm-import.ru.md) | [简体中文](universal-crm-import.zh-CN.md)
 
 ## Modules and entry point
 

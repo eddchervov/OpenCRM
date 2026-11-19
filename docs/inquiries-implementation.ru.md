@@ -1,6 +1,6 @@
 # Ручные обращения до записи: реализация
 
-[English](inquiries-implementation.md) | **Русский**
+[English](inquiries-implementation.md) | **Русский** | [简体中文](inquiries-implementation.zh-CN.md)
 
 Второй этап [развития CRM](README.ru.md) реализован. Исходный [проект обращений](inquiries-design.ru.md) сохраняет описание границ и решений.
 

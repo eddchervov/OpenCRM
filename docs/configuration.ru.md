@@ -1,6 +1,6 @@
 # Конфигурация
 
-[English](configuration.md) | **Русский**
+[English](configuration.md) | **Русский** | [简体中文](configuration.zh-CN.md)
 
 OpenCRM читает стандартную конфигурацию .NET: секции JSON задаются в формате `Parent:Child`, а для переменных окружения двоеточие заменяется двойным подчёркиванием, например `ConnectionStrings__OpenCRMConnection`.
 

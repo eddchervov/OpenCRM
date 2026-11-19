@@ -1,6 +1,6 @@
 # Общая оболочка CRM
 
-[English](crm-workspace-shell.md) | **Русский**
+[English](crm-workspace-shell.md) | **Русский** | [简体中文](crm-workspace-shell.zh-CN.md)
 
 Оболочка используется клиентами детейлинга, СТО и автопарка. Публичный сайт и админка её не используют.
 

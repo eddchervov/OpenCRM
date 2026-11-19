@@ -1,6 +1,6 @@
 # Реализация рабочего места исполнителя и контроля администратора
 
-[English](employee-workplace-implementation.md) | **Русский**
+[English](employee-workplace-implementation.md) | **Русский** | [简体中文](employee-workplace-implementation.zh-CN.md)
 
 Основание: [требования к рабочему месту](employee-workplace.ru.md), [общий план](plan.ru.md), действующие правила [сотрудников](organization-employees.ru.md). Этот план уточняет технические границы задачи. Уже завершённые приглашения, акт приёмки и перенос данных повторно не реализуются. Мобильная навигация и выполненная часть CRM не входят в объём. После этого приоритета идут сквозная проверка СТО и замена post-build-скрипта на Vite manifest.
 

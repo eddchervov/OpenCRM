@@ -1,6 +1,6 @@
 # Рабочее место исполнителя
 
-[English](employee-workplace.md) | **Русский**
+[English](employee-workplace.md) | **Русский** | [简体中文](employee-workplace.zh-CN.md)
 
 План реализации и проверяемые сценарии: [Рабочее место исполнителя и контроль администратора](employee-workplace-implementation.ru.md).
 

@@ -1,6 +1,6 @@
 # Form and Section Headers
 
-**English** | [Русский](form-headers.ru.md)
+**English** | [Русский](form-headers.ru.md) | [简体中文](form-headers.zh-CN.md)
 
 The shared `UiCard page` and `UiModal` components style primary form headings with the `ui-form-header` class. A regular `UiCard` uses `ui-section-header` for inner groups. Theme color variables live in the shared `packages/ui` package.
 

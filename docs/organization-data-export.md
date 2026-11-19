@@ -1,6 +1,6 @@
 # Exporting organization data as ZIP
 
-**English** | [Русский](organization-data-export.ru.md)
+**English** | [Русский](organization-data-export.ru.md) | [简体中文](organization-data-export.zh-CN.md)
 
 The current organization owner can export data regardless of Free/PRO. Authorization is checked when requested, before building, before publishing, and on every download.
 

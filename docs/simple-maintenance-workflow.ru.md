@@ -1,6 +1,6 @@
 # Общий простой режим детейлинга и СТО
 
-[English](simple-maintenance-workflow.md) | **Русский**
+[English](simple-maintenance-workflow.md) | **Русский** | [简体中文](simple-maintenance-workflow.zh-CN.md)
 
 Реализован и проверен локально. Разработка обращений второго этапа CRM не начиналась.
 

@@ -1,10 +1,10 @@
 # OpenCRM screenshot gallery
 
-**English** | [Русский](screenshots.ru.md)
+**English** | [Русский](screenshots.ru.md) | [简体中文](screenshots.zh-CN.md)
 
 These are real captures of a local OpenCRM installation, not generated interface mockups. All customer names, vehicles, amounts, and records are demonstration data. Commercial mode is disabled. Dark and light themes use the same CRM functionality.
 
-The UI is shown in Russian. English captions explain each view; changing the documentation language does not change the application language. Click an image to open it at its original resolution.
+The UI is shown in Russian. Localized captions explain each view; changing the documentation language does not change the application language. Click an image to open it at its original resolution.
 
 [Workday](#workday) · [Customers](#customers) · [Appointments](#appointments) · [Orders](#orders) · [Intake](#intake) · [Inquiries](#inquiries) · [Statistics](#statistics) · [Permissions](#permissions) · [Public pages](#public-pages)
 

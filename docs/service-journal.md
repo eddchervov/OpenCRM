@@ -1,6 +1,6 @@
 # Detailing service journal
 
-**English** | [Русский](service-journal.ru.md)
+**English** | [Русский](service-journal.ru.md) | [简体中文](service-journal.zh-CN.md)
 
 The `#work-journal` section shows organization appointments from all time. The default status is “Completed”. You can select all, planned, in-progress, or cancelled appointments. Day-by-day scheduling and the calendar remain in “Appointments”.
 

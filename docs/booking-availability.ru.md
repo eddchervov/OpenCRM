@@ -1,6 +1,6 @@
 # Занятость поста при записи
 
-[English](booking-availability.md) | **Русский**
+[English](booking-availability.md) | **Русский** | [简体中文](booking-availability.zh-CN.md)
 
 Общий компонент `BookingTimeFields` используется в быстром создании детейлинга и СТО, а также в общей форме создания и редактирования обслуживания.
 

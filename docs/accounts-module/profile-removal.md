@@ -1,6 +1,6 @@
 # Removing account scenarios and capabilities
 
-**English** | [Русский](profile-removal.ru.md)
+**English** | [Русский](profile-removal.ru.md) | [简体中文](profile-removal.zh-CN.md)
 
 ## Current model
 

@@ -1,6 +1,6 @@
 # Vehicles with an unknown make or model
 
-**English** | [Русский](vehicle-identity.ru.md)
+**English** | [Русский](vehicle-identity.ru.md) | [简体中文](vehicle-identity.zh-CN.md)
 
 Make and model are optional when creating a vehicle or a quick appointment. Only entered data is stored: unknown `BrandId`, `ModelId`, `ManualBrandName`, and `ManualModelName` remain `null`. A license plate, VIN, body number, engine number, registration certificate, or user-defined name must still identify the vehicle. A license plate is required for a quick appointment.
 

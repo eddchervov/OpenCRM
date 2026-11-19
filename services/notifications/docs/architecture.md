@@ -1,6 +1,6 @@
 # Architecture
 
-**English** | [Русский](architecture.ru.md)
+**English** | [Русский](architecture.ru.md) | [简体中文](architecture.zh-CN.md)
 
 NotificationService has one executable project, Notifications.Worker. OpenCRM and other applications determine why a notification is needed; the service owns templates, delivery, retries, and history. It does not share applications' databases or domain models.
 

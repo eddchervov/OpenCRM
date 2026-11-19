@@ -1,6 +1,6 @@
 # OpenCRM notifications through RabbitMQ
 
-**English** | [Русский](notifications.ru.md)
+**English** | [Русский](notifications.ru.md) | [简体中文](notifications.zh-CN.md)
 
 Within the main application, `OpenCRM.Modules.Notifications` owns emails, website notifications, outbox/result handlers, and MAX/Telegram settings. It registers services through `AddOpenCRMNotifications`; account and subscription scenarios use narrow contracts. Domain events and intents are stored in OpenCRM's shared database.
 

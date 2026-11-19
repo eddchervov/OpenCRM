@@ -1,6 +1,6 @@
 # Карточка клиента
 
-[English](client-card.md) | **Русский**
+[English](client-card.md) | **Русский** | [简体中文](client-card.zh-CN.md)
 
 ## Комментарий
 

@@ -1,6 +1,6 @@
 # Employee Shifts and Time Tracking in OpenCRM
 
-**English** | [Русский](employee-shifts-design.ru.md)
+**English** | [Русский](employee-shifts-design.ru.md) | [简体中文](employee-shifts-design.zh-CN.md)
 
 > One solution for detailing and auto service, built on the existing employee and shift model. The sections below distinguish what already works from what is still proposed. Related guides are listed in the [documentation index](README.md). Proposed phases below are design options, not a promised implementation schedule.
 

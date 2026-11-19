@@ -1,6 +1,6 @@
 # Subscription management in the OpenCRM admin interfaces
 
-**English** | [Русский](admin-subscriptions.ru.md)
+**English** | [Русский](admin-subscriptions.ru.md) | [简体中文](admin-subscriptions.zh-CN.md)
 
 This is an optional module controlled by `PlatformPolicy:Commercial:Enabled`, which defaults to `false`. When disabled, commercial administration sections are hidden and a subscription is not required to use the CRM. The installation owner enables the module and configures prices, offers, and trial terms.
 

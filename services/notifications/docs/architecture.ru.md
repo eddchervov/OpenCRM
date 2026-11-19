@@ -1,6 +1,6 @@
 # Архитектура
 
-[English](architecture.md) | **Русский**
+[English](architecture.md) | **Русский** | [简体中文](architecture.zh-CN.md)
 
 NotificationService содержит один исполняемый проект Notifications.Worker.
 OpenCRM и другие приложения определяют повод уведомления; сервис владеет шаблонами,

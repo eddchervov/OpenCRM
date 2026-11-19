@@ -1,6 +1,6 @@
 # Услуги и оплаты записи
 
-[English](maintenance-services-payments.md) | **Русский**
+[English](maintenance-services-payments.md) | **Русский** | [简体中文](maintenance-services-payments.zh-CN.md)
 
 Общие компоненты используются в детейлинге, СТО и автопарке. Публичные страницы не меняются.
 

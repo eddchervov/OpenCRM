@@ -1,6 +1,6 @@
 # Микросервисы OpenCRM
 
-[English](microservices.md) | **Русский**
+[English](microservices.md) | **Русский** | [简体中文](microservices.zh-CN.md)
 
 OpenCRM сочетает модульное CRM-ядро и отдельные сервисы уведомлений и платежей. Прикладная CRM работает в ASP.NET Core host; фоновые интеграционные задачи вынесены в собственные приложения.
 

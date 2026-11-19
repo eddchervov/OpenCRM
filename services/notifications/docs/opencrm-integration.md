@@ -1,6 +1,6 @@
 # Connect OpenCRM through RabbitMQ
 
-**English** | [Русский](opencrm-integration.ru.md)
+**English** | [Русский](opencrm-integration.ru.md) | [简体中文](opencrm-integration.zh-CN.md)
 
 OpenCRM already uses the EmailMessages outbox and result handlers. Running applications depend only on Notifications.Contracts. In this solution, that is a ProjectReference to services/notifications/src/Notifications.Contracts within the shared repository. CI builds applications and the Worker from one checkout; keep contract and consumer versions consistent when releasing.
 

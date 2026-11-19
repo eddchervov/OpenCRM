@@ -1,6 +1,6 @@
 # Переписка с клиентами
 
-[English](communications.md) | **Русский**
+[English](communications.md) | **Русский** | [简体中文](communications.zh-CN.md)
 
 ## Клиенты и каналы
 

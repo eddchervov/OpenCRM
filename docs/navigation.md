@@ -1,6 +1,6 @@
 # CRM Navigation: Phase One
 
-**English** | [Русский](navigation.ru.md)
+**English** | [Русский](navigation.ru.md) | [简体中文](navigation.zh-CN.md)
 
 The transition from concept to phase one is complete. Detailing and auto service are the priorities.
 

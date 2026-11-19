@@ -1,6 +1,6 @@
 # Organization employees
 
-**English** | [Русский](organization-employees.ru.md)
+**English** | [Русский](organization-employees.ru.md) | [简体中文](organization-employees.zh-CN.md)
 
 Employees perform work without needing their own accounts. Their cards are in the “Team” section of the Detailing, Service Station, and Fleet workspace menus. A name is required; a phone number is optional. Archiving preserves previous assignments but prevents new ones. Job titles and specializations are not modeled.
 

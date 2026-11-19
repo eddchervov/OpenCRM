@@ -1,6 +1,6 @@
 # Опциональное подтверждение email
 
-[English](email-confirmation.md) | **Русский**
+[English](email-confirmation.md) | **Русский** | [简体中文](email-confirmation.zh-CN.md)
 
 По умолчанию подтверждение email выключено (`EmailConfirmation:Required=false`). Парольная регистрация и вход в базовой установке не требуют SMTP или подтверждения ящика. Чтобы требовать подтверждение, сначала настройте и проверьте доставку уведомлений, затем задайте `EmailConfirmation__Required=true`. Сам флаг не настраивает отправку почты.
 

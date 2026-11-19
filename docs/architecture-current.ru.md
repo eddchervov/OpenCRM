@@ -1,6 +1,6 @@
 # Архитектура приложения
 
-[English](architecture-current.md) | **Русский**
+[English](architecture-current.md) | **Русский** | [简体中文](architecture-current.zh-CN.md)
 
 Решение разделяет веб-хост, предметные модули, клиентские приложения и фоновые сервисы.
 

@@ -1,6 +1,6 @@
 # Manual Inquiries Before Booking: Phase Two Design
 
-**English** | [Русский](inquiries-design.ru.md)
+**English** | [Русский](inquiries-design.ru.md) | [简体中文](inquiries-design.zh-CN.md)
 
 Subscription and read-only restrictions in this design apply when `PlatformPolicy:Commercial:Enabled=true`. The default base mode does not require a paid plan; membership and action permissions remain mandatory.
 

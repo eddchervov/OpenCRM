@@ -1,6 +1,6 @@
 # Administer your installation
 
-**English** | [Русский](administration.ru.md)
+**English** | [Русский](administration.ru.md) | [简体中文](administration.zh-CN.md)
 
 OpenCRM includes a web admin interface and a separate desktop administration application. Both use one server's administrative APIs and enforce its roles and permissions.
 

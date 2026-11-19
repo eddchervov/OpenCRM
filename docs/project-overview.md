@@ -1,6 +1,6 @@
 # OpenCRM overview
 
-**English** | [Русский](project-overview.ru.md)
+**English** | [Русский](project-overview.ru.md) | [简体中文](project-overview.zh-CN.md)
 
 OpenCRM manages customers and the related operational workflows of organizations.
 

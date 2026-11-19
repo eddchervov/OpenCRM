@@ -1,6 +1,6 @@
 # Service readiness checks
 
-**English** | [Русский](service-health-monitoring.ru.md)
+**English** | [Русский](service-health-monitoring.ru.md) | [简体中文](service-health-monitoring.zh-CN.md)
 
 The payment and notification services expose internal HTTP endpoints:
 

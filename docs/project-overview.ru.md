@@ -1,6 +1,6 @@
 # Обзор OpenCRM
 
-[English](project-overview.md) | **Русский**
+[English](project-overview.md) | **Русский** | [简体中文](project-overview.zh-CN.md)
 
 OpenCRM — система для ведения клиентов и связанных с ними рабочих процессов организаций.
 

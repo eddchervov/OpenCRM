@@ -1,6 +1,6 @@
 # OpenCRM technical documentation
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 Guides for running and extending the CRM core, along with component architecture and contract descriptions.
 

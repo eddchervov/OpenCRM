@@ -1,6 +1,6 @@
 # Connecting OpenCRM to Payments
 
-**English** | [Русский](payments-service-integration.ru.md)
+**English** | [Русский](payments-service-integration.ru.md) | [简体中文](payments-service-integration.zh-CN.md)
 
 One-off purchases and renewals of personal and organization subscriptions for OpenCRM are integrated. Studio work order acquiring, automatic payments, and entitlement changes after refunds are outside this scope. A refund is recorded as a monetary fact; an administrator changes already granted access manually.
 

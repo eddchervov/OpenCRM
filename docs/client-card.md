@@ -1,6 +1,6 @@
 # Customer Profile
 
-**English** | [Русский](client-card.ru.md)
+**English** | [Русский](client-card.ru.md) | [简体中文](client-card.zh-CN.md)
 
 ## Comment
 

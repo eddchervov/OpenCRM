@@ -1,6 +1,6 @@
 # Organization Workday
 
-**English** | [Русский](detailing-workday.ru.md)
+**English** | [Русский](detailing-workday.ru.md) | [简体中文](detailing-workday.zh-CN.md)
 
 This screen is the shared operations board for detailing, auto service, and fleet organizations. Statistical charts remain in “Statistics” and are not loaded with the initial workspace context.
 

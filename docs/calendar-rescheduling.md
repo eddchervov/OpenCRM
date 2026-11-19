@@ -1,6 +1,6 @@
 # Rescheduling appointments from the calendar
 
-**English** | [Русский](calendar-rescheduling.ru.md)
+**English** | [Русский](calendar-rescheduling.ru.md) | [简体中文](calendar-rescheduling.zh-CN.md)
 
 In Detailing’s “Appointments” section:
 

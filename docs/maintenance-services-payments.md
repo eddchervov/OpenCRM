@@ -1,6 +1,6 @@
 # Services and payments on an appointment
 
-**English** | [Русский](maintenance-services-payments.ru.md)
+**English** | [Русский](maintenance-services-payments.ru.md) | [简体中文](maintenance-services-payments.zh-CN.md)
 
 Shared components are used by Detailing, Service Station, and Fleet. Public pages are unchanged.
 

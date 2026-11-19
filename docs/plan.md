@@ -1,6 +1,6 @@
 # OpenCRM preparation and technical sections
 
-**English** | [Русский](plan.ru.md)
+**English** | [Русский](plan.ru.md) | [简体中文](plan.zh-CN.md)
 
 OpenCRM preparation notes and technical documentation navigation.
 

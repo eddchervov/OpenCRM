@@ -1,6 +1,6 @@
 # Service duration and appointment scheduling
 
-**English** | [Русский](service-duration.ru.md)
+**English** | [Русский](service-duration.ru.md) | [简体中文](service-duration.zh-CN.md)
 
 Service and service-set directories now have an optional “Duration, min” field. It specifies the continuous time for which a bay is occupied, including drying and waiting. The value is an integer from 1 to 525600; an empty field means the duration is unknown. Lists and selection menus display time in hours and minutes. Service duration is also available in the Detailing setup wizard.
 

@@ -1,6 +1,6 @@
 # Linking services to an organization's catalog
 
-**English** | [Русский](service-catalog-integrity.ru.md)
+**English** | [Русский](service-catalog-integrity.ru.md) | [简体中文](service-catalog-integrity.zh-CN.md)
 
 An organization record can combine catalog services and bundles with several arbitrary jobs. An arbitrary job requires a name, quantity, and price; `CatalogItemId` remains empty and no catalog item is created automatically. If an ID is supplied, the server validates that the service exists, belongs to the organization, has the correct type, and is available. Existing personal-account records without an organization retain their previous behavior.
 

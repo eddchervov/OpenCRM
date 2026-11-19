@@ -1,6 +1,6 @@
 # Manual Inquiries Before Booking: Implementation
 
-**English** | [Русский](inquiries-implementation.ru.md)
+**English** | [Русский](inquiries-implementation.ru.md) | [简体中文](inquiries-implementation.zh-CN.md)
 
 Phase two of [CRM development](README.md) is implemented. The original [inquiries design](inquiries-design.md) preserves the scope and decisions.
 

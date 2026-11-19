@@ -1,6 +1,6 @@
 # Customer conversations
 
-**English** | [Русский](communications.ru.md)
+**English** | [Русский](communications.ru.md) | [简体中文](communications.zh-CN.md)
 
 ## Customers and channels
 

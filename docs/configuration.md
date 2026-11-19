@@ -1,6 +1,6 @@
 # Configuration
 
-**English** | [Русский](configuration.ru.md)
+**English** | [Русский](configuration.ru.md) | [简体中文](configuration.zh-CN.md)
 
 OpenCRM reads standard .NET configuration: JSON sections use `Parent:Child`, while environment variables replace the colon with a double underscore, for example `ConnectionStrings__OpenCRMConnection`.
 

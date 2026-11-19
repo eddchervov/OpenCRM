@@ -1,6 +1,6 @@
 # NotificationService
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 A notification microservice for OpenCRM and other applications. One Worker process receives commands through RabbitMQ, stores state in PostgreSQL, sends email/SMS, and returns results to the application's queue. Commands are accepted only through RabbitMQ. An email provider callback webhook may run on internal port 8080; there is no HTTP API for sending notifications.
 

@@ -1,6 +1,6 @@
 # Уведомления OpenCRM через RabbitMQ
 
-[English](notifications.md) | **Русский**
+[English](notifications.md) | **Русский** | [简体中文](notifications.zh-CN.md)
 
 В основном приложении `OpenCRM.Modules.Notifications` владеет письмами, уведомлениями сайта, обработчиками outbox/результатов и настройками MAX/Telegram. Он регистрирует сервисы через `AddOpenCRMNotifications`; сценарии аккаунтов и подписок используют узкие контракты. Предметные события и намерения сохраняются в общей БД OpenCRM.
 

@@ -1,6 +1,6 @@
 # Organization setup
 
-**English** | [Русский](organization-setup.ru.md)
+**English** | [Русский](organization-setup.ru.md) | [简体中文](organization-setup.zh-CN.md)
 
 The setup wizard opens automatically on the workspace when a user first visits a new Detailing or Service Station organization. Labels match the selected scenario. If dismissed, the wizard can be reopened with “Continue setup”. Once completed, the panel and button disappear from the workspace. After completion, service bays and services can be edited in “Directories”, and working hours in “Organization settings”. Fleet organizations do not show the wizard. Organization settings include a separate “Working hours and breaks” section. Settings storage and the API are shared; public pages are unchanged.
 

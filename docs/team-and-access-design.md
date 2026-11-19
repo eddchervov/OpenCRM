@@ -1,6 +1,6 @@
 # Organization Team and Access
 
-**English** | [Русский](team-and-access-design.ru.md)
+**English** | [Русский](team-and-access-design.ru.md) | [简体中文](team-and-access-design.zh-CN.md)
 
 ## Unified list
 

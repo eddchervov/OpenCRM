@@ -1,6 +1,6 @@
 # configuration
 
-**English** | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
 This directory contains the shared `brand.json` file used by every application in the solution.
 

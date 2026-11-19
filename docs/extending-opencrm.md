@@ -1,6 +1,6 @@
 # Build your product on OpenCRM
 
-**English** | [Русский](extending-opencrm.ru.md)
+**English** | [Русский](extending-opencrm.ru.md) | [简体中文](extending-opencrm.zh-CN.md)
 
 OpenCRM is a shared CRM foundation. Start with the available settings, then add your product's differences while keeping shared fixes in the core.
 

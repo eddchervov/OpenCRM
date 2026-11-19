@@ -1,6 +1,6 @@
 # Multi-day appointments
 
-**English** | [Русский](maintenance-periods.ru.md)
+**English** | [Русский](maintenance-periods.ru.md) | [简体中文](maintenance-periods.zh-CN.md)
 
 One appointment contains the planned period, services, vehicle, customer, photos, and calculation. A separate maintenance record for each day is not required.
 

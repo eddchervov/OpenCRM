@@ -1,6 +1,6 @@
 # OpenCRM server-side AI assistant
 
-**English** | [Русский](ai-assistant.ru.md)
+**English** | [Русский](ai-assistant.ru.md) | [简体中文](ai-assistant.zh-CN.md)
 
 This document is the entry point for new tasks: read it first, then the [command catalog](voice-ai-actions.md). It does not replace reading the code you intend to change.
 

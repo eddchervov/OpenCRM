@@ -1,6 +1,6 @@
 # Vehicle Intake and Before/After Photos
 
-**English** | [Русский](detailing-intake.ru.md)
+**English** | [Русский](detailing-intake.ru.md) | [简体中文](detailing-intake.zh-CN.md)
 
 Damage numbers in PDFs are rendered as native QuestPDF text over the diagram. SVG no longer depends on a system font to render digits; Linux rendering has confirmed a visible “1” for a chip. Previously downloaded PDFs must be generated again. Damage types and stored coordinates are unchanged.
 

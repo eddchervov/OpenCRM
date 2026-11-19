@@ -1,6 +1,6 @@
 # OpenCRM.Admin.Launcher
 
-[English](README.md) | **Русский**
+[English](README.md) | **Русский** | [简体中文](README.zh-CN.md)
 
 Windows-приложение открывает существующую Vue-админку через Google Chrome в режиме
 приложения, без вкладок и адресной строки. Формы, API,

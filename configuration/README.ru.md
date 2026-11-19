@@ -1,6 +1,6 @@
 # configuration
 
-[English](README.md) | **Русский**
+[English](README.md) | **Русский** | [简体中文](README.zh-CN.md)
 
 Папка содержит общий файл бренда `brand.json`, используемый всеми приложениями решения.
 

@@ -1,6 +1,6 @@
 # CRM administration dashboard
 
-**English** | [Русский](admin-dashboard-analytics.ru.md)
+**English** | [Русский](admin-dashboard-analytics.ru.md) | [简体中文](admin-dashboard-analytics.zh-CN.md)
 
 The OpenCRM administration dashboard reports on CRM activity: registrations, organizations, maintenance records, and (when commercial mode is enabled) payments. It does not include analytics for a public website, advertising attribution, search-engine services, or third-party tracking providers. Installations can add their own site analytics outside the OpenCRM core.
 
