@@ -28,6 +28,8 @@ Web 应用依次加载 `appsettings.json`、`appsettings.{Environment}.json`、�
 | `DataProtection:ApplicationName`、`DataProtection:KeysDirectory` | 数据保护的隔离标识和密钥环目录。应用名称默认为 `OpenCRM.WebApp`，升级时保留两项设置。 |
 | `ReverseProxy:KnownProxy` | Production 环境要求填写受信任的反向代理 IP；本地开发可省略。 |
 
+<a name="desktop-administration-paths"></a>
+
 ### 桌面管理端路径
 
 桌面启动器和管理应用读取与应用一起提供的 `brand.json` 中的 `AdminDesktop` 对象。
@@ -41,7 +43,7 @@ Web 应用依次加载 `appsettings.json`、`appsettings.{Environment}.json`、�
 
 环境变量展开后，非空路径必须为绝对路径。省略某个值或整个 `AdminDesktop` 段时使用内置的用户级路径。会话目录应只允许相应的操作系统用户访问。
 
-`Administration:Sections` 的每条记录包含 `Title`、以单个 `/` 开头的本地绝对路径 `Url`，以及 `Permission`（例如 `Admin.Dashboard.View`）。路径不接受查询参数和片段。两个管理端根据当前账户的权限或系统管理员身份筛选链接。Web 管理端加上请求的 `PathBase`，桌面管理端在系统浏览器中打开路径并保留服务器的基础路径。浏览器执行正常登录流程，JWT 或其他凭据不会附加到网址。各产品端点仍须自行实施授权检查。参见[定制指南](extending-opencrm.md#product-links-in-both-admin-panels)。
+`Administration:Sections` 的每条记录包含 `Title`、以单个 `/` 开头的本地绝对路径 `Url`，以及 `Permission`（例如 `Admin.Dashboard.View`）。路径不接受查询参数和片段。两个管理端根据当前账户的权限或系统管理员身份筛选链接。Web 管理端加上请求的 `PathBase`，桌面管理端在系统浏览器中打开路径并保留服务器的基础路径。浏览器执行正常登录流程，JWT 或其他凭据不会附加到网址。各产品端点仍须自行实施授权检查。参见[定制指南](extending-opencrm.zh-CN.md#product-links-in-both-admin-panels)。
 
 为读取每项设置的目标进程提供环境变量。WebApp、通知 Worker 和支付服务分别配置。
 

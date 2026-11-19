@@ -8,105 +8,38 @@ OpenCRM combines a working web application, shared business modules, administrat
 
 ## CRM interface
 
-Real screenshots from a local OpenCRM installation with fictitious demonstration data and commercial mode disabled. The interface shown is Russian; the translated guides share the same images.
+Screenshots from a local OpenCRM installation using the English interface and a fictitious workshop with USD accounting. Plates use the `DEMO-` format. Phone numbers and VINs are blank.
 
-Expand a section below to explore that screen without leaving this README.
-
-![OpenCRM workday in dark theme](docs/images/screenshots/workday-dark.jpg)
+![Workday](docs/images/screenshots/localized/en/workday.jpg)
 
 <details>
-<summary><strong>Workday — light theme</strong></summary>
+<summary>Work-bay schedule</summary>
 
-The same four-stage workday in light theme.
+Six appointments are shown across three work bays.
 
-![Workday — light theme](docs/images/screenshots/workday-light.jpg)
+![Work-bay schedule](docs/images/screenshots/localized/en/schedule.jpg)
 
 </details>
 
 <details>
-<summary><strong>Customers — search, filters, and visit history</strong></summary>
+<summary>Vehicle intake and damage map</summary>
 
-Customer records, vehicles, and service history in one list.
+The Volvo XC60 demo record has a scratch marked on its left side.
 
-![Customers — search, filters, and visit history](docs/images/screenshots/clients.jpg)
-
-</details>
-
-<details>
-<summary><strong>Appointments — work-bay schedule</strong></summary>
-
-Planned and active orders on the time grid for three work areas.
-
-![Appointments — work-bay schedule](docs/images/screenshots/schedule.jpg)
+![Vehicle intake and damage map](docs/images/screenshots/localized/en/intake.jpg)
 
 </details>
 
 <details>
-<summary><strong>Work order — services and payment summary</strong></summary>
+<summary>Work order</summary>
 
-Vehicle, workflow stage, service lines, customer, and payment summary.
+The order shows the services, current stage, and the amount due in USD.
 
-![Work order — services and payment summary](docs/images/screenshots/order.jpg)
-
-</details>
-
-<details>
-<summary><strong>Intake — condition, damage diagram, and documents</strong></summary>
-
-Four vehicle projections with a damage marker and document actions.
-
-![Intake — condition, damage diagram, and documents](docs/images/screenshots/intake.jpg)
+![Work order](docs/images/screenshots/localized/en/order.jpg)
 
 </details>
 
-<details>
-<summary><strong>Inquiries — four-stage board</strong></summary>
-
-Follow a request from first contact to readiness for an appointment.
-
-![Inquiries — four-stage board](docs/images/screenshots/inquiries-board.jpg)
-
-</details>
-
-<details>
-<summary><strong>Inquiry record — next action and history</strong></summary>
-
-Customer interest, the next action, notes, and event history.
-
-![Inquiry record — next action and history](docs/images/screenshots/inquiry-card.jpg)
-
-</details>
-
-<details>
-<summary><strong>Statistics — metrics and work charts</strong></summary>
-
-Operational organization metrics, completed work, and amounts.
-
-![Statistics — metrics and work charts](docs/images/screenshots/statistics.jpg)
-
-</details>
-
-<details>
-<summary><strong>Roles and permissions — access by role</strong></summary>
-
-Role selection and permission search; the example shows employee access to customers.
-
-![Roles and permissions — access by role](docs/images/screenshots/permissions.jpg)
-
-</details>
-
-<details>
-<summary><strong>Public pages — home and sign-in</strong></summary>
-
-A neutral home page and an empty password sign-in form for a self-hosted installation.
-
-![Neutral OpenCRM home page](docs/images/screenshots/home.jpg)
-
-![OpenCRM sign-in page](docs/images/screenshots/login.jpg)
-
-</details>
-
-[Open the full gallery with captions](docs/screenshots.md).
+[Open the full gallery with captions](docs/screenshots.md)
 
 ## Why OpenCRM
 
@@ -130,7 +63,7 @@ Once the application is running, open **https://localhost:7142**, register an ac
 
 ## Documentation
 
-Project guides are available in English, Russian, and [Simplified Chinese](docs/README.zh-CN.md). Use the language links at the top of each document; navigation stays in the selected language. Code samples and screenshots preserve their original content.
+Project guides are available in English, Russian, and Simplified Chinese. Use the language links at the top of each document; navigation stays in the selected language. Code samples and screenshots preserve their original content.
 
 | Task | Guide |
 | --- | --- |

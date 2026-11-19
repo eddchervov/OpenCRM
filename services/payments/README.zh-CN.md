@@ -6,7 +6,7 @@
 
 > 本页为机器译稿。涉及部署、接口或数据变更时，请同时核对英文或俄文原文。
 
-独立支付.NET 10及其自己的PostgreSQL和RabbitMQ.  所有三个项目都包括在 `OpenCRM.sln`: `Payments.Contracts` 和 `Payments.Service` 包含在 `Services/Payments`,以及 `Payments.Tests` 已经进入 `Tests`.  他们不参考 OpenCRM 。 检查和账单通过单独的金融运输连接;参见 [融合和恢复指南](../../docs/payments-service-integration.zh-CN.md). 生产要求列于 [服务器设置](../../docs/payments-service-integration.md#server-setup).
+独立支付.NET 10及其自己的PostgreSQL和RabbitMQ.  所有三个项目都包括在 `OpenCRM.sln`: `Payments.Contracts` 和 `Payments.Service` 包含在 `Services/Payments`,以及 `Payments.Tests` 已经进入 `Tests`.  他们不参考 OpenCRM 。 检查和账单通过单独的金融运输连接;参见 [融合和恢复指南](../../docs/payments-service-integration.zh-CN.md). 生产要求列于 [服务器设置](../../docs/payments-service-integration.zh-CN.md#server-setup).
 
  这是另一个阶段的 [结构设计](../../docs/payments-service-design.zh-CN.md):命令收录,操作坚持性,测试/活取YooKassa适配器,webhook收件箱,调和,退款,以及可靠的状态交付. 订阅补助金、促销代码和目前的收款方式仍然在主要应用中。
 

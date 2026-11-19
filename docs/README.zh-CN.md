@@ -15,6 +15,8 @@
 - [定制、扩展及同步上游更新](extending-opencrm.zh-CN.md)
 - [开发、测试与贡献](../CONTRIBUTING.zh-CN.md) · [项目规则（俄文）](../AGENTS.md)
 
+<a name="diagrams"></a>
+
 ## 架构与基础设施
 
 - [应用架构](architecture-current.zh-CN.md) · [服务健康检查](service-health-monitoring.zh-CN.md)
@@ -22,6 +24,8 @@
 - [账户模块设计](accounts-module/design.zh-CN.md) · [移除账户场景和功能](accounts-module/profile-removal.zh-CN.md) · [账户模块提取规范](accounts-module/spec.zh-CN.md)
 - [数据模型、组件与服务交互图](uml/README.zh-CN.md)
 - [界面示意图说明](plan.zh-CN.md) · [国际化计划](internationalization-plan.zh-CN.md)
+
+<a name="workspaces"></a>
 
 ## 工作区与日常业务
 

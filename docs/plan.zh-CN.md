@@ -9,11 +9,11 @@
 OpenCRM准备说明和技术文档导航.
 
 - [应用程序架构](architecture-current.zh-CN.md)
-- [工作空间和组织数据](README.md#workspaces)
+- [工作空间和组织数据](README.zh-CN.md#workspaces)
 - [通知](notifications.zh-CN.md)
 - [付款一体化](payments-service-integration.zh-CN.md)
 - [服务健康监测](service-health-monitoring.zh-CN.md)
-- [组件和模型图](README.md#diagrams)
+- [组件和模型图](README.zh-CN.md#diagrams)
 - [本地配置和设置](local-run.zh-CN.md)
 
 <a name="interface-illustrations"></a>

@@ -56,7 +56,7 @@ OpenCRM是一个共享的CRM基础.  从可用的设置开始,然后添加出您
 - 根据需要启用电子邮件、 AI 和支付基础设施 。
 - `PlatformPolicy__Commercial__Enabled` 控制可选的商业模式。
 - `UserTracking:Enabled` 实值 `false` 默认; 仅在产品需要时允许额外访问计数器和客户端访问快照。  见 [配置](configuration.zh-CN.md).
-- `AdminDesktop`  可以移动发射装置的Chrome profile和桌面管理员应用程序的本地状态文件;所有四个可选路径必须是绝对的.  见 [配置](configuration.md#desktop-administration-paths).
+- `AdminDesktop`  可以移动发射装置的Chrome profile和桌面管理员应用程序的本地状态文件;所有四个可选路径必须是绝对的.  见 [配置](configuration.zh-CN.md#desktop-administration-paths).
 - `Export1C:ProcessingDownloadUrl`  在导出能力响应中可选地发布本地 1C 处理文件 URL ; 忽略非本地 URL 。
 
 服务器支持 `Brand__DisplayName` 和 `Brand__PublicBaseUrl`;桌面应用程序使用品牌文件. 保持分布中所有进程设置的一致性。 改变品牌并不能去除所需的OpenCRM核心归属.
@@ -183,7 +183,7 @@ git merge upstream/main
 合并后 :
 
 1. 解决冲突,同时保留产品设置和核心检查。
-2. 恢复依附关系、构建和运行 [测试](../CONTRIBUTING.md#validation).
+2. 恢复依附关系、构建和运行 [测试](../CONTRIBUTING.zh-CN.md#validation).
 3. 在一个单独的数据库中验证迁移,并检查您的安装的主要情景 。
 4.  只有这样,更新内容才会包含在您产品的发布中.
 

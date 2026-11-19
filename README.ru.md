@@ -8,105 +8,38 @@ OpenCRM объединяет готовое веб-приложение, общ�
 
 ## Интерфейс CRM
 
-Настоящие снимки локальной OpenCRM с вымышленными демонстрационными данными и выключенным коммерческим режимом. Все языковые версии документации используют общие изображения.
+Снимки локальной установки OpenCRM с русским интерфейсом и вымышленной мастерской с учётом в рублях. Номера машин начинаются с `DEMO-`. Телефоны и VIN оставлены пустыми.
 
-Раскрывайте нужные разделы ниже, чтобы посмотреть каждый экран прямо в README.
-
-![Рабочий день OpenCRM в тёмной теме](docs/images/screenshots/workday-dark.jpg)
+![Рабочий день](docs/images/screenshots/localized/ru/workday.jpg)
 
 <details>
-<summary><strong>Рабочий день — светлая тема</strong></summary>
+<summary>Расписание по постам</summary>
 
-Тот же рабочий день с четырьмя этапами в светлой теме.
+Шесть демонстрационных записей распределены по трём постам.
 
-![Рабочий день — светлая тема](docs/images/screenshots/workday-light.jpg)
+![Расписание по постам](docs/images/screenshots/localized/ru/schedule.jpg)
 
 </details>
 
 <details>
-<summary><strong>Клиенты — поиск, фильтры и история визитов</strong></summary>
+<summary>Приёмка и схема повреждений</summary>
 
-Клиентская база, автомобили и история услуг в одном списке.
+В карточке Volvo XC60 на левом борту отмечена царапина.
 
-![Клиенты — поиск, фильтры и история визитов](docs/images/screenshots/clients.jpg)
-
-</details>
-
-<details>
-<summary><strong>Записи — расписание по постам</strong></summary>
-
-Плановые и текущие заказы на временной сетке трёх рабочих зон.
-
-![Записи — расписание по постам](docs/images/screenshots/schedule.jpg)
+![Приёмка и схема повреждений](docs/images/screenshots/localized/ru/intake.jpg)
 
 </details>
 
 <details>
-<summary><strong>Заказ — услуги и расчёты</strong></summary>
+<summary>Заказ-наряд</summary>
 
-Автомобиль, этап работы, состав услуг, клиент и расчёты.
+В заказе видны услуги, этап работы и сумма в рублях.
 
-![Заказ — услуги и расчёты](docs/images/screenshots/order.jpg)
-
-</details>
-
-<details>
-<summary><strong>Приёмка — состояние, схема повреждений и документы</strong></summary>
-
-Четыре проекции автомобиля с отметкой повреждения и документами.
-
-![Приёмка — состояние, схема повреждений и документы](docs/images/screenshots/intake.jpg)
+![Заказ-наряд](docs/images/screenshots/localized/ru/order.jpg)
 
 </details>
 
-<details>
-<summary><strong>Обращения — доска с четырьмя этапами</strong></summary>
-
-Путь обращения от первого контакта до готовности к записи.
-
-![Обращения — доска с четырьмя этапами](docs/images/screenshots/inquiries-board.jpg)
-
-</details>
-
-<details>
-<summary><strong>Карточка обращения — следующее действие и история</strong></summary>
-
-Запрос клиента, следующее действие, заметки и история событий.
-
-![Карточка обращения — следующее действие и история](docs/images/screenshots/inquiry-card.jpg)
-
-</details>
-
-<details>
-<summary><strong>Статистика — показатели и графики работ</strong></summary>
-
-Рабочие показатели организации, выполненные работы и суммы.
-
-![Статистика — показатели и графики работ](docs/images/screenshots/statistics.jpg)
-
-</details>
-
-<details>
-<summary><strong>Роли и права — доступ по ролям</strong></summary>
-
-Выбор роли и поиск разрешений; в примере показан доступ сотрудника к клиентам.
-
-![Роли и права — доступ по ролям](docs/images/screenshots/permissions.jpg)
-
-</details>
-
-<details>
-<summary><strong>Публичные страницы — главная и вход</strong></summary>
-
-Нейтральная главная и незаполненная форма парольного входа для собственной установки.
-
-![Нейтральная главная OpenCRM](docs/images/screenshots/home.jpg)
-
-![Страница входа OpenCRM](docs/images/screenshots/login.jpg)
-
-</details>
-
-[Открыть полную галерею с пояснениями](docs/screenshots.ru.md).
+[Открыть полную галерею с подписями](docs/screenshots.ru.md)
 
 ## Почему OpenCRM
 

@@ -8,20 +8,36 @@ OpenCRM 为汽车美容门店和维修厂提供客户、车辆、工位预约、
 
 ## 界面预览
 
-以下截图来自本地运行的 OpenCRM，使用演示数据，商业模式已关闭。截图中的界面为俄语。应用支持切换俄语、英语和简体中文。
+截图来自本地运行的 OpenCRM。界面为简体中文，虚构门店以人民币（CNY）记账。演示车牌以 `DEMO-` 开头，电话和车辆识别代号（VIN）留空。
 
-![OpenCRM 深色工作看板](docs/images/screenshots/workday-dark.jpg)
+![工作日看板](docs/images/screenshots/localized/zh-CN/workday.jpg)
 
-| 场景 | 界面 |
-| --- | --- |
-| 工作看板 | [浅色主题](docs/images/screenshots/workday-light.jpg) |
-| 客户 | [搜索、筛选和到店记录](docs/images/screenshots/clients.jpg) |
-| 工位预约 | [按工位查看排班](docs/images/screenshots/schedule.jpg) |
-| 接车检查 | [车况、损伤示意图和单据](docs/images/screenshots/intake.jpg) |
-| 维修工单 | [服务项目和收款汇总](docs/images/screenshots/order.jpg) |
-| 客户咨询 | [四阶段看板](docs/images/screenshots/inquiries-board.jpg) · [咨询详情](docs/images/screenshots/inquiry-card.jpg) |
-| 运营 | [统计数据](docs/images/screenshots/statistics.jpg) · [角色和权限](docs/images/screenshots/permissions.jpg) |
-| 公开页面 | [首页](docs/images/screenshots/home.jpg) · [登录](docs/images/screenshots/login.jpg) |
+<details>
+<summary>工位预约排班</summary>
+
+三个工位上安排了六条演示预约。
+
+![工位预约排班](docs/images/screenshots/localized/zh-CN/schedule.jpg)
+
+</details>
+
+<details>
+<summary>接车与损伤示意图</summary>
+
+沃尔沃 XC60 的接车记录标记了左侧的一处划痕。
+
+![接车与损伤示意图](docs/images/screenshots/localized/zh-CN/intake.jpg)
+
+</details>
+
+<details>
+<summary>维修工单</summary>
+
+工单显示服务项目、当前阶段和人民币应收金额。
+
+![维修工单](docs/images/screenshots/localized/zh-CN/order.jpg)
+
+</details>
 
 [查看完整截图和说明](docs/screenshots.zh-CN.md)
 
@@ -71,7 +87,7 @@ flowchart LR
 
 ## 基于 OpenCRM 构建自己的产品
 
-先配置自己的数据库、品牌和集成。将产品专属的界面和行为放在产品一侧，将可供其他部署使用的修复提交给 OpenCRM。从 `upstream/main` 同步更新并在部署前验证。新增模块需要在主机和客户端构建中显式注册。详细流程和扩展点见[定制与扩展指南（英文）](docs/extending-opencrm.md)。
+先配置自己的数据库、品牌和集成。将产品专属的界面和行为放在产品一侧，将可供其他部署使用的修复提交给 OpenCRM。从 `upstream/main` 同步更新并在部署前验证。新增模块需要在主机和客户端构建中显式注册。详细流程和扩展点见[定制与扩展指南](docs/extending-opencrm.zh-CN.md)。
 
 ## 许可与署名
 
