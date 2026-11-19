@@ -4,6 +4,8 @@
 
 **开箱即用的汽车服务 CRM，也可作为自建 CRM 的模块化核心。支持自行部署，无需支付许可费。**
 
+[观看演示](#视频演示) · [自行部署](docs/local-run.zh-CN.md) · [构建自己的 CRM](docs/extending-opencrm.zh-CN.md)
+
 OpenCRM 为汽车美容门店和维修厂提供客户、车辆、工位预约、接车检查和维修工单管理。车队管理团队也可以用它作为自建车辆台账和维保工具的基础。应用部署在自己的服务器上，团队可以配置品牌和集成，并按业务需要扩展代码。
 
 ## 视频演示
@@ -65,6 +67,10 @@ cd OpenCRM
 按[本地部署指南](docs/local-run.zh-CN.md)安装依赖、配置 PostgreSQL、运行数据库迁移并启动应用。指南包含 Bash 和 PowerShell 命令。
 
 启动后访问 **https://localhost:7142**，注册账号并创建组织。默认配置下，密码登录无需邮件服务或邮箱验证。
+
+## 付费部署与技术支持
+
+OpenCRM 作者提供在您自己的服务器上部署 OpenCRM 的付费服务和技术支持。如需沟通需求和费用，请发邮件至 [wiji.ed@mail.ru](mailto:wiji.ed@mail.ru)。
 
 ## 文档
 

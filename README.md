@@ -4,6 +4,8 @@
 
 **A ready-to-use CRM for automotive businesses and a modular core for your own CRM. Run it on your own server with no license fee.**
 
+[Watch the demo](#video-tour) · [Install on your server](docs/local-run.md) · [Build your own CRM](docs/extending-opencrm.md)
+
 OpenCRM combines a working web application, shared business modules, administration interfaces, and independent notification and payment microservices. Detailing studios and repair shops can start with customers, vehicles, bay schedules, intake, and work orders. Fleet teams can use the core to build their own maintenance tools.
 
 ## Video tour
@@ -66,6 +68,10 @@ cd OpenCRM
 Follow the [local setup guide](docs/local-run.md) for dependencies, your own PostgreSQL instance, connection configuration, build commands, migrations, and HTTPS. It includes commands for Bash and PowerShell.
 
 Once the application is running, open **https://localhost:7142**, register an account, and create an organization. By default, password sign-in does not require an email service or email verification.
+
+## Paid installation and support
+
+The author of OpenCRM offers paid installation on your server and technical support. To discuss your needs and pricing, email [wiji.ed@mail.ru](mailto:wiji.ed@mail.ru).
 
 ## Documentation
 
