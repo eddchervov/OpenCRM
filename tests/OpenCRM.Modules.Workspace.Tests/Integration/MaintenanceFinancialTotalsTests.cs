@@ -47,8 +47,7 @@ public sealed class MaintenanceFinancialTotalsTests
         {
             UserId = user.Id, Vehicle = vehicle, Date = date, DateTimeCreation = date
         };
-        context.Vehicles.Add(vehicle);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
         context.ChangeTracker.Clear();
 
         // Исторические заказы создаются до появления производных финансовых итогов.

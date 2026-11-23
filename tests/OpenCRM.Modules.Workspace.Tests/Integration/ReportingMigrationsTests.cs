@@ -182,8 +182,7 @@ public sealed class ReportingMigrationsTests
             Details = []
         };
 
-        context.Vehicles.Add(vehicle);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
 
         await context.Database.ExecuteSqlAsync($"""
             INSERT INTO "Maintenance" ("Id", "Type", "Date", "DateTimeCreation", "IsDeleted", "UserId", "VehicleId", "Status")

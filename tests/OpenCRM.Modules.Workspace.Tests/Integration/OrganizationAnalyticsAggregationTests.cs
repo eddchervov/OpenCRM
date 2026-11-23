@@ -18,6 +18,7 @@ public sealed class OrganizationAnalyticsAggregationTests(NotificationFixture fi
         var user = new ApplicationUser();
         var organization = new Organization { Name = "Проверка статистики", OwnerUser = user };
         var foreignOrganization = new Organization { Name = "Чужая организация", OwnerUser = user };
+        var emptyOrganization = new Organization { Name = "Организация без данных", OwnerUser = user };
         var vehicle = new Vehicle { User = user, Organization = organization };
         var archivedVehicle = new Vehicle { User = user, Organization = organization, IsArchived = true };
         var deletedVehicle = new Vehicle { User = user, Organization = organization, IsDeleted = true };
@@ -51,6 +52,7 @@ public sealed class OrganizationAnalyticsAggregationTests(NotificationFixture fi
             });
         }
 
+        context.Organizations.Add(emptyOrganization);
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
         await context.Database.OpenConnectionAsync();
@@ -66,7 +68,7 @@ public sealed class OrganizationAnalyticsAggregationTests(NotificationFixture fi
             Assert.Empty(context.ChangeTracker.Entries());
 
             var empty = await new OrganizationWorkspaceAnalyticsQueryService(context).GetAnalyticsAsync(
-                Guid.NewGuid(), false, false, false, false, today);
+                emptyOrganization.Id, false, false, false, false, today);
             Assert.Equal(0m, empty.Kpis.Revenue14Days);
             Assert.All(empty.RevenueSeries, point => Assert.Equal(0m, point.Value));
         }
