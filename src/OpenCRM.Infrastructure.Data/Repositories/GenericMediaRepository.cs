@@ -94,7 +94,7 @@ public class GenericMediaRepository : IGenericMediaRepository
     }
 
     /// <summary> Возвращает медиафайл пользователя по идентификатору. </summary>
-    public async Task<T> GetByIdAsync<T>(string userId, Guid mediaId, bool includeDeleted = false) where T : BaseMedia
+    public async Task<T?> GetByIdAsync<T>(string? userId, Guid mediaId, bool includeDeleted = false) where T : BaseMedia
     {
         var query = _context.Set<T>()
             .Where(m => m.UserId == userId && m.Id == mediaId);
@@ -149,7 +149,7 @@ public class GenericMediaRepository : IGenericMediaRepository
     }
 
     /// <summary> Возвращает идентификаторы медиафайлов пользователя. </summary>
-    public async Task<IEnumerable<Guid>> GetMediaIdsByUserAsync(string userId, MediaType? type = null, bool includeDeleted = false)
+    public async Task<IEnumerable<Guid>> GetMediaIdsByUserAsync(string? userId, MediaType? type = null, bool includeDeleted = false)
     {
         var result = new List<Guid>();
 

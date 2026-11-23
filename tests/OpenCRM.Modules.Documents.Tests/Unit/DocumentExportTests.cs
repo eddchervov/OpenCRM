@@ -137,8 +137,8 @@ public sealed class DocumentExportTests
         Assert.Equal(3, generatedModel.Maintenance.MaintenanceDetails.Single().Quantity);
         Assert.Equal(4250.75m, generatedModel.Maintenance.MaintenanceDetails.Single().Price);
         Assert.Equal("Приёмка: царапина", generatedModel.Maintenance.IntakeNotes);
-        Assert.Equal(new[] { "До работы", "После работы" }, generatedModel.Maintenance.Photos.Select(photo => photo.Caption));
-        Assert.All(generatedModel.Maintenance.Photos, photo => Assert.Equal(new byte[] { 4, 5, 6 }, photo.ImageData));
+        Assert.Equal(new[] { "До работы", "После работы" }, generatedModel.Maintenance.Photos.Select(photo => Assert.IsType<PhotoInfo>(photo).Caption));
+        Assert.All(generatedModel.Maintenance.Photos, photo => Assert.Equal(new byte[] { 4, 5, 6 }, Assert.IsType<PhotoInfo>(photo).ImageData));
         fixture.MaintenanceDocumentService.Verify(service => service.TrackDocumentGenerated(
             UserId, OrganizationId, MaintenanceId, "Сформирован отчет обслуживания PDF", "Формат: PDF\nФотографии: включены"), Times.Once);
     }
@@ -603,7 +603,7 @@ public sealed class DocumentExportTests
         var result = await fixture.Pdf.GenerateMaintenancePdf(UserId, MaintenanceId, includePhotos: true, organizationId: OrganizationId);
 
         Assert.Equal(DocumentExportOutcome.File, result.Outcome);
-        Assert.Null(Assert.Single(generatedModel!.Maintenance.Photos).Caption);
+        Assert.Null(Assert.IsType<PhotoInfo>(Assert.Single(generatedModel!.Maintenance.Photos)).Caption);
     }
 
     [Theory]

@@ -354,7 +354,7 @@ public sealed class MaintenanceInventoryAtomicityTests(InventoryDatabaseFixture 
         }
 
         var issue = IssueAsync();
-        await locks.StockLocked.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        await locks.OrganizationLocked.Task.WaitAsync(TimeSpan.FromSeconds(30));
         await Task.WhenAll(issue, CreateAndLockAsync());
         await context.Entry(stock).ReloadAsync();
 
@@ -363,20 +363,34 @@ public sealed class MaintenanceInventoryAtomicityTests(InventoryDatabaseFixture 
         Assert.Equal(2, await context.OrganizationMaterialStocks.CountAsync(item => item.OrganizationId == vehicle.OrganizationId));
         Assert.Equal(2, await context.OrganizationMaterialMovements.CountAsync(item => item.OrganizationId == vehicle.OrganizationId));
         Assert.Equal(2, locks.StockLockCount);
-        Assert.Equal(1, locks.OrganizationLockCount);
+        Assert.Equal(2, locks.OrganizationLockCount);
     }
 
     private sealed class StockCreationLockBarrier : DbCommandInterceptor
     {
-        internal TaskCompletionSource StockLocked { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource OrganizationLocked { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private readonly TaskCompletionSource _organizationLocked = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _secondOrganizationLockRequested = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private int _stockLockCount;
         private int _organizationLockCount;
 
         internal int StockLockCount => Volatile.Read(ref this._stockLockCount);
 
         internal int OrganizationLockCount => Volatile.Read(ref this._organizationLockCount);
+
+        public override ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(
+            DbCommand command,
+            CommandEventData eventData,
+            InterceptionResult<int> result,
+            CancellationToken cancellationToken = default)
+        {
+            if (StockCreationLockBarrier.IsOrganizationLock(command) && this.OrganizationLockCount > 0)
+            {
+                this._secondOrganizationLockRequested.TrySetResult();
+            }
+
+            return ValueTask.FromResult(result);
+        }
 
         public override async ValueTask<int> NonQueryExecutedAsync(
             DbCommand command,
@@ -388,20 +402,23 @@ public sealed class MaintenanceInventoryAtomicityTests(InventoryDatabaseFixture 
                 && command.CommandText.Contains("FOR UPDATE", StringComparison.Ordinal))
             {
                 Interlocked.Increment(ref this._stockLockCount);
-                if (this.StockLocked.TrySetResult())
-                {
-                    await this._organizationLocked.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
-                }
             }
 
-            if (command.CommandText.Contains("FROM \"Organizations\"", StringComparison.Ordinal))
+            if (!StockCreationLockBarrier.IsOrganizationLock(command)
+                || Interlocked.Increment(ref this._organizationLockCount) != 1)
             {
-                Interlocked.Increment(ref this._organizationLockCount);
-                this._organizationLocked.TrySetResult();
+                return result;
             }
+
+            this.OrganizationLocked.TrySetResult();
+            await this._secondOrganizationLockRequested.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
 
             return result;
         }
+
+        private static bool IsOrganizationLock(DbCommand command) =>
+            command.CommandText.Contains("FROM \"Organizations\"", StringComparison.Ordinal)
+            && command.CommandText.Contains("FOR NO KEY UPDATE", StringComparison.Ordinal);
     }
 
     private sealed class EmptyStockReadBarrier : DbCommandInterceptor

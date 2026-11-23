@@ -10,7 +10,7 @@ namespace OpenCRM.Services.Interfaces.Word.Dtos
     public class WordPhotoInfo
     {
         /// <summary> Двоичные данные фотографии для вставки в документ. </summary>
-        public byte[] ImageData { get; set; }
+        public byte[]? ImageData { get; set; }
     }
 }
 

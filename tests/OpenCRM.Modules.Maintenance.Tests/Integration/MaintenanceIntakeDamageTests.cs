@@ -354,7 +354,7 @@ public sealed class MaintenanceIntakeDamageTests(MaintenanceDatabaseFixture fixt
         await isolated.GetService<IRelationalDatabaseCreator>().CreateAsync();
         const string communicationsMigration = "20261023152920_AddUniqueMaxBotIdentity";
         const string intakeMigration = "20261024101148_AddMaintenanceIntakeDamages";
-        await isolated.Database.MigrateAsync(communicationsMigration);
+        await isolated.Database.MigrateAsync();
 
         var textIntake = MaintenanceIntakeDamageTests.CreateWork();
         textIntake.IntakeRecordedAt = DateTime.UtcNow;
@@ -367,6 +367,8 @@ public sealed class MaintenanceIntakeDamageTests(MaintenanceDatabaseFixture fixt
             legacySeed.Vehicles.AddRange(textIntake.Vehicle, unstarted.Vehicle);
             await legacySeed.SaveChangesAsync();
         }
+
+        await isolated.GetService<IMigrator>().MigrateAsync(communicationsMigration);
 
         foreach (var work in new[] { textIntake, unstarted })
         {

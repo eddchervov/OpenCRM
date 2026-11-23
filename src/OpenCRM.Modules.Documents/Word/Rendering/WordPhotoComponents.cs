@@ -52,7 +52,7 @@ internal sealed class WordPhotoComponents
     }
 
     /// <summary> Добавляет фотографии обслуживания в документ. </summary>
-    internal static async Task AddMaintenancePhotos(Body body, IEnumerable<WordPhotoInfo> photos, WordprocessingDocument document)
+    internal static async Task AddMaintenancePhotos(Body body, IEnumerable<WordPhotoInfo?> photos, WordprocessingDocument document)
     {
         var photoList = photos.Where(x => x?.ImageData?.Length > 0).ToList();
         if (photoList.Count == 0) return;
@@ -69,7 +69,12 @@ internal sealed class WordPhotoComponents
                 )
             ));
 
-            AddImage(body, photoList[i].ImageData, document);
+            if (photoList[i]?.ImageData is not { Length: > 0 } imageData)
+            {
+                continue;
+            }
+
+            AddImage(body, imageData, document);
             WordDocumentComponents.AddSpacer(body, 120);
         }
 

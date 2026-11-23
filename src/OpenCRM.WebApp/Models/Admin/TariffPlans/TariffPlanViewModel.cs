@@ -11,11 +11,11 @@ namespace OpenCRM.WebApp.Models.Admin.TariffPlans
         /// <summary> Название тарифного плана. </summary>
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary> Описание тарифного плана. </summary>
         [StringLength(500)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         /// <summary> Цена тарифного плана. </summary>
         [Required]

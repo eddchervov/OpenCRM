@@ -53,7 +53,7 @@ public sealed class DashboardTests : IDisposable
             Dispatcher.UIThread.RunJobs();
             Assert.True(model.IsDashboardOpen);
             Assert.Equal(["Новые пользователи", "Новые организации"], model.Dashboard.RegistrationMetrics.Select(metric => metric.Title));
-            Assert.Equal(1, model.Dashboard.GrowthSeries.Count);
+            Assert.Single(model.Dashboard.GrowthSeries);
             Assert.Equal(["Регистрации", "Email", "Обслуживания"], model.Dashboard.ActivitySeries.Select(series => series.Title));
             Assert.Single(model.Dashboard.PaymentSeries);
             var heading = window.GetVisualDescendants().OfType<TextBlock>().Single(control =>

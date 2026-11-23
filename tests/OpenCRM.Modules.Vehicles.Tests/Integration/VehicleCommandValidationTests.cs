@@ -381,7 +381,7 @@ public sealed class VehicleCommandValidationTests(VehicleDatabaseFixture fixture
             VehicleCommandValidationTests.TryCreateAsync(firstService, user.Id, organization.Id, "Первое новое авто"),
             VehicleCommandValidationTests.TryCreateAsync(secondService, user.Id, organization.Id, "Второе новое авто"));
 
-        Assert.Single(results.Where(created => created));
+        Assert.Single(results, created => created);
         await using var verificationContext = fixture.CreateContext();
         Assert.Equal(300, await verificationContext.Vehicles.CountAsync(vehicle =>
             vehicle.OrganizationId == organization.Id && !vehicle.IsDeleted));

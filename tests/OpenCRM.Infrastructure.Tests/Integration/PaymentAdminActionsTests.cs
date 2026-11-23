@@ -11,6 +11,7 @@ using Moq;
 using OpenCRM.Domain;
 using OpenCRM.Domain.Identity;
 using OpenCRM.Infrastructure.Data;
+using OpenCRM.Infrastructure.Migrations;
 using OpenCRM.Infrastructure.Payments.ServiceIntegration;
 using OpenCRM.Modules.Payments.Contracts;
 using OpenCRM.Modules.Promotions.Contracts;
@@ -18,6 +19,7 @@ using OpenCRM.Services.Interfaces.Organizations;
 using OpenCRM.Services.Interfaces.Payments.Dto;
 using OpenCRM.Testing;
 using Payments.Contracts;
+using Testcontainers.PostgreSql;
 
 namespace OpenCRM.Infrastructure.Tests.Integration;
 
@@ -239,13 +241,22 @@ public sealed class PaymentAdminActionsTests(NotificationFixture fixture) : ICla
     [Fact]
     public async Task MigrationMatchesModelAndRefusesToEraseAdministrativeAudit()
     {
-        var id = await this.SeedAsync(fresh: false);
-        await using var context = fixture.CreateContext();
+        await using var postgres = new PostgreSqlBuilder("postgres:15-alpine").Build();
+        await postgres.StartAsync();
+        var options = new DbContextOptionsBuilder<OpenCRMContext>()
+            .UseNpgsql(postgres.GetConnectionString(), database =>
+                database.MigrationsAssembly(typeof(AssemblyMarker).Assembly.GetName().Name))
+            .Options;
+
+        await using var context = new OpenCRMContext(options);
+        await context.Database.MigrateAsync();
+        var id = await this.SeedAsync(context, fresh: false);
         Assert.False(context.Database.HasPendingModelChanges());
         var token = (await this.Service(context).GetAsync(id))!.StateToken;
         await this.Service(context).ExecuteAsync(id, new(Guid.NewGuid(), "check", "Сохранённый аудит", null, token), "admin");
         var error = await Assert.ThrowsAnyAsync<Exception>(() => context.GetService<IMigrator>().MigrateAsync("20261025071834_AddPaymentsServicePurchases"));
         Assert.Contains("Нельзя удалить журнал", error.ToString());
+        Assert.Single(await context.SubscriptionPaymentAdminActions.Select(action => action.Id).ToListAsync());
     }
 
     [Fact]
@@ -324,7 +335,13 @@ public sealed class PaymentAdminActionsTests(NotificationFixture fixture) : ICla
     [Fact]
     public async Task EmptyAdministrativeMigrationsCanRollBackAndApplyAgain()
     {
-        await using var context = fixture.CreateContext();
+        await using var postgres = new PostgreSqlBuilder("postgres:15-alpine").Build();
+        await postgres.StartAsync();
+        var options = new DbContextOptionsBuilder<OpenCRMContext>()
+            .UseNpgsql(postgres.GetConnectionString(), database =>
+                database.MigrationsAssembly(typeof(AssemblyMarker).Assembly.GetName().Name)).Options;
+        await using var context = new OpenCRMContext(options);
+        await context.Database.MigrateAsync();
         await context.GetService<IMigrator>().MigrateAsync("20261025071834_AddPaymentsServicePurchases");
         await context.Database.MigrateAsync();
         Assert.False(context.Database.HasPendingModelChanges());
@@ -476,6 +493,12 @@ public sealed class PaymentAdminActionsTests(NotificationFixture fixture) : ICla
     private async Task<int> SeedAsync(bool fresh = true)
     {
         await using var context = fixture.CreateContext();
+
+        return await this.SeedAsync(context, fresh);
+    }
+
+    private async Task<int> SeedAsync(OpenCRMContext context, bool fresh = true)
+    {
         var user = new ApplicationUser { Email = "admin-actions-" + Guid.NewGuid().ToString("N") + "@example.test" };
         var plan = new SubscriptionPlan { Name = "Тест действий", Price = 420, DurationDays = 30, VehicleLimit = 5,
             PlanTypeCode = SubscriptionPlanCatalogCodes.PlanTypes.Personal };

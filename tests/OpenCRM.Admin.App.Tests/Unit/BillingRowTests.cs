@@ -60,12 +60,29 @@ public sealed class BillingRowTests
     [Fact]
     public void FutureSubscriptionHasItsOwnStatus()
     {
-        var subscription = new AdminBillingOrganizationSubscription
-        {
-            StartDate = DateTime.UtcNow.AddDays(1),
-            EndDate = DateTime.UtcNow.AddDays(31)
-        };
+        var localization = AdminLocalization.Instance;
+        var previousLanguage = localization.Language;
+        var preferencePath = Path.Combine(Path.GetTempPath(), $"opencrm-billing-row-{Guid.NewGuid():N}.txt");
+        using var preferenceScope = localization.UsePreferencePath(preferencePath);
 
-        Assert.Equal("Ещё не началась", new BillingRow(subscription).Status);
+        try
+        {
+            localization.Language = "ru";
+            var subscription = new AdminBillingOrganizationSubscription
+            {
+                StartDate = DateTime.UtcNow.AddDays(1),
+                EndDate = DateTime.UtcNow.AddDays(31)
+            };
+
+            Assert.Equal("Ещё не началась", new BillingRow(subscription).Status);
+        }
+        finally
+        {
+            localization.Language = previousLanguage;
+            if (File.Exists(preferencePath))
+            {
+                File.Delete(preferencePath);
+            }
+        }
     }
 }

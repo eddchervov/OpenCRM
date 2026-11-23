@@ -19,6 +19,7 @@
       "IntakeNotes": null,
       "Comment": "Работа выполнена",
       "Price": 1500.25,
+      "CurrencyCode": "RUB",
       "MaintenanceDetails": [
         {
           "Quantity": 1,
@@ -32,5 +33,8 @@
     }
   ],
   "TotalMaintenanceCount": 1,
-  "TotalSpent": 1500.25
+  "TotalSpent": 1500.25,
+  "CurrencyTotals": {
+    "RUB": 1500.25
+  }
 }

@@ -4,10 +4,10 @@
 public interface IMaintenancePhotoRepository
 {
     /// <summary> Находит фотографию обслуживания по идентификатору. </summary>
-    Task<MaintenancePhoto> GetByIdAsync(string userId, Guid photoId, bool includeDeleted = false);
+    Task<MaintenancePhoto?> GetByIdAsync(string userId, Guid photoId, bool includeDeleted = false);
 
     /// <summary> Находит фотографию обслуживания с учётом организации. </summary>
-    Task<MaintenancePhoto> GetByIdAsync(string userId, Guid? organizationId, Guid photoId, bool includeDeleted = false);
+    Task<MaintenancePhoto?> GetByIdAsync(string userId, Guid? organizationId, Guid photoId, bool includeDeleted = false);
 
     /// <summary> Получает фотографии обслуживания по идентификатору обслуживания. </summary>
     Task<IEnumerable<MaintenancePhoto>> GetByMaintenanceIdAsync(string userId, Guid maintenanceId, bool includeDeleted = false);

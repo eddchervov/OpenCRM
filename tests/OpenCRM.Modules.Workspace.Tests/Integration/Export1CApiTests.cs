@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using OpenCRM.Infrastructure.Data;
+using OpenCRM.Testing;
 using OpenCRM.Domain;
 using OpenCRM.Domain.Identity;
 using OpenCRM.Services.Interfaces.Export1C;
@@ -15,10 +17,11 @@ using OpenCRM.Services.Interfaces.Organizations;
 using OpenCRM.Services.Interfaces.Organizations.Dtos;
 using OpenCRM.WebApp.Controllers.Api.V1.Organizations;
 
-namespace OpenCRM.Modules.Workspace.Tests.Unit;
+namespace OpenCRM.Modules.Workspace.Tests.Integration;
 
-public sealed class Export1CApiTests
+public sealed class Export1CApiTests(NotificationFixture fixture) : IClassFixture<NotificationFixture>, IDisposable
 {
+    private readonly OpenCRMContext _context = fixture.CreateContext();
     private readonly Guid _organizationId = Guid.NewGuid();
     private readonly ApplicationUser _user = new();
     private readonly Mock<IOrganizationSubscriptionService> _subscriptions = new();
@@ -36,7 +39,7 @@ public sealed class Export1CApiTests
     [InlineData(true, "full", true)]
     public async Task OnlyBp3RequiresProBeforeReadingExportData(bool hasPro, string destination, bool download)
     {
-        var controller = this.CreateController(hasPro);
+        var controller = await this.CreateControllerAsync(hasPro);
         var options = Export1CApiTests.CreateOptions(destination);
 
         var result = download
@@ -69,7 +72,7 @@ public sealed class Export1CApiTests
     [InlineData("other", true)]
     public async Task UnknownDestinationIsRejectedWithoutReadingData(string destination, bool download)
     {
-        var controller = this.CreateController(true);
+        var controller = await this.CreateControllerAsync(true);
         var options = Export1CApiTests.CreateOptions(destination);
 
         var result = download
@@ -87,7 +90,7 @@ public sealed class Export1CApiTests
     [InlineData("full", true)]
     public async Task ProDoesNotBypassRolePermissions(string destination, bool download)
     {
-        var controller = this.CreateController(true);
+        var controller = await this.CreateControllerAsync(true);
         this._permissions.Setup(service => service.HasPermissionAsync(this._user.Id, this._organizationId, OrganizationPermissionCodes.DocumentsExport))
             .ReturnsAsync(false);
         var options = Export1CApiTests.CreateOptions(destination);
@@ -103,7 +106,7 @@ public sealed class Export1CApiTests
     [Fact]
     public async Task FreeCapabilitiesKeepUniversalExportAndSeparateBp3Availability()
     {
-        var controller = this.CreateController(false);
+        var controller = await this.CreateControllerAsync(false);
 
         var result = Assert.IsType<OkObjectResult>(await controller.Capabilities(this._organizationId));
         var capabilities = JsonSerializer.SerializeToElement(result.Value);
@@ -117,7 +120,7 @@ public sealed class Export1CApiTests
     [Fact]
     public async Task LegacyRequestWithoutDestinationKeepsFreeJsonExport()
     {
-        var controller = this.CreateController(false);
+        var controller = await this.CreateControllerAsync(false);
         var options = new Export1COptionsDto
         {
             DateFrom = new DateOnly(2026, 10, 1),
@@ -128,8 +131,48 @@ public sealed class Export1CApiTests
         this._export.Verify(service => service.CreateAsync(this._organizationId, options), Times.Once);
     }
 
-    private Export1CApiController CreateController(bool hasPro)
+    [Theory]
+    [InlineData("USD", false)]
+    [InlineData("USD", true)]
+    [InlineData("CNY", false)]
+    [InlineData("CNY", true)]
+    public async Task NonRubOrganizationCannotExport(string currencyCode, bool download)
     {
+        var controller = await this.CreateControllerAsync(true, currencyCode);
+        var options = Export1CApiTests.CreateOptions("full");
+
+        var result = download
+            ? await controller.Download(this._organizationId, options)
+            : await controller.Preview(this._organizationId, options);
+
+        Assert.IsType<ConflictObjectResult>(result);
+        this._export.Verify(service => service.CreateAsync(It.IsAny<Guid>(), It.IsAny<Export1COptionsDto>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("USD")]
+    [InlineData("CNY")]
+    public async Task NonRubOrganizationCannotReadExportCapabilities(string currencyCode)
+    {
+        var controller = await this.CreateControllerAsync(true, currencyCode);
+
+        Assert.IsType<ConflictObjectResult>(await controller.Capabilities(this._organizationId));
+        this._export.Verify(service => service.CreateAsync(It.IsAny<Guid>(), It.IsAny<Export1COptionsDto>()), Times.Never);
+    }
+
+    public void Dispose() => this._context.Dispose();
+
+    private async Task<Export1CApiController> CreateControllerAsync(bool hasPro, string currencyCode = CurrencyCodes.Rub)
+    {
+        this._context.Organizations.Add(new Organization
+        {
+            Id = this._organizationId,
+            Name = "Тестовая организация",
+            OwnerUser = this._user,
+            CurrencyCode = currencyCode
+        });
+        await this._context.SaveChangesAsync();
+
         var users = new Mock<UserManager<ApplicationUser>>(
             Mock.Of<IUserStore<ApplicationUser>>(), Options.Create(new IdentityOptions()),
             Mock.Of<IPasswordHasher<ApplicationUser>>(), Array.Empty<IUserValidator<ApplicationUser>>(),
@@ -144,7 +187,7 @@ public sealed class Export1CApiTests
         this._export.Setup(service => service.CreateAsync(this._organizationId, It.IsAny<Export1COptionsDto>())).ReturnsAsync(new Export1CPackageDto());
 
         return new Export1CApiController(users.Object, this._subscriptions.Object, this._permissions.Object, this._export.Object,
-            Mock.Of<ILogger<Export1CApiController>>())
+            Mock.Of<ILogger<Export1CApiController>>(), this._context)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };

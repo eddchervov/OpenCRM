@@ -11,10 +11,10 @@ namespace OpenCRM.Services.Interfaces.Word.Dtos
     public class WordVehicleInfo
     {
         /// <summary> Наименование марки транспортного средства. </summary>
-        public string BrandName { get; set; }
+        public string BrandName { get; set; } = string.Empty;
 
         /// <summary> Наименование модели транспортного средства. </summary>
-        public string ModelName { get; set; }
+        public string ModelName { get; set; } = string.Empty;
 
         /// <summary> Регистрационный знак транспортного средства. </summary>
         public string? RegistrationPlate { get; set; }
@@ -26,13 +26,13 @@ namespace OpenCRM.Services.Interfaces.Word.Dtos
         public int? YearIssue { get; set; }
 
         /// <summary> Название транспортного средства. </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary> Описание транспортного средства. </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary> Двоичные данные фотографии транспортного средства. </summary>
-        public byte[] PhotoData { get; set; }
+        public byte[]? PhotoData { get; set; }
     }
 
 }

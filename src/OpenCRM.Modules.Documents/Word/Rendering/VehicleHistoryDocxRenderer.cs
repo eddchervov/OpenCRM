@@ -24,9 +24,9 @@ internal sealed class VehicleHistoryDocxRenderer(string projectName)
             WordDocumentComponents.AddPageHeader(body, "История обслуживания техники", WordDocumentComponents.GetVehicleTitle(model.Vehicle), model.GeneratedDate);
             WordDocumentComponents.AddGenerationPanel(body, model.GeneratedDate, includePhotos, projectName);
 
-            if (includePhotos && model.Vehicle?.PhotoData?.Length > 0)
+            if (includePhotos && model.Vehicle?.PhotoData is { Length: > 0 } photoData)
             {
-                await WordPhotoComponents.AddPhotoWithCaption(body, model.Vehicle.PhotoData, "Фотография техники", wordDocument);
+                await WordPhotoComponents.AddPhotoWithCaption(body, photoData, "Фотография техники", wordDocument);
             }
 
             WordDocumentComponents.AddSectionHeading(body, "Техника");

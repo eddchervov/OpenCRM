@@ -11,10 +11,10 @@ namespace OpenCRM.Services.Interfaces.Pdf.Dtos;
 public class VehicleInfo
 {
     /// <summary> Марка автомобиля. </summary>
-    public string BrandName { get; set; }
+    public string BrandName { get; set; } = string.Empty;
 
     /// <summary> Модель автомобиля. </summary>
-    public string ModelName { get; set; }
+    public string ModelName { get; set; } = string.Empty;
 
     /// <summary> Регистрационный знак, если есть. </summary>
     public string? RegistrationPlate { get; set; }
@@ -26,12 +26,12 @@ public class VehicleInfo
     public int? YearIssue { get; set; }
 
     /// <summary> Отображаемое название автомобиля. </summary>
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary> Описание автомобиля. </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary> Данные фотографии автомобиля. </summary>
-    public byte[] PhotoData { get; set; }
+    public byte[]? PhotoData { get; set; }
 }
 

@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolveFrontendOutputDir } from '../../build/frontendOutput'
+import { resolveSharedChunk } from '../../build/frontendChunks'
 
 export default defineConfig({
   plugins: [vue()],
@@ -28,6 +29,7 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
+        manualChunks: resolveSharedChunk,
         entryFileNames: 'assets/index-[hash].js',
         chunkFileNames: chunkInfo => `assets/${chunkInfo.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase()}-[hash].js`,
         assetFileNames: assetInfo => {

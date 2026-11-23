@@ -15,13 +15,13 @@ public class MaintenanceInfo
     public MaintenanceType Type { get; set; }
 
     /// <summary> Дата обслуживания в текстовом виде. </summary>
-    public string Date { get; set; }
+    public string? Date { get; set; }
 
     /// <summary> Место проведения обслуживания. </summary>
-    public string Location { get; set; }
+    public string? Location { get; set; }
 
     /// <summary> Исполнитель обслуживания. </summary>
-    public string Performer { get; set; }
+    public string? Performer { get; set; }
 
     /// <summary> Пробег на момент обслуживания, если известен. </summary>
     public int? Mileage { get; set; }
@@ -30,7 +30,7 @@ public class MaintenanceInfo
     public string? IntakeNotes { get; set; }
 
     /// <summary> Комментарий к обслуживанию. </summary>
-    public string Comment { get; set; }
+    public string? Comment { get; set; }
 
     /// <summary> Стоимость обслуживания, если указана. </summary>
     public decimal? Price { get; set; }
@@ -39,10 +39,10 @@ public class MaintenanceInfo
     public string CurrencyCode { get; set; } = "RUB";
 
     /// <summary> Строки работ и услуг обслуживания. </summary>
-    public List<MaintenanceDetail> MaintenanceDetails { get; set; }
+    public List<MaintenanceDetail> MaintenanceDetails { get; set; } = [];
 
     /// <summary> Фотографии, относящиеся к обслуживанию. </summary>
-    public IEnumerable<PhotoInfo> Photos { get; set; } 
+    public IEnumerable<PhotoInfo?> Photos { get; set; } = [];
 
     /// <summary> Количество фотографий обслуживания. </summary>
     public int PhotosCount => Photos?.Count() ?? 0; 

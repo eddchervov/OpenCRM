@@ -60,7 +60,7 @@ jobs:
     name: Backend project boundaries
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - shell: pwsh
         run: ./scripts/assert-backend-boundaries.ps1
   build-and-test:
@@ -69,14 +69,14 @@ jobs:
       run:
         working-directory: services/notifications
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - run: dotnet restore NotificationService.slnx
       - run: dotnet build NotificationService.slnx --configuration Release --no-restore
       - run: dotnet test NotificationService.slnx --configuration Release --no-build
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - run: node --test telegram-relay/worker.test.mjs
@@ -93,7 +93,7 @@ jobs:
       run:
         working-directory: src/OpenCRM.Frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
@@ -109,12 +109,12 @@ jobs:
       matrix:
         project: [OpenCRM.Infrastructure.Tests]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - run: dotnet test tests/${{ matrix.project }}/${{ matrix.project }}.csproj --configuration Release -m:1 -p:BuildScenarioClientsOnBuild=false --settings tests/Backend.runsettings --logger trx --results-directory TestResults/${{ matrix.project }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-tests-${{ matrix.project }}
@@ -127,8 +127,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - name: Test Documents with PostgreSQL and measure coverage
@@ -139,7 +139,7 @@ jobs:
           $report = Get-ChildItem "$env:RUNNER_TEMP/documents-coverage" -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
           if ($null -eq $report) { throw 'Отчёт покрытия Documents не создан.' }
           ./scripts/assert-documents-coverage.ps1 -ReportPath $report.FullName
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: documents-coverage
@@ -155,8 +155,8 @@ jobs:
       matrix:
         module: [Vehicles, Inventory, Maintenance, Clients, Organizations, Catalog, Planning, Billing, Workspace, Accounts, Notifications, Support, Promotions]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - name: Test module with PostgreSQL and measure coverage
@@ -169,7 +169,7 @@ jobs:
           $report = Get-ChildItem $results -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
           if ($null -eq $report) { throw "Отчёт покрытия $module не создан." }
           ./scripts/assert-module-coverage.ps1 -ReportPath $report.FullName -ModuleName $module
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ${{ matrix.module }}-coverage
@@ -195,8 +195,8 @@ jobs:
           - name: Payments service
             project: services/payments/tests/Payments.Tests/Payments.Tests.csproj
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - name: Run backend tests
@@ -212,8 +212,8 @@ jobs:
       matrix:
         project: [OpenCRM.Admin.Api.Tests, OpenCRM.Admin.App.Tests]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - name: Run admin tests
@@ -224,8 +224,8 @@ jobs:
       run:
         working-directory: services/notifications
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: docker build -f src/Notifications.Worker/Dockerfile ../..
   opencrm-docker:
     name: OpenCRM Docker build and readiness
@@ -259,9 +259,9 @@ jobs:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__OpenCRMConnection: Host=127.0.0.1;Port=5432;Database=opencrm_ci;Username=opencrm_ci;Password=opencrm_ci;Timeout=5;Command Timeout=5
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - run: docker build --file src/Dockerfile --tag opencrm:ci .

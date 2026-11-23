@@ -20,7 +20,9 @@ public sealed class OrganizationDataExportJobsMigrationTests
                 database.MigrationsAssembly(typeof(AssemblyMarker).Assembly.GetName().Name)).Options;
         await using var context = new OpenCRMContext(options);
         var migrator = context.GetService<IMigrator>();
-        await migrator.MigrateAsync("20261029070300_AddSupportAttachments");
+        const string supportAttachmentsMigration = "20261029070300_AddSupportAttachments";
+        const string exportJobsMigration = "20261030065903_AddOrganizationDataExportJobs";
+        await migrator.MigrateAsync();
         var owner = new OpenCRM.Domain.Identity.ApplicationUser();
         var organization = new Organization
         {
@@ -37,18 +39,23 @@ public sealed class OrganizationDataExportJobsMigrationTests
         context.OrganizationAuditEvents.Add(audit);
         await context.SaveChangesAsync();
 
-        await migrator.MigrateAsync("20261030065903_AddOrganizationDataExportJobs");
-        context.Add(new OrganizationDataExportJob { OrganizationId = organization.Id, RequestedByUserId = owner.Id });
-        await context.SaveChangesAsync();
+        await migrator.MigrateAsync(supportAttachmentsMigration);
+        await migrator.MigrateAsync(exportJobsMigration);
+        var exportJobId = Guid.NewGuid();
+        var queuedState = "queued";
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "OrganizationDataExportJobs" ("Id", "OrganizationId", "RequestedByUserId", "State", "RequestedAtUtc")
+            VALUES ({exportJobId}, {organization.Id}, {owner.Id}, {queuedState}, {DateTime.UtcNow})
+            """);
         Assert.False(context.Database.HasPendingModelChanges());
         context.ChangeTracker.Clear();
-        await migrator.MigrateAsync("20261029070300_AddSupportAttachments");
+        await migrator.MigrateAsync(supportAttachmentsMigration);
+        await migrator.MigrateAsync();
 
         Assert.Equal("QA миграция экспорта", await context.Organizations.Where(value => value.Id == organization.Id)
             .Select(value => value.Name).SingleAsync());
         Assert.True(await context.OrganizationAuditEvents.AnyAsync(value => value.Id == audit.Id));
 
-        await migrator.MigrateAsync();
         Assert.Empty(await context.Set<OrganizationDataExportJob>().ToArrayAsync());
         Assert.False(context.Database.HasPendingModelChanges());
     }

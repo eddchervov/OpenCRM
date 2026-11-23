@@ -76,6 +76,7 @@ public sealed class AdminAuthenticationApiTests(NotificationFixture fixture) : I
         });
         builder.Services.AddScoped<IApplicationUnitOfWork, ApplicationUnitOfWork>();
         builder.Services.AddScoped<IEmailNotificationService>(_ => Mock.Of<IEmailNotificationService>());
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
         builder.Services.AddControllers()
             .AddApplicationPart(typeof(AuthApiController).Assembly)
             .AddApplicationPart(typeof(CurrentUserApiController).Assembly);
@@ -250,6 +251,7 @@ public sealed class AdminAuthenticationApiTests(NotificationFixture fixture) : I
         builder.Services.AddScoped<IAccountRegistrationService>(_ => Mock.Of<IAccountRegistrationService>());
         builder.Services.AddScoped<IAccountDeletionService>(_ => Mock.Of<IAccountDeletionService>());
         builder.Services.AddScoped<IEmailCodeLoginService>(_ => Mock.Of<IEmailCodeLoginService>());
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
         builder.Services.AddControllersWithViews()
             .AddApplicationPart(typeof(AuthController).Assembly);
 
@@ -312,7 +314,7 @@ public sealed class AdminAuthenticationApiTests(NotificationFixture fixture) : I
         using var deniedPage = await client.SendAsync(pageRequest);
         Assert.Equal(HttpStatusCode.NotFound, deniedPage.StatusCode);
         Assert.Null(deniedPage.Headers.Location);
-        var notFoundContent = await deniedPage.Content.ReadAsStringAsync();
+        var notFoundContent = WebUtility.HtmlDecode(await deniedPage.Content.ReadAsStringAsync());
         Assert.Contains("404 — страница не найдена", notFoundContent);
         Assert.DoesNotContain("Доступ временно ограничен", notFoundContent);
 
@@ -324,7 +326,7 @@ public sealed class AdminAuthenticationApiTests(NotificationFixture fixture) : I
 
         using var lockoutPage = await client.GetAsync("/auth/lockout");
         Assert.Equal(HttpStatusCode.OK, lockoutPage.StatusCode);
-        Assert.Contains("Доступ временно ограничен", await lockoutPage.Content.ReadAsStringAsync());
+        Assert.Contains("Доступ временно ограничен", WebUtility.HtmlDecode(await lockoutPage.Content.ReadAsStringAsync()));
 
         await app.StopAsync();
     }

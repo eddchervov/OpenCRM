@@ -58,7 +58,9 @@ public sealed class JournalIndexMigrationTests
         await context.Database.ExecuteSqlRawAsync("""
             ALTER TABLE "Maintenance"
                 ADD COLUMN "IntakeDiagramVersion" character varying(64),
-                ADD COLUMN "VisitReminderEnabled" boolean NOT NULL DEFAULT true;
+                ADD COLUMN "VisitReminderEnabled" boolean NOT NULL DEFAULT true,
+                ADD COLUMN "CurrencyCode" character varying(3) NOT NULL DEFAULT 'RUB';
+            ALTER TABLE "Vehicles" ADD COLUMN "RegistrationCountryCode" character varying(2);
             """);
         var user = new ApplicationUser { Email = "journal-migration@example.test" };
         await context.Database.ExecuteSqlInterpolatedAsync($"""
@@ -104,8 +106,7 @@ public sealed class JournalIndexMigrationTests
             vehicle, MaintenanceStatus.Cancelled, date.AddDays(-10), date.AddDays(1), null);
 
         var orders = new[] { completed, completedWithoutDate, plannedWithoutDate, active, nextDayCancelled };
-        context.Vehicles.Add(vehicle);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
 
         // Историческая схема ещё не содержит итогов, которые поддерживает текущий SaveChanges.
         foreach (var order in orders)

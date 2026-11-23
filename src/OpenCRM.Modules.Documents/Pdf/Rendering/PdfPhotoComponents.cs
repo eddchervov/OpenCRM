@@ -23,7 +23,8 @@ internal sealed class PdfPhotoComponents
                 .AlignCenter()
                 .MaxWidth(maxWidth)
                 .MaxHeight(maxHeight)
-                .Image(imageData, ImageScaling.FitArea);
+                .Image(imageData)
+                .FitArea();
         }
         catch (Exception exception) when (exception is UnknownImageFormatException or InvalidImageContentException)
         {
@@ -37,8 +38,13 @@ internal sealed class PdfPhotoComponents
     }
 
     /// <summary> Отрисовывает карточку фотографии с номером по порядку. </summary>
-    internal static void RenderPhotoCard(IContainer container, PhotoInfo photo, int index)
+    internal static void RenderPhotoCard(IContainer container, PhotoInfo? photo, int index)
     {
+        if (photo?.ImageData is not { Length: > 0 } imageData)
+        {
+            return;
+        }
+
         container.Element(PdfDocumentComponents.Card).Column(column =>
         {
             column.Spacing(6);
@@ -47,14 +53,14 @@ internal sealed class PdfPhotoComponents
                 .SemiBold()
                 .FontColor(PdfDocumentComponents.MutedColor);
 
-            RenderImage(column.Item(), photo.ImageData, 500, 330);
+            RenderImage(column.Item(), imageData, 500, 330);
         });
     }
 
     /// <summary> Отрисовывает список фотографий. </summary>
-    internal static void RenderPhotos(IContainer container, IEnumerable<PhotoInfo> photos)
+    internal static void RenderPhotos(IContainer container, IEnumerable<PhotoInfo?> photos)
     {
-        var photoList = photos.Where(x => x?.ImageData?.Length > 0).ToList();
+        var photoList = photos.Where(photo => photo?.ImageData is { Length: > 0 }).ToList();
         if (photoList.Count == 0)
         {
             PdfDocumentComponents.RenderEmptyState(container, "Фотографии отсутствуют");

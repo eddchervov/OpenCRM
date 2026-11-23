@@ -23,7 +23,7 @@ using System.Text;
 
 namespace OpenCRM.WebApp.Controllers.Auth;
 
-#nullable disable
+#nullable disable warnings
 
 /// <summary> Контроллер аутентификации: вход, регистрация, пароли и подтверждение email. </summary>
 [EnableRateLimiting(RateLimitPolicyNames.Authentication)]
@@ -75,7 +75,7 @@ public sealed class AuthController(
     [AllowAnonymous]
     [AllowUnconfirmedEmail]
     [DisableRateLimiting]
-    public IActionResult EmailCodeLogin(string returnUrl = null)
+    public IActionResult EmailCodeLogin(string? returnUrl = null)
     {
         returnUrl = NormalizeReturnUrl(returnUrl);
         if (!EmailDeliveryPolicy.IsAvailable(configuration))
@@ -269,7 +269,7 @@ public sealed class AuthController(
     [AllowAnonymous]
     [AllowUnconfirmedEmail]
     [DisableRateLimiting]
-    public async Task<IActionResult> Register(string returnUrl = null)
+    public async Task<IActionResult> Register(string? returnUrl = null)
     {
         returnUrl = NormalizeReturnUrl(returnUrl);
 
@@ -286,7 +286,7 @@ public sealed class AuthController(
     [AllowAnonymous]
     [AllowUnconfirmedEmail]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterModel model, string returnUrl = null)
+    public async Task<IActionResult> Register(RegisterModel model, string? returnUrl = null)
     {
         returnUrl = NormalizeReturnUrl(returnUrl);
         model.ReturnUrl = returnUrl;

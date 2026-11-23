@@ -39,10 +39,10 @@ public sealed class IntakeDamageMarkerRenderingTests
         Assert.Equal(number.ToString(CultureInfo.InvariantCulture), page.Text);
         Assert.All(page.Letters, letter =>
         {
-            Assert.InRange(letter.GlyphRectangle.Left, 9.9, width + 10.1);
-            Assert.InRange(letter.GlyphRectangle.Right, 9.9, width + 10.1);
-            Assert.InRange(letter.GlyphRectangle.Bottom, 9.9, height + 10.1);
-            Assert.InRange(letter.GlyphRectangle.Top, 9.9, height + 10.1);
+            Assert.InRange(letter.BoundingBox.Left, 9.9, width + 10.1);
+            Assert.InRange(letter.BoundingBox.Right, 9.9, width + 10.1);
+            Assert.InRange(letter.BoundingBox.Bottom, 9.9, height + 10.1);
+            Assert.InRange(letter.BoundingBox.Top, 9.9, height + 10.1);
         });
 
         var imageBytes = Assert.Single(document.GenerateImages(new ImageGenerationSettings { RasterDpi = 72 }));

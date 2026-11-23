@@ -80,6 +80,7 @@ public sealed class CatalogUsageMigrationTests
 
             await migrator.MigrateAsync(previousMigration);
             await migrator.MigrateAsync(currentMigration);
+            await migrator.MigrateAsync();
 
             var flags = await context.OrganizationScenarioCatalogItems.AsNoTracking()
                 .Where(item => item.OrganizationId == organization.Id)

@@ -13,7 +13,7 @@ namespace OpenCRM.Infrastructure.Migrations.Migrations
 {
     [DbContext(typeof(OpenCRMContext))]
     [Migration("20260411135301_init")]
-    partial class init
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

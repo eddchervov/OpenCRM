@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolveFrontendOutputDir } from '../../build/frontendOutput'
+import { resolveSharedChunk } from '../../build/frontendChunks'
 
 function toSafeAssetName(name = 'asset') {
   return name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase()
@@ -44,6 +45,7 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
+        manualChunks: resolveSharedChunk,
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: chunkInfo => `assets/${toSafeAssetName(chunkInfo.name)}-[hash].js`,
         assetFileNames: resolveAssetFileName,

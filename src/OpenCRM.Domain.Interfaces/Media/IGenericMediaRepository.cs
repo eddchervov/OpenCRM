@@ -11,7 +11,7 @@ namespace OpenCRM.Domain.Interfaces.Media;
 public interface IGenericMediaRepository
 {
     /// <summary> Находит медиафайл заданного типа по идентификатору. </summary>
-    Task<T> GetByIdAsync<T>(string? userId, Guid mediaId, bool includeDeleted = false) where T : BaseMedia;
+    Task<T?> GetByIdAsync<T>(string? userId, Guid mediaId, bool includeDeleted = false) where T : BaseMedia;
 
     /// <summary> Возвращает путь медиафайла по его идентификатору. </summary>
     Task<string?> GetMediaPathAsync(string? userId, Guid mediaId, bool includeDeleted = false);

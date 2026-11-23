@@ -98,7 +98,7 @@ public sealed class OrganizationProfileTests(OrganizationsDatabaseFixture fixtur
 
         var results = await Task.WhenAll(AttemptCreateAsync(), AttemptCreateAsync());
 
-        Assert.Single(results.Where(organizationId => organizationId.HasValue));
+        Assert.Single(results, organizationId => organizationId.HasValue);
         await using var verifyContext = fixture.CreateContext();
         Assert.Equal(1, await verifyContext.Organizations.CountAsync(organization =>
             organization.OwnerUserId == owner.Id && organization.PrimaryScenarioCode == "detailing" && !organization.IsDeleted));

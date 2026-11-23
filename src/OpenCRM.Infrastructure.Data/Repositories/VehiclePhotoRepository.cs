@@ -22,7 +22,7 @@ public class VehiclePhotoRepository : IVehiclePhotoRepository
     }
 
     /// <summary> Возвращает фотографию техники пользователя по идентификатору. </summary>
-    public async Task<VehiclePhoto> GetByIdAsync(string? userId, Guid photoId, bool includeDeleted = false)
+    public async Task<VehiclePhoto?> GetByIdAsync(string? userId, Guid photoId, bool includeDeleted = false)
     {
         var query = _context.VehiclePhotos.AsQueryable();
         query = userId != null ? query.Where(p => p.UserId == userId) : query.Where(p => p.UserId == null);
@@ -37,7 +37,7 @@ public class VehiclePhotoRepository : IVehiclePhotoRepository
     }
 
     /// <summary> Возвращает системную фотографию по идентификатору. </summary>
-    public Task<VehiclePhoto> GetSystemPhotoByIdAsync(Guid photoId, bool includeDeleted = false)
+    public Task<VehiclePhoto?> GetSystemPhotoByIdAsync(Guid photoId, bool includeDeleted = false)
     {
         return GetByIdAsync(null, photoId, includeDeleted);
     }
@@ -80,13 +80,13 @@ public class VehiclePhotoRepository : IVehiclePhotoRepository
     }
 
     /// <summary> Возвращает фотографию техники по идентификатору техники. </summary>
-    public Task<VehiclePhoto> GetByVehicleIdAsync(string userId, Guid vehicleId, bool includeDeleted = false)
+    public Task<VehiclePhoto?> GetByVehicleIdAsync(string userId, Guid vehicleId, bool includeDeleted = false)
     {
         return GetByVehicleIdAsync(userId, null, vehicleId, includeDeleted);
     }
 
     /// <summary> Возвращает фотографию техники в рабочем пространстве. </summary>
-    public Task<VehiclePhoto> GetByVehicleIdAsync(string userId, Guid? organizationId, Guid vehicleId, bool includeDeleted = false)
+    public Task<VehiclePhoto?> GetByVehicleIdAsync(string userId, Guid? organizationId, Guid vehicleId, bool includeDeleted = false)
     {
         var query = BuildWorkspaceVehiclePhotosQuery(userId, organizationId)
             .Where(p => p.VehicleId == vehicleId);

@@ -10,7 +10,7 @@ namespace OpenCRM.Services.Interfaces.Sms.Dtos;
 public class CheckCallResponse
 {
     /// <summary> Статус проверки звонка. </summary>
-    public string Status { get; set; }
+    public string Status { get; set; } = string.Empty;
 
     /// <summary> Числовой статус проверки звонка. </summary>
     public int Check_status { get; set; }

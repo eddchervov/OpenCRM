@@ -321,7 +321,7 @@ internal sealed class WordDocumentComponents
     }
 
     /// <summary> Добавляет текст подвала в документ. </summary>
-    internal static void AddFooter(Body body, string text)
+    internal static void AddFooter(Body body, string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return;
 

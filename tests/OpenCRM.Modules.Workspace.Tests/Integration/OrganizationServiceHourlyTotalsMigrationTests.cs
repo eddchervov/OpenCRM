@@ -39,14 +39,13 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
         var organization = new Organization { Name = "Начисления отменённых заказов", OwnerUserId = user.Id };
         await HistoricalMigrationSeed.InsertOrganizationAsync(context, organization);
         var vehicle = new Vehicle { UserId = user.Id, Organization = organization, ManualBrandName = "BMW", ManualModelName = "X3" };
-        context.Vehicles.Add(vehicle);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
         var date = new DateTime(2026, 10, 19, 10, 20, 30, DateTimeKind.Utc);
         await OrganizationServiceHourlyTotalsMigrationTests.SeedOrderAsync(context, vehicle, date, false,
             [new("Полировка", 3000m, 0)], status: 4, discount: 200m, paid: 500m, materialCost: 120m, laborCost: 80m);
 
         await migrator.MigrateAsync(migration);
-        var accrued = await context.MaintenanceFinancialTotals.AsNoTracking().SingleAsync();
+        var accrued = await OrganizationServiceHourlyTotalsMigrationTests.ReadFinancialTotalAsync(context);
         Assert.True(accrued.IsVisible);
         Assert.False(accrued.IsAccruable);
         Assert.Equal(3000m, accrued.GrossAmount);
@@ -55,7 +54,7 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
         Assert.Equal(500m, accrued.PaidAmount);
         Assert.Equal(0m, accrued.DebtAmount);
         Assert.Equal(-200m, accrued.ProfitAmount);
-        Assert.Empty(await context.OrganizationServiceHourlyTotals.AsNoTracking().ToListAsync());
+        Assert.Equal(0, await OrganizationServiceHourlyTotalsMigrationTests.ReadHourlyTotalCountAsync(context));
 
         await migrator.MigrateAsync(previous);
         Assert.Equal(2800m, await context.Database.SqlQuery<decimal>($"""
@@ -72,12 +71,12 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
             """).SingleAsync());
 
         await migrator.MigrateAsync(migration);
-        var reapplied = await context.MaintenanceFinancialTotals.AsNoTracking().SingleAsync();
+        var reapplied = await OrganizationServiceHourlyTotalsMigrationTests.ReadFinancialTotalAsync(context);
         Assert.False(reapplied.IsAccruable);
         Assert.Equal(0m, reapplied.NetAmount);
         Assert.Equal(0m, reapplied.DebtAmount);
         Assert.Equal(500m, reapplied.PaidAmount);
-        Assert.Empty(await context.OrganizationServiceHourlyTotals.AsNoTracking().ToListAsync());
+        Assert.Equal(0, await OrganizationServiceHourlyTotalsMigrationTests.ReadHourlyTotalCountAsync(context));
     }
 
     [Fact]
@@ -109,8 +108,9 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
         {
             UserId = user.Id, Organization = organization, ManualBrandName = "BMW", ManualModelName = "X3", IsDeleted = true
         };
-        context.Vehicles.AddRange(vehicle, personal, deleted);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, personal);
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, deleted);
         context.ChangeTracker.Clear();
         var date = new DateTime(2026, 10, 19, 10, 20, 30, DateTimeKind.Utc);
         var longName = new string(Enumerable.Range(0, 1000).Select(index => (char)(0x4E00 + index)).ToArray());
@@ -235,7 +235,10 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
                 Count = group.LongCount(), Amount = group.Sum(detail => detail.Amount),
                 FirstKey = group.Select(detail => detail.FirstKey).Order(StringComparer.Ordinal).First()
             });
-        var actual = await context.OrganizationServiceHourlyTotals.AsNoTracking().ToListAsync();
+        var actual = await context.Database.SqlQuery<HourlyTotalSnapshot>($"""
+            SELECT "OrganizationId", "UtcHour", "NameHash", "Name", "Count", "Amount", "FirstKey"
+            FROM "OrganizationServiceHourlyTotals"
+            """).ToListAsync();
         Assert.Equal(expected.Count, actual.Count);
         Assert.Contains(actual, row => row.UtcHour == 0 && row.Count == 2 && row.Amount == 5m);
         Assert.Contains(actual, row => row.UtcHour == 87649415 && row.Count == 2 && row.Amount == 12m);
@@ -278,7 +281,10 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
             """).ToArrayAsync();
         Assert.Equal(3, collations.Length);
         Assert.All(collations, collation => Assert.Equal("C", collation));
-        var row = await context.OrganizationServiceHourlyTotals.AsNoTracking().FirstAsync();
+        var row = (await context.Database.SqlQuery<HourlyTotalSnapshot>($"""
+            SELECT "OrganizationId", "UtcHour", "NameHash", "Name", "Count", "Amount", "FirstKey"
+            FROM "OrganizationServiceHourlyTotals" LIMIT 1
+            """).SingleAsync());
         var violation = await Assert.ThrowsAsync<PostgresException>(() => context.Database.ExecuteSqlAsync($"""
             UPDATE "OrganizationServiceHourlyTotals" SET "NameHash" = {new string('0', 64)}
             WHERE "OrganizationId" = {row.OrganizationId} AND "UtcHour" = {row.UtcHour} AND "NameHash" = {row.NameHash}
@@ -286,9 +292,22 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
         Assert.Equal(PostgresErrorCodes.CheckViolation, violation.SqlState);
         await using var transaction = await context.Database.BeginTransactionAsync();
         await context.Database.ExecuteSqlAsync($"""DELETE FROM "Organizations" WHERE "Id" = {organizationId}""");
-        Assert.False(await context.OrganizationServiceHourlyTotals.AnyAsync(total => total.OrganizationId == organizationId));
+        Assert.False(await context.Database.SqlQuery<bool>($"""
+            SELECT EXISTS (SELECT 1 FROM "OrganizationServiceHourlyTotals" WHERE "OrganizationId" = {organizationId}) AS "Value"
+            """).SingleAsync());
         await transaction.RollbackAsync();
     }
+
+    private static Task<FinancialTotalSnapshot> ReadFinancialTotalAsync(OpenCRMContext context) =>
+        context.Database.SqlQuery<FinancialTotalSnapshot>($"""
+            SELECT "IsVisible", "IsAccruable", "GrossAmount", "DiscountAmount", "NetAmount", "PaidAmount",
+                "DebtAmount", "ProfitAmount"
+            FROM "MaintenanceFinancialTotals"
+            """).SingleAsync();
+
+    private static Task<int> ReadHourlyTotalCountAsync(OpenCRMContext context) => context.Database.SqlQuery<int>($"""
+        SELECT COUNT(*)::integer AS "Value" FROM "OrganizationServiceHourlyTotals"
+        """).SingleAsync();
 
     private static Task<string> ReadSourceAsync(OpenCRMContext context) => context.Database.SqlQuery<string>($"""
         SELECT jsonb_build_object(
@@ -310,4 +329,40 @@ public sealed class OrganizationServiceHourlyTotalsMigrationTests
         """).SingleAsync();
 
     private sealed record SeedDetail(string Name, decimal? Price, int Position);
+
+    private sealed class FinancialTotalSnapshot
+    {
+        public bool IsVisible { get; set; }
+
+        public bool IsAccruable { get; set; }
+
+        public decimal GrossAmount { get; set; }
+
+        public decimal DiscountAmount { get; set; }
+
+        public decimal NetAmount { get; set; }
+
+        public decimal PaidAmount { get; set; }
+
+        public decimal DebtAmount { get; set; }
+
+        public decimal ProfitAmount { get; set; }
+    }
+
+    private sealed class HourlyTotalSnapshot
+    {
+        public Guid OrganizationId { get; set; }
+
+        public int UtcHour { get; set; }
+
+        public string NameHash { get; set; } = string.Empty;
+
+        public string Name { get; set; } = string.Empty;
+
+        public long Count { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public string FirstKey { get; set; } = string.Empty;
+    }
 }

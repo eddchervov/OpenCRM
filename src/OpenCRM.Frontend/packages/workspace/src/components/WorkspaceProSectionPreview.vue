@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue'
 import { UiCard } from '@opencrm/ui'
 import type { WorkspaceWikiData } from '../api/workspaceAdmin'
 import type { WorkspaceContext, WorkspaceAnalytics } from '../types'
@@ -8,7 +9,8 @@ import WorkspaceShiftsSection from './WorkspaceShiftsSection.vue'
 import WorkspaceStatisticsSection from './WorkspaceStatisticsSection.vue'
 import WorkspaceWikiSection from './WorkspaceWikiSection.vue'
 import WorkspaceWorkSection from './WorkspaceWorkSection.vue'
-import MessagesSection from './MessagesSection.vue'
+
+const MessagesSection = defineAsyncComponent(() => import('./MessagesSection.vue'))
 
 defineProps<{
   context: WorkspaceContext

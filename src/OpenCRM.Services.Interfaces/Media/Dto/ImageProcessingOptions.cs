@@ -13,7 +13,7 @@ public class ImageProcessingOptions
     public int Quality { get; set; } 
 
     /// <summary> Целевая папка для сохранения. </summary>
-    public string TargetFolder { get; set; }
+    public string TargetFolder { get; set; } = string.Empty;
 
     /// <summary> Признак необходимости вычисления хеша изображения. </summary>
     public bool GenerateHash { get; set; } = true;

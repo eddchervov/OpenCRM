@@ -38,8 +38,8 @@ public sealed class OrganizationShiftTransactionTests(OrganizationsDatabaseFixtu
         var service = this.CreateService(context);
 
         Assert.Equal(1, await service.CopyPreviousWeekAsync(organization.OwnerUserId, organization.Id, targetMonday));
-        var copied = Assert.Single((await service.GetWeekAsync(organization.OwnerUserId, organization.Id, targetMonday))
-            .Shifts.Where(shift => shift.LocalStartDate == targetMonday));
+        var copied = Assert.Single((await service.GetWeekAsync(organization.OwnerUserId, organization.Id, targetMonday)).Shifts,
+            shift => shift.LocalStartDate == targetMonday);
         Assert.Equal("2027-01-04T09:00", copied.StartLocal);
         Assert.Equal("2027-01-04T18:00", copied.EndLocal);
         Assert.Equal(45, copied.PlannedBreakMinutes);

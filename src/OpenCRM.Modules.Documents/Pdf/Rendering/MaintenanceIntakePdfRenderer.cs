@@ -99,7 +99,7 @@ internal sealed class MaintenanceIntakePdfRenderer
                                 {
                                     photoColumn.Spacing(6);
                                     photoColumn.Item().Text($"Фото {photoNumber}. {photo.Caption}").FontSize(9);
-                                    PdfPhotoComponents.RenderImage(photoColumn.Item(), photo.ImageData, 500, 300);
+                                    PdfPhotoComponents.RenderImage(photoColumn.Item(), photo.ImageData ?? [], 500, 300);
                                 });
                             }
                         }

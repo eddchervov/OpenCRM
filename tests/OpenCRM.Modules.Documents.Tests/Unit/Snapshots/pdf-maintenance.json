@@ -18,6 +18,7 @@
     "IntakeNotes": "Приёмка: царапина",
     "Comment": "Согласовано с клиентом",
     "Price": 4250.75,
+    "CurrencyCode": "RUB",
     "MaintenanceDetails": [
       {
         "Quantity": 3,

@@ -1,28 +1,29 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import DashboardView from '@/views/DashboardView.vue'
-import SettingsView from '@/views/SettingsView.vue'
-import CrmImportView from '@/views/CrmImportView.vue'
-import BillingView from '@/views/BillingView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
-import PromoCodesView from '@/views/PromoCodesView.vue'
-import SubscriptionPlansView from '@/views/SubscriptionPlansView.vue'
-import SystemRolesView from '@/views/SystemRolesView.vue'
-import UserOverviewView from '@/views/UserOverviewView.vue'
-import UsersView from '@/views/UsersView.vue'
-import OrganizationsView from '@/views/OrganizationsView.vue'
-import CatalogSuggestionsView from '@/views/CatalogSuggestionsView.vue'
-import EmailCampaignsView from '@/views/EmailCampaignsView.vue'
-import EmailComposeView from '@/views/EmailComposeView.vue'
-import EmailMessagesView from '@/views/EmailMessagesView.vue'
-import SiteNotificationsView from '@/views/SiteNotificationsView.vue'
-import FeaturesView from '@/views/FeaturesView.vue'
-import SmsHistoryView from '@/views/SmsHistoryView.vue'
-import SupportMessagesView from '@/views/SupportMessagesView.vue'
-import TestDataView from '@/views/TestDataView.vue'
-import VehicleCatalogView from '@/views/VehicleCatalogView.vue'
-import AssistantView from '@/views/AssistantView.vue'
 import { pinia } from '@/stores/pinia'
 import { useAdminCurrentUserStore } from '@/stores/adminCurrentUserStore'
+
+const DashboardView = () => import('@/views/DashboardView.vue')
+const SettingsView = () => import('@/views/SettingsView.vue')
+const CrmImportView = () => import('@/views/CrmImportView.vue')
+const BillingView = () => import('@/views/BillingView.vue')
+const NotFoundView = () => import('@/views/NotFoundView.vue')
+const PromoCodesView = () => import('@/views/PromoCodesView.vue')
+const SubscriptionPlansView = () => import('@/views/SubscriptionPlansView.vue')
+const SystemRolesView = () => import('@/views/SystemRolesView.vue')
+const UserOverviewView = () => import('@/views/UserOverviewView.vue')
+const UsersView = () => import('@/views/UsersView.vue')
+const OrganizationsView = () => import('@/views/OrganizationsView.vue')
+const CatalogSuggestionsView = () => import('@/views/CatalogSuggestionsView.vue')
+const EmailCampaignsView = () => import('@/views/EmailCampaignsView.vue')
+const EmailComposeView = () => import('@/views/EmailComposeView.vue')
+const EmailMessagesView = () => import('@/views/EmailMessagesView.vue')
+const SiteNotificationsView = () => import('@/views/SiteNotificationsView.vue')
+const FeaturesView = () => import('@/views/FeaturesView.vue')
+const SmsHistoryView = () => import('@/views/SmsHistoryView.vue')
+const SupportMessagesView = () => import('@/views/SupportMessagesView.vue')
+const TestDataView = () => import('@/views/TestDataView.vue')
+const VehicleCatalogView = () => import('@/views/VehicleCatalogView.vue')
+const AssistantView = () => import('@/views/AssistantView.vue')
 
 const permissionRoutes = [
   { permission: 'Admin.Dashboard.View', path: '/' },

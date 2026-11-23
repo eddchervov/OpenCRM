@@ -1,7 +1,6 @@
 using OpenCRM.Modules.Billing.Contracts;
 using OpenCRM.Services.Interfaces.Documents.Dtos;
 using OpenCRM.Modules.Maintenance.Contracts.Photos;
-using OpenCRM.Modules.Billing.Contracts;
 using OpenCRM.Testing;
 using OpenCRM.Modules.Catalog.Contracts;
 using OpenCRM.Modules.Catalog;

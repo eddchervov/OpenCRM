@@ -15,7 +15,7 @@ public abstract class BaseMedia
     public Guid Id { get; set; }
 
     /// <summary> Путь к медиафайлу. </summary>
-    public string Path { get; set; }
+    public string Path { get; set; } = string.Empty;
 
     /// <summary> Тип медиафайла. </summary>
     public MediaType Type { get; set; }

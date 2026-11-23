@@ -142,23 +142,23 @@ public sealed class OrganizationShiftTests(OrganizationsDatabaseFixture fixture)
         await context.SaveChangesAsync();
         var boundaryWeek = await service.GetWeekAsync(owner.Id, organization.Id, weekStart);
         Assert.Contains(boundaryWeek.Shifts, shift => shift.Id == overnightShiftId && shift.IsPublished);
-        var mondayAssignment = Assert.Single(boundaryWeek.Assignments.Where(item =>
-            item.MaintenanceId == overnightMaintenance.Id && item.LocalStartDate == weekStart));
+        var mondayAssignment = Assert.Single(boundaryWeek.Assignments,
+            item => item.MaintenanceId == overnightMaintenance.Id && item.LocalStartDate == weekStart);
         Assert.Equal("00:00", Assert.Single(mondayAssignment.Segments).StartLocal[11..]);
         Assert.False(mondayAssignment.Segments[0].IsOutsideShift);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SetTimeZoneAsync(owner.Id, organization.Id, "Europe/Moscow", "Etc/UTC"));
         var shiftedWeek = await service.GetWeekAsync(owner.Id, organization.Id, weekStart);
-        var shiftedOvernight = Assert.Single(shiftedWeek.Shifts.Where(shift => shift.Id == overnightShiftId));
+        var shiftedOvernight = Assert.Single(shiftedWeek.Shifts, shift => shift.Id == overnightShiftId);
         Assert.Equal(sunday, shiftedOvernight.LocalStartDate);
         Assert.Equal("22:00", shiftedOvernight.StartLocal[11..]);
-        Assert.Equal("09:00", Assert.Single(shiftedWeek.Shifts.Where(shift => shift.Id == shiftId)).StartLocal[11..]);
+        Assert.Equal("09:00", Assert.Single(shiftedWeek.Shifts, shift => shift.Id == shiftId).StartLocal[11..]);
         Assert.Contains(await service.GetOwnAsync(performer.Id, organization.Id), shift =>
             shift.Id == shiftId && shift.StartLocal[11..] == "09:00");
         Assert.Equal(0, await service.PublishWeekAsync(owner.Id, organization.Id, weekStart));
-        var publishedOvernight = Assert.Single((await service.GetWeekAsync(owner.Id, organization.Id, weekStart)).Shifts
-            .Where(shift => shift.Id == overnightShiftId));
+        var publishedOvernight = Assert.Single((await service.GetWeekAsync(owner.Id, organization.Id, weekStart)).Shifts,
+            shift => shift.Id == overnightShiftId);
 
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => service.SaveAsync(
             owner.Id, organization.Id, overnightShiftId, new SaveOrganizationShiftDto
@@ -181,8 +181,8 @@ public sealed class OrganizationShiftTests(OrganizationsDatabaseFixture fixture)
             Version = publishedOvernight.Version,
             Reason = "Уточнили время"
         });
-        var editedShift = Assert.Single((await service.GetWeekAsync(owner.Id, organization.Id, weekStart)).Shifts
-            .Where(shift => shift.Id == overnightShiftId));
+        var editedShift = Assert.Single((await service.GetWeekAsync(owner.Id, organization.Id, weekStart)).Shifts,
+            shift => shift.Id == overnightShiftId);
         Assert.Equal("Etc/UTC", editedShift.TimeZoneId);
         Assert.Equal("02:00", editedShift.StartLocal[11..]);
         permissions.Setup(value => value.HasPermissionAsync(

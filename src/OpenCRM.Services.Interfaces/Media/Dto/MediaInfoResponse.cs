@@ -13,7 +13,7 @@ public class MediaInfoResponse
     public Guid MediaId { get; set; }
 
     /// <summary> Тип медиафайла. </summary>
-    public string Type { get; set; }
+    public string Type { get; set; } = string.Empty;
 
     /// <summary> Дата и время создания медиафайла. </summary>
     public DateTime CreatedAt { get; set; }

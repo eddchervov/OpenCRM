@@ -4,13 +4,13 @@
 public interface IVehiclePhotoRepository
 {
     /// <summary> Находит фотографию техники по идентификатору. </summary>
-    Task<VehiclePhoto> GetByIdAsync(string userId, Guid photoId, bool includeDeleted = false);
+    Task<VehiclePhoto?> GetByIdAsync(string? userId, Guid photoId, bool includeDeleted = false);
 
     /// <summary> Находит фотографию техники по идентификатору техники. </summary>
-    Task<VehiclePhoto> GetByVehicleIdAsync(string userId, Guid vehicleId, bool includeDeleted = false);
+    Task<VehiclePhoto?> GetByVehicleIdAsync(string userId, Guid vehicleId, bool includeDeleted = false);
 
     /// <summary> Находит фотографию техники с учётом организации. </summary>
-    Task<VehiclePhoto> GetByVehicleIdAsync(string userId, Guid? organizationId, Guid vehicleId, bool includeDeleted = false);
+    Task<VehiclePhoto?> GetByVehicleIdAsync(string userId, Guid? organizationId, Guid vehicleId, bool includeDeleted = false);
 
     /// <summary> Получает галерею фотографий техники. </summary>
     Task<List<VehiclePhoto>> GetGalleryByVehicleIdAsync(string userId, Guid? organizationId, Guid vehicleId, bool includeDeleted = false);
@@ -25,7 +25,7 @@ public interface IVehiclePhotoRepository
     Task<IEnumerable<VehiclePhoto>> GetByUserAsync(string userId, bool includeDeleted = false);
 
     /// <summary> Находит системную фотографию техники по идентификатору. </summary>
-    Task<VehiclePhoto> GetSystemPhotoByIdAsync(Guid photoId, bool includeDeleted = false);
+    Task<VehiclePhoto?> GetSystemPhotoByIdAsync(Guid photoId, bool includeDeleted = false);
 
     /// <summary> Получает системные фотографии техники. </summary>
     Task<IEnumerable<VehiclePhoto>> GetSystemPhotosAsync(bool includeDeleted = false);

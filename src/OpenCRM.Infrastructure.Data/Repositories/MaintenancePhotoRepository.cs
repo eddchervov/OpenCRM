@@ -22,13 +22,13 @@ public class MaintenancePhotoRepository : IMaintenancePhotoRepository
     }
 
     /// <summary> Возвращает фотографию обслуживания пользователя по идентификатору. </summary>
-    public async Task<MaintenancePhoto> GetByIdAsync(string userId, Guid photoId, bool includeDeleted = false)
+    public async Task<MaintenancePhoto?> GetByIdAsync(string userId, Guid photoId, bool includeDeleted = false)
     {
         return await GetByIdAsync(userId, null, photoId, includeDeleted);
     }
 
     /// <summary> Возвращает фотографию обслуживания в рабочем пространстве. </summary>
-    public async Task<MaintenancePhoto> GetByIdAsync(string userId, Guid? organizationId, Guid photoId, bool includeDeleted = false)
+    public async Task<MaintenancePhoto?> GetByIdAsync(string userId, Guid? organizationId, Guid photoId, bool includeDeleted = false)
     {
         var query = BuildWorkspacePhotosQuery(userId, organizationId).Where(p => p.Id == photoId);
         if (!includeDeleted)

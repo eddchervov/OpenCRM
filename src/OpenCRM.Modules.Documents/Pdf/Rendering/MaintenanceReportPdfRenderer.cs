@@ -26,9 +26,9 @@ internal sealed class MaintenanceReportPdfRenderer(string projectName)
                         column.Spacing(16);
                         column.Item().Element(c => PdfDocumentComponents.RenderGenerationPanel(c, model.GeneratedDate, includePhotos, projectName));
 
-                        if (includePhotos && model.Vehicle?.PhotoData?.Length > 0)
+                        if (includePhotos && model.Vehicle?.PhotoData is { Length: > 0 } photoData)
                         {
-                            column.Item().Element(c => PdfDocumentComponents.RenderVehiclePhoto(c, model.Vehicle.PhotoData));
+                            column.Item().Element(c => PdfDocumentComponents.RenderVehiclePhoto(c, photoData));
                         }
 
                         column.Item().Element(c => PdfDocumentComponents.RenderSection(c, "Техника", section => PdfDocumentComponents.RenderVehicleInfo(section, model.Vehicle)));

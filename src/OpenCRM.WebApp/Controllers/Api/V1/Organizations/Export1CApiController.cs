@@ -195,6 +195,11 @@ public sealed class Export1CApiController(
                 return NotFound();
             }
 
+            if (!await this.IsRubOrganizationAsync(organizationId))
+            {
+                return Conflict(new { message = "Формат выгрузки 1С не поддерживает валюту организации." });
+            }
+
             var package = await export1CService.CreateAsync(organizationId, options);
             var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {

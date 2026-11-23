@@ -123,7 +123,7 @@ internal sealed class PdfDocumentComponents
     }
 
     /// <summary> Отрисовывает шапку документа с заголовком, подзаголовком и датой. </summary>
-    internal static void RenderDocumentHeader(IContainer container, string title, string subtitle, string dateText, string projectName)
+    internal static void RenderDocumentHeader(IContainer container, string title, string subtitle, string? dateText, string projectName)
     {
         container.Column(column =>
         {

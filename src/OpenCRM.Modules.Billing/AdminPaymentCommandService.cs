@@ -94,7 +94,7 @@ internal sealed class AdminPaymentCommandService(
         var previousStatus = payment.PaymentStatus;
         var remoteCreatedAt = remoteStatus.CreatedAt;
         var hasRemoteCreatedAt = remoteCreatedAt.HasValue && remoteCreatedAt.Value != default;
-        var isCreationDateChanged = hasRemoteCreatedAt && payment.CreatedAt != remoteCreatedAt.Value;
+        var isCreationDateChanged = hasRemoteCreatedAt && payment.CreatedAt != remoteCreatedAt.GetValueOrDefault();
         if (isCreationDateChanged)
         {
             payment.CreatedAt = remoteCreatedAt!.Value;

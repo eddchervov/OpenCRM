@@ -1,6 +1,7 @@
 {
   "DocumentStyleCode": "classic",
   "ScenarioCode": "autoservice",
+  "CurrencyCode": "RUB",
   "ActNumber": "42",
   "ActDate": "03.02.2025",
   "ExecutorName": "СТО Кириллица",

@@ -44,8 +44,7 @@ public sealed class MaintenanceFinancialProjectionMigrationTests
             ManualBrandName = "BMW",
             ManualModelName = "X3"
         };
-        context.Vehicles.Add(vehicle);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
         await context.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO "OrganizationClients" ("Id", "OrganizationId", "Name", "Phone", "Comment", "IsDeleted", "DeletionDate", "CreatedAt", "UpdatedAt")
             VALUES ({buyerId}, {organization.Id}, {buyerName}, NULL, NULL, false, NULL, now(), now())

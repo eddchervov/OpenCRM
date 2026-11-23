@@ -1,11 +1,3 @@
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Validation;
-using OpenCRM.Domain;
-using OpenCRM.Domain.Enums;
-using OpenCRM.Modules.Documents.Pdf;
-using OpenCRM.Modules.Documents.Word;
-using OpenCRM.Services.Interfaces.Pdf.Dtos;
-using OpenCRM.Services.Interfaces.Word.Dtos;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
@@ -14,6 +6,14 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Tiff;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Validation;
+using OpenCRM.Domain;
+using OpenCRM.Domain.Enums;
+using OpenCRM.Modules.Documents.Pdf;
+using OpenCRM.Modules.Documents.Word;
+using OpenCRM.Services.Interfaces.Pdf.Dtos;
+using OpenCRM.Services.Interfaces.Word.Dtos;
 using UglyToad.PdfPig;
 using PdfMaintenanceDetail = OpenCRM.Services.Interfaces.Pdf.Dtos.MaintenanceDetail;
 using WordText = DocumentFormat.OpenXml.Wordprocessing.Text;
@@ -164,7 +164,7 @@ public sealed class DocumentRenderingTests
         using var document = PdfDocument.Open(bytes);
         var summaryPage = Assert.Single(document.GetPages(), page => page.Text.Contains("Сводка"));
 
-        Assert.Contains("Общие затраты", summaryPage.Text);
+        Assert.Contains("Затраты, RUB", summaryPage.Text);
     }
 
     [Fact]
@@ -1086,10 +1086,10 @@ public sealed class DocumentRenderingTests
         else
         {
             pdf.Vehicle.YearIssue = null;
-            pdf.Vehicle.Name = null!;
+            pdf.Vehicle.Name = null;
             pdf.Vehicle.PhotoData = missingData == 1 ? null : [];
             word.Vehicle.YearIssue = null;
-            word.Vehicle.Name = null!;
+            word.Vehicle.Name = null;
             word.Vehicle.PhotoData = missingData == 1 ? null : [];
         }
 
@@ -1122,10 +1122,10 @@ public sealed class DocumentRenderingTests
     {
         var pdf = CreateMaintenancePdfModel();
         pdf.Vehicle.PhotoData = null;
-        pdf.Maintenance.Photos = [null!, new PhotoInfo { ImageData = null! }, new PhotoInfo { ImageData = [] }];
+        pdf.Maintenance.Photos = [null, new PhotoInfo { ImageData = null }, new PhotoInfo { ImageData = [] }];
         var word = CreateWordMaintenanceModel();
         word.Vehicle.PhotoData = null;
-        word.Maintenance.Photos = [null!, new WordPhotoInfo { ImageData = null! }, new WordPhotoInfo { ImageData = [] }];
+        word.Maintenance.Photos = [null, new WordPhotoInfo { ImageData = null }, new WordPhotoInfo { ImageData = [] }];
         var pdfBytes = await new QuestPdfGeneratorService().GenerateMaintenancePdfAsync(pdf, true);
         var wordBytes = await new DocxGeneratorService().GenerateMaintenanceDocxAsync(word, true);
 
@@ -1268,6 +1268,7 @@ public sealed class DocumentRenderingTests
         GeneratedDate = "09.10.2026",
         TotalMaintenanceCount = 1,
         TotalSpent = 12500,
+        CurrencyTotals = new Dictionary<string, decimal> { ["RUB"] = 12500 },
         MaintenanceHistory = [CreatePdfMaintenance()]
     };
 

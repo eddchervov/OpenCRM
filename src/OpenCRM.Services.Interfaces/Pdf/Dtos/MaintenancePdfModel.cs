@@ -11,15 +11,15 @@ namespace OpenCRM.Services.Interfaces.Pdf.Dtos;
 public class MaintenancePdfModel
 {
     /// <summary> Данные транспортного средства в отчёте. </summary>
-    public VehicleInfo Vehicle { get; set; }
+    public required VehicleInfo Vehicle { get; set; }
 
     /// <summary> Данные обслуживания в отчёте. </summary>
-    public MaintenanceInfo Maintenance { get; set; }
+    public required MaintenanceInfo Maintenance { get; set; }
 
     /// <summary> Дата формирования отчёта. </summary>
-    public string GeneratedDate { get; set; }
+    public string GeneratedDate { get; set; } = string.Empty;
 
     /// <summary> Информация о компании в отчёте. </summary>
-    public string CompanyInfo { get; set; }
+    public string? CompanyInfo { get; set; }
 }
 

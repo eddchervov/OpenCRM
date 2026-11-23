@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-#nullable disable
+#nullable disable warnings
 
 namespace OpenCRM.WebApp.Models.Auth;
 

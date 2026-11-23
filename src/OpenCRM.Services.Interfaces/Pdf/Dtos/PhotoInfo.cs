@@ -17,6 +17,6 @@ public class PhotoInfo
     public Guid? PhotoId { get; set; }
 
     /// <summary> Данные изображения фотографии. </summary>
-    public byte[] ImageData { get; set; }
+    public byte[]? ImageData { get; set; }
 }
 

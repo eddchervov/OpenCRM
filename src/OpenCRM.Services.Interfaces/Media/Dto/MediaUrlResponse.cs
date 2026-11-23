@@ -4,7 +4,7 @@
 public class MediaUrlResponse
 {
     /// <summary> URL медиафайла. </summary>
-    public string Url { get; set; }
+    public string Url { get; set; } = string.Empty;
 
     /// <summary> Дата и время окончания действия URL. </summary>
     public DateTime ExpiresAt { get; set; }

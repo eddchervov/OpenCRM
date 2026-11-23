@@ -141,7 +141,7 @@ public sealed class SubscriptionExpiryReminderTests(BillingDatabaseFixture fixtu
 
         foreach (var expected in expectedEmails)
         {
-            var reminder = Assert.Single(captured.Where(item => item.Email == expected.Email));
+            var reminder = Assert.Single(captured, item => item.Email == expected.Email);
             Assert.Equal(expected.Kind, reminder.Data.GetProperty("kind").GetString());
             Assert.True(reminder.Data.GetProperty("hasFreeWorkspace").GetBoolean());
             Assert.Equal(

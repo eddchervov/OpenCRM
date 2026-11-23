@@ -823,7 +823,7 @@ public sealed class AuthMvcAcceptanceTests(NotificationFixture fixture) : IClass
         using var page = await AuthMvcAcceptanceTests.GetPageAsync(client, "/auth/login?returnUrl=%2Fworkspace%2Ftoday", cookies);
 
         Assert.Equal(HttpStatusCode.OK, page.Response.StatusCode);
-        var html = await page.Response.Content.ReadAsStringAsync();
+        var html = WebUtility.HtmlDecode(await page.Response.Content.ReadAsStringAsync());
         Assert.Contains("Войти в аккаунт", html);
         Assert.Contains("/auth/forgotPassword", html);
         Assert.Contains("returnUrl", html);
@@ -1440,6 +1440,7 @@ public sealed class AuthMvcAcceptanceTests(NotificationFixture fixture) : IClass
                     limiter.Window = TimeSpan.FromHours(1);
                 });
         });
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(AuthController).Assembly);
 
         var app = builder.Build();

@@ -13,6 +13,6 @@ public class MediaUploadResponse
     public Guid MediaId { get; set; }
 
     /// <summary> Сообщение о результате загрузки. </summary>
-    public string Message { get; set; }
+    public string Message { get; set; } = string.Empty;
 }
 

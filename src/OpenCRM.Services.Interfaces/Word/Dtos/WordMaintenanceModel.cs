@@ -10,16 +10,16 @@ namespace OpenCRM.Services.Interfaces.Word.Dtos
     public class WordMaintenanceModel
     {
         /// <summary> Данные автомобиля в документе. </summary>
-        public WordVehicleInfo Vehicle { get; set; }
+        public required WordVehicleInfo Vehicle { get; set; }
 
         /// <summary> Данные обслуживания в документе. </summary>
-        public WordMaintenanceInfo Maintenance { get; set; }
+        public required WordMaintenanceInfo Maintenance { get; set; }
 
         /// <summary> Дата формирования документа. </summary>
-        public string GeneratedDate { get; set; }
+        public string GeneratedDate { get; set; } = string.Empty;
 
         /// <summary> Информация о компании в документе. </summary>
-        public string CompanyInfo { get; set; }
+        public string? CompanyInfo { get; set; }
     }
 
 }

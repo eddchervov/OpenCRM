@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Helpers;
 
-#nullable disable
+#nullable disable warnings
 
 /// <summary> Утилиты для обработки и масштабирования изображений. </summary>
 public class ImageUtils

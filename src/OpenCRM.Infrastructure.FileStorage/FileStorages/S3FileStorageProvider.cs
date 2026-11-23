@@ -47,7 +47,7 @@ public class S3FileStorageProvider : IFileStorageService
     public S3FileStorageProvider(
         IConfiguration configuration,
         ILogger<S3FileStorageProvider> logger,
-        IAmazonS3 s3Client = null)
+        IAmazonS3? s3Client = null)
     {
         _logger = logger;
 
@@ -154,7 +154,7 @@ public class S3FileStorageProvider : IFileStorageService
     /// <summary> Сохраняет файл в хранилище и возвращает его путь. </summary>
     public async Task<string> SaveFileAsync(string path, Stream content)
     {
-        return await SaveFileAsync(path, content, null);
+        return await SaveFileAsync(path, content, CancellationToken.None);
     }
 
     /// <summary> Возвращает поток с содержимым файла. </summary>
@@ -305,7 +305,7 @@ public class S3FileStorageProvider : IFileStorageService
         this.SaveFileAsync(path, content, null, cancellationToken);
 
     private async Task<string> SaveFileAsync(
-        string path, Stream content, IDictionary<string, string> metadata, CancellationToken cancellationToken)
+        string path, Stream content, IDictionary<string, string>? metadata, CancellationToken cancellationToken)
     {
         try
         {
@@ -540,7 +540,7 @@ public class S3FileStorageProvider : IFileStorageService
     /// <summary> Нормализует путь файла для хранилища. </summary>
     private string NormalizePath(string path)
     {
-        return path?.Replace('\\', '/').TrimStart('/');
+        return path.Replace('\\', '/').TrimStart('/');
     }
 
     /// <summary> Определяет MIME-тип файла по расширению пути. </summary>

@@ -51,8 +51,7 @@ public sealed class WorkdayIndexMigrationTests
             WorkdayIndexMigrationTests.Order(vehicle, MaintenanceStatus.Planned, date, isDeleted: true)
         };
 
-        context.Vehicles.Add(vehicle);
-        await context.SaveChangesAsync();
+        await HistoricalMigrationSeed.InsertVehicleAsync(context, vehicle);
 
         // Исторические заказы создаются до появления поддерживаемых текущим SaveChanges сводок.
         foreach (var order in orders)
