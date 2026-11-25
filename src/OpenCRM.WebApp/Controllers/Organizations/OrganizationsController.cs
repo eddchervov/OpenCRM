@@ -127,7 +127,7 @@ public class OrganizationsController(
                 TimeZoneId = model.TimeZoneId
             });
 
-            TempData["Success"] = text["organization.create.success"];
+            TempData["Success"] = text["organization.create.success"].Value;
             TempData["AnalyticsGoal"] = "organization_created";
             TempData["AnalyticsParams"] = System.Text.Json.JsonSerializer.Serialize(new
             {
