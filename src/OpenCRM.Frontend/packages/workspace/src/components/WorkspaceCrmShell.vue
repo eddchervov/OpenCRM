@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
-import { formatLocaleDate, getProjectBrand, pageBreadcrumbsKey, toggleWorkspaceTheme, useLocalization, workspaceTheme, type ProfileLink } from '@opencrm/ui'
+import { formatLocaleDate, getProjectBrand, pageBreadcrumbsKey, shouldShowProjectAttribution, toggleWorkspaceTheme, useLocalization, workspaceTheme, type ProfileLink } from '@opencrm/ui'
 import type { WorkspaceContext } from '../types'
 import { provideWorkspaceCurrency } from '../workspaceCurrency'
 import type { WorkspaceBreadcrumbItem } from './WorkspaceBreadcrumbs.vue'
@@ -16,6 +16,7 @@ import { withPathBase } from '../utils/pathBase.mjs'
 import '../workspaceChromeMessages'
 
 const projectBrand = getProjectBrand()
+const showAttribution = shouldShowProjectAttribution()
 const { t } = useLocalization()
 
 const props = defineProps<{
@@ -285,7 +286,7 @@ onBeforeUnmount(() => {
         <WorkspaceProSectionPreview :context="context" :section-code="activeSection" :title="lockedSection.title" />
       </WorkspaceProLock>
       <slot v-else />
-      <footer class="crm-attribution">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a></footer>
+      <footer v-if="showAttribution" class="crm-attribution">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a></footer>
     </main>
 
     <dialog v-if="sections.length > 1" id="crm-mobile-menu" ref="mobileMenu" class="crm-mobile-menu" :aria-label="t('workspaceChrome.mobileNavigation')" @close="restorePage" @click="($event.target === mobileMenu) && closeMenu()">

@@ -33,6 +33,7 @@
 <head>
     <partial name="_ClientLocalization" />
     <meta name="project-brand" content="@Brand.DisplayName" />
+    <meta name="project-show-attribution" content="@(Brand.ShowAttribution ? "true" : "false")" />
     <meta name="project-github" content="@Helpers.ProjectBrand.GitHubUrl" />
     <meta name="opencrm-formatting-culture" content="@System.Globalization.CultureInfo.CurrentCulture.Name" />
     <meta name="opencrm-time-zone" content="@ViewData["OrganizationTimeZoneId"]" />
@@ -85,9 +86,12 @@
 
     @if (ViewData["WorkspaceEntry"] is true)
     {
-        <footer class="entry-footer">
-            <partial name="_ProjectAttribution" />
-        </footer>
+        @if (Brand.ShowAttribution)
+        {
+            <footer class="entry-footer">
+                <partial name="_ProjectAttribution" />
+            </footer>
+        }
     }
     else
     {

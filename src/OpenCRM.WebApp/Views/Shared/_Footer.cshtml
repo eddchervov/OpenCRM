@@ -36,7 +36,10 @@
         </div>
         <div class="row mt-4">
             <div class="col-12 text-center">
-                <div class="text-white small mb-2"><partial name="_ProjectAttribution" /></div>
+                @if (Brand.ShowAttribution)
+                {
+                    <div class="text-white small mb-2"><partial name="_ProjectAttribution" /></div>
+                }
                 <div class="text-white-50 small">© @Brand.DisplayName, @DateTime.Now.Year</div>
             </div>
         </div>

@@ -8,6 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="project-brand" content="@Brand.DisplayName" />
+    <meta name="project-show-attribution" content="@(Brand.ShowAttribution ? "true" : "false")" />
     <meta name="project-github" content="@Helpers.ProjectBrand.GitHubUrl" />
     <meta name="color-scheme" content="light" />
     <meta name="description" content="@Text["home.description", Brand.DisplayName]" />
@@ -44,6 +45,12 @@
         </div>
         <div class="home-graphic" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
     </main>
-    <footer class="home-footer"><span>@Brand.DisplayName</span><partial name="_ProjectAttribution" /></footer>
+    <footer class="home-footer">
+        <span>@Brand.DisplayName</span>
+        @if (Brand.ShowAttribution)
+        {
+            <partial name="_ProjectAttribution" />
+        }
+    </footer>
 </body>
 </html>

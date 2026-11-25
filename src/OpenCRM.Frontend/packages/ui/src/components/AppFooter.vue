@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { FooterSection } from '../navigation'
-import { getProjectBrand } from '../projectBrand'
+import { getProjectBrand, shouldShowProjectAttribution } from '../projectBrand'
 import { useLocalization } from '../i18n'
 
 const { t } = useLocalization()
+const showAttribution = shouldShowProjectAttribution()
 
 withDefaults(defineProps<{
   brand?: string
@@ -26,6 +27,9 @@ withDefaults(defineProps<{
         </div>
       </section>
     </div>
-    <div class="opencrm-footer__copy">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a> · © {{ brand }}, {{ year }}</div>
+    <div class="opencrm-footer__copy">
+      <span v-if="showAttribution">На базе <a href="https://github.com/eddchervov/OpenCRM" target="_blank" rel="noopener noreferrer">OpenCRM</a> · </span>
+      © {{ brand }}, {{ year }}
+    </div>
   </footer>
 </template>

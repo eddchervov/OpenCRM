@@ -19,7 +19,8 @@ public sealed class ProjectBrand
         string telegramUrl = "",
         string vkUrl = "",
         string instagramUrl = "",
-        string publicBaseUrl = "https://localhost:7142")
+        string publicBaseUrl = "https://localhost:7142",
+        bool showAttribution = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
@@ -35,6 +36,7 @@ public sealed class ProjectBrand
         this.TelegramUrl = telegramUrl;
         this.VkUrl = vkUrl;
         this.InstagramUrl = instagramUrl;
+        this.ShowAttribution = showAttribution;
     }
 
     /// <summary> Читает общие настройки бренда из конфигурации хоста. </summary>
@@ -45,7 +47,8 @@ public sealed class ProjectBrand
             readSetting("Brand:TelegramUrl") ?? string.Empty,
             readSetting("Brand:VkUrl") ?? string.Empty,
             readSetting("Brand:InstagramUrl") ?? string.Empty,
-            readSetting("Brand:PublicBaseUrl") ?? "https://localhost:7142");
+            readSetting("Brand:PublicBaseUrl") ?? "https://localhost:7142",
+            !bool.TryParse(readSetting("Brand:ShowAttribution"), out var showAttribution) || showAttribution);
     }
 
     /// <summary> Публичный адрес приложения с учётом базового пути. </summary>
@@ -65,4 +68,7 @@ public sealed class ProjectBrand
 
     /// <summary> Ссылка на Instagram, если сообщество настроено. </summary>
     public string InstagramUrl { get; }
+
+    /// <summary> Показывает ли экземпляр подпись OpenCRM в интерфейсе. </summary>
+    public bool ShowAttribution { get; }
 }
