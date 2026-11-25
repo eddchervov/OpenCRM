@@ -386,7 +386,7 @@
   <data name="organization.create.timezone.choose" xml:space="preserve"><value>选择时区</value></data>
   <data name="organization.create.timezone.required" xml:space="preserve"><value>请选择组织时区。</value></data>
   <data name="organization.create.timezone.length" xml:space="preserve"><value>时区标识符不得超过 100 个字符。</value></data>
-  <data name="organization.create.timezone.help" xml:space="preserve"><value>请选择或输入工作地点的 IANA 时区，例如 Asia/Shanghai。创建带时间的预约或班次后将无法更改时区。</value></data>
+  <data name="organization.create.timezone.help" xml:space="preserve"><value>请选择工作地点的时区。列表显示当前的 UTC 偏移量。创建带时间的预约或班次后将无法更改时区。</value></data>
   <data name="personal.support.attachments.sizeMismatch" xml:space="preserve"><value>文件大小与请求不符。</value></data>
   <data name="maintenance.payment.amountInvalid" xml:space="preserve"><value>请输入大于零且最多包含两位小数的付款金额。</value></data>
   <data name="maintenance.payment.methodInvalid" xml:space="preserve"><value>请选择有效的付款方式。</value></data>

@@ -386,7 +386,7 @@
   <data name="organization.create.timezone.choose" xml:space="preserve"><value>Выберите часовой пояс</value></data>
   <data name="organization.create.timezone.required" xml:space="preserve"><value>Выберите часовой пояс организации.</value></data>
   <data name="organization.create.timezone.length" xml:space="preserve"><value>Идентификатор часового пояса не должен превышать 100 символов.</value></data>
-  <data name="organization.create.timezone.help" xml:space="preserve"><value>Выберите или введите пояс IANA места работы, например Asia/Shanghai. После появления записей со временем или смен изменить пояс нельзя.</value></data>
+  <data name="organization.create.timezone.help" xml:space="preserve"><value>Выберите часовой пояс места работы. В списке показано текущее смещение от UTC. После появления записей со временем или смен изменить пояс нельзя.</value></data>
   <data name="personal.support.attachments.sizeMismatch" xml:space="preserve"><value>Размер файла не соответствует запросу.</value></data>
   <data name="maintenance.payment.amountInvalid" xml:space="preserve"><value>Укажите сумму оплаты больше нуля, не более двух знаков после запятой.</value></data>
   <data name="maintenance.payment.methodInvalid" xml:space="preserve"><value>Выберите корректный способ оплаты.</value></data>

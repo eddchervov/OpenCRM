@@ -9,20 +9,41 @@
     ViewData["WorkspaceEntry"] = true;
     Layout = "/Views/Shared/_Layout.cshtml";
 
-    var timeZoneIds = new SortedSet<string>(StringComparer.Ordinal) { "Etc/UTC" };
-    var systemTimeZones = TimeZoneInfo.GetSystemTimeZones();
-    foreach (var timeZone in systemTimeZones)
+    var timeZoneOffsets = new Dictionary<string, TimeSpan>(StringComparer.Ordinal)
     {
-        if (timeZone.Id.Contains('/'))
+        ["Etc/UTC"] = TimeSpan.Zero
+    };
+
+    var now = DateTimeOffset.UtcNow;
+    foreach (var timeZone in TimeZoneInfo.GetSystemTimeZones())
+    {
+        var id = timeZone.Id;
+        if (!id.Contains('/') && !TimeZoneInfo.TryConvertWindowsIdToIanaId(id, out id))
         {
-            timeZoneIds.Add(timeZone.Id);
             continue;
         }
 
-        if (TimeZoneInfo.TryConvertWindowsIdToIanaId(timeZone.Id, out var ianaId))
-        {
-            timeZoneIds.Add(ianaId);
-        }
+        timeZoneOffsets[id] = timeZone.GetUtcOffset(now);
+    }
+
+    var selectedTimeZoneId = Model.CreateOrganization.TimeZoneId;
+    if (!string.IsNullOrEmpty(selectedTimeZoneId) && selectedTimeZoneId.Contains('/')
+        && !timeZoneOffsets.ContainsKey(selectedTimeZoneId)
+        && TimeZoneInfo.TryFindSystemTimeZoneById(selectedTimeZoneId, out var selectedTimeZone))
+    {
+        timeZoneOffsets[selectedTimeZoneId] = selectedTimeZone.GetUtcOffset(now);
+    }
+
+    var timeZones = timeZoneOffsets
+        .OrderBy(zone => zone.Value)
+        .ThenBy(zone => zone.Key, StringComparer.Ordinal);
+
+    string FormatTimeZone(string id, TimeSpan offset)
+    {
+        var sign = offset < TimeSpan.Zero ? "-" : "+";
+        var time = offset.Duration().ToString(@"hh\:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+        return $"UTC{sign}{time} · {id}";
     }
 
     string LocalizePreset(string key, string fallback) => Text[key].ResourceNotFound ? fallback : Text[key].Value;
@@ -116,26 +137,31 @@
                     <textarea class="form-control" asp-for="CreateOrganization.Description" rows="2" maxlength="600" aria-describedby="organization-description-error"></textarea>
                     <span id="organization-description-error" class="text-danger" asp-validation-for="CreateOrganization.Description"></span>
                 </div>
-                <div class="entry-currency-field">
-                    <label class="form-label" asp-for="CreateOrganization.CurrencyCode">@Text["organization.create.currency"] <span aria-hidden="true">*</span></label>
-                    <select class="form-select" asp-for="CreateOrganization.CurrencyCode" required aria-describedby="organization-currency-help organization-currency-error">
-                        @foreach (var currencyCode in CurrencyCodes.Supported)
-                        {
-                            <option value="@currencyCode">@currencyCode</option>
-                        }
-                    </select>
+                <div class="entry-select-field" data-ui-select data-searchable="false" data-label="@Text["organization.create.currency"]">
+                    <div data-ui-select-fallback>
+                        <label class="form-label" asp-for="CreateOrganization.CurrencyCode">@Text["organization.create.currency"] <span aria-hidden="true">*</span></label>
+                        <select class="form-select" asp-for="CreateOrganization.CurrencyCode" required aria-describedby="organization-currency-help organization-currency-error">
+                            @foreach (var currencyCode in CurrencyCodes.Supported)
+                            {
+                                <option value="@currencyCode">@currencyCode</option>
+                            }
+                        </select>
+                    </div>
                     <div id="organization-currency-help" class="form-text">@Text["organization.create.currency.help"]</div>
                     <span id="organization-currency-error" class="text-danger" asp-validation-for="CreateOrganization.CurrencyCode"></span>
                 </div>
-                <div class="entry-timezone-field">
-                    <label class="form-label" asp-for="CreateOrganization.TimeZoneId">@Text["organization.create.timezone"] <span aria-hidden="true">*</span></label>
-                    <input class="form-control" asp-for="CreateOrganization.TimeZoneId" list="organization-timezone-options" placeholder="@Text["organization.create.timezone.choose"]" maxlength="100" required aria-describedby="organization-timezone-help organization-timezone-error" />
-                    <datalist id="organization-timezone-options">
-                        @foreach (var timeZoneId in timeZoneIds)
-                        {
-                            <option value="@timeZoneId"></option>
-                        }
-                    </datalist>
+                <div class="entry-select-field" data-ui-select data-label="@Text["organization.create.timezone"]"
+                     data-required-message="@Text["organization.create.timezone.required"]">
+                    <div data-ui-select-fallback>
+                        <label class="form-label" asp-for="CreateOrganization.TimeZoneId">@Text["organization.create.timezone"] <span aria-hidden="true">*</span></label>
+                        <select class="form-select" asp-for="CreateOrganization.TimeZoneId" data-ui-time-zone required aria-describedby="organization-timezone-help organization-timezone-error">
+                            <option value="">@Text["organization.create.timezone.choose"]</option>
+                            @foreach (var (id, offset) in timeZones)
+                            {
+                                <option value="@id" data-utc-offset="@((int)offset.TotalMinutes)">@FormatTimeZone(id, offset)</option>
+                            }
+                        </select>
+                    </div>
                     <div id="organization-timezone-help" class="form-text">@Text["organization.create.timezone.help"]</div>
                     <span id="organization-timezone-error" class="text-danger" asp-validation-for="CreateOrganization.TimeZoneId"></span>
                 </div>
@@ -149,6 +175,7 @@
 </section>
 
 @section Styles {
+    <link rel="stylesheet" href="~/app/date-time-fields.css" asp-append-version="true" />
     <environment include="Development">
         <link rel="stylesheet" href="~/css/organizations-entry.css" asp-append-version="true" />
     </environment>
@@ -159,18 +186,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (() => {
-            const list = document.getElementById('organization-timezone-options');
-            if (!list || typeof Intl.supportedValuesOf !== 'function') return;
-
-            const existing = new Set(Array.from(list.options, option => option.value));
-            for (const id of Intl.supportedValuesOf('timeZone')) {
-                if (existing.has(id)) continue;
-                const option = document.createElement('option');
-                option.value = id;
-                list.append(option);
-            }
-        })();
-    </script>
+    <script src="~/app/date-time-fields.bundle.js" asp-append-version="true" defer></script>
 }

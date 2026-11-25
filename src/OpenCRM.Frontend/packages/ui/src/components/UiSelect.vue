@@ -20,6 +20,7 @@ const props = withDefaults(defineProps<{
   }>
   disabled?: boolean
   ariaLabel?: string
+  describedBy?: string
   placeholder?: string
   searchable?: boolean
   required?: boolean
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<{
   error: '',
   disabled: false,
   ariaLabel: '',
+  describedBy: '',
   placeholder: '',
   searchable: true,
   required: false
@@ -40,6 +42,7 @@ const isMounted = ref(false)
 onMounted(() => { isMounted.value = true })
 const fallbackId = useId()
 const selectId = computed(() => props.id ?? `ui-select-${fallbackId}`)
+const descriptionIds = computed(() => [props.describedBy, props.error ? `${selectId.value}-error` : ''].filter(Boolean).join(' ') || undefined)
 </script>
 
 <template>
@@ -56,7 +59,7 @@ const selectId = computed(() => props.id ?? `ui-select-${fallbackId}`)
       :disabled="disabled"
       :searchable="searchable"
       :placeholder="placeholder || t('common.selectValue')"
-      :aria="{ 'aria-label': ariaLabel || label, 'aria-invalid': !!error || undefined, 'aria-describedby': error ? `${selectId}-error` : undefined }"
+      :aria="{ 'aria-label': ariaLabel || label, 'aria-invalid': !!error || undefined, 'aria-describedby': descriptionIds, 'aria-required': required || undefined }"
       open-direction="bottom"
       :hide-selected="false"
       :can-clear="false"

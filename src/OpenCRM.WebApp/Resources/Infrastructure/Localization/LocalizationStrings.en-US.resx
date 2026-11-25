@@ -386,7 +386,7 @@
   <data name="organization.create.timezone.choose" xml:space="preserve"><value>Choose a time zone</value></data>
   <data name="organization.create.timezone.required" xml:space="preserve"><value>Choose the organization time zone.</value></data>
   <data name="organization.create.timezone.length" xml:space="preserve"><value>The time zone identifier must not exceed 100 characters.</value></data>
-  <data name="organization.create.timezone.help" xml:space="preserve"><value>Choose or enter the IANA time zone of your workplace, such as Asia/Shanghai. It cannot be changed after timed appointments or shifts are created.</value></data>
+  <data name="organization.create.timezone.help" xml:space="preserve"><value>Choose the time zone of your workplace. The list shows the current UTC offset. The time zone cannot be changed after timed appointments or shifts are created.</value></data>
   <data name="personal.support.attachments.sizeMismatch" xml:space="preserve"><value>The file size does not match the request.</value></data>
   <data name="maintenance.payment.amountInvalid" xml:space="preserve"><value>Enter a payment amount greater than zero with no more than two decimal places.</value></data>
   <data name="maintenance.payment.methodInvalid" xml:space="preserve"><value>Select a valid payment method.</value></data>

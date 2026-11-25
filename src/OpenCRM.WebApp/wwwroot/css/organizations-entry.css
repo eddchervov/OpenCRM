@@ -129,7 +129,14 @@ body.organizations-entry > main { flex: 1; min-width: 0; background: var(--crm-c
 .organizations-entry .entry-scenario-unavailable { color: var(--entry-danger); font-weight: 600; }
 .organizations-entry .entry-scenario-modules { display: flex; flex-wrap: wrap; gap: 5px 8px; color: var(--crm-text-muted); font-size: 11px; }
 .organizations-entry .entry-scenario-modules span { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--crm-line); }
-.organizations-entry .entry-name-field, .organizations-entry .entry-description { max-width: 640px; width: 100%; }
+.organizations-entry .entry-name-field, .organizations-entry .entry-description, .organizations-entry .entry-select-field { max-width: 640px; width: 100%; min-width: 0; }
+.organizations-entry .entry-select-field .form-select { appearance: auto; background: var(--crm-surface); color: var(--crm-text); border-color: var(--crm-line); min-height: 44px; }
+.organizations-entry .entry-select-field .ui-select { min-height: 44px; }
+.organizations-entry .entry-select-field .ui-field__required { color: var(--entry-accent); }
+.organizations-entry .entry-select-field .multiselect-search:focus-visible { outline: none; }
+.organizations-entry .entry-select-field .multiselect-dropdown { overflow-y: auto; }
+.organizations-entry .entry-select-field .form-text { margin-top: 8px; color: var(--crm-text-muted); }
+.organizations-entry .entry-select-field .multiselect-option { overflow-wrap: anywhere; }
 .organizations-entry .form-label { display: block; font-weight: 650; margin-bottom: 8px; color: var(--crm-text); }
 .organizations-entry .form-label > span { color: var(--entry-accent); }
 .organizations-entry .form-control { background: var(--crm-surface); color: var(--crm-text); border: 1px solid var(--crm-line); border-radius: 7px; padding: 11px 12px; min-height: 44px; font: inherit; box-shadow: none; }
