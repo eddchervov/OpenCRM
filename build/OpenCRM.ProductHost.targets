@@ -1,17 +1,41 @@
 <Project>
   <PropertyGroup>
     <OpenCRMRoot>$([System.IO.Path]::GetFullPath('$(OpenCRMRoot)'))</OpenCRMRoot>
+    <RunBundleMinify>false</RunBundleMinify>
     <BuildScenarioClientsOnBuild Condition="'$(BuildScenarioClientsOnBuild)' == ''">true</BuildScenarioClientsOnBuild>
     <BuildScenarioClientsOnPublish Condition="'$(BuildScenarioClientsOnPublish)' == ''">true</BuildScenarioClientsOnPublish>
   </PropertyGroup>
   <ItemGroup>
     <Content Remove="wwwroot\clients\**;wwwroot\admin-panel\**;wwwroot\app\*.bundle.js;wwwroot\app\date-time-fields.css" />
+    <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" PrivateAssets="all" />
     <ProjectReference Include="$(OpenCRMRoot)/src/OpenCRM.Hosting/OpenCRM.Hosting.csproj" />
     <Content Include="$(OpenCRMRoot)/src/OpenCRM.WebApp/appsettings.json" Link="opencrm.defaults.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <Content Include="$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/**/*"
              Exclude="$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/img/cars/**;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/clients/**;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/admin-panel/**;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/app/*.bundle.js;$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/app/date-time-fields.css"
              Link="wwwroot/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <Target Name="BuildOpenCRMRazorAssets"
+          BeforeTargets="ResolveProjectStaticWebAssets;AssignTargetPaths"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <BundlerMinifier.BundlerBuildTask FileName="$(OpenCRMRoot)/src/OpenCRM.WebApp/bundleconfig.json" />
+    <ItemGroup>
+      <!-- Файлы, появившиеся в чистой сборке, ещё не входят в Content. -->
+      <_GeneratedOpenCRMRazorAsset Include="$(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/css/*.min.css;
+                                           $(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/js/*.min.js;
+                                           $(OpenCRMRoot)/src/OpenCRM.WebApp/wwwroot/app/*.min.js"
+                                    Exclude="@(Content)" />
+      <Content Include="@(_GeneratedOpenCRMRazorAsset)" Condition="'@(_GeneratedOpenCRMRazorAsset)' != ''"
+               Link="$([MSBuild]::MakeRelative('$(OpenCRMRoot)/src/OpenCRM.WebApp', '%(_GeneratedOpenCRMRazorAsset.FullPath)'))"
+               CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+  <Target Name="ValidateOpenCRMRazorAssets" AfterTargets="Publish">
+    <ItemGroup>
+      <_RequiredOpenCRMRazorAsset Include="wwwroot/css/site.min.css;wwwroot/css/auth.min.css;wwwroot/css/personal.min.css;wwwroot/js/site.min.js" />
+    </ItemGroup>
+    <Error Condition="!Exists('$(PublishDir)/%(_RequiredOpenCRMRazorAsset.Identity)')"
+           Text="В каталоге публикации отсутствует ресурс OpenCRM: %(_RequiredOpenCRMRazorAsset.Identity)." />
+  </Target>
   <Target Name="BuildOpenCRMClientsBeforeBuild"
           Condition="('$(BuildScenarioClientsOnBuild)' == 'true' or ('$(_IsPublishing)' == 'true' and '$(BuildScenarioClientsOnPublish)' == 'true')) and '$(DesignTimeBuild)' != 'true' and '$(NoBuild)' != 'true'">
     <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(OpenCRMRoot)/src/OpenCRM.Frontend" Condition="!Exists('$(OpenCRMRoot)/src/OpenCRM.Frontend/node_modules')" />

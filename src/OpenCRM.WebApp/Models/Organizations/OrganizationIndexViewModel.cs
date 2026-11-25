@@ -1889,7 +1889,6 @@ public class CreateOrganizationInputModel : IValidatableObject
 
     /// <summary> Валюта учета новой организации. </summary>
     [Required(ErrorMessage = "organization.create.currency.required")]
-    [StringLength(3, MinimumLength = 3, ErrorMessage = "organization.create.currency.length")]
     public string CurrencyCode { get; set; } = CurrencyCodes.Rub;
 
     /// <summary> Часовой пояс новой организации в формате IANA. </summary>
